@@ -4,22 +4,24 @@
 //!
 //! This module mainly introduces the [Amount] and [SignedAmount] types.
 //! We refer to the documentation on the types for more information.
-//!
 
 use core::cmp::Ordering;
 use core::fmt::{self, Write};
 use core::str::FromStr;
 use core::{default, ops};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::prelude::*;
+#[cfg(feature = "serde")]
+use ::serde::{Deserialize, Serialize};
+
+#[cfg(feature = "alloc")]
+use crate::prelude::{String, ToString};
 
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Examples
 /// ```
 /// # use core::str::FromStr;
-/// # use bitcoin::Amount;
+/// # use bitcoin_units::Amount;
 ///
 /// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
 /// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
@@ -126,12 +128,12 @@ impl FromStr for Denomination {
         use self::ParseAmountError::*;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(PossiblyConfusingDenomination(s.to_owned()));
+            return Err(PossiblyConfusingDenomination(s.to_string()));
         };
 
         let form = self::Denomination::forms(s);
 
-        form.ok_or_else(|| UnknownDenomination(s.to_owned()))
+        form.ok_or_else(|| UnknownDenomination(s.to_string()))
     }
 }
 
@@ -493,7 +495,6 @@ fn fmt_satoshi_in(
 ///
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Amount(u64);
 
 impl Amount {
@@ -582,7 +583,7 @@ impl Amount {
     ///
     /// # Examples
     /// ```
-    /// # use bitcoin::{Amount, Denomination};
+    /// # use bitcoin_units::amount::{Amount, Denomination};
     /// let amount = Amount::from_sat(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
@@ -684,20 +685,6 @@ impl Amount {
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
-    }
-}
-
-impl Decodable for Amount {
-    #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(Amount(Decodable::consensus_decode(r)?))
-    }
-}
-
-impl Encodable for Amount {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
     }
 }
 
@@ -1215,12 +1202,11 @@ pub mod serde {
     //!
     //! ```rust,ignore
     //! use serde::{Serialize, Deserialize};
-    //! use bitcoin::Amount;
+    //! use bitcoin_units::Amount;
     //!
     //! #[derive(Serialize, Deserialize)]
-    //! # #[serde(crate = "actual_serde")]
     //! pub struct HasAmount {
-    //!     #[serde(with = "bitcoin::amount::serde::as_btc")]
+    //!     #[serde(with = "bitcoin_units::amount::serde::as_btc")]
     //!     pub amount: Amount,
     //! }
     //! ```
@@ -1999,7 +1985,7 @@ mod tests {
             assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
         }
 
-        case("5 BCH", Err(E::UnknownDenomination("BCH".to_owned())));
+        case("5 BCH", Err(E::UnknownDenomination("BCH".to_string())));
 
         case("-1 BTC", Err(E::Negative));
         case("-0.0 BTC", Err(E::Negative));
@@ -2135,7 +2121,6 @@ mod tests {
     #[test]
     fn serde_as_sat() {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
-        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(with = "crate::amount::serde::as_sat")]
             pub amt: Amount,
@@ -2163,7 +2148,6 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
-        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(with = "crate::amount::serde::as_btc")]
             pub amt: Amount,
@@ -2199,7 +2183,6 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
-        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(default, with = "crate::amount::serde::as_btc::opt")]
             pub amt: Option<Amount>,
@@ -2241,7 +2224,6 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
-        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(default, with = "crate::amount::serde::as_sat::opt")]
             pub amt: Option<Amount>,

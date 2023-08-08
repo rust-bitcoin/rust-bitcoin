@@ -2,7 +2,7 @@
 
 set -ex
 
-CRATES="bitcoin hashes internals fuzz"
+CRATES="bitcoin hashes units internals fuzz"
 DEPS="recent minimal"
 
 for dep in $DEPS

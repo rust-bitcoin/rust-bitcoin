@@ -36,7 +36,7 @@ macro_rules! parse_error_type {
 
         impl core::fmt::Display for $name {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                $crate::error::write_err!("{}", self.input.display_cannot_parse($subject); self.source)
+                $crate::error::write_err!(f, "{}", self.input.display_cannot_parse($subject); self.source)
             }
         }
 

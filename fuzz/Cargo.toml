@@ -22,10 +22,6 @@ name = "bitcoin_deserialize_address"
 path = "fuzz_targets/bitcoin/deserialize_address.rs"
 
 [[bin]]
-name = "bitcoin_deserialize_amount"
-path = "fuzz_targets/bitcoin/deserialize_amount.rs"
-
-[[bin]]
 name = "bitcoin_deserialize_block"
 path = "fuzz_targets/bitcoin/deserialize_block.rs"
 
@@ -88,3 +84,7 @@ path = "fuzz_targets/hashes/sha512_256.rs"
 [[bin]]
 name = "hashes_sha512"
 path = "fuzz_targets/hashes/sha512.rs"
+
+[[bin]]
+name = "units_deserialize_amount"
+path = "fuzz_targets/units/deserialize_amount.rs"

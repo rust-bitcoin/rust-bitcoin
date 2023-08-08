@@ -15,10 +15,10 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std"]
+std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde"]
+serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
@@ -35,6 +35,7 @@ hex_lit = "0.1.1"
 internals = { package = "bitcoin-internals", version = "0.2.0" }
 io = { package = "bitcoin-io", version = "0.1", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes", "alloc"] }
+units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 
 base64 = { version = "0.21.3", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.

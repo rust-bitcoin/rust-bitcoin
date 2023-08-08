@@ -17,7 +17,6 @@ jobs:
       matrix:
         fuzz_target: [
           bitcoin_deserialize_address,
-          bitcoin_deserialize_amount,
           bitcoin_deserialize_block,
           bitcoin_deserialize_prefilled_transaction,
           bitcoin_deserialize_psbt,
@@ -34,6 +33,7 @@ jobs:
           hashes_sha256,
           hashes_sha512_256,
           hashes_sha512,
+          units_deserialize_amount,
         ]
     steps:
       - name: Install test dependencies
