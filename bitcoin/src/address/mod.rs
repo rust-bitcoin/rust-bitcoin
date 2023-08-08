@@ -231,15 +231,15 @@ impl Payload {
 
 /// A utility struct to encode an address payload with the given parameters.
 /// This is a low-level utility struct. Consider using `Address` instead.
-pub struct AddressEncoding<'a> {
+struct AddressEncoding<'a> {
     /// The address payload to encode.
-    pub payload: &'a Payload,
+    payload: &'a Payload,
     /// base58 version byte for p2pkh payloads (e.g. 0x00 for "1..." addresses).
-    pub p2pkh_prefix: u8,
+    p2pkh_prefix: u8,
     /// base58 version byte for p2sh payloads (e.g. 0x05 for "3..." addresses).
-    pub p2sh_prefix: u8,
+    p2sh_prefix: u8,
     /// The bech32 human-readable part.
-    pub hrp: Hrp,
+    hrp: Hrp,
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
