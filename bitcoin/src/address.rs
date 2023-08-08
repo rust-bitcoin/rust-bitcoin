@@ -32,7 +32,10 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32;
-use hashes::{sha256, Hash, HashEngine};
+
+// use hashes::{sha256, Hash, HashEngine};
+use hashes::Hash;
+
 use internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
@@ -1199,10 +1202,19 @@ impl FromStr for Address<NetworkUnchecked> {
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
 fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
-    let mut sha_engine = sha256::Hash::engine();
-    sha_engine.input(&[0, 20]);
-    sha_engine.input(pubkey_hash.as_ref());
-    crate::hashes::hash160::Hash::from_engine(sha_engine)
+    let sha = vanadium_sdk::crypto::CtxSha256::new()
+        .update(&[0, 20])
+        .update(pubkey_hash.as_ref())
+        .r#final();
+    let rip = vanadium_sdk::crypto::CtxRipeMd160::new()
+        .update(&sha)
+        .r#final();
+    crate::hashes::hash160::Hash::from_byte_array(rip)
+
+    // let mut sha_engine = sha256::Hash::engine();
+    // sha_engine.input(&[0, 20]);
+    // sha_engine.input(pubkey_hash.as_ref());
+    // crate::hashes::hash160::Hash::from_engine(sha_engine)
 }
 
 #[cfg(test)]

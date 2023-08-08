@@ -46,6 +46,8 @@ core2 = { version = "0.3.2", default-features = false, features = ["alloc"], opt
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
+vanadium_sdk = { path = "../../../../rust-sdk" }
+
 [dev-dependencies]
 serde_json = "1.0.0"
 serde_test = "1.0.19"

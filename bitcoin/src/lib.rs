@@ -77,6 +77,10 @@ pub extern crate secp256k1;
 #[macro_use]
 extern crate actual_serde as serde;
 
+// Used in vnd-bitcoin to replace native crypto implementations with corresponding functions
+// based on the Vanadium sdk (which are based on ecalls).
+extern crate vanadium_sdk;
+
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
