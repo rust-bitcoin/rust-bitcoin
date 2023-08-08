@@ -26,6 +26,8 @@ use crate::io::Write;
 use crate::network::constants::Network;
 use crate::prelude::*;
 
+use vanadium_sdk;
+
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
@@ -706,12 +708,18 @@ impl ExtendedPubKey {
         match i {
             ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
             ChildNumber::Normal { index: n } => {
-                let mut hmac_engine: HmacEngine<sha512::Hash> =
-                    HmacEngine::new(&self.chain_code[..]);
-                hmac_engine.input(&self.public_key.serialize()[..]);
-                hmac_engine.input(&n.to_be_bytes());
+                // let mut hmac_engine: HmacEngine<sha512::Hash> =
+                //     HmacEngine::new(&self.chain_code[..]);
+                // hmac_engine.input(&self.public_key.serialize()[..]);
+                // hmac_engine.input(&n.to_be_bytes());
 
-                let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+                // let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+
+                let mut hmac_data: Vec<u8> = Vec::new();
+                hmac_data.extend_from_slice(&self.public_key.serialize()[..]);
+                hmac_data.extend_from_slice(&n.to_be_bytes());
+
+                let hmac_result: Hmac<sha512::Hash> = Hmac::from_byte_array(vanadium_sdk::crypto::hmac_sha512(&self.chain_code[..], &hmac_data));
 
                 let private_key = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
                 let chain_code = ChainCode::from_hmac(hmac_result);
