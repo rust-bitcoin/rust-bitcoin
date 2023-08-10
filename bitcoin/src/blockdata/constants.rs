@@ -194,11 +194,12 @@ impl ChainHash {
 mod test {
     use core::str::FromStr;
 
+    use hex::test_hex_unwrap as hex;
+
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::serialize;
-    use crate::internal_macros::hex;
     use crate::network::Network;
 
     #[test]

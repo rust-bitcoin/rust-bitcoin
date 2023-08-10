@@ -245,8 +245,9 @@ impl std::error::Error for Error {
 
 #[cfg(test)]
 mod tests {
+    use hex::test_hex_unwrap as hex;
+
     use super::*;
-    use crate::internal_macros::hex;
 
     #[test]
     fn test_base58_encode() {

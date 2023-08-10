@@ -1565,7 +1565,7 @@ mod test {
 
     #[cfg(feature = "serde")]
     use {
-        crate::internal_macros::hex,
+        hex::test_hex_unwrap as hex,
         serde_test::Configure,
         serde_test::{assert_tokens, Token},
     };

@@ -554,12 +554,12 @@ impl<'a, W: io::Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
+    use hex::test_hex_unwrap as hex;
     use serde_json::Value;
 
     use super::*;
     use crate::consensus::encode::deserialize;
     use crate::hash_types::BlockHash;
-    use crate::internal_macros::hex;
     use crate::ScriptBuf;
 
     #[test]

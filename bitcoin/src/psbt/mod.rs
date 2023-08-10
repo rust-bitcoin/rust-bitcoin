@@ -1000,6 +1000,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use hashes::{hash160, ripemd160, sha256, Hash};
+    use hex::test_hex_unwrap as hex;
     use secp256k1::{self, Secp256k1};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
@@ -1010,7 +1011,6 @@ mod tests {
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
-    use crate::internal_macros::hex;
     use crate::network::Network::Bitcoin;
     use crate::psbt::map::{Input, Output};
     use crate::psbt::raw;

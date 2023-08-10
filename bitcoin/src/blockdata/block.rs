@@ -442,11 +442,10 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hex::FromHex;
+    use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::internal_macros::hex;
 
     #[test]
     fn test_coinbase_and_bip34() {

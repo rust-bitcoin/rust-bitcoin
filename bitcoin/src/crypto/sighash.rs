@@ -1258,14 +1258,13 @@ mod tests {
     use std::str::FromStr;
 
     use hashes::HashEngine;
-    use hex::FromHex;
+    use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::deserialize;
     use crate::crypto::sighash::{LegacySighash, TapSighash};
-    use crate::internal_macros::hex;
     use crate::taproot::TapLeafHash;
 
     extern crate serde_json;
