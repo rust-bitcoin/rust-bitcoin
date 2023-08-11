@@ -90,6 +90,31 @@ impl crate::HashEngine for HashEngine {
     engine_input_impl!();
 }
 
+#[cfg(feature = "small-hash")]
+#[macro_use]
+mod small_hash {
+    #[rustfmt::skip]
+    pub(super) fn round(a: u32, _b: u32, c: u32, _d: u32, e: u32,
+                        x: u32, bits: u32, add: u32, round: u32,
+    ) -> (u32, u32) {
+        let a = a.wrapping_add(round).wrapping_add(x).wrapping_add(add);
+        let a = a.rotate_left(bits).wrapping_add(e);
+        let c = c.rotate_left(10);
+
+        (a, c)
+    }
+
+    macro_rules! round(
+        ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr,
+         $x:expr, $bits:expr, $add:expr, $round:expr) => ({
+            let updates = small_hash::round($a, $b, $c, $d, $e, $x, $bits, $add, $round);
+            $a = updates.0;
+            $c = updates.1;
+        });
+    );
+}
+
+#[cfg(not(feature = "small-hash"))]
 macro_rules! round(
     ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr,
      $x:expr, $bits:expr, $add:expr, $round:expr) => ({
