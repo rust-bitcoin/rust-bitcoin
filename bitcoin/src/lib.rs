@@ -129,7 +129,7 @@ pub use crate::{
     blockdata::witness::{self, Witness},
     consensus::encode::VarInt,
     consensus::params,
-    crypto::ecdsa,
+    crypto::ecdsa::{self, legacy, segwit_v0},
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::{MerkleBlock, TxMerkleNode, WitnessMerkleNode},
