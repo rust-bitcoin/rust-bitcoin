@@ -432,26 +432,38 @@ impl PartialMerkleTree {
 
 impl Encodable for PartialMerkleTree {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let ret = self.num_transactions.consensus_encode(w)? + self.hashes.consensus_encode(w)?;
-        let mut bytes: Vec<u8> = vec![0; (self.bits.len() + 7) / 8];
-        for p in 0..self.bits.len() {
-            bytes[p / 8] |= (self.bits[p] as u8) << (p % 8) as u8;
+        let mut ret = self.num_transactions.consensus_encode(w)?;
+        ret += self.hashes.consensus_encode(w)?;
+
+        let nb_bytes_for_bits = (self.bits.len() + 7) / 8;
+        ret += encode::VarInt(nb_bytes_for_bits as u64).consensus_encode(w)?;
+        for chunk in self.bits.chunks(8) {
+            let mut byte = 0u8;
+            for (i, bit) in chunk.iter().enumerate() {
+                byte |= (*bit as u8) << i;
+            }
+            ret += byte.consensus_encode(w)?;
         }
-        Ok(ret + bytes.consensus_encode(w)?)
+        Ok(ret)
     }
 }
 
 impl Decodable for PartialMerkleTree {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, encode::Error> {
         let num_transactions: u32 = Decodable::consensus_decode(r)?;
         let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode(r)?;
 
-        let bytes: Vec<u8> = Decodable::consensus_decode(r)?;
-        let mut bits: Vec<bool> = vec![false; bytes.len() * 8];
-
-        for (p, bit) in bits.iter_mut().enumerate() {
-            *bit = (bytes[p / 8] & (1 << (p % 8) as u8)) != 0;
+        let nb_bytes_for_bits = encode::VarInt::consensus_decode(r)?.0 as usize;
+        let mut bits = vec![false; nb_bytes_for_bits * 8];
+        for chunk in bits.chunks_mut(8) {
+            let byte = u8::consensus_decode(r)?;
+            for (i, bit) in chunk.iter_mut().enumerate() {
+                *bit = (byte & (1 << i)) != 0;
+            }
         }
+
         Ok(PartialMerkleTree { num_transactions, hashes, bits })
     }
 }
