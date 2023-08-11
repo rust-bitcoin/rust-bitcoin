@@ -15,6 +15,8 @@ use crate::script::PushBytes;
 use crate::sighash::EcdsaSighashType;
 
 mod error;
+pub mod legacy;
+pub mod segwit_v0;
 pub use self::error::Error;
 
 const MAX_SIG_LEN: usize = 73;
