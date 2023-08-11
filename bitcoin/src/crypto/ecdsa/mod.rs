@@ -31,7 +31,7 @@ pub struct Signature {
 }
 
 impl Signature {
-    /// Constructs an ECDSA bitcoin signature for [`EcdsaSighashType::All`].
+    /// Constructs an ECDSA Bitcoin signature for [`EcdsaSighashType::All`].
     pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> Signature {
         Signature { sig, hash_ty: EcdsaSighashType::All }
     }
