@@ -140,16 +140,23 @@ pub use crate::blockdata::weight::Weight;
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
+pub use crate::crypto::ecdsa;
 pub use crate::crypto::key::{
     self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
 };
-pub use crate::crypto::{ecdsa, sighash};
-pub use crate::hash_types::{BlockHash, Txid, Wtxid};
+pub use crate::crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag};
+pub use crate::hash_types::{
+    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid,
+    XpubIdentifier,
+};
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::psbt::Psbt;
 pub use crate::sighash::{EcdsaSighashType, TapSighashType};
+pub use crate::taproot::{
+    TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
