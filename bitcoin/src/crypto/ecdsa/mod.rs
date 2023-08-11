@@ -15,7 +15,11 @@ use crate::script::PushBytes;
 use crate::sighash::EcdsaSighashType;
 
 mod error;
+mod legacy;
+mod segwit_v0;
 pub use self::error::Error;
+pub use self::legacy::LegacySignature;
+pub use self::segwit_v0::SegwitV0Signature;
 
 const MAX_SIG_LEN: usize = 73;
 
