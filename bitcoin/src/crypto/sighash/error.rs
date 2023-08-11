@@ -4,6 +4,8 @@
 
 use core::fmt;
 
+#[cfg(doc)]
+use crate::crypto::sighash::Prevouts;
 use crate::error::impl_std_error;
 use crate::io;
 use crate::prelude::String;
