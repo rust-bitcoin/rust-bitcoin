@@ -10,7 +10,7 @@ use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self};
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
@@ -166,7 +166,7 @@ impl Script {
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
-        self.0.first().and_then(|opcode| WitnessVersion::try_from(opcodes::All::from(*opcode)).ok())
+        self.0.first().and_then(|opcode| WitnessVersion::try_from(Opcode::from(*opcode)).ok())
     }
 
     /// Checks whether a script pubkey is a P2SH output.
@@ -229,7 +229,7 @@ impl Script {
         if !(4..=42).contains(&script_len) {
             return false;
         }
-        let ver_opcode = opcodes::All::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+        let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
         let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
         WitnessVersion::try_from(ver_opcode).is_ok()
             && push_opbyte >= OP_PUSHBYTES_2.to_u8()
@@ -286,7 +286,7 @@ impl Script {
 
         match self.0.first() {
             Some(b) => {
-                let first = opcodes::All::from(*b);
+                let first = Opcode::from(*b);
                 let class = first.classify(opcodes::ClassifyContext::Legacy);
 
                 class == ReturnOp || class == IllegalOp
@@ -475,14 +475,14 @@ impl Script {
     pub fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
 
     /// Returns the first opcode of the script (if there is any).
-    pub fn first_opcode(&self) -> Option<opcodes::All> {
+    pub fn first_opcode(&self) -> Option<Opcode> {
         self.as_bytes().first().copied().map(From::from)
     }
 
     /// Iterates the script to find the last opcode.
     ///
     /// Returns `None` is the instruction is data push or if the script is empty.
-    pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<opcodes::All> {
+    pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<Opcode> {
         match self.instructions().last() {
             Some(Ok(Instruction::Op(op))) => Some(op),
             _ => None,

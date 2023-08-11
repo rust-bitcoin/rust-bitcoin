@@ -6,7 +6,7 @@ use core::ops::Deref;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self};
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
@@ -176,7 +176,7 @@ impl ScriptBuf {
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Adds a single opcode to the script.
-    pub fn push_opcode(&mut self, data: opcodes::All) { self.0.push(data.to_u8()); }
+    pub fn push_opcode(&mut self, data: Opcode) { self.0.push(data.to_u8()); }
 
     /// Adds instructions to push some arbitrary data onto the stack.
     pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
@@ -266,7 +266,7 @@ impl ScriptBuf {
     /// alternative.
     ///
     /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-    pub(in crate::blockdata::script) fn push_verify(&mut self, last_opcode: Option<opcodes::All>) {
+    pub(in crate::blockdata::script) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
         match opcode_to_verify(last_opcode) {
             Some(opcode) => {
                 self.0.pop();
