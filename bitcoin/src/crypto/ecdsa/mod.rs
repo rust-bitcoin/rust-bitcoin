@@ -5,6 +5,8 @@
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
 mod error;
+pub mod legacy;
+pub mod segwit_v0;
 
 use core::str::FromStr;
 use core::{fmt, iter};
