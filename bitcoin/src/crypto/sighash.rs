@@ -20,6 +20,7 @@ use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::prelude::*;
+use crate::script::P2wpkChecked;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
@@ -58,7 +59,7 @@ sha256t_hash_newtype! {
 
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
-    /// This hash type is used for computing taproot signature hash."
+    /// This hash type is used for computing taproot signature hash.
     #[hash_newtype(forward)]
     pub struct TapSighash(_);
 }
@@ -821,6 +822,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Computes the BIP143 sighash for any flag type.
+    #[deprecated(note = "use `segwit_script_code_signature_hash` instead")]
     pub fn segwit_signature_hash(
         &mut self,
         input_index: usize,
@@ -836,6 +838,25 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         )?;
+        Ok(SegwitV0Sighash::from_engine(enc))
+    }
+
+    /// Computes the BIP143 sighash for any flag type.
+    pub fn segwit_script_code_signature_hash(
+        &mut self,
+        input_index: usize,
+        script_code: &P2wpkChecked,
+        value: Amount,
+        sighash_type: EcdsaSighashType,
+    ) -> Result<SegwitV0Sighash, Error> {
+        let mut enc = SegwitV0Sighash::engine();
+        self.segwit_encode_signing_data_to(
+            &mut enc,
+            input_index,
+            script_code.as_script(),
+            value,
+            sighash_type,
+        ).expect("invalid Segwit script code");
         Ok(SegwitV0Sighash::from_engine(enc))
     }
 
@@ -1757,11 +1778,13 @@ mod tests {
 
         let witness_script =
             p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
+
+        let script_code = witness_script.p2wpkh_checked();
         let value = Amount::from_sat(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(1, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_script_code_signature_hash(1, &script_code, value, EcdsaSighashType::All).unwrap(),
             "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -1798,11 +1821,13 @@ mod tests {
 
         let witness_script =
             p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
+
+        let script_code = witness_script.p2wpkh_checked();
         let value = Amount::from_sat(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_script_code_signature_hash(0, &script_code, value, EcdsaSighashType::All).unwrap(),
             "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -1845,11 +1870,13 @@ mod tests {
              56ae",
         )
         .unwrap();
+
+        let script_code = witness_script.p2wpkh_checked();
         let value = Amount::from_sat(987_654_321);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_script_code_signature_hash(0, &script_code, value, EcdsaSighashType::All).unwrap(),
             "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),

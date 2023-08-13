@@ -38,11 +38,11 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     let wpkh = pk.wpubkey_hash().expect("compressed key");
     println!("Script pubkey hash: {:x}", wpkh);
     let spk = ScriptBuf::new_v0_p2wpkh(&wpkh);
-    let script_code = spk.p2wpkh_script_code().expect("spk is known to be p2wpkh");
+    let script_code = spk.p2wpkh_checked();
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
-        .segwit_signature_hash(inp_idx, &script_code, Amount::from_sat(value), sig.hash_ty)
+        .segwit_script_code_signature_hash(inp_idx, &script_code, Amount::from_sat(value), sig.hash_ty)
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from(sighash);
@@ -111,8 +111,8 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     println!("witness {:?}", witness);
 
     //last element is called witnessScript according to BIP141. It supersedes scriptPubKey.
-    let witness_script_bytes: &[u8] = witness.last().expect("Out of Bounds");
-    let witness_script = Script::from_bytes(witness_script_bytes);
+    let witness_script_bytes: Vec<u8> = witness.last().expect("Out of Bounds").to_vec();
+    let script_code = ScriptBuf::from_bytes(witness_script_bytes).p2wpkh_checked();
     let mut cache = sighash::SighashCache::new(&tx);
 
     //in an M of N multisig, the witness elements from 1 (0-based) to M-2 are signatures (with sighash flags as the last byte)
@@ -124,7 +124,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
         assert!((70..=72).contains(&sig_len), "signature length {} out of bounds", sig_len);
         //here we assume that all sighash_flags are the same. Can they be different?
         let sighash = cache
-            .segwit_signature_hash(inp_idx, witness_script, Amount::from_sat(value), sig.hash_ty)
+            .segwit_script_code_signature_hash(inp_idx, &script_code, Amount::from_sat(value), sig.hash_ty)
             .expect("failed to compute sighash");
         println!("Segwit p2wsh sighash: {:x} ({})", sighash, sig.hash_ty);
     }

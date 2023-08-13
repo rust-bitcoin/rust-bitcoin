@@ -335,27 +335,36 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
-                let script_code = spk.p2wpkh_script_code().ok_or(SignError::NotWpkh)?;
+                // We explicitly check whether the spk is a v0_wpkh.
+                if !spk.is_v0_p2wpkh() {
+                    return Err(SignError::NotWpkh)
+                }
+
+                let script_code = spk.p2wpkh_checked();
                 let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                    cache.segwit_script_code_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let script_code = input
-                    .redeem_script
-                    .as_ref()
-                    .expect("checked above")
-                    .p2wpkh_script_code()
-                    .ok_or(SignError::NotWpkh)?;
+                let redeem_script = input.redeem_script.as_ref().expect("checked above");
+                // We explicitly check whether the redeem script is a v0_wpkh.
+                if !redeem_script.is_v0_p2wpkh() {
+                    return Err(SignError::NotWpkh)
+                }
+
+                let script_code = redeem_script.p2wpkh_checked();
+
                 let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                    cache.segwit_script_code_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+
                 Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {
                 let script_code =
-                    input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
+                    input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?.p2wpkh_checked();
+
                 let sighash =
-                    cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?;
+                    cache.segwit_script_code_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Tr => {
