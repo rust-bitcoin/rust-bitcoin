@@ -175,6 +175,43 @@ impl ScriptBuf {
     /// This method doesn't (re)allocate.
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
+    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    #[deprecated(note = "use `p2wpkh_checked` instead")]
+    pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
+        // Unlike `p2wpkh_checked`, this method returns `None` for anything
+        // non-v0_p2wpkh.
+        if self.is_v0_p2wpkh() {
+            Some(self.p2wpkh_checked().into_script_buf())
+        } else {
+            None
+        }
+    }
+
+    /// Converts a script into a Segwit spending script code. Respectively,
+    /// P2WPKH is handled in a special manner as defined in [BIP143] while every
+    /// other script is left untouched.
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    pub fn p2wpkh_checked(&self) -> P2wpkChecked {
+        if let Some(wpkh) = self.v0_p2wpkh() {
+            let script_buf = Builder::new()
+                .push_opcode(OP_DUP)
+                .push_opcode(OP_HASH160)
+                // The `self` script is 0x00, 0x14, <pubkey_hash>
+                .push_slice(wpkh)
+                .push_opcode(OP_EQUALVERIFY)
+                .push_opcode(OP_CHECKSIG)
+                .into_script();
+
+            P2wpkChecked(script_buf)
+        } else {
+            P2wpkChecked(self.clone())
+        }
+    }
+
     /// Adds a single opcode to the script.
     pub fn push_opcode(&mut self, data: Opcode) { self.0.push(data.to_u8()); }
 
@@ -335,5 +372,100 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
                 self.push_instruction(instr);
             }
         }
+    }
+}
+
+
+/// A Segwit spending script code. Respectively, P2WPKH is handled in a special
+/// manner as defined by [BIP143] while every other script is left untouched.
+/// This spending script is passed on to [`segwit_script_code_signature_hash`].
+///
+/// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+/// [`segwit_script_code_signature_hash`]: <crate::sighash::SighashCache::segwit_script_code_signature_hash>
+#[derive(Default, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub struct P2wpkChecked(ScriptBuf);
+
+impl P2wpkChecked {
+    /// Converts a script into a Segwit spending script code. Alternatively, use
+    /// [`p2wpkh_checked`](ScriptBuf::p2wpkh_checked).
+    pub fn from_script_buf(script: ScriptBuf) -> Self {
+        script.p2wpkh_checked()
+    }
+    /// Returns a reference to the unsized script.
+    pub fn as_script(&self) -> &Script {
+        self.0.as_script()
+    }
+    /// Converts this type into [`ScriptBuf`].
+    pub fn into_script_buf(self) -> ScriptBuf {
+        self.0
+    }
+}
+
+impl From<ScriptBuf> for P2wpkChecked {
+    fn from(script: ScriptBuf) -> Self {
+        Self::from_script_buf(script)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::P2wpkChecked;
+    use crate::{ScriptBuf, PublicKey};
+    use std::str::FromStr;
+
+    #[test]
+    fn bip143_p2wpkh_spending_script_code() {
+        let pubkey = PublicKey::from_str(
+            "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
+        )
+        .unwrap();
+        let whash = pubkey.wpubkey_hash().unwrap();
+
+        // Check regular P2WPKH.
+        let script = ScriptBuf::new_v0_p2wpkh(&whash);
+        assert!(script.is_v0_p2wpkh());
+        assert!(!script.is_p2pkh());
+
+        // Check spending script for P2WPKH
+        let script_code = script.p2wpkh_checked();
+        assert!(!script_code.as_script().is_v0_p2wpkh());
+        assert!(script_code.as_script().is_p2pkh());
+
+        // Check spending script for P2WPKH with deprecated method.
+        #[allow(deprecated)]
+        let script_code_depr = script.p2wpkh_script_code().unwrap();
+        assert!(!script_code_depr.is_v0_p2wpkh());
+        assert!(script_code_depr.is_p2pkh());
+
+        // Check script from deprecated and new method directly.
+        assert_eq!(script_code.as_script(), script_code_depr.as_script());
+    }
+
+    #[test]
+    fn bip143_p2wpkh_spending_script_code_from_script_buf() {
+        let pubkey = PublicKey::from_str(
+            "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
+        )
+        .unwrap();
+        let whash = pubkey.wpubkey_hash().unwrap();
+
+        // Check regular P2WPKH
+        let script = ScriptBuf::new_v0_p2wpkh(&whash);
+        assert!(script.is_v0_p2wpkh());
+        assert!(!script.is_p2pkh());
+
+        // Check spending script for P2WPKH.
+        let script_code = script.p2wpkh_checked();
+        // We can successfully convert from the script buf.
+        let wrapped = P2wpkChecked::from_script_buf(script_code.into_script_buf());
+
+        // Check with deprecated method.
+        #[allow(deprecated)]
+        let script_code_depr = script.p2wpkh_script_code().unwrap();
+        let wrapped_depr = P2wpkChecked::from_script_buf(script_code_depr);
+
+        // Check script from deprecated and new method directly.
+        assert_eq!(wrapped, wrapped_depr);
+        assert_eq!(wrapped.as_script(), wrapped_depr.as_script());
     }
 }
