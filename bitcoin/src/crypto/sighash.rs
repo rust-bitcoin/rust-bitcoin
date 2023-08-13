@@ -16,6 +16,13 @@ use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 
+#[cfg(feature = "rand-std")]
+use secp256k1::{Signing, Verification, schnorr};
+#[cfg(feature = "rand-std")]
+use crate::key::{UntweakedKeyPair, TweakedKeyPair, KeyPair, Secp256k1, TapTweak};
+#[cfg(feature = "rand-std")]
+use crate::taproot::TapNodeHash;
+
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
@@ -516,6 +523,59 @@ impl TapSighashType {
             0x83 => SinglePlusAnyoneCanPay,
             x => return Err(InvalidSighashTypeError(x.into())),
         })
+    }
+}
+
+impl TapSighash {
+    /// Signs the sighash for a P2TR key-path spending transaction with a
+    /// [`KeyPair`] and creates a Schnorr signature as defined in [BIP340]. For
+    /// P2TR script-path use [`sign_schnorr`] directly.
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [`sign_schnorr`]: <TapSighash::sign_schnorr>
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign_schnorr_key_spend<C: Signing + Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &KeyPair
+    ) -> schnorr::Signature {
+        // Tweak keypair with zeroed merkle root.
+        self.sign_schnorr_tweak(secp, keypair, None)
+    }
+    /// Signs the sighash by tweaking the [`UntweakedKeyPair`] with a some
+    /// optional script tree merkle root [`TapNodeHash`] and creates a Schnorr
+    /// signature as defined in [BIP340].
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign_schnorr_tweak<C: Signing + Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &UntweakedKeyPair,
+        merkle_root: Option<TapNodeHash>
+    ) -> schnorr::Signature {
+        let tweaked: TweakedKeyPair = keypair.tap_tweak(secp, merkle_root);
+        let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
+        secp.sign_schnorr(&msg, &tweaked.to_inner())
+    }
+    /// Signs the sighash with a [`KeyPair`] without applying a tweak and
+    /// creates a Schnorr signature as defined in [BIP340]. This is used for
+    /// spending P2TR script-path inputs.
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign_schnorr<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &KeyPair
+    ) -> schnorr::Signature {
+        // Prepare secp256k1 message. This unwrap never panics since the sighash
+        // is always 32 bytes.
+        let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
+        secp.sign_schnorr(&msg, &keypair)
     }
 }
 
@@ -1899,5 +1959,45 @@ mod tests {
             &Vec::from_hex("bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc")
                 .unwrap()[..],
         );
+    }
+
+    #[test]
+    #[cfg(feature = "rand-std")]
+    fn bip_341_sighash_sign_method_tests() {
+        let secp = &secp256k1::Secp256k1::new();
+        let keypair = KeyPair::new(secp, &mut secp256k1::rand::thread_rng());
+        let (untweaked_xpubkey, _) = keypair.x_only_public_key();
+
+        // Tap keypair manually, then verify signature with
+        // secp256k1::verify_schnorr directly.
+        let tweaked = keypair.tap_tweak(secp, None);
+        let (tweaked_xpubkey, _) = tweaked.to_inner().x_only_public_key();
+
+        // The sighash to be signed and verified.
+        let hash = Hash::from_slice(&[1; 32]).unwrap();
+        let sighash = TapSighash::from_raw_hash(hash);
+
+        // Sign sighash without a tweak to the keypair.
+        let unweaked_sig = sighash.sign_schnorr(secp, &keypair);
+        let sighash_msg = secp256k1::Message::from(sighash);
+
+        // Trying to verify an untweaked signature with a tweaked pubkey (invalid).
+        let res = secp.verify_schnorr(&unweaked_sig, &sighash_msg, &tweaked_xpubkey);
+        assert!(res.is_err());
+
+        // Trying to verify an untweaked signature with a untweaked pubkey (valid).
+        let res = secp.verify_schnorr(&unweaked_sig, &sighash_msg, &untweaked_xpubkey);
+        assert!(res.is_ok());
+
+        // Sign sighash *with* a tweak to the keypair (valid).
+        let tweaked_sig = sighash.sign_schnorr_key_spend(secp, &keypair);
+
+        // Trying to verify a tweaked signature with a tweaked pubkey (valid).
+        let res = secp.verify_schnorr(&tweaked_sig, &sighash_msg, &tweaked_xpubkey);
+        assert!(res.is_ok());
+
+        // Trying to verify a tweaked signature with a untweaked pubkey (invalid).
+        let res = secp.verify_schnorr(&tweaked_sig, &sighash_msg, &untweaked_xpubkey);
+        assert!(res.is_err());
     }
 }
