@@ -99,20 +99,39 @@ impl ScriptBuf {
     }
 
     /// Generates P2WPKH-type of scriptPubkey.
-    pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
+    #[deprecated(since = "0.31.0", note = "use new_p2wpkh instead")]
+    pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self { Self::new_p2wpkh(pubkey_hash) }
+
+    /// Generates P2WPKH-type of scriptPubkey.
+    pub fn new_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
         // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Self {
+    #[deprecated(since = "0.31.0", note = "use new_p2wsh instead")]
+    pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Self { Self::new_p2wsh(script_hash) }
+
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
+    pub fn new_p2wsh(script_hash: &WScriptHash) -> Self {
         // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
+    #[deprecated(since = "0.31.0", note = "use new_p2tr instead")]
     pub fn new_v1_p2tr<C: Verification>(
+        secp: &Secp256k1<C>,
+        internal_key: UntweakedPublicKey,
+        merkle_root: Option<TapNodeHash>,
+    ) -> Self {
+        Self::new_p2tr(secp, internal_key, merkle_root)
+    }
+
+    /// Generates P2TR for script spending path using an internal public key and some optional
+    /// script tree merkle root.
+    pub fn new_p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
@@ -123,7 +142,13 @@ impl ScriptBuf {
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
+    #[deprecated(since = "0.31.0", note = "use new_p2tr_tweaked instead")]
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
+        Self::new_p2tr_tweaked(output_key)
+    }
+
+    /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
+    pub fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
@@ -139,8 +164,7 @@ impl ScriptBuf {
     /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
     /// Does not do any checks on version or program length.
     ///
-    /// Convenience method used by `new_v0_p2wpkh`, `new_v0_p2wsh`, `new_v1_p2tr`, and
-    /// `new_v1_p2tr_tweaked`.
+    /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
     fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
         version: WitnessVersion,
         program: T,

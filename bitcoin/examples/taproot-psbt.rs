@@ -397,7 +397,7 @@ impl BenefactorWallet {
             .finalize(&self.secp, internal_keypair.x_only_public_key().0)
             .expect("Should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
-        let script_pubkey = ScriptBuf::new_v1_p2tr(
+        let script_pubkey = ScriptBuf::new_p2tr(
             &self.secp,
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
@@ -496,7 +496,7 @@ impl BenefactorWallet {
                 .expect("Should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
-            let output_script_pubkey = ScriptBuf::new_v1_p2tr(
+            let output_script_pubkey = ScriptBuf::new_p2tr(
                 &self.secp,
                 taproot_spend_info.internal_key(),
                 taproot_spend_info.merkle_root(),
