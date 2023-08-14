@@ -82,6 +82,8 @@ cargo update -p proc-macro2 --precise 1.0.63
 cargo update -p serde_test --precise 1.0.175
 ```
 
+The above commands are sourced from `./contrib/test.sh`.
+
 ## External dependencies
 
 We integrate with a few external libraries, most notably `serde`. These
