@@ -14,9 +14,11 @@
 use core::borrow::{Borrow, BorrowMut};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use secp256k1::{Message, Secp256k1, SecretKey, Signing};
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::crypto::ecdsa::{self, LegacySignature, SegwitV0Signature};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
@@ -50,14 +52,49 @@ hash_newtype! {
     /// Hash of a transaction according to the legacy signature algorithm.
     #[hash_newtype(forward)]
     pub struct LegacySighash(sha256d::Hash);
+}
 
+impl_thirty_two_byte_hash!(LegacySighash);
+
+impl LegacySighash {
+    /// Signs this sighash using `sk`.
+    ///
+    /// `hash_ty` must be the same as that used to create the sighash.
+    pub fn sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        sk: &SecretKey,
+        hash_ty: EcdsaSighashType,
+    ) -> LegacySignature {
+        let msg = Message::from(*self);
+        let sig = secp.sign_ecdsa(&msg, sk);
+        LegacySignature(ecdsa::Signature { sig, hash_ty })
+    }
+}
+
+hash_newtype! {
     /// Hash of a transaction according to the segwit version 0 signature algorithm.
     #[hash_newtype(forward)]
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
 
-impl_thirty_two_byte_hash!(LegacySighash);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
+
+impl SegwitV0Sighash {
+    /// Signs this sighash using `sk`.
+    ///
+    /// `hash_ty` must be the same as that used to create the sighash.
+    pub fn sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        sk: &SecretKey,
+        hash_ty: EcdsaSighashType,
+    ) -> SegwitV0Signature {
+        let msg = Message::from(*self);
+        let sig = secp.sign_ecdsa(&msg, sk);
+        SegwitV0Signature(ecdsa::Signature { sig, hash_ty })
+    }
+}
 
 sha256t_hash_newtype! {
     pub struct TapSighashTag = hash_str("TapSighash");
