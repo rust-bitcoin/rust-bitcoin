@@ -335,27 +335,20 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
-                let script_code = spk.p2wpkh_script_code().ok_or(SignError::NotWpkh)?;
-                let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                let sighash = cache.p2wpkh_signature_hash(input_index, spk, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let script_code = input
-                    .redeem_script
-                    .as_ref()
-                    .expect("checked above")
-                    .p2wpkh_script_code()
-                    .ok_or(SignError::NotWpkh)?;
+                let redeem_script = input.redeem_script.as_ref().expect("checked above");
                 let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                    cache.p2wpkh_signature_hash(input_index, redeem_script, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {
-                let script_code =
+                let witness_script =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
                 let sighash =
-                    cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?;
+                    cache.p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Tr => {
