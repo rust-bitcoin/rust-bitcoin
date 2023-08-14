@@ -575,7 +575,7 @@ impl TapSighash {
         // Prepare secp256k1 message. This unwrap never panics since the sighash
         // is always 32 bytes.
         let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
-        secp.sign_schnorr(&msg, &keypair)
+        secp.sign_schnorr(&msg, keypair)
     }
 }
 
