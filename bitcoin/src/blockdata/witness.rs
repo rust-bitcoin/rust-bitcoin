@@ -536,6 +536,16 @@ mod test {
     }
 
     #[test]
+    fn witness_debug_can_display_empty_instruction() {
+        let witness = Witness {
+            witness_elements: 1,
+            content: append_u32_vec(vec![], &[0]),
+            indices_start: 2,
+        };
+        println!("{:?}", witness);
+    }
+
+    #[test]
     fn test_push() {
         let mut witness = Witness::default();
         assert_eq!(witness.last(), None);
