@@ -2658,6 +2658,141 @@ mod tests {
             assert!(psbt.inputs[0].required_time_locktime.is_some());
             assert!(psbt.inputs[0].required_height_locktime.is_some())
         }
+
+        #[test]
+        fn compute_locktime_1() {
+            let psbt = hex_psbt!("70736274ff01020402000000010401010105010201fb040200000000010e200b0ad921419c1c8719735d72dc739f9ea9e0638d1fe4c1eef0f9944084815fc8010f0400000000000103080008af2f000000000104160014c430f64c4756da310dbd1a085572ef299926272c000103088bbdeb0b0000000001041600144dd193ac964a56ac1b9e1cca8454fe2f474f851300").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::ZERO);
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_1_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQQBAQEFAQIB+wQCAAAAAAEOIAsK2SFBnByHGXNdctxzn56p4GONH+TB7vD5lECEgV/IAQ8EAAAAAAABAwgACK8vAAAAAAEEFgAUxDD2TEdW2jENvRoIVXLvKZkmJywAAQMIi73rCwAAAAABBBYAFE3Rk6yWSlasG54cyoRU/i9HT4UTAA==").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::ZERO);
+        }
+
+        #[test]
+        fn compute_locktime_2() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f040100000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f0400000000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::ZERO);
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_2_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAAAAQ4gOhs7PIN9ZInqejHY5sfdUDwAG+8+BpWOdXSAjWjKeKUBDwQAAAAAAAEDCE+TNXcAAAAAAQQWABQLE1LKzQPPaqG388jWOIZxs0peEQA=").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::ZERO);
+        }
+
+        #[test]
+        fn compute_locktime_3() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f0400000000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_3_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEgQQJwAAAAEOIDobOzyDfWSJ6nox2ObH3VA8ABvvPgaVjnV0gI1oynilAQ8EAAAAAAABAwhPkzV3AAAAAAEEFgAUCxNSys0Dz2qht/PI1jiGcbNKXhEA").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[test]
+        fn compute_locktime_4() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f040000000001120428230000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_4_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEgQQJwAAAAEOIDobOzyDfWSJ6nox2ObH3VA8ABvvPgaVjnV0gI1oynilAQ8EAAAAAAESBCgjAAAAAQMIT5M1dwAAAAABBBYAFAsTUsrNA89qobfzyNY4hnGzSl4RAA==").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[test]
+        fn compute_locktime_5() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f04000000000111048c8dc46201120428230000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_5_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEgQQJwAAAAEOIDobOzyDfWSJ6nox2ObH3VA8ABvvPgaVjnV0gI1oynilAQ8EAAAAAAERBIyNxGIBEgQoIwAAAAEDCE+TNXcAAAAAAQQWABQLE1LKzQPPaqG388jWOIZxs0peEQA=").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[test]
+        fn compute_locktime_6() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000111048b8dc4620112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f04000000000111048c8dc46201120428230000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_6_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEQSLjcRiARIEECcAAAABDiA6Gzs8g31kiep6Mdjmx91QPAAb7z4GlY51dICNaMp4pQEPBAAAAAABEQSMjcRiARIEKCMAAAABAwhPkzV3AAAAAAEEFgAUCxNSys0Dz2qht/PI1jiGcbNKXhEA").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(10000));
+        }
+
+        #[test]
+        fn compute_locktime_7() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000111048b8dc46200010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f04000000000111048c8dc46201120428230000000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(1_657_048_460));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_7_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEQSLjcRiAAEOIDobOzyDfWSJ6nox2ObH3VA8ABvvPgaVjnV0gI1oynilAQ8EAAAAAAERBIyNxGIBEgQoIwAAAAEDCE+TNXcAAAAAAQQWABQLE1LKzQPPaqG388jWOIZxs0peEQA=").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(1_657_048_460));
+        }
+
+        #[test]
+        fn compute_locktime_8() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000111048b8dc4620112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f04000000000111048c8dc462000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(1_657_048_460));
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_8_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEQSLjcRiARIEECcAAAABDiA6Gzs8g31kiep6Mdjmx91QPAAb7z4GlY51dICNaMp4pQEPBAAAAAABEQSMjcRiAAEDCE+TNXcAAAAAAQQWABQLE1LKzQPPaqG388jWOIZxs0peEQA=").unwrap();
+            let locktime = psbt.compute_locktime().unwrap();
+            assert_eq!(locktime, absolute::LockTime::from_consensus(1_657_048_460));
+        }
+
+        #[test]
+        fn compute_locktime_9() {
+            let psbt = hex_psbt!("70736274ff0102040200000001030400000000010401020105010101fb040200000000010e200f758dbfbd4da7c16c8a3309c3c81e1100f561ea646db5b01752c485e1bdde9f010f04010000000112041027000000010e203a1b3b3c837d6489ea7a31d8e6c7dd503c001bef3e06958e7574808d68ca78a5010f04000000000111048c8dc462000103084f9335770000000001041600140b1352cacd03cf6aa1b7f3c8d6388671b34a5e1100").unwrap();
+            let err = psbt.compute_locktime().unwrap_err();
+            assert_eq!(err.to_string(), "required locktime not present in this Psbt input");
+        }
+
+        #[cfg(feature = "base64")]
+        #[test]
+        fn compute_locktime_9_base64() {
+            let psbt = Psbt::from_str("cHNidP8BAgQCAAAAAQMEAAAAAAEEAQIBBQEBAfsEAgAAAAABDiAPdY2/vU2nwWyKMwnDyB4RAPVh6mRttbAXUsSF4b3enwEPBAEAAAABEgQQJwAAAAEOIDobOzyDfWSJ6nox2ObH3VA8ABvvPgaVjnV0gI1oynilAQ8EAAAAAAERBIyNxGIAAQMIT5M1dwAAAAABBBYAFAsTUsrNA89qobfzyNY4hnGzSl4RAA==").unwrap();
+            let err = psbt.compute_locktime().unwrap_err();
+            assert_eq!(err.to_string(), "required locktime not present in this Psbt input");
+        }
     }
 
     mod bip_371_vectors {
