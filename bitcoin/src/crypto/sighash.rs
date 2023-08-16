@@ -1751,7 +1751,9 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let msg = secp256k1::Message::from(sighash);
+            // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
+            let msg = secp256k1::Message::from_slice(sighash.as_byte_array())
+                .expect("sighash is 32 bytes long");
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);

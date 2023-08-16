@@ -80,6 +80,7 @@ use std::str::FromStr;
 
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
+use bitcoin::hashes::Hash;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
@@ -737,7 +738,10 @@ fn sign_psbt_taproot(
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let sig = secp.sign_schnorr(&hash.into(), &keypair);
+    // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
+    let msg =
+        secp256k1::Message::from_slice(hash.as_byte_array()).expect("tap sighash is 32 bytes long");
+    let sig = secp.sign_schnorr(&msg, &keypair);
 
     let final_signature = taproot::Signature { sig, hash_ty };
 
