@@ -224,7 +224,7 @@ fn script_generators() {
     // Test data are taken from the second output of
     // 2ccb3a1f745eb4eefcf29391460250adda5fab78aaddb902d25d3cd97d9d8e61 transaction
     let data = hex!("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
-    let op_return = ScriptBuf::new_op_return(&data);
+    let op_return = ScriptBuf::new_op_return(data);
     assert!(op_return.is_op_return());
     assert_eq!(
         op_return.to_hex_string(),

@@ -153,7 +153,7 @@ impl ScriptBuf {
     }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
-    pub fn new_op_return<T: AsRef<PushBytes>>(data: &T) -> Self {
+    pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
         Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
 
