@@ -190,27 +190,75 @@ impl hex::FromHex for Midstate {
     }
 }
 
-macro_rules! Ch( ($x:expr, $y:expr, $z:expr) => ($z ^ ($x & ($y ^ $z))) );
-macro_rules! Maj( ($x:expr, $y:expr, $z:expr) => (($x & $y) | ($z & ($x | $y))) );
-macro_rules! Sigma0( ($x:expr) => ($x.rotate_left(30) ^ $x.rotate_left(19) ^ $x.rotate_left(10)) );
-macro_rules! Sigma1( ($x:expr) => ( $x.rotate_left(26) ^ $x.rotate_left(21) ^ $x.rotate_left(7)) );
-macro_rules! sigma0( ($x:expr) => ($x.rotate_left(25) ^ $x.rotate_left(14) ^ ($x >> 3)) );
-macro_rules! sigma1( ($x:expr) => ($x.rotate_left(15) ^ $x.rotate_left(13) ^ ($x >> 10)) );
+#[allow(non_snake_case)]
+const fn Ch(x: u32, y: u32, z: u32) -> u32 { z ^ (x & (y ^ z)) }
+#[allow(non_snake_case)]
+const fn Maj(x: u32, y: u32, z: u32) -> u32 { (x & y) | (z & (x | y)) }
+#[allow(non_snake_case)]
+const fn Sigma0(x: u32) -> u32 { x.rotate_left(30) ^ x.rotate_left(19) ^ x.rotate_left(10) }
+#[allow(non_snake_case)]
+const fn Sigma1(x: u32) -> u32 { x.rotate_left(26) ^ x.rotate_left(21) ^ x.rotate_left(7) }
+const fn sigma0(x: u32) -> u32 { x.rotate_left(25) ^ x.rotate_left(14) ^ (x >> 3) }
+const fn sigma1(x: u32) -> u32 { x.rotate_left(15) ^ x.rotate_left(13) ^ (x >> 10) }
 
-macro_rules! round(
-    // first round
-    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr) => (
-        let t1 = $h.wrapping_add(Sigma1!($e)).wrapping_add(Ch!($e, $f, $g)).wrapping_add($k).wrapping_add($w);
-        let t2 = Sigma0!($a).wrapping_add(Maj!($a, $b, $c));
-        $d = $d.wrapping_add(t1);
-        $h = t1.wrapping_add(t2);
+#[cfg(feature = "small-hash")]
+#[macro_use]
+mod small_hash {
+    use super::*;
+
+    #[rustfmt::skip]
+    pub(super) const fn round(a: u32, b: u32, c: u32, d: u32, e: u32,
+                              f: u32, g: u32, h: u32, k: u32, w: u32) -> (u32, u32) {
+        let t1 =
+            h.wrapping_add(Sigma1(e)).wrapping_add(Ch(e, f, g)).wrapping_add(k).wrapping_add(w);
+        let t2 = Sigma0(a).wrapping_add(Maj(a, b, c));
+        (d.wrapping_add(t1), t1.wrapping_add(t2))
+    }
+    #[rustfmt::skip]
+    pub(super) const fn later_round(a: u32, b: u32, c: u32, d: u32, e: u32,
+                                    f: u32, g: u32, h: u32, k: u32, w: u32,
+                                    w1: u32, w2: u32, w3: u32,
+    ) -> (u32, u32, u32) {
+        let w = w.wrapping_add(sigma1(w1)).wrapping_add(w2).wrapping_add(sigma0(w3));
+        let (d, h) = round(a, b, c, d, e, f, g, h, k, w);
+        (d, h, w)
+    }
+
+    macro_rules! round(
+        // first round
+        ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr) => (
+            let updates = small_hash::round($a, $b, $c, $d, $e, $f, $g, $h, $k, $w);
+            $d = updates.0;
+            $h = updates.1;
+        );
+        // later rounds we reassign $w before doing the first-round computation
+        ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr, $w1:expr, $w2:expr, $w3:expr) => (
+            let updates = small_hash::later_round($a, $b, $c, $d, $e, $f, $g, $h, $k, $w, $w1, $w2, $w3);
+            $d = updates.0;
+            $h = updates.1;
+            $w = updates.2;
+        )
     );
-    // later rounds we reassign $w before doing the first-round computation
-    ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr, $w1:expr, $w2:expr, $w3:expr) => (
-        $w = $w.wrapping_add(sigma1!($w1)).wrapping_add($w2).wrapping_add(sigma0!($w3));
-        round!($a, $b, $c, $d, $e, $f, $g, $h, $k, $w);
-    )
-);
+}
+
+#[cfg(not(feature = "small-hash"))]
+#[macro_use]
+mod fast_hash {
+    macro_rules! round(
+        // first round
+        ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr) => (
+            let t1 = $h.wrapping_add(Sigma1($e)).wrapping_add(Ch($e, $f, $g)).wrapping_add($k).wrapping_add($w);
+            let t2 = Sigma0($a).wrapping_add(Maj($a, $b, $c));
+            $d = $d.wrapping_add(t1);
+            $h = t1.wrapping_add(t2);
+        );
+        // later rounds we reassign $w before doing the first-round computation
+        ($a:expr, $b:expr, $c:expr, $d:expr, $e:expr, $f:expr, $g:expr, $h:expr, $k:expr, $w:expr, $w1:expr, $w2:expr, $w3:expr) => (
+            $w = $w.wrapping_add(sigma1($w1)).wrapping_add($w2).wrapping_add(sigma0($w3));
+            round!($a, $b, $c, $d, $e, $f, $g, $h, $k, $w);
+        )
+    );
+}
 
 impl Midstate {
     #[allow(clippy::identity_op)] // more readble
