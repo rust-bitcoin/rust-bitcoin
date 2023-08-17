@@ -1,6 +1,6 @@
 use bitcoin::hashes::Hash;
 use bitcoin::{consensus, ecdsa, sighash, Amount, PublicKey, Script, ScriptBuf, Transaction};
-use hex_lit::hex;
+use hex::test_hex_unwrap as hex;
 
 //These are real blockchain transactions examples of computing sighash for:
 // - P2WPKH

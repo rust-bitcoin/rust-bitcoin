@@ -2121,7 +2121,7 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use hex_lit::hex;
+    use hex::test_hex_unwrap as hex;
     use test::{black_box, Bencher};
 
     use super::Transaction;

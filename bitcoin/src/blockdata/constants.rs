@@ -7,10 +7,11 @@
 //! single transaction.
 //!
 
+use core::convert::TryFrom;
 use core::default::Default;
 
 use hashes::{sha256d, Hash};
-use hex_lit::hex;
+use hex::test_hex_unwrap as hex;
 use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};
@@ -22,6 +23,8 @@ use crate::blockdata::witness::Witness;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::pow::CompactTarget;
+use crate::prelude::Vec;
+use crate::script::PushBytesBuf;
 use crate::Amount;
 
 /// How many seconds between blocks we expect on average.
@@ -84,7 +87,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     });
 
     // Outputs
-    let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
+    let script_bytes = PushBytesBuf::try_from(hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f")).expect("hex is valid length");
     let out_script =
         script::Builder::new().push_slice(script_bytes).push_opcode(OP_CHECKSIG).into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });

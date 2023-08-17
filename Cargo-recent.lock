@@ -41,7 +41,6 @@ dependencies = [
  "bitcoinconsensus",
  "core2",
  "hex-conservative",
- "hex_lit",
  "mutagen",
  "secp256k1",
  "serde",
@@ -148,12 +147,6 @@ checksum = "30ed443af458ccb6d81c1e7e661545f94d3176752fb1df2f543b902a1e0f51e2"
 dependencies = [
  "core2",
 ]
-
-[[package]]
-name = "hex_lit"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
 name = "honggfuzz"

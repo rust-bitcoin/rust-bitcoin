@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::convert::TryFrom;
 use core::str::FromStr;
 
 use hashes::Hash;
-use hex_lit::hex;
+use hex::test_hex_unwrap as hex;
 
 use super::*;
 use crate::blockdata::opcodes;
@@ -187,10 +188,11 @@ fn script_x_only_key() {
 #[test]
 fn script_builder() {
     // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
+    let bytes = PushBytesBuf::try_from(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19")).unwrap();
     let script = Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
-        .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
+        .push_slice(bytes)
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
@@ -223,7 +225,10 @@ fn script_generators() {
 
     // Test data are taken from the second output of
     // 2ccb3a1f745eb4eefcf29391460250adda5fab78aaddb902d25d3cd97d9d8e61 transaction
-    let data = hex!("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
+    let data = PushBytesBuf::try_from(hex!(
+        "aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a"
+    ))
+    .unwrap();
     let op_return = ScriptBuf::new_op_return(data);
     assert!(op_return.is_op_return());
     assert_eq!(

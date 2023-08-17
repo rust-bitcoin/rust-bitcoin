@@ -843,7 +843,7 @@ fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash 
 mod tests {
     use core::str::FromStr;
 
-    use hex_lit::hex;
+    use hex::test_hex_unwrap as hex;
     use secp256k1::XOnlyPublicKey;
 
     use super::*;

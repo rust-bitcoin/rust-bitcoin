@@ -39,7 +39,6 @@ hex = { package = "hex-conservative", version = "0.1.1", default-features = fals
 bech32 = { version = "0.10.0-beta", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false }
 secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes"] }
-hex_lit = "0.1.1"
 
 base64 = { version = "0.21.3", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
