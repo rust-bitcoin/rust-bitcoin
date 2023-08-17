@@ -394,20 +394,29 @@ impl Psbt {
     }
 
     /// Gets the input at `input_index` after checking that it is a valid index.
-    fn checked_input(&self, input_index: usize) -> Result<&Input, SignError> {
+    fn checked_input(&self, input_index: usize) -> Result<&Input, IndexOutOfBoundsError> {
         self.check_index_is_within_bounds(input_index)?;
         Ok(&self.inputs[input_index])
     }
 
     /// Checks `input_index` is within bounds for the PSBT `inputs` array and
     /// for the PSBT `unsigned_tx` `input` array.
-    fn check_index_is_within_bounds(&self, input_index: usize) -> Result<(), SignError> {
+    fn check_index_is_within_bounds(
+        &self,
+        input_index: usize,
+    ) -> Result<(), IndexOutOfBoundsError> {
         if input_index >= self.inputs.len() {
-            return Err(SignError::IndexOutOfBounds(input_index, self.inputs.len()));
+            return Err(IndexOutOfBoundsError::Inputs {
+                index: input_index,
+                length: self.inputs.len(),
+            });
         }
 
         if input_index >= self.unsigned_tx.input.len() {
-            return Err(SignError::IndexOutOfBounds(input_index, self.unsigned_tx.input.len()));
+            return Err(IndexOutOfBoundsError::TxInput {
+                index: input_index,
+                length: self.unsigned_tx.input.len(),
+            });
         }
 
         Ok(())
@@ -676,8 +685,8 @@ pub enum SigningAlgorithm {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SignError {
-    /// Input index out of bounds (actual index, maximum index allowed).
-    IndexOutOfBounds(usize, usize),
+    /// Input index out of bounds.
+    IndexOutOfBounds(IndexOutOfBoundsError),
     /// Invalid Sighash type.
     InvalidSighashType,
     /// Missing input utxo.
@@ -711,9 +720,7 @@ impl fmt::Display for SignError {
         use self::SignError::*;
 
         match *self {
-            IndexOutOfBounds(ref ind, ref len) => {
-                write!(f, "index {}, psbt input len: {}", ind, len)
-            }
+            IndexOutOfBounds(ref e) => write_err!(f, "index out of bounds"; e),
             InvalidSighashType => write!(f, "invalid sighash type"),
             MissingInputUtxo => write!(f, "missing input utxo in PBST"),
             MissingRedeemScript => write!(f, "missing redeem script"),
@@ -738,8 +745,7 @@ impl std::error::Error for SignError {
         use self::SignError::*;
 
         match *self {
-            IndexOutOfBounds(_, _)
-            | InvalidSighashType
+            InvalidSighashType
             | MissingInputUtxo
             | MissingRedeemScript
             | MissingSpendUtxo
@@ -752,6 +758,7 @@ impl std::error::Error for SignError {
             | WrongSigningAlgorithm
             | Unsupported => None,
             SighashComputation(ref e) => Some(e),
+            IndexOutOfBounds(ref e) => Some(e),
         }
     }
 }
@@ -759,6 +766,51 @@ impl std::error::Error for SignError {
 impl From<sighash::Error> for SignError {
     fn from(e: sighash::Error) -> Self { SignError::SighashComputation(e) }
 }
+
+impl From<IndexOutOfBoundsError> for SignError {
+    fn from(e: IndexOutOfBoundsError) -> Self { SignError::IndexOutOfBounds(e) }
+}
+
+/// Input index out of bounds (actual index, maximum index allowed).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IndexOutOfBoundsError {
+    /// The index is out of bounds for the `psbt.inputs` vector.
+    Inputs {
+        /// Attempted index access.
+        index: usize,
+        /// Length of the PBST inputs vector.
+        length: usize,
+    },
+    /// The index is out of bounds for the `psbt.unsigned_tx.input` vector.
+    TxInput {
+        /// Attempted index access.
+        index: usize,
+        /// Length of the PBST's unsigned transaction input vector.
+        length: usize,
+    },
+}
+
+impl fmt::Display for IndexOutOfBoundsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use IndexOutOfBoundsError::*;
+
+        match *self {
+            Inputs { ref index, ref length } => write!(
+                f,
+                "index {} is out-of-bounds for PSBT inputs vector length {}",
+                length, index
+            ),
+            TxInput { ref index, ref length } => write!(
+                f,
+                "index {} is out-of-bounds for PSBT unsigned tx input vector length {}",
+                length, index
+            ),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IndexOutOfBoundsError {}
 
 #[cfg(feature = "base64")]
 mod display_from_str {
