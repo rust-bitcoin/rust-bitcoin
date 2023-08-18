@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::blockdata::opcodes::OP_0;
-use bitcoin::blockdata::script;
+use bitcoin::blockdata::{script, transaction};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
@@ -163,7 +163,7 @@ fn create_transaction() -> Transaction {
     }
 
     Transaction {
-        version: 2,
+        version: transaction::Version::TWO,
         lock_time: absolute::LockTime::ZERO,
         input: vec![
             TxIn {

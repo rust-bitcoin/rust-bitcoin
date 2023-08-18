@@ -96,9 +96,9 @@ impl FeeRate {
     /// # Examples
     ///
     /// ```no_run
-    /// # use bitcoin::{absolute, FeeRate, Transaction};
+    /// # use bitcoin::{absolute, transaction, FeeRate, Transaction};
     /// # // Dummy transaction.
-    /// # let tx = Transaction { version: 1, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
+    /// # let tx = Transaction { version: transaction::Version::ONE, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
     ///
     /// let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/vbyte is valid");
     /// let fee = rate.fee_wu(tx.weight());

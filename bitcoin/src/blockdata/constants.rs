@@ -17,7 +17,7 @@ use crate::blockdata::block::{self, Block};
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script;
-use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
+use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
@@ -64,7 +64,7 @@ pub const COINBASE_MATURITY: u32 = 100;
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
-        version: 1,
+        version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
         input: vec![],
         output: vec![],
@@ -196,6 +196,7 @@ mod test {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
+    use crate::blockdata::transaction;
     use crate::consensus::encode::serialize;
     use crate::internal_macros::hex;
     use crate::network::Network;
@@ -204,7 +205,7 @@ mod test {
     fn bitcoin_genesis_first_transaction() {
         let gen = bitcoin_genesis_tx();
 
-        assert_eq!(gen.version, 1);
+        assert_eq!(gen.version, transaction::Version::ONE);
         assert_eq!(gen.input.len(), 1);
         assert_eq!(gen.input[0].previous_output.txid, Hash::all_zeros());
         assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);

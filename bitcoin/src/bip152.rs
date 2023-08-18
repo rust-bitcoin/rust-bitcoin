@@ -371,6 +371,7 @@ mod test {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
+    use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hash_types::TxMerkleNode;
     use crate::{
@@ -380,7 +381,7 @@ mod test {
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {
-            version: 1,
+            version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
                 previous_output: OutPoint::new(Txid::hash(nonce), 0),
