@@ -38,8 +38,8 @@ use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
-    ecdsa, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
-    Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
+    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -221,7 +221,7 @@ fn serde_regression_public_key() {
 #[test]
 fn serde_regression_psbt() {
     let tx = Transaction {
-        version: 1,
+        version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {

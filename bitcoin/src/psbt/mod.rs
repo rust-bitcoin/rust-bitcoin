@@ -820,7 +820,7 @@ mod tests {
     use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::script::ScriptBuf;
-    use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
+    use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
     use crate::internal_macros::hex;
     use crate::network::Network::Bitcoin;
@@ -832,7 +832,7 @@ mod tests {
     fn trivial_psbt() {
         let psbt = Psbt {
             unsigned_tx: Transaction {
-                version: 2,
+                version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::ZERO,
                 input: vec![],
                 output: vec![],
@@ -905,7 +905,7 @@ mod tests {
     fn serialize_then_deserialize_global() {
         let expected = Psbt {
             unsigned_tx: Transaction {
-                version: 2,
+                version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
@@ -976,7 +976,7 @@ mod tests {
 
         // create some values to use in the PSBT
         let tx = Transaction {
-            version: 1,
+            version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint {
@@ -1173,7 +1173,7 @@ mod tests {
         fn valid_vector_1() {
             let unserialized = Psbt {
                 unsigned_tx: Transaction {
-                    version: 2,
+                    version: transaction::Version::TWO,
                     lock_time: absolute::LockTime::from_consensus(1257139),
                     input: vec![
                         TxIn {
@@ -1205,7 +1205,7 @@ mod tests {
                 inputs: vec![
                     Input {
                         non_witness_utxo: Some(Transaction {
-                            version: 1,
+                            version: transaction::Version::ONE,
                             lock_time: absolute::LockTime::ZERO,
                             input: vec![
                                 TxIn {
@@ -1505,7 +1505,7 @@ mod tests {
         // same vector as valid_vector_1 from BIPs with added
         let mut unserialized = Psbt {
             unsigned_tx: Transaction {
-                version: 2,
+                version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
                     TxIn {
@@ -1537,7 +1537,7 @@ mod tests {
             inputs: vec![
                 Input {
                     non_witness_utxo: Some(Transaction {
-                        version: 1,
+                        version: transaction::Version::ONE,
                         lock_time: absolute::LockTime::ZERO,
                         input: vec![
                             TxIn {
@@ -1674,7 +1674,7 @@ mod tests {
 
         let mut t = Psbt {
             unsigned_tx: Transaction {
-                version: 2,
+                version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
                     TxIn {
@@ -1705,7 +1705,7 @@ mod tests {
             inputs: vec![
                 Input {
                     non_witness_utxo: Some(Transaction {
-                        version: 1,
+                        version: transaction::Version::ONE,
                         lock_time: absolute::LockTime::ZERO,
                         input: vec![
                             TxIn {
@@ -1783,7 +1783,7 @@ mod tests {
         use crate::{WPubkeyHash, WitnessProgram};
 
         let unsigned_tx = Transaction {
-            version: 2,
+            version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::NULL],

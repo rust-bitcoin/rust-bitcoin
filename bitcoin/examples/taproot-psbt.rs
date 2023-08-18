@@ -87,8 +87,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,
-    Witness,
+    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
+    TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -230,7 +230,7 @@ fn generate_bip86_key_spend_tx(
 
     // CREATOR + UPDATER
     let tx1 = Transaction {
-        version: 2,
+        version: transaction::Version::TWO,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
@@ -415,7 +415,7 @@ impl BenefactorWallet {
 
         // CREATOR + UPDATER
         let next_tx = Transaction {
-            version: 2,
+            version: transaction::Version::TWO,
             lock_time,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.txid(), vout: 0 },
@@ -561,7 +561,7 @@ impl BenefactorWallet {
             .expect("failed to verify transaction");
 
             let next_tx = Transaction {
-                version: 2,
+                version: transaction::Version::TWO,
                 lock_time,
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.txid(), vout: 0 },
