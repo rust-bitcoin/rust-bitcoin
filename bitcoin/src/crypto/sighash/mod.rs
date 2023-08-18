@@ -14,11 +14,14 @@
 use core::borrow::{Borrow, BorrowMut};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use secp256k1::{KeyPair, Message, Secp256k1, SecretKey, Signing, Verification};
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::crypto::ecdsa::{self, LegacySignature, SegwitV0Signature};
+use crate::crypto::key::{TapTweak, TweakedKeyPair, UntweakedKeyPair};
 use crate::prelude::*;
-use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{self, LeafVersion, TapLeafHash, TapNodeHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 mod error;
@@ -50,14 +53,49 @@ hash_newtype! {
     /// Hash of a transaction according to the legacy signature algorithm.
     #[hash_newtype(forward)]
     pub struct LegacySighash(sha256d::Hash);
+}
 
+impl_thirty_two_byte_hash!(LegacySighash);
+
+impl LegacySighash {
+    /// Signs this sighash using `sk`.
+    ///
+    /// `hash_ty` must be the same as that used to create the sighash.
+    pub fn sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        sk: &SecretKey,
+        hash_ty: EcdsaSighashType,
+    ) -> LegacySignature {
+        let msg = Message::from(*self);
+        let sig = secp.sign_ecdsa(&msg, sk);
+        LegacySignature(ecdsa::Signature { sig, hash_ty })
+    }
+}
+
+hash_newtype! {
     /// Hash of a transaction according to the segwit version 0 signature algorithm.
     #[hash_newtype(forward)]
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
 
-impl_thirty_two_byte_hash!(LegacySighash);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
+
+impl SegwitV0Sighash {
+    /// Signs this sighash using `sk`.
+    ///
+    /// `hash_ty` must be the same as that used to create the sighash.
+    pub fn sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        sk: &SecretKey,
+        hash_ty: EcdsaSighashType,
+    ) -> SegwitV0Signature {
+        let msg = Message::from(*self);
+        let sig = secp.sign_ecdsa(&msg, sk);
+        SegwitV0Signature(ecdsa::Signature { sig, hash_ty })
+    }
+}
 
 sha256t_hash_newtype! {
     pub struct TapSighashTag = hash_str("TapSighash");
@@ -70,6 +108,66 @@ sha256t_hash_newtype! {
 }
 
 impl_thirty_two_byte_hash!(TapSighash);
+
+impl TapSighash {
+    /// Signs the sighash for a P2TR key-path spending transaction with a
+    /// [`KeyPair`] and creates a Taproot signature as defined in [BIP340]. For
+    /// P2TR script-path use [`TapSighash::sign`] directly.
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    /// [`sign_schnorr`]: <TapSighash::sign_schnorr>
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign_key_spend<C: Signing + Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &KeyPair,
+        hash_ty: TapSighashType,
+    ) -> taproot::Signature {
+        // Tweak keypair with zeroed merkle root.
+        self.sign_tweak(secp, keypair, None, hash_ty)
+    }
+
+    /// Signs the sighash by tweaking the [`UntweakedKeyPair`] with a some
+    /// optional script tree merkle root [`TapNodeHash`] and creates a Schnorr
+    /// signature as defined in [BIP340].
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign_tweak<C: Signing + Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &UntweakedKeyPair,
+        merkle_root: Option<TapNodeHash>,
+        hash_ty: TapSighashType,
+    ) -> taproot::Signature {
+        let tweaked: TweakedKeyPair = keypair.tap_tweak(secp, merkle_root);
+        let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
+        let sig = secp.sign_schnorr(&msg, &tweaked.to_inner());
+        taproot::Signature { sig, hash_ty }
+    }
+
+    /// Signs the sighash with a [`KeyPair`] without applying a tweak and
+    /// creates a Schnorr signature as defined in [BIP340]. This is used for
+    /// spending P2TR script-path inputs.
+    ///
+    /// [BIP340]: https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki
+    #[cfg(feature = "rand-std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rand-std")))]
+    pub fn sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        keypair: &KeyPair,
+        hash_ty: TapSighashType,
+    ) -> taproot::Signature {
+        // Prepare secp256k1 message. This unwrap never panics since the sighash
+        // is always 32 bytes.
+        let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
+        let sig = secp.sign_schnorr(&msg, keypair);
+        taproot::Signature { sig, hash_ty }
+    }
+}
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -1329,7 +1427,7 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let msg = secp256k1::Message::from(sighash);
+            let msg = secp256k1::Message::from(sighash.clone());
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);
@@ -1341,6 +1439,8 @@ mod tests {
 
             let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
             assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
+
+            // TODO: Test the TapSighash API.
         }
     }
 

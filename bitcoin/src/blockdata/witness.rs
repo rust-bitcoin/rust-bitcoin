@@ -9,14 +9,13 @@ use core::convert::TryInto;
 use core::fmt;
 use core::ops::Index;
 
-use secp256k1::ecdsa;
-
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::crypto::ecdsa::SegwitV0Signature;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::sighash::EcdsaSighashType;
-use crate::taproot::TAPROOT_ANNEX_PREFIX;
+use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -311,9 +310,10 @@ impl Witness {
 
     /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
     /// witness, requires an allocation.
+    #[deprecated(since = "0.0.0", note = "NEXT_RELEASE use push_segwit_v0_signature instead")]
     pub fn push_bitcoin_signature(
         &mut self,
-        signature: &ecdsa::SerializedSignature,
+        signature: &secp256k1::ecdsa::SerializedSignature,
         hash_type: EcdsaSighashType,
     ) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
@@ -321,6 +321,23 @@ impl Witness {
         sig[..signature.len()].copy_from_slice(signature);
         sig[signature.len()] = hash_type as u8;
         self.push(&sig[..signature.len() + 1]);
+    }
+
+    /// Pushes a segwit v0 signature on the witness, requires an allocation.
+    pub fn push_segwit_v0_signature(&mut self, sig: &SegwitV0Signature) {
+        let signature = sig.0.sig.serialize_der();
+        let hash_type = sig.0.hash_ty;
+
+        // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
+        let mut sig = [0; 73];
+        sig[..signature.len()].copy_from_slice(&signature);
+        sig[signature.len()] = hash_type as u8;
+        self.push(&sig[..signature.len() + 1]);
+    }
+
+    /// Pushes a taproot signature on the witness, requires an allocation.
+    pub fn push_taproot_signature(&mut self, sig: &taproot::Signature) {
+        self.push_slice(sig.sig.as_ref())
     }
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
@@ -515,8 +532,6 @@ impl From<Vec<&[u8]>> for Witness {
 
 #[cfg(test)]
 mod test {
-    use secp256k1::ecdsa;
-
     use super::*;
     use crate::consensus::{deserialize, serialize};
     use crate::internal_macros::hex;
@@ -604,9 +619,12 @@ mod test {
         // The very first signature in block 734,958
         let sig_bytes =
             hex!("304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541");
-        let sig = ecdsa::Signature::from_der(&sig_bytes).unwrap();
+        let sig = SegwitV0Signature(crate::ecdsa::Signature {
+            sig: secp256k1::ecdsa::Signature::from_der(&sig_bytes).unwrap(),
+            hash_ty: EcdsaSighashType::All,
+        });
         let mut witness = Witness::default();
-        witness.push_bitcoin_signature(&sig.serialize_der(), EcdsaSighashType::All);
+        witness.push_segwit_v0_signature(&sig);
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];

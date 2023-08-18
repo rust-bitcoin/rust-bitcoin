@@ -73,3 +73,11 @@ required-features = ["std", "bitcoinconsensus"]
 [[example]]
 name = "taproot-psbt"
 required-features = ["std", "rand-std", "bitcoinconsensus"]
+
+[[example]]
+name = "sign-tx-p2wpkh"
+required-features = ["std", "rand-std"]
+
+[[example]]
+name = "sign-tx-p2tr"
+required-features = ["std", "rand-std"]
