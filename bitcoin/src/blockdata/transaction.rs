@@ -199,6 +199,9 @@ pub struct TxIn {
 }
 
 impl TxIn {
+    /// The weight of a `TxIn` excluding the `script_sig` and `witness`.
+    pub const BASE_WEIGHT: Weight = Weight::from_wu(32 + 4 + 4);
+
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
@@ -612,8 +615,8 @@ impl cmp::Ord for Transaction {
 }
 
 impl Transaction {
-    /// Maximum transaction weight for Bitcoin Core 25.0.
     // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
+    /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
 
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -713,9 +716,9 @@ impl Transaction {
     pub fn strippedsize(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
-            input_size += 32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len();
+            input_size += TxIn::BASE_WEIGHT.to_wu() as usize
+                + VarInt(input.script_sig.len() as u64).len()
+                + input.script_sig.len();
         }
         let mut output_size = 0;
         for output in &self.output {
@@ -741,9 +744,9 @@ impl Transaction {
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
             input_weight += scale_factor
-                * (32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len());
+                * (TxIn::BASE_WEIGHT.to_wu() as usize
+                    + VarInt(input.script_sig.len() as u64).len()
+                    + input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
                 input_weight += input.witness.serialized_len();
