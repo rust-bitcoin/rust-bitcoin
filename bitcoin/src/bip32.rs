@@ -12,7 +12,7 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
@@ -20,7 +20,6 @@ use serde;
 
 use crate::base58;
 use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
-use crate::hash_types::XpubIdentifier;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::Network;
@@ -52,6 +51,11 @@ impl ChainCode {
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
+
+hash_newtype! {
+    /// XpubIdentifier as defined in BIP-32.
+    pub struct XpubIdentifier(hash160::Hash);
+}
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]

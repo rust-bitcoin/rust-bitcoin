@@ -52,7 +52,7 @@ pub use newtypes::*;
 
 #[rustfmt::skip]
 mod newtypes {
-    use hashes::{sha256d, hash160, hash_newtype};
+    use hashes::{sha256d, hash_newtype};
 
     hash_newtype! {
         /// A bitcoin transaction hash/transaction ID.
@@ -75,8 +75,6 @@ mod newtypes {
         pub struct WitnessMerkleNode(sha256d::Hash);
         /// A hash corresponding to the witness structure commitment in the coinbase transaction
         pub struct WitnessCommitment(sha256d::Hash);
-        /// XpubIdentifier as defined in BIP-32.
-        pub struct XpubIdentifier(hash160::Hash);
 
         /// Filter hash, as defined in BIP-157
         pub struct FilterHash(sha256d::Hash);
