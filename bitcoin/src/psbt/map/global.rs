@@ -2,7 +2,7 @@
 
 use core::convert::TryFrom;
 
-use crate::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
+use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
@@ -76,8 +76,7 @@ impl Psbt {
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
-        let mut xpub_map: BTreeMap<ExtendedPubKey, (Fingerprint, DerivationPath)> =
-            Default::default();
+        let mut xpub_map: BTreeMap<Xpub, (Fingerprint, DerivationPath)> = Default::default();
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
 
         loop {
@@ -114,7 +113,7 @@ impl Psbt {
                         }
                         PSBT_GLOBAL_XPUB => {
                             if !pair.key.key.is_empty() {
-                                let xpub = ExtendedPubKey::decode(&pair.key.key)
+                                let xpub = Xpub::decode(&pair.key.key)
                                     .map_err(|_| Error::XPubKey(
                                         "Can't deserialize ExtendedPublicKey from global XPUB key data"
                                     ))?;

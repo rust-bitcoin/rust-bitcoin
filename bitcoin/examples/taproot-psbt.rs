@@ -78,7 +78,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
+use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
         &secp,
         // The master extended private key from the descriptor in step 4
-        ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
+        Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
         // Set these fields with valid data for the UTXO from step 5 above
         UTXO_1,
         vec![
@@ -133,11 +133,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("START EXAMPLE 2 - Script path spending of inheritance UTXO\n");
 
     {
-        let beneficiary =
-            BeneficiaryWallet::new(ExtendedPrivKey::from_str(BENEFICIARY_XPRIV_STR)?)?;
+        let beneficiary = BeneficiaryWallet::new(Xpriv::from_str(BENEFICIARY_XPRIV_STR)?)?;
 
         let mut benefactor = BenefactorWallet::new(
-            ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
+            Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
             beneficiary.master_xpub(),
         )?;
         let (tx, psbt) = benefactor.create_inheritance_funding_tx(
@@ -172,11 +171,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("START EXAMPLE 3 - Key path spending of inheritance UTXO\n");
 
     {
-        let beneficiary =
-            BeneficiaryWallet::new(ExtendedPrivKey::from_str(BENEFICIARY_XPRIV_STR)?)?;
+        let beneficiary = BeneficiaryWallet::new(Xpriv::from_str(BENEFICIARY_XPRIV_STR)?)?;
 
         let mut benefactor = BenefactorWallet::new(
-            ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
+            Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
             beneficiary.master_xpub(),
         )?;
         let (tx, _) = benefactor.create_inheritance_funding_tx(
@@ -221,7 +219,7 @@ struct P2trUtxo<'a> {
 
 fn generate_bip86_key_spend_tx(
     secp: &secp256k1::Secp256k1<secp256k1::All>,
-    master_xpriv: ExtendedPrivKey,
+    master_xpriv: Xpriv,
     input_utxo: P2trUtxo,
     outputs: Vec<TxOut>,
 ) -> Result<Transaction, Box<dyn std::error::Error>> {
@@ -335,8 +333,8 @@ fn generate_bip86_key_spend_tx(
 /// A wallet that allows creating and spending from an inheritance directly via the key path for purposes
 /// of refreshing the inheritance timelock or changing other spending conditions.
 struct BenefactorWallet {
-    master_xpriv: ExtendedPrivKey,
-    beneficiary_xpub: ExtendedPubKey,
+    master_xpriv: Xpriv,
+    beneficiary_xpub: Xpub,
     current_spend_info: Option<TaprootSpendInfo>,
     next_psbt: Option<Psbt>,
     secp: Secp256k1<secp256k1::All>,
@@ -345,8 +343,8 @@ struct BenefactorWallet {
 
 impl BenefactorWallet {
     fn new(
-        master_xpriv: ExtendedPrivKey,
-        beneficiary_xpub: ExtendedPubKey,
+        master_xpriv: Xpriv,
+        beneficiary_xpub: Xpub,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             master_xpriv,
@@ -615,18 +613,16 @@ impl BenefactorWallet {
 /// A wallet that allows spending from an inheritance locked to a P2TR UTXO via a script path
 /// after some expiry using CLTV.
 struct BeneficiaryWallet {
-    master_xpriv: ExtendedPrivKey,
+    master_xpriv: Xpriv,
     secp: secp256k1::Secp256k1<secp256k1::All>,
 }
 
 impl BeneficiaryWallet {
-    fn new(master_xpriv: ExtendedPrivKey) -> Result<Self, Box<dyn std::error::Error>> {
+    fn new(master_xpriv: Xpriv) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self { master_xpriv, secp: Secp256k1::new() })
     }
 
-    fn master_xpub(&self) -> ExtendedPubKey {
-        ExtendedPubKey::from_priv(&self.secp, &self.master_xpriv)
-    }
+    fn master_xpub(&self) -> Xpub { Xpub::from_priv(&self.secp, &self.master_xpriv) }
 
     fn spend_inheritance(
         &self,

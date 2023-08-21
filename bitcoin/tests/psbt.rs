@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::bip32::{ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath, KeySource};
+use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::blockdata::opcodes::OP_0;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
@@ -41,7 +41,7 @@ fn bip174_psbt_workflow() {
     //
 
     let ext_priv = build_extended_private_key();
-    let ext_pub = ExtendedPubKey::from_priv(&secp, &ext_priv);
+    let ext_pub = Xpub::from_priv(&secp, &ext_priv);
     let parent_fingerprint = ext_pub.fingerprint();
 
     //
@@ -120,15 +120,15 @@ fn bip174_psbt_workflow() {
 }
 
 /// Attempts to build an extended private key from seed and also directly from a string.
-fn build_extended_private_key() -> ExtendedPrivKey {
+fn build_extended_private_key() -> Xpriv {
     // Strings from BIP 174 test vector.
     let extended_private_key = "tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSUUbTVeFszDE23Ki6TBB5nCefAdHkK8Fm3qMQR6sHwA56zqRmKmxnHk37JkiFzvncDqoKmPWubu7hDF";
     let seed = "cUkG8i1RFfWGWy5ziR11zJ5V4U4W3viSFCfyJmZnvQaUsd1xuF3T";
 
-    let xpriv = ExtendedPrivKey::from_str(extended_private_key).unwrap();
+    let xpriv = Xpriv::from_str(extended_private_key).unwrap();
 
     let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = ExtendedPrivKey::new_master(NETWORK, &sk.inner.secret_bytes()).unwrap();
+    let seeded = Xpriv::new_master(NETWORK, &sk.inner.secret_bytes()).unwrap();
     assert_eq!(xpriv, seeded);
 
     xpriv
@@ -224,7 +224,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let redeem_script_1 = "00208c2353173743b595dfb4a07b72ba8e42e3797da74e87fe7d9d7497e3b2028903";
     let witness_script = "522103089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc21023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e7352ae";
 
-    // Public key and its derivation path (these are the child pubkeys for our `ExtendedPrivKey`,
+    // Public key and its derivation path (these are the child pubkeys for our `Xpriv`,
     // can be verified by deriving the key using this derivation path).
     let pk_path = vec![
         ("029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f", "m/0h/0h/0h"),
@@ -310,7 +310,7 @@ fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
 
 /// Verifies the keys in the test vector are valid for the extended private key and derivation path.
 fn parse_and_verify_keys(
-    ext_priv: &ExtendedPrivKey,
+    ext_priv: &Xpriv,
     sk_path: &[(&str, &str)],
 ) -> BTreeMap<PublicKey, PrivateKey> {
     let secp = &Secp256k1::new();

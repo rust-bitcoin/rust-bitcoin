@@ -4,7 +4,7 @@ use core::fmt;
 
 use internals::write_err;
 
-use crate::bip32::ExtendedPubKey;
+use crate::bip32::Xpub;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
 use crate::prelude::*;
@@ -69,7 +69,7 @@ pub enum Error {
     },
     /// Conflicting data during combine procedure:
     /// global extended public key has inconsistent key sources
-    CombineInconsistentKeySources(Box<ExtendedPubKey>),
+    CombineInconsistentKeySources(Box<Xpub>),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding(encode::Error),
     /// Negative fee
