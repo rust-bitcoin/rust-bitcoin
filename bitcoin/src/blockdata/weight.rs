@@ -40,13 +40,13 @@ impl Weight {
     /// Directly constructs `Weight` from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
-    /// Constructs `Weight` from kilo weight units returning `None` if overflow occurred.
+    /// Constructs `Weight` from kilo weight units returning `None` if an overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
     /// Constructs `Weight` from virtual bytes, returning `None` on overflow.
     pub fn from_vb(vb: u64) -> Option<Self> { vb.checked_mul(4).map(Weight::from_wu) }
 
-    /// Constructs `Weight` from virtual bytes without overflow check.
+    /// Constructs `Weight` from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
     /// Constructs `Weight` from witness size.
@@ -73,17 +73,17 @@ impl Weight {
 
     /// Checked addition.
     ///
-    /// Computes `self + rhs` returning `None` if overflow occurred.
+    /// Computes `self + rhs` returning `None` if an overflow occurred.
     pub fn checked_add(self, rhs: Self) -> Option<Self> { self.0.checked_add(rhs.0).map(Self) }
 
     /// Checked subtraction.
     ///
-    /// Computes `self - rhs` returning `None` if overflow occurred.
+    /// Computes `self - rhs` returning `None` if an overflow occurred.
     pub fn checked_sub(self, rhs: Self) -> Option<Self> { self.0.checked_sub(rhs.0).map(Self) }
 
     /// Checked multiplication.
     ///
-    /// Computes `self * rhs` returning `None` if overflow occurred.
+    /// Computes `self * rhs` returning `None` if an overflow occurred.
     pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
 
     /// Checked division.
