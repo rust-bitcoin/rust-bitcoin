@@ -31,11 +31,14 @@ impl Weight {
     /// Maximum possible value.
     pub const MAX: Weight = Weight(u64::MAX);
 
+    /// The factor that non-witness serialization data is multiplied by during weight calculation.
+    pub const WITNESS_SCALE_FACTOR: u64 = crate::blockdata::constants::WITNESS_SCALE_FACTOR as u64;
+
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
     pub const MAX_BLOCK: Weight = Weight(4_000_000);
 
     /// The minimum transaction weight for a valid serialized transaction.
-    pub const MIN_TRANSACTION: Weight = Weight(4 * 60);
+    pub const MIN_TRANSACTION: Weight = Weight(Self::WITNESS_SCALE_FACTOR * 60);
 
     /// Directly constructs `Weight` from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
@@ -47,7 +50,9 @@ impl Weight {
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
     /// Constructs `Weight` from virtual bytes, returning `None` on overflow.
-    pub fn from_vb(vb: u64) -> Option<Self> { vb.checked_mul(4).map(Weight::from_wu) }
+    pub fn from_vb(vb: u64) -> Option<Self> {
+        vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
+    }
 
     /// Constructs `Weight` from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
@@ -57,7 +62,7 @@ impl Weight {
 
     /// Constructs `Weight` from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Weight(non_witness_size * 4)
+        Weight(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Returns raw weight units.
@@ -69,10 +74,12 @@ impl Weight {
     pub const fn to_kwu_floor(self) -> u64 { self.0 / 1000 }
 
     /// Converts to vB rounding down.
-    pub const fn to_vbytes_floor(self) -> u64 { self.0 / 4 }
+    pub const fn to_vbytes_floor(self) -> u64 { self.0 / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
-    pub const fn to_vbytes_ceil(self) -> u64 { (self.0 + 3) / 4 }
+    pub const fn to_vbytes_ceil(self) -> u64 {
+        (self.0 + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+    }
 
     /// Checked addition.
     ///
