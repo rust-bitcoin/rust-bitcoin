@@ -34,7 +34,7 @@ use core::str::FromStr;
 use bech32;
 use hashes::{sha256, Hash, HashEngine};
 use internals::write_err;
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::{PublicKey, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
 use crate::blockdata::constants::{
@@ -44,7 +44,7 @@ use crate::blockdata::constants::{
 use crate::blockdata::script::witness_program::{self, WitnessProgram};
 use crate::blockdata::script::witness_version::{self, WitnessVersion};
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PubkeyHash, PublicKeyExt, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -266,6 +266,12 @@ impl Payload {
     #[inline]
     pub fn p2pkh(pk: &PublicKey) -> Payload { Payload::PubkeyHash(pk.pubkey_hash()) }
 
+    /// Creates a pay to uncompressed public key hash payload from a public key
+    #[inline]
+    pub fn p2pkh_uncompressed(pk: &PublicKey) -> Payload {
+        Payload::PubkeyHash(pk.pubkey_hash_uncompressed())
+    }
+
     /// Creates a pay to script hash P2SH payload from a script
     #[inline]
     pub fn p2sh(script: &Script) -> Result<Payload, Error> {
@@ -277,10 +283,7 @@ impl Payload {
 
     /// Create a witness pay to public key payload from a public key
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
-        let prog = WitnessProgram::new(
-            WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?,
-        )?;
+        let prog = WitnessProgram::new(WitnessVersion::V0, pk.wpubkey_hash())?;
         Ok(Payload::WitnessProgram(prog))
     }
 
@@ -288,7 +291,7 @@ impl Payload {
     pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
+            .push_slice(pk.wpubkey_hash());
 
         Ok(Payload::ScriptHash(builder.into_script().script_hash()))
     }
@@ -637,6 +640,14 @@ impl Address {
         Address::new(network, Payload::p2pkh(pk))
     }
 
+    /// Creates a pay to uncompressed public key hash address from a public key.
+    ///
+    /// This is the preferred non-witness type address.
+    #[inline]
+    pub fn p2pkh_uncompressed(pk: &PublicKey, network: Network) -> Address {
+        Address::new(network, Payload::p2pkh_uncompressed(pk))
+    }
+
     /// Creates a pay to script hash P2SH address from a script.
     ///
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
@@ -761,10 +772,12 @@ impl Address {
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
+        let pubkey_hash_uncompressed = pubkey.pubkey_hash_uncompressed();
         let payload = self.payload().inner_prog_as_bytes();
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(*pubkey);
 
         (*pubkey_hash.as_byte_array() == *payload)
+            || (*pubkey_hash_uncompressed.as_byte_array() == *payload)
             || (xonly_pubkey.serialize() == *payload)
             || (*segwit_redeem_hash(&pubkey_hash).as_byte_array() == *payload)
     }
@@ -1032,7 +1045,7 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse::<PublicKey>().unwrap();
-        let addr = Address::p2pkh(&key, Bitcoin);
+        let addr = Address::p2pkh_uncompressed(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = "03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f"
@@ -1078,17 +1091,13 @@ mod tests {
     #[test]
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
-        let mut key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
+        let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<PublicKey>()
             .unwrap();
         let addr = Address::p2wpkh(&key, Bitcoin).unwrap();
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
     }
 
     #[test]
@@ -1107,17 +1116,13 @@ mod tests {
     #[test]
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
-        let mut key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
+        let key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
             .parse::<PublicKey>()
             .unwrap();
         let addr = Address::p2shwpkh(&key, Bitcoin).unwrap();
         assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
     }
 
     #[test]
@@ -1530,7 +1535,7 @@ mod tests {
     fn test_is_related_to_pubkey_p2tr() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
 
@@ -1556,7 +1561,7 @@ mod tests {
     fn test_is_related_to_xonly_pubkey() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
 

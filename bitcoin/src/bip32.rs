@@ -690,7 +690,7 @@ impl ExtendedPubKey {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(self) -> PublicKey { PublicKey { compressed: true, inner: self.public_key } }
+    pub fn to_pub(self) -> PublicKey { self.public_key }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.

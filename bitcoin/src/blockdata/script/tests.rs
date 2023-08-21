@@ -37,10 +37,15 @@ fn script() {
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
     let key = PublicKey::from_str(&KEYSTR1[2..]).unwrap();
-    script = script.push_key(&key); comp.extend_from_slice(&hex!(KEYSTR1)); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_key(&key);
+    comp.extend_from_slice(&hex!(KEYSTR1));
+    assert_eq!(script.as_bytes(), &comp[..]);
+    // uncompressed
     const KEYSTR2: &str = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
     let key = PublicKey::from_str(&KEYSTR2[2..]).unwrap();
-    script = script.push_key(&key); comp.extend_from_slice(&hex!(KEYSTR2)); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_key_uncompressed(&key);
+    comp.extend_from_slice(&hex!(KEYSTR2));
+    assert_eq!(script.as_bytes(), &comp[..]);
 
     // opcodes
     script = script.push_opcode(OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script.as_bytes(), &comp[..]);
@@ -53,7 +58,7 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key = PublicKey::from_str(key_str).unwrap();
     let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
-    assert_eq!(actual.to_vec(), key.to_bytes());
+    assert_eq!(actual.to_vec(), key.serialize());
 }
 
 #[test]
@@ -108,7 +113,7 @@ fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
     let key = PublicKey::from_str(compressed_key_str).unwrap();
     let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
-    assert_eq!(actual.to_vec(), key.to_bytes());
+    assert_eq!(actual.to_vec(), key.serialize());
 }
 
 #[test]
@@ -204,10 +209,10 @@ fn script_generators() {
             .unwrap();
     assert!(ScriptBuf::new_p2pk(&pubkey).is_p2pk());
 
-    let pubkey_hash = PubkeyHash::hash(&pubkey.inner.serialize());
+    let pubkey_hash = PubkeyHash::hash(&pubkey.serialize());
     assert!(ScriptBuf::new_p2pkh(&pubkey_hash).is_p2pkh());
 
-    let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
+    let wpubkey_hash = WPubkeyHash::hash(&pubkey.serialize());
     assert!(ScriptBuf::new_v0_p2wpkh(&wpubkey_hash).is_v0_p2wpkh());
 
     let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();

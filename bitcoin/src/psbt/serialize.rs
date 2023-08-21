@@ -9,7 +9,7 @@
 use core::convert::{TryFrom, TryInto};
 
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use secp256k1::{self, XOnlyPublicKey};
+use secp256k1::{self, PublicKey, XOnlyPublicKey};
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
@@ -17,7 +17,6 @@ use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
@@ -132,24 +131,10 @@ impl Deserialize for ScriptBuf {
 }
 
 impl Serialize for PublicKey {
-    fn serialize(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.write_into(&mut buf).expect("vecs don't error");
-        buf
-    }
-}
-
-impl Deserialize for PublicKey {
-    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        PublicKey::from_slice(bytes).map_err(Error::InvalidPublicKey)
-    }
-}
-
-impl Serialize for secp256k1::PublicKey {
     fn serialize(&self) -> Vec<u8> { self.serialize().to_vec() }
 }
 
-impl Deserialize for secp256k1::PublicKey {
+impl Deserialize for PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         secp256k1::PublicKey::from_slice(bytes).map_err(Error::InvalidSecp256k1PublicKey)
     }

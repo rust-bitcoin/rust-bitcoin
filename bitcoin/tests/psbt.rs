@@ -12,9 +12,9 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
-use bitcoin::secp256k1::{self, Secp256k1};
+use bitcoin::secp256k1::{self, PublicKey, Secp256k1};
 use bitcoin::{
-    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
+    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
 };
 
@@ -285,7 +285,7 @@ fn bip32_derivation(
         let pk = PublicKey::from_str(pk).unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.inner, (fingerprint, path));
+        tree.insert(pk, (fingerprint, path));
     }
     tree
 }
@@ -331,7 +331,7 @@ fn parse_and_verify_keys(
 }
 
 /// Does the first signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
-fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_1_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
@@ -342,7 +342,7 @@ fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the second signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
-fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_2_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
@@ -408,7 +408,7 @@ fn combine_lexicographically() {
 }
 
 /// Signs `psbt` with `keys` if required.
-fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn sign(mut psbt: Psbt, keys: BTreeMap<PublicKey, PrivateKey>) -> Psbt {
     let secp = Secp256k1::new();
     psbt.sign(&keys, &secp).unwrap();
     psbt

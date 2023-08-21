@@ -8,7 +8,6 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKe
 use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::PublicKey;
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -53,6 +52,6 @@ fn main() {
     // manually creating indexes this time
     let zero = ChildNumber::from_normal_idx(0).unwrap();
     let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(&PublicKey::new(public_key), network).unwrap();
+    let address = Address::p2wpkh(&public_key, network).unwrap();
     println!("First receiving address: {}", address);
 }

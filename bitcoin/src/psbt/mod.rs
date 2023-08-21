@@ -12,12 +12,12 @@ use core::{cmp, fmt};
 use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
-use secp256k1::{Message, Secp256k1, Signing};
+use secp256k1::{Message, PublicKey, Secp256k1, Signing};
 
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
-use crate::crypto::key::{PrivateKey, PublicKey};
+use crate::crypto::key::PrivateKey;
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::Amount;
@@ -276,7 +276,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(*pk), secp) {
                 sk
             } else {
                 continue;
@@ -853,8 +853,6 @@ mod tests {
         let psbt: Psbt = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
 
         assert!(psbt.inputs[0].partial_sigs.len() == 1);
-        let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
-        assert!(!pk.compressed);
     }
 
     #[test]

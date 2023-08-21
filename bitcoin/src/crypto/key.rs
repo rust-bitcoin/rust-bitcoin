@@ -10,236 +10,142 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::{hash160, Hash};
-use hex::FromHex;
 use internals::write_err;
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
-pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use secp256k1::{
+    self, constants, KeyPair, Parity, PublicKey, Secp256k1, Verification, XOnlyPublicKey,
+};
 
-use crate::crypto::ecdsa;
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::{base58, io};
+use crate::base58;
 
-/// A Bitcoin ECDSA public key
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PublicKey {
-    /// Whether this public key should be serialized as compressed
-    pub compressed: bool,
-    /// The actual ECDSA key
-    pub inner: secp256k1::PublicKey,
+/// Extension trait for [PublicKey].
+pub trait PublicKeyExt {
+    /// Returns bitcoin 160-bit hash of the (compressed) public key.
+    fn pubkey_hash(&self) -> PubkeyHash;
+
+    /// Returns bitcoin 160-bit hash of the uncompressed public key.
+    fn pubkey_hash_uncompressed(&self) -> PubkeyHash;
+
+    /// Returns bitcoin 160-bit hash of the public key for witness program.
+    fn wpubkey_hash(&self) -> WPubkeyHash;
+
+    /// Convert this public key to a [SortKey].
+    ///
+    /// See documentation on [SortKey] for more info.
+    fn to_sort_key(&self) -> SortKey;
+
+    /// Convert this public key to an uncompressed [SortKey].
+    ///
+    /// See documentation on [SortKey] for more info.
+    fn to_sort_key_uncompressed(&self) -> SortKey;
 }
 
-impl PublicKey {
-    /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key
-    pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
-        PublicKey { compressed: true, inner: key.into() }
+impl PublicKeyExt for PublicKey {
+    fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash::hash(&self.serialize()) }
+
+    fn pubkey_hash_uncompressed(&self) -> PubkeyHash {
+        PubkeyHash::hash(&self.serialize_uncompressed())
     }
 
-    /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
-    /// public key
-    pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
-        PublicKey { compressed: false, inner: key.into() }
+    fn wpubkey_hash(&self) -> WPubkeyHash {
+        WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.serialize()).to_byte_array())
     }
 
-    fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
-        if self.compressed {
-            f(&self.inner.serialize())
-        } else {
-            f(&self.inner.serialize_uncompressed())
-        }
-    }
+    fn to_sort_key(&self) -> SortKey { SortKey::new(self) }
 
-    /// Returns bitcoin 160-bit hash of the public key
-    pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
-
-    /// Returns bitcoin 160-bit hash of the public key for witness program
-    pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
-        if self.compressed {
-            Some(WPubkeyHash::from_byte_array(
-                hash160::Hash::hash(&self.inner.serialize()).to_byte_array(),
-            ))
-        } else {
-            // We can't create witness pubkey hashes for an uncompressed
-            // public keys
-            None
-        }
-    }
-
-    /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
-        self.with_serialized(|bytes| writer.write_all(bytes))
-    }
-
-    /// Read the public key from a reader
-    ///
-    /// This internally reads the first byte before reading the rest, so
-    /// use of a `BufReader` is recommended.
-    pub fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> {
-        let mut bytes = [0; 65];
-
-        reader.read_exact(&mut bytes[0..1])?;
-        let bytes = if bytes[0] < 4 { &mut bytes[..33] } else { &mut bytes[..65] };
-
-        reader.read_exact(&mut bytes[1..])?;
-        Self::from_slice(bytes).map_err(|e| {
-            // Need a static string for core2
-            #[cfg(feature = "std")]
-            let reason = e;
-            #[cfg(not(feature = "std"))]
-            let reason = match e {
-                Error::Base58(_) => "base58 error",
-                Error::Secp256k1(_) => "secp256k1 error",
-                Error::InvalidKeyPrefix(_) => "invalid key prefix",
-                Error::Hex(_) => "hex decoding error",
-                Error::InvalidHexLength(_) => "invalid hex string length",
-            };
-            io::Error::new(io::ErrorKind::InvalidData, reason)
-        })
-    }
-
-    /// Serialize the public key to bytes
-    pub fn to_bytes(self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.write_into(&mut buf).expect("vecs don't error");
-        buf
-    }
-
-    /// Serialize the public key into a `SortKey`.
-    ///
-    /// `SortKey` is not too useful by itself, but it can be used to sort a
-    /// `[PublicKey]` slice using `sort_unstable_by_key`, `sort_by_cached_key`,
-    /// `sort_by_key`, or any of the other `*_by_key` methods on slice.
-    /// Pass the method into the sort method directly. (ie. `PublicKey::to_sort_key`)
-    ///
-    /// This method of sorting is in line with Bitcoin Core's implementation of
-    /// sorting keys for output descriptors such as `sortedmulti()`.
-    ///
-    /// If every `PublicKey` in the slice is `compressed == true` then this will sort
-    /// the keys in a
-    /// [BIP67](https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki)
-    /// compliant way.
-    ///
-    /// # Example: Using with `sort_unstable_by_key`
-    ///
-    /// ```rust
-    /// use std::str::FromStr;
-    /// use bitcoin::PublicKey;
-    ///
-    /// let pk = |s| PublicKey::from_str(s).unwrap();
-    ///
-    /// let mut unsorted = [
-    ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
-    ///     pk("038f47dcd43ba6d97fc9ed2e3bba09b175a45fac55f0683e8cf771e8ced4572354"),
-    ///     pk("028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa"),
-    ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc3816753d96001fd7cba3ce5372f5c9a0d63708183033538d07b1e532fc43aaacfa"),
-    ///     pk("032b8324c93575034047a52e9bca05a46d8347046b91a032eff07d5de8d3f2730b"),
-    ///     pk("045d753414fa292ea5b8f56e39cfb6a0287b2546231a5cb05c4b14ab4b463d171f5128148985b23eccb1e2905374873b1f09b9487f47afa6b1f2b0083ac8b4f7e8"),
-    ///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
-    /// ];
-    /// let sorted = [
-    ///     // These first 4 keys are in a BIP67 compatible sorted order
-    ///     // (since they are compressed)
-    ///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
-    ///     pk("028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa"),
-    ///     pk("032b8324c93575034047a52e9bca05a46d8347046b91a032eff07d5de8d3f2730b"),
-    ///     pk("038f47dcd43ba6d97fc9ed2e3bba09b175a45fac55f0683e8cf771e8ced4572354"),
-    ///     // Uncompressed keys are not BIP67 compliant, but are sorted
-    ///     // after compressed keys in Bitcoin Core using `sortedmulti()`
-    ///     pk("045d753414fa292ea5b8f56e39cfb6a0287b2546231a5cb05c4b14ab4b463d171f5128148985b23eccb1e2905374873b1f09b9487f47afa6b1f2b0083ac8b4f7e8"),
-    ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc3816753d96001fd7cba3ce5372f5c9a0d63708183033538d07b1e532fc43aaacfa"),
-    ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
-    /// ];
-    ///
-    /// unsorted.sort_unstable_by_key(|k| PublicKey::to_sort_key(*k));
-    ///
-    /// assert_eq!(unsorted, sorted);
-    /// ```
-    pub fn to_sort_key(self) -> SortKey {
-        if self.compressed {
-            let bytes = self.inner.serialize();
-            let mut res = [0; 32];
-            res[..].copy_from_slice(&bytes[1..33]);
-            SortKey(bytes[0], res, [0; 32])
-        } else {
-            let bytes = self.inner.serialize_uncompressed();
-            let mut res_left = [0; 32];
-            let mut res_right = [0; 32];
-            res_left[..].copy_from_slice(&bytes[1..33]);
-            res_right[..].copy_from_slice(&bytes[33..65]);
-            SortKey(bytes[0], res_left, res_right)
-        }
-    }
-
-    /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
-        let compressed = match data.len() {
-            33 => true,
-            65 => false,
-            len => {
-                return Err(base58::Error::InvalidLength(len).into());
-            }
-        };
-
-        if !compressed && data[0] != 0x04 {
-            return Err(Error::InvalidKeyPrefix(data[0]));
-        }
-
-        Ok(PublicKey { compressed, inner: secp256k1::PublicKey::from_slice(data)? })
-    }
-
-    /// Computes the public key as supposed to be used with this secret
-    pub fn from_private_key<C: secp256k1::Signing>(
-        secp: &Secp256k1<C>,
-        sk: &PrivateKey,
-    ) -> PublicKey {
-        sk.public_key(secp)
-    }
-
-    /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
-    pub fn verify<C: secp256k1::Verification>(
-        &self,
-        secp: &Secp256k1<C>,
-        msg: &secp256k1::Message,
-        sig: &ecdsa::Signature,
-    ) -> Result<(), Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.sig, &self.inner)?)
-    }
+    fn to_sort_key_uncompressed(&self) -> SortKey { SortKey::new_uncompressed(self) }
 }
 
-impl From<secp256k1::PublicKey> for PublicKey {
-    fn from(pk: secp256k1::PublicKey) -> PublicKey { PublicKey::new(pk) }
-}
-
-impl From<PublicKey> for XOnlyPublicKey {
-    fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
-}
-
-/// An opaque return type for PublicKey::to_sort_key
+/// `SortKey` is not too useful by itself, but it can be used to sort a
+/// `[PublicKey]` slice using `sort_unstable_by_key`, `sort_by_cached_key`,
+/// `sort_by_key`, or any of the other `*_by_key` methods on slice.
+/// Pass the method into the sort method directly. (ie. `PublicKey::to_sort_key`)
+///
+/// This method of sorting is in line with Bitcoin Core's implementation of
+/// sorting keys for output descriptors such as `sortedmulti()`.
+///
+/// If every `PublicKey` in the slice is `compressed == true` then this will sort
+/// the keys in a
+/// [BIP67](https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki)
+/// compliant way.
+///
+/// # Example: Using with `sort_unstable_by_key`
+///
+/// ```rust
+/// use std::str::FromStr;
+/// use bitcoin::secp256k1::PublicKey;
+/// use bitcoin::PublicKeyExt;
+///
+/// let pk = |s| {
+///     let pk = PublicKey::from_str(s).unwrap();
+///     let sort = if s.len() > 66 {
+///         pk.to_sort_key_uncompressed()
+///     } else {
+///         pk.to_sort_key()
+///     };
+///     (pk, sort)
+/// };
+///
+/// let mut unsorted = [
+///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
+///     pk("038f47dcd43ba6d97fc9ed2e3bba09b175a45fac55f0683e8cf771e8ced4572354"),
+///     pk("028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa"),
+///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc3816753d96001fd7cba3ce5372f5c9a0d63708183033538d07b1e532fc43aaacfa"),
+///     pk("032b8324c93575034047a52e9bca05a46d8347046b91a032eff07d5de8d3f2730b"),
+///     pk("045d753414fa292ea5b8f56e39cfb6a0287b2546231a5cb05c4b14ab4b463d171f5128148985b23eccb1e2905374873b1f09b9487f47afa6b1f2b0083ac8b4f7e8"),
+///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
+/// ];
+/// let sorted = [
+///     // These first 4 keys are in a BIP67 compatible sorted order
+///     // (since they are compressed)
+///     pk("0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68"),
+///     pk("028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa"),
+///     pk("032b8324c93575034047a52e9bca05a46d8347046b91a032eff07d5de8d3f2730b"),
+///     pk("038f47dcd43ba6d97fc9ed2e3bba09b175a45fac55f0683e8cf771e8ced4572354"),
+///     // Uncompressed keys are not BIP67 compliant, but are sorted
+///     // after compressed keys in Bitcoin Core using `sortedmulti()`
+///     pk("045d753414fa292ea5b8f56e39cfb6a0287b2546231a5cb05c4b14ab4b463d171f5128148985b23eccb1e2905374873b1f09b9487f47afa6b1f2b0083ac8b4f7e8"),
+///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc3816753d96001fd7cba3ce5372f5c9a0d63708183033538d07b1e532fc43aaacfa"),
+///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
+/// ];
+///
+/// unsorted.sort_unstable_by_key(|(pk, sort)| *sort);
+/// 
+/// assert_eq!(
+///     unsorted.into_iter().map(|(pk, _sort)| pk).collect::<Vec<_>>(),
+///     sorted.into_iter().map(|(pk, _sort)| pk).collect::<Vec<_>>(),
+/// );
+/// ```
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(u8, [u8; 32], [u8; 32]);
 
-impl fmt::Display for PublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: fast hex encoding
-        self.with_serialized(|bytes| {
-            for ch in bytes {
-                write!(f, "{:02x}", ch)?;
-            }
-            Ok(())
-        })
+impl SortKey {
+    /// Create a new [SortKey] for given (compressed) [PublicKey].
+    pub fn new(pubkey: &PublicKey) -> SortKey {
+        let bytes = pubkey.serialize();
+        let mut res = [0; 32];
+        res[..].copy_from_slice(&bytes[1..33]);
+        SortKey(bytes[0], res, [0; 32])
+    }
+
+    /// Create a new [SortKey] for given uncompressed [PublicKey].
+    pub fn new_uncompressed(pubkey: &PublicKey) -> SortKey {
+        let bytes = pubkey.serialize_uncompressed();
+        let mut res_left = [0; 32];
+        let mut res_right = [0; 32];
+        res_left[..].copy_from_slice(&bytes[1..33]);
+        res_right[..].copy_from_slice(&bytes[33..65]);
+        SortKey(bytes[0], res_left, res_right)
     }
 }
 
-impl FromStr for PublicKey {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<PublicKey, Error> {
-        match s.len() {
-            66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
-            130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
-            len => Err(Error::InvalidHexLength(len)),
-        }
+impl From<PublicKey> for SortKey {
+    fn from(pubkey: PublicKey) -> SortKey {
+        SortKey::new(&pubkey)
     }
 }
 
@@ -293,10 +199,7 @@ impl PrivateKey {
 
     /// Creates a public key from this private key
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
-        PublicKey {
-            compressed: self.compressed,
-            inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner),
-        }
+        secp256k1::PublicKey::from_secret_key(secp, &self.inner)
     }
 
     /// Serialize the private key to bytes
@@ -418,73 +321,6 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
         }
 
         d.deserialize_str(WifVisitor)
-    }
-}
-
-#[cfg(feature = "serde")]
-#[allow(clippy::collapsible_else_if)] // Aids readability.
-impl serde::Serialize for PublicKey {
-    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        if s.is_human_readable() {
-            s.collect_str(self)
-        } else {
-            self.with_serialized(|bytes| s.serialize_bytes(bytes))
-        }
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PublicKey {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
-        if d.is_human_readable() {
-            struct HexVisitor;
-
-            impl<'de> serde::de::Visitor<'de> for HexVisitor {
-                type Value = PublicKey;
-
-                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                    formatter.write_str("an ASCII hex string")
-                }
-
-                fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                where
-                    E: serde::de::Error,
-                {
-                    if let Ok(hex) = core::str::from_utf8(v) {
-                        PublicKey::from_str(hex).map_err(E::custom)
-                    } else {
-                        Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
-                    }
-                }
-
-                fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                where
-                    E: serde::de::Error,
-                {
-                    PublicKey::from_str(v).map_err(E::custom)
-                }
-            }
-            d.deserialize_str(HexVisitor)
-        } else {
-            struct BytesVisitor;
-
-            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
-                type Value = PublicKey;
-
-                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                    formatter.write_str("a bytestring")
-                }
-
-                fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                where
-                    E: serde::de::Error,
-                {
-                    PublicKey::from_slice(v).map_err(E::custom)
-                }
-            }
-
-            d.deserialize_bytes(BytesVisitor)
-        }
     }
 }
 
@@ -752,7 +588,6 @@ mod tests {
 
     use super::*;
     use crate::address::Address;
-    use crate::io;
     use crate::network::Network::{Bitcoin, Testnet};
 
     #[test]
@@ -782,13 +617,10 @@ mod tests {
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
-        let mut pk = sk.public_key(&secp);
-        assert!(!pk.compressed);
-        assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
+        let pk = sk.public_key(&secp);
         assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
-        let addr = Address::p2pkh(&pk, sk.network);
+        let addr = Address::p2pkh_uncompressed(&pk, sk.network);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
-        pk.compressed = true;
         assert_eq!(
             &pk.to_string(),
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
@@ -808,9 +640,13 @@ mod tests {
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(pk.pubkey_hash().to_string(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
-        assert_eq!(upk.pubkey_hash().to_string(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
+
+        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        assert_eq!(
+            upk.pubkey_hash_uncompressed().to_string(),
+            "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a",
+        );
     }
 
     #[test]
@@ -821,10 +657,13 @@ mod tests {
         .unwrap();
         let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(
-            pk.wpubkey_hash().unwrap().to_string(),
+            pk.wpubkey_hash().to_string(),
             "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
         );
-        assert_eq!(upk.wpubkey_hash(), None);
+        assert_eq!(
+            upk.wpubkey_hash().to_string(),
+            "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
+        );
     }
 
     #[cfg(feature = "serde")]
@@ -872,62 +711,11 @@ mod tests {
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
     }
 
-    fn random_key(mut seed: u8) -> PublicKey {
-        loop {
-            let mut data = [0; 65];
-            for byte in &mut data[..] {
-                *byte = seed;
-                // totally a rng
-                seed = seed.wrapping_mul(41).wrapping_add(43);
-            }
-            if data[0] % 2 == 0 {
-                data[0] = 4;
-                if let Ok(key) = PublicKey::from_slice(&data[..]) {
-                    return key;
-                }
-            } else {
-                data[0] = 2 + (data[0] >> 7);
-                if let Ok(key) = PublicKey::from_slice(&data[..33]) {
-                    return key;
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn pubkey_read_write() {
-        const N_KEYS: usize = 20;
-        let keys: Vec<_> = (0..N_KEYS).map(|i| random_key(i as u8)).collect();
-
-        let mut v = vec![];
-        for k in &keys {
-            k.write_into(&mut v).expect("writing into vec");
-        }
-
-        let mut dec_keys = vec![];
-        let mut cursor = io::Cursor::new(&v);
-        for _ in 0..N_KEYS {
-            dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
-        }
-
-        assert_eq!(keys, dec_keys);
-
-        // sanity checks
-        assert!(PublicKey::read_from(&mut cursor).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
-    }
-
     #[test]
     fn pubkey_to_sort_key() {
-        let key1 = PublicKey::from_str(
+        let key = PublicKey::from_str(
             "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
-        )
-        .unwrap();
-        let key2 = PublicKey { inner: key1.inner, compressed: false };
+        ).unwrap();
         let expected1 = SortKey(
             2,
             <[u8; 32]>::from_hex(
@@ -947,75 +735,73 @@ mod tests {
             )
             .unwrap(),
         );
-        assert_eq!(key1.to_sort_key(), expected1);
-        assert_eq!(key2.to_sort_key(), expected2);
+        assert_eq!(key.to_sort_key(), expected1);
+        assert_eq!(key.to_sort_key_uncompressed(), expected2);
     }
 
     #[test]
     fn pubkey_sort() {
         struct Vector {
-            input: Vec<PublicKey>,
-            expect: Vec<PublicKey>,
+            input: Vec<&'static str>,
+            expect: Vec<&'static str>,
         }
-        let fmt =
-            |v: Vec<_>| v.into_iter().map(|s| PublicKey::from_str(s).unwrap()).collect::<Vec<_>>();
         let vectors = vec![
             // Start BIP67 vectors
             // Vector 1
             Vector {
-                input: fmt(vec![
+                input: vec![
                     "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
                     "02fe6f0a5a297eb38c391581c4413e084773ea23954d93f7753db7dc0adc188b2f",
-                ]),
-                expect: fmt(vec![
+                ],
+                expect: vec![
                     "02fe6f0a5a297eb38c391581c4413e084773ea23954d93f7753db7dc0adc188b2f",
                     "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
-                ]),
+                ],
             },
             // Vector 2 (Already sorted, no action required)
             Vector {
-                input: fmt(vec![
+                input: vec![
                     "02632b12f4ac5b1d1b72b2a3b508c19172de44f6f46bcee50ba33f3f9291e47ed0",
                     "027735a29bae7780a9755fae7a1c4374c656ac6a69ea9f3697fda61bb99a4f3e77",
                     "02e2cc6bd5f45edd43bebe7cb9b675f0ce9ed3efe613b177588290ad188d11b404",
-                ]),
-                expect: fmt(vec![
+                ],
+                expect: vec![
                     "02632b12f4ac5b1d1b72b2a3b508c19172de44f6f46bcee50ba33f3f9291e47ed0",
                     "027735a29bae7780a9755fae7a1c4374c656ac6a69ea9f3697fda61bb99a4f3e77",
                     "02e2cc6bd5f45edd43bebe7cb9b675f0ce9ed3efe613b177588290ad188d11b404",
-                ]),
+                ],
             },
             // Vector 3
             Vector {
-                input: fmt(vec![
+                input: vec![
                     "030000000000000000000000000000000000004141414141414141414141414141",
                     "020000000000000000000000000000000000004141414141414141414141414141",
                     "020000000000000000000000000000000000004141414141414141414141414140",
                     "030000000000000000000000000000000000004141414141414141414141414140",
-                ]),
-                expect: fmt(vec![
+                ],
+                expect: vec![
                     "020000000000000000000000000000000000004141414141414141414141414140",
                     "020000000000000000000000000000000000004141414141414141414141414141",
                     "030000000000000000000000000000000000004141414141414141414141414140",
                     "030000000000000000000000000000000000004141414141414141414141414141",
-                ]),
+                ],
             },
             // Vector 4: (from bitcore)
             Vector {
-                input: fmt(vec![
+                input: vec![
                     "022df8750480ad5b26950b25c7ba79d3e37d75f640f8e5d9bcd5b150a0f85014da",
                     "03e3818b65bcc73a7d64064106a859cc1a5a728c4345ff0b641209fba0d90de6e9",
                     "021f2f6e1e50cb6a953935c3601284925decd3fd21bc445712576873fb8c6ebc18",
-                ]),
-                expect: fmt(vec![
+                ],
+                expect: vec![
                     "021f2f6e1e50cb6a953935c3601284925decd3fd21bc445712576873fb8c6ebc18",
                     "022df8750480ad5b26950b25c7ba79d3e37d75f640f8e5d9bcd5b150a0f85014da",
                     "03e3818b65bcc73a7d64064106a859cc1a5a728c4345ff0b641209fba0d90de6e9",
-                ]),
+                ],
             },
             // Non-BIP67 vectors
             Vector {
-                input: fmt(vec![
+                input: vec![
                     "02c690d642c1310f3a1ababad94e3930e4023c930ea472e7f37f660fe485263b88",
                     "0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68",
                     "041a181bd0e79974bd7ca552e09fc42ba9c3d5dbb3753741d6f0ab3015dbfd9a22d6b001a32f5f51ac6f2c0f35e73a6a62f59e848fa854d3d21f3f231594eeaa46",
@@ -1032,8 +818,8 @@ mod tests {
                     "028d3a2d9f1b1c5c75845944f93bc183ba23aecde53f1978b8aa1b77661be6114f",
                     "028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa",
                     "04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35",
-                ]),
-                expect: fmt(vec![
+                ],
+                expect: vec![
                     "0234dd69c56c36a41230d573d68adeae0030c9bc0bf26f24d3e1b64c604d293c68",
                     "028bde91b10013e08949a318018fedbd896534a549a278e220169ee2a36517c7aa",
                     "028d3a2d9f1b1c5c75845944f93bc183ba23aecde53f1978b8aa1b77661be6114f",
@@ -1051,42 +837,19 @@ mod tests {
                     "04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35",
                     "04c6bec3b07586a4b085a78cbb97e9bab6f1d3c9ebf299b65dec85213c5eacd44487de86017183120bb7ea3b6c6660c5037615fe1add2a73f800cbeeae22c60438",
                     "04eb0db2d71ccbb0edd8fb35092cbcae2f7fa1f06d4c170804bf52007924b569a8d2d6f6bc8fd2b3caa3253fa1bb674443743bf7fb9f94f9c0b0831a252894cfa8",
-                ]),
+                ],
             },
         ];
         for mut vector in vectors {
-            vector.input.sort_by_cached_key(|k| PublicKey::to_sort_key(*k));
+            vector.input.sort_by_cached_key(|k| {
+                let pk = PublicKey::from_str(k).unwrap();
+                if k.len() > 66 {
+                    pk.to_sort_key_uncompressed()
+                } else {
+                    pk.to_sort_key()
+                }
+            });
             assert_eq!(vector.input, vector.expect);
         }
-    }
-
-    #[test]
-    #[cfg(feature = "rand-std")]
-    fn public_key_constructors() {
-        use secp256k1::rand;
-
-        let secp = Secp256k1::new();
-        let kp = KeyPair::new(&secp, &mut rand::thread_rng());
-
-        let _ = PublicKey::new(kp);
-        let _ = PublicKey::new_uncompressed(kp);
-    }
-
-    #[test]
-    fn public_key_from_str_wrong_length() {
-        // Sanity checks, we accept string length 130 digits.
-        let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
-        assert_eq!(s.len(), 130);
-        assert!(PublicKey::from_str(s).is_ok());
-        // And 66 digits.
-        let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
-        assert_eq!(s.len(), 66);
-        assert!(PublicKey::from_str(s).is_ok());
-
-        let s = "aoeusthb";
-        assert_eq!(s.len(), 8);
-        let res = PublicKey::from_str(s);
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
     }
 }

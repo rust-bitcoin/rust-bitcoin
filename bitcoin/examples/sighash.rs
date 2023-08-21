@@ -1,4 +1,5 @@
-use bitcoin::{consensus, ecdsa, sighash, Amount, PublicKey, Script, ScriptBuf, Transaction};
+use bitcoin::{consensus, ecdsa, sighash, Amount, PublicKeyExt, Script, ScriptBuf, Transaction};
+use bitcoin::secp256k1::PublicKey;
 use hex_lit::hex;
 
 //These are real blockchain transactions examples of computing sighash for:
@@ -35,7 +36,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     //BIP-143: "The item 5 : For P2WPKH witness program, the scriptCode is 0x1976a914{20-byte-pubkey-hash}88ac"
     //this is nothing but a standard P2PKH script OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG:
     let pk = PublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
-    let wpkh = pk.wpubkey_hash().expect("compressed key");
+    let wpkh = pk.wpubkey_hash();
     println!("Script pubkey hash: {:x}", wpkh);
     let spk = ScriptBuf::new_v0_p2wpkh(&wpkh);
     let script_code = spk.p2wpkh_script_code().expect("spk is known to be p2wpkh");
@@ -48,7 +49,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     let msg = secp256k1::Message::from(sighash);
     println!("Message is {:x}", msg);
     let secp = secp256k1::Secp256k1::verification_only();
-    secp.verify_ecdsa(&msg, &sig.sig, &pk.inner).unwrap();
+    secp.verify_ecdsa(&msg, &sig.sig, &pk).unwrap();
 }
 
 /// Computes sighash for a legacy multisig transaction input that spends either a p2sh or a p2ms output.
