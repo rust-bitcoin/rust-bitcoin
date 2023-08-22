@@ -12,12 +12,11 @@ use core::{cmp, fmt};
 use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
-use secp256k1::{Message, Secp256k1, Signing};
+use secp256k1::{Message, PublicKey, Secp256k1, SecretKey, Signing};
 
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
-use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::Amount;
@@ -276,7 +275,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(*pk), secp) {
                 sk
             } else {
                 continue;
@@ -288,8 +287,7 @@ impl Psbt {
                 Ok((msg, sighash_ty)) => (msg, sighash_ty),
             };
 
-            let sig =
-                ecdsa::Signature { sig: secp.sign_ecdsa(&msg, &sk.inner), hash_ty: sighash_ty };
+            let sig = ecdsa::Signature { sig: secp.sign_ecdsa(&msg, &sk), hash_ty: sighash_ty };
 
             let pk = sk.public_key(secp);
 
@@ -466,13 +464,13 @@ impl Psbt {
     }
 }
 
-/// Data required to call [`GetKey`] to get the private key to sign an input.
+/// Data required to call [`GetKey`] to get the secret key to sign an input.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum KeyRequest {
-    /// Request a private key using the associated public key.
+    /// Request a secret key using the associated public key.
     Pubkey(PublicKey),
-    /// Request a private key using BIP-32 fingerprint and derivation path.
+    /// Request a secret key using BIP-32 fingerprint and derivation path.
     Bip32(KeySource),
 }
 
@@ -491,7 +489,7 @@ pub trait GetKey {
         &self,
         key_request: KeyRequest,
         secp: &Secp256k1<C>,
-    ) -> Result<Option<PrivateKey>, Self::Error>;
+    ) -> Result<Option<SecretKey>, Self::Error>;
 }
 
 impl GetKey for ExtendedPrivKey {
@@ -501,18 +499,16 @@ impl GetKey for ExtendedPrivKey {
         &self,
         key_request: KeyRequest,
         secp: &Secp256k1<C>,
-    ) -> Result<Option<PrivateKey>, Self::Error> {
+    ) -> Result<Option<SecretKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
-            KeyRequest::Bip32((fingerprint, path)) => {
-                let key = if self.fingerprint(secp) == fingerprint {
+            KeyRequest::Bip32((fingerprint, path)) =>
+                if self.fingerprint(secp) == fingerprint {
                     let k = self.derive_priv(secp, &path)?;
-                    Some(k.to_priv())
+                    Ok(Some(k.private_key))
                 } else {
-                    None
-                };
-                Ok(key)
-            }
+                    Ok(None)
+                },
         }
     }
 }
@@ -534,14 +530,14 @@ impl GetKey for $set<ExtendedPrivKey> {
         &self,
         key_request: KeyRequest,
         secp: &Secp256k1<C>
-    ) -> Result<Option<PrivateKey>, Self::Error> {
+    ) -> Result<Option<SecretKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 for xpriv in self.iter() {
                     if xpriv.parent_fingerprint == fingerprint {
                         let k = xpriv.derive_priv(secp, &path)?;
-                        return Ok(Some(k.to_priv()));
+                        return Ok(Some(k.private_key));
                     }
                 }
                 Ok(None)
@@ -557,14 +553,14 @@ impl_get_key_for_set!(HashSet);
 macro_rules! impl_get_key_for_map {
     ($map:ident) => {
 
-impl GetKey for $map<PublicKey, PrivateKey> {
+impl GetKey for $map<PublicKey, SecretKey> {
     type Error = GetKeyError;
 
     fn get_key<C: Signing>(
         &self,
         key_request: KeyRequest,
         _: &Secp256k1<C>,
-    ) -> Result<Option<PrivateKey>, Self::Error> {
+    ) -> Result<Option<SecretKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(pk) => Ok(self.get(&pk).cloned()),
             KeyRequest::Bip32(_) => Err(GetKeyError::NotSupported),
@@ -846,15 +842,6 @@ mod tests {
             outputs: vec![],
         };
         assert_eq!(psbt.serialize_hex(), "70736274ff01000a0200000000000000000000");
-    }
-
-    #[test]
-    fn psbt_uncompressed_key() {
-        let psbt: Psbt = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
-
-        assert!(psbt.inputs[0].partial_sigs.len() == 1);
-        let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
-        assert!(!pk.compressed);
     }
 
     #[test]
@@ -1642,28 +1629,27 @@ mod tests {
     }
 
     #[cfg(feature = "rand-std")]
-    fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
+    fn gen_keys() -> (SecretKey, PublicKey, Secp256k1<All>) {
         use secp256k1::rand::thread_rng;
 
         let secp = Secp256k1::new();
 
         let sk = SecretKey::new(&mut thread_rng());
-        let priv_key = PrivateKey::new(sk, crate::Network::Regtest);
-        let pk = PublicKey::from_private_key(&secp, &priv_key);
+        let pk = sk.public_key(&secp);
 
-        (priv_key, pk, secp)
+        (sk, pk, secp)
     }
 
     #[test]
     #[cfg(feature = "rand-std")]
     fn get_key_btree_map() {
-        let (priv_key, pk, secp) = gen_keys();
+        let (sk, pk, secp) = gen_keys();
 
         let mut key_map = BTreeMap::new();
-        key_map.insert(pk, priv_key);
+        key_map.insert(pk, sk);
 
         let got = key_map.get_key(KeyRequest::Pubkey(pk), &secp).expect("failed to get key");
-        assert_eq!(got.unwrap(), priv_key)
+        assert_eq!(got.unwrap(), sk)
     }
 
     #[test]
@@ -1780,7 +1766,7 @@ mod tests {
     fn sign_psbt() {
         use crate::bip32::{DerivationPath, Fingerprint};
         use crate::witness_version::WitnessVersion;
-        use crate::{WPubkeyHash, WitnessProgram};
+        use crate::WitnessProgram;
 
         let unsigned_tx = Transaction {
             version: 2,
@@ -1790,22 +1776,23 @@ mod tests {
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
 
-        let (priv_key, pk, secp) = gen_keys();
+        let (sk, pk, secp) = gen_keys();
 
         // key_map implements `GetKey` using KeyRequest::Pubkey. A pubkey key request does not use
         // keysource so we use default `KeySource` (fingreprint and derivation path) below.
         let mut key_map = BTreeMap::new();
-        key_map.insert(pk, priv_key);
+        key_map.insert(pk, sk);
 
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_v0_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            // TODO: If we had a PubkeyExt trait this would be better written as pk.wpubkey_hash()
+            script_pubkey: ScriptBuf::new_v0_p2wpkh(&pk.into()),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(pk.inner, (Fingerprint::default(), DerivationPath::default()));
+        map.insert(pk, (Fingerprint::default(), DerivationPath::default()));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.

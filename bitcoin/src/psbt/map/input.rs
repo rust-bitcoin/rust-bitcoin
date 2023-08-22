@@ -11,7 +11,6 @@ use crate::bip32::KeySource;
 use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
-use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::*;
 use crate::psbt::map::Map;
@@ -80,7 +79,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
-    pub partial_sigs: BTreeMap<PublicKey, ecdsa::Signature>,
+    pub partial_sigs: BTreeMap<secp256k1::PublicKey, ecdsa::Signature>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<PsbtSighashType>,
@@ -258,7 +257,7 @@ impl Input {
             }
             PSBT_IN_PARTIAL_SIG => {
                 impl_psbt_insert_pair! {
-                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: ecdsa::Signature>
+                    self.partial_sigs <= <raw_key: secp256k1::PublicKey>|<raw_value: ecdsa::Signature>
                 }
             }
             PSBT_IN_SIGHASH_TYPE => {

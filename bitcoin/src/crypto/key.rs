@@ -259,6 +259,18 @@ impl From<&PublicKey> for PubkeyHash {
     fn from(key: &PublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
+impl From<secp256k1::PublicKey> for WPubkeyHash {
+    fn from(key: secp256k1::PublicKey) -> WPubkeyHash {
+        WPubkeyHash::hash(&key.serialize_uncompressed())
+    }
+}
+
+impl From<&secp256k1::PublicKey> for WPubkeyHash {
+    fn from(key: &secp256k1::PublicKey) -> WPubkeyHash {
+        WPubkeyHash::hash(&key.serialize_uncompressed())
+    }
+}
+
 /// A Bitcoin ECDSA private key
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Debug))]

@@ -12,9 +12,9 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
-use bitcoin::secp256k1::{self, Secp256k1};
+use bitcoin::secp256k1::{self, PublicKey, Secp256k1, SecretKey};
 use bitcoin::{
-    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
+    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
 };
 
@@ -276,7 +276,7 @@ fn bip32_derivation(
     fingerprint: Fingerprint,
     pk_path: &[(&str, &str)],
     indecies: Vec<usize>,
-) -> BTreeMap<secp256k1::PublicKey, KeySource> {
+) -> BTreeMap<PublicKey, KeySource> {
     let mut tree = BTreeMap::new();
     for i in indecies {
         let pk = pk_path[i].0;
@@ -285,7 +285,7 @@ fn bip32_derivation(
         let pk = PublicKey::from_str(pk).unwrap();
         let path = path.into_derivation_path().unwrap();
 
-        tree.insert(pk.inner, (fingerprint, path));
+        tree.insert(pk, (fingerprint, path));
     }
     tree
 }
@@ -312,7 +312,7 @@ fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
 fn parse_and_verify_keys(
     ext_priv: &ExtendedPrivKey,
     sk_path: &[(&str, &str)],
-) -> BTreeMap<PublicKey, PrivateKey> {
+) -> BTreeMap<PublicKey, SecretKey> {
     let secp = &Secp256k1::new();
 
     let mut key_map = BTreeMap::new();
@@ -322,8 +322,10 @@ fn parse_and_verify_keys(
         let path =
             derivation_path.into_derivation_path().expect("failed to convert derivation path");
         let derived_priv =
-            ext_priv.derive_priv(secp, &path).expect("failed to derive ext priv key").to_priv();
-        assert_eq!(wif_priv, derived_priv);
+            ext_priv.derive_priv(secp, &path).expect("failed to derive ext priv key");
+        assert_eq!(wif_priv, derived_priv.to_priv());
+
+        let derived_priv = derived_priv.private_key;
         let derived_pub = derived_priv.public_key(secp);
         key_map.insert(derived_pub, derived_priv);
     }
@@ -331,7 +333,7 @@ fn parse_and_verify_keys(
 }
 
 /// Does the first signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
-fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<secp256k1::PublicKey, SecretKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_1_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
@@ -342,7 +344,7 @@ fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the second signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
-fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<secp256k1::PublicKey, SecretKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_2_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
@@ -408,7 +410,7 @@ fn combine_lexicographically() {
 }
 
 /// Signs `psbt` with `keys` if required.
-fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
+fn sign(mut psbt: Psbt, keys: BTreeMap<secp256k1::PublicKey, SecretKey>) -> Psbt {
     let secp = Secp256k1::new();
     psbt.sign(&keys, &secp).unwrap();
     psbt
