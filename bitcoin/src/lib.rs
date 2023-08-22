@@ -129,7 +129,7 @@ use core2::io;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
-pub use crate::bip32::XpubIdentifier;
+pub use crate::bip32::XKeyIdentifier;
 pub use crate::blockdata::block::{self, Block};
 pub use crate::blockdata::fee_rate::FeeRate;
 pub use crate::blockdata::locktime::{self, absolute, relative};
