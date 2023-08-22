@@ -131,6 +131,11 @@ cargo test
 Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more
 detailed instructions.
 
+### Just
+
+We support [`just`](https://just.systems/man/en/) for running dev workflow commands. Run `just` from
+your shell to see list available sub-commands.
+
 ### Building the docs
 
 We build docs with the nightly toolchain, you may wish to use the following shell alias to check
