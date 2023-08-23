@@ -67,6 +67,72 @@ pub trait Decodable: Sized {
     }
 }
 
+/// Extensions of `Read` to decode data as per Bitcoin consensus.
+pub trait ReadExt: io::Read {
+    /// Reads a 64-bit unsigned integer.
+    fn read_u64(&mut self) -> Result<u64, Error>;
+    /// Reads a 32-bit unsigned integer.
+    fn read_u32(&mut self) -> Result<u32, Error>;
+    /// Reads a 16-bit unsigned integer.
+    fn read_u16(&mut self) -> Result<u16, Error>;
+    /// Reads an 8-bit unsigned integer.
+    fn read_u8(&mut self) -> Result<u8, Error>;
+
+    /// Reads a 64-bit signed integer.
+    fn read_i64(&mut self) -> Result<i64, Error>;
+    /// Reads a 32-bit signed integer.
+    fn read_i32(&mut self) -> Result<i32, Error>;
+    /// Reads a 16-bit signed integer.
+    fn read_i16(&mut self) -> Result<i16, Error>;
+    /// Reads an 8-bit signed integer.
+    fn read_i8(&mut self) -> Result<i8, Error>;
+
+    /// Reads a boolean.
+    fn read_bool(&mut self) -> Result<bool, Error>;
+
+    /// Reads a byte slice.
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error>;
+}
+
+macro_rules! decoder_fn {
+    ($name:ident, $val_type:ty, $byte_len: expr) => {
+        #[inline]
+        fn $name(&mut self) -> Result<$val_type, Error> {
+            let mut val = [0; $byte_len];
+            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            Ok(<$val_type>::from_le_bytes(val))
+        }
+    };
+}
+
+impl<R: Read + ?Sized> ReadExt for R {
+    decoder_fn!(read_u64, u64, 8);
+    decoder_fn!(read_u32, u32, 4);
+    decoder_fn!(read_u16, u16, 2);
+    decoder_fn!(read_i64, i64, 8);
+    decoder_fn!(read_i32, i32, 4);
+    decoder_fn!(read_i16, i16, 2);
+
+    #[inline]
+    fn read_u8(&mut self) -> Result<u8, Error> {
+        let mut slice = [0u8; 1];
+        self.read_exact(&mut slice)?;
+        Ok(slice[0])
+    }
+    #[inline]
+    fn read_i8(&mut self) -> Result<i8, Error> {
+        let mut slice = [0u8; 1];
+        self.read_exact(&mut slice)?;
+        Ok(slice[0] as i8)
+    }
+    #[inline]
+    fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
+    #[inline]
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
+        self.read_exact(slice).map_err(Error::Io)
+    }
+}
+
 /// A decoding error.
 #[derive(Debug)]
 #[non_exhaustive]
