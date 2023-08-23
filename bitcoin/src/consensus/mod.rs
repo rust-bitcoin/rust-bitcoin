@@ -8,6 +8,7 @@
 
 pub mod decode;
 pub mod encode;
+mod impls;
 pub mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
