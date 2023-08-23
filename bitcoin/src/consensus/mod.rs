@@ -11,6 +11,7 @@ pub mod encode;
 pub mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
+mod types;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
 
@@ -22,6 +23,7 @@ use crate::prelude::*;
 pub use self::{
     encode::{Decodable, Encodable, ReadExt, WriteExt},
     params::Params,
+    types::{CheckedData, VarInt},
 };
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
