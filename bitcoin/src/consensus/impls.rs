@@ -6,7 +6,9 @@ use core::mem;
 
 use crate::consensus::decode::{self, Decodable, ReadExt};
 use crate::consensus::encode::{Encodable, WriteExt};
+use crate::consensus::VarInt;
 use crate::io;
+use crate::prelude::*;
 
 // Primitive types
 macro_rules! impl_int_encodable {
@@ -51,5 +53,44 @@ impl Decodable for bool {
     #[inline]
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<bool, decode::Error> {
         ReadExt::read_bool(r)
+    }
+}
+
+impl Encodable for String {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let b = self.as_bytes();
+        let vi_len = VarInt(b.len() as u64).consensus_encode(w)?;
+        w.emit_slice(b)?;
+        Ok(vi_len + b.len())
+    }
+}
+
+impl Decodable for String {
+    #[inline]
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<String, decode::Error> {
+        String::from_utf8(Decodable::consensus_decode(r)?)
+            .map_err(|_| decode::Error::ParseFailed("String was not valid UTF8"))
+    }
+}
+
+impl Encodable for Cow<'static, str> {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let b = self.as_bytes();
+        let vi_len = VarInt(b.len() as u64).consensus_encode(w)?;
+        w.emit_slice(b)?;
+        Ok(vi_len + b.len())
+    }
+}
+
+impl Decodable for Cow<'static, str> {
+    #[inline]
+    fn consensus_decode<R: io::Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Cow<'static, str>, decode::Error> {
+        String::from_utf8(Decodable::consensus_decode(r)?)
+            .map_err(|_| decode::Error::ParseFailed("String was not valid UTF8"))
+            .map(Cow::Owned)
     }
 }
