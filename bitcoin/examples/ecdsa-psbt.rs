@@ -36,13 +36,12 @@ use std::str::FromStr;
 use bitcoin::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath,
 };
-use bitcoin::consensus::encode;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Witness,
+    consensus, Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction,
+    TxIn, TxOut, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -87,7 +86,7 @@ fn main() -> Result<()> {
     let tx = finalized.extract_tx();
     tx.verify(|_| Some(previous_output())).expect("failed to verify transaction");
 
-    let hex = encode::serialize_hex(&tx);
+    let hex = consensus::serialize_hex(&tx);
     println!("You should now be able to broadcast the following transaction: \n\n{}", hex);
 
     Ok(())

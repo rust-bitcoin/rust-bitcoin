@@ -196,7 +196,7 @@ mod test {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
-    use crate::consensus::encode::serialize;
+    use crate::consensus::serialize;
     use crate::internal_macros::hex;
     use crate::network::Network;
 

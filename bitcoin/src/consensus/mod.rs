@@ -16,7 +16,8 @@ mod types;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
 
-pub use self::encode::{Decodable, Encodable, ReadExt, WriteExt};
+pub use self::decode::{Decodable, Error, ReadExt, MAX_VEC_SIZE};
+pub use self::encode::{Encodable, WriteExt};
 pub use self::params::Params;
 pub use self::types::{CheckedData, VarInt};
 #[cfg(feature = "bitcoinconsensus")]

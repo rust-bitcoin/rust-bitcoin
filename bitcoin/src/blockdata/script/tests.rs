@@ -7,7 +7,7 @@ use hex_lit::hex;
 
 use super::*;
 use crate::blockdata::opcodes;
-use crate::consensus::encode::{deserialize, serialize};
+use crate::consensus::{deserialize, serialize};
 use crate::crypto::key::{PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey};
 
 #[test]

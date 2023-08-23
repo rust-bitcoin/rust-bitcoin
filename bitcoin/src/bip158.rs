@@ -48,8 +48,7 @@ use internals::write_err;
 use crate::blockdata::block::Block;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
-use crate::consensus::encode::VarInt;
-use crate::consensus::{Decodable, Encodable};
+use crate::consensus::{Decodable, Encodable, VarInt};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 use crate::io;
 use crate::prelude::*;
@@ -557,7 +556,7 @@ mod test {
     use serde_json::Value;
 
     use super::*;
-    use crate::consensus::encode::deserialize;
+    use crate::consensus::deserialize;
     use crate::hash_types::BlockHash;
     use crate::internal_macros::hex;
     use crate::ScriptBuf;

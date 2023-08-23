@@ -11,8 +11,7 @@ use core::ops::Index;
 
 use secp256k1::ecdsa;
 
-use crate::consensus::encode::{Error, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::{Decodable, Encodable, Error, WriteExt, MAX_VEC_SIZE};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::sighash::EcdsaSighashType;

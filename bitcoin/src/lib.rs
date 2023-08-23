@@ -139,7 +139,7 @@ pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, T
 pub use crate::blockdata::weight::Weight;
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
-pub use crate::consensus::encode::VarInt;
+pub use crate::consensus::VarInt;
 pub use crate::crypto::key::{
     self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
 };

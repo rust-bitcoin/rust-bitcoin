@@ -24,7 +24,7 @@ macro_rules! impl_consensus_encoding {
             #[inline]
             fn consensus_decode_from_finite_reader<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
-            ) -> Result<$thing, $crate::consensus::encode::Error> {
+            ) -> Result<$thing, $crate::consensus::Error> {
                 Ok($thing {
                     $($field: $crate::consensus::Decodable::consensus_decode_from_finite_reader(r)?),+
                 })
@@ -33,9 +33,9 @@ macro_rules! impl_consensus_encoding {
             #[inline]
             fn consensus_decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
-            ) -> Result<$thing, $crate::consensus::encode::Error> {
+            ) -> Result<$thing, $crate::consensus::Error> {
                 use crate::io::Read as _;
-                let mut r = r.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
+                let mut r = r.take($crate::consensus::MAX_VEC_SIZE as u64);
                 Ok($thing {
                     $($field: $crate::consensus::Decodable::consensus_decode(r.by_ref())?),+
                 })

@@ -30,7 +30,6 @@ use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use bitcoin::blockdata::locktime::{absolute, relative};
 use bitcoin::blockdata::witness::Witness;
-use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
@@ -38,8 +37,8 @@ use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
-    ecdsa, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
-    Target, Transaction, TxIn, TxOut, Txid, Work,
+    consensus, ecdsa, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -48,7 +47,7 @@ fn serde_regression_block() {
     let segwit = include_bytes!(
         "data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw"
     );
-    let block: Block = deserialize(segwit).unwrap();
+    let block: Block = consensus::deserialize(segwit).unwrap();
     let got = serialize(&block).unwrap();
     let want = include_bytes!("data/serde/block_bincode");
     assert_eq!(got, want)
@@ -101,7 +100,7 @@ fn serde_regression_script() {
 #[test]
 fn serde_regression_txin() {
     let ser = include_bytes!("data/serde/txin_ser");
-    let txin: TxIn = deserialize(ser).unwrap();
+    let txin: TxIn = consensus::deserialize(ser).unwrap();
 
     let got = serialize(&txin).unwrap();
     let want = include_bytes!("data/serde/txin_bincode") as &[_];
@@ -122,7 +121,7 @@ fn serde_regression_txout() {
 #[test]
 fn serde_regression_transaction() {
     let ser = include_bytes!("data/serde/transaction_ser");
-    let tx: Transaction = deserialize(ser).unwrap();
+    let tx: Transaction = consensus::deserialize(ser).unwrap();
     let got = serialize(&tx).unwrap();
     let want = include_bytes!("data/serde/transaction_bincode") as &[_];
     assert_eq!(got, want)

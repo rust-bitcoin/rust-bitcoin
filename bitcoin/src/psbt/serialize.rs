@@ -16,7 +16,7 @@ use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
-use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
+use crate::consensus::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::*;
@@ -233,7 +233,7 @@ impl Serialize for PsbtSighashType {
 
 impl Deserialize for PsbtSighashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        let raw: u32 = encode::deserialize(bytes)?;
+        let raw: u32 = consensus::deserialize(bytes)?;
         Ok(PsbtSighashType { inner: raw })
     }
 }

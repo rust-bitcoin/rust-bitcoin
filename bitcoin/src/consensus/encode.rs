@@ -15,12 +15,7 @@
 //! typically big-endian decimals, etc.)
 //!
 
-// TODO(Tobin): Remove this re-export once consensus refactor is done.
-pub use crate::consensus::decode::{Decodable, Error, ReadExt, MAX_VEC_SIZE};
-// TODO(Tobin): Remove this re-export once consensus refactor is done.
-pub use crate::consensus::types::{CheckedData, VarInt};
-// TODO(Tobin): Remove this re-export once consensus refactor is done.
-pub use crate::consensus::{deserialize, deserialize_partial, serialize, serialize_hex};
+use crate::consensus::VarInt;
 use crate::io;
 
 /// Data which can be encoded in a consensus-consistent way.

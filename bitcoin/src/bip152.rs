@@ -13,7 +13,7 @@ use std::error;
 use hashes::{sha256, siphash24, Hash};
 use internals::impl_array_newtype;
 
-use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
+use crate::consensus::{decode, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
 use crate::{block, io, Block, BlockHash, Transaction};
@@ -80,10 +80,10 @@ impl Encodable for PrefilledTransaction {
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         let idx = VarInt::consensus_decode(r)?.0;
         let idx = u16::try_from(idx)
-            .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
+            .map_err(|_| decode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
         let tx = Transaction::consensus_decode(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
@@ -136,7 +136,7 @@ impl Encodable for ShortId {
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<ShortId, decode::Error> {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
@@ -272,7 +272,7 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode(r)?,
             indexes: {
@@ -284,11 +284,11 @@ impl Decodable for BlockTransactionsRequest {
                 // transactions that would be allowed in a vector.
                 let byte_size = (nb_indexes)
                     .checked_mul(mem::size_of::<Transaction>())
-                    .ok_or(encode::Error::ParseFailed("Invalid length"))?;
-                if byte_size > encode::MAX_VEC_SIZE {
-                    return Err(encode::Error::OversizedVectorAllocation {
+                    .ok_or(decode::Error::ParseFailed("Invalid length"))?;
+                if byte_size > decode::MAX_VEC_SIZE {
+                    return Err(decode::Error::OversizedVectorAllocation {
                         requested: byte_size,
-                        max: encode::MAX_VEC_SIZE,
+                        max: decode::MAX_VEC_SIZE,
                     });
                 }
 
@@ -298,12 +298,12 @@ impl Decodable for BlockTransactionsRequest {
                     let differential: VarInt = Decodable::consensus_decode(r)?;
                     last_index = match last_index.checked_add(differential.0) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(decode::Error::ParseFailed("block index overflow")),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(decode::Error::ParseFailed("block index overflow")),
                     };
                 }
                 indexes
@@ -371,7 +371,7 @@ mod test {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
     use crate::hash_types::TxMerkleNode;
     use crate::{
         Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,

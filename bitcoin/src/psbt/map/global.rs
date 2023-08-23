@@ -4,8 +4,7 @@ use core::convert::TryFrom;
 
 use crate::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::encode::MAX_VEC_SIZE;
-use crate::consensus::{encode, Decodable};
+use crate::consensus::{self, Decodable, MAX_VEC_SIZE};
 use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
@@ -30,10 +29,10 @@ impl Map for Psbt {
                 // Manually serialized to ensure 0-input txs are serialized
                 // without witnesses.
                 let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
+                ret.extend(consensus::serialize(&self.unsigned_tx.version));
+                ret.extend(consensus::serialize(&self.unsigned_tx.input));
+                ret.extend(consensus::serialize(&self.unsigned_tx.output));
+                ret.extend(consensus::serialize(&self.unsigned_tx.lock_time));
                 ret
             },
         });

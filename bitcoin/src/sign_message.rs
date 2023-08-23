@@ -10,7 +10,7 @@ use hashes::{sha256d, Hash, HashEngine};
 
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
-use crate::consensus::{encode, Encodable};
+use crate::consensus::{Encodable, VarInt};
 
 /// The prefix for signed messages using Bitcoin's message signing protocol.
 pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
@@ -195,7 +195,7 @@ mod message_signing {
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let mut engine = sha256d::Hash::engine();
     engine.input(BITCOIN_SIGNED_MSG_PREFIX);
-    let msg_len = encode::VarInt(msg.len() as u64);
+    let msg_len = VarInt(msg.len() as u64);
     msg_len.consensus_encode(&mut engine).expect("engines don't error");
     engine.input(msg.as_bytes());
     sha256d::Hash::from_engine(engine)

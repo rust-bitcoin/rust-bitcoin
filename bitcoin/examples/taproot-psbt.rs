@@ -79,7 +79,6 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
-use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
@@ -87,8 +86,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,
-    Witness,
+    absolute, consensus, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn,
+    TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -111,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|x| x.checked_sub(ABSOLUTE_FEES_IN_SATS))
         .ok_or("Fees more than input amount!")?;
 
-    let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
+    let tx_hex_string = consensus::serialize_hex(&generate_bip86_key_spend_tx(
         &secp,
         // The master extended private key from the descriptor in step 4
         ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
@@ -144,7 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             absolute::LockTime::from_height(1000).unwrap(),
             UTXO_2,
         )?;
-        let tx_hex = encode::serialize_hex(&tx);
+        let tx_hex = consensus::serialize_hex(&tx);
 
         println!("Inheritance funding tx hex:\n\n{}", tx_hex);
         // You can now broadcast the transaction hex:
@@ -158,7 +157,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             absolute::LockTime::from_height(1000).unwrap(),
             to_address,
         )?;
-        let spending_tx_hex = encode::serialize_hex(&spending_tx);
+        let spending_tx_hex = consensus::serialize_hex(&spending_tx);
         println!("\nInheritance spending tx hex:\n\n{}", spending_tx_hex);
         // If you try to broadcast now, the transaction will be rejected as it is timelocked.
         // First mine 900 blocks so we're sure we are over the 1000 block locktime:
@@ -183,7 +182,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             absolute::LockTime::from_height(2000).unwrap(),
             UTXO_3,
         )?;
-        let tx_hex = encode::serialize_hex(&tx);
+        let tx_hex = consensus::serialize_hex(&tx);
 
         println!("Inheritance funding tx hex:\n\n{}", tx_hex);
         // You can now broadcast the transaction hex:
@@ -198,7 +197,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // by the timelock so we can spend it immediately. We set up a new output similar to the first with
         // a locktime that is 'locktime_delta' blocks greater.
         let (tx, _) = benefactor.refresh_tx(1000)?;
-        let tx_hex = encode::serialize_hex(&tx);
+        let tx_hex = consensus::serialize_hex(&tx);
 
         println!("\nRefreshed inheritance tx hex:\n\n{}\n", tx_hex);
 

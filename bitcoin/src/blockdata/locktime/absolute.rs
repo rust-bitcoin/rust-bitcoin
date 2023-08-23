@@ -15,7 +15,7 @@ use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::absolute;
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::{decode, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
 use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
@@ -332,7 +332,7 @@ impl Encodable for LockTime {
 
 impl Decodable for LockTime {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         u32::consensus_decode(r).map(LockTime::from_consensus)
     }
 }

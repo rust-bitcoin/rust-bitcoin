@@ -13,7 +13,7 @@ use hashes::{sha256d, Hash};
 use io::Read as _;
 
 use crate::blockdata::{block, transaction};
-use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
+use crate::consensus::{decode, CheckedData, Decodable, Encodable, VarInt};
 use crate::io;
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
@@ -112,7 +112,7 @@ impl Encodable for CommandString {
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
             if u > 0 {
@@ -407,7 +407,7 @@ impl Decodable for HeaderDeserializationWrapper {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, decode::Error> {
         let len = VarInt::consensus_decode(r)?.0;
         // should be above usual number of items to avoid
         // allocation
@@ -415,7 +415,7 @@ impl Decodable for HeaderDeserializationWrapper {
         for _ in 0..len {
             ret.push(Decodable::consensus_decode(r)?);
             if u8::consensus_decode(r)? != 0u8 {
-                return Err(encode::Error::ParseFailed(
+                return Err(decode::Error::ParseFailed(
                     "Headers message should not contain transactions",
                 ));
             }
@@ -424,7 +424,7 @@ impl Decodable for HeaderDeserializationWrapper {
     }
 
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Self::consensus_decode_from_finite_reader(r.take(MAX_MSG_SIZE as u64).by_ref())
     }
 }
@@ -432,7 +432,7 @@ impl Decodable for HeaderDeserializationWrapper {
 impl Decodable for RawNetworkMessage {
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, decode::Error> {
         let magic = Decodable::consensus_decode_from_finite_reader(r)?;
         let cmd = CommandString::consensus_decode_from_finite_reader(r)?;
         let checked_data = CheckedData::consensus_decode_from_finite_reader(r)?;
@@ -529,7 +529,7 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Self::consensus_decode_from_finite_reader(r.take(MAX_MSG_SIZE as u64).by_ref())
     }
 }
@@ -547,7 +547,7 @@ mod test {
     use crate::blockdata::block::{self, Block};
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::Transaction;
-    use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
+    use crate::consensus::{deserialize, deserialize_partial, serialize};
     use crate::internal_macros::hex;
     use crate::network::Network;
     use crate::p2p::address::{AddrV2, AddrV2Message, Address};

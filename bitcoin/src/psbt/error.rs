@@ -6,7 +6,7 @@ use internals::write_err;
 
 use crate::bip32::ExtendedPubKey;
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::encode;
+use crate::consensus::decode;
 use crate::prelude::*;
 use crate::psbt::raw;
 use crate::{hashes, io};
@@ -71,7 +71,7 @@ pub enum Error {
     /// global extended public key has inconsistent key sources
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
-    ConsensusEncoding(encode::Error),
+    ConsensusEncoding(decode::Error),
     /// Negative fee
     NegativeFee,
     /// Integer overflow in fee calculation
@@ -207,8 +207,8 @@ impl From<hashes::FromSliceError> for Error {
     fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
 }
 
-impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Self { Error::ConsensusEncoding(e) }
+impl From<decode::Error> for Error {
+    fn from(e: decode::Error) -> Self { Error::ConsensusEncoding(e) }
 }
 
 impl From<io::Error> for Error {

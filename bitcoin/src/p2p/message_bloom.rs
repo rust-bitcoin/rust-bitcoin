@@ -7,7 +7,7 @@
 
 use std::io;
 
-use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::consensus::{decode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 
 /// `filterload` message sets the current bloom filter
@@ -48,12 +48,12 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,
             2 => BloomFlags::PubkeyOnly,
-            _ => return Err(encode::Error::ParseFailed("unknown bloom flag")),
+            _ => return Err(decode::Error::ParseFailed("unknown bloom flag")),
         })
     }
 }

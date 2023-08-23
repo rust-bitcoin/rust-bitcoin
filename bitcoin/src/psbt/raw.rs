@@ -10,8 +10,8 @@ use core::convert::TryFrom;
 use core::fmt;
 
 use super::serialize::{Deserialize, Serialize};
-use crate::consensus::encode::{
-    self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
+use crate::consensus::{
+    decode, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
 };
 use crate::io;
 use crate::prelude::*;
@@ -84,7 +84,7 @@ impl Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE as u64 {
-            return Err(encode::Error::OversizedVectorAllocation {
+            return Err(decode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
             })?;
@@ -158,7 +158,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u8> + Into<u8>,
 {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_u8()?);
         let key = read_to_end(r)?;
