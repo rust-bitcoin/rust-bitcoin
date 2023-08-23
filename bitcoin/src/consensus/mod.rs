@@ -8,6 +8,7 @@
 
 pub mod decode;
 pub mod encode;
+mod impls;
 pub mod params;
 mod types;
 #[cfg(feature = "bitcoinconsensus")]
