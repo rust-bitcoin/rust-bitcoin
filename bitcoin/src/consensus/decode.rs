@@ -133,6 +133,36 @@ impl<R: io::Read + ?Sized> ReadExt for R {
     }
 }
 
+/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious.
+///
+/// This function relies on reader being bound in amount of data
+/// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
+#[inline]
+pub(crate) fn read_bytes_from_finite_reader<D: io::Read + ?Sized>(
+    d: &mut D,
+    mut opts: ReadBytesFromFiniteReaderOpts,
+) -> Result<Vec<u8>, Error> {
+    let mut ret = vec![];
+
+    assert_ne!(opts.chunk_size, 0);
+
+    while opts.len > 0 {
+        let chunk_start = ret.len();
+        let chunk_size = core::cmp::min(opts.len, opts.chunk_size);
+        let chunk_end = chunk_start + chunk_size;
+        ret.resize(chunk_end, 0u8);
+        d.read_slice(&mut ret[chunk_start..chunk_end])?;
+        opts.len -= chunk_size;
+    }
+
+    Ok(ret)
+}
+
+pub(crate) struct ReadBytesFromFiniteReaderOpts {
+    pub(crate) len: usize,
+    pub(crate) chunk_size: usize,
+}
+
 /// A decoding error.
 #[derive(Debug)]
 #[non_exhaustive]
