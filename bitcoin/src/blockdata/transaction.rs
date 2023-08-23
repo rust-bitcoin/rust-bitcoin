@@ -713,7 +713,11 @@ impl Transaction {
     }
 
     /// Returns the size of this transaction excluding the witness data.
-    pub fn strippedsize(&self) -> usize {
+    #[deprecated(since = "0.31.0", note = "Use Transaction::stripped_size() instead")]
+    pub fn strippedsize(&self) -> usize { Self::stripped_size(self) }
+
+    /// Returns the size of this transaction excluding the witness data.
+    pub fn stripped_size(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
             input_size += TxIn::BASE_WEIGHT.to_wu() as usize
@@ -1394,7 +1398,7 @@ mod tests {
         assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
-        assert_eq!(realtx.strippedsize(), tx_bytes.len());
+        assert_eq!(realtx.stripped_size(), tx_bytes.len());
     }
 
     #[test]
@@ -1442,7 +1446,7 @@ mod tests {
         //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
         let expected_strippedsize =
             (EXPECTED_WEIGHT.to_wu() as usize - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1);
-        assert_eq!(realtx.strippedsize(), expected_strippedsize);
+        assert_eq!(realtx.stripped_size(), expected_strippedsize);
         // Construct a transaction without the witness data.
         let mut tx_without_witness = realtx;
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
@@ -1452,7 +1456,7 @@ mod tests {
         );
         assert_eq!(tx_without_witness.size(), expected_strippedsize);
         assert_eq!(tx_without_witness.vsize(), expected_strippedsize);
-        assert_eq!(tx_without_witness.strippedsize(), expected_strippedsize);
+        assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.

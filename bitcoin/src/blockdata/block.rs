@@ -286,9 +286,16 @@ impl Block {
         self.base_size() + txs_size
     }
 
-    /// Returns the strippedsize of the block.
-    pub fn strippedsize(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::strippedsize).sum();
+    /// Returns the stripped size of the block.
+    #[deprecated(
+        since = "0.31.0",
+        note = "Truncates on 32-bit machines, Use Block::stripped_size() instead"
+    )]
+    pub fn strippedsize(&self) -> usize { Self::stripped_size(self) }
+
+    /// Returns the stripped size of the block.
+    pub fn stripped_size(&self) -> usize {
+        let txs_size: usize = self.txdata.iter().map(Transaction::stripped_size).sum();
         self.base_size() + txs_size
     }
 
@@ -481,7 +488,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.size(), some_block.len());
-        assert_eq!(real_decode.strippedsize(), some_block.len());
+        assert_eq!(real_decode.stripped_size(), some_block.len());
         assert_eq!(
             real_decode.weight(),
             Weight::from_non_witness_data_size(some_block.len() as u64)
@@ -523,7 +530,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.size(), segwit_block.len());
-        assert_eq!(real_decode.strippedsize(), 4283);
+        assert_eq!(real_decode.stripped_size(), 4283);
         assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
         assert!(real_decode.check_witness_commitment());
