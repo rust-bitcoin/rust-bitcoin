@@ -10,6 +10,8 @@ pub mod decode;
 pub mod encode;
 mod impls;
 pub mod params;
+#[cfg(test)]
+mod tests;
 mod types;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
