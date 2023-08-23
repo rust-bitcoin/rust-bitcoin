@@ -16,8 +16,7 @@ use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
 
-use super::encode::Error as ConsensusError;
-use super::{Decodable, Encodable};
+use super::{decode, Decodable, Encodable};
 use crate::io;
 
 /// Hex-encoding strategy
@@ -365,29 +364,29 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 
 enum DecodeError<E> {
     TooManyBytes,
-    Consensus(ConsensusError),
+    Consensus(decode::Error),
     Other(E),
 }
 
 // not a trait impl because we panic on some variants
-fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
+fn consensus_error_into_serde<E: serde::de::Error>(error: decode::Error) -> E {
     match error {
-        ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
-        ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
+        decode::Error::Io(error) => panic!("unexpected IO error {:?}", error),
+        decode::Error::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",
             requested, max
         )),
-        ConsensusError::InvalidChecksum { expected, actual } => E::invalid_value(
+        decode::Error::InvalidChecksum { expected, actual } => E::invalid_value(
             Unexpected::Bytes(&actual),
             &DisplayExpected(format_args!(
                 "checksum {:02x}{:02x}{:02x}{:02x}",
                 expected[0], expected[1], expected[2], expected[3]
             )),
         ),
-        ConsensusError::NonMinimalVarInt =>
+        decode::Error::NonMinimalVarInt =>
             E::custom(format_args!("compact size was not encoded minimally")),
-        ConsensusError::ParseFailed(msg) => E::custom(msg),
-        ConsensusError::UnsupportedSegwitFlag(flag) =>
+        decode::Error::ParseFailed(msg) => E::custom(msg),
+        decode::Error::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
     }
 }
@@ -434,9 +433,9 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
             },
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
-            (Err(ConsensusError::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
+            (Err(decode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
             (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
-            (Err(ConsensusError::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
+            (Err(decode::Error::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
         }
     }
