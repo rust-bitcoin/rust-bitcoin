@@ -9,11 +9,13 @@
 pub mod decode;
 pub mod encode;
 pub mod params;
+mod types;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
 
 pub use self::encode::{Decodable, Encodable, ReadExt, WriteExt};
 pub use self::params::Params;
+pub use self::types::{CheckedData, VarInt};
 #[cfg(feature = "bitcoinconsensus")]
 pub use self::validation::{
     verify_script, verify_script_with_flags, verify_transaction, verify_transaction_with_flags,
