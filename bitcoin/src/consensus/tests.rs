@@ -4,9 +4,9 @@ use core::fmt;
 use core::mem::{self, discriminant};
 
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
-use crate::consensus::decode::{Error, ReadBytesFromFiniteReaderOpts, MAX_VEC_SIZE};
+use crate::consensus::decode::{self, Decodable, ReadBytesFromFiniteReaderOpts, MAX_VEC_SIZE};
 use crate::consensus::{
-    decode, deserialize, deserialize_partial, serialize, CheckedData, Decodable, Encodable, VarInt,
+    deserialize, deserialize_partial, serialize, CheckedData, Encodable, VarInt,
 };
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode};
 use crate::io;
@@ -100,7 +100,7 @@ fn test_varint_len(varint: VarInt, expected: usize) {
     assert_eq!(varint.len(), expected);
 }
 
-fn test_varint_encode(n: u8, x: &[u8]) -> Result<VarInt, Error> {
+fn test_varint_encode(n: u8, x: &[u8]) -> Result<VarInt, decode::Error> {
     let mut input = [0u8; 9];
     input[0] = n;
     input[1..x.len() + 1].copy_from_slice(x);
@@ -112,50 +112,50 @@ fn deserialize_nonminimal_vec() {
     // Check the edges for variant int
     assert_eq!(
         discriminant(&test_varint_encode(0xFF, &(0x100000000_u64 - 1).to_le_bytes()).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&test_varint_encode(0xFE, &(0x10000_u64 - 1).to_le_bytes()).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&test_varint_encode(0xFD, &(0xFD_u64 - 1).to_le_bytes()).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
 
     assert_eq!(
         discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(
             &deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
                 .unwrap_err()
         ),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
     assert_eq!(
         discriminant(
             &deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00])
                 .unwrap_err()
         ),
-        discriminant(&Error::NonMinimalVarInt)
+        discriminant(&decode::Error::NonMinimalVarInt)
     );
 
     let mut vec_256 = vec![0; 259];
@@ -270,7 +270,7 @@ fn deserialize_vec_test() {
     ])
     .is_err());
 
-    let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+    let rand_io_err = decode::Error::Io(io::Error::new(io::ErrorKind::Other, ""));
 
     // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
     // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
@@ -297,7 +297,7 @@ where
     Vec<T>: Decodable,
     T: fmt::Debug,
 {
-    let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+    let rand_io_err = decode::Error::Io(io::Error::new(io::ErrorKind::Other, ""));
     let varint = VarInt((MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
     let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
     assert_eq!(discriminant(&err), discriminant(&rand_io_err));
