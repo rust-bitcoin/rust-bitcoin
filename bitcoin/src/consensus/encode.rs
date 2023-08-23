@@ -22,6 +22,7 @@ use hashes::{sha256, sha256d, Hash};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::consensus::decode::{read_bytes_from_finite_reader, ReadBytesFromFiniteReaderOpts};
 // TODO(Tobin): Remove this re-export once consensus refactor is done.
 pub use crate::consensus::decode::{Decodable, Error, ReadExt, MAX_VEC_SIZE};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
@@ -448,36 +449,6 @@ pub(crate) fn consensus_encode_with_size<W: io::Write>(
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut w)?;
     w.emit_slice(data)?;
     Ok(vi_len + data.len())
-}
-
-struct ReadBytesFromFiniteReaderOpts {
-    len: usize,
-    chunk_size: usize,
-}
-
-/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious.
-///
-/// This function relies on reader being bound in amount of data
-/// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
-#[inline]
-fn read_bytes_from_finite_reader<D: io::Read>(
-    mut d: D,
-    mut opts: ReadBytesFromFiniteReaderOpts,
-) -> Result<Vec<u8>, Error> {
-    let mut ret = vec![];
-
-    assert_ne!(opts.chunk_size, 0);
-
-    while opts.len > 0 {
-        let chunk_start = ret.len();
-        let chunk_size = core::cmp::min(opts.len, opts.chunk_size);
-        let chunk_end = chunk_start + chunk_size;
-        ret.resize(chunk_end, 0u8);
-        d.read_slice(&mut ret[chunk_start..chunk_end])?;
-        opts.len -= chunk_size;
-    }
-
-    Ok(ret)
 }
 
 impl Encodable for Vec<u8> {
