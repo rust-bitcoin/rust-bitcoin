@@ -12,6 +12,8 @@ mod impls;
 pub mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
+#[cfg(test)]
+mod tests;
 mod types;
 #[cfg(feature = "bitcoinconsensus")]
 pub mod validation;
