@@ -16,14 +16,15 @@
 //!
 
 use core::convert::{From, TryFrom};
-use core::{fmt, mem, u32};
+use core::{mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
-use internals::write_err;
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::block;
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+// TODO(Tobin): Remove this re-export once consensus refactor is done.
+pub use crate::consensus::decode::Error;
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
@@ -33,72 +34,6 @@ use crate::p2p::{
 };
 use crate::prelude::*;
 use crate::taproot::TapLeafHash;
-
-/// Encoding error.
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// And I/O error.
-    Io(io::Error),
-    /// Tried to allocate an oversized vector.
-    OversizedVectorAllocation {
-        /// The capacity requested.
-        requested: usize,
-        /// The maximum capacity.
-        max: usize,
-    },
-    /// Checksum was invalid.
-    InvalidChecksum {
-        /// The expected checksum.
-        expected: [u8; 4],
-        /// The invalid checksum.
-        actual: [u8; 4],
-    },
-    /// VarInt was encoded in a non-minimal way.
-    NonMinimalVarInt,
-    /// Parsing error.
-    ParseFailed(&'static str),
-    /// Unsupported Segwit flag.
-    UnsupportedSegwitFlag(u8),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            Io(ref e) => write_err!(f, "IO error"; e),
-            OversizedVectorAllocation { requested: ref r, max: ref m } =>
-                write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
-            InvalidChecksum { expected: ref e, actual: ref a } =>
-                write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
-            NonMinimalVarInt => write!(f, "non-minimal varint"),
-            ParseFailed(ref s) => write!(f, "parse failed: {}", s),
-            UnsupportedSegwitFlag(ref swflag) =>
-                write!(f, "unsupported segwit version: {}", swflag),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match self {
-            Io(e) => Some(e),
-            OversizedVectorAllocation { .. }
-            | InvalidChecksum { .. }
-            | NonMinimalVarInt
-            | ParseFailed(_)
-            | UnsupportedSegwitFlag(_) => None,
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self { Error::Io(error) }
-}
 
 /// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
