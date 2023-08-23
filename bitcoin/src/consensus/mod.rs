@@ -6,6 +6,7 @@
 //! conform to Bitcoin consensus.
 //!
 
+pub mod decode;
 pub mod encode;
 pub mod params;
 #[cfg(feature = "bitcoinconsensus")]
