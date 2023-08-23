@@ -23,6 +23,17 @@ pub use crate::consensus::types::{CheckedData, VarInt};
 pub use crate::consensus::{deserialize, deserialize_partial, serialize, serialize_hex};
 use crate::io;
 
+/// Data which can be encoded in a consensus-consistent way.
+pub trait Encodable {
+    /// Encodes an object with a well-defined format.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
+    fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
+}
+
 /// Extensions of `Write` to encode data as per Bitcoin consensus.
 pub trait WriteExt: io::Write {
     /// Outputs a 64-bit unsigned integer.
@@ -75,17 +86,6 @@ impl<W: io::Write + ?Sized> WriteExt for W {
     fn emit_bool(&mut self, v: bool) -> Result<(), io::Error> { self.write_all(&[v as u8]) }
     #[inline]
     fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error> { self.write_all(v) }
-}
-
-/// Data which can be encoded in a consensus-consistent way.
-pub trait Encodable {
-    /// Encodes an object with a well-defined format.
-    ///
-    /// # Returns
-    ///
-    /// The number of bytes written on success. The only errors returned are errors propagated from
-    /// the writer.
-    fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
 }
 
 pub(crate) fn consensus_encode_with_size<W: io::Write>(
