@@ -37,7 +37,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 bech32 = { version = "0.9.0", default-features = false }
-hashes = { package = "bitcoin_hashes", version = "0.12.0", default-features = false }
+hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
 hex_lit = "0.1.1"
 
