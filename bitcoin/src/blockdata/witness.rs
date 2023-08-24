@@ -213,7 +213,7 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 
 impl Encodable for Witness {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = VarInt(self.witness_elements as u64);
+        let len = VarInt::from(self.witness_elements);
         len.consensus_encode(w)?;
         let content_with_indices_len = self.content.len();
         let indices_size = self.witness_elements * 4;
@@ -233,14 +233,14 @@ impl Witness {
         let index_size = witness_elements * 4;
         let content_size = slice
             .iter()
-            .map(|elem| elem.as_ref().len() + VarInt(elem.as_ref().len() as u64).len())
+            .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).len())
             .sum();
 
         let mut content = vec![0u8; content_size + index_size];
         let mut cursor = 0usize;
         for (i, elem) in slice.iter().enumerate() {
             encode_cursor(&mut content, content_size, i, cursor);
-            let elem_len_varint = VarInt(elem.as_ref().len() as u64);
+            let elem_len_varint = VarInt::from(elem.as_ref().len());
             elem_len_varint
                 .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.len()])
                 .expect("writers on vec don't errors, space granted by content_size");
@@ -268,8 +268,8 @@ impl Witness {
 
     /// Returns the bytes required when this Witness is consensus encoded.
     pub fn serialized_len(&self) -> usize {
-        self.iter().map(|el| VarInt(el.len() as u64).len() + el.len()).sum::<usize>()
-            + VarInt(self.witness_elements as u64).len()
+        self.iter().map(|el| VarInt::from(el.len()).len() + el.len()).sum::<usize>()
+            + VarInt::from(self.witness_elements).len()
     }
 
     /// Clear the witness.
@@ -288,7 +288,7 @@ impl Witness {
     fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;
-        let element_len_varint = VarInt(new_element.len() as u64);
+        let element_len_varint = VarInt::from(new_element.len());
         let current_content_len = self.content.len();
         let new_item_total_len = element_len_varint.len() + new_element.len();
         self.content.resize(current_content_len + new_item_total_len + 4, 0);

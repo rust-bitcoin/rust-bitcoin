@@ -399,6 +399,21 @@ impl VarInt {
     }
 }
 
+/// Implements `From<T> for VarInt`.
+///
+/// `VarInt`s are consensus encoded as `u64`s so we store them as such. Casting from any integer size smaller than or equal to `u64` is always safe and the cast value is correctly handled by `consensus_encode`.
+macro_rules! impl_var_int_from {
+    ($($ty:tt),*) => {
+        $(
+            /// Creates a `VarInt` from a `usize` by casting the to a `u64`.
+            impl From<$ty> for VarInt {
+                fn from(x: $ty) -> Self { VarInt(x as u64) }
+            }
+        )*
+    }
+}
+impl_var_int_from!(u8, u16, u32, u64, usize);
+
 impl Encodable for VarInt {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -436,7 +451,7 @@ impl Decodable for VarInt {
                 if x < 0x100000000 {
                     Err(self::Error::NonMinimalVarInt)
                 } else {
-                    Ok(VarInt(x))
+                    Ok(VarInt::from(x))
                 }
             }
             0xFE => {
@@ -444,7 +459,7 @@ impl Decodable for VarInt {
                 if x < 0x10000 {
                     Err(self::Error::NonMinimalVarInt)
                 } else {
-                    Ok(VarInt(x as u64))
+                    Ok(VarInt::from(x))
                 }
             }
             0xFD => {
@@ -452,10 +467,10 @@ impl Decodable for VarInt {
                 if x < 0xFD {
                     Err(self::Error::NonMinimalVarInt)
                 } else {
-                    Ok(VarInt(x as u64))
+                    Ok(VarInt::from(x))
                 }
             }
-            n => Ok(VarInt(n as u64)),
+            n => Ok(VarInt::from(n)),
         }
     }
 }

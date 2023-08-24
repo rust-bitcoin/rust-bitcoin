@@ -276,7 +276,7 @@ impl Block {
     }
 
     /// base_size == size of header + size of encoded transaction count.
-    fn base_size(&self) -> usize { 80 + VarInt(self.txdata.len() as u64).len() }
+    fn base_size(&self) -> usize { 80 + VarInt::from(self.txdata.len()).len() }
 
     /// Returns the size of the block.
     ///

@@ -335,7 +335,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += VarInt(self.0.len() as u64).consensus_encode(w)?;
+        len += VarInt::from(self.0.len()).consensus_encode(w)?;
         for header in self.0.iter() {
             len += header.consensus_encode(w)?;
             len += 0u8.consensus_encode(w)?;
