@@ -253,5 +253,5 @@ impl std::error::Error for Error {
 }
 
 impl From<bech32::Error> for Error {
-    fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
+    fn from(e: bech32::Error) -> Self { Self::Bech32(e) }
 }
