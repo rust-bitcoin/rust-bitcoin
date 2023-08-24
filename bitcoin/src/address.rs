@@ -66,8 +66,8 @@ pub enum Error {
         /// The actual Bech32 variant encoded in the address representation.
         found: bech32::Variant,
     },
-    /// A witness version conversion/parsing error.
-    WitnessVersion(witness_version::Error),
+    /// A witness version construction error.
+    WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
     WitnessProgram(witness_program::Error),
     /// An uncompressed pubkey was used where it is not allowed.
@@ -100,8 +100,7 @@ impl fmt::Display for Error {
                 "invalid bech32 checksum variant found {:?} when {:?} was expected",
                 found, expected
             ),
-            Error::WitnessVersion(ref e) =>
-                write_err!(f, "witness version conversion/parsing error"; e),
+            Error::WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
             Error::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             Error::UncompressedPubkey =>
                 write!(f, "an uncompressed pubkey was used where it is not allowed"),
@@ -155,8 +154,8 @@ impl From<bech32::Error> for Error {
     fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
 }
 
-impl From<witness_version::Error> for Error {
-    fn from(e: witness_version::Error) -> Error { Error::WitnessVersion(e) }
+impl From<witness_version::TryFromError> for Error {
+    fn from(e: witness_version::TryFromError) -> Error { Error::WitnessVersion(e) }
 }
 
 impl From<witness_program::Error> for Error {
