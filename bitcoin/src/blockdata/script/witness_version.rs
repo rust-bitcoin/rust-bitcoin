@@ -98,31 +98,12 @@ impl FromStr for WitnessVersion {
 impl TryFrom<bech32::u5> for WitnessVersion {
     type Error = Error;
 
-    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
-    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    ///
-    /// If the integer does not correspond to any witness version, errors with [`Error::Invalid`].
     fn try_from(value: bech32::u5) -> Result<Self, Self::Error> { Self::try_from(value.to_u8()) }
 }
 
 impl TryFrom<u8> for WitnessVersion {
     type Error = Error;
 
-    /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    ///
-    /// If the integer does not correspond to any witness version, errors with [`Error::Invalid`].
     fn try_from(no: u8) -> Result<Self, Self::Error> {
         use WitnessVersion::*;
 
@@ -152,16 +133,6 @@ impl TryFrom<u8> for WitnessVersion {
 impl TryFrom<Opcode> for WitnessVersion {
     type Error = Error;
 
-    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`).
-    ///
-    /// # Errors
-    ///
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::Malformed`].
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
@@ -175,17 +146,6 @@ impl TryFrom<Opcode> for WitnessVersion {
 impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
     type Error = Error;
 
-    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
-    /// byte value within `1..=16` range.
-    ///
-    /// # Errors
-    ///
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::Malformed`] for the rest of opcodes.
     fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
         match instruction {
             Instruction::Op(op) => WitnessVersion::try_from(op),
