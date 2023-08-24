@@ -436,7 +436,7 @@ impl Encodable for PartialMerkleTree {
         ret += self.hashes.consensus_encode(w)?;
 
         let nb_bytes_for_bits = (self.bits.len() + 7) / 8;
-        ret += encode::VarInt(nb_bytes_for_bits as u64).consensus_encode(w)?;
+        ret += encode::VarInt::from(nb_bytes_for_bits).consensus_encode(w)?;
         for chunk in self.bits.chunks(8) {
             let mut byte = 0u8;
             for (i, bit) in chunk.iter().enumerate() {

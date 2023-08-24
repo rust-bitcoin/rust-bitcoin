@@ -227,7 +227,7 @@ impl TxIn {
         // Size in vbytes:
         // previous_output (36) + script_sig varint len + script_sig push + sequence (4)
         Weight::from_non_witness_data_size(
-            (36 + VarInt(script_sig_size as u64).len() + script_sig_size + 4) as u64,
+            (36 + VarInt::from(script_sig_size).len() + script_sig_size + 4) as u64,
         )
     }
 
@@ -501,9 +501,7 @@ impl TxOut {
         let script_len = self.script_pubkey.len();
         // In vbytes:
         // value (8) + script varint len + script push
-        Weight::from_non_witness_data_size(
-            (8 + VarInt(script_len as u64).len() + script_len) as u64,
-        )
+        Weight::from_non_witness_data_size((8 + VarInt::from(script_len).len() + script_len) as u64)
     }
 
     /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust

@@ -74,7 +74,7 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 impl Encodable for PrefilledTransaction {
     #[inline]
     fn consensus_encode<S: io::Write + ?Sized>(&self, mut s: &mut S) -> Result<usize, io::Error> {
-        Ok(VarInt(self.idx as u64).consensus_encode(&mut s)? + self.tx.consensus_encode(&mut s)?)
+        Ok(VarInt::from(self.idx).consensus_encode(&mut s)? + self.tx.consensus_encode(&mut s)?)
     }
 }
 

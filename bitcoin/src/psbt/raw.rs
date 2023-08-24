@@ -104,7 +104,7 @@ impl Key {
 impl Serialize for Key {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        VarInt((self.key.len() + 1) as u64)
+        VarInt::from(self.key.len() + 1)
             .consensus_encode(&mut buf)
             .expect("in-memory writers don't error");
 
