@@ -33,9 +33,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
-use bitcoin::bip32::{
-    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath,
-};
+use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
@@ -97,14 +95,14 @@ fn main() -> Result<()> {
 /// An example of an offline signer i.e., a cold-storage device.
 struct ColdStorage {
     /// The master extended private key.
-    master_xpriv: ExtendedPrivKey,
+    master_xpriv: Xpriv,
     /// The master extended public key.
-    master_xpub: ExtendedPubKey,
+    master_xpub: Xpub,
 }
 
 /// The data exported from an offline wallet to enable creation of a watch-only online wallet.
 /// (wallet, fingerprint, account_0_xpub, input_utxo_xpub)
-type ExportData = (ColdStorage, Fingerprint, ExtendedPubKey, ExtendedPubKey);
+type ExportData = (ColdStorage, Fingerprint, Xpub, Xpub);
 
 impl ColdStorage {
     /// Constructs a new `ColdStorage` signer.
@@ -113,18 +111,18 @@ impl ColdStorage {
     ///
     /// The newly created signer along with the data needed to configure a watch-only wallet.
     fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
-        let master_xpriv = ExtendedPrivKey::from_str(xpriv)?;
-        let master_xpub = ExtendedPubKey::from_priv(secp, &master_xpriv);
+        let master_xpriv = Xpriv::from_str(xpriv)?;
+        let master_xpub = Xpub::from_priv(secp, &master_xpriv);
 
         // Hardened children require secret data to derive.
 
         let path = "m/84h/0h/0h".into_derivation_path()?;
         let account_0_xpriv = master_xpriv.derive_priv(secp, &path)?;
-        let account_0_xpub = ExtendedPubKey::from_priv(secp, &account_0_xpriv);
+        let account_0_xpub = Xpub::from_priv(secp, &account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
         let input_xpriv = master_xpriv.derive_priv(secp, &path)?;
-        let input_xpub = ExtendedPubKey::from_priv(secp, &input_xpriv);
+        let input_xpub = Xpub::from_priv(secp, &input_xpriv);
 
         let wallet = ColdStorage { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
@@ -151,9 +149,9 @@ impl ColdStorage {
 /// An example of an watch-only online wallet.
 struct WatchOnly {
     /// The xpub for account 0 derived from derivation path "m/84h/0h/0h".
-    account_0_xpub: ExtendedPubKey,
+    account_0_xpub: Xpub,
     /// The xpub derived from `INPUT_UTXO_DERIVATION_PATH`.
-    input_xpub: ExtendedPubKey,
+    input_xpub: Xpub,
     /// The master extended pubkey fingerprint.
     master_fingerprint: Fingerprint,
 }
@@ -166,11 +164,7 @@ impl WatchOnly {
     ///
     /// The reason for importing the `input_xpub` is so one can use bitcoind to grab a valid input
     /// to verify the workflow presented in this file.
-    fn new(
-        account_0_xpub: ExtendedPubKey,
-        input_xpub: ExtendedPubKey,
-        master_fingerprint: Fingerprint,
-    ) -> Self {
+    fn new(account_0_xpub: Xpub, input_xpub: Xpub, master_fingerprint: Fingerprint) -> Self {
         WatchOnly { account_0_xpub, input_xpub, master_fingerprint }
     }
 

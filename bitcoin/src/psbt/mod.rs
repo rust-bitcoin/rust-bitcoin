@@ -15,7 +15,7 @@ use hashes::Hash;
 use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
-use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
+use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
@@ -45,7 +45,7 @@ pub struct Psbt {
     pub version: u32,
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32.
-    pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
+    pub xpub: BTreeMap<Xpub, KeySource>,
     /// Global proprietary key-value pairs.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -508,7 +508,7 @@ pub trait GetKey {
     ) -> Result<Option<PrivateKey>, Self::Error>;
 }
 
-impl GetKey for ExtendedPrivKey {
+impl GetKey for Xpriv {
     type Error = GetKeyError;
 
     fn get_key<C: Signing>(
@@ -541,7 +541,7 @@ pub type SigningErrors = BTreeMap<usize, SignError>;
 macro_rules! impl_get_key_for_set {
     ($set:ident) => {
 
-impl GetKey for $set<ExtendedPrivKey> {
+impl GetKey for $set<Xpriv> {
     type Error = GetKeyError;
 
     fn get_key<C: Signing>(
@@ -831,7 +831,7 @@ mod tests {
     use secp256k1::{All, SecretKey};
 
     use super::*;
-    use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
+    use crate::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
@@ -878,7 +878,7 @@ mod tests {
 
         let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
-        let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
+        let mut sk: Xpriv = Xpriv::new_master(Bitcoin, &seed).unwrap();
 
         let fprint = sk.fingerprint(secp);
 
@@ -895,7 +895,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk = ExtendedPubKey::from_priv(secp, &sk);
+        let pk = Xpub::from_priv(secp, &sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
@@ -1040,7 +1040,7 @@ mod tests {
         let psbt = Psbt {
             version: 0,
             xpub: {
-                let xpub: ExtendedPubKey =
+                let xpub: Xpub =
                     "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
                     QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
                 vec![(xpub, key_source)].into_iter().collect()
