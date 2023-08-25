@@ -700,7 +700,7 @@ mod tests {
 
         let txid1 = txids[0];
         let txid2 = txids[1];
-        let txids = vec![txid1, txid2];
+        let txids = [txid1, txid2];
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
