@@ -100,6 +100,13 @@ impl Weight {
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
     pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+
+    /// Scale by witness factor.
+    ///
+    /// Computes `self * WITNESS_SCALE_FACTOR` returning `None` if an overflow occurred.
+    pub fn scale_by_witness_factor(self) -> Option<Self> {
+        Self::checked_mul(self, Self::WITNESS_SCALE_FACTOR)
+    }
 }
 
 /// Alternative will display the unit.
@@ -214,6 +221,15 @@ mod tests {
         assert_eq!(Weight(1), result);
 
         let result = Weight(2).checked_div(0);
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn scale_by_witness_factor() {
+        let result = Weight(1).scale_by_witness_factor().expect("expected weight unit");
+        assert_eq!(Weight(4), result);
+
+        let result = Weight::MAX.scale_by_witness_factor();
         assert_eq!(None, result);
     }
 }
