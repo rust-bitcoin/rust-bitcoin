@@ -39,7 +39,7 @@ impl<T: Tag> Hash<T> {
 
 impl<T: Tag> Copy for Hash<T> {}
 impl<T: Tag> Clone for Hash<T> {
-    fn clone(&self) -> Self { Hash(self.0, self.1) }
+    fn clone(&self) -> Self { *self }
 }
 impl<T: Tag> PartialEq for Hash<T> {
     fn eq(&self, other: &Hash<T>) -> bool { self.0 == other.0 }
