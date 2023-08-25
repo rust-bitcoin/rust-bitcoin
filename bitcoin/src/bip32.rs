@@ -26,6 +26,15 @@ use crate::io::Write;
 use crate::network::Network;
 use crate::prelude::*;
 
+/// Version bytes for extended public keys on the Bitcoin network.
+const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
+/// Version bytes for extended private keys on the Bitcoin network.
+const VERSION_BYTES_MAINNET_PRIVATE: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
+/// Version bytes for extended public keys on any of the testnet networks.
+const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
+/// Version bytes for extended private keys on any of the testnet networks.
+const VERSION_BYTES_TESTNETS_PRIVATE: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
+
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
@@ -623,11 +632,13 @@ impl Xpriv {
             return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
-        let network = match data {
-            [0x04u8, 0x88, 0xAD, 0xE4, ..] => Network::Bitcoin,
-            [0x04u8, 0x35, 0x83, 0x94, ..] => Network::Testnet,
-            [b0, b1, b2, b3, ..] => return Err(Error::UnknownVersion([*b0, *b1, *b2, *b3])),
-            _ => unreachable!("length checked above"),
+        let network = if data.starts_with(&VERSION_BYTES_MAINNET_PRIVATE) {
+            Network::Bitcoin
+        } else if data.starts_with(&VERSION_BYTES_TESTNETS_PRIVATE) {
+            Network::Testnet
+        } else {
+            let (b0, b1, b2, b3) = (data[0], data[1], data[2], data[3]);
+            return Err(Error::UnknownVersion([b0, b1, b2, b3]));
         };
 
         Ok(Xpriv {
@@ -647,12 +658,10 @@ impl Xpriv {
     /// Extended private key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(
-            &match self.network {
-                Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-                Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-            }[..],
-        );
+        ret[0..4].copy_from_slice(&match self.network {
+            Network::Bitcoin => VERSION_BYTES_MAINNET_PRIVATE,
+            Network::Testnet | Network::Signet | Network::Regtest => VERSION_BYTES_TESTNETS_PRIVATE,
+        });
         ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
@@ -755,11 +764,13 @@ impl Xpub {
             return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
-        let network = match data {
-            [0x04u8, 0x88, 0xB2, 0x1E, ..] => Network::Bitcoin,
-            [0x04u8, 0x35, 0x87, 0xCF, ..] => Network::Testnet,
-            [b0, b1, b2, b3, ..] => return Err(Error::UnknownVersion([*b0, *b1, *b2, *b3])),
-            _ => unreachable!("length checked above"),
+        let network = if data.starts_with(&VERSION_BYTES_MAINNET_PUBLIC) {
+            Network::Bitcoin
+        } else if data.starts_with(&VERSION_BYTES_TESTNETS_PUBLIC) {
+            Network::Testnet
+        } else {
+            let (b0, b1, b2, b3) = (data[0], data[1], data[2], data[3]);
+            return Err(Error::UnknownVersion([b0, b1, b2, b3]));
         };
 
         Ok(Xpub {
@@ -779,12 +790,10 @@ impl Xpub {
     /// Extended public key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(
-            &match self.network {
-                Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-                Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
-            }[..],
-        );
+        ret[0..4].copy_from_slice(&match self.network {
+            Network::Bitcoin => VERSION_BYTES_MAINNET_PUBLIC,
+            Network::Testnet | Network::Signet | Network::Regtest => VERSION_BYTES_TESTNETS_PUBLIC,
+        });
         ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
