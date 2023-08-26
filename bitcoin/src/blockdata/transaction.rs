@@ -711,28 +711,32 @@ impl Transaction {
     }
 
     /// Returns the size of this transaction excluding the witness data.
-    pub fn strippedsize(&self) -> usize {
-        let mut input_size = 0;
+    #[deprecated(since = "0.31.0", note = "Use Transaction::stripped_size() instead")]
+    pub fn strippedsize(&self) -> usize { Self::stripped_size(self).to_wu() as usize }
+
+    /// Returns the size of this transaction excluding the witness data.
+    pub fn stripped_size(&self) -> Weight {
+        let mut input_size: Weight = Weight::ZERO;
         for input in &self.input {
-            input_size += TxIn::BASE_WEIGHT.to_wu() as usize
-                + VarInt(input.script_sig.len() as u64).len()
-                + input.script_sig.len();
+            input_size += TxIn::BASE_WEIGHT
+                + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
+                + Weight::from_wu_usize(input.script_sig.len());
         }
-        let mut output_size = 0;
+        let mut output_size = Weight::ZERO;
         for output in &self.output {
-            output_size += 8 + // value
-                VarInt(output.script_pubkey.len() as u64).len() +
-                output.script_pubkey.len();
+            output_size += Weight::from_wu(8)+ // value
+                Weight::from_wu_usize(VarInt(output.script_pubkey.len() as u64).len()) +
+                Weight::from_wu_usize(output.script_pubkey.len());
         }
-        let non_input_size =
+        let non_input_size: Weight =
         // version:
-        4 +
+        Weight::from_wu(4)+
         // count varints:
-        VarInt(self.input.len() as u64).len() +
-        VarInt(self.output.len() as u64).len() +
+        Weight::from_wu_usize(VarInt(self.input.len() as u64).len()) +
+        Weight::from_wu_usize(VarInt(self.output.len() as u64).len()) +
         output_size +
         // lock_time
-        4;
+        Weight::from_wu(4);
         non_input_size + input_size
     }
 
@@ -1392,7 +1396,7 @@ mod tests {
         assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
-        assert_eq!(realtx.strippedsize(), tx_bytes.len());
+        assert_eq!(realtx.stripped_size(), Weight::from_wu_usize(tx_bytes.len()));
     }
 
     #[test]
@@ -1438,19 +1442,21 @@ mod tests {
         //     weight = WITNESS_SCALE_FACTOR * stripped_size + witness_size
         // then,
         //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
-        let expected_strippedsize =
-            (EXPECTED_WEIGHT.to_wu() as usize - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1);
-        assert_eq!(realtx.strippedsize(), expected_strippedsize);
+        let expected_strippedsize: Weight = Weight::from_wu(
+            (EXPECTED_WEIGHT - Weight::from_wu_usize(tx_bytes.len()))
+                / (Weight::from_wu_usize(WITNESS_SCALE_FACTOR - 1)),
+        );
+        assert_eq!(realtx.stripped_size(), expected_strippedsize);
         // Construct a transaction without the witness data.
         let mut tx_without_witness = realtx;
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
         assert_eq!(
-            tx_without_witness.weight().to_wu() as usize,
-            expected_strippedsize * WITNESS_SCALE_FACTOR
+            tx_without_witness.weight(),
+            expected_strippedsize.scale_by_witness_factor().unwrap()
         );
-        assert_eq!(tx_without_witness.size(), expected_strippedsize);
-        assert_eq!(tx_without_witness.vsize(), expected_strippedsize);
-        assert_eq!(tx_without_witness.strippedsize(), expected_strippedsize);
+        assert_eq!(Weight::from_wu_usize(tx_without_witness.size()), expected_strippedsize);
+        assert_eq!(Weight::from_wu_usize(tx_without_witness.vsize()), expected_strippedsize);
+        assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.

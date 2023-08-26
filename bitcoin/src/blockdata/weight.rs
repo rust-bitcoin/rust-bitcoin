@@ -31,22 +31,30 @@ impl Weight {
     /// Maximum possible value.
     pub const MAX: Weight = Weight(u64::MAX);
 
+    /// The factor that non-witness serialization data is multiplied by during weight calculation.
+    pub const WITNESS_SCALE_FACTOR: u64 = crate::blockdata::constants::WITNESS_SCALE_FACTOR as u64;
+
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
     pub const MAX_BLOCK: Weight = Weight(4_000_000);
 
     /// The minimum transaction weight for a valid serialized transaction.
-    pub const MIN_TRANSACTION: Weight = Weight(4 * 60);
+    pub const MIN_TRANSACTION: Weight = Weight(Self::WITNESS_SCALE_FACTOR * 60);
 
     /// Directly constructs `Weight` from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
-    /// Constructs `Weight` from kilo weight units returning `None` if overflow occurred.
+    /// Directly constructs `Weight` from usize weight units.
+    pub const fn from_wu_usize(wu: usize) -> Self { Weight(wu as u64) }
+
+    /// Constructs `Weight` from kilo weight units returning `None` if an overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
     /// Constructs `Weight` from virtual bytes, returning `None` on overflow.
-    pub fn from_vb(vb: u64) -> Option<Self> { vb.checked_mul(4).map(Weight::from_wu) }
+    pub fn from_vb(vb: u64) -> Option<Self> {
+        vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
+    }
 
-    /// Constructs `Weight` from virtual bytes without overflow check.
+    /// Constructs `Weight` from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
     /// Constructs `Weight` from witness size.
@@ -54,7 +62,7 @@ impl Weight {
 
     /// Constructs `Weight` from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Weight(non_witness_size * 4)
+        Weight(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
 
     /// Returns raw weight units.
@@ -66,30 +74,39 @@ impl Weight {
     pub const fn to_kwu_floor(self) -> u64 { self.0 / 1000 }
 
     /// Converts to vB rounding down.
-    pub const fn to_vbytes_floor(self) -> u64 { self.0 / 4 }
+    pub const fn to_vbytes_floor(self) -> u64 { self.0 / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
-    pub const fn to_vbytes_ceil(self) -> u64 { (self.0 + 3) / 4 }
+    pub const fn to_vbytes_ceil(self) -> u64 {
+        (self.0 + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+    }
 
     /// Checked addition.
     ///
-    /// Computes `self + rhs` returning `None` if overflow occurred.
+    /// Computes `self + rhs` returning `None` if an overflow occurred.
     pub fn checked_add(self, rhs: Self) -> Option<Self> { self.0.checked_add(rhs.0).map(Self) }
 
     /// Checked subtraction.
     ///
-    /// Computes `self - rhs` returning `None` if overflow occurred.
+    /// Computes `self - rhs` returning `None` if an overflow occurred.
     pub fn checked_sub(self, rhs: Self) -> Option<Self> { self.0.checked_sub(rhs.0).map(Self) }
 
     /// Checked multiplication.
     ///
-    /// Computes `self * rhs` returning `None` if overflow occurred.
+    /// Computes `self * rhs` returning `None` if an overflow occurred.
     pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
 
     /// Checked division.
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
     pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+
+    /// Scale by witness factor.
+    ///
+    /// Computes `self * WITNESS_SCALE_FACTOR` returning `None` if an overflow occurred.
+    pub fn scale_by_witness_factor(self) -> Option<Self> {
+        Self::checked_mul(self, Self::WITNESS_SCALE_FACTOR)
+    }
 }
 
 /// Alternative will display the unit.
@@ -108,23 +125,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn weight_constructor_test() {
+    fn weight_constructor() {
         assert_eq!(Weight::ZERO, Weight::from_wu(0));
+        assert_eq!(Weight::ZERO, Weight::from_wu_usize(0_usize));
     }
 
     #[test]
-    fn kilo_weight_constructor_test() {
+    fn kilo_weight_constructor() {
         assert_eq!(Weight(1_000), Weight::from_kwu(1).expect("expected weight unit"));
     }
 
     #[test]
     #[should_panic]
-    fn kilo_weight_constructor_panic_test() {
+    fn kilo_weight_constructor_panic() {
         Weight::from_kwu(u64::MAX).expect("expected weight unit");
     }
 
     #[test]
-    fn from_vb_test() {
+    fn from_vb() {
         let vb = Weight::from_vb(1).expect("expected weight unit");
         assert_eq!(Weight(4), vb);
 
@@ -133,45 +151,45 @@ mod tests {
     }
 
     #[test]
-    fn from_vb_unchecked_test() {
+    fn from_vb_unchecked() {
         let vb = Weight::from_vb_unchecked(1);
         assert_eq!(Weight(4), vb);
     }
 
     #[test]
     #[should_panic]
-    fn from_vb_unchecked_panic_test() { Weight::from_vb_unchecked(u64::MAX); }
+    fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]
-    fn from_witness_data_size_test() {
+    fn from_witness_data_size() {
         let witness_data_size = 1;
         assert_eq!(Weight(witness_data_size), Weight::from_witness_data_size(witness_data_size));
     }
 
     #[test]
-    fn from_non_witness_data_size_test() {
+    fn from_non_witness_data_size() {
         assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
     }
 
     #[test]
-    fn to_kwu_floor_test() {
+    fn to_kwu_floor() {
         assert_eq!(1, Weight(1_000).to_kwu_floor());
     }
 
     #[test]
-    fn to_vb_floor_test() {
+    fn to_vb_floor() {
         assert_eq!(1, Weight(4).to_vbytes_floor());
         assert_eq!(1, Weight(5).to_vbytes_floor());
     }
 
     #[test]
-    fn to_vb_ceil_test() {
+    fn to_vb_ceil() {
         assert_eq!(1, Weight(4).to_vbytes_ceil());
         assert_eq!(2, Weight(5).to_vbytes_ceil());
     }
 
     #[test]
-    fn checked_add_test() {
+    fn checked_add() {
         let result = Weight(1).checked_add(Weight(1)).expect("expected weight unit");
         assert_eq!(Weight(2), result);
 
@@ -180,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_sub_test() {
+    fn checked_sub() {
         let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
         assert_eq!(Weight::ZERO, result);
 
@@ -189,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_mul_test() {
+    fn checked_mul() {
         let result = Weight(2).checked_mul(2).expect("expected weight unit");
         assert_eq!(Weight(4), result);
 
@@ -198,11 +216,20 @@ mod tests {
     }
 
     #[test]
-    fn checked_div_test() {
+    fn checked_div() {
         let result = Weight(2).checked_div(2).expect("expected weight unit");
         assert_eq!(Weight(1), result);
 
         let result = Weight(2).checked_div(0);
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn scale_by_witness_factor() {
+        let result = Weight(1).scale_by_witness_factor().expect("expected weight unit");
+        assert_eq!(Weight(4), result);
+
+        let result = Weight::MAX.scale_by_witness_factor();
         assert_eq!(None, result);
     }
 }
