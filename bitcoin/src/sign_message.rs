@@ -26,8 +26,6 @@ mod message_signing {
 
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
-    #[cfg(feature = "base64")]
-    use crate::prelude::*;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -159,37 +157,40 @@ mod message_signing {
                 None => Ok(false),
             }
         }
-
-        /// Convert a signature from base64 encoding.
-        #[cfg(feature = "base64")]
-        pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
-            let bytes = base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
-            MessageSignature::from_slice(&bytes)
-        }
-
-        /// Convert to base64 encoding.
-        #[cfg(feature = "base64")]
-        pub fn to_base64(self) -> String { base64::encode(&self.serialize()[..]) }
     }
 
     #[cfg(feature = "base64")]
-    impl fmt::Display for MessageSignature {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            let bytes = self.serialize();
-            // This avoids the allocation of a String.
-            write!(
-                f,
-                "{}",
-                base64::display::Base64Display::with_config(&bytes[..], base64::STANDARD)
-            )
-        }
-    }
+    mod base64_impls {
+        use base64::prelude::{Engine as _, BASE64_STANDARD};
 
-    #[cfg(feature = "base64")]
-    impl core::str::FromStr for MessageSignature {
-        type Err = MessageSignatureError;
-        fn from_str(s: &str) -> Result<MessageSignature, MessageSignatureError> {
-            MessageSignature::from_base64(s)
+        use super::*;
+        use crate::prelude::String;
+
+        impl MessageSignature {
+            /// Convert a signature from base64 encoding.
+            pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
+                let bytes =
+                    BASE64_STANDARD.decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
+                MessageSignature::from_slice(&bytes)
+            }
+
+            /// Convert to base64 encoding.
+            pub fn to_base64(self) -> String { BASE64_STANDARD.encode(self.serialize()) }
+        }
+
+        impl fmt::Display for MessageSignature {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                let bytes = self.serialize();
+                // This avoids the allocation of a String.
+                write!(f, "{}", base64::display::Base64Display::new(&bytes, &BASE64_STANDARD))
+            }
+        }
+
+        impl core::str::FromStr for MessageSignature {
+            type Err = MessageSignatureError;
+            fn from_str(s: &str) -> Result<MessageSignature, MessageSignatureError> {
+                MessageSignature::from_base64(s)
+            }
         }
     }
 }
@@ -260,6 +261,7 @@ mod tests {
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_incorrect_message_signature() {
+        use base64::prelude::{Engine as _, BASE64_STANDARD};
         use secp256k1;
 
         use crate::crypto::key::PublicKey;
@@ -276,8 +278,9 @@ mod tests {
         let signature =
             super::MessageSignature::from_base64(signature_base64).expect("message signature");
 
-        let pubkey = PublicKey::from_slice(&base64::decode(pubkey_base64).expect("base64 string"))
-            .expect("pubkey slice");
+        let pubkey =
+            PublicKey::from_slice(&BASE64_STANDARD.decode(pubkey_base64).expect("base64 string"))
+                .expect("pubkey slice");
 
         let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
         assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
