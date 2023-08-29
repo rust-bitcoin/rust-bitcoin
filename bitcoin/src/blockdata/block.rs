@@ -487,6 +487,7 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(), 1.0);
         // [test] TODO: check the transaction data
 
+        assert_eq!(real_decode.base_size(), 81);
         assert_eq!(real_decode.size(), some_block.len());
         assert_eq!(real_decode.stripped_size(), Weight::from_wu_usize(some_block.len()));
         assert_eq!(
