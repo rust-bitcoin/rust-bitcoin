@@ -1397,6 +1397,7 @@ mod tests {
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
         assert_eq!(realtx.stripped_size(), Weight::from_wu_usize(tx_bytes.len()));
+        assert_eq!(realtx.scaled_size(4), 772);
     }
 
     #[test]
@@ -1457,6 +1458,7 @@ mod tests {
         assert_eq!(Weight::from_wu_usize(tx_without_witness.size()), expected_strippedsize);
         assert_eq!(Weight::from_wu_usize(tx_without_witness.vsize()), expected_strippedsize);
         assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
+        assert_eq!(tx_without_witness.scaled_size(1), 83);
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.
