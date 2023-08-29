@@ -130,15 +130,16 @@ use core2::io;
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::blockdata::block::{self, Block};
+pub use crate::blockdata::constants;
 pub use crate::blockdata::fee_rate::FeeRate;
 pub use crate::blockdata::locktime::{self, absolute, relative};
+pub use crate::blockdata::opcodes::{self, Opcode};
 pub use crate::blockdata::script::witness_program::{self, WitnessProgram};
 pub use crate::blockdata::script::witness_version::{self, WitnessVersion};
 pub use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash, WScriptHash};
 pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 pub use crate::blockdata::weight::Weight;
 pub use crate::blockdata::witness::{self, Witness};
-pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::crypto::ecdsa;
 pub use crate::crypto::key::{
