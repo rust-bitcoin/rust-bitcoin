@@ -68,20 +68,26 @@ fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> 
     f.write_str("witnesses: [")?;
 
     let instructions = w.iter();
-    let last_instruction = instructions.len() - 1;
-
-    for (i, instruction) in instructions.enumerate() {
-        let bytes = instruction.iter();
-        let last_byte = bytes.len() - 1;
-
-        f.write_str("[")?;
-
-        for (j, byte) in bytes.enumerate() {
-            write!(f, "{:#04x}", byte)?;
-            f.write_str(comma_or_close(j, last_byte))?;
+    if instructions.len() > 0 {
+        let last_instruction = instructions.len() - 1;
+        for (i, instruction) in instructions.enumerate() {
+            let bytes = instruction.iter();
+            if bytes.len() > 0 {
+                let last_byte = bytes.len() - 1;
+                f.write_str("[")?;
+                for (j, byte) in bytes.enumerate() {
+                    write!(f, "{:#04x}", byte)?;
+                    f.write_str(comma_or_close(j, last_byte))?;
+                }
+            } else {
+                // This is possible because the varint is not part of the instruction (see Iter).
+                write!(f, "[]")?;
+            }
+            f.write_str(comma_or_close(i, last_instruction))?;
         }
-
-        f.write_str(comma_or_close(i, last_instruction))?;
+    } else {
+        // Witnesses can be empty because the 0x00 var int is not stored in content.
+        write!(f, "]")?;
     }
 
     f.write_str(" }")
@@ -527,6 +533,16 @@ mod test {
             v.extend_from_slice(&num.to_ne_bytes());
         }
         v
+    }
+
+    #[test]
+    fn witness_debug_can_display_empty_instruction() {
+        let witness = Witness {
+            witness_elements: 1,
+            content: append_u32_vec(vec![], &[0]),
+            indices_start: 2,
+        };
+        println!("{:?}", witness);
     }
 
     #[test]
