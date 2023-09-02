@@ -818,6 +818,7 @@ mod display_from_str {
     use core::str::FromStr;
 
     use base64::display::Base64Display;
+    use base64::prelude::{Engine as _, BASE64_STANDARD};
     use internals::write_err;
 
     use super::{Error, Psbt};
@@ -857,7 +858,7 @@ mod display_from_str {
 
     impl Display for Psbt {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", Base64Display::with_config(&self.serialize(), base64::STANDARD))
+            write!(f, "{}", Base64Display::new(&self.serialize(), &BASE64_STANDARD))
         }
     }
 
@@ -865,7 +866,7 @@ mod display_from_str {
         type Err = PsbtParseError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let data = base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
+            let data = BASE64_STANDARD.decode(s).map_err(PsbtParseError::Base64Encoding)?;
             Psbt::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)
         }
     }
