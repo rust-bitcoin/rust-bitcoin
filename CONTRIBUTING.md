@@ -150,7 +150,7 @@ grammar fixes.
 
 Pull request merge requirements:
 - all CI test should pass,
-- at least two "accepts"/ACKs from the repository maintainers (see "refactor carve out").
+- at least two "accepts"/ACKs from the repository maintainers (see "refactor carve-out").
 - no reasonable "rejects"/NACKs from anybody who reviewed the code.
 
 Current list of the project maintainers:
@@ -164,7 +164,7 @@ Current list of the project maintainers:
 - [Riccardo Casatta](https://github.com/RCasatta)
 - [Tobin Harding](https://github.com/tcharding)
 
-#### Refactor carve output
+#### Refactor carve-out
 
 The repository is going through heavy refactoring and "trivial" API redesign
 (eg, rename `Foo::empty` to `Foo::new`) as we push towards API stabilization. As
