@@ -54,6 +54,7 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
+pub mod txhash;
 pub mod witness_program;
 pub mod witness_version;
 
