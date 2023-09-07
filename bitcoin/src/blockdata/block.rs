@@ -283,9 +283,9 @@ impl Block {
     /// Returns the size of the block.
     ///
     /// size == size of header + size of encoded transaction count + total size of transactions.
-    pub fn size(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::size).sum();
-        self.base_size().to_wu() as usize + txs_size
+    pub fn size(&self) -> Weight {
+        let txs_size: Weight = Weight::from_wu_usize(self.txdata.iter().map(Transaction::size).sum());
+        self.base_size() + txs_size
     }
 
     /// Returns the stripped size of the block.
@@ -490,7 +490,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.base_size(), Weight::from_wu(81));
-        assert_eq!(real_decode.size(), some_block.len());
+        assert_eq!(real_decode.size(), Weight::from_wu_usize(some_block.len()));
         assert_eq!(real_decode.stripped_size(), Weight::from_wu_usize(some_block.len()));
         assert_eq!(
             real_decode.weight(),
@@ -532,7 +532,7 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
         // [test] TODO: check the transaction data
 
-        assert_eq!(real_decode.size(), segwit_block.len());
+        assert_eq!(real_decode.size(), Weight::from_wu_usize(segwit_block.len()));
         assert_eq!(real_decode.stripped_size(), Weight::from_wu(4283));
         assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
