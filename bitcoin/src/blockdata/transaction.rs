@@ -693,7 +693,7 @@ impl Transaction {
 
     /// Returns the regular byte-wise consensus-serialized size of this transaction.
     #[inline]
-    pub fn size(&self) -> usize { self.scaled_size(1).to_wu() as usize }
+    pub fn size(&self) -> Weight { self.scaled_size(1) }
 
     /// Returns the "virtual size" (vsize) of this transaction.
     ///
@@ -1395,7 +1395,7 @@ mod tests {
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
         assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
-        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.size(), Weight::from_wu_usize(tx_bytes.len()));
         assert_eq!(realtx.vsize(), tx_bytes.len());
         assert_eq!(realtx.stripped_size(), Weight::from_wu_usize(tx_bytes.len()));
         assert_eq!(realtx.scaled_size(4), Weight::from_wu(772));
@@ -1437,7 +1437,7 @@ mod tests {
         );
         const EXPECTED_WEIGHT: Weight = Weight::from_wu(442);
         assert_eq!(realtx.weight(), EXPECTED_WEIGHT);
-        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.size(), Weight::from_wu_usize(tx_bytes.len()));
         assert_eq!(realtx.vsize(), 111);
         // Since
         //     size   =                        stripped_size + witness_size
@@ -1456,7 +1456,7 @@ mod tests {
             tx_without_witness.weight(),
             expected_strippedsize.scale_by_witness_factor().unwrap()
         );
-        assert_eq!(Weight::from_wu_usize(tx_without_witness.size()), expected_strippedsize);
+        assert_eq!(tx_without_witness.size(), expected_strippedsize);
         assert_eq!(Weight::from_wu_usize(tx_without_witness.vsize()), expected_strippedsize);
         assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
         assert_eq!(tx_without_witness.scaled_size(1), Weight::from_wu(83));

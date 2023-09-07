@@ -284,7 +284,7 @@ impl Block {
     ///
     /// size == size of header + size of encoded transaction count + total size of transactions.
     pub fn size(&self) -> Weight {
-        let txs_size: Weight = Weight::from_wu_usize(self.txdata.iter().map(Transaction::size).sum());
+        let txs_size: Weight = self.txdata.iter().map(Transaction::size).sum();
         self.base_size() + txs_size
     }
 
