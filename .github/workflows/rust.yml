@@ -74,7 +74,7 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v3
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@1.48.0
+        uses: dtolnay/rust-toolchain@1.80.0
       - name: Running test script
         env:
           DO_FEATURE_MATRIX: true
