@@ -718,7 +718,8 @@ impl Transaction {
     pub fn stripped_size(&self) -> Weight {
         let mut input_size: Weight = Weight::ZERO;
         for input in &self.input {
-            input_size += TxIn::BASE_WEIGHT
+            //outpoint (32+4) + nSequence
+            input_size += Weight::from_wu(32 + 4 + 4)
                 + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
                 + Weight::from_wu_usize(input.script_sig.len());
         }
@@ -745,7 +746,8 @@ impl Transaction {
         let mut input_weight: Weight = Weight::ZERO;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
-            let non_scaled_input_weight: Weight = TxIn::BASE_WEIGHT
+            //outpoint (32+4) + nSequence
+            let non_scaled_input_weight: Weight = Weight::from_wu(32 + 4 + 4)
                 + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
                 + Weight::from_wu_usize(input.script_sig.len());
             input_weight += non_scaled_input_weight * scale_factor;
