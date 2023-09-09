@@ -22,11 +22,24 @@
 compile_error!("At least one of std or core2 must be enabled");
 
 #[cfg(feature = "std")]
-pub use std::io;
-#[cfg(feature = "std")]
 pub use std::error;
-
-#[cfg(not(feature = "std"))]
-pub use core2::io;
 #[cfg(not(feature = "std"))]
 pub use core2::error;
+
+#[cfg(any(feature = "alloc", feature = "std"))]
+extern crate alloc;
+
+/// Standard I/O stream definitions which are API-equivalent to `std`'s `io` module. See
+/// [`std::io`] for more info.
+pub mod io {
+    #[cfg(all(not(feature = "std"), not(feature = "core2")))]
+    compile_error!("At least one of std or core2 must be enabled");
+
+    #[cfg(feature = "std")]
+    pub use std::io::{Read, Write, Cursor, Take, IoSlice, Error, ErrorKind, Result};
+
+    #[cfg(not(feature = "std"))]
+    pub use core2::io::{Read, Write, Cursor, Take, Error, ErrorKind, Result};
+
+
+}
