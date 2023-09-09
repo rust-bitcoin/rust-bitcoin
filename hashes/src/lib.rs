@@ -79,8 +79,6 @@
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
 
-#[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
-extern crate actual_core2 as core2;
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 extern crate alloc;
 #[cfg(any(test, feature = "std"))]
@@ -117,7 +115,7 @@ pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
 pub mod hmac;
-#[cfg(any(test, feature = "std", feature = "core2"))]
+#[cfg(feature = "bitcoin_io")]
 mod impls;
 pub mod ripemd160;
 pub mod sha1;
@@ -129,12 +127,10 @@ pub mod sha512_256;
 pub mod siphash24;
 
 use core::{borrow, fmt, hash, ops};
-// You get I/O if you enable "std" or "core2" (as well as during testing).
-#[cfg(any(test, feature = "std"))]
-use std::io;
 
-#[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
-use core2::io;
+// You get I/O if you enable "std" or "core2" (as well as during testing).
+#[cfg(feature = "bitcoin_io")]
+use bitcoin_io::io;
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
