@@ -87,42 +87,23 @@ impl fmt::Display for WitnessVersion {
 }
 
 impl FromStr for WitnessVersion {
-    type Err = Error;
+    type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = crate::parse::int(s).map_err(Error::Unparsable)?;
-        WitnessVersion::try_from(version)
+        let version: u8 = crate::parse::int(s).map_err(FromStrError::Unparsable)?;
+        Ok(WitnessVersion::try_from(version)?)
     }
 }
 
 impl TryFrom<bech32::u5> for WitnessVersion {
-    type Error = Error;
+    type Error = TryFromError;
 
-    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
-    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    ///
-    /// If the integer does not correspond to any witness version, errors with [`Error::Invalid`].
     fn try_from(value: bech32::u5) -> Result<Self, Self::Error> { Self::try_from(value.to_u8()) }
 }
 
 impl TryFrom<u8> for WitnessVersion {
-    type Error = Error;
+    type Error = TryFromError;
 
-    /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    ///
-    /// If the integer does not correspond to any witness version, errors with [`Error::Invalid`].
     fn try_from(no: u8) -> Result<Self, Self::Error> {
         use WitnessVersion::*;
 
@@ -144,53 +125,32 @@ impl TryFrom<u8> for WitnessVersion {
             14 => V14,
             15 => V15,
             16 => V16,
-            wrong => return Err(Error::Invalid(wrong)),
+            invalid => return Err(TryFromError { invalid }),
         })
     }
 }
 
 impl TryFrom<Opcode> for WitnessVersion {
-    type Error = Error;
+    type Error = TryFromError;
 
-    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`).
-    ///
-    /// # Errors
-    ///
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::Malformed`].
     fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
             version if version >= OP_PUSHNUM_1.to_u8() && version <= OP_PUSHNUM_16.to_u8() =>
                 WitnessVersion::try_from(version - OP_PUSHNUM_1.to_u8() + 1),
-            _ => Err(Error::Malformed),
+            invalid => Err(TryFromError { invalid }),
         }
     }
 }
 
 impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
-    type Error = Error;
+    type Error = TryFromInstructionError;
 
-    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    ///
-    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
-    /// byte value within `1..=16` range.
-    ///
-    /// # Errors
-    ///
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::Malformed`] for the rest of opcodes.
     fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
         match instruction {
-            Instruction::Op(op) => WitnessVersion::try_from(op),
+            Instruction::Op(op) => Ok(WitnessVersion::try_from(op)?),
             Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
-            Instruction::PushBytes(_) => Err(Error::Malformed),
+            Instruction::PushBytes(_) => Err(TryFromInstructionError::DataPush),
         }
     }
 }
@@ -212,46 +172,92 @@ impl From<WitnessVersion> for Opcode {
     }
 }
 
-/// Witness version error.
+/// Error parsing [`WitnessVersion`] from a string.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Bech32 u5 conversion error.
-    Bech32(bech32::Error),
-    /// Script version must be 0 to 16 inclusive.
-    Invalid(u8),
-    /// Unable to parse witness version from string.
+pub enum FromStrError {
+    /// Unable to parse integer from string.
     Unparsable(ParseIntError),
-    /// Bitcoin script opcode does not match any known witness version, the script is malformed.
-    Malformed,
+    /// String contained an invalid witness version number.
+    Invalid(TryFromError),
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use FromStrError::*;
 
         match *self {
-            Bech32(ref e) => write_err!(f, "bech32 u5 conversion error"; e),
-            Invalid(v) => write!(f, "invalid witness script version: {}", v),
-            Unparsable(ref e) => write_err!(f, "incorrect format of a witness version byte"; e),
-            Malformed => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
+            Unparsable(ref e) => write_err!(f, "integer parse error"; e),
+            Invalid(ref e) => write_err!(f, "invalid version number"; e),
         }
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for FromStrError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use FromStrError::*;
 
         match *self {
-            Bech32(ref e) => Some(e),
             Unparsable(ref e) => Some(e),
-            Invalid { .. } | Malformed => None,
+            Invalid(ref e) => Some(e),
         }
     }
 }
 
-impl From<bech32::Error> for Error {
-    fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
+impl From<TryFromError> for FromStrError {
+    fn from(e: TryFromError) -> Self { Self::Invalid(e) }
+}
+
+/// Error attempting to create a [`WitnessVersion`] from an [`Instruction`]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TryFromInstructionError {
+    /// Cannot not convert OP to a witness version.
+    TryFrom(TryFromError),
+    /// Cannot create a witness version from non-zero data push.
+    DataPush,
+}
+
+impl fmt::Display for TryFromInstructionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TryFromInstructionError::*;
+
+        match *self {
+            TryFrom(ref e) => write_err!(f, "opcode is not a valid witness version"; e),
+            DataPush => write!(f, "non-zero data push opcode is not a valid witness version"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TryFromInstructionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TryFromInstructionError::*;
+
+        match *self {
+            TryFrom(ref e) => Some(e),
+            DataPush => None,
+        }
+    }
+}
+
+impl From<TryFromError> for TryFromInstructionError {
+    fn from(e: TryFromError) -> Self { Self::TryFrom(e) }
+}
+
+/// Error attempting to create a [`WitnessVersion`] from an integer.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TryFromError {
+    /// The invalid non-witness version integer.
+    pub invalid: u8,
+}
+
+impl fmt::Display for TryFromError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid witness script version: {}", self.invalid)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TryFromError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
