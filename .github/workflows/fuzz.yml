@@ -38,7 +38,7 @@ hashes_sha1,
     steps:
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/cache@v3
         id: cache-fuzz
         with:
@@ -70,7 +70,7 @@ hashes_sha1,
     needs: fuzz
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
       - name: Display structure of downloaded files
         run: ls -R
