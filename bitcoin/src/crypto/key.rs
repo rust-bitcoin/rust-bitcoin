@@ -68,7 +68,7 @@ impl PublicKey {
     }
 
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         self.with_serialized(|bytes| writer.write_all(bytes))
     }
 

@@ -643,11 +643,11 @@ impl_vec!((u32, Address));
 #[cfg(feature = "std")]
 impl_vec!(AddrV2Message);
 
-pub(crate) fn consensus_encode_with_size<W: io::Write>(
+pub(crate) fn consensus_encode_with_size<W: io::Write + ?Sized>(
     data: &[u8],
-    mut w: W,
+    w: &mut W,
 ) -> Result<usize, io::Error> {
-    let vi_len = VarInt(data.len() as u64).consensus_encode(&mut w)?;
+    let vi_len = VarInt(data.len() as u64).consensus_encode(w)?;
     w.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
