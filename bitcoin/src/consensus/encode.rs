@@ -662,8 +662,8 @@ struct ReadBytesFromFiniteReaderOpts {
 /// This function relies on reader being bound in amount of data
 /// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
 #[inline]
-fn read_bytes_from_finite_reader<D: io::Read>(
-    mut d: D,
+fn read_bytes_from_finite_reader<D: io::Read + ?Sized>(
+    d: &mut D,
     mut opts: ReadBytesFromFiniteReaderOpts,
 ) -> Result<Vec<u8>, Error> {
     let mut ret = vec![];
@@ -1234,7 +1234,7 @@ mod tests {
         for chunk_size in 1..20 {
             assert_eq!(
                 read_bytes_from_finite_reader(
-                    io::Cursor::new(&data),
+                    &mut io::Cursor::new(&data),
                     ReadBytesFromFiniteReaderOpts { len: data.len(), chunk_size }
                 )
                 .unwrap(),

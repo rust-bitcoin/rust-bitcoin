@@ -76,7 +76,7 @@ impl PublicKey {
     ///
     /// This internally reads the first byte before reading the rest, so
     /// use of a `BufReader` is recommended.
-    pub fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> {
+    pub fn read_from<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, io::Error> {
         let mut bytes = [0; 65];
 
         reader.read_exact(&mut bytes[0..1])?;
@@ -914,11 +914,11 @@ mod tests {
 
         // sanity checks
         assert!(PublicKey::read_from(&mut cursor).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
+        assert!(PublicKey::read_from(&mut io::Cursor::new(&[])).is_err());
+        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 33][..])).is_err());
+        assert!(PublicKey::read_from(&mut io::Cursor::new(&[2; 32][..])).is_err());
+        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 65][..])).is_err());
+        assert!(PublicKey::read_from(&mut io::Cursor::new(&[4; 64][..])).is_err());
     }
 
     #[test]
