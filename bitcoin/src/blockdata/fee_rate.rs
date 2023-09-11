@@ -119,7 +119,7 @@ impl FeeRate {
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{} sat/kwu", self.0)
+            write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
         } else {
             fmt::Display::fmt(&self.0, f)
         }
