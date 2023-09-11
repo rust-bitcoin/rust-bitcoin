@@ -32,14 +32,67 @@ extern crate alloc;
 /// Standard I/O stream definitions which are API-equivalent to `std`'s `io` module. See
 /// [`std::io`] for more info.
 pub mod io {
+    use core::convert::TryInto;
+
     #[cfg(all(not(feature = "std"), not(feature = "core2")))]
     compile_error!("At least one of std or core2 must be enabled");
 
     #[cfg(feature = "std")]
-    pub use std::io::{Read, Cursor, Take, Error, ErrorKind, Result};
+    pub use std::io::{Cursor, Error, ErrorKind, Result};
 
     #[cfg(not(feature = "std"))]
-    pub use core2::io::{Read, Cursor, Take, Error, ErrorKind, Result};
+    pub use core2::io::{Cursor, Error, ErrorKind, Result};
+
+    /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
+    pub trait Read {
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
+        #[inline]
+        fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
+            while !buf.is_empty() {
+                match self.read(buf) {
+                    Ok(0) => return Err(Error::new(ErrorKind::UnexpectedEof, "")),
+                    Ok(len) => buf = &mut buf[len..],
+                    Err(e) if e.kind() == ErrorKind::Interrupted => {}
+                    Err(e) => return Err(e),
+                }
+            }
+            Ok(())
+        }
+        #[inline]
+        fn take(&mut self, limit: u64) -> Take<Self> {
+            Take { reader: self, remaining: limit }
+        }
+    }
+
+    pub struct Take<'a, R: Read + ?Sized> {
+        reader: &'a mut R,
+        remaining: u64,
+    }
+    impl<'a, R: Read + ?Sized> Read for Take<'a, R> {
+        #[inline]
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+            let len = core::cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
+            let read = self.reader.read(&mut buf[..len])?;
+            self.remaining -= read.try_into().unwrap_or(self.remaining);
+            Ok(read)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl<R: std::io::Read> Read for R {
+        #[inline]
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+            <R as std::io::Read>::read(self, buf)
+        }
+    }
+
+    #[cfg(all(feature = "core2", not(feature = "std")))]
+    impl<R: core2::io::Read> Read for R {
+        #[inline]
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+            <R as core2::io::Read>::read(self, buf)
+        }
+    }
 
     /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
     pub trait Write {

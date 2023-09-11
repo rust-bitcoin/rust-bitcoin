@@ -10,7 +10,6 @@ use core::convert::TryFrom;
 use core::{fmt, iter};
 
 use hashes::{sha256d, Hash};
-use io::Read as _;
 
 use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
