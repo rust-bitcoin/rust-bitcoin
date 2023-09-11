@@ -37,7 +37,7 @@ macro_rules! impl_consensus_encoding {
                 use crate::io::Read as _;
                 let mut r = r.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
                 Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode(r.by_ref())?),+
+                    $($field: $crate::consensus::Decodable::consensus_decode(&mut r)?),+
                 })
             }
         }

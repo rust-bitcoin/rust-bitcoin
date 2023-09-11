@@ -320,7 +320,7 @@ pub trait Decodable: Sized {
     /// instead.
     #[inline]
     fn consensus_decode<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(reader.take(MAX_VEC_SIZE as u64).by_ref())
+        Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE as u64))
     }
 }
 
