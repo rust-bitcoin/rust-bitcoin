@@ -798,12 +798,12 @@ impl fmt::Display for IndexOutOfBoundsError {
             Inputs { ref index, ref length } => write!(
                 f,
                 "index {} is out-of-bounds for PSBT inputs vector length {}",
-                length, index
+                index, length
             ),
             TxInput { ref index, ref length } => write!(
                 f,
                 "index {} is out-of-bounds for PSBT unsigned tx input vector length {}",
-                length, index
+                index, length
             ),
         }
     }
