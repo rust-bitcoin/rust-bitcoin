@@ -844,7 +844,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Computes the BIP143 sighash for any flag type.
-    #[deprecated(since = "0.31.0", note = "use segwit_v0_signature_hash instead")]
+    #[deprecated(since = "0.31.0", note = "use (p2wpkh|p2wsh)_signature_hash instead")]
     pub fn segwit_signature_hash(
         &mut self,
         input_index: usize,
