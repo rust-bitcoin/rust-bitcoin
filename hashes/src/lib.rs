@@ -130,9 +130,6 @@ pub mod siphash24;
 
 use core::{borrow, fmt, hash, ops};
 
-// You get I/O if you enable "std" or "core2" (as well as during testing).
-#[cfg(feature = "bitcoin-io")]
-use bitcoin_io::io;
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
