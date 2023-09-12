@@ -193,27 +193,3 @@ mod prelude {
 
     pub use hex::DisplayHex;
 }
-
-#[cfg(bench)]
-use bench::EmptyWrite;
-
-#[cfg(bench)]
-mod bench {
-    use core::fmt::Arguments;
-
-    use crate::io::{IoSlice, Result, Write};
-
-    #[derive(Default, Clone, Debug, PartialEq, Eq)]
-    pub struct EmptyWrite;
-
-    impl Write for EmptyWrite {
-        fn write(&mut self, buf: &[u8]) -> Result<usize> { Ok(buf.len()) }
-        fn write_vectored(&mut self, bufs: &[IoSlice]) -> Result<usize> {
-            Ok(bufs.iter().map(|s| s.len()).sum())
-        }
-        fn flush(&mut self) -> Result<()> { Ok(()) }
-
-        fn write_all(&mut self, _: &[u8]) -> Result<()> { Ok(()) }
-        fn write_fmt(&mut self, _: Arguments) -> Result<()> { Ok(()) }
-    }
-}

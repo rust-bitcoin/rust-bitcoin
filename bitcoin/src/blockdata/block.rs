@@ -616,7 +616,7 @@ mod benches {
 
     use super::Block;
     use crate::consensus::{deserialize, Decodable, Encodable};
-    use crate::EmptyWrite;
+    use crate::io::sink;
 
     #[bench]
     pub fn bench_stream_reader(bh: &mut Bencher) {
@@ -653,7 +653,7 @@ mod benches {
         let block: Block = deserialize(&raw_block[..]).unwrap();
 
         bh.iter(|| {
-            let size = block.consensus_encode(&mut EmptyWrite);
+            let size = block.consensus_encode(&mut sink());
             black_box(&size);
         });
     }

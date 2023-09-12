@@ -36,7 +36,7 @@ pub mod io {
     compile_error!("At least one of std or core2 must be enabled");
 
     #[cfg(feature = "std")]
-    pub use std::io::{Read, Write, Cursor, Take, IoSlice, Error, ErrorKind, Result};
+    pub use std::io::{Read, Write, sink, Cursor, Take, Error, ErrorKind, Result};
 
     #[cfg(not(feature = "std"))]
     pub use core2::io::{Read, Write, Cursor, Take, Error, ErrorKind, Result};
