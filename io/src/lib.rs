@@ -65,6 +65,24 @@ pub mod io {
         fn take(&mut self, limit: u64) -> Take<Self> {
             Take { reader: self, remaining: limit }
         }
+        #[inline]
+        #[cfg(any(feature = "alloc", feature = "std"))]
+        fn read_to_end(&mut self, buf: &mut alloc::vec::Vec<u8>) -> Result<usize> {
+            let mut bytes_read = 0;
+            let mut read_buf = [0u8; 512];
+            loop {
+                match self.read(&mut read_buf) {
+                    Ok(0) => break,
+                    Ok(n) => {
+                        buf.extend_from_slice(&read_buf[0..n]);
+                        bytes_read += n;
+                    },
+                    Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
+                    Err(e) => return Err(e),
+                }
+            }
+            Ok(bytes_read)
+        }
     }
 
     pub struct Take<'a, R: Read + ?Sized> {
