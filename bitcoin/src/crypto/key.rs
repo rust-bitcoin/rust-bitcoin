@@ -752,7 +752,6 @@ mod tests {
 
     use super::*;
     use crate::address::Address;
-    use crate::io;
     use crate::network::Network::{Bitcoin, Testnet};
 
     #[test]
@@ -895,6 +894,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn pubkey_read_write() {
         const N_KEYS: usize = 20;
         let keys: Vec<_> = (0..N_KEYS).map(|i| random_key(i as u8)).collect();
@@ -904,8 +904,10 @@ mod tests {
             k.write_into(&mut v).expect("writing into vec");
         }
 
+        // Note that we must temporarily use std::io::Cursor here until libsecp256k1 converts to
+        // bitcoin_io.
         let mut dec_keys = vec![];
-        let mut cursor = io::Cursor::new(&v);
+        let mut cursor = std::io::Cursor::new(&v);
         for _ in 0..N_KEYS {
             dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
         }
@@ -914,11 +916,11 @@ mod tests {
 
         // sanity checks
         assert!(PublicKey::read_from(&mut cursor).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
+        assert!(PublicKey::read_from(std::io::Cursor::new(&[])).is_err());
+        assert!(PublicKey::read_from(std::io::Cursor::new(&[0; 33][..])).is_err());
+        assert!(PublicKey::read_from(std::io::Cursor::new(&[2; 32][..])).is_err());
+        assert!(PublicKey::read_from(std::io::Cursor::new(&[0; 65][..])).is_err());
+        assert!(PublicKey::read_from(std::io::Cursor::new(&[4; 64][..])).is_err());
     }
 
     #[test]

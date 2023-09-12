@@ -38,10 +38,10 @@ pub mod io {
     compile_error!("At least one of std or core2 must be enabled");
 
     #[cfg(feature = "std")]
-    pub use std::io::{Cursor, Error, ErrorKind, Result};
+    pub use std::io::{Error, ErrorKind, Result};
 
     #[cfg(not(feature = "std"))]
-    pub use core2::io::{Cursor, Error, ErrorKind, Result};
+    pub use core2::io::{Error, ErrorKind, Result};
 
     /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
     pub trait Read {
@@ -112,6 +112,36 @@ pub mod io {
         #[inline]
         fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
             <R as core2::io::Read>::read(self, buf)
+        }
+    }
+
+    pub struct Cursor<T> {
+        inner: T,
+        pos: u64,
+    }
+    impl<T: AsRef<[u8]>> Cursor<T> {
+        #[inline]
+        pub fn new(inner: T) -> Self {
+            Cursor { inner, pos: 0 }
+        }
+        #[inline]
+        pub fn position(&self) -> u64 {
+            self.pos
+        }
+        #[inline]
+        pub fn into_inner(self) -> T {
+            self.inner
+        }
+    }
+    impl<T: AsRef<[u8]>> Read for Cursor<T> {
+        #[inline]
+        fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+            let inner: &[u8] = self.inner.as_ref();
+            let start_pos = self.pos.try_into().unwrap_or(inner.len());
+            let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
+            buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
+            self.pos = self.pos.saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
+            Ok(read)
         }
     }
 
