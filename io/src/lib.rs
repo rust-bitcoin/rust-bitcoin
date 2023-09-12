@@ -36,7 +36,7 @@ pub mod io {
     compile_error!("At least one of std or core2 must be enabled");
 
     #[cfg(feature = "std")]
-    pub use std::io::{Read, sink, Cursor, Take, Error, ErrorKind, Result};
+    pub use std::io::{Read, Cursor, Take, Error, ErrorKind, Result};
 
     #[cfg(not(feature = "std"))]
     pub use core2::io::{Read, Cursor, Take, Error, ErrorKind, Result};
@@ -86,6 +86,44 @@ pub mod io {
             <W as core2::io::Write>::flush(self)
         }
     }
+
+    /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
+    pub struct Sink;
+    #[cfg(not(any(feature = "core2", feature = "std")))]
+    impl Write for Sink {
+        #[inline]
+        fn write(&mut self, buf: &[u8]) -> Result<usize> {
+            Ok(buf.len())
+        }
+        #[inline]
+        fn write_all(&mut self, _: &[u8]) -> Result<()> { Ok(()) }
+        #[inline]
+        fn flush(&mut self) -> Result<()> { Ok(()) }
+    }
+    #[cfg(feature = "std")]
+    impl std::io::Write for Sink {
+        #[inline]
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            Ok(buf.len())
+        }
+        #[inline]
+        fn write_all(&mut self, _: &[u8]) -> std::io::Result<()> { Ok(()) }
+        #[inline]
+        fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
+    }
+    #[cfg(all(feature = "core2", not(feature = "std")))]
+    impl core2::io::Write for Sink {
+        #[inline]
+        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> {
+            Ok(buf.len())
+        }
+        #[inline]
+        fn write_all(&mut self, _: &[u8]) -> core2::io::Result<()> { Ok(()) }
+        #[inline]
+        fn flush(&mut self) -> core2::io::Result<()> { Ok(()) }
+    }
+    /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
+    pub fn sink() -> Sink { Sink }
 }
 
 #[doc(hidden)]

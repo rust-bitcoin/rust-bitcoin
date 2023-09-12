@@ -186,7 +186,7 @@ mod prelude {
     pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
     #[cfg(feature = "std")]
-    pub use std::io::sink;
+    pub use crate::io::sink;
 
     #[cfg(not(feature = "std"))]
     pub use crate::io_extras::sink;
