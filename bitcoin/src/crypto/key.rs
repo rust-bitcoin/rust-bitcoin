@@ -752,7 +752,6 @@ mod tests {
 
     use super::*;
     use crate::address::Address;
-    use crate::io;
     use crate::network::Network::{Bitcoin, Testnet};
 
     #[test]
