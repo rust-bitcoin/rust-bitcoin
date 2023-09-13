@@ -295,7 +295,7 @@ impl Block {
 
     /// Returns the stripped size of the block.
     pub fn stripped_size(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::strippedsize).sum();
+        let txs_size: usize = self.txdata.iter().map(Transaction::stripped_size).sum();
         self.base_size() + txs_size
     }
 
