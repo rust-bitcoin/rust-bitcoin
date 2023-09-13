@@ -693,7 +693,7 @@ impl Transaction {
 
     /// Returns the regular byte-wise consensus-serialized size of this transaction.
     #[inline]
-    pub fn size(&self) -> usize { self.scaled_size(1).to_wu() as usize }
+    pub fn size(&self) -> usize { self.scaled_size(1) }
 
     /// Returns the "virtual size" (vsize) of this transaction.
     ///
@@ -741,40 +741,39 @@ impl Transaction {
     }
 
     /// Internal utility function for size/weight functions.
-    fn scaled_size(&self, scale_factor: u64) -> Weight {
-        let mut input_weight: Weight = Weight::ZERO;
+    fn scaled_size(&self, scale_factor: usize) -> usize {
+        let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
-            let non_scaled_input_weight: Weight = TxIn::BASE_WEIGHT
-                + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
-                + Weight::from_wu_usize(input.script_sig.len());
-            input_weight += non_scaled_input_weight * scale_factor;
+            input_weight += scale_factor
+                * (32 + 4 + 4 + // outpoint (32+4) + nSequence
+                VarInt(input.script_sig.len() as u64).len() +
+                input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
-                input_weight += Weight::from_wu_usize(input.witness.serialized_len());
+                input_weight += input.witness.serialized_len();
             }
         }
-        let mut output_size = Weight::ZERO;
+        let mut output_size = 0;
         for output in &self.output {
-            output_size += Weight::from_wu(8)+ // value
-                Weight::from_wu_usize(VarInt(output.script_pubkey.len() as u64).len()) +
-                Weight::from_wu_usize(output.script_pubkey.len());
+            output_size += 8 + // value
+                VarInt(output.script_pubkey.len() as u64).len() +
+                output.script_pubkey.len();
         }
         let non_input_size =
         // version:
-        Weight::from_wu(4) +
+        4 +
         // count varints:
-        Weight::from_wu_usize(VarInt(self.input.len() as u64).len()) +
-        Weight::from_wu_usize(VarInt(self.output.len() as u64).len()) +
+        VarInt(self.input.len() as u64).len() +
+        VarInt(self.output.len() as u64).len() +
         output_size +
         // lock_time
-        Weight::from_wu(4);
+        4;
         if inputs_with_witnesses == 0 {
-            non_input_size.checked_mul(scale_factor).unwrap() + input_weight
+            non_input_size * scale_factor + input_weight
         } else {
-            non_input_size.checked_mul(scale_factor).unwrap()
-                + input_weight
-                + Weight::from_wu_usize(self.input.len() - inputs_with_witnesses + 2)
+            non_input_size * scale_factor + input_weight + self.input.len() - inputs_with_witnesses
+                + 2
         }
     }
 
@@ -1398,7 +1397,7 @@ mod tests {
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
         assert_eq!(realtx.stripped_size(), tx_bytes.len());
-        assert_eq!(realtx.scaled_size(4), Weight::from_wu(772));
+        assert_eq!(realtx.scaled_size(4), 772);
     }
 
     #[test]
@@ -1457,7 +1456,7 @@ mod tests {
         assert_eq!(tx_without_witness.size(), expected_strippedsize);
         assert_eq!(tx_without_witness.vsize(), expected_strippedsize);
         assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
-        assert_eq!(tx_without_witness.scaled_size(1), Weight::from_wu(83));
+        assert_eq!(tx_without_witness.scaled_size(1), 83);
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.
