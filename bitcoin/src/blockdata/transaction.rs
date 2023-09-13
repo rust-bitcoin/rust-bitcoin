@@ -51,6 +51,14 @@ pub struct OutPoint {
 crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
+    /// The size of an OutPoint.
+    ///
+    /// ### Bitcoin Core References
+    ///
+    /// * [COutPoint hash size (32 bytes)](https://github.com/bitcoin/bitcoin/blob/adc0921ea19f3b06878df6b22393fec519ed8f91/src/primitives/transaction.h#L79)
+    /// * [COutPoint n size (4 bytes)](https://github.com/bitcoin/bitcoin/blob/adc0921ea19f3b06878df6b22393fec519ed8f91/src/primitives/transaction.h#L39)
+    pub const SIZE: usize = 32 + 4;
+
     /// Creates a new [`OutPoint`].
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
