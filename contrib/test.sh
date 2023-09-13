@@ -11,7 +11,7 @@ if cargo --version | grep ${MSRV}; then
     cargo update -p serde_json --precise 1.0.99
     cargo update -p serde --precise 1.0.156
     cargo update -p quote --precise 1.0.30
-    cargo update -p proc-macro2 --precise 1.0.63
+    cargo update -p proc-macro2 --precise 1.0.67
     cargo update -p serde_test --precise 1.0.175
     # Have to pin this so we can pin `schemars_derive`
     cargo update -p schemars --precise 0.8.12
