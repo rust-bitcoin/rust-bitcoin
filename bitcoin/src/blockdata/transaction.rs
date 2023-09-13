@@ -208,7 +208,8 @@ pub struct TxIn {
 
 impl TxIn {
     /// The weight of a `TxIn` excluding the `script_sig` and `witness`.
-    pub const BASE_WEIGHT: Weight = Weight::from_wu(32 + 4 + 4);
+    pub const BASE_WEIGHT: Weight =
+        Weight::from_vb_const(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
