@@ -286,6 +286,12 @@ impl Default for TxIn {
 pub struct Sequence(pub u32);
 
 impl Sequence {
+    /// The size of a Sequence.
+    ///
+    /// ### Bitcoin Core Reference
+    ///
+    /// * [nSequence size (4 bytes)](https://github.com/bitcoin/bitcoin/blob/adc0921ea19f3b06878df6b22393fec519ed8f91/src/primitives/transaction.h#L39)
+    pub const SIZE: usize = 32 + 4;
     /// The maximum allowable sequence number.
     ///
     /// This sequence number disables absolute lock time and replace-by-fee.
