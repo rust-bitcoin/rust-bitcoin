@@ -18,14 +18,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(not(feature = "std"), not(feature = "core2")))]
-compile_error!("At least one of std or core2 must be enabled");
-
-#[cfg(feature = "std")]
-pub use std::error;
-#[cfg(not(feature = "std"))]
-pub use core2::error;
-
 #[cfg(any(feature = "alloc", feature = "std"))]
 extern crate alloc;
 
@@ -33,15 +25,183 @@ extern crate alloc;
 /// [`std::io`] for more info.
 pub mod io {
     use core::convert::TryInto;
+    use core::fmt::{Debug, Display, Formatter};
+    #[cfg(any(feature = "alloc", feature = "std"))]
+    use alloc::boxed::Box;
 
-    #[cfg(all(not(feature = "std"), not(feature = "core2")))]
-    compile_error!("At least one of std or core2 must be enabled");
+    #[cfg(all(feature = "alloc", not(feature = "std")))]
+    mod sealed {
+        use alloc::boxed::Box;
+        use alloc::string::String;
+        use core::fmt::Debug;
+        pub trait IntoBoxDynDebug {
+            fn into(self) -> Box<dyn Debug + Send + Sync + 'static>;
+        }
+        impl IntoBoxDynDebug for &str {
+            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> {
+                Box::new(String::from(self))
+            }
+        }
+        impl IntoBoxDynDebug for String {
+            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> {
+                Box::new(self)
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct Error {
+        kind: ErrorKind,
+
+        #[cfg(feature = "std")]
+        error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+        #[cfg(all(feature = "alloc", not(feature = "std")))]
+        error: Option<Box<dyn Debug + Send + Sync + 'static>>,
+    }
+    impl Error {
+        #[cfg(feature = "std")]
+        pub fn new<E>(kind: ErrorKind, error: E) -> Error
+        where
+            E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
+        {
+            Self { kind, error: Some(error.into()) }
+        }
+        #[cfg(all(feature = "alloc", not(feature = "std")))]
+        pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
+            Self { kind, error: Some(error.into()) }
+        }
+
+        pub fn kind(&self) -> ErrorKind {
+            self.kind
+        }
+    }
+
+    impl From<ErrorKind> for Error {
+        fn from(kind: ErrorKind) -> Error {
+            Self {
+                kind,
+                #[cfg(any(feature = "std", feature = "alloc"))]
+                error: None,
+            }
+        }
+    }
+
+    impl Display for Error {
+        fn fmt(&self, fmt: &mut Formatter) -> core::result::Result<(), core::fmt::Error> {
+            fmt.write_fmt(format_args!("I/O Error: {}", self.kind.description()))?;
+            #[cfg(any(feature = "alloc", feature = "std"))]
+            if let Some(e) = &self.error {
+                fmt.write_fmt(format_args!(". {:?}", e))?;
+            }
+            Ok(())
+        }
+    }
 
     #[cfg(feature = "std")]
-    pub use std::io::{Error, ErrorKind, Result};
+    impl std::error::Error for Error {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            self.error.as_ref().and_then(|e| e.as_ref().source())
+        }
+        #[allow(deprecated)]
+        fn description(&self) -> &str {
+            match self.error.as_ref() {
+                Some(e) => e.description(),
+                None => self.kind.description(),
+            }
+        }
+        #[allow(deprecated)]
+        fn cause(&self) -> Option<&dyn std::error::Error> {
+            self.error.as_ref().and_then(|e| e.as_ref().cause())
+        }
+    }
 
-    #[cfg(not(feature = "std"))]
-    pub use core2::io::{Error, ErrorKind, Result};
+    impl Error {
+        #[cfg(feature = "std")]
+        pub fn get_ref(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
+            self.error.as_deref()
+        }
+        #[cfg(all(feature = "alloc", not(feature = "std")))]
+        pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
+            self.error.as_deref()
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl From<std::io::Error> for Error {
+        fn from(o: std::io::Error) -> Error {
+            Self { kind: ErrorKind::from_std(o.kind()), error: o.into_inner() }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl From<Error> for std::io::Error {
+        fn from(o: Error) -> std::io::Error {
+            if let Some(err) = o.error {
+                std::io::Error::new(o.kind.to_std(), err)
+            } else {
+                o.kind.to_std().into()
+            }
+        }
+    }
+
+    macro_rules! define_errorkind {
+        ($($kind: ident),*) => {
+            #[non_exhaustive]
+            #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+            /// A minimal subset of [`std::io::ErrorKind`] which is used for [`Error`]. Note that, as with
+            /// [`std::io`], only [`Self::Interrupted`] has defined semantics in this crate, all other
+            /// variants are provided here only to provide higher-fidelity conversions to and from
+            /// [`std::io::Error`].
+            pub enum ErrorKind {
+                $($kind),*
+            }
+
+            impl ErrorKind {
+                fn description(&self) -> &'static str {
+                    match self {
+                        $(Self::$kind => stringify!($kind)),*
+                    }
+                }
+                #[cfg(feature = "std")]
+                fn to_std(self) -> std::io::ErrorKind {
+                    match self {
+                        $(Self::$kind => std::io::ErrorKind::$kind),*
+                    }
+                }
+                #[cfg(feature = "std")]
+                fn from_std(o: std::io::ErrorKind) -> ErrorKind {
+                    match o {
+                        $(std::io::ErrorKind::$kind => ErrorKind::$kind),*,
+                        _ => ErrorKind::Other
+                    }
+                }
+            }
+        }
+    }
+
+    define_errorkind!(
+        NotFound,
+        PermissionDenied,
+        ConnectionRefused,
+        ConnectionReset,
+        ConnectionAborted,
+        NotConnected,
+        AddrInUse,
+        AddrNotAvailable,
+        BrokenPipe,
+        AlreadyExists,
+        WouldBlock,
+        InvalidInput,
+        InvalidData,
+        TimedOut,
+        WriteZero,
+        Interrupted,
+        UnexpectedEof,
+        // Note: Any time we bump the MSRV any new error kinds should be added here!
+        Other
+    );
+
+    pub type Result<T> = core::result::Result<T, Error>;
 
     /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
     pub trait Read {
@@ -50,7 +210,7 @@ pub mod io {
         fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
             while !buf.is_empty() {
                 match self.read(buf) {
-                    Ok(0) => return Err(Error::new(ErrorKind::UnexpectedEof, "")),
+                    Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
                     Ok(len) => buf = &mut buf[len..],
                     Err(e) if e.kind() == ErrorKind::Interrupted => {}
                     Err(e) => return Err(e),
@@ -82,7 +242,7 @@ pub mod io {
     impl<R: std::io::Read> Read for R {
         #[inline]
         fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-            <R as std::io::Read>::read(self, buf)
+            Ok(<R as std::io::Read>::read(self, buf)?)
         }
     }
 
@@ -136,7 +296,7 @@ pub mod io {
         fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
             while !buf.is_empty() {
                 match self.write(buf) {
-                    Ok(0) => return Err(Error::new(ErrorKind::UnexpectedEof, "")),
+                    Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
                     Ok(len) => buf = &buf[len..],
                     Err(e) if e.kind() == ErrorKind::Interrupted => {}
                     Err(e) => return Err(e),
@@ -150,11 +310,11 @@ pub mod io {
     impl<W: std::io::Write> Write for W {
         #[inline]
         fn write(&mut self, buf: &[u8]) -> Result<usize> {
-            <W as std::io::Write>::write(self, buf)
+            Ok(<W as std::io::Write>::write(self, buf)?)
         }
         #[inline]
         fn flush(&mut self) -> Result<()> {
-            <W as std::io::Write>::flush(self)
+            Ok(<W as std::io::Write>::flush(self)?)
         }
     }
 
