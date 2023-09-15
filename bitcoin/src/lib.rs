@@ -113,9 +113,6 @@ pub mod sign_message;
 pub mod string;
 pub mod taproot;
 
-// May depend on crate features and we don't want to bother with it
-#[allow(unused)]
-use bitcoin_io::error::Error as StdError;
 use bitcoin_io::io;
 
 pub use crate::address::{Address, AddressType};
