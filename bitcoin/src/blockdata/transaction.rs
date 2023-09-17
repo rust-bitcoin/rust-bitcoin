@@ -36,6 +36,11 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
 use crate::{io, Amount, VarInt};
 
+/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
+const SEGWIT_MARKER: u8 = 0x00;
+/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
+const SEGWIT_FLAG: u8 = 0x01;
+
 /// A reference to a transaction output.
 ///
 /// ### Bitcoin Core References
@@ -1021,8 +1026,8 @@ impl Encodable for Transaction {
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
         } else {
-            len += 0u8.consensus_encode(w)?;
-            len += 1u8.consensus_encode(w)?;
+            len += SEGWIT_MARKER.consensus_encode(w)?;
+            len += SEGWIT_FLAG.consensus_encode(w)?;
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
             for input in &self.input {
