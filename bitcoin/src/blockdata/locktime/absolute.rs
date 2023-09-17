@@ -100,6 +100,9 @@ impl LockTime {
     /// transaction with nLocktime==0 is able to be included immediately in any block.
     pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
 
+    /// The number of bytes that the locktime contributes to the size of a transaction.
+    pub const SIZE: usize = 4; // Serialized length of a u32.
+
     /// Constructs a `LockTime` from an nLockTime value or the argument to OP_CHEKCLOCKTIMEVERIFY.
     ///
     /// # Examples

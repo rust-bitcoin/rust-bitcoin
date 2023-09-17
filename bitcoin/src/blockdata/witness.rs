@@ -150,7 +150,7 @@ impl Decodable for Witness {
 
             for i in 0..witness_elements {
                 let element_size_varint = VarInt::consensus_decode(r)?;
-                let element_size_varint_len = element_size_varint.len();
+                let element_size_varint_len = element_size_varint.size();
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor
                     .checked_add(element_size)
@@ -229,7 +229,7 @@ impl Encodable for Witness {
         let indices_size = self.witness_elements * 4;
         let content_len = content_with_indices_len - indices_size;
         w.emit_slice(&self.content[..content_len])?;
-        Ok(content_len + len.len())
+        Ok(content_len + len.size())
     }
 }
 
@@ -243,7 +243,7 @@ impl Witness {
         let index_size = witness_elements * 4;
         let content_size = slice
             .iter()
-            .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).len())
+            .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).size())
             .sum();
 
         let mut content = vec![0u8; content_size + index_size];
@@ -252,9 +252,9 @@ impl Witness {
             encode_cursor(&mut content, content_size, i, cursor);
             let elem_len_varint = VarInt::from(elem.as_ref().len());
             elem_len_varint
-                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.len()])
+                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.size()])
                 .expect("writers on vec don't errors, space granted by content_size");
-            cursor += elem_len_varint.len();
+            cursor += elem_len_varint.size();
             content[cursor..cursor + elem.as_ref().len()].copy_from_slice(elem.as_ref());
             cursor += elem.as_ref().len();
         }
@@ -277,9 +277,22 @@ impl Witness {
     pub fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the bytes required when this Witness is consensus encoded.
-    pub fn serialized_len(&self) -> usize {
-        self.iter().map(|el| VarInt::from(el.len()).len() + el.len()).sum::<usize>()
-            + VarInt::from(self.witness_elements).len()
+    #[deprecated(since = "0.31.0", note = "use size instead")]
+    pub fn serialized_len(&self) -> usize { self.size() }
+
+    /// Returns the number of bytes this witness contributes to a transactions total size.
+    pub fn size(&self) -> usize {
+        let mut size: usize = 0;
+
+        size += VarInt::from(self.witness_elements).size();
+        size += self
+            .iter()
+            .map(|witness_element| {
+                VarInt::from(witness_element.len()).size() + witness_element.len()
+            })
+            .sum::<usize>();
+
+        size
     }
 
     /// Clear the witness.
@@ -300,7 +313,7 @@ impl Witness {
         let previous_content_end = self.indices_start;
         let element_len_varint = VarInt::from(new_element.len());
         let current_content_len = self.content.len();
-        let new_item_total_len = element_len_varint.len() + new_element.len();
+        let new_item_total_len = element_len_varint.size() + new_element.len();
         self.content.resize(current_content_len + new_item_total_len + 4, 0);
 
         self.content[previous_content_end..].rotate_right(new_item_total_len);
@@ -312,7 +325,7 @@ impl Witness {
             previous_content_end,
         );
 
-        let end_varint = previous_content_end + element_len_varint.len();
+        let end_varint = previous_content_end + element_len_varint.size();
         element_len_varint
             .consensus_encode(&mut &mut self.content[previous_content_end..end_varint])
             .expect("writers on vec don't error, space granted through previous resize");
@@ -335,7 +348,7 @@ impl Witness {
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
-        let start = index + varint.len();
+        let start = index + varint.size();
         Some(&self.content[start..start + varint.0 as usize])
     }
 
@@ -404,7 +417,7 @@ impl<'a> Iterator for Iter<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let index = decode_cursor(self.inner, self.indices_start, self.current_index)?;
         let varint = VarInt::consensus_decode(&mut &self.inner[index..]).ok()?;
-        let start = index + varint.len();
+        let start = index + varint.size();
         let end = start + varint.0 as usize;
         let slice = &self.inner[start..end];
         self.current_index += 1;
