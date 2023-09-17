@@ -350,11 +350,7 @@ impl Script {
     /// (Note: taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
-    ///
-    /// # Errors
-    ///
-    /// If the Script is not able to be parsed to completion.
-    pub fn count_sigops(&self) -> Result<usize, super::Error> { self.count_sigops_internal(true) }
+    pub fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
 
     /// Counts the sigops for this Script using legacy counting.
     ///
@@ -368,20 +364,14 @@ impl Script {
     /// (Note: taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
-    ///
-    /// # Errors
-    ///
-    /// If the Script is not able to be parsed to completion.
-    pub fn count_sigops_legacy(&self) -> Result<usize, super::Error> {
-        self.count_sigops_internal(false)
-    }
+    pub fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
 
-    fn count_sigops_internal(&self, accurate: bool) -> Result<usize, super::Error> {
+    fn count_sigops_internal(&self, accurate: bool) -> usize {
         let mut n = 0;
         let mut pushnum_cache = None;
         for inst in self.instructions() {
-            match inst? {
-                Instruction::Op(opcode) => {
+            match inst {
+                Ok(Instruction::Op(opcode)) => {
                     match opcode {
                         OP_CHECKSIG | OP_CHECKSIGVERIFY => {
                             n += 1;
@@ -404,13 +394,15 @@ impl Script {
                         }
                     }
                 }
-                Instruction::PushBytes(_) => {
+                Ok(Instruction::PushBytes(_)) => {
                     pushnum_cache = None;
                 }
+                // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
+                Err(_) => break,
             }
         }
 
-        Ok(n)
+        n
     }
 
     /// Iterates over the script instructions.
