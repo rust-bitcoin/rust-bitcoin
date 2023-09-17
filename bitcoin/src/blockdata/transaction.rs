@@ -1022,10 +1022,12 @@ impl Encodable for Transaction {
                 break;
             }
         }
+        // Legacy transaction serialization format only includes inputs and outputs.
         if !have_witness {
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
         } else {
+            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
             len += SEGWIT_MARKER.consensus_encode(w)?;
             len += SEGWIT_FLAG.consensus_encode(w)?;
             len += self.input.consensus_encode(w)?;
