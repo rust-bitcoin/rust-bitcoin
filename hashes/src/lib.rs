@@ -115,7 +115,6 @@ pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
 pub mod hmac;
-#[cfg(feature = "bitcoin_io")]
 mod impls;
 pub mod ripemd160;
 pub mod sha1;
