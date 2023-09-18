@@ -84,6 +84,10 @@ cargo update -p serde_test --precise 1.0.175
 
 The above commands are sourced from `./contrib/test.sh`.
 
+### WASM
+
+We do not guarantee the MSRV works with WASM (and it probably doesn't).
+
 ## External dependencies
 
 We integrate with a few external libraries, most notably `serde`. These

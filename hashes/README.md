@@ -23,6 +23,10 @@ cargo update -p serde --precise 1.0.156
 before building. (And if your code is a library, your downstream users will need to run these
 commands, and so on.)
 
+### WASM
+
+We do not guarantee the MSRV works with WASM (and it probably doesn't).
+
 ## Contributions
 
 Contributions are welcome, including additional hash function implementations.
