@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="serde serde-std std alloc"
+FEATURES="serde serde-std std alloc bitcoin_io/alloc bitcoin_io/core2 bitcoin_io/std"
 
 cargo --version
 rustc --version
