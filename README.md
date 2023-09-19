@@ -71,18 +71,8 @@ For more information please see `./CONTRIBUTING.md`.
 
 This library should always compile with any combination of features on **Rust 1.48.0**.
 
-To build with the MSRV you will need to pin `serde` (if you have the feature enabled)
-
-```
-# serde 1.0.157 uses syn 2.0 which requires edition 2021
-cargo update -p serde_json --precise 1.0.99
-cargo update -p serde --precise 1.0.156
-cargo update -p quote --precise 1.0.30
-cargo update -p proc-macro2 --precise 1.0.63
-cargo update -p serde_test --precise 1.0.175
-```
-
-The above commands are sourced from `./contrib/test.sh`.
+To build with the MSRV you will likely need to pin a bunch of dependencies, see `./contrib/test.sh`
+for the current list.
 
 ## External dependencies
 
