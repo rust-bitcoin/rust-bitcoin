@@ -218,6 +218,7 @@ struct P2trUtxo<'a> {
     derivation_path: &'a str,
 }
 
+#[allow(clippy::single_element_loop)]
 fn generate_bip86_key_spend_tx(
     secp: &secp256k1::Secp256k1<secp256k1::All>,
     master_xpriv: Xpriv,
@@ -267,6 +268,16 @@ fn generate_bip86_key_spend_tx(
     input.tap_internal_key = Some(input_pubkey);
     psbt.inputs = vec![input];
 
+    // The `Prevouts::All` array is used to create the sighash to sign for each input in the
+    // `psbt.inputs` array, as such it must be the same length and in the same order as the inputs.
+    let mut input_txouts = Vec::<TxOut>::new();
+    for input in [&input_utxo].iter() {
+        input_txouts.push(TxOut {
+            value: input.amount_in_sats,
+            script_pubkey: ScriptBuf::from_hex(input.script_pubkey)?,
+        });
+    }
+
     // SIGNER
     let unsigned_tx = psbt.unsigned_tx.clone();
     psbt.inputs.iter_mut().enumerate().try_for_each::<_, Result<(), Box<dyn std::error::Error>>>(
@@ -277,10 +288,7 @@ fn generate_bip86_key_spend_tx(
                 .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 vout,
-                &sighash::Prevouts::All(&[TxOut {
-                    value: from_amount,
-                    script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey)?,
-                }]),
+                &sighash::Prevouts::All(input_txouts.as_slice()),
                 hash_ty,
             )?;
 
