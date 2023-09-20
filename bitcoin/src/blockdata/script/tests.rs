@@ -625,7 +625,7 @@ fn test_script_get_sigop_count() {
             .push_opcode(OP_EQUAL)
             .into_script()
             .count_sigops(),
-        Ok(0)
+        0
     );
     assert_eq!(
         Builder::new()
@@ -636,7 +636,7 @@ fn test_script_get_sigop_count() {
             .push_opcode(OP_CHECKSIG)
             .into_script()
             .count_sigops(),
-        Ok(1)
+        1
     );
     assert_eq!(
         Builder::new()
@@ -648,7 +648,7 @@ fn test_script_get_sigop_count() {
             .push_opcode(OP_PUSHNUM_1)
             .into_script()
             .count_sigops(),
-        Ok(1)
+        1
     );
     let multi = Builder::new()
         .push_opcode(OP_PUSHNUM_1)
@@ -658,8 +658,8 @@ fn test_script_get_sigop_count() {
         .push_opcode(OP_PUSHNUM_3)
         .push_opcode(OP_CHECKMULTISIG)
         .into_script();
-    assert_eq!(multi.count_sigops(), Ok(3));
-    assert_eq!(multi.count_sigops_legacy(), Ok(20));
+    assert_eq!(multi.count_sigops(), 3);
+    assert_eq!(multi.count_sigops_legacy(), 20);
     let multi_verify = Builder::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
@@ -669,8 +669,8 @@ fn test_script_get_sigop_count() {
         .push_opcode(OP_CHECKMULTISIGVERIFY)
         .push_opcode(OP_PUSHNUM_1)
         .into_script();
-    assert_eq!(multi_verify.count_sigops(), Ok(3));
-    assert_eq!(multi_verify.count_sigops_legacy(), Ok(20));
+    assert_eq!(multi_verify.count_sigops(), 3);
+    assert_eq!(multi_verify.count_sigops_legacy(), 20);
     let multi_nopushnum_pushdata = Builder::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
@@ -678,8 +678,8 @@ fn test_script_get_sigop_count() {
         .push_slice([3; 33])
         .push_opcode(OP_CHECKMULTISIG)
         .into_script();
-    assert_eq!(multi_nopushnum_pushdata.count_sigops(), Ok(20));
-    assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), Ok(20));
+    assert_eq!(multi_nopushnum_pushdata.count_sigops(), 20);
+    assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), 20);
     let multi_nopushnum_op = Builder::new()
         .push_opcode(OP_PUSHNUM_1)
         .push_slice([3; 33])
@@ -687,8 +687,8 @@ fn test_script_get_sigop_count() {
         .push_opcode(OP_DROP)
         .push_opcode(OP_CHECKMULTISIG)
         .into_script();
-    assert_eq!(multi_nopushnum_op.count_sigops(), Ok(20));
-    assert_eq!(multi_nopushnum_op.count_sigops_legacy(), Ok(20));
+    assert_eq!(multi_nopushnum_op.count_sigops(), 20);
+    assert_eq!(multi_nopushnum_op.count_sigops_legacy(), 20);
 }
 
 #[test]
