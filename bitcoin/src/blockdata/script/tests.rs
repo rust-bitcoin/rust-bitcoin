@@ -377,6 +377,53 @@ fn op_return_test() {
 }
 
 #[test]
+fn multisig() {
+    // First multisig? 1-of-2
+    // In block 164467, txid 60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1
+    assert!(
+        ScriptBuf::from_hex("514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae")
+            .unwrap()
+            .is_multisig()
+    );
+    // 2-of-2
+    assert!(
+        ScriptBuf::from_hex("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
+            .unwrap()
+            .is_multisig()
+    );
+
+    // Extra opcode after OP_CHECKMULTISIG
+    assert!(
+        !ScriptBuf::from_hex("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae52")
+            .unwrap()
+            .is_multisig()
+    );
+    // Required sigs > num pubkeys
+    assert!(
+        !ScriptBuf::from_hex("5321021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f452ae")
+            .unwrap()
+            .is_multisig()
+    );
+    // Num pubkeys != pushnum
+    assert!(
+        !ScriptBuf::from_hex("5221021c4ac2ecebc398e390e07f045aac5cc421f82f0739c1ce724d3d53964dc6537d21023a2e9155e0b62f76737605504819a2b4e5ce20653f6c397d7a178ae42ba702f453ae")
+            .unwrap()
+            .is_multisig()
+    );
+
+    // Taproot hash from another test
+    assert!(!ScriptBuf::from_hex(
+        "20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac"
+    )
+    .unwrap()
+    .is_multisig());
+    // OP_RETURN from another test
+    assert!(!ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
+        .unwrap()
+        .is_multisig());
+}
+
+#[test]
 #[cfg(feature = "serde")]
 fn script_json_serialize() {
     use serde_json;
