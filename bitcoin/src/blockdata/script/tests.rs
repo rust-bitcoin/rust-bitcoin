@@ -312,9 +312,13 @@ fn scriptint_round_trip() {
     for &i in test_vectors.iter() {
         assert_eq!(Ok(i), read_scriptint(&build_scriptint(i)));
         assert_eq!(Ok(-i), read_scriptint(&build_scriptint(-i)));
+        assert_eq!(Ok(i), read_scriptint_non_minimal(&build_scriptint(i)));
+        assert_eq!(Ok(-i), read_scriptint_non_minimal(&build_scriptint(-i)));
     }
     assert!(read_scriptint(&build_scriptint(1 << 31)).is_err());
     assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
+    assert!(read_scriptint_non_minimal(&build_scriptint(1 << 31)).is_err());
+    assert!(read_scriptint_non_minimal(&build_scriptint(-(1 << 31))).is_err());
 }
 
 #[test]
@@ -323,6 +327,11 @@ fn non_minimal_scriptints() {
     assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
     assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
     assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
+
+    assert_eq!(read_scriptint_non_minimal(&[0x80, 0x00]), Ok(0x80));
+    assert_eq!(read_scriptint_non_minimal(&[0xff, 0x00]), Ok(0xff));
+    assert_eq!(read_scriptint_non_minimal(&[0x8f, 0x00, 0x00]), Ok(0x8f));
+    assert_eq!(read_scriptint_non_minimal(&[0x7f, 0x00]), Ok(0x7f));
 }
 
 #[test]
@@ -768,4 +777,50 @@ fn read_scriptbool_non_zero_is_true() {
 
     let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x80]; // With sign bit set.
     assert!(read_scriptbool(&v));
+}
+
+#[test]
+fn instruction_script_num_parse() {
+    let push_bytes = [
+        (PushBytesBuf::from([]), Some(0)),
+        (PushBytesBuf::from([0x00]), Some(0)),
+        (PushBytesBuf::from([0x01]), Some(1)),
+        // Check all the negative 1s
+        (PushBytesBuf::from([0x81]), Some(-1)),
+        (PushBytesBuf::from([0x01, 0x80]), Some(-1)),
+        (PushBytesBuf::from([0x01, 0x00, 0x80]), Some(-1)),
+        (PushBytesBuf::from([0x01, 0x00, 0x00, 0x80]), Some(-1)),
+        // Check all the negative 0s
+        (PushBytesBuf::from([0x80]), Some(0)),
+        (PushBytesBuf::from([0x00, 0x80]), Some(0)),
+        (PushBytesBuf::from([0x00, 0x00, 0x80]), Some(0)),
+        (PushBytesBuf::from([0x00, 0x00, 0x00, 0x80]), Some(0)),
+        // Too long
+        (PushBytesBuf::from([0x01, 0x00, 0x00, 0x00, 0x80]), None),
+        // Check the position of all the bytes
+        (PushBytesBuf::from([0xef, 0xbe, 0xad, 0x5e]), Some(0x5eadbeef)),
+        // Add negative
+        (PushBytesBuf::from([0xef, 0xbe, 0xad, 0xde]), Some(-0x5eadbeef)),
+    ];
+    let ops = [
+        (Instruction::Op(opcodes::all::OP_PUSHDATA4), None),
+        (Instruction::Op(opcodes::all::OP_PUSHNUM_NEG1), Some(-1)),
+        (Instruction::Op(opcodes::all::OP_RESERVED), None),
+        (Instruction::Op(opcodes::all::OP_PUSHNUM_1), Some(1)),
+        (Instruction::Op(opcodes::all::OP_PUSHNUM_16), Some(16)),
+        (Instruction::Op(opcodes::all::OP_NOP), None),
+    ];
+    for (input, expected) in &push_bytes {
+        assert_eq!(Instruction::PushBytes(input).script_num(), *expected);
+    }
+    for (input, expected) in &ops {
+        assert_eq!(input.script_num(), *expected);
+    }
+
+    // script_num() is predicated on OP_0/OP_FALSE (0x00)
+    // being treated as an empty PushBytes
+    assert_eq!(
+        Script::from_bytes(&[0x00]).instructions().next(),
+        Some(Ok(Instruction::PushBytes(PushBytes::empty()))),
+    );
 }

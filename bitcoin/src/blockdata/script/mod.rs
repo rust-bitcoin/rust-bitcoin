@@ -170,20 +170,19 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 ///
 /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
-    let len = v.len();
-    if len > 4 {
-        return Err(Error::NumericOverflow);
-    }
     let last = match v.last() {
         Some(last) => last,
         None => return Ok(0),
     };
+    if v.len() > 4 {
+        return Err(Error::NumericOverflow);
+    }
     // Comment and code copied from Bitcoin Core:
     // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
     // If the most-significant-byte - excluding the sign bit - is zero
     // then we're not minimal. Note how this test also rejects the
     // negative-zero encoding, 0x80.
-    if (last & 0x7f) == 0 {
+    if (*last & 0x7f) == 0 {
         // One exception: if there's more than one byte and the most
         // significant bit of the second-most-significant-byte is set
         // it would conflict with the sign bit. An example of this case
@@ -194,12 +193,33 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
         }
     }
 
+    Ok(scriptint_parse(v))
+}
+
+/// Decodes an integer in script format without non-minimal error.
+///
+/// The overflow error for slices over 4 bytes long is still there.
+/// See [`read_scriptint`] for a description of some subtleties of
+/// this function.
+pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
+    if v.is_empty() {
+        return Ok(0);
+    }
+    if v.len() > 4 {
+        return Err(Error::NumericOverflow);
+    }
+
+    Ok(scriptint_parse(v))
+}
+
+// Caller to guarantee that `v` is not empty.
+fn scriptint_parse(v: &[u8]) -> i64 {
     let (mut ret, sh) = v.iter().fold((0, 0), |(acc, sh), n| (acc + ((*n as i64) << sh), sh + 8));
-    if v[len - 1] & 0x80 != 0 {
+    if v[v.len() - 1] & 0x80 != 0 {
         ret &= (1 << (sh - 1)) - 1;
         ret = -ret;
     }
-    Ok(ret)
+    ret
 }
 
 /// Decodes a boolean.

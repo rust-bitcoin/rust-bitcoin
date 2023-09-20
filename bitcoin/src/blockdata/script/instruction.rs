@@ -31,6 +31,31 @@ impl<'a> Instruction<'a> {
         }
     }
 
+    /// Returns the number interpretted by the script parser
+    /// if it can be coerced into a number.
+    ///
+    /// This does not require the script num to be minimal.
+    pub fn script_num(&self) -> Option<i64> {
+        match self {
+            Instruction::Op(op) => {
+                let v = op.to_u8();
+                match v {
+                    // OP_PUSHNUM_1 ..= OP_PUSHNUM_16
+                    0x51..=0x60 => Some(v as i64 - 0x50),
+                    // OP_PUSHNUM_NEG1
+                    0x4f => Some(-1),
+                    _ => None,
+                }
+            }
+            Instruction::PushBytes(bytes) => {
+                match super::read_scriptint_non_minimal(bytes.as_bytes()) {
+                    Ok(v) => Some(v),
+                    _ => None,
+                }
+            }
+        }
+    }
+
     /// Returns the number of bytes required to encode the instruction in script.
     pub(super) fn script_serialized_len(&self) -> usize {
         match self {
