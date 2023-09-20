@@ -236,6 +236,19 @@ impl Witness {
     /// Creates a new empty [`Witness`].
     pub fn new() -> Self { Witness::default() }
 
+    /// Creates a witness required to spend a P2WPKH output.
+    ///
+    /// The witness will be made up of the DER encoded signature + sighash_type followed by the
+    /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
+    ///
+    /// It is expected that `pubkey` is related to the secret key used to create `signature`.
+    pub fn p2wpkh(signature: &ecdsa::Signature, pubkey: &secp256k1::PublicKey) -> Witness {
+        let mut witness = Witness::new();
+        witness.push_slice(&signature.serialize());
+        witness.push_slice(&pubkey.serialize());
+        witness
+    }
+
     /// Creates a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
