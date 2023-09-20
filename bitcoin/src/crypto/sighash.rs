@@ -1187,25 +1187,34 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 }
 
 impl<R: BorrowMut<Transaction>> SighashCache<R> {
-    /// When the `SighashCache` is initialized with a mutable reference to a transaction instead of
-    /// a regular reference, this method is available to allow modification to the witnesses.
+    /// Allows modification of witnesses.
     ///
-    /// This allows in-line signing such as
+    /// As a lint against accidental changes to the transaction that would invalidate the cache and
+    /// signatures, `SighashCache` borrows the Transaction so that modifying it is not possible
+    /// without hacks with `UnsafeCell` (which is hopefully a strong indication that something is
+    /// wrong). However modifying witnesses never invalidates the cache and is actually useful - one
+    /// usually wants to put the signature generated for an input into the witness of that input.
+    ///
+    /// This method allows doing exactly that if the transaction is owned by the `SighashCache` or
+    /// borrowed mutably.
+    ///
+    /// # Examples
+    ///
+    /// ```compile_fail
+    /// let mut sighasher = SighashCache::new(&mut tx_to_sign);
+    /// let sighash = sighasher.p2wpkh_signature_hash(input_index, &utxo.script_pubkey, amount, sighash_type)?;
+    ///
+    /// let signature = {
+    ///     // Sign the sighash using secp256k1
+    /// };
+    ///
+    /// *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&signature, &pk);
     /// ```
-    /// use bitcoin::{absolute, transaction, Amount, Transaction, Script};
-    /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     ///
-    /// let mut tx_to_sign = Transaction { version: transaction::Version::TWO, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
-    /// let input_count = tx_to_sign.input.len();
+    /// For full signing code see the [`segwit v0`] and [`taproot`] signing examples.
     ///
-    /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
-    /// for inp in 0..input_count {
-    ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.p2wpkh_signature_hash(inp, prevout_script, Amount::ONE_SAT, EcdsaSighashType::All);
-    ///     // ... sign the sighash
-    ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
-    /// }
-    /// ```
+    /// [`segwit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
+    /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
     }
