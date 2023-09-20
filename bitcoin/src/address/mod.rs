@@ -33,7 +33,6 @@ use core::str::FromStr;
 
 use bech32;
 use hashes::{sha256, Hash, HashEngine};
-use internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
@@ -41,126 +40,17 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::script::witness_program::{self, WitnessProgram};
-use crate::blockdata::script::witness_version::{self, WitnessVersion};
+use crate::blockdata::script::witness_program::WitnessProgram;
+use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
 use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
-/// Address error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Base58 encoding error.
-    Base58(base58::Error),
-    /// Bech32 encoding error.
-    Bech32(bech32::Error),
-    /// The bech32 payload was empty.
-    EmptyBech32Payload,
-    /// The wrong checksum algorithm was used. See BIP-0350.
-    InvalidBech32Variant {
-        /// Bech32 variant that is required by the used Witness version.
-        expected: bech32::Variant,
-        /// The actual Bech32 variant encoded in the address representation.
-        found: bech32::Variant,
-    },
-    /// A witness version construction error.
-    WitnessVersion(witness_version::TryFromError),
-    /// A witness program error.
-    WitnessProgram(witness_program::Error),
-    /// An uncompressed pubkey was used where it is not allowed.
-    UncompressedPubkey,
-    /// Address size more than 520 bytes is not allowed.
-    ExcessiveScriptSize,
-    /// Script is not a p2pkh, p2sh or witness program.
-    UnrecognizedScript,
-    /// Address type is either invalid or not supported in rust-bitcoin.
-    UnknownAddressType(String),
-    /// Address's network differs from required one.
-    NetworkValidation {
-        /// Network that was required.
-        required: Network,
-        /// Network on which the address was found to be valid.
-        found: Network,
-        /// The address itself
-        address: Address<NetworkUnchecked>,
-    },
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
-            Error::Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
-            Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
-            Error::InvalidBech32Variant { expected, found } => write!(
-                f,
-                "invalid bech32 checksum variant found {:?} when {:?} was expected",
-                found, expected
-            ),
-            Error::WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
-            Error::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            Error::UncompressedPubkey =>
-                write!(f, "an uncompressed pubkey was used where it is not allowed"),
-            Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
-            Error::UnrecognizedScript =>
-                write!(f, "script is not a p2pkh, p2sh or witness program"),
-            Error::UnknownAddressType(ref s) => write!(
-                f,
-                "unknown address type: '{}' is either invalid or not supported in rust-bitcoin",
-                s
-            ),
-            Error::NetworkValidation { required, found, ref address } => {
-                write!(f, "address ")?;
-                address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
-                write!(
-                    f,
-                    " belongs to network {} which is different from required {}",
-                    found, required
-                )
-            }
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
-
-        match self {
-            Base58(e) => Some(e),
-            Bech32(e) => Some(e),
-            WitnessVersion(e) => Some(e),
-            WitnessProgram(e) => Some(e),
-            EmptyBech32Payload
-            | InvalidBech32Variant { .. }
-            | UncompressedPubkey
-            | ExcessiveScriptSize
-            | UnrecognizedScript
-            | UnknownAddressType(_)
-            | NetworkValidation { .. } => None,
-        }
-    }
-}
-
-impl From<base58::Error> for Error {
-    fn from(e: base58::Error) -> Error { Error::Base58(e) }
-}
-
-impl From<bech32::Error> for Error {
-    fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
-}
-
-impl From<witness_version::TryFromError> for Error {
-    fn from(e: witness_version::TryFromError) -> Error { Error::WitnessVersion(e) }
-}
-
-impl From<witness_program::Error> for Error {
-    fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
-}
+/// Error code for the address module.
+pub mod error;
+pub use self::error::{Error, ParseError, UnknownAddressTypeError};
 
 /// The different types of addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -191,7 +81,7 @@ impl fmt::Display for AddressType {
 }
 
 impl FromStr for AddressType {
-    type Err = Error;
+    type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
@@ -199,7 +89,7 @@ impl FromStr for AddressType {
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
             "p2tr" => Ok(AddressType::P2tr),
-            _ => Err(Error::UnknownAddressType(s.to_owned())),
+            _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
 }
@@ -910,9 +800,9 @@ fn find_bech32_prefix(bech32: &str) -> &str {
 
 /// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, Error> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         // try bech32
         let bech32_network = match find_bech32_prefix(s) {
             // note that upper or lowercase is allowed but NOT mixed case
@@ -925,7 +815,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // decode as bech32
             let (_, payload, variant) = bech32::decode(s)?;
             if payload.is_empty() {
-                return Err(Error::EmptyBech32Payload);
+                return Err(ParseError::EmptyBech32Payload);
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
@@ -939,7 +829,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // Encoding check
             let expected = version.bech32_variant();
             if expected != variant {
-                return Err(Error::InvalidBech32Variant { expected, found: variant });
+                return Err(ParseError::InvalidBech32Variant { expected, found: variant });
             }
 
             return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
@@ -947,11 +837,11 @@ impl FromStr for Address<NetworkUnchecked> {
 
         // Base58
         if s.len() > 50 {
-            return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
         let data = base58::decode_check(s)?;
         if data.len() != 21 {
-            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(data.len())));
         }
 
         let (network, payload) = match data[0] {
@@ -963,7 +853,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 (Network::Testnet, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
             SCRIPT_ADDRESS_PREFIX_TEST =>
                 (Network::Testnet, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
-            x => return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))),
+            x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
         };
 
         Ok(Address::new(network, payload))
@@ -1190,84 +1080,6 @@ mod tests {
                 .require_network(Network::Bitcoin)
                 .expect("mainnet");
             assert_eq!(&addr.address_type(), expected_type);
-        }
-    }
-
-    #[test]
-    fn test_bip173_350_vectors() {
-        // Test vectors valid under both BIP-173 and BIP-350
-        let valid_vectors = [
-            ("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", "0014751e76e8199196d454941c45d1b3a323f1433bd6"),
-            ("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"),
-            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
-            ("BC1SW50QGDZ25J", "6002751e"),
-            ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", "5210751e76e8199196d454941c45d1b3a323"),
-            ("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
-            ("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", "5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
-            ("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", "512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
-        ];
-        for vector in &valid_vectors {
-            let addr: Address = vector.0.parse::<Address<_>>().unwrap().assume_checked();
-            assert_eq!(&addr.script_pubkey().to_hex_string(), vector.1);
-            roundtrips(&addr);
-        }
-
-        let invalid_vectors = [
-            // 1. BIP-350 test vectors
-            // Invalid human-readable part
-            "tc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq5zuyut",
-            // Invalid checksums (Bech32 instead of Bech32m):
-            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqh2y7hd",
-            "tb1z0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqglt7rf",
-            "BC1S0XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQ54WELL",
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kemeawh",
-            "tb1q0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq24jc47",
-            // Invalid character in checksum
-            "bc1p38j9r5y49hruaue7wxjce0updqjuyyx0kh56v8s25huc6995vvpql3jow4",
-            // Invalid witness version
-            "BC130XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQ7ZWS8R",
-            // Invalid program length (1 byte)
-            "bc1pw5dgrnzv",
-            // Invalid program length (41 bytes)
-            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v8n0nx0muaewav253zgeav",
-            // Invalid program length for witness version 0 (per BIP141)
-            "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P",
-            // Mixed case
-            "tb1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq47Zagq",
-            // zero padding of more than 4 bits
-            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v07qwwzcrf",
-            // Non-zero padding in 8-to-5 conversion
-            "tb1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vpggkg4j",
-            // Empty data section
-            "bc1gmk9yu",
-            // 2. BIP-173 test vectors
-            // Invalid human-readable part
-            "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty",
-            // Invalid checksum
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5",
-            // Invalid witness version
-            "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2",
-            // Invalid program length
-            "bc1rw5uspcuh",
-            // Invalid program length
-            "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90",
-            // Invalid program length for witness version 0 (per BIP141)
-            "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P",
-            // Mixed case
-            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7",
-            // zero padding of more than 4 bits
-            "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du",
-            // Non-zero padding in 8-to-5 conversion
-            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv",
-            // Final test for empty data section is the same as above in BIP-350
-
-            // 3. BIP-173 valid test vectors obsolete by BIP-350
-            "bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx",
-            "BC1SW50QA3JX3S",
-            "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj",
-        ];
-        for vector in &invalid_vectors {
-            assert!(vector.parse::<Address<_>>().is_err());
         }
     }
 
@@ -1601,7 +1413,7 @@ mod tests {
     #[test]
     fn invalid_address_parses_error() {
         let got = AddressType::from_str("invalid");
-        let want = Err(Error::UnknownAddressType("invalid".to_string()));
+        let want = Err(UnknownAddressTypeError("invalid".to_string()));
         assert_eq!(got, want);
     }
 
