@@ -9,6 +9,7 @@ use core::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, Ran
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
+use super::PushBytes;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_version::WitnessVersion;
@@ -205,6 +206,25 @@ impl Script {
             && self.0[2] == OP_PUSHBYTES_20.to_u8()
             && self.0[23] == OP_EQUALVERIFY.to_u8()
             && self.0[24] == OP_CHECKSIG.to_u8()
+    }
+
+    /// Checks whether a script is push only.
+    ///
+    /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
+    /// are considered push operations.
+    #[inline]
+    pub fn is_push_only(&self) -> bool {
+        for inst in self.instructions() {
+            match inst {
+                Err(_) => return false,
+                Ok(Instruction::PushBytes(_)) => {}
+                Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
+                // From Bitcoin Core
+                // if (opcode > OP_PUSHNUM_16 (0x60)) return false
+                Ok(Instruction::Op(_)) => return false,
+            }
+        }
+        true
     }
 
     /// Checks whether a script pubkey is a P2PK output.
@@ -459,6 +479,7 @@ impl Script {
             match inst {
                 Ok(Instruction::Op(opcode)) => {
                     match opcode {
+                        // p2pk, p2pkh
                         OP_CHECKSIG | OP_CHECKSIGVERIFY => {
                             n += 1;
                         }
@@ -567,6 +588,29 @@ impl Script {
         }
     }
 
+    /// Iterates the script to find the last pushdata.
+    ///
+    /// Returns `None` if the instruction is an opcode or if the script is empty.
+    pub(crate) fn last_pushdata(&self) -> Option<Push> {
+        match self.instructions().last() {
+            // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
+            Some(Ok(Instruction::PushBytes(bytes))) => Some(Push::Data(bytes)),
+            // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
+            // By here we know that op is between OP_PUSHNUM_NEG AND OP_PUSHNUM_16 inclusive.
+            Some(Ok(Instruction::Op(op))) if op.to_u8() <= 0x60 => {
+                if op == OP_PUSHNUM_NEG1 {
+                    Some(Push::Num(-1))
+                } else if op == OP_RESERVED {
+                    Some(Push::Reserved)
+                } else {
+                    let num = (op.to_u8() - 0x50) as i8; // cast ok, num is [1, 16].
+                    Some(Push::Num(num))
+                }
+            }
+            _ => None,
+        }
+    }
+
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use = "`self` will be dropped if the result is not used"]
     pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
@@ -578,6 +622,19 @@ impl Script {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
     }
+}
+
+/// Data pushed by "push" opcodes.
+///
+/// "push" opcodes are defined by Bitcoin Core as OP_PUSHBYTES_, OP_PUSHDATA, OP_PUSHNUM_, and
+/// OP_RESERVED i.e., everything less than OP_PUSHNUM_16 (0x60) . (TODO: Add link to core code).
+pub(crate) enum Push<'a> {
+    /// All the OP_PUSHBYTES_ and OP_PUSHDATA_ opcodes.
+    Data(&'a PushBytes),
+    /// All the OP_PUSHNUM_ opcodes (-1, 1, 2, .., 16)
+    Num(i8),
+    /// OP_RESERVED
+    Reserved,
 }
 
 /// Iterator over bytes of a script
