@@ -68,7 +68,7 @@ impl PublicKey {
     }
 
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         self.with_serialized(|bytes| writer.write_all(bytes))
     }
 
@@ -752,7 +752,6 @@ mod tests {
 
     use super::*;
     use crate::address::Address;
-    use crate::io;
     use crate::network::Network::{Bitcoin, Testnet};
 
     #[test]
@@ -904,6 +903,8 @@ mod tests {
             k.write_into(&mut v).expect("writing into vec");
         }
 
+        // Note that we must temporarily use std::io::Cursor here until libsecp256k1 converts to
+        // bitcoin_io.
         let mut dec_keys = vec![];
         let mut cursor = io::Cursor::new(&v);
         for _ in 0..N_KEYS {

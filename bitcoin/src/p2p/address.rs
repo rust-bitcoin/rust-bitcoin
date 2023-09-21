@@ -116,7 +116,7 @@ impl fmt::Debug for Address {
 
 impl ToSocketAddrs for Address {
     type Iter = iter::Once<SocketAddr>;
-    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+    fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
         Ok(iter::once(self.socket_addr()?))
     }
 }
@@ -296,7 +296,7 @@ impl Decodable for AddrV2Message {
 
 impl ToSocketAddrs for AddrV2Message {
     type Iter = iter::Once<SocketAddr>;
-    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+    fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
         Ok(iter::once(self.socket_addr()?))
     }
 }

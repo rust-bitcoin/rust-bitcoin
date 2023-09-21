@@ -174,10 +174,8 @@ impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, 
         self.0.consensus_encode(&mut writer).map_err(|error| {
             #[cfg(debug_assertions)]
             {
-                use crate::StdError;
-
                 if error.kind() != io::ErrorKind::Other
-                    || error.source().is_some()
+                    || error.get_ref().is_some()
                     || !writer.writer.was_error
                 {
                     panic!(
@@ -429,8 +427,6 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     fn new(iterator: I) -> Self { IterReader { iterator: iterator.fuse(), error: None } }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
-        use crate::StdError;
-
         let result = T::consensus_decode(&mut self);
         match (result, self.error) {
             (Ok(_), None) if self.iterator.next().is_some() => {
@@ -438,7 +434,7 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
             },
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
-            (Err(ConsensusError::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.source().is_none() => Err(DecodeError::Other(de_error)),
+            (Err(ConsensusError::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
             (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
             (Err(ConsensusError::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
@@ -494,8 +490,6 @@ impl<E> With<E> {
         if serializer.is_human_readable() {
             serializer.collect_str(&DisplayWrapper::<'_, _, E>(value, Default::default()))
         } else {
-            use crate::StdError;
-
             let serializer = serializer.serialize_seq(None)?;
             let mut writer = BinWriter { serializer, error: None };
 
@@ -505,7 +499,7 @@ impl<E> With<E> {
                 (Ok(_), Some(error)) =>
                     panic!("{} silently ate an IO error: {:?}", core::any::type_name::<T>(), error),
                 (Err(io_error), Some(ser_error))
-                    if io_error.kind() == io::ErrorKind::Other && io_error.source().is_none() =>
+                    if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() =>
                     Err(ser_error),
                 (Err(io_error), ser_error) => panic!(
                     "{} returned an unexpected IO error: {:?} serialization error: {:?}",

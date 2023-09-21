@@ -39,8 +39,8 @@ dependencies = [
  "bincode",
  "bitcoin-internals",
  "bitcoin_hashes 0.13.0",
+ "bitcoin_io",
  "bitcoinconsensus",
- "core2",
  "hex-conservative",
  "hex_lit",
  "mutagen",
@@ -89,13 +89,20 @@ name = "bitcoin_hashes"
 version = "0.13.0"
 dependencies = [
  "bitcoin-internals",
- "core2",
+ "bitcoin_io",
  "hex-conservative",
  "schemars",
  "serde",
  "serde_json",
  "serde_test",
  "wasm-bindgen-test",
+]
+
+[[package]]
+name = "bitcoin_io"
+version = "0.1.0"
+dependencies = [
+ "core2",
 ]
 
 [[package]]

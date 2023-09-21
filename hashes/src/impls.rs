@@ -5,65 +5,69 @@
 //! Implementations of traits defined in `std` / `core2` and not in `core`.
 //!
 
-use crate::{hmac, io, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
+use bitcoin_io::impl_write;
 
-impl io::Write for sha1::HashEngine {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
+use crate::{hmac, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
 
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    sha1::HashEngine,
+    |us: &mut sha1::HashEngine, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) }
+);
 
-impl io::Write for sha256::HashEngine {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
-
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    sha256::HashEngine,
+    |us: &mut sha256::HashEngine, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) }
+);
 
-impl io::Write for sha512::HashEngine {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
-
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    sha512::HashEngine,
+    |us: &mut sha512::HashEngine, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) }
+);
 
-impl io::Write for ripemd160::HashEngine {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
-
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    ripemd160::HashEngine,
+    |us: &mut ripemd160::HashEngine, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) }
+);
 
-impl io::Write for siphash24::HashEngine {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
-
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    siphash24::HashEngine,
+    |us: &mut siphash24::HashEngine, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) }
+);
 
-impl<T: crate::Hash> io::Write for hmac::HmacEngine<T> {
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
-
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.input(buf);
+impl_write!(
+    hmac::HmacEngine<T>,
+    |us: &mut hmac::HmacEngine<T>, buf| {
+        us.input(buf);
         Ok(buf.len())
-    }
-}
+    },
+    |_us| { Ok(()) },
+    T: crate::Hash
+);
 
 #[cfg(test)]
 mod tests {
-    use super::io::Write;
+    use bitcoin_io::io::Write;
+
     use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, Hash};
 
     macro_rules! write_test {
