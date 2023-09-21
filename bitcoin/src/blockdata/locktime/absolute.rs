@@ -67,7 +67,7 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// };
 /// ```
 #[allow(clippy::derive_ord_xor_partial_ord)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockTime {
     /// A block height lock time value.
     ///
@@ -290,6 +290,17 @@ impl PartialOrd for LockTime {
             (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
             (Seconds(ref a), Seconds(ref b)) => a.partial_cmp(b),
             (_, _) => None,
+        }
+    }
+}
+
+impl fmt::Debug for LockTime {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use LockTime::*;
+
+        match *self {
+            Blocks(ref h) => write!(f, "{} blocks", h),
+            Seconds(ref t) => write!(f, "{} seconds", t),
         }
     }
 }
