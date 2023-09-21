@@ -245,7 +245,7 @@ fn serde_regression_psbt() {
         }],
     };
     let unknown: BTreeMap<raw::Key, Vec<u8>> =
-        vec![(raw::Key { type_value: 1, key: vec![0, 1] }, vec![3, 4, 5])].into_iter().collect();
+        vec![(raw::Key { type_value: 9, key: vec![0, 1] }, vec![3, 4, 5])].into_iter().collect();
     let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
     let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
         "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
@@ -296,10 +296,10 @@ fn serde_regression_psbt() {
             )].into_iter().collect(),
             bip32_derivation: keypaths.clone().into_iter().collect(),
             final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
-            ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-            sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-            hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-            hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+            ripemd160_preimages: vec![(ripemd160::Hash::hash(&[1, 2]), vec![1, 2])].into_iter().collect(),
+            sha256_preimages: vec![(sha256::Hash::hash(&[1, 2]), vec![1, 2])].into_iter().collect(),
+            hash160_preimages: vec![(hash160::Hash::hash(&[1, 2]), vec![1, 2])].into_iter().collect(),
+            hash256_preimages: vec![(sha256d::Hash::hash(&[1, 2]), vec![1, 2])].into_iter().collect(),
             proprietary: proprietary.clone(),
             unknown: unknown.clone(),
             ..Default::default()
@@ -311,6 +311,10 @@ fn serde_regression_psbt() {
             ..Default::default()
         }],
     };
+
+    // Sanity, check we can roundtrip BIP-174 serialize.
+    let serialized = psbt.serialize();
+    Psbt::deserialize(&serialized).unwrap();
 
     let got = serialize(&psbt).unwrap();
     let want = include_bytes!("data/serde/psbt_bincode") as &[_];
