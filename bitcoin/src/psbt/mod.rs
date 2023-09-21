@@ -439,25 +439,25 @@ impl Psbt {
             return Ok(OutputType::Bare);
         }
 
-        if spk.is_v0_p2wpkh() {
+        if spk.is_p2wpkh() {
             return Ok(OutputType::Wpkh);
         }
 
-        if spk.is_v0_p2wsh() {
+        if spk.is_p2wsh() {
             return Ok(OutputType::Wsh);
         }
 
         if spk.is_p2sh() {
-            if input.redeem_script.as_ref().map(|s| s.is_v0_p2wpkh()).unwrap_or(false) {
+            if input.redeem_script.as_ref().map(|s| s.is_p2wpkh()).unwrap_or(false) {
                 return Ok(OutputType::ShWpkh);
             }
-            if input.redeem_script.as_ref().map(|x| x.is_v0_p2wsh()).unwrap_or(false) {
+            if input.redeem_script.as_ref().map(|x| x.is_p2wsh()).unwrap_or(false) {
                 return Ok(OutputType::ShWsh);
             }
             return Ok(OutputType::Sh);
         }
 
-        if spk.is_v1_p2tr() {
+        if spk.is_p2tr() {
             return Ok(OutputType::Tr);
         }
 
@@ -1351,7 +1351,7 @@ mod tests {
             let expected_out =
                 ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
-            assert!(redeem_script.is_v0_p2wpkh());
+            assert!(redeem_script.is_p2wpkh());
             assert_eq!(
                 redeem_script.to_p2sh(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
@@ -1397,7 +1397,7 @@ mod tests {
             let expected_out =
                 ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
-            assert!(redeem_script.is_v0_p2wpkh());
+            assert!(redeem_script.is_p2wpkh());
             assert_eq!(
                 redeem_script.to_p2sh(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
@@ -1422,7 +1422,7 @@ mod tests {
             let expected_out =
                 ScriptBuf::from_hex("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87").unwrap();
 
-            assert!(redeem_script.is_v0_p2wsh());
+            assert!(redeem_script.is_p2wsh());
             assert_eq!(
                 redeem_script.to_p2sh(),
                 psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
@@ -1867,7 +1867,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_v0_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 

@@ -148,19 +148,37 @@ impl Script {
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     #[inline]
-    pub fn to_v0_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_v0_p2wsh(&self.wscript_hash()) }
+    #[deprecated(since = "0.31.0", note = "use to_p2wsh instead")]
+    pub fn to_v0_p2wsh(&self) -> ScriptBuf { self.to_p2wsh() }
+
+    /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+    /// script").
+    #[inline]
+    pub fn to_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_p2wsh(&self.wscript_hash()) }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
     #[inline]
+    #[deprecated(since = "0.31.0", note = "use to_p2tr instead")]
     pub fn to_v1_p2tr<C: Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        internal_key: UntweakedPublicKey,
+    ) -> ScriptBuf {
+        self.to_p2tr(secp, internal_key)
+    }
+
+    /// Computes P2TR output with a given internal key and a single script spending path equal to
+    /// the current script, assuming that the script is a Tapscript.
+    #[inline]
+    pub fn to_p2tr<C: Verification>(
         &self,
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
     ) -> ScriptBuf {
         let leaf_hash = self.tapscript_leaf_hash();
         let merkle_root = TapNodeHash::from(leaf_hash);
-        ScriptBuf::new_v1_p2tr(secp, internal_key, Some(merkle_root))
+        ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
     }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
@@ -293,7 +311,12 @@ impl Script {
 
     /// Checks whether a script pubkey is a P2WSH output.
     #[inline]
-    pub fn is_v0_p2wsh(&self) -> bool {
+    #[deprecated(since = "0.31.0", note = "use is_p2wsh instead")]
+    pub fn is_v0_p2wsh(&self) -> bool { self.is_p2wsh() }
+
+    /// Checks whether a script pubkey is a P2WSH output.
+    #[inline]
+    pub fn is_p2wsh(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
@@ -301,14 +324,19 @@ impl Script {
 
     /// Checks whether a script pubkey is a P2WPKH output.
     #[inline]
-    pub fn is_v0_p2wpkh(&self) -> bool {
+    #[deprecated(since = "0.31.0", note = "use is_p2wpkh instead")]
+    pub fn is_v0_p2wpkh(&self) -> bool { self.is_p2wpkh() }
+
+    /// Checks whether a script pubkey is a P2WPKH output.
+    #[inline]
+    pub fn is_p2wpkh(&self) -> bool {
         self.0.len() == 22
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_20.to_u8()
     }
 
-    pub(crate) fn v0_p2wpkh(&self) -> Option<&[u8; 20]> {
-        if self.is_v0_p2wpkh() {
+    pub(crate) fn p2wpkh(&self) -> Option<&[u8; 20]> {
+        if self.is_p2wpkh() {
             Some(self.0[2..].try_into().expect("is_v0_p2wpkh checks the length"))
         } else {
             None
@@ -317,7 +345,12 @@ impl Script {
 
     /// Checks whether a script pubkey is a P2TR output.
     #[inline]
-    pub fn is_v1_p2tr(&self) -> bool {
+    #[deprecated(since = "0.31.0", note = "use is_p2tr instead")]
+    pub fn is_v1_p2tr(&self) -> bool { self.is_p2tr() }
+
+    /// Checks whether a script pubkey is a P2TR output.
+    #[inline]
+    pub fn is_p2tr(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V1)
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
@@ -356,7 +389,7 @@ impl Script {
     ///
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
     pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        self.v0_p2wpkh().map(|wpkh| {
+        self.p2wpkh().map(|wpkh| {
             Builder::new()
                 .push_opcode(OP_DUP)
                 .push_opcode(OP_HASH160)

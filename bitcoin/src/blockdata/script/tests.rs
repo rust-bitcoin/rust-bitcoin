@@ -208,7 +208,7 @@ fn script_generators() {
     assert!(ScriptBuf::new_p2pkh(&pubkey_hash).is_p2pkh());
 
     let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
-    assert!(ScriptBuf::new_v0_p2wpkh(&wpubkey_hash).is_v0_p2wpkh());
+    assert!(ScriptBuf::new_p2wpkh(&wpubkey_hash).is_p2wpkh());
 
     let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
     let script_hash = script.script_hash();
@@ -217,9 +217,9 @@ fn script_generators() {
     assert_eq!(script.to_p2sh(), p2sh);
 
     let wscript_hash = script.wscript_hash();
-    let p2wsh = ScriptBuf::new_v0_p2wsh(&wscript_hash);
-    assert!(p2wsh.is_v0_p2wsh());
-    assert_eq!(script.to_v0_p2wsh(), p2wsh);
+    let p2wsh = ScriptBuf::new_p2wsh(&wscript_hash);
+    assert!(p2wsh.is_p2wsh());
+    assert_eq!(script.to_p2wsh(), p2wsh);
 
     // Test data are taken from the second output of
     // 2ccb3a1f745eb4eefcf29391460250adda5fab78aaddb902d25d3cd97d9d8e61 transaction
@@ -525,8 +525,8 @@ fn p2sh_p2wsh_conversion() {
     let expected_witout =
         ScriptBuf::from_hex("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64")
             .unwrap();
-    assert!(redeem_script.to_v0_p2wsh().is_v0_p2wsh());
-    assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
+    assert!(redeem_script.to_p2wsh().is_p2wsh());
+    assert_eq!(redeem_script.to_p2wsh(), expected_witout);
 
     // p2sh
     let redeem_script = ScriptBuf::from_hex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
@@ -543,9 +543,9 @@ fn p2sh_p2wsh_conversion() {
     let expected_out =
         ScriptBuf::from_hex("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887").unwrap();
     assert!(redeem_script.to_p2sh().is_p2sh());
-    assert!(redeem_script.to_p2sh().to_v0_p2wsh().is_v0_p2wsh());
-    assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
-    assert_eq!(redeem_script.to_v0_p2wsh().to_p2sh(), expected_out);
+    assert!(redeem_script.to_p2sh().to_p2wsh().is_p2wsh());
+    assert_eq!(redeem_script.to_p2wsh(), expected_witout);
+    assert_eq!(redeem_script.to_p2wsh().to_p2sh(), expected_out);
 }
 
 macro_rules! unwrap_all {
@@ -648,7 +648,7 @@ fn defult_dust_value_tests() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
     let script_p2wpkh = Builder::new().push_int(0).push_slice([42; 20]).into_script();
-    assert!(script_p2wpkh.is_v0_p2wpkh());
+    assert!(script_p2wpkh.is_p2wpkh());
     assert_eq!(script_p2wpkh.dust_value(), crate::Amount::from_sat(294));
 
     let script_p2pkh = Builder::new()
