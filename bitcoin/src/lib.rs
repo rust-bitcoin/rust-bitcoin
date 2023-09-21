@@ -129,6 +129,7 @@ use core2::io;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
+pub use crate::bip32::XKeyIdentifier;
 pub use crate::blockdata::block::{self, Block};
 pub use crate::blockdata::constants;
 pub use crate::blockdata::fee_rate::FeeRate;
@@ -148,7 +149,6 @@ pub use crate::crypto::key::{
 pub use crate::crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag};
 pub use crate::hash_types::{
     BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid,
-    XpubIdentifier,
 };
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::Network;

@@ -6,13 +6,15 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
+#![allow(deprecated)] // Remove once we remove XpubIdentifier.
+
 use core::convert::TryInto;
 use core::default::Default;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
@@ -20,7 +22,6 @@ use serde;
 
 use crate::base58;
 use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
-use crate::hash_types::XpubIdentifier;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::Network;
@@ -52,6 +53,15 @@ impl ChainCode {
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
+
+hash_newtype! {
+    /// XpubIdentifier as defined in BIP-32.
+    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use XKeyIdentifier instead")]
+    pub struct XpubIdentifier(hash160::Hash);
+
+    /// Extended key identifier as defined in BIP-32.
+    pub struct XKeyIdentifier(hash160::Hash);
+}
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -672,7 +682,7 @@ impl Xpriv {
     }
 
     /// Returns the HASH160 of the public key belonging to the xpriv
-    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
+    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XKeyIdentifier {
         Xpub::from_priv(secp, self).identifier()
     }
 
@@ -803,10 +813,10 @@ impl Xpub {
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier(&self) -> XpubIdentifier {
-        let mut engine = XpubIdentifier::engine();
+    pub fn identifier(&self) -> XKeyIdentifier {
+        let mut engine = XKeyIdentifier::engine();
         engine.write_all(&self.public_key.serialize()).expect("engines don't error");
-        XpubIdentifier::from_engine(engine)
+        XKeyIdentifier::from_engine(engine)
     }
 
     /// Returns the first four bytes of the identifier
@@ -855,12 +865,12 @@ impl FromStr for Xpub {
     }
 }
 
-impl From<Xpub> for XpubIdentifier {
-    fn from(key: Xpub) -> XpubIdentifier { key.identifier() }
+impl From<Xpub> for XKeyIdentifier {
+    fn from(key: Xpub) -> XKeyIdentifier { key.identifier() }
 }
 
-impl From<&Xpub> for XpubIdentifier {
-    fn from(key: &Xpub) -> XpubIdentifier { key.identifier() }
+impl From<&Xpub> for XKeyIdentifier {
+    fn from(key: &Xpub) -> XKeyIdentifier { key.identifier() }
 }
 
 #[cfg(test)]
