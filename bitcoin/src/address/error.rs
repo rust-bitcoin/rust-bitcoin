@@ -99,17 +99,8 @@ impl_std_error!(UnknownAddressTypeError);
 pub enum ParseError {
     /// Base58 error.
     Base58(base58::Error),
-    /// Bech32 error.
-    Bech32(bech32::Error),
-    /// The bech32 payload was empty.
-    EmptyBech32Payload,
-    /// The wrong checksum algorithm was used. See BIP-0350.
-    InvalidBech32Variant {
-        /// Bech32 variant that is required by the used Witness version.
-        expected: bech32::Variant,
-        /// The actual Bech32 variant encoded in the address representation.
-        found: bech32::Variant,
-    },
+    /// Bech32 segwit decoding error.
+    Bech32(bech32::primitives::decode::SegwitHrpstringError),
     /// A witness version conversion/parsing error.
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
@@ -122,13 +113,7 @@ impl fmt::Display for ParseError {
 
         match *self {
             Base58(ref e) => write_err!(f, "base58 error"; e),
-            Bech32(ref e) => write_err!(f, "bech32 error"; e),
-            EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
-            InvalidBech32Variant { expected, found } => write!(
-                f,
-                "invalid bech32 checksum variant found {:?} when {:?} was expected",
-                found, expected
-            ),
+            Bech32(ref e) => write_err!(f, "bech32 segwit decoding error"; e),
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
         }
@@ -145,7 +130,6 @@ impl std::error::Error for ParseError {
             Bech32(ref e) => Some(e),
             WitnessVersion(ref e) => Some(e),
             WitnessProgram(ref e) => Some(e),
-            EmptyBech32Payload | InvalidBech32Variant { .. } => None,
         }
     }
 }
@@ -154,8 +138,8 @@ impl From<base58::Error> for ParseError {
     fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
 
-impl From<bech32::Error> for ParseError {
-    fn from(e: bech32::Error) -> Self { Self::Bech32(e) }
+impl From<bech32::primitives::decode::SegwitHrpstringError> for ParseError {
+    fn from(e: bech32::primitives::decode::SegwitHrpstringError) -> Self { Self::Bech32(e) }
 }
 
 impl From<witness_version::TryFromError> for ParseError {

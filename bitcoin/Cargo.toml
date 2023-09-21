@@ -27,7 +27,7 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std", "hex/std"]
-no-std = ["core2", "hashes/alloc", "hashes/core2", "secp256k1/alloc", "hex/alloc", "hex/core2"]
+no-std = ["core2", "hashes/alloc", "hashes/core2", "bech32/alloc", "secp256k1/alloc", "hex/alloc", "hex/core2"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -36,7 +36,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
-bech32 = { version = "0.9.0", default-features = false }
+bech32 = { version = "0.10.0-alpha", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
 hex_lit = "0.1.1"
