@@ -21,7 +21,7 @@ use internals::write_err;
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
-use crate::blockdata::script::ScriptBuf;
+use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 #[cfg(feature = "bitcoinconsensus")]
 pub use crate::consensus::validation::TxVerifyError;
@@ -30,6 +30,7 @@ use crate::hash_types::{Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
+use crate::script::Push;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
@@ -832,6 +833,122 @@ impl Transaction {
     /// weight.
     pub fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
         self.output.iter().map(|txout| txout.script_pubkey.len())
+    }
+
+    /// Counts the total number of sigops.
+    ///
+    /// This value is for pre-taproot transactions only.
+    ///
+    /// > In taproot, a different mechanism is used. Instead of having a global per-block limit,
+    /// > there is a per-transaction-input limit, proportional to the size of that input.
+    /// > ref: <https://bitcoin.stackexchange.com/questions/117356/what-is-sigop-signature-operation#117359>
+    ///
+    /// The `spent` parameter is a closure/function that looks up the output being spent by each input
+    /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
+    /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
+    /// as well as any segwit sigops will not be counted for that input.
+    pub fn total_sigop_cost<S>(&self, mut spent: S) -> usize
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+    {
+        let mut cost = self.count_p2pk_p2pkh_sigops().saturating_mul(4);
+
+        // coinbase tx is correctly handled because `spent` will always returns None.
+        cost = cost.saturating_add(self.count_p2sh_sigops(&mut spent).saturating_mul(4));
+        cost.saturating_add(self.count_witness_sigops(&mut spent))
+    }
+
+    /// Gets the sigop count.
+    ///
+    /// Counts sigops for this transaction's input scriptSigs and output scriptPubkeys i.e., doesn't
+    /// count sigops in the redeemScript for p2sh or the sigops in the witness (use
+    /// `count_p2sh_sigops` and `count_witness_sigops` respectively).
+    fn count_p2pk_p2pkh_sigops(&self) -> usize {
+        let mut count: usize = 0;
+        for input in &self.input {
+            // 0 for p2wpkh, p2wsh, and p2sh (including wrapped segwit).
+            count = count.saturating_add(input.script_sig.count_sigops_legacy());
+        }
+        for output in &self.output {
+            count = count.saturating_add(output.script_pubkey.count_sigops_legacy());
+        }
+        count
+    }
+
+    /// Does not include wrapped segwit (see `count_witness_sigops`).
+    fn count_p2sh_sigops<S>(&self, spent: &mut S) -> usize
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+    {
+        fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
+            let mut count: usize = 0;
+            if prevout.script_pubkey.is_p2sh() {
+                if let Some(Push::Data(redeem)) = input.script_sig.last_pushdata() {
+                    count =
+                        count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
+                }
+            }
+            count
+        }
+
+        let mut count: usize = 0;
+        for input in &self.input {
+            if let Some(prevout) = spent(&input.previous_output) {
+                count = count.saturating_add(count_sigops(&prevout, input));
+            }
+        }
+        count
+    }
+
+    /// Includes wrapped segwit (returns 0 for taproot spends).
+    fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+    {
+        fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
+            if witness_program.is_p2wpkh() {
+                1
+            } else if witness_program.is_p2wsh() {
+                // Treat the last item of the witness as the witnessScript
+                return witness
+                    .last()
+                    .map(Script::from_bytes)
+                    .map(|s| s.count_sigops())
+                    .unwrap_or(0);
+            } else {
+                0
+            }
+        }
+
+        fn count_sigops(prevout: TxOut, input: &TxIn) -> usize {
+            let script_sig = &input.script_sig;
+            let witness = &input.witness;
+
+            let witness_program = if prevout.script_pubkey.is_witness_program() {
+                &prevout.script_pubkey
+            } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
+                // If prevout is P2SH and scriptSig is push only
+                // then we wrap the last push (redeemScript) in a Script
+                if let Some(Push::Data(push_bytes)) = script_sig.last_pushdata() {
+                    Script::from_bytes(push_bytes.as_bytes())
+                } else {
+                    return 0;
+                }
+            } else {
+                return 0;
+            };
+
+            // This will return 0 if the redeemScript wasn't a witness program
+            count_sigops_with_witness_program(witness, witness_program)
+        }
+
+        let mut count: usize = 0;
+        for input in &self.input {
+            if let Some(prevout) = spent(&input.previous_output) {
+                count = count.saturating_add(count_sigops(prevout, input));
+            }
+        }
+        count
     }
 }
 
@@ -1801,6 +1918,154 @@ mod tests {
             assert_eq!(calculated_size, tx.weight());
 
             assert_eq!(tx.weight(), *expected_weight);
+        }
+    }
+
+    #[test]
+    fn tx_sigop_count() {
+        let tx_hexes = [
+            // 0 sigops (p2pkh in + p2wpkh out)
+            (
+                "0200000001725aab4d23f76ad10bb569a68f8702ebfb8b076e015179ff9b9425234953\
+                ac63000000006a47304402204cae7dc9bb68b588dd6b8afb8b881b752fd65178c25693e\
+                a6d5d9a08388fd2a2022011c753d522d5c327741a6d922342c86e05c928309d7e566f68\
+                8148432e887028012103f14b11cfb58b113716e0fa277ab4a32e4d3ed64c6b09b1747ef\
+                7c828d5b06a94fdffffff01e5d4830100000000160014e98527b55cae861e5b9c3a6794\
+                86514c012d6fce00000000",
+                0,                                             // Expected (Some)
+                return_none as fn(&OutPoint) -> Option<TxOut>, // spent fn
+                0,                                             // Expected (None)
+            ),
+            // 5 sigops (p2wpkh in + p2pkh out (x4))
+            (
+                "020000000001018c47330b1c4d30e7e2244e8ccb56d411b71e10073bb42fa1813f3f01\
+                e144cc4d0100000000fdffffff01f7e30300000000001976a9143b49fd16f7562cfeedc\
+                6a4ba84805f8c2f8e1a2c88ac024830450221009a4dbf077a63f6e4c3628a5fef2a09ec\
+                6f7ca4a4d95bc8bb69195b6b671e9272022074da9ffff5a677fc7b37d66bb4ff1f316c9\
+                dbacb92058291d84cd4b83f7c63c9012103d013e9e53c9ca8dd2ddffab1e9df27811503\
+                feea7eb0700ff058851bbb37d99000000000",
+                5,
+                return_p2wpkh,
+                4,
+            ),
+            // 8 sigops (P2WSH 3-of-4 MS (4) in + P2WSH out + P2PKH out (1x4))
+            (
+                "01000000000101e70d7b4d957122909a665070b0c5bbb693982d09e4e66b9e6b7a8390\
+                ce65ef1f0100000000ffffffff02095f2b0000000000220020800a016ea57a08f30c273\
+                ae7624f8f91c505ccbd3043829349533f317168248c52594500000000001976a914607f\
+                643372477c044c6d40b814288e40832a602688ac05004730440220282943649e687b5a3\
+                bda9403c16f363c2ee2be0ec43fb8df40a08b96a4367d47022014e8f36938eef41a09ee\
+                d77a815b0fa120a35f25e3a185310f050959420cee360147304402201e555f894036dd5\
+                78045701e03bf10e093d7e93cd9997e44c1fc65a7b669852302206893f7261e52c9d779\
+                5ba39d99aad30663da43ed675c389542805469fa8eb26a014730440220510fc99bc37d6\
+                dbfa7e8724f4802cebdb17b012aaf70ce625e22e6158b139f40022022e9b811751d491f\
+                bdec7691b697e88ba84315f6739b9e3bd4425ac40563aed2018b5321029ddecf0cc2013\
+                514961550e981a0b8b60e7952f70561a5bb552aa7f075e71e3c2103316195a59c35a3b2\
+                7b6dfcc3192cc10a7a6bbccd5658dfbe98ca62a13d6a02c121034629d906165742def4e\
+                f53c6dade5dcbf88b775774cad151e35ae8285e613b0221035826a29938de2076950811\
+                13c58bcf61fe6adacc3aacceb21c4827765781572d54ae00000000",
+                8,
+                return_p2wsh,
+                4,
+            ),
+            // 5 sigops (P2SH-P2WPKH in (1), 2 P2SH outs (0), 1 P2PKH out (1x4))
+            (
+                "010000000001018aec7e0729ba5a2d284303c89b3f397e92d54472a225d28eb0ae2fa6\
+                5a7d1a2e02000000171600145ad5db65f313ab76726eb178c2fd8f21f977838dfdfffff\
+                f03102700000000000017a914dca89e03ba124c2c70e55533f91100f2d9dab04587f2d7\
+                1d00000000001976a91442a34f4b0a65bc81278b665d37fd15910d261ec588ac292c3b0\
+                00000000017a91461978dcebd0db2da0235c1ba3e8087f9fd74c57f8702473044022000\
+                9226f8def30a8ffa53e55ca5d71a72a64cd20ae7f3112562e3413bd0731d2c0220360d2\
+                20435e67eef7f2bf0258d1dded706e3824f06d961ba9eeaed300b16c2cc012103180cff\
+                753d3e4ee1aa72b2b0fd72ce75956d04f4c19400a3daed0b18c3ab831e00000000",
+                5,
+                return_p2sh,
+                4,
+            ),
+            // 12 sigops (1 P2SH 2-of-3 MS in (3x4), P2SH outs (0))
+            (
+                "010000000115fe9ec3dc964e41f5267ea26cfe505f202bf3b292627496b04bece84da9\
+                b18903000000fc004730440220442827f1085364bda58c5884cee7b289934083362db6d\
+                fb627dc46f6cdbf5793022078cfa524252c381f2a572f0c41486e2838ca94aa268f2384\
+                d0e515744bf0e1e9014730440220160e49536bb29a49c7626744ee83150174c22fa40d5\
+                8fb4cd554a907a6a7b825022045f6cf148504b334064686795f0968c689e542f475b8ef\
+                5a5fa42383948226a3014c69522103e54bc61efbcb8eeff3a5ab2a92a75272f5f6820e3\
+                8e3d28edb54beb06b86c0862103a553e30733d7a8df6d390d59cc136e2c9d9cf4e808f3\
+                b6ab009beae68dd60822210291c5a54bb8b00b6f72b90af0ac0ecaf78fab026d8eded28\
+                2ad95d4d65db268c953aeffffffff024c4f0d000000000017a9146ebf0484bd5053f727\
+                c755a750aa4c815dfa112887a06b12020000000017a91410065dd50b3a7f299fef3b1c5\
+                3b8216399916ab08700000000",
+                12,
+                return_p2sh,
+                0,
+            ),
+            // 3 sigops (1 P2SH-P2WSH 2-of-3 MS in (3), P2SH + P2WSH outs (0))
+            (
+                "0100000000010117a31277a8ba3957be351fe4cffd080e05e07f9ee1594d638f55dd7d\
+                707a983c01000000232200203a33fc9628c29f36a492d9fd811fd20231fbd563f7863e7\
+                9c4dc0ed34ea84b15ffffffff033bed03000000000017a914fb00d9a49663fd8ae84339\
+                8ae81299a1941fb8d287429404000000000017a9148fe08d81882a339cf913281eca8af\
+                39110507c798751ab1300000000002200208819e4bac0109b659de6b9168b83238a050b\
+                ef16278e470083b39d28d2aa5a6904004830450221009faf81f72ec9b14a39f0f0e12f0\
+                1a7175a4fe3239cd9a015ff2085985a9b0e3f022059e1aaf96c9282298bdc9968a46d8a\
+                d28e7299799835cf982b02c35e217caeae0147304402202b1875355ee751e0c8b21990b\
+                7ea73bd84dfd3bd17477b40fc96552acba306ad02204913bc43acf02821a3403132aa0c\
+                33ac1c018d64a119f6cb55dfb8f408d997ef01695221023c15bf3436c0b4089e0ed0428\
+                5101983199d0967bd6682d278821c1e2ac3583621034d924ccabac6d190ce8343829834\
+                cac737aa65a9abe521bcccdcc3882d97481f21035d01d092bb0ebcb793ba3ffa0aeb143\
+                2868f5277d5d3d2a7d2bc1359ec13abbd53aee1560c00",
+                3,
+                return_p2sh,
+                0,
+            ),
+            // 80 sigops (1 P2PKH ins (0), 1 BARE MS outs (20x4))
+            (
+                "0100000001628c1726fecd23331ae9ff2872341b82d2c03180aa64f9bceefe457448db\
+                e579020000006a47304402204799581a5b34ae5adca21ef22c55dbfcee58527127c95d0\
+                1413820fe7556ed970220391565b24dc47ce57fe56bf029792f821a392cdb5a3d45ed85\
+                c158997e7421390121037b2fb5b602e51c493acf4bf2d2423bcf63a09b3b99dfb7bd3c8\
+                d74733b5d66f5ffffffff011c0300000000000069512103a29472a1848105b2225f0eca\
+                5c35ada0b0abbc3c538818a53eca177f4f4dcd9621020c8fd41b65ae6b980c072c5a9f3\
+                aec9f82162c92eb4c51d914348f4390ac39122102222222222222222222222222222222\
+                222222222222222222222222222222222253ae00000000",
+                80,
+                return_none,
+                80,
+            ),
+        ];
+
+        // All we need is to trigger 3 cases for prevout
+        fn return_p2sh(_outpoint: &OutPoint) -> Option<TxOut> {
+            Some(
+                deserialize(&hex!(
+                    "cc721b000000000017a91428203c10cc8f18a77412caaa83dabaf62b8fbb0f87"
+                ))
+                .unwrap(),
+            )
+        }
+        fn return_p2wpkh(_outpoint: &OutPoint) -> Option<TxOut> {
+            Some(
+                deserialize(&hex!(
+                    "e695779d000000001600141c6977423aa4b82a0d7f8496cdf3fc2f8b4f580c"
+                ))
+                .unwrap(),
+            )
+        }
+        fn return_p2wsh(_outpoint: &OutPoint) -> Option<TxOut> {
+            Some(
+                deserialize(&hex!(
+                    "66b51e0900000000220020dbd6c9d5141617eff823176aa226eb69153c1e31334ac37469251a2539fc5c2b"
+                ))
+                .unwrap(),
+            )
+        }
+        fn return_none(_outpoint: &OutPoint) -> Option<TxOut> { None }
+
+        for (hx, expected, spent_fn, expected_none) in tx_hexes.iter() {
+            let tx_bytes = hex!(hx);
+            let tx: Transaction = deserialize(&tx_bytes).unwrap();
+            assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
+            assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
         }
     }
 }
