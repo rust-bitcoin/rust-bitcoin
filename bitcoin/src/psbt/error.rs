@@ -5,10 +5,10 @@ use core::fmt;
 use internals::write_err;
 
 use crate::bip32::Xpub;
-use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
+use crate::hash_types::Txid;
 use crate::prelude::*;
-use crate::psbt::raw;
+use crate::psbt::{raw, FutureVersionError};
 use crate::{hashes, io};
 
 /// Enum for marking psbt hash error.
@@ -38,21 +38,22 @@ pub enum Error {
     InvalidProprietaryKey,
     /// Keys within key-value map should never be duplicated.
     DuplicateKey(raw::Key),
+    /// Future version of PSBT which can't be parsed by this library
+    FutureVersion(FutureVersionError),
     /// The scriptSigs for the unsigned transaction must be empty.
     UnsignedTxHasScriptSigs,
     /// The scriptWitnesses for the unsigned transaction must be empty.
     UnsignedTxHasScriptWitnesses,
-    /// A PSBT must have an unsigned transaction.
+    /// A PSBTV0 must have an unsigned transaction.
     MustHaveUnsignedTx,
     /// Signals that there are no more key-value pairs in a key-value map.
     NoMorePairs,
-    /// Attempting to combine with a PSBT describing a different unsigned
-    /// transaction.
-    UnexpectedUnsignedTx {
+    /// Attempting to combine with a PSBT describing a different unique identification.
+    UnexpectedUniqueId {
         /// Expected
-        expected: Box<Transaction>,
+        expected: Box<Txid>,
         /// Actual
-        actual: Box<Transaction>,
+        actual: Box<Txid>,
     },
     /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
@@ -102,6 +103,35 @@ pub enum Error {
     PartialDataConsumption,
     /// I/O error.
     Io(io::Error),
+
+    // PsbtV0 field Errors
+    /// Transaction Version is not allowed in PsbtV0
+    TxVersionPresent,
+    /// Fallback Locktime is not allowed in PsbtV0
+    FallbackLocktimePresent,
+    /// Transaction Modifiable flags are not allowed in PsbtV0
+    TxModifiablePresent,
+    /// Invalid Input
+    InvalidInput,
+    /// Invalid Output
+    InvalidOutput,
+
+    // PsbtV2 field Errors
+    /// Transaction Version not present in PsbtV2 or invallid if present
+    InvalidTxVersion,
+    /// Unsigned Transaction is not allowed in PsbtV2
+    UnsignedTxPresent,
+    /// In a serialized psbtv2, input and output counts are required
+    /// to be present in the global types section. On the other hand,
+    /// they must be omitted in PsbtV0.
+    InvalidInputOutputCounts,
+    /// Computing Locktime error for Non-PsbtV0 indicating the
+    /// required Locktime not present in the input.
+    RequiredLocktimeNotPresent,
+    /// Input can not be added to the PsbtV2.
+    InputNotAddable(&'static str),
+    /// Outputs can not be modified as `output_modifiable` flag is `false` in PsbtV2.
+    OutputNotAddable,
 }
 
 impl fmt::Display for Error {
@@ -113,9 +143,11 @@ impl fmt::Display for Error {
             Error::PsbtUtxoOutOfbounds =>
                 f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            Error::InvalidProprietaryKey =>
-                write!(f, "non-proprietary key type found when proprietary key was expected"),
+            Error::InvalidProprietaryKey => {
+                write!(f, "non-proprietary key type found when proprietary key was expected")
+            }
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
+            Error::FutureVersion(ref e) => write_err!(f, "unrecognized PSBT version"; e),
             Error::UnsignedTxHasScriptSigs =>
                 f.write_str("the unsigned transaction has script sigs"),
             Error::UnsignedTxHasScriptWitnesses =>
@@ -123,14 +155,11 @@ impl fmt::Display for Error {
             Error::MustHaveUnsignedTx =>
                 f.write_str("partially signed transactions must have an unsigned transaction"),
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
-                f,
-                "different unsigned transaction: expected {}, actual {}",
-                e.txid(),
-                a.txid()
-            ),
-            Error::NonStandardSighashType(ref sht) =>
-                write!(f, "non-standard sighash type: {}", sht),
+            Error::UnexpectedUniqueId { expected: ref e, actual: ref a } =>
+                write!(f, "different unsigned transaction: expected {}, actual {}", e, a),
+            Error::NonStandardSighashType(ref sht) => {
+                write!(f, "non-standard sighash type: {}", sht)
+            }
             Error::InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
             Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
@@ -143,8 +172,9 @@ impl fmt::Display for Error {
             Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
             Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
-            Error::InvalidSecp256k1PublicKey(ref e) =>
-                write_err!(f, "invalid secp256k1 public key"; e),
+            Error::InvalidSecp256k1PublicKey(ref e) => {
+                write_err!(f, "invalid secp256k1 public key"; e)
+            }
             Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
             Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
             Error::InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
@@ -157,6 +187,20 @@ impl fmt::Display for Error {
             Error::PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
             Error::Io(ref e) => write_err!(f, "I/O error"; e),
+            Error::TxVersionPresent => f.write_str("transaction version not allowed in PsbtV0"),
+            Error::FallbackLocktimePresent =>
+                f.write_str("fallback locktime not allowed in PsbtV0"),
+            Error::TxModifiablePresent => f.write_str("TxModifiable not allowed in PsbtV0"),
+            Error::InvalidTxVersion => f.write_str("transaction version is required in PsbtV2"),
+            Error::UnsignedTxPresent => f.write_str("unsigned transaction not allowed in PsbtV2"),
+            Error::InvalidInputOutputCounts => f.write_str("input and output counts are not valid"),
+            Error::InvalidInput => f.write_str("input not valid"),
+            Error::InvalidOutput => f.write_str("output not valid"),
+            Error::RequiredLocktimeNotPresent =>
+                f.write_str("required locktime not present in this Psbt input"),
+            Error::InputNotAddable(s) => write!(f, "input can not be added - {}", s),
+            Error::OutputNotAddable =>
+                f.write_str("output can not be added as output_modifiable flag is false"),
         }
     }
 }
@@ -169,6 +213,7 @@ impl std::error::Error for Error {
         match self {
             InvalidHash(e) => Some(e),
             ConsensusEncoding(e) => Some(e),
+            FutureVersion(e) => Some(e),
             Io(e) => Some(e),
             InvalidMagic
             | MissingUtxo
@@ -181,7 +226,7 @@ impl std::error::Error for Error {
             | UnsignedTxHasScriptWitnesses
             | MustHaveUnsignedTx
             | NoMorePairs
-            | UnexpectedUnsignedTx { .. }
+            | &UnexpectedUniqueId { .. }
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair { .. }
             | CombineInconsistentKeySources(_)
@@ -198,13 +243,28 @@ impl std::error::Error for Error {
             | TapTree(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption => None,
+            | PartialDataConsumption
+            | TxVersionPresent
+            | FallbackLocktimePresent
+            | TxModifiablePresent
+            | InvalidTxVersion
+            | UnsignedTxPresent
+            | InvalidInputOutputCounts
+            | InvalidInput
+            | InvalidOutput
+            | RequiredLocktimeNotPresent
+            | InputNotAddable(_)
+            | OutputNotAddable => None,
         }
     }
 }
 
 impl From<hashes::FromSliceError> for Error {
     fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
+}
+
+impl From<FutureVersionError> for Error {
+    fn from(err: FutureVersionError) -> Self { Error::FutureVersion(err) }
 }
 
 impl From<encode::Error> for Error {

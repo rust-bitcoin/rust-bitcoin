@@ -7,16 +7,18 @@ use core::str::FromStr;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
+use crate::absolute;
 use crate::bip32::KeySource;
 use crate::blockdata::script::ScriptBuf;
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::transaction::{Sequence, Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
+use crate::hash_types::Txid;
 use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
-use crate::psbt::{self, error, raw, Error};
+use crate::psbt::{self, error, raw, Error, Version};
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,
@@ -49,6 +51,16 @@ const PSBT_IN_SHA256: u8 = 0x0b;
 const PSBT_IN_HASH160: u8 = 0x0c;
 /// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
 const PSBT_IN_HASH256: u8 = 0x0d;
+/// Type: Previous TXID PSBT_IN_PREVIOUS_TXID = 0x0e
+const PSBT_IN_PREVIOUS_TXID: u8 = 0x0e;
+/// Type: Spent output index PSBT_IN_OUTPUT_INDEX = 0x0f
+const PSBT_IN_OUTPUT_INDEX: u8 = 0x0f;
+/// Type: Sequence number PSBT_IN_SEQUENCE = 0x10
+const PSBT_IN_SEQUENCE: u8 = 0x10;
+/// Type: Required time-based locktime PSBT_IN_REQUIRED_TIME_LOCKTIME = 0x11
+const PSBT_IN_REQUIRED_TIME_LOCKTIME: u8 = 0x11;
+/// Type: Required height-based locktime PSBT_IN_REQUIRED_HEIGHT_LOCKTIME = 0x12
+const PSBT_IN_REQUIRED_HEIGHT_LOCKTIME: u8 = 0x12;
 /// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
 const PSBT_IN_TAP_KEY_SIG: u8 = 0x13;
 /// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
@@ -132,6 +144,22 @@ pub struct Input {
     /// Unknown key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
+
+    /// Represents the transaction Id of the previous transaction whose UTXO is being spent.
+    /// Required in PSBTv2 and must be excluded in PSBTv0.
+    pub previous_tx_id: Option<Txid>,
+    /// Stores the index of the unspent output of the corresponding `previous_tx_id`.
+    /// Required in PSBTv2 and must be excluded in PSBTv0.
+    pub output_index: Option<u32>,
+    /// Represents the sequence number of this input. Must be excluded in PSBTv0 and optional
+    /// in PSBTv2. If not specified in PSBTv2, the default sequence number `Sequence::MAX` is assumed.
+    pub sequence: Option<Sequence>,
+    /// Represents the minimum UNIX timestamp to set as the lock time for this transaction.
+    /// Optional in PSBTv2, not allowed in PSBTv0.
+    pub required_time_locktime: Option<absolute::LockTime>,
+    /// Represents the minimum block height required to be set as the transaction’s lock time.
+    /// Optional in PSBTv2, not allowed in PSBTv0.
+    pub required_height_locktime: Option<absolute::LockTime>,
 }
 
 /// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
@@ -323,6 +351,31 @@ impl Input {
                     error::PsbtHash::Hash256,
                 )?;
             }
+            PSBT_IN_PREVIOUS_TXID => {
+                impl_psbt_insert_pair! {
+                    self.previous_tx_id <= <raw_key: _>|<raw_value: Txid>
+                }
+            }
+            PSBT_IN_OUTPUT_INDEX => {
+                impl_psbt_insert_pair! {
+                    self.output_index <= <raw_key: _>|<raw_value: u32>
+                }
+            }
+            PSBT_IN_SEQUENCE => {
+                impl_psbt_insert_pair! {
+                    self.sequence <= <raw_key: _>|<raw_value: Sequence>
+                }
+            }
+            PSBT_IN_REQUIRED_TIME_LOCKTIME => {
+                impl_psbt_insert_pair! {
+                    self.required_time_locktime <= <raw_key: _>|<raw_value: absolute::LockTime>
+                }
+            }
+            PSBT_IN_REQUIRED_HEIGHT_LOCKTIME => {
+                impl_psbt_insert_pair! {
+                    self.required_height_locktime <= <raw_key: _>|<raw_value: absolute::LockTime>
+                }
+            }
             PSBT_IN_TAP_KEY_SIG => {
                 impl_psbt_insert_pair! {
                     self.tap_key_sig <= <raw_key: _>|<raw_value: taproot::Signature>
@@ -382,6 +435,30 @@ impl Input {
             self.non_witness_utxo = None; // Clear out any non-witness UTXO when we set a witness one
         }
 
+        if let (&None, Some(previous_tx_id)) = (&self.previous_tx_id, other.previous_tx_id) {
+            self.previous_tx_id = Some(previous_tx_id);
+        }
+
+        if let (&None, Some(output_index)) = (&self.output_index, other.output_index) {
+            self.output_index = Some(output_index);
+        }
+
+        if let (&None, Some(sequence)) = (&self.sequence, other.sequence) {
+            self.sequence = Some(sequence);
+        }
+
+        if let (&None, Some(locktime)) =
+            (&self.required_time_locktime, other.required_time_locktime)
+        {
+            self.required_time_locktime = Some(locktime);
+        }
+
+        if let (&None, Some(locktime)) =
+            (&self.required_height_locktime, other.required_height_locktime)
+        {
+            self.required_height_locktime = Some(locktime);
+        }
+
         self.partial_sigs.extend(other.partial_sigs);
         self.bip32_derivation.extend(other.bip32_derivation);
         self.ripemd160_preimages.extend(other.ripemd160_preimages);
@@ -401,6 +478,41 @@ impl Input {
         combine!(tap_key_sig, self, other);
         combine!(tap_internal_key, self, other);
         combine!(tap_merkle_root, self, other);
+    }
+
+    /// Validates this [`Input`] according to the given Psbt [`Version`]
+    pub fn validate_version(&self, version: Version) -> Result<(), Error> {
+        match version {
+            Version::PsbtV0 => {
+                if self.previous_tx_id.is_some()
+                    || self.output_index.is_some()
+                    || self.sequence.is_some()
+                    || self.required_time_locktime.is_some()
+                    || self.required_height_locktime.is_some()
+                {
+                    return Err(Error::InvalidInput);
+                }
+            }
+            _ => {
+                if self.previous_tx_id.as_ref().is_none() || self.output_index.as_ref().is_none() {
+                    return Err(Error::InvalidInput);
+                }
+
+                if let Some(locktime) = self.required_time_locktime.as_ref() {
+                    if locktime.is_block_height() {
+                        return Err(Error::InvalidInput);
+                    }
+                }
+
+                if let Some(locktime) = self.required_height_locktime.as_ref() {
+                    if locktime.is_block_time() {
+                        return Err(Error::InvalidInput);
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -458,6 +570,26 @@ impl Map for Input {
 
         impl_psbt_get_pair! {
             rv.push_map(self.hash256_preimages, PSBT_IN_HASH256)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.previous_tx_id, PSBT_IN_PREVIOUS_TXID)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.output_index, PSBT_IN_OUTPUT_INDEX)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.sequence, PSBT_IN_SEQUENCE)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.required_time_locktime, PSBT_IN_REQUIRED_TIME_LOCKTIME)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.required_height_locktime, PSBT_IN_REQUIRED_HEIGHT_LOCKTIME)
         }
 
         impl_psbt_get_pair! {

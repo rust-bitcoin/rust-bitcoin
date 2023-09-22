@@ -12,19 +12,21 @@ use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use secp256k1::{self, XOnlyPublicKey};
 
 use super::map::{Input, Map, Output, PsbtSighashType};
+use crate::absolute::LockTime;
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::blockdata::script::ScriptBuf;
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::transaction::{Sequence, Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
+use crate::hash_types::Txid;
 use crate::prelude::*;
-use crate::psbt::{Error, Psbt};
+use crate::psbt::{Error, Psbt, Version};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::{io, VarInt};
+use crate::{io, Amount, VarInt};
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -53,11 +55,11 @@ impl Psbt {
 
         buf.extend(self.serialize_map());
 
-        for i in &self.inputs {
+        for i in &self.inner.inputs {
             buf.extend(i.serialize_map());
         }
 
-        for i in &self.outputs {
+        for i in &self.inner.outputs {
             buf.extend(i.serialize_map());
         }
 
@@ -71,48 +73,52 @@ impl Psbt {
             return Err(Error::InvalidMagic);
         }
 
-        const PSBT_SERPARATOR: u8 = 0xff_u8;
-        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SERPARATOR) {
+        const PSBT_SEPARATOR: u8 = 0xff_u8;
+        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SEPARATOR) {
             return Err(Error::InvalidSeparator);
         }
 
         let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
 
         let mut global = Psbt::decode_global(&mut d)?;
-        global.unsigned_tx_checks()?;
+        let inputs = &mut global.inner.inputs;
+        let outputs = &mut global.inner.outputs;
 
-        let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
-
-            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
-
-            for _ in 0..inputs_len {
-                inputs.push(Input::decode(&mut d)?);
+        let inputs_len: usize = {
+            match global.inner.version {
+                Version::PsbtV0 => global.inner.unsigned_tx.as_ref().unwrap().input.len(),
+                _ => inputs.capacity(),
             }
-
-            inputs
         };
+        for _ in 0..inputs_len {
+            let input = Input::decode(&mut d)?;
+            input.validate_version(global.inner.version)?;
+            inputs.push(input);
+        }
 
-        let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
-
-            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
-
-            for _ in 0..outputs_len {
-                outputs.push(Output::decode(&mut d)?);
+        let outputs_len: usize = {
+            match global.inner.version {
+                Version::PsbtV0 => global.inner.unsigned_tx.as_ref().unwrap().output.len(),
+                _ => outputs.capacity(),
             }
-
-            outputs
         };
+        for _ in 0..outputs_len {
+            let output = Output::decode(&mut d)?;
+            output.validate_version(global.inner.version)?;
+            outputs.push(output);
+        }
 
-        global.inputs = inputs;
-        global.outputs = outputs;
         Ok(global)
     }
 }
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
+impl_psbt_de_serialize!(Sequence);
 impl_psbt_de_serialize!(Witness);
+impl_psbt_de_serialize!(u32);
+impl_psbt_de_serialize!(LockTime);
+impl_psbt_de_serialize!(Amount);
+impl_psbt_hash_de_serialize!(Txid);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);

@@ -9,8 +9,9 @@ use crate::bip32::KeySource;
 use crate::blockdata::script::ScriptBuf;
 use crate::prelude::*;
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error};
+use crate::psbt::{raw, Error, Version};
 use crate::taproot::{TapLeafHash, TapTree};
+use crate::Amount;
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
@@ -18,6 +19,10 @@ const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
 const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
 /// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
 const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
+/// Type: Output amount PSBT_OUT_AMOUNT = 0x03
+const PSBT_OUT_AMOUNT: u8 = 0x03;
+/// Type: Output script PSBT_OUT_SCRIPT = 0x04
+const PSBT_OUT_SCRIPT: u8 = 0x04;
 /// Type: Taproot Internal Key PSBT_OUT_TAP_INTERNAL_KEY = 0x05
 const PSBT_OUT_TAP_INTERNAL_KEY: u8 = 0x05;
 /// Type: Taproot Tree PSBT_OUT_TAP_TREE = 0x06
@@ -54,6 +59,11 @@ pub struct Output {
     /// Unknown key-value pairs for this output.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
+
+    /// The output's amount. Required in PSBTv2. Must be excluded in PSBTV0.
+    pub amount: Option<Amount>,
+    /// The script for this output. Required in PSBTv2. Must be excluded in PSBTV0.
+    pub script: Option<ScriptBuf>,
 }
 
 impl Output {
@@ -74,6 +84,16 @@ impl Output {
             PSBT_OUT_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
                     self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
+                }
+            }
+            PSBT_OUT_AMOUNT => {
+                impl_psbt_insert_pair! {
+                    self.amount <= <raw_key: _>|<raw_value: Amount>
+                }
+            }
+            PSBT_OUT_SCRIPT => {
+                impl_psbt_insert_pair! {
+                    self.script <= <raw_key: _>|<raw_value: ScriptBuf>
                 }
             }
             PSBT_OUT_PROPRIETARY => {
@@ -118,10 +138,34 @@ impl Output {
         self.unknown.extend(other.unknown);
         self.tap_key_origins.extend(other.tap_key_origins);
 
+        if let (&None, Some(amount)) = (&self.amount, other.amount) {
+            self.amount = Some(amount);
+        }
+
+        if let (&None, Some(script)) = (&self.script, other.script) {
+            self.script = Some(script);
+        }
+
         combine!(redeem_script, self, other);
         combine!(witness_script, self, other);
         combine!(tap_internal_key, self, other);
         combine!(tap_tree, self, other);
+    }
+
+    /// Validates this [`Output`] according to the given [Version]
+    pub fn validate_version(&self, version: Version) -> Result<(), Error> {
+        match version {
+            Version::PsbtV0 =>
+                if self.amount.is_some() || self.script.is_some() {
+                    return Err(Error::InvalidOutput);
+                },
+            _ =>
+                if self.amount.is_none() || self.script.is_none() {
+                    return Err(Error::InvalidOutput);
+                },
+        }
+
+        Ok(())
     }
 }
 
@@ -139,6 +183,14 @@ impl Map for Output {
 
         impl_psbt_get_pair! {
             rv.push_map(self.bip32_derivation, PSBT_OUT_BIP32_DERIVATION)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.amount, PSBT_OUT_AMOUNT)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.script, PSBT_OUT_SCRIPT)
         }
 
         impl_psbt_get_pair! {
