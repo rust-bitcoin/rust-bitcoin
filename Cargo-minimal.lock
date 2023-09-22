@@ -88,7 +88,6 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.13.0"
 dependencies = [
- "bitcoin-internals",
  "core2",
  "hex-conservative",
  "schemars",

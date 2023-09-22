@@ -14,8 +14,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std", "hex/std"]
-alloc = ["internals/alloc", "hex/alloc"]
+std = ["alloc", "hex/std"]
+alloc = ["hex/alloc"]
 serde-std = ["serde/std"]
 # If you want I/O you must enable either "std" or "core2".
 core2 = ["actual-core2", "hex/core2"]
@@ -27,7 +27,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-internals = { package = "bitcoin-internals", version = "0.2.0" }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 
 schemars = { version = "0.8.3", optional = true }
