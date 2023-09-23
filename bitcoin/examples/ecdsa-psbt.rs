@@ -39,8 +39,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Witness,
+    transaction, Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction,
+    TxIn, TxOut, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -177,7 +177,7 @@ impl WatchOnly {
         let change_amount = Amount::from_str(CHANGE_AMOUNT_BTC)?;
 
         let tx = Transaction {
-            version: 2,
+            version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: INPUT_UTXO_TXID.parse()?, vout: INPUT_UTXO_VOUT },

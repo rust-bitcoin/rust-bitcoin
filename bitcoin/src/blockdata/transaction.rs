@@ -586,7 +586,7 @@ impl TxOut {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
-    pub version: i32,
+    pub version: Version,
     /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
     ///
     /// ### Relevant BIPs
@@ -952,6 +952,50 @@ impl Transaction {
     }
 }
 
+/// The transaction version.
+///
+/// Currently, as specified by [BIP-68], only version 1 and 2 are considered standard.
+///
+/// Standardness of the inner `i32` is not an invariant because you are free to create transactions
+/// of any version, transactions with non-standard version numbers will not be relayed by the
+/// Bitcoin network.
+///
+/// [BIP-68]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
+#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub struct Version(pub i32);
+
+impl Version {
+    /// The original Bitcoin transaction version (pre-BIP-68).
+    pub const ONE: Self = Self(1);
+
+    /// The second Bitcoin transaction version (post-BIP-68).
+    pub const TWO: Self = Self(2);
+
+    /// Creates a non-standard transaction version.
+    pub fn non_standard(version: i32) -> Version { Self(version) }
+
+    /// Returns true if this transaction version number is considered standard.
+    pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+}
+
+impl Default for Version {
+    fn default() -> Version { Version::TWO }
+}
+
+impl Encodable for Version {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
+    }
+}
+
+impl Decodable for Version {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode(r).map(Version)
+    }
+}
+
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
@@ -1038,7 +1082,7 @@ impl Decodable for Transaction {
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        let version = i32::consensus_decode_from_finite_reader(r)?;
+        let version = Version::consensus_decode_from_finite_reader(r)?;
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
         if input.is_empty() {
@@ -1491,7 +1535,7 @@ mod tests {
         let realtx = tx.unwrap();
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
-        assert_eq!(realtx.version, 1);
+        assert_eq!(realtx.version, Version::ONE);
         assert_eq!(realtx.input.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
@@ -1532,7 +1576,7 @@ mod tests {
         let realtx = tx.unwrap();
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
-        assert_eq!(realtx.version, 2);
+        assert_eq!(realtx.version, Version::TWO);
         assert_eq!(realtx.input.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
@@ -1604,13 +1648,13 @@ mod tests {
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_ok());
         let realtx = tx.unwrap();
-        assert_eq!(realtx.version, 2147483647);
+        assert_eq!(realtx.version, Version::non_standard(2147483647));
 
         let tx2_bytes = hex!("000000800100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000");
         let tx2: Result<Transaction, _> = deserialize(&tx2_bytes);
         assert!(tx2.is_ok());
         let realtx2 = tx2.unwrap();
-        assert_eq!(realtx2.version, -2147483648);
+        assert_eq!(realtx2.version, Version::non_standard(-2147483648));
     }
 
     #[test]
@@ -1898,7 +1942,7 @@ mod tests {
             ];
 
         let empty_transaction_weight = Transaction {
-            version: 0,
+            version: Version::default(),
             lock_time: absolute::LockTime::ZERO,
             input: vec![],
             output: vec![],

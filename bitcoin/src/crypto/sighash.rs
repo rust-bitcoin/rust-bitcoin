@@ -1136,10 +1136,10 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::{absolute, Amount, Transaction, Script};
+    /// use bitcoin::{absolute, transaction, Amount, Transaction, Script};
     /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: transaction::Version::TWO, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
@@ -1262,6 +1262,7 @@ mod tests {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
+    use crate::blockdata::transaction;
     use crate::consensus::deserialize;
     use crate::crypto::sighash::{LegacySighash, TapSighash};
     use crate::internal_macros::hex;
@@ -1275,7 +1276,7 @@ mod tests {
 
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
-            version: 1,
+            version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::NULL],
@@ -1462,7 +1463,7 @@ mod tests {
     #[rustfmt::skip] // Allow long function call `taproot_signature_hash`.
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
-            version: 0,
+            version: transaction::Version::default(),
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default()],
             output: vec![],
