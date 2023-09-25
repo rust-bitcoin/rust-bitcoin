@@ -1,3 +1,49 @@
+# Unreleased (changelog done for PRs merged as of June 24)
+
+- Bump MSRV to Rust 1.48.0 [#1729](https://github.com/rust-bitcoin/rust-bitcoin/pull/1729)
+- Add new example code for signature verification[#1776](https://github.com/rust-bitcoin/rust-bitcoin/pull/1776)
+- Manually implement `Debug` on `Witness`[#1913](https://github.com/rust-bitcoin/rust-bitcoin/pull/1913)
+
+- API Improvements:
+  - Add kilo weight unit conversion [#1735](https://github.com/rust-bitcoin/rust-bitcoin/pull/1735)
+  - Add `ChainHash::from_genesis_block_hash`[#1753](https://github.com/rust-bitcoin/rust-bitcoin/pull/1753)
+  - Add implementation of `PartialEq` trait for `Address<NetworkUnchecked>` [#1757](https://github.com/rust-bitcoin/rust-bitcoin/pull/1757)
+  - Add unsafe address type conversions [#1765](https://github.com/rust-bitcoin/rust-bitcoin/pull/1765)
+  - Add `Inventory::network_hash()` method [#515](https://github.com/rust-bitcoin/rust-bitcoin/pull/515)
+  - Implement `serde::Serialize` for `Address` [#1785](https://github.com/rust-bitcoin/rust-bitcoin/pull/1785)
+  - Expose valid (min, max) difficulty transition thresholds [#1820](https://github.com/rust-bitcoin/rust-bitcoin/pull/1820)
+  - Add functionality to generate `PrivateKey` [#1837](https://github.com/rust-bitcoin/rust-bitcoin/pull/1837)
+  - Allow parsing sub-sat denominations with decimal points [#1768](https://github.com/rust-bitcoin/rust-bitcoin/pull/1768)
+  - Fix associated constants of `InputWeightPrediction` [#1835](https://github.com/rust-bitcoin/rust-bitcoin/pull/1835)
+  - Add `FeeRate::checked_mul_by_weight` [#1864](https://github.com/rust-bitcoin/rust-bitcoin/pull/1864)
+  - Use `Amount` type for the `TxOut` value field [#1811](https://github.com/rust-bitcoin/rust-bitcoin/pull/1811)
+  - Add support for alloc-free parse errors [#1297](https://github.com/rust-bitcoin/rust-bitcoin/pull/1297)
+  - Add `Amount::from_int_btc` [#1870](https://github.com/rust-bitcoin/rust-bitcoin/pull/1870)
+  - Make `ckd_priv` function private and impl `AsRef` for `ChildNumber` [#1882](https://github.com/rust-bitcoin/rust-bitcoin/pull/1882)
+  - Use `hex_lit::hex` in benches (also backported to v0.30.1) [#1941](https://github.com/rust-bitcoin/rust-bitcoin/pull/1941)
+  - Add a verify function to `PublicKey` [#1911](https://github.com/rust-bitcoin/rust-bitcoin/pull/1911)
+  - Add method `Script::count_sigops` [#1890](https://github.com/rust-bitcoin/rust-bitcoin/pull/1890)
+  - Implement `From<PublicKey> for XOnlyPublicKey` [#1901](https://github.com/rust-bitcoin/rust-bitcoin/pull/1901)
+  - Implement `From<secp256k1::PublicKey> for bitcoin::PublicKey` [#1949](https://github.com/rust-bitcoin/rust-bitcoin/pull/1949)
+  - Add `DerivationPath::to_u32_vec` [#1946](https://github.com/rust-bitcoin/rust-bitcoin/pull/1946)
+
+- Moves, Removes, and renames:
+  - Move witness types to the script module [#1846](https://github.com/rust-bitcoin/rust-bitcoin/pull/1846)
+  - Remove reexport of `psbt::Prevouts` [#1872](https://github.com/rust-bitcoin/rust-bitcoin/pull/1872)
+  - Rename `Transaction::is_coin_base` to `is_coinbase` [#1796](https://github.com/rust-bitcoin/rust-bitcoin/pull/1796)
+  - Rename `TaprootSpendInfo::as_script_map` to `script_map` [#1897](https://github.com/rust-bitcoin/rust-bitcoin/pull/1897)
+  - Rename `Script::empty` to `Script::new` [#1925](https://github.com/rust-bitcoin/rust-bitcoin/pull/1925)
+  - Rename `PartiallySignedTransaction` to `Psbt` [#1938](https://github.com/rust-bitcoin/rust-bitcoin/pull/1938)
+
+- Error handling improvements:
+  - Improve `hashes::Error` [#1873](https://github.com/rust-bitcoin/rust-bitcoin/pull/1873)
+  - Add `ValidationError` [#1874](https://github.com/rust-bitcoin/rust-bitcoin/pull/1874)
+  - Improve `crypto::taproot` error type [#1895](https://github.com/rust-bitcoin/rust-bitcoin/pull/1895)
+
+# 0.30.1 - 2023-07-16
+
+- Fix compilation when [`RUSTFLAGS=--cfg=bench` is set](https://github.com/rust-bitcoin/rust-bitcoin/pull/1943)
+
 # 0.30 - 2023-03-21 "The First Crate-Smashing Release"
 
 We now have a website for crates that live under the `rust-bitcoin` GitHub organization: https://rust-bitcoin.org/
