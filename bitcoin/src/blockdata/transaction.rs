@@ -980,10 +980,6 @@ impl Version {
     pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
 }
 
-impl Default for Version {
-    fn default() -> Version { Version::TWO }
-}
-
 impl Encodable for Version {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
@@ -1942,7 +1938,7 @@ mod tests {
             ];
 
         let empty_transaction_weight = Transaction {
-            version: Version::default(),
+            version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![],
             output: vec![],

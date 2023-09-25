@@ -1463,7 +1463,7 @@ mod tests {
     #[rustfmt::skip] // Allow long function call `taproot_signature_hash`.
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
-            version: transaction::Version::default(),
+            version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default()],
             output: vec![],
