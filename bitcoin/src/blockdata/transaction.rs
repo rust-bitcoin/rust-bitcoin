@@ -36,6 +36,11 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
 use crate::{io, Amount, VarInt};
 
+/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
+const SEGWIT_MARKER: u8 = 0x00;
+/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
+const SEGWIT_FLAG: u8 = 0x01;
+
 /// A reference to a transaction output.
 ///
 /// ### Bitcoin Core References
@@ -52,6 +57,9 @@ pub struct OutPoint {
 crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
+    /// The number of bytes that an outpoint contributes to the size of a transaction.
+    const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
+
     /// Creates a new [`OutPoint`].
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
@@ -200,9 +208,6 @@ pub struct TxIn {
 }
 
 impl TxIn {
-    /// The weight of a `TxIn` excluding the `script_sig` and `witness`.
-    pub const BASE_WEIGHT: Weight = Weight::from_wu(32 + 4 + 4);
-
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
@@ -224,12 +229,7 @@ impl TxIn {
     /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
     /// the input length `VarInt` to increase its encoding length.
     pub fn legacy_weight(&self) -> Weight {
-        let script_sig_size = self.script_sig.len();
-        // Size in vbytes:
-        // previous_output (36) + script_sig varint len + script_sig push + sequence (4)
-        Weight::from_non_witness_data_size(
-            (36 + VarInt::from(script_sig_size).len() + script_sig_size + 4) as u64,
-        )
+        Weight::from_non_witness_data_size(self.base_size() as u64)
     }
 
     /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
@@ -244,8 +244,26 @@ impl TxIn {
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
     ///   transaction weight to take into account the segwit marker
     pub fn segwit_weight(&self) -> Weight {
-        self.legacy_weight() + Weight::from_witness_data_size(self.witness.serialized_len() as u64)
+        Weight::from_non_witness_data_size(self.base_size() as u64)
+            + Weight::from_witness_data_size(self.witness.size() as u64)
     }
+
+    /// Returns the base size of this input.
+    ///
+    /// Base size excludes the witness data (see [`Self::total_size`]).
+    pub fn base_size(&self) -> usize {
+        let mut size = OutPoint::SIZE;
+
+        size += VarInt::from(self.script_sig.len()).size();
+        size += self.script_sig.len();
+
+        size + Sequence::SIZE
+    }
+
+    /// Returns the total number of bytes that this input contributes to a transaction.
+    ///
+    /// Total size includes the witness data (for base size see [`Self::base_size`]).
+    pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
 }
 
 impl Default for TxIn {
@@ -293,6 +311,9 @@ impl Sequence {
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
+
+    /// The number of bytes that a sequence number contributes to the size of a transaction.
+    const SIZE: usize = 4; // Serialized length of a u32.
 
     /// The lowest sequence number that does not opt-in for replace-by-fee.
     ///
@@ -493,24 +514,32 @@ impl TxOut {
     pub const NULL: Self =
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 
-    /// The weight of the txout in witness units
+    /// The weight of this output.
     ///
-    /// Keep in mind that when adding a TxOut to a transaction, the total weight of the transaction
-    /// might increase more than `TxOut::weight`. This happens when the new output added causes
-    /// the output length `VarInt` to increase its encoding length.
+    /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
+    /// transaction might increase more than `TxOut::weight`. This happens when the new output added
+    /// causes the output length `VarInt` to increase its encoding length.
+    ///
+    /// # Panics
+    ///
+    /// If output size * 4 overflows, this should never happen under normal conditions. Use
+    /// `Weght::from_vb_checked(self.size() as u64)` if you are concerned.
     pub fn weight(&self) -> Weight {
-        let script_len = self.script_pubkey.len();
-        // In vbytes:
-        // value (8) + script varint len + script push
-        Weight::from_non_witness_data_size((8 + VarInt::from(script_len).len() + script_len) as u64)
+        // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
+        Weight::from_vb(self.size() as u64).expect("should never happen under normal conditions")
     }
+
+    /// Returns the total number of bytes that this output contributes to a transaction.
+    ///
+    /// There is no difference between base size vs total size for outputs.
+    pub fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
 
     /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
     /// per current Core policy.
     ///
     /// The current dust fee rate is 3 sat/vB.
     pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
-        let len = script_pubkey.len() + VarInt(script_pubkey.len() as u64).len() + 8;
+        let len = size_from_script_pubkey(&script_pubkey);
         let len = len
             + if script_pubkey.is_witness_program() {
                 32 + 4 + 1 + (107 / 4) + 4
@@ -524,6 +553,12 @@ impl TxOut {
             script_pubkey,
         }
     }
+}
+
+/// Returns the total number of bytes that this script pubkey would contribute to a transaction.
+fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
+    let len = script_pubkey.len();
+    Amount::SIZE + VarInt::from(len).size() + len
 }
 
 /// Bitcoin transaction.
@@ -665,7 +700,10 @@ impl Transaction {
         Wtxid::from_engine(enc)
     }
 
-    /// Returns the "weight" of this transaction, as defined by BIP141.
+    /// Returns the weight of this transaction, as defined by BIP-141.
+    ///
+    /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
+    /// > the same method as calculating Block weight from Base size and Total size).
     ///
     /// For transactions with an empty witness, this is simply the consensus-serialized size times
     /// four. For transactions with a witness, this is the non-witness consensus-serialized size
@@ -682,19 +720,56 @@ impl Transaction {
     /// and can therefore avoid this ambiguity.
     #[inline]
     pub fn weight(&self) -> Weight {
-        let inputs = self.input.iter().map(|txin| {
-            InputWeightPrediction::new(
-                txin.script_sig.len(),
-                txin.witness.iter().map(|elem| elem.len()),
-            )
-        });
-        let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
-        predict_weight(inputs, outputs)
+        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+        let wu = self.base_size() * 3 + self.total_size();
+        Weight::from_wu_usize(wu)
     }
 
-    /// Returns the regular byte-wise consensus-serialized size of this transaction.
+    /// Returns the base transaction size.
+    ///
+    /// > Base transaction size is the size of the transaction serialised with the witness data stripped.
+    pub fn base_size(&self) -> usize {
+        let mut size: usize = 4; // Serialized length of a u32 for the version number.
+
+        size += VarInt::from(self.input.len()).size();
+        size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
+
+        size += VarInt::from(self.output.len()).size();
+        size += self.output.iter().map(|input| input.size()).sum::<usize>();
+
+        size + absolute::LockTime::SIZE
+    }
+
+    /// Returns the total transaction size.
+    ///
+    /// > Total transaction size is the transaction size in bytes serialized as described in BIP144,
+    /// > including base data and witness data.
     #[inline]
-    pub fn size(&self) -> usize { self.scaled_size(1).to_wu() as usize }
+    pub fn total_size(&self) -> usize {
+        let mut size: usize = 4; // Serialized length of a u32 for the version number.
+
+        if self.use_segwit_serialization() {
+            size += 2; // 1 byte for the marker and 1 for the flag.
+        }
+
+        size += VarInt::from(self.input.len()).size();
+        size += self
+            .input
+            .iter()
+            .map(|input| {
+                if self.use_segwit_serialization() {
+                    input.total_size()
+                } else {
+                    input.base_size()
+                }
+            })
+            .sum::<usize>();
+
+        size += VarInt::from(self.output.len()).size();
+        size += self.output.iter().map(|output| output.size()).sum::<usize>();
+
+        size + absolute::LockTime::SIZE
+    }
 
     /// Returns the "virtual size" (vsize) of this transaction.
     ///
@@ -702,6 +777,8 @@ impl Transaction {
     /// is different to what is implemented in Bitcoin Core. The computation should be the same for
     /// any remotely sane transaction, and a standardness-rule-correct version is available in the
     /// [`policy`] module.
+    ///
+    /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
     ///
     /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
     /// [`policy`]: ../../policy/index.html
@@ -712,72 +789,8 @@ impl Transaction {
     }
 
     /// Returns the size of this transaction excluding the witness data.
-    #[deprecated(since = "0.31.0", note = "Use Transaction::stripped_size() instead")]
-    pub fn strippedsize(&self) -> usize { Self::stripped_size(self).to_wu() as usize }
-
-    /// Returns the size of this transaction excluding the witness data.
-    pub fn stripped_size(&self) -> Weight {
-        let mut input_size: Weight = Weight::ZERO;
-        for input in &self.input {
-            input_size += TxIn::BASE_WEIGHT
-                + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
-                + Weight::from_wu_usize(input.script_sig.len());
-        }
-        let mut output_size = Weight::ZERO;
-        for output in &self.output {
-            output_size += Weight::from_wu(8)+ // value
-                Weight::from_wu_usize(VarInt(output.script_pubkey.len() as u64).len()) +
-                Weight::from_wu_usize(output.script_pubkey.len());
-        }
-        let non_input_size: Weight =
-        // version:
-        Weight::from_wu(4)+
-        // count varints:
-        Weight::from_wu_usize(VarInt(self.input.len() as u64).len()) +
-        Weight::from_wu_usize(VarInt(self.output.len() as u64).len()) +
-        output_size +
-        // lock_time
-        Weight::from_wu(4);
-        non_input_size + input_size
-    }
-
-    /// Internal utility function for size/weight functions.
-    fn scaled_size(&self, scale_factor: u64) -> Weight {
-        let mut input_weight: Weight = Weight::ZERO;
-        let mut inputs_with_witnesses = 0;
-        for input in &self.input {
-            let non_scaled_input_weight: Weight = TxIn::BASE_WEIGHT
-                + Weight::from_wu_usize(VarInt(input.script_sig.len() as u64).len())
-                + Weight::from_wu_usize(input.script_sig.len());
-            input_weight += non_scaled_input_weight * scale_factor;
-            if !input.witness.is_empty() {
-                inputs_with_witnesses += 1;
-                input_weight += Weight::from_wu_usize(input.witness.serialized_len());
-            }
-        }
-        let mut output_size = Weight::ZERO;
-        for output in &self.output {
-            output_size += Weight::from_wu(8)+ // value
-                Weight::from_wu_usize(VarInt(output.script_pubkey.len() as u64).len()) +
-                Weight::from_wu_usize(output.script_pubkey.len());
-        }
-        let non_input_size =
-        // version:
-        Weight::from_wu(4) +
-        // count varints:
-        Weight::from_wu_usize(VarInt(self.input.len() as u64).len()) +
-        Weight::from_wu_usize(VarInt(self.output.len() as u64).len()) +
-        output_size +
-        // lock_time
-        Weight::from_wu(4);
-        if inputs_with_witnesses == 0 {
-            non_input_size.checked_mul(scale_factor).unwrap() + input_weight
-        } else {
-            non_input_size.checked_mul(scale_factor).unwrap()
-                + input_weight
-                + Weight::from_wu_usize(self.input.len() - inputs_with_witnesses + 2)
-        }
-    }
+    #[deprecated(since = "0.31.0", note = "Use Transaction::base_size() instead")]
+    pub fn strippedsize(&self) -> usize { self.base_size() }
 
     /// Checks if this is a coinbase transaction.
     ///
@@ -950,6 +963,18 @@ impl Transaction {
         }
         count
     }
+
+    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    fn use_segwit_serialization(&self) -> bool {
+        for input in &self.input {
+            if !input.witness.is_empty() {
+                return true;
+            }
+        }
+        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // `Transaction` docs for full explanation).
+        self.input.is_empty()
+    }
 }
 
 /// The transaction version.
@@ -1048,21 +1073,15 @@ impl Encodable for Transaction {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(w)?;
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
-        // `Transaction` docs for full explanation).
-        let mut have_witness = self.input.is_empty();
-        for input in &self.input {
-            if !input.witness.is_empty() {
-                have_witness = true;
-                break;
-            }
-        }
-        if !have_witness {
+
+        // Legacy transaction serialization format only includes inputs and outputs.
+        if !self.use_segwit_serialization() {
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
         } else {
-            len += 0u8.consensus_encode(w)?;
-            len += 1u8.consensus_encode(w)?;
+            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
+            len += SEGWIT_MARKER.consensus_encode(w)?;
+            len += SEGWIT_FLAG.consensus_encode(w)?;
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
             for input in &self.input {
@@ -1206,7 +1225,7 @@ where
     let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
         (0, 0),
         |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + VarInt(script_len as u64).len();
+            let script_size = script_len + VarInt(script_len as u64).size();
             (output_count + 1, total_scripts_size + script_size)
         },
     );
@@ -1236,8 +1255,8 @@ const fn predict_weight_internal(
     // version:
         4 +
     // count varints:
-        VarInt(input_count as u64).len() +
-        VarInt(output_count as u64).len() +
+        VarInt(input_count as u64).size() +
+        VarInt(output_count as u64).size() +
         output_size +
     // lock_time
         4;
@@ -1277,7 +1296,7 @@ pub const fn predict_weight_from_slices(
     i = 0;
     while i < output_script_lens.len() {
         let script_len = output_script_lens[i];
-        output_scripts_size += script_len + VarInt(script_len as u64).len();
+        output_scripts_size += script_len + VarInt(script_len as u64).size();
         i += 1;
     }
 
@@ -1357,11 +1376,11 @@ impl InputWeightPrediction {
         let (count, total_size) =
             witness_element_lengths.into_iter().fold((0, 0), |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + VarInt(elem_len as u64).len();
+                let elem_size = elem_len + VarInt(elem_len as u64).size();
                 (count + 1, total_size + elem_size)
             });
-        let witness_size = if count > 0 { total_size + VarInt(count as u64).len() } else { 0 };
-        let script_size = input_script_len + VarInt(input_script_len as u64).len();
+        let witness_size = if count > 0 { total_size + VarInt(count as u64).size() } else { 0 };
+        let script_size = input_script_len + VarInt(input_script_len as u64).size();
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1377,16 +1396,16 @@ impl InputWeightPrediction {
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + VarInt(elem_len as u64).len();
+            let elem_size = elem_len + VarInt(elem_len as u64).size();
             total_size += elem_size;
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + VarInt(witness_element_lengths.len() as u64).len()
+            total_size + VarInt(witness_element_lengths.len() as u64).size()
         } else {
             0
         };
-        let script_size = input_script_len + VarInt(input_script_len as u64).len();
+        let script_size = input_script_len + VarInt(input_script_len as u64).size();
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1552,10 +1571,9 @@ mod tests {
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
         assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
-        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.total_size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
-        assert_eq!(realtx.stripped_size(), Weight::from_wu_usize(tx_bytes.len()));
-        assert_eq!(realtx.scaled_size(4), Weight::from_wu(772));
+        assert_eq!(realtx.base_size(), tx_bytes.len());
     }
 
     #[test]
@@ -1594,29 +1612,17 @@ mod tests {
         );
         const EXPECTED_WEIGHT: Weight = Weight::from_wu(442);
         assert_eq!(realtx.weight(), EXPECTED_WEIGHT);
-        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.total_size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), 111);
-        // Since
-        //     size   =                        stripped_size + witness_size
-        //     weight = WITNESS_SCALE_FACTOR * stripped_size + witness_size
-        // then,
-        //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
-        let expected_strippedsize: Weight = Weight::from_wu(
-            (EXPECTED_WEIGHT - Weight::from_wu_usize(tx_bytes.len()))
-                / (Weight::from_wu_usize(WITNESS_SCALE_FACTOR - 1)),
-        );
-        assert_eq!(realtx.stripped_size(), expected_strippedsize);
+
+        let expected_strippedsize = (442 - realtx.total_size()) / 3;
+        assert_eq!(realtx.base_size(), expected_strippedsize);
+
         // Construct a transaction without the witness data.
         let mut tx_without_witness = realtx;
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
-        assert_eq!(
-            tx_without_witness.weight(),
-            expected_strippedsize.scale_by_witness_factor().unwrap()
-        );
-        assert_eq!(Weight::from_wu_usize(tx_without_witness.size()), expected_strippedsize);
-        assert_eq!(Weight::from_wu_usize(tx_without_witness.vsize()), expected_strippedsize);
-        assert_eq!(tx_without_witness.stripped_size(), expected_strippedsize);
-        assert_eq!(tx_without_witness.scaled_size(1), Weight::from_wu(83));
+        assert_eq!(tx_without_witness.total_size(), tx_without_witness.total_size());
+        assert_eq!(tx_without_witness.total_size(), expected_strippedsize);
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.
@@ -1948,15 +1954,18 @@ mod tests {
         for (is_segwit, tx, expected_weight) in &txs {
             let txin_weight = if *is_segwit { TxIn::segwit_weight } else { TxIn::legacy_weight };
             let tx: Transaction = deserialize(Vec::from_hex(tx).unwrap().as_slice()).unwrap();
-            // The empty tx size doesn't include the segwit marker (`0001`), so, in case of segwit txs,
-            // we have to manually add it ourselves
-            let segwit_marker_weight = if *is_segwit { Weight::from_wu(2) } else { Weight::ZERO };
-            let calculated_size = empty_transaction_weight
-                + segwit_marker_weight
+            assert_eq!(*is_segwit, tx.use_segwit_serialization());
+
+            let mut calculated_weight = empty_transaction_weight
                 + tx.input.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
                 + tx.output.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
-            assert_eq!(calculated_size, tx.weight());
 
+            // The empty tx uses segwit serialization but a legacy tx does not.
+            if !tx.use_segwit_serialization() {
+                calculated_weight -= Weight::from_wu(2);
+            }
+
+            assert_eq!(calculated_weight, *expected_weight);
             assert_eq!(tx.weight(), *expected_weight);
         }
     }
@@ -2128,7 +2137,7 @@ mod benches {
         let mut tx: Transaction = deserialize(&raw_tx).unwrap();
 
         bh.iter(|| {
-            black_box(black_box(&mut tx).size());
+            black_box(black_box(&mut tx).total_size());
         });
     }
 

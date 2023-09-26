@@ -342,7 +342,7 @@ impl Serialize for TapTree {
         let capacity = self
             .script_leaves()
             .map(|l| {
-                l.script().len() + VarInt::from(l.script().len()).len() // script version
+                l.script().len() + VarInt::from(l.script().len()).size() // script version
             + 1 // merkle branch
             + 1 // leaf version
             })

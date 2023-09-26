@@ -54,6 +54,10 @@ pub struct Header {
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl Header {
+    /// The number of bytes that the block header contributes to the size of a block.
+    // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
+    pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
+
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = BlockHash::engine();
@@ -275,38 +279,44 @@ impl Block {
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
-    /// base_size == size of header + size of encoded transaction count.
-    fn base_size(&self) -> Weight {
-        Weight::from_wu_usize(80 + VarInt::from(self.txdata.len()).len())
-    }
-
-    /// Returns the size of the block.
-    ///
-    /// size == size of header + size of encoded transaction count + total size of transactions.
-    pub fn size(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::size).sum();
-        self.base_size().to_wu() as usize + txs_size
-    }
-
-    /// Returns the stripped size of the block.
-    #[deprecated(
-        since = "0.31.0",
-        note = "Truncates on 32-bit machines, Use Block::stripped_size() instead"
-    )]
-    pub fn strippedsize(&self) -> usize { Self::stripped_size(self).to_wu() as usize }
-
-    /// Returns the stripped size of the block.
-    pub fn stripped_size(&self) -> Weight {
-        let txs_size: Weight = self.txdata.iter().map(Transaction::stripped_size).sum();
-        self.base_size() + txs_size
-    }
-
     /// Returns the weight of the block.
+    ///
+    /// > Block weight is defined as Base size * 3 + Total size.
     pub fn weight(&self) -> Weight {
-        let base_weight = self.base_size() * Weight::WITNESS_SCALE_FACTOR;
-        let txs_weight: Weight = self.txdata.iter().map(Transaction::weight).sum();
-        base_weight + txs_weight
+        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+        let wu = self.base_size() * 3 + self.total_size();
+        Weight::from_wu_usize(wu)
     }
+
+    /// Returns the base block size.
+    ///
+    /// > Base size is the block size in bytes with the original transaction serialization without
+    /// > any witness-related data, as seen by a non-upgraded node.
+    fn base_size(&self) -> usize {
+        let mut size = Header::SIZE;
+
+        size += VarInt::from(self.txdata.len()).size();
+        size += self.txdata.iter().map(|tx| tx.base_size()).sum::<usize>();
+
+        size
+    }
+
+    /// Returns the total block size.
+    ///
+    /// > Total size is the block size in bytes with transactions serialized as described in BIP144,
+    /// > including base data and witness data.
+    pub fn total_size(&self) -> usize {
+        let mut size = Header::SIZE;
+
+        size += VarInt::from(self.txdata.len()).size();
+        size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
+
+        size
+    }
+
+    /// Returns the stripped size of the block.
+    #[deprecated(since = "0.31.0", note = "use Block::base_size() instead")]
+    pub fn strippedsize(&self) -> usize { self.base_size() }
 
     /// Returns the coinbase transaction, if one is present.
     pub fn coinbase(&self) -> Option<&Transaction> { self.txdata.first() }
@@ -489,9 +499,8 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(), 1.0);
         // [test] TODO: check the transaction data
 
-        assert_eq!(real_decode.base_size(), Weight::from_wu(81));
-        assert_eq!(real_decode.size(), some_block.len());
-        assert_eq!(real_decode.stripped_size(), Weight::from_wu_usize(some_block.len()));
+        assert_eq!(real_decode.total_size(), some_block.len());
+        assert_eq!(real_decode.base_size(), some_block.len());
         assert_eq!(
             real_decode.weight(),
             Weight::from_non_witness_data_size(some_block.len() as u64)
@@ -532,8 +541,8 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
         // [test] TODO: check the transaction data
 
-        assert_eq!(real_decode.size(), segwit_block.len());
-        assert_eq!(real_decode.stripped_size(), Weight::from_wu(4283));
+        assert_eq!(real_decode.total_size(), segwit_block.len());
+        assert_eq!(real_decode.base_size(), 4283);
         assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
         assert!(real_decode.check_witness_commitment());

@@ -509,6 +509,8 @@ impl Amount {
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
     pub const MAX: Amount = Amount(u64::MAX);
+    /// The number of bytes that an amount contributes to the size of a transaction.
+    pub const SIZE: usize = 8; // Serialized length of a u64.
 
     /// Create an [Amount] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
