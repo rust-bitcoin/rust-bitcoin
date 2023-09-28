@@ -12,8 +12,7 @@ use crate::{FromSliceError, Hash as _, HashEngine as _};
 crate::internal_macros::hash_type! {
     64,
     false,
-    "Output of the SipHash24 hash function.",
-    "crate::util::json_hex_string::len_8"
+    "Output of the SipHash24 hash function."
 }
 
 #[cfg(not(hashes_fuzz))]

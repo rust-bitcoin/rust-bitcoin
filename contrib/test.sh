@@ -13,10 +13,7 @@ if cargo --version | grep ${MSRV}; then
     cargo update -p quote --precise 1.0.30
     cargo update -p proc-macro2 --precise 1.0.63
     cargo update -p serde_test --precise 1.0.175
-    # Have to pin this so we can pin `schemars_derive`
     cargo update -p schemars --precise 0.8.12
-    # schemars_derive 0.8.13 uses edition 2021
-    cargo update -p schemars_derive --precise 0.8.12
     # byteorder 1.5.0 uses edition 2021
     cargo update -p byteorder --precise 1.4.3
 

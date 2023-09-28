@@ -27,7 +27,13 @@ impl<T: Tag> schemars::JsonSchema for Hash<T> {
     fn schema_name() -> String { "Hash".to_owned() }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        crate::util::json_hex_string::len_32(gen)
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(32 * 2),
+            min_length: Some(32 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
     }
 }
 
@@ -169,7 +175,6 @@ mod tests {
     ];
 
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
-    #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
     pub struct TestHashTag;
 
     impl sha256t::Tag for TestHashTag {
@@ -177,6 +182,21 @@ mod tests {
             // The TapRoot TapLeaf midstate.
             let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
             sha256::HashEngine::from_midstate(midstate, 64)
+        }
+    }
+
+    #[cfg(feature = "schemars")]
+    impl schemars::JsonSchema for TestHashTag {
+        fn schema_name() -> String { "Hash".to_owned() }
+
+        fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+            let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: Some(64 * 2),
+                min_length: Some(64 * 2),
+                pattern: Some("[0-9a-fA-F]+".to_owned()),
+            }));
+            schema.into()
         }
     }
 
