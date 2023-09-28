@@ -19,7 +19,6 @@ jobs:
 hashes_sha1,
 hashes_json,
 hashes_ripemd160,
-hashes_cbor,
 hashes_sha512_256,
 hashes_sha256,
 hashes_sha512,
