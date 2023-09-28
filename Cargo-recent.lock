@@ -45,7 +45,6 @@ dependencies = [
  "mutagen",
  "secp256k1",
  "serde",
- "serde_derive",
  "serde_json",
  "serde_test",
 ]
