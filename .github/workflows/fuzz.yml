@@ -16,24 +16,24 @@ jobs:
       fail-fast: false
       matrix:
         fuzz_target: [
+hashes_sha1,
+hashes_json,
+hashes_ripemd160,
+hashes_cbor,
+hashes_sha512_256,
+hashes_sha256,
+hashes_sha512,
+bitcoin_script_bytes_to_asm_fmt,
+bitcoin_deserialize_block,
+bitcoin_deser_net_msg,
+bitcoin_deserialize_script,
+bitcoin_deserialize_psbt,
 bitcoin_outpoint_string,
 bitcoin_deserialize_amount,
 bitcoin_deserialize_transaction,
-bitcoin_deser_net_msg,
 bitcoin_deserialize_address,
-bitcoin_script_bytes_to_asm_fmt,
 bitcoin_deserialize_prefilled_transaction,
 bitcoin_deserialize_witness,
-bitcoin_deserialize_psbt,
-bitcoin_deserialize_block,
-bitcoin_deserialize_script,
-hashes_json,
-hashes_cbor,
-hashes_sha256,
-hashes_ripemd160,
-hashes_sha512_256,
-hashes_sha512,
-hashes_sha1,
         ]
     steps:
       - name: Install test dependencies
