@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Demonstrate creating a transaction that spends to and from p2tr outputs.
+//! Demonstrate creating a transaction that does a key spend from a p2tr output and spends to a p2tr
+//! output also.
 
 use std::str::FromStr;
 
 use bitcoin::hashes::Hash;
 use bitcoin::key::{Keypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
+use bitcoin::output::P2tr;
 use bitcoin::secp256k1::{rand, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::{
@@ -35,7 +37,7 @@ fn main() {
     // The input for the transaction we are constructing.
     let input = TxIn {
         previous_output: dummy_out_point, // The dummy output we are spending.
-        script_sig: ScriptBuf::default(), // For a p2tr script_sig is empty.
+        script_sig: P2tr::script_sig(),
         sequence: Sequence::ENABLE_RBF_NO_LOCKTIME,
         witness: Witness::default(), // Filled in after signing.
     };
@@ -46,7 +48,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
+        script_pubkey: P2tr::script_pubkey(&secp, internal_key, None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.

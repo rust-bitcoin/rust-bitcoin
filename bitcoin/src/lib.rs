@@ -109,6 +109,7 @@ pub mod error;
 pub mod hash_types;
 pub mod merkle_tree;
 pub mod network;
+pub mod output;
 pub mod policy;
 pub mod pow;
 pub mod psbt;
