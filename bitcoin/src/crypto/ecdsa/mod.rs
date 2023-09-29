@@ -2,7 +2,7 @@
 
 //! ECDSA Bitcoin signatures.
 //!
-//! This module provides ECDSA signatures used Bitcoin that can be roundtrip (de)serialized.
+//! This module provides ECDSA signatures used in Bitcoin that can be roundtrip (de)serialized.
 
 use core::str::FromStr;
 use core::{fmt, iter};
