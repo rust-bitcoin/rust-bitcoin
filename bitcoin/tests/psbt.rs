@@ -380,7 +380,7 @@ fn finalize(psbt: Psbt) -> Psbt {
 fn extract_transaction(psbt: Psbt) -> Transaction {
     let expected_tx_hex = include_str!("data/extract_tx_hex");
 
-    let tx = psbt.extract_tx();
+    let tx = psbt.extract_tx_unchecked_fee_rate();
 
     let got = serialize_hex(&tx);
     assert_eq!(got, expected_tx_hex);

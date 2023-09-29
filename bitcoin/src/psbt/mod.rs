@@ -21,7 +21,7 @@ use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
-use crate::Amount;
+use crate::{Amount, FeeRate};
 
 #[macro_use]
 mod macros;
@@ -121,8 +121,55 @@ impl Psbt {
         Ok(psbt)
     }
 
-    /// Extracts the `Transaction` from a PSBT by filling in the available signature information.
-    pub fn extract_tx(self) -> Transaction {
+    /// The default `max_fee_rate` value used for extracting transactions with [`extract_tx`]
+    ///
+    /// As of 2023, even the biggest overpayers during the highest fee markets only paid around
+    /// 1000 sats/vByte. 25k sats/vByte is obviously a mistake at this point.
+    ///
+    /// [`extract_tx`]: Psbt::extract_tx
+    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_unchecked(25_000);
+
+    /// An alias for [`extract_tx_fee_rate_limit`].
+    ///
+    /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
+    pub fn extract_tx(self) -> Result<Transaction, ExtractTxError> {
+        self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
+    }
+
+    /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
+    ///
+    /// ## Errors
+    ///
+    /// [`ExtractTxError`] variants will contain either the [`Psbt`] itself or the [`Transaction`]
+    /// that was extracted. These can be extracted from the Errors in order to recover.
+    /// See the error documentation for info on the variants. In general, it covers large fees.
+    pub fn extract_tx_fee_rate_limit(self) -> Result<Transaction, ExtractTxError> {
+        self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
+    }
+
+    /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
+    ///
+    /// ## Errors
+    ///
+    /// See [`extract_tx`].
+    ///
+    /// [`extract_tx`]: Psbt::extract_tx
+    pub fn extract_tx_with_fee_rate_limit(
+        self,
+        max_fee_rate: FeeRate,
+    ) -> Result<Transaction, ExtractTxError> {
+        self.internal_extract_tx_with_fee_rate_limit(max_fee_rate)
+    }
+
+    /// Perform [`extract_tx_fee_rate_limit`] without the fee rate check.
+    ///
+    /// This can result in a transaction with absurdly high fees. Use with caution.
+    ///
+    /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
+    pub fn extract_tx_unchecked_fee_rate(self) -> Transaction { self.internal_extract_tx() }
+
+    #[inline]
+    fn internal_extract_tx(self) -> Transaction {
         let mut tx: Transaction = self.unsigned_tx;
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
@@ -131,6 +178,38 @@ impl Psbt {
         }
 
         tx
+    }
+
+    #[inline]
+    fn internal_extract_tx_with_fee_rate_limit(
+        self,
+        max_fee_rate: FeeRate,
+    ) -> Result<Transaction, ExtractTxError> {
+        let fee = match self.fee() {
+            Ok(fee) => fee,
+            Err(Error::MissingUtxo) =>
+                return Err(ExtractTxError::MissingInputValue { tx: self.internal_extract_tx() }),
+            Err(Error::NegativeFee) => return Err(ExtractTxError::SendingTooMuch { psbt: self }),
+            Err(Error::FeeOverflow) =>
+                return Err(ExtractTxError::AbsurdFeeRate {
+                    fee_rate: FeeRate::MAX,
+                    tx: self.internal_extract_tx(),
+                }),
+            _ => unreachable!(),
+        };
+
+        // Note: Move prevents usage of &self from now on.
+        let tx = self.internal_extract_tx();
+
+        // Now that the extracted Transaction is made, decide how to return it.
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(fee.to_sat().saturating_mul(1000) / tx.weight().to_wu());
+        // Prefer to return an AbsurdFeeRate error when both trigger.
+        if fee_rate > max_fee_rate {
+            return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
+        }
+
+        Ok(tx)
     }
 
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
@@ -771,6 +850,48 @@ impl From<IndexOutOfBoundsError> for SignError {
     fn from(e: IndexOutOfBoundsError) -> Self { SignError::IndexOutOfBounds(e) }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// This error is returned when extracting a [`Transaction`] from a [`Psbt`].
+pub enum ExtractTxError {
+    /// The [`FeeRate`] is too high
+    AbsurdFeeRate {
+        /// The [`FeeRate`]
+        fee_rate: FeeRate,
+        /// The extracted [`Transaction`] (use this to ignore the error)
+        tx: Transaction,
+    },
+    /// One or more of the inputs lacks value information (witness_utxo or non_witness_utxo)
+    MissingInputValue {
+        /// The extracted [`Transaction`] (use this to ignore the error)
+        tx: Transaction,
+    },
+    /// Input value is less than Output Value, and the [`Transaction`] would be invalid.
+    SendingTooMuch {
+        /// The original [`Psbt`] is returned untouched.
+        psbt: Psbt,
+    },
+}
+
+impl fmt::Display for ExtractTxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ExtractTxError::AbsurdFeeRate { fee_rate, .. } =>
+                write!(f, "An absurdly high fee rate of {}", fee_rate),
+            ExtractTxError::MissingInputValue { .. } => write!(
+                f,
+                "One of the inputs lacked value information (witness_utxo or non_witness_utxo)"
+            ),
+            ExtractTxError::SendingTooMuch { .. } => write!(
+                f,
+                "Transaction would be invalid due to output value being greater than input value."
+            ),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ExtractTxError {}
+
 /// Input index out of bounds (actual index, maximum index allowed).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IndexOutOfBoundsError {
@@ -922,6 +1043,51 @@ mod tests {
         assert!(psbt.inputs[0].partial_sigs.len() == 1);
         let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
         assert!(!pk.compressed);
+    }
+
+    #[test]
+    fn psbt_high_fee_checks() {
+        let psbt = psbt_with_values!(5_000_000_000_000, 1000);
+        assert_eq!(
+            psbt.clone().extract_tx().map_err(|e| match e {
+                ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
+                _ => panic!(""),
+            }),
+            Err(FeeRate::from_sat_per_kwu(15060240960843))
+        );
+        assert_eq!(
+            psbt.clone().extract_tx_fee_rate_limit().map_err(|e| match e {
+                ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
+                _ => panic!(""),
+            }),
+            Err(FeeRate::from_sat_per_kwu(15060240960843))
+        );
+        assert_eq!(
+            psbt.clone()
+                .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_kwu(15060240960842))
+                .map_err(|e| match e {
+                    ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
+                    _ => panic!(""),
+                }),
+            Err(FeeRate::from_sat_per_kwu(15060240960843))
+        );
+        assert!(psbt
+            .clone()
+            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_kwu(15060240960843))
+            .is_ok());
+
+        // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
+        assert_eq!(
+            psbt_with_values!(2076001, 1000).extract_tx().map_err(|e| match e {
+                ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
+                _ => panic!(""),
+            }),
+            Err(FeeRate::from_sat_per_kwu(6250003)) // 6250000 is 25k sat/vbyte
+        );
+
+        // Lowering the input satoshis by 1 lowers the sat/kwu by 3
+        // Putting it exactly at 25k sat/vbyte
+        assert!(psbt_with_values!(2076000, 1000).extract_tx().is_ok());
     }
 
     #[test]
