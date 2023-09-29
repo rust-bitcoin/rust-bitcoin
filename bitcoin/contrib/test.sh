@@ -29,6 +29,8 @@ then
     cargo clippy --locked --example bip32 -- -D warnings
     cargo clippy --locked --example handshake --features=rand-std -- -D warnings
     cargo clippy --locked --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
+    cargo clippy --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
+    cargo clippy --locked --example sign-tx-taproot --features=rand-std -- -D warnings
     cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 
     # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
@@ -92,6 +94,8 @@ do
 done
 
 cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
+cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
+cargo run --locked --example sign-tx-taproot --features=rand-std -- -D warnings
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
