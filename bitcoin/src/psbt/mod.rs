@@ -1016,6 +1016,50 @@ mod tests {
     use crate::psbt::raw;
     use crate::psbt::serialize::{Deserialize, Serialize};
 
+    #[track_caller]
+    fn psbt_with_values(input: u64, output: u64) -> Psbt {
+        Psbt {
+            unsigned_tx: Transaction {
+                version: transaction::Version::TWO,
+                lock_time: absolute::LockTime::ZERO,
+                input: vec![TxIn {
+                    previous_output: OutPoint {
+                        txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126"
+                            .parse()
+                            .unwrap(),
+                        vout: 0,
+                    },
+                    script_sig: ScriptBuf::new(),
+                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                    witness: Witness::default(),
+                }],
+                output: vec![TxOut {
+                    value: Amount::from_sat(output),
+                    script_pubkey: ScriptBuf::from_hex(
+                        "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+                    )
+                    .unwrap(),
+                }],
+            },
+            xpub: Default::default(),
+            version: 0,
+            proprietary: BTreeMap::new(),
+            unknown: BTreeMap::new(),
+
+            inputs: vec![Input {
+                witness_utxo: Some(TxOut {
+                    value: Amount::from_sat(input),
+                    script_pubkey: ScriptBuf::from_hex(
+                        "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
+                    )
+                    .unwrap(),
+                }),
+                ..Default::default()
+            }],
+            outputs: vec![],
+        }
+    }
+
     #[test]
     fn trivial_psbt() {
         let psbt = Psbt {
@@ -1047,7 +1091,7 @@ mod tests {
 
     #[test]
     fn psbt_high_fee_checks() {
-        let psbt = psbt_with_values!(5_000_000_000_000, 1000);
+        let psbt = psbt_with_values(5_000_000_000_000, 1000);
         assert_eq!(
             psbt.clone().extract_tx().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
@@ -1077,7 +1121,7 @@ mod tests {
 
         // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
         assert_eq!(
-            psbt_with_values!(2076001, 1000).extract_tx().map_err(|e| match e {
+            psbt_with_values(2076001, 1000).extract_tx().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
@@ -1086,7 +1130,7 @@ mod tests {
 
         // Lowering the input satoshis by 1 lowers the sat/kwu by 3
         // Putting it exactly at 25k sat/vbyte
-        assert!(psbt_with_values!(2076000, 1000).extract_tx().is_ok());
+        assert!(psbt_with_values(2076000, 1000).extract_tx().is_ok());
     }
 
     #[test]
