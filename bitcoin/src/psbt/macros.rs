@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 #[allow(unused_macros)]
-macro_rules! hex_psbt {
-    ($s:expr) => {
-        <$crate::psbt::Psbt>::deserialize(
-            &<$crate::prelude::Vec<u8> as $crate::hex::FromHex>::from_hex($s).unwrap(),
-        )
-    };
-}
-
 macro_rules! combine {
     ($thing:ident, $slf:ident, $other:ident) => {
         if let (&None, Some($thing)) = (&$slf.$thing, $other.$thing) {
