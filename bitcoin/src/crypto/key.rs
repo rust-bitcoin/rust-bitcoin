@@ -14,7 +14,7 @@ use hex::FromHex;
 use internals::write_err;
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
-pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::crypto::ecdsa;
 use crate::network::Network;
@@ -512,7 +512,7 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeyPair = UntweakedKeypair;
 
 /// Untweaked BIP-340 key pair
-pub type UntweakedKeypair = KeyPair;
+pub type UntweakedKeypair = Keypair;
 
 /// Tweaked BIP-340 key pair
 #[deprecated(since = "0.31.0", note = "use TweakedKeypair instead")]
@@ -524,10 +524,10 @@ pub type TweakedKeyPair = TweakedKeypair;
 /// # Examples
 /// ```
 /// # #[cfg(feature = "rand-std")] {
-/// # use bitcoin::key::{KeyPair, TweakedKeypair, TweakedPublicKey};
+/// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
 /// # use bitcoin::secp256k1::{rand, Secp256k1};
 /// # let secp = Secp256k1::new();
-/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(KeyPair::new(&secp, &mut rand::thread_rng()));
+/// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::thread_rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
 /// let (_pk, _parity) = keypair.public_parts();
 /// let _pk  = TweakedPublicKey::from_keypair(keypair);
@@ -538,7 +538,7 @@ pub type TweakedKeyPair = TweakedKeypair;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
-pub struct TweakedKeypair(KeyPair);
+pub struct TweakedKeypair(Keypair);
 
 /// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
@@ -548,7 +548,7 @@ pub trait TapTweak {
     type TweakedKey;
 
     /// Tweaks an untweaked key with corresponding public key value and optional script tree merkle
-    /// root. For the [`KeyPair`] type this also tweaks the private key in the pair.
+    /// root. For the [`Keypair`] type this also tweaks the private key in the pair.
     ///
     /// This is done by using the equation Q = P + H(P|c)G, where
     ///  * Q is the tweaked public key
@@ -607,7 +607,7 @@ impl TapTweak for UntweakedKeypair {
     type TweakedAux = TweakedKeypair;
     type TweakedKey = TweakedKeypair;
 
-    /// Tweaks private and public keys within an untweaked [`KeyPair`] with corresponding public key
+    /// Tweaks private and public keys within an untweaked [`Keypair`] with corresponding public key
     /// value and optional script tree merkle root.
     ///
     /// This is done by tweaking private key within the pair using the equation q = p + H(P|c), where
@@ -662,17 +662,17 @@ impl TweakedPublicKey {
 }
 
 impl TweakedKeypair {
-    /// Creates a new [`TweakedKeypair`] from a [`KeyPair`]. No tweak is applied, consider
-    /// calling `tap_tweak` on an [`UntweakedKeyPair`] instead of using this constructor.
+    /// Creates a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
+    /// calling `tap_tweak` on an [`UntweakedKeypair`] instead of using this constructor.
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
     #[inline]
-    pub fn dangerous_assume_tweaked(pair: KeyPair) -> TweakedKeypair { TweakedKeypair(pair) }
+    pub fn dangerous_assume_tweaked(pair: Keypair) -> TweakedKeypair { TweakedKeypair(pair) }
 
     /// Returns the underlying key pair.
     #[inline]
-    pub fn to_inner(self) -> KeyPair { self.0 }
+    pub fn to_inner(self) -> Keypair { self.0 }
 
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
@@ -687,7 +687,7 @@ impl From<TweakedPublicKey> for XOnlyPublicKey {
     fn from(pair: TweakedPublicKey) -> Self { pair.0 }
 }
 
-impl From<TweakedKeypair> for KeyPair {
+impl From<TweakedKeypair> for Keypair {
     #[inline]
     fn from(pair: TweakedKeypair) -> Self { pair.0 }
 }
@@ -1076,7 +1076,7 @@ mod tests {
         use secp256k1::rand;
 
         let secp = Secp256k1::new();
-        let kp = KeyPair::new(&secp, &mut rand::thread_rng());
+        let kp = Keypair::new(&secp, &mut rand::thread_rng());
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
