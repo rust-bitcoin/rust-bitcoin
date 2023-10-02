@@ -46,8 +46,8 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
     // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-    let msg =
-        secp256k1::Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long");
+    let msg = secp256k1::Message::from_digest_slice(sighash.as_byte_array())
+        .expect("sighash is 32 bytes long");
     println!("Message is {:x}", msg);
     let secp = secp256k1::Secp256k1::verification_only();
     secp.verify_ecdsa(&msg, &sig.sig, &pk.inner).unwrap();
