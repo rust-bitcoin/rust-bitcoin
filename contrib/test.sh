@@ -22,8 +22,6 @@ if cargo --version | grep ${MSRV}; then
     # byteorder 1.5.0 uses edition 2021
     cargo update -p byteorder --precise 1.4.3
 
-    cargo update -p bitcoin:0.30.1 --precise 0.30.0
-
     # Build MSRV with pinned versions.
     cargo check --all-features --all-targets
 fi
