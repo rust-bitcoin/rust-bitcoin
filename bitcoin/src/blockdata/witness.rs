@@ -11,7 +11,7 @@ use core::ops::Index;
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
-use crate::crypto::ecdsa;
+use crate::crypto::ecdsa::{self, segwit_v0};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::sighash::EcdsaSighashType;
@@ -242,7 +242,7 @@ impl Witness {
     /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
     ///
     /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-    pub fn p2wpkh(signature: &ecdsa::Signature, pubkey: &secp256k1::PublicKey) -> Witness {
+    pub fn p2wpkh(signature: &segwit_v0::Signature, pubkey: &secp256k1::PublicKey) -> Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
         witness.push_slice(&pubkey.serialize());
