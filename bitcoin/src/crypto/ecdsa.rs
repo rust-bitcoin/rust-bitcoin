@@ -38,7 +38,7 @@ impl Signature {
     pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
         let (hash_ty, sig) = sl.split_last().ok_or(Error::EmptySignature)?;
         let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)?;
-        let sig = secp256k1::ecdsa::Signature::from_der(sig).map_err(Error::Secp256k1)?;
+        let sig = secp256k1::ecdsa::Signature::from_der(sig)?;
         Ok(Signature { sig, hash_ty })
     }
 
@@ -223,9 +223,7 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
-}
+secp256k1::impl_from_for_all_crate_errors_for!(Error);
 
 impl From<NonStandardSighashTypeError> for Error {
     fn from(err: NonStandardSighashTypeError) -> Self { Error::SighashType(err) }

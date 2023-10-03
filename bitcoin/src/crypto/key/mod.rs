@@ -11,7 +11,6 @@ use core::str::FromStr;
 
 use hashes::{hash160, Hash};
 use hex::FromHex;
-use internals::write_err;
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -21,6 +20,11 @@ use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
+
+pub mod error;
+pub use self::error::{
+    Error, PrivateKeyFromWifiError, PublicKeyFromSliceError, PublicKeyFromStrError,
+};
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -173,17 +177,17 @@ impl PublicKey {
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
+    pub fn from_slice(data: &[u8]) -> Result<PublicKey, PublicKeyFromSliceError> {
         let compressed = match data.len() {
             33 => true,
             65 => false,
             len => {
-                return Err(base58::Error::InvalidLength(len).into());
+                return Err(PublicKeyFromSliceError::InvalidLength(len));
             }
         };
 
         if !compressed && data[0] != 0x04 {
-            return Err(Error::InvalidKeyPrefix(data[0]));
+            return Err(PublicKeyFromSliceError::InvalidPrefix(data[0]));
         }
 
         Ok(PublicKey { compressed, inner: secp256k1::PublicKey::from_slice(data)? })
@@ -203,8 +207,8 @@ impl PublicKey {
         secp: &Secp256k1<C>,
         msg: &secp256k1::Message,
         sig: &ecdsa::Signature,
-    ) -> Result<(), Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.sig, &self.inner)?)
+    ) -> Result<(), secp256k1::SysError> {
+        secp.verify_ecdsa(msg, &sig.sig, &self.inner)
     }
 }
 
@@ -233,12 +237,12 @@ impl fmt::Display for PublicKey {
 }
 
 impl FromStr for PublicKey {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<PublicKey, Error> {
+    type Err = PublicKeyFromStrError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.len() {
-            66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
-            130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
-            len => Err(Error::InvalidHexLength(len)),
+            66 => Ok(PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?)?),
+            130 => Ok(PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?)?),
+            len => Err(PublicKeyFromStrError::InvalidHexLength(len)),
         }
     }
 }
@@ -303,7 +307,10 @@ impl PrivateKey {
     pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
 
     /// Deserialize a private key from a slice
-    pub fn from_slice(data: &[u8], network: Network) -> Result<PrivateKey, Error> {
+    pub fn from_slice(
+        data: &[u8],
+        network: Network,
+    ) -> Result<PrivateKey, secp256k1::SecretKeyError> {
         Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
     }
 
@@ -333,14 +340,14 @@ impl PrivateKey {
     }
 
     /// Parse WIF encoded private key.
-    pub fn from_wif(wif: &str) -> Result<PrivateKey, Error> {
+    pub fn from_wif(wif: &str) -> Result<PrivateKey, PrivateKeyFromWifiError> {
         let data = base58::decode_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
             _ => {
-                return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+                return Err(PrivateKeyFromWifiError::InvalidLength(data.len()));
             }
         };
 
@@ -348,7 +355,7 @@ impl PrivateKey {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
             x => {
-                return Err(Error::Base58(base58::Error::InvalidAddressVersion(x)));
+                return Err(PrivateKeyFromWifiError::InvalidPrefix(x));
             }
         };
 
@@ -370,8 +377,8 @@ impl fmt::Debug for PrivateKey {
 }
 
 impl FromStr for PrivateKey {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<PrivateKey, Error> { PrivateKey::from_wif(s) }
+    type Err = PrivateKeyFromWifiError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> { PrivateKey::from_wif(s) }
 }
 
 impl ops::Index<ops::RangeFull> for PrivateKey {
@@ -685,62 +692,6 @@ impl From<TweakedKeyPair> for KeyPair {
 impl From<TweakedKeyPair> for TweakedPublicKey {
     #[inline]
     fn from(pair: TweakedKeyPair) -> Self { TweakedPublicKey::from_keypair(pair) }
-}
-/// A key-related error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// A base58 error.
-    Base58(base58::Error),
-    /// A secp256k1 error.
-    Secp256k1(secp256k1::Error),
-    /// Invalid key prefix error.
-    InvalidKeyPrefix(u8),
-    /// Hex decoding error.
-    Hex(hex::HexToArrayError),
-    /// `PublicKey` hex should be 66 or 130 digits long.
-    InvalidHexLength(usize),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            Base58(ref e) => write_err!(f, "base58"; e),
-            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
-            InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
-            Hex(ref e) => write_err!(f, "hex"; e),
-            InvalidHexLength(got) =>
-                write!(f, "pubkey hex should be 66 or 130 digits long, got: {}", got),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
-
-        match self {
-            Base58(e) => Some(e),
-            Secp256k1(e) => Some(e),
-            Hex(e) => Some(e),
-            InvalidKeyPrefix(_) | InvalidHexLength(_) => None,
-        }
-    }
-}
-
-impl From<base58::Error> for Error {
-    fn from(e: base58::Error) -> Error { Error::Base58(e) }
-}
-
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
-}
-
-impl From<hex::HexToArrayError> for Error {
-    fn from(e: hex::HexToArrayError) -> Self { Error::Hex(e) }
 }
 
 #[cfg(test)]
@@ -1087,6 +1038,6 @@ mod tests {
         assert_eq!(s.len(), 8);
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
+        assert_eq!(res.unwrap_err(), PublicKeyFromStrError::InvalidHexLength(8));
     }
 }
