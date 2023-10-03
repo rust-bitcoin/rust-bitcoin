@@ -250,11 +250,8 @@ impl PartialMerkleTree {
             bits: Vec::with_capacity(txids.len()),
             hashes: vec![],
         };
-        // calculate height of tree
-        let mut height = 0;
-        while pmt.calc_tree_width(height) > 1 {
-            height += 1;
-        }
+        let height = pmt.calc_tree_height();
+
         // traverse the partial tree
         pmt.traverse_and_build(height, 0, txids, matches);
         pmt
@@ -286,11 +283,9 @@ impl PartialMerkleTree {
         if self.bits.len() < self.hashes.len() {
             return Err(NotEnoughBits);
         };
-        // calculate height of tree
-        let mut height = 0;
-        while self.calc_tree_width(height) > 1 {
-            height += 1;
-        }
+
+        let height = self.calc_tree_height();
+
         // traverse the partial tree
         let mut bits_used = 0u32;
         let mut hash_used = 0u32;
@@ -306,6 +301,15 @@ impl PartialMerkleTree {
             return Err(NotAllHashesConsumed);
         }
         Ok(TxMerkleNode::from_byte_array(hash_merkle_root.to_byte_array()))
+    }
+
+    /// Calculates the height of the tree.
+    fn calc_tree_height(&self) -> u32 {
+        let mut height = 0;
+        while self.calc_tree_width(height) > 1 {
+            height += 1;
+        }
+        height
     }
 
     /// Helper function to efficiently calculate the number of nodes at given height
@@ -766,5 +770,55 @@ mod tests {
         use hex::FromHex;
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
         deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
+    }
+
+    macro_rules! check_calc_tree_width {
+        ($($test_name:ident, $num_transactions:literal, $height:literal, $expected_width:literal);* $(;)?) => {
+            $(
+                #[test]
+                fn $test_name() {
+                    let pmt = PartialMerkleTree {
+                        num_transactions: $num_transactions,
+                        bits: vec![],
+                        hashes: vec![],
+                    };
+                    let got = pmt.calc_tree_width($height);
+                    assert_eq!(got, $expected_width)
+                }
+            )*
+        }
+    }
+
+    // tree_width_<id> <num txs> <height> <expected_width>
+    //
+    // height 0 is the bottom of the tree, where the leaves are.
+    check_calc_tree_width! {
+        tree_width_01, 1, 0, 1;
+        //
+        tree_width_02, 2, 0, 2;
+        tree_width_03, 2, 1, 1;
+        //
+        tree_width_04, 3, 0, 3;
+        tree_width_05, 3, 1, 2;
+        tree_width_06, 3, 2, 1;
+        //
+        tree_width_07, 4, 0, 4;
+        tree_width_08, 4, 1, 2;
+        tree_width_09, 4, 2, 1;
+        //
+        tree_width_10, 5, 0, 5;
+        tree_width_11, 5, 1, 3;
+        tree_width_12, 5, 2, 2;
+        tree_width_13, 5, 3, 1;
+        //
+        tree_width_14, 6, 0, 6;
+        tree_width_15, 6, 1, 3;
+        tree_width_16, 6, 2, 2;
+        tree_width_17, 6, 3, 1;
+        //
+        tree_width_18, 7, 0, 7;
+        tree_width_19, 7, 1, 4;
+        tree_width_20, 7, 2, 2;
+        tree_width_21, 7, 3, 1;
     }
 }
