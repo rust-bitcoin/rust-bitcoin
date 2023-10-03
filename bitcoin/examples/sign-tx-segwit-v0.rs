@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use bitcoin::hashes::Hash;
 use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing};
+use bitcoin::secp256k1::{rand, Secp256k1, SecretKey, Signing};
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
@@ -64,14 +64,10 @@ fn main() {
         .p2wpkh_signature_hash(input_index, &dummy_utxo.script_pubkey, SPEND_AMOUNT, sighash_type)
         .expect("failed to create sighash");
 
-    // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
-    let msg = Message::from(sighash);
-    let sig = secp.sign_ecdsa(&msg, &sk);
-
-    // Update the witness stack.
-    let signature = bitcoin::ecdsa::Signature { sig, hash_ty: EcdsaSighashType::All };
+    // Sign the sighash and update the witness stack.
+    let sig = sighash.sign(&secp, &sk, sighash_type);
     let pk = sk.public_key(&secp);
-    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&signature, &pk);
+    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&sig, &pk);
 
     // Get the signed transaction.
     let tx = sighasher.into_transaction();
