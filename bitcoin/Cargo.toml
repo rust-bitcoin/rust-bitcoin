@@ -14,7 +14,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-rand-std = ["secp256k1/rand-std"]
+rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
 serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
