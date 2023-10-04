@@ -245,7 +245,7 @@ impl From<Network> for Magic {
 }
 
 impl TryFrom<Magic> for Network {
-    type Error = UnknownMagic;
+    type Error = UnknownMagicError;
 
     fn try_from(magic: Magic) -> Result<Self, Self::Error> {
         match magic {
@@ -254,7 +254,7 @@ impl TryFrom<Magic> for Network {
             Magic::TESTNET => Ok(Network::Testnet),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownMagic(magic)),
+            _ => Err(UnknownMagicError(magic)),
         }
     }
 }
@@ -343,14 +343,14 @@ impl_std_error!(ParseMagicError, error);
 
 /// Error in creating a Network from Magic bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownMagic(Magic);
+pub struct UnknownMagicError(Magic);
 
-impl fmt::Display for UnknownMagic {
+impl fmt::Display for UnknownMagicError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "unknown network magic {}", self.0)
     }
 }
-impl_std_error!(UnknownMagic);
+impl_std_error!(UnknownMagicError);
 
 #[cfg(test)]
 mod tests {
