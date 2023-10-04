@@ -238,18 +238,18 @@ impl fmt::Display for Network {
 
 /// Error in parsing network from chain hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownChainHash(ChainHash);
+pub struct UnknownChainHashError(ChainHash);
 
-impl Display for UnknownChainHash {
+impl Display for UnknownChainHashError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown chain hash: {}", self.0)
     }
 }
 
-impl_std_error!(UnknownChainHash);
+impl_std_error!(UnknownChainHashError);
 
 impl TryFrom<ChainHash> for Network {
-    type Error = UnknownChainHash;
+    type Error = UnknownChainHashError;
 
     fn try_from(chain_hash: ChainHash) -> Result<Self, Self::Error> {
         match chain_hash {
@@ -258,7 +258,7 @@ impl TryFrom<ChainHash> for Network {
             ChainHash::TESTNET => Ok(Network::Testnet),
             ChainHash::SIGNET => Ok(Network::Signet),
             ChainHash::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownChainHash(chain_hash)),
+            _ => Err(UnknownChainHashError(chain_hash)),
         }
     }
 }
