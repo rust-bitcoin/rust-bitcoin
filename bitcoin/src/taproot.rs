@@ -468,11 +468,11 @@ impl TaprootBuilder {
     ///
     /// # Errors:
     ///
-    /// [`IncompleteBuilder::NotFinalized`] if the builder is not finalized. The builder
-    /// can be restored by calling [`IncompleteBuilder::into_builder`]
-    pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilder> {
+    /// [`IncompleteBuilderError::NotFinalized`] if the builder is not finalized. The builder
+    /// can be restored by calling [`IncompleteBuilderError::into_builder`]
+    pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilderError> {
         if self.branch().len() != 1 {
-            return Err(IncompleteBuilder::NotFinalized(self));
+            return Err(IncompleteBuilderError::NotFinalized(self));
         }
         Ok(self
             .branch
@@ -483,11 +483,11 @@ impl TaprootBuilder {
 
     /// Converts the builder into a [`TapTree`] if the builder is a full tree and
     /// does not contain any hidden nodes
-    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilder> {
+    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilderError> {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilder::HiddenParts(TaprootBuilder {
+            return Err(IncompleteBuilderError::HiddenParts(TaprootBuilder {
                 branch: vec![Some(node)],
             }));
         }
@@ -576,40 +576,43 @@ impl Default for TaprootBuilder {
 /// having hidden branches or not being finalized.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 #[non_exhaustive]
-pub enum IncompleteBuilder {
+pub enum IncompleteBuilderError {
     /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
     NotFinalized(TaprootBuilder),
     /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
     HiddenParts(TaprootBuilder),
 }
 
-impl IncompleteBuilder {
+impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
+        use IncompleteBuilderError::*;
+
         match self {
-            IncompleteBuilder::NotFinalized(builder) | IncompleteBuilder::HiddenParts(builder) =>
-                builder,
+            NotFinalized(builder) | HiddenParts(builder) => builder,
         }
     }
 }
 
-impl core::fmt::Display for IncompleteBuilder {
+impl core::fmt::Display for IncompleteBuilderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use IncompleteBuilderError::*;
+
         f.write_str(match self {
-            IncompleteBuilder::NotFinalized(_) =>
+            NotFinalized(_) =>
                 "an attempt to construct a tap tree from a builder containing incomplete branches.",
-            IncompleteBuilder::HiddenParts(_) =>
+            HiddenParts(_) =>
                 "an attempt to construct a tap tree from a builder containing hidden parts.",
         })
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IncompleteBuilder {
+impl std::error::Error for IncompleteBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::IncompleteBuilder::*;
+        use IncompleteBuilderError::*;
 
-        match self {
+        match *self {
             NotFinalized(_) | HiddenParts(_) => None,
         }
     }
@@ -685,13 +688,13 @@ impl TapTree {
 }
 
 impl TryFrom<TaprootBuilder> for TapTree {
-    type Error = IncompleteBuilder;
+    type Error = IncompleteBuilderError;
 
     /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilder`]
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilderError`]
     /// error with the content of incomplete `builder` instance.
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> { builder.try_into_taptree() }
 }
@@ -834,7 +837,7 @@ impl NodeInfo {
 }
 
 impl TryFrom<TaprootBuilder> for NodeInfo {
-    type Error = IncompleteBuilder;
+    type Error = IncompleteBuilderError;
 
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
         builder.try_into_node_info()
