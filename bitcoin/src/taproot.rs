@@ -622,33 +622,33 @@ impl std::error::Error for IncompleteBuilderError {
 /// having hidden branches.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 #[non_exhaustive]
-pub enum HiddenNodes {
+pub enum HiddenNodesError {
     /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
     HiddenParts(NodeInfo),
 }
 
-impl HiddenNodes {
+impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
     pub fn into_node_info(self) -> NodeInfo {
         match self {
-            HiddenNodes::HiddenParts(node_info) => node_info,
+            HiddenNodesError::HiddenParts(node_info) => node_info,
         }
     }
 }
 
-impl core::fmt::Display for HiddenNodes {
+impl core::fmt::Display for HiddenNodesError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match self {
-            HiddenNodes::HiddenParts(_) =>
+            HiddenNodesError::HiddenParts(_) =>
                 "an attempt to construct a tap tree from a node_info containing hidden parts.",
         })
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for HiddenNodes {
+impl std::error::Error for HiddenNodesError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::HiddenNodes::*;
+        use self::HiddenNodesError::*;
 
         match self {
             HiddenParts(_) => None,
@@ -700,17 +700,17 @@ impl TryFrom<TaprootBuilder> for TapTree {
 }
 
 impl TryFrom<NodeInfo> for TapTree {
-    type Error = HiddenNodes;
+    type Error = HiddenNodesError;
 
     /// Constructs [`TapTree`] from a [`NodeInfo`] if it is complete binary tree.
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return [`HiddenNodes`]
-    /// error with the content of incomplete [`NodeInfo`] instance.
+    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return
+    /// [`HiddenNodesError`] error with the content of incomplete [`NodeInfo`] instance.
     fn try_from(node_info: NodeInfo) -> Result<Self, Self::Error> {
         if node_info.has_hidden_nodes {
-            Err(HiddenNodes::HiddenParts(node_info))
+            Err(HiddenNodesError::HiddenParts(node_info))
         } else {
             Ok(TapTree(node_info))
         }
