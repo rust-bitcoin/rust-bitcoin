@@ -194,6 +194,7 @@ pub mod as_core_arg {
 
 /// An error in parsing network string.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ParseNetworkError(String);
 
 impl fmt::Display for ParseNetworkError {
@@ -241,6 +242,7 @@ impl fmt::Display for Network {
 
 /// Error in parsing network from chain hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct UnknownChainHashError(ChainHash);
 
 impl Display for UnknownChainHashError {

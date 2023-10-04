@@ -82,6 +82,7 @@ impl From<witness_program::Error> for Error {
 
 /// Address type is either invalid or not supported in rust-bitcoin.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct UnknownAddressTypeError(pub String);
 
 impl fmt::Display for UnknownAddressTypeError {
@@ -96,7 +97,7 @@ impl std::error::Error for UnknownAddressTypeError {
 }
 
 /// Address parsing error.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseError {
     /// Base58 error.

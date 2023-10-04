@@ -87,9 +87,9 @@ impl std::error::Error for SigFromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use SigFromSliceError::*;
 
-        match self {
-            Secp256k1(e) => Some(e),
-            SighashType(e) => Some(e),
+        match *self {
+            Secp256k1(ref e) => Some(e),
+            SighashType(ref e) => Some(e),
             InvalidSignatureSize(_) => None,
         }
     }

@@ -106,57 +106,56 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::InvalidMagic => f.write_str("invalid magic"),
-            Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
-            Error::InvalidSeparator => f.write_str("invalid separator"),
-            Error::PsbtUtxoOutOfbounds =>
+            InvalidMagic => f.write_str("invalid magic"),
+            MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
+            InvalidSeparator => f.write_str("invalid separator"),
+            PsbtUtxoOutOfbounds =>
                 f.write_str("output index is out of bounds of non witness script output array"),
-            Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            Error::InvalidProprietaryKey =>
+            InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
+            InvalidProprietaryKey =>
                 write!(f, "non-proprietary key type found when proprietary key was expected"),
-            Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
-            Error::UnsignedTxHasScriptSigs =>
-                f.write_str("the unsigned transaction has script sigs"),
-            Error::UnsignedTxHasScriptWitnesses =>
+            DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
+            UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
+            UnsignedTxHasScriptWitnesses =>
                 f.write_str("the unsigned transaction has script witnesses"),
-            Error::MustHaveUnsignedTx =>
+            MustHaveUnsignedTx =>
                 f.write_str("partially signed transactions must have an unsigned transaction"),
-            Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
+            NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
+            UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
                 f,
                 "different unsigned transaction: expected {}, actual {}",
                 e.txid(),
                 a.txid()
             ),
-            Error::NonStandardSighashType(ref sht) =>
-                write!(f, "non-standard sighash type: {}", sht),
-            Error::InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
-            Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
+            NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
+            InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
             }
-            Error::CombineInconsistentKeySources(ref s) => {
+            CombineInconsistentKeySources(ref s) => {
                 write!(f, "combine conflict: {}", s)
             }
-            Error::ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
-            Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
-            Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
-            Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
-            Error::InvalidSecp256k1PublicKey(ref e) =>
-                write_err!(f, "invalid secp256k1 public key"; e),
-            Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
-            Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
-            Error::InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
-            Error::InvalidControlBlock => f.write_str("invalid control block"),
-            Error::InvalidLeafVersion => f.write_str("invalid leaf version"),
-            Error::Taproot(s) => write!(f, "taproot error -  {}", s),
-            Error::TapTree(ref e) => write_err!(f, "taproot tree error"; e),
-            Error::XPubKey(s) => write!(f, "xpub key error -  {}", s),
-            Error::Version(s) => write!(f, "version error {}", s),
-            Error::PartialDataConsumption =>
+            ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
+            NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
+            FeeOverflow => f.write_str("integer overflow in fee calculation"),
+            InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
+            InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
+            InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
+            InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
+            InvalidControlBlock => f.write_str("invalid control block"),
+            InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Taproot(s) => write!(f, "taproot error -  {}", s),
+            TapTree(ref e) => write_err!(f, "taproot tree error"; e),
+            XPubKey(s) => write!(f, "xpub key error -  {}", s),
+            Version(s) => write!(f, "version error {}", s),
+            PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
-            Error::Io(ref e) => write_err!(f, "I/O error"; e),
+            Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
 }
@@ -164,12 +163,12 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
-        match self {
-            InvalidHash(e) => Some(e),
-            ConsensusEncoding(e) => Some(e),
-            Io(e) => Some(e),
+        match *self {
+            InvalidHash(ref e) => Some(e),
+            ConsensusEncoding(ref e) => Some(e),
+            Io(ref e) => Some(e),
             InvalidMagic
             | MissingUtxo
             | InvalidSeparator

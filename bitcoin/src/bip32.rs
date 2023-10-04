@@ -494,21 +494,22 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::CannotDeriveFromHardenedKey =>
+            CannotDeriveFromHardenedKey =>
                 f.write_str("cannot derive hardened key from public key"),
-            Error::Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-            Error::InvalidChildNumber(ref n) =>
+            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+            InvalidChildNumber(ref n) =>
                 write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
-            Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
-            Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
-            Error::UnknownVersion(ref bytes) =>
-                write!(f, "unknown version magic bytes: {:?}", bytes),
-            Error::WrongExtendedKeyLength(ref len) =>
+            InvalidChildNumberFormat => f.write_str("invalid child number format"),
+            InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
+            UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
+            WrongExtendedKeyLength(ref len) =>
                 write!(f, "encoded extended key data has wrong length {}", len),
-            Error::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-            Error::Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
-            Error::InvalidPublicKeyHexLength(got) =>
+            Base58(ref e) => write_err!(f, "base58 encoding error"; e),
+            Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
+            InvalidPublicKeyHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
@@ -517,12 +518,12 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
-        match self {
-            Secp256k1(e) => Some(e),
-            Base58(e) => Some(e),
-            Hex(e) => Some(e),
+        match *self {
+            Secp256k1(ref e) => Some(e),
+            Base58(ref e) => Some(e),
+            Hex(ref e) => Some(e),
             CannotDeriveFromHardenedKey
             | InvalidChildNumber(_)
             | InvalidChildNumberFormat

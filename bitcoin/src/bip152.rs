@@ -314,7 +314,8 @@ impl Decodable for BlockTransactionsRequest {
 
 /// A transaction index is requested that is out of range from the
 /// corresponding block.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct TxIndexOutOfRangeError(u64);
 
 impl fmt::Display for TxIndexOutOfRangeError {

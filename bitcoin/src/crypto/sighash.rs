@@ -247,7 +247,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
 
-        match self {
+        match *self {
             Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
             IndexOutOfInputsBounds { index, inputs_size } => write!(f, "requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
@@ -266,7 +266,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use Error::*;
 
-        match self {
+        match *self {
             Io(_)
             | IndexOutOfInputsBounds { .. }
             | SingleWithoutCorrespondingOutput { .. }
@@ -523,7 +523,8 @@ impl TapSighashType {
 }
 
 /// Integer is not a consensus valid sighash type.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct InvalidSighashTypeError(pub u32);
 
 impl fmt::Display for InvalidSighashTypeError {
@@ -539,7 +540,8 @@ impl std::error::Error for InvalidSighashTypeError {
 
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct NonStandardSighashTypeError(pub u32);
 
 impl fmt::Display for NonStandardSighashTypeError {
@@ -557,6 +559,7 @@ impl std::error::Error for NonStandardSighashTypeError {
 ///
 /// This is currently returned for unrecognized sighash strings.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct SighashTypeParseError {
     /// The unrecognized string we attempted to parse.
     pub unrecognized: String,

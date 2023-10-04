@@ -720,12 +720,12 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
-        match self {
-            Base58(e) => Some(e),
-            Secp256k1(e) => Some(e),
-            Hex(e) => Some(e),
+        match *self {
+            Base58(ref e) => Some(e),
+            Secp256k1(ref e) => Some(e),
+            Hex(ref e) => Some(e),
             InvalidKeyPrefix(_) | InvalidHexLength(_) => None,
         }
     }

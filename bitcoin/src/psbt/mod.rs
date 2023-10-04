@@ -796,7 +796,7 @@ pub enum SignError {
 
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use self::SignError::*;
+        use SignError::*;
 
         match *self {
             IndexOutOfBounds(ref e) => write_err!(f, "index out of bounds"; e),
@@ -821,9 +821,11 @@ impl fmt::Display for SignError {
 #[cfg(feature = "std")]
 impl std::error::Error for SignError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::SignError::*;
+        use SignError::*;
 
         match *self {
+            SighashComputation(ref e) => Some(e),
+            IndexOutOfBounds(ref e) => Some(e),
             InvalidSighashType
             | MissingInputUtxo
             | MissingRedeemScript
@@ -836,8 +838,6 @@ impl std::error::Error for SignError {
             | KeyNotFound
             | WrongSigningAlgorithm
             | Unsupported => None,
-            SighashComputation(ref e) => Some(e),
-            IndexOutOfBounds(ref e) => Some(e),
         }
     }
 }
@@ -850,8 +850,9 @@ impl From<IndexOutOfBoundsError> for SignError {
     fn from(e: IndexOutOfBoundsError) -> Self { SignError::IndexOutOfBounds(e) }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 /// This error is returned when extracting a [`Transaction`] from a [`Psbt`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ExtractTxError {
     /// The [`FeeRate`] is too high
     AbsurdFeeRate {
@@ -874,14 +875,16 @@ pub enum ExtractTxError {
 
 impl fmt::Display for ExtractTxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ExtractTxError::AbsurdFeeRate { fee_rate, .. } =>
+        use ExtractTxError::*;
+
+        match *self {
+            AbsurdFeeRate { fee_rate, .. } =>
                 write!(f, "An absurdly high fee rate of {}", fee_rate),
-            ExtractTxError::MissingInputValue { .. } => write!(
+            MissingInputValue { .. } => write!(
                 f,
                 "One of the inputs lacked value information (witness_utxo or non_witness_utxo)"
             ),
-            ExtractTxError::SendingTooMuch { .. } => write!(
+            SendingTooMuch { .. } => write!(
                 f,
                 "Transaction would be invalid due to output value being greater than input value."
             ),
@@ -891,11 +894,18 @@ impl fmt::Display for ExtractTxError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for ExtractTxError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ExtractTxError::*;
+
+        match *self {
+            AbsurdFeeRate { .. } | MissingInputValue { .. } | SendingTooMuch { .. } => None,
+        }
+    }
 }
 
 /// Input index out of bounds (actual index, maximum index allowed).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum IndexOutOfBoundsError {
     /// The index is out of bounds for the `psbt.inputs` vector.
     Inputs {
@@ -934,7 +944,13 @@ impl fmt::Display for IndexOutOfBoundsError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for IndexOutOfBoundsError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use IndexOutOfBoundsError::*;
+
+        match *self {
+            Inputs { .. } | TxInput { .. } => None,
+        }
+    }
 }
 
 #[cfg(feature = "base64")]

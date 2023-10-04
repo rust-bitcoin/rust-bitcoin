@@ -325,7 +325,8 @@ impl BorrowMut<[u8; 4]> for Magic {
 }
 
 /// An error in parsing magic bytes.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
     error: hex::HexToArrayError,
@@ -346,6 +347,7 @@ impl std::error::Error for ParseMagicError {
 
 /// Error in creating a Network from Magic bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct UnknownMagicError(Magic);
 
 impl fmt::Display for UnknownMagicError {

@@ -707,7 +707,8 @@ impl<T: Into<u128>> From<T> for U256 {
 }
 
 /// Error from `TryFrom<signed type>` implementations, occurs when input is negative.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct TryFromError(i128);
 
 impl fmt::Display for TryFromError {

@@ -168,6 +168,7 @@ impl From<WitnessVersion> for Opcode {
 
 /// Error parsing [`WitnessVersion`] from a string.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum FromStrError {
     /// Unable to parse integer from string.
     Unparsable(ParseIntError),
@@ -204,6 +205,7 @@ impl From<TryFromError> for FromStrError {
 
 /// Error attempting to create a [`WitnessVersion`] from an [`Instruction`]
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum TryFromInstructionError {
     /// Cannot not convert OP to a witness version.
     TryFrom(TryFromError),
@@ -240,6 +242,7 @@ impl From<TryFromError> for TryFromInstructionError {
 
 /// Error attempting to create a [`WitnessVersion`] from an integer.
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct TryFromError {
     /// The invalid non-witness version integer.
     pub invalid: u8,

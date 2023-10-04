@@ -116,13 +116,14 @@ pub enum ParseOutPointError {
 
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ParseOutPointError::*;
+
         match *self {
-            ParseOutPointError::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
-            ParseOutPointError::Vout(ref e) => write_err!(f, "error parsing vout"; e),
-            ParseOutPointError::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
-            ParseOutPointError::TooLong => write!(f, "vout should be at most 10 digits"),
-            ParseOutPointError::VoutNotCanonical =>
-                write!(f, "no leading zeroes or + allowed in vout part"),
+            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            Vout(ref e) => write_err!(f, "error parsing vout"; e),
+            Format => write!(f, "OutPoint not in <txid>:<vout> format"),
+            TooLong => write!(f, "vout should be at most 10 digits"),
+            VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
         }
     }
 }
@@ -130,7 +131,7 @@ impl fmt::Display for ParseOutPointError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseOutPointError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::ParseOutPointError::*;
+        use ParseOutPointError::*;
 
         match self {
             Txid(e) => Some(e),

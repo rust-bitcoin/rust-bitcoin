@@ -698,13 +698,15 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::NonMinimalPush => f.write_str("non-minimal datapush"),
-            Error::EarlyEndOfScript => f.write_str("unexpected end of script"),
-            Error::NumericOverflow =>
+            NonMinimalPush => f.write_str("non-minimal datapush"),
+            EarlyEndOfScript => f.write_str("unexpected end of script"),
+            NumericOverflow =>
                 f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
-            Error::UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
-            Error::Serialization =>
+            UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
+            Serialization =>
                 f.write_str("can not serialize the spending transaction in Transaction::verify()"),
         }
     }
@@ -713,7 +715,7 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match *self {
             NonMinimalPush
