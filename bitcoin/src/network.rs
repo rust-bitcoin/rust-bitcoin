@@ -28,7 +28,6 @@ use internals::write_err;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::ChainHash;
-use crate::error::impl_std_error;
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
@@ -202,7 +201,11 @@ impl fmt::Display for ParseNetworkError {
         write_err!(f, "failed to parse {} as network", self.0; self)
     }
 }
-impl_std_error!(ParseNetworkError);
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseNetworkError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 impl FromStr for Network {
     type Err = ParseNetworkError;
@@ -246,7 +249,10 @@ impl Display for UnknownChainHashError {
     }
 }
 
-impl_std_error!(UnknownChainHashError);
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownChainHashError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 impl TryFrom<ChainHash> for Network {
     type Error = UnknownChainHashError;

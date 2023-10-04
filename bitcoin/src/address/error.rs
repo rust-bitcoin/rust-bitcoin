@@ -4,7 +4,6 @@ use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
-use crate::error::impl_std_error;
 use crate::prelude::String;
 use crate::{base58, Network};
 
@@ -91,7 +90,10 @@ impl fmt::Display for UnknownAddressTypeError {
     }
 }
 
-impl_std_error!(UnknownAddressTypeError);
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownAddressTypeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// Address parsing error.
 #[derive(Debug, PartialEq, Eq, Clone)]

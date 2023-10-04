@@ -30,7 +30,6 @@ use hex::FromHex;
 use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::impl_std_error;
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::{io, Network};
 
@@ -339,7 +338,11 @@ impl fmt::Display for ParseMagicError {
         write_err!(f, "failed to parse {} as network magic", self.magic; self.error)
     }
 }
-impl_std_error!(ParseMagicError, error);
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseMagicError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
+}
 
 /// Error in creating a Network from Magic bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -350,7 +353,11 @@ impl fmt::Display for UnknownMagicError {
         write!(f, "unknown network magic {}", self.0)
     }
 }
-impl_std_error!(UnknownMagicError);
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownMagicError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 #[cfg(test)]
 mod tests {

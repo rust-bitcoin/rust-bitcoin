@@ -6,7 +6,6 @@ use core::str::FromStr;
 
 use internals::write_err;
 
-use crate::error::impl_std_error;
 use crate::prelude::*;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
@@ -43,7 +42,10 @@ impl fmt::Display for ParseIntError {
     }
 }
 
-impl_std_error!(ParseIntError, source);
+#[cfg(feature = "std")]
+impl std::error::Error for ParseIntError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.source) }
+}
 
 impl From<ParseIntError> for core::num::ParseIntError {
     fn from(value: ParseIntError) -> Self { value.source }

@@ -31,21 +31,3 @@ macro_rules! write_err {
         }
     }
 }
-
-/// Impls std::error::Error for the specified type with appropriate attributes, possibly returning
-/// source.
-#[macro_export]
-macro_rules! impl_std_error {
-    // No source available
-    ($type:ty) => {
-        #[cfg(feature = "std")]
-        impl std::error::Error for $type {}
-    };
-    // Struct with $field as source
-    ($type:ty, $field:ident) => {
-        #[cfg(feature = "std")]
-        impl std::error::Error for $type {
-            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.$field) }
-        }
-    };
-}

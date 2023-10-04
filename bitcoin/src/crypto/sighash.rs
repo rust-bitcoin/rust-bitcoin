@@ -18,7 +18,6 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
-use crate::error::impl_std_error;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
@@ -533,7 +532,10 @@ impl fmt::Display for InvalidSighashTypeError {
     }
 }
 
-impl_std_error!(InvalidSighashTypeError);
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidSighashTypeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
@@ -546,7 +548,10 @@ impl fmt::Display for NonStandardSighashTypeError {
     }
 }
 
-impl_std_error!(NonStandardSighashTypeError);
+#[cfg(feature = "std")]
+impl std::error::Error for NonStandardSighashTypeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// Error returned for failure during parsing one of the sighash types.
 ///
@@ -563,7 +568,10 @@ impl fmt::Display for SighashTypeParseError {
     }
 }
 
-impl_std_error!(SighashTypeParseError);
+#[cfg(feature = "std")]
+impl std::error::Error for SighashTypeParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Constructs a new `SighashCache` from an unsigned transaction.

@@ -2,6 +2,4 @@
 
 //! Contains error types and other error handling tools.
 
-pub(crate) use internals::impl_std_error;
-
 pub use crate::parse::ParseIntError;
