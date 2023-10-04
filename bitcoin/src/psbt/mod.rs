@@ -890,7 +890,9 @@ impl fmt::Display for ExtractTxError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ExtractTxError {}
+impl std::error::Error for ExtractTxError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// Input index out of bounds (actual index, maximum index allowed).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -931,7 +933,9 @@ impl fmt::Display for IndexOutOfBoundsError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IndexOutOfBoundsError {}
+impl std::error::Error for IndexOutOfBoundsError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 #[cfg(feature = "base64")]
 mod display_from_str {

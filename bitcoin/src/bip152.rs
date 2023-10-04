@@ -329,7 +329,9 @@ impl fmt::Display for TxIndexOutOfRangeError {
 }
 
 #[cfg(feature = "std")]
-impl error::Error for TxIndexOutOfRangeError {}
+impl error::Error for TxIndexOutOfRangeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// A [BlockTransactions] structure is used to provide some of the transactions
 /// in a block, as requested.

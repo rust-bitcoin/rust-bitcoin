@@ -637,7 +637,9 @@ impl fmt::Display for ConversionError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ConversionError {}
+impl std::error::Error for ConversionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// Describes the two types of locking, lock-by-blockheight and lock-by-blocktime.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -679,7 +681,9 @@ impl fmt::Display for OperationError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for OperationError {}
+impl std::error::Error for OperationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 #[cfg(test)]
 mod tests {
