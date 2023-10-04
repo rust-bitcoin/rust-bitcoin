@@ -35,20 +35,22 @@ impl ParseIntError {
     pub fn input(&self) -> &str { &self.input }
 }
 
-impl From<ParseIntError> for core::num::ParseIntError {
-    fn from(value: ParseIntError) -> Self { value.source }
-}
-
-impl AsRef<core::num::ParseIntError> for ParseIntError {
-    fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
-}
-
 impl fmt::Display for ParseIntError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let signed = if self.is_signed { "signed" } else { "unsigned" };
         let n = if self.bits == 8 { "n" } else { "" };
         write_err!(f, "failed to parse '{}' as a{} {}-bit {} integer", self.input, n, self.bits, signed; self.source)
     }
+}
+
+impl_std_error!(ParseIntError, source);
+
+impl From<ParseIntError> for core::num::ParseIntError {
+    fn from(value: ParseIntError) -> Self { value.source }
+}
+
+impl AsRef<core::num::ParseIntError> for ParseIntError {
+    fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
 }
 
 /// Not strictly neccessary but serves as a lint - avoids weird behavior if someone accidentally
@@ -94,8 +96,6 @@ pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIn
         source: error,
     })
 }
-
-impl_std_error!(ParseIntError, source);
 
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
 /// conversion function `fn`.
