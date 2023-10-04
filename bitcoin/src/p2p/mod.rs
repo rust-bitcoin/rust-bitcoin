@@ -221,15 +221,6 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 }
 
-/// An error in parsing magic bytes.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ParseMagicError {
-    /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
-    /// The byte string that failed to parse.
-    magic: String,
-}
-
 impl FromStr for Magic {
     type Err = ParseMagicError;
 
@@ -252,10 +243,6 @@ impl From<Network> for Magic {
         }
     }
 }
-
-/// Error in creating a Network from Magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownMagic(Magic);
 
 impl TryFrom<Magic> for Network {
     type Error = UnknownMagic;
@@ -338,12 +325,25 @@ impl BorrowMut<[u8; 4]> for Magic {
     fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
 }
 
+/// An error in parsing magic bytes.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ParseMagicError {
+    /// The error that occurred when parsing the string.
+    error: hex::HexToArrayError,
+    /// The byte string that failed to parse.
+    magic: String,
+}
+
 impl fmt::Display for ParseMagicError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write_err!(f, "failed to parse {} as network magic", self.magic; self.error)
     }
 }
 impl_std_error!(ParseMagicError, error);
+
+/// Error in creating a Network from Magic bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnknownMagic(Magic);
 
 impl fmt::Display for UnknownMagic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
