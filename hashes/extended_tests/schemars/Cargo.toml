@@ -21,3 +21,6 @@ serde_json = "1.0"
 
 [patch.crates-io.bitcoin-internals]
 path = "../../../internals"
+
+[patch.crates-io.bitcoin-io]
+path = "../../../io"

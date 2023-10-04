@@ -23,7 +23,7 @@
 //!                 deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `no-std` - enables additional features required for this crate to be usable
-//!              without std. Does **not** disable `std`. Depends on `core2`.
+//!              without std. Does **not** disable `std`.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
 //!                            to this crate so it knows how to implement
 //!                            `std::error::Error`. At this time there's a hack to
@@ -67,9 +67,6 @@ pub extern crate bech32;
 #[cfg(feature = "bitcoinconsensus")]
 /// Bitcoin's libbitcoinconsensus with Rust binding.
 pub extern crate bitcoinconsensus;
-
-#[cfg(not(feature = "std"))]
-extern crate core2;
 
 /// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
@@ -118,16 +115,8 @@ pub mod taproot;
 
 // May depend on crate features and we don't want to bother with it
 #[allow(unused)]
-#[cfg(feature = "std")]
-use std::error::Error as StdError;
-#[cfg(feature = "std")]
-use std::io;
-
-#[allow(unused)]
-#[cfg(not(feature = "std"))]
-use core2::error::Error as StdError;
-#[cfg(not(feature = "std"))]
-use core2::io;
+use bitcoin_io::error::Error as StdError;
+use bitcoin_io::io;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
@@ -163,6 +152,8 @@ pub use crate::taproot::{
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
+    use crate::io;
+
     /// A writer which will move data into the void.
     pub struct Sink {
         _priv: (),
@@ -171,12 +162,12 @@ mod io_extras {
     /// Creates an instance of a writer which will successfully consume all data.
     pub const fn sink() -> Sink { Sink { _priv: () } }
 
-    impl core2::io::Write for Sink {
+    impl io::Write for Sink {
         #[inline]
-        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> { Ok(buf.len()) }
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> { Ok(buf.len()) }
 
         #[inline]
-        fn flush(&mut self) -> core2::io::Result<()> { Ok(()) }
+        fn flush(&mut self) -> io::Result<()> { Ok(()) }
     }
 }
 
