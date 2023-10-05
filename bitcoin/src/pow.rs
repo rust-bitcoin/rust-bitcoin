@@ -2,7 +2,7 @@
 
 //! Proof-of-work related integer types.
 //!
-//! Provides the [`Work`] and [`Target`] types that are use in proof-of-work calculations. The
+//! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 //!
 
@@ -61,8 +61,6 @@ macro_rules! do_impl {
 /// A 256 bit integer representing work.
 ///
 /// Work is a measure of how difficult it is to find a hash below a given [`Target`].
-///
-/// ref: <https://en.bitcoin.it/wiki/Work>
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
