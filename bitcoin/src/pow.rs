@@ -2,7 +2,7 @@
 
 //! Proof-of-work related integer types.
 //!
-//! Provides the [`Work`] and [`Target`] types that are use in proof-of-work calculations. The
+//! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 //!
 
