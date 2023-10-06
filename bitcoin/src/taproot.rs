@@ -468,11 +468,11 @@ impl TaprootBuilder {
     ///
     /// # Errors:
     ///
-    /// [`IncompleteBuilder::NotFinalized`] if the builder is not finalized. The builder
-    /// can be restored by calling [`IncompleteBuilder::into_builder`]
-    pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilder> {
+    /// [`IncompleteBuilderError::NotFinalized`] if the builder is not finalized. The builder
+    /// can be restored by calling [`IncompleteBuilderError::into_builder`]
+    pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilderError> {
         if self.branch().len() != 1 {
-            return Err(IncompleteBuilder::NotFinalized(self));
+            return Err(IncompleteBuilderError::NotFinalized(self));
         }
         Ok(self
             .branch
@@ -483,11 +483,11 @@ impl TaprootBuilder {
 
     /// Converts the builder into a [`TapTree`] if the builder is a full tree and
     /// does not contain any hidden nodes
-    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilder> {
+    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilderError> {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilder::HiddenParts(TaprootBuilder {
+            return Err(IncompleteBuilderError::HiddenParts(TaprootBuilder {
                 branch: vec![Some(node)],
             }));
         }
@@ -574,42 +574,45 @@ impl Default for TaprootBuilder {
 
 /// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
 /// having hidden branches or not being finalized.
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum IncompleteBuilder {
+pub enum IncompleteBuilderError {
     /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
     NotFinalized(TaprootBuilder),
     /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
     HiddenParts(TaprootBuilder),
 }
 
-impl IncompleteBuilder {
+impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
+        use IncompleteBuilderError::*;
+
         match self {
-            IncompleteBuilder::NotFinalized(builder) | IncompleteBuilder::HiddenParts(builder) =>
-                builder,
+            NotFinalized(builder) | HiddenParts(builder) => builder,
         }
     }
 }
 
-impl core::fmt::Display for IncompleteBuilder {
+impl core::fmt::Display for IncompleteBuilderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use IncompleteBuilderError::*;
+
         f.write_str(match self {
-            IncompleteBuilder::NotFinalized(_) =>
+            NotFinalized(_) =>
                 "an attempt to construct a tap tree from a builder containing incomplete branches.",
-            IncompleteBuilder::HiddenParts(_) =>
+            HiddenParts(_) =>
                 "an attempt to construct a tap tree from a builder containing hidden parts.",
         })
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IncompleteBuilder {
+impl std::error::Error for IncompleteBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::IncompleteBuilder::*;
+        use IncompleteBuilderError::*;
 
-        match self {
+        match *self {
             NotFinalized(_) | HiddenParts(_) => None,
         }
     }
@@ -617,35 +620,39 @@ impl std::error::Error for IncompleteBuilder {
 
 /// Error happening when [`TapTree`] is constructed from a [`NodeInfo`]
 /// having hidden branches.
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum HiddenNodes {
+pub enum HiddenNodesError {
     /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
     HiddenParts(NodeInfo),
 }
 
-impl HiddenNodes {
+impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
     pub fn into_node_info(self) -> NodeInfo {
+        use HiddenNodesError::*;
+
         match self {
-            HiddenNodes::HiddenParts(node_info) => node_info,
+            HiddenParts(node_info) => node_info,
         }
     }
 }
 
-impl core::fmt::Display for HiddenNodes {
+impl core::fmt::Display for HiddenNodesError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use HiddenNodesError::*;
+
         f.write_str(match self {
-            HiddenNodes::HiddenParts(_) =>
+            HiddenParts(_) =>
                 "an attempt to construct a tap tree from a node_info containing hidden parts.",
         })
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for HiddenNodes {
+impl std::error::Error for HiddenNodesError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::HiddenNodes::*;
+        use HiddenNodesError::*;
 
         match self {
             HiddenParts(_) => None,
@@ -685,29 +692,29 @@ impl TapTree {
 }
 
 impl TryFrom<TaprootBuilder> for TapTree {
-    type Error = IncompleteBuilder;
+    type Error = IncompleteBuilderError;
 
     /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilder`]
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilderError`]
     /// error with the content of incomplete `builder` instance.
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> { builder.try_into_taptree() }
 }
 
 impl TryFrom<NodeInfo> for TapTree {
-    type Error = HiddenNodes;
+    type Error = HiddenNodesError;
 
     /// Constructs [`TapTree`] from a [`NodeInfo`] if it is complete binary tree.
     ///
     /// # Returns
     ///
-    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return [`HiddenNodes`]
-    /// error with the content of incomplete [`NodeInfo`] instance.
+    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return
+    /// [`HiddenNodesError`] error with the content of incomplete [`NodeInfo`] instance.
     fn try_from(node_info: NodeInfo) -> Result<Self, Self::Error> {
         if node_info.has_hidden_nodes {
-            Err(HiddenNodes::HiddenParts(node_info))
+            Err(HiddenNodesError::HiddenParts(node_info))
         } else {
             Ok(TapTree(node_info))
         }
@@ -834,7 +841,7 @@ impl NodeInfo {
 }
 
 impl TryFrom<TaprootBuilder> for NodeInfo {
-    type Error = IncompleteBuilder;
+    type Error = IncompleteBuilderError;
 
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
         builder.try_into_node_info()
@@ -1444,26 +1451,28 @@ pub enum TaprootBuilderError {
 
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use TaprootBuilderError::*;
+
         match *self {
-            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
+            InvalidMerkleTreeDepth(d) => {
                 write!(
                     f,
                     "Merkle Tree depth({}) must be less than {}",
                     d, TAPROOT_CONTROL_MAX_NODE_COUNT
                 )
             }
-            TaprootBuilderError::NodeNotInDfsOrder => {
+            NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
-            TaprootBuilderError::OverCompleteTree => write!(
+            OverCompleteTree => write!(
                 f,
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            TaprootBuilderError::InvalidInternalKey(ref e) => {
+            InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
-            TaprootBuilderError::EmptyTree => {
+            EmptyTree => {
                 write!(f, "Called finalize on an empty tree")
             }
         }
@@ -1473,7 +1482,7 @@ impl fmt::Display for TaprootBuilderError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::TaprootBuilderError::*;
+        use TaprootBuilderError::*;
 
         match self {
             InvalidInternalKey(e) => Some(e),
@@ -1504,30 +1513,32 @@ pub enum TaprootError {
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use TaprootError::*;
+
         match *self {
-            TaprootError::InvalidMerkleBranchSize(sz) => write!(
+            InvalidMerkleBranchSize(sz) => write!(
                 f,
                 "Merkle branch size({}) must be a multiple of {}",
                 sz, TAPROOT_CONTROL_NODE_SIZE
             ),
-            TaprootError::InvalidMerkleTreeDepth(d) => write!(
+            InvalidMerkleTreeDepth(d) => write!(
                 f,
                 "Merkle Tree depth({}) must be less than {}",
                 d, TAPROOT_CONTROL_MAX_NODE_COUNT
             ),
-            TaprootError::InvalidTaprootLeafVersion(v) => {
+            InvalidTaprootLeafVersion(v) => {
                 write!(f, "Leaf version({}) must have the least significant bit 0", v)
             }
-            TaprootError::InvalidControlBlockSize(sz) => write!(
+            InvalidControlBlockSize(sz) => write!(
                 f,
                 "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
                 sz, TAPROOT_CONTROL_MAX_NODE_COUNT
             ),
-            TaprootError::InvalidInternalKey(ref e) => {
+            InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
-            TaprootError::InvalidParity(_) => write!(f, "invalid parity value for internal key"),
-            TaprootError::EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
+            InvalidParity(_) => write!(f, "invalid parity value for internal key"),
+            EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
 }
@@ -1535,7 +1546,7 @@ impl fmt::Display for TaprootError {
 #[cfg(feature = "std")]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::TaprootError::*;
+        use TaprootError::*;
 
         match self {
             InvalidInternalKey(e) => Some(e),

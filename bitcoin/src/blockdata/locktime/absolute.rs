@@ -575,7 +575,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::Error::*;
+        use Error::*;
 
         match *self {
             Conversion(ref e) => write_err!(f, "error converting lock time value"; e),
@@ -588,7 +588,7 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match *self {
             Conversion(ref e) => Some(e),
@@ -614,7 +614,8 @@ impl From<ParseIntError> for Error {
 }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ConversionError {
     /// The expected timelock unit, height (blocks) or time (seconds).
     unit: LockTimeUnit,
@@ -637,7 +638,9 @@ impl fmt::Display for ConversionError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ConversionError {}
+impl std::error::Error for ConversionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// Describes the two types of locking, lock-by-blockheight and lock-by-blocktime.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -669,7 +672,7 @@ pub enum OperationError {
 
 impl fmt::Display for OperationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::OperationError::*;
+        use OperationError::*;
 
         match *self {
             InvalidComparison =>
@@ -679,7 +682,15 @@ impl fmt::Display for OperationError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for OperationError {}
+impl std::error::Error for OperationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use OperationError::*;
+
+        match *self {
+            InvalidComparison => None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -413,4 +413,7 @@ mod error {
     }
 }
 
-crate::error::impl_std_error!(PushBytesError);
+#[cfg(feature = "std")]
+impl std::error::Error for PushBytesError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}

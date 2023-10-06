@@ -40,6 +40,9 @@ macro_rules! parse_error_type {
             }
         }
 
-        $crate::error::impl_std_error!($name, source);
+        #[cfg(feature = "std")]
+        impl std::error::Error for $name {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.source) }
+        }
     }
 }

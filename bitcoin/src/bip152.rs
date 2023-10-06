@@ -314,7 +314,8 @@ impl Decodable for BlockTransactionsRequest {
 
 /// A transaction index is requested that is out of range from the
 /// corresponding block.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct TxIndexOutOfRangeError(u64);
 
 impl fmt::Display for TxIndexOutOfRangeError {
@@ -329,7 +330,9 @@ impl fmt::Display for TxIndexOutOfRangeError {
 }
 
 #[cfg(feature = "std")]
-impl error::Error for TxIndexOutOfRangeError {}
+impl error::Error for TxIndexOutOfRangeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 /// A [BlockTransactions] structure is used to provide some of the transactions
 /// in a block, as requested.

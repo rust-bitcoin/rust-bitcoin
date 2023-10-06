@@ -43,12 +43,13 @@ mod message_signing {
 
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            use MessageSignatureError::*;
+
             match *self {
-                MessageSignatureError::InvalidLength => write!(f, "length not 65 bytes"),
-                MessageSignatureError::InvalidEncoding(ref e) =>
-                    write_err!(f, "invalid encoding"; e),
-                MessageSignatureError::InvalidBase64 => write!(f, "invalid base64"),
-                MessageSignatureError::UnsupportedAddressType(ref address_type) =>
+                InvalidLength => write!(f, "length not 65 bytes"),
+                InvalidEncoding(ref e) => write_err!(f, "invalid encoding"; e),
+                InvalidBase64 => write!(f, "invalid base64"),
+                UnsupportedAddressType(ref address_type) =>
                     write!(f, "unsupported address type: {}", address_type),
             }
         }
@@ -57,10 +58,10 @@ mod message_signing {
     #[cfg(feature = "std")]
     impl std::error::Error for MessageSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            use self::MessageSignatureError::*;
+            use MessageSignatureError::*;
 
-            match self {
-                InvalidEncoding(e) => Some(e),
+            match *self {
+                InvalidEncoding(ref e) => Some(e),
                 InvalidLength | InvalidBase64 | UnsupportedAddressType(_) => None,
             }
         }

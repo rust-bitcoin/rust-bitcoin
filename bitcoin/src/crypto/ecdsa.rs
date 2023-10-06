@@ -212,12 +212,12 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
-        match self {
-            Hex(e) => Some(e),
-            Secp256k1(e) => Some(e),
-            SighashType(e) => Some(e),
+        match *self {
+            Hex(ref e) => Some(e),
+            Secp256k1(ref e) => Some(e),
+            SighashType(ref e) => Some(e),
             EmptySignature => None,
         }
     }

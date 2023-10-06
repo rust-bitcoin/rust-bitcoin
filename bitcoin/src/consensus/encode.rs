@@ -63,15 +63,17 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::Io(ref e) => write_err!(f, "IO error"; e),
-            Error::OversizedVectorAllocation { requested: ref r, max: ref m } =>
+            Io(ref e) => write_err!(f, "IO error"; e),
+            OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
-            Error::InvalidChecksum { expected: ref e, actual: ref a } =>
+            InvalidChecksum { expected: ref e, actual: ref a } =>
                 write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
-            Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
-            Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
-            Error::UnsupportedSegwitFlag(ref swflag) =>
+            NonMinimalVarInt => write!(f, "non-minimal varint"),
+            ParseFailed(ref s) => write!(f, "parse failed: {}", s),
+            UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported segwit version: {}", swflag),
         }
     }
@@ -80,7 +82,7 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match self {
             Io(e) => Some(e),

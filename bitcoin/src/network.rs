@@ -28,7 +28,6 @@ use internals::write_err;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::ChainHash;
-use crate::error::impl_std_error;
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
@@ -195,6 +194,7 @@ pub mod as_core_arg {
 
 /// An error in parsing network string.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ParseNetworkError(String);
 
 impl fmt::Display for ParseNetworkError {
@@ -202,7 +202,11 @@ impl fmt::Display for ParseNetworkError {
         write_err!(f, "failed to parse {} as network", self.0; self)
     }
 }
-impl_std_error!(ParseNetworkError);
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseNetworkError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 impl FromStr for Network {
     type Err = ParseNetworkError;
@@ -238,18 +242,22 @@ impl fmt::Display for Network {
 
 /// Error in parsing network from chain hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownChainHash(ChainHash);
+#[non_exhaustive]
+pub struct UnknownChainHashError(ChainHash);
 
-impl Display for UnknownChainHash {
+impl Display for UnknownChainHashError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown chain hash: {}", self.0)
     }
 }
 
-impl_std_error!(UnknownChainHash);
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownChainHashError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 impl TryFrom<ChainHash> for Network {
-    type Error = UnknownChainHash;
+    type Error = UnknownChainHashError;
 
     fn try_from(chain_hash: ChainHash) -> Result<Self, Self::Error> {
         match chain_hash {
@@ -258,7 +266,7 @@ impl TryFrom<ChainHash> for Network {
             ChainHash::TESTNET => Ok(Network::Testnet),
             ChainHash::SIGNET => Ok(Network::Signet),
             ChainHash::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownChainHash(chain_hash)),
+            _ => Err(UnknownChainHashError(chain_hash)),
         }
     }
 }

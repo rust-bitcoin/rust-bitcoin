@@ -30,7 +30,6 @@ use hex::FromHex;
 use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::impl_std_error;
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::{io, Network};
 
@@ -221,15 +220,6 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 }
 
-/// An error in parsing magic bytes.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ParseMagicError {
-    /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
-    /// The byte string that failed to parse.
-    magic: String,
-}
-
 impl FromStr for Magic {
     type Err = ParseMagicError;
 
@@ -253,12 +243,8 @@ impl From<Network> for Magic {
     }
 }
 
-/// Error in creating a Network from Magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownMagic(Magic);
-
 impl TryFrom<Magic> for Network {
-    type Error = UnknownMagic;
+    type Error = UnknownMagicError;
 
     fn try_from(magic: Magic) -> Result<Self, Self::Error> {
         match magic {
@@ -267,7 +253,7 @@ impl TryFrom<Magic> for Network {
             Magic::TESTNET => Ok(Network::Testnet),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownMagic(magic)),
+            _ => Err(UnknownMagicError(magic)),
         }
     }
 }
@@ -338,19 +324,42 @@ impl BorrowMut<[u8; 4]> for Magic {
     fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
 }
 
+/// An error in parsing magic bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct ParseMagicError {
+    /// The error that occurred when parsing the string.
+    error: hex::HexToArrayError,
+    /// The byte string that failed to parse.
+    magic: String,
+}
+
 impl fmt::Display for ParseMagicError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write_err!(f, "failed to parse {} as network magic", self.magic; self.error)
     }
 }
-impl_std_error!(ParseMagicError, error);
 
-impl fmt::Display for UnknownMagic {
+#[cfg(feature = "std")]
+impl std::error::Error for ParseMagicError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
+}
+
+/// Error in creating a Network from Magic bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct UnknownMagicError(Magic);
+
+impl fmt::Display for UnknownMagicError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "unknown network magic {}", self.0)
     }
 }
-impl_std_error!(UnknownMagic);
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownMagicError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
 
 #[cfg(test)]
 mod tests {
