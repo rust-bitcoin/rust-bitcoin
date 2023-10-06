@@ -306,11 +306,10 @@ mod test {
     use core::str::FromStr;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
-    use hex::FromHex;
+    use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::internal_macros::hex;
     use crate::p2p::ServiceFlags;
 
     #[test]

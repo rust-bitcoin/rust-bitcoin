@@ -44,16 +44,6 @@ macro_rules! impl_consensus_encoding {
     );
 }
 pub(crate) use impl_consensus_encoding;
-// We use test_macros module to keep things organised, re-export everything for ease of use.
-#[cfg(test)]
-pub(crate) use test_macros::*;
-
-#[cfg(test)]
-mod test_macros {
-
-    macro_rules! hex (($hex:expr) => (<Vec<u8> as $crate::hex::FromHex>::from_hex($hex).unwrap()));
-    pub(crate) use hex;
-}
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:

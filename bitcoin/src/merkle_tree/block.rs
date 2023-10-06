@@ -535,6 +535,7 @@ impl std::error::Error for MerkleBlockError {
 mod tests {
     #[cfg(feature = "rand-std")]
     use hashes::Hash;
+    use hex::test_hex_unwrap as hex;
     #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
 
@@ -542,7 +543,6 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
     use crate::hash_types::TxMerkleNode;
-    use crate::internal_macros::hex;
     use crate::{Block, Txid};
 
     #[cfg(feature = "rand-std")]

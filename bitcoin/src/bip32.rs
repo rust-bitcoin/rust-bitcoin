@@ -878,11 +878,11 @@ impl From<&Xpub> for XKeyIdentifier {
 mod tests {
     use core::str::FromStr;
 
+    use hex::test_hex_unwrap as hex;
     use secp256k1::{self, Secp256k1};
 
     use super::ChildNumber::{Hardened, Normal};
     use super::*;
-    use crate::internal_macros::hex;
     use crate::network::Network::{self, Bitcoin};
 
     #[test]
