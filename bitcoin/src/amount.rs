@@ -243,7 +243,7 @@ fn parse_signed_to_satoshi(
             let last_n = unsigned_abs(precision_diff).into();
             if is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
-                    Ok(v) if v == 0_i64 => return Ok((is_negative, 0)),
+                    Ok(0) => return Ok((is_negative, 0)),
                     _ => return Err(ParseAmountError::TooPrecise),
                 }
             }
