@@ -87,7 +87,8 @@ impl Key {
             return Err(encode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
-            })?;
+            }
+            .into());
         }
 
         let type_value: u8 = Decodable::consensus_decode(r)?;

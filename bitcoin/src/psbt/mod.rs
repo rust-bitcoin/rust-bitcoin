@@ -1092,7 +1092,6 @@ mod tests {
             Err(FeeRate::from_sat_per_kwu(15060240960843))
         );
         assert!(psbt
-            .clone()
             .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_kwu(15060240960843))
             .is_ok());
 

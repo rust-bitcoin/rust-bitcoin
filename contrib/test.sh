@@ -19,6 +19,8 @@ if cargo --version | grep ${MSRV}; then
     cargo update -p schemars_derive --precise 0.8.12
     # memcrh 2.6.0 uses edition 2021
     cargo update -p memchr --precise 2.5.0
+    # byteorder 1.5.0 uses edition 2021
+    cargo update -p byteorder --precise 1.4.3
 
     cargo update -p bitcoin:0.30.1 --precise 0.30.0
 

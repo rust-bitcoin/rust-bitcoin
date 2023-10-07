@@ -210,7 +210,7 @@ impl Deserialize for KeySource {
         while !d.is_empty() {
             match u32::consensus_decode(&mut d) {
                 Ok(index) => dpath.push(index.into()),
-                Err(e) => return Err(e)?,
+                Err(e) => return Err(e.into()),
             }
         }
 
