@@ -32,3 +32,7 @@ sane: lint
 # Update the recent and minimal lock files.
 update-lock-files:
   contrib/update-lock-files.sh
+
+# Check for API changes.
+check-api:
+ contrib/check-for-api-changes.sh
