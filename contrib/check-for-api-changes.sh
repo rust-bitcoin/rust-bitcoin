@@ -72,7 +72,7 @@ generate_api_files() {
     popd > /dev/null
 }
 
-# Check if there are changes (dirty git index) to the `api/` directory. 
+# Check if there are changes (dirty git index) to the `api/` directory.
 check_for_changes() {
     pushd "$REPO_DIR" > /dev/null
 
