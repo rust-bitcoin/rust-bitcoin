@@ -68,15 +68,18 @@ generate_api_files() {
 # Check if there are changes (dirty git index) to the `api/` directory. 
 check_for_changes() {
     pushd "$REPO_DIR" > /dev/null
+
     if [[ $(git status --porcelain api) ]]; then
         git diff --color=always
 
         echo
         echo "You have introduced changes to the public API, commit the changes to api/ currently in your working directory" >&2
         exit 1
+
     else
         echo "No changes to the current public API"
     fi
+
     popd > /dev/null
 }
 
