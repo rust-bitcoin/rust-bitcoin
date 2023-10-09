@@ -264,9 +264,9 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 let program = witness_program.program().as_bytes();
 
                 if fmt.alternate() {
-                    bech32::segwit::encode_to_fmt_unchecked_uppercase(fmt, hrp, version, program)
+                    bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
                 } else {
-                    bech32::segwit::encode_to_fmt_unchecked(fmt, hrp, version, program)
+                    bech32::segwit::encode_lower_to_fmt_unchecked(fmt, hrp, version, program)
                 }
             }
         }

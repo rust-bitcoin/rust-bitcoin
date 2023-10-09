@@ -103,7 +103,7 @@ pub enum ParseError {
     /// Base58 error.
     Base58(base58::Error),
     /// Bech32 segwit decoding error.
-    Bech32(bech32::primitives::decode::SegwitHrpstringError),
+    Bech32(bech32::segwit::DecodeError),
     /// A witness version conversion/parsing error.
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
@@ -141,8 +141,8 @@ impl From<base58::Error> for ParseError {
     fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
 
-impl From<bech32::primitives::decode::SegwitHrpstringError> for ParseError {
-    fn from(e: bech32::primitives::decode::SegwitHrpstringError) -> Self { Self::Bech32(e) }
+impl From<bech32::segwit::DecodeError> for ParseError {
+    fn from(e: bech32::segwit::DecodeError) -> Self { Self::Bech32(e) }
 }
 
 impl From<witness_version::TryFromError> for ParseError {
