@@ -18,12 +18,15 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-pub use block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 use hashes::Hash;
 
 use crate::consensus::encode::Encodable;
 use crate::io;
 use crate::prelude::*;
+
+#[rustfmt::skip]
+#[doc(inline)]
+pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///

@@ -1,3 +1,5 @@
+//! Error code for the address module.
+
 use core::fmt;
 
 use internals::write_err;

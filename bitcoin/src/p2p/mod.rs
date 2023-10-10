@@ -8,8 +8,6 @@
 #[cfg(feature = "std")]
 pub mod address;
 #[cfg(feature = "std")]
-pub use self::address::Address;
-#[cfg(feature = "std")]
 pub mod message;
 #[cfg(feature = "std")]
 pub mod message_blockdata;
@@ -32,6 +30,11 @@ use internals::{debug_from_display, write_err};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::{io, Network};
+
+#[rustfmt::skip]
+#[doc(inline)]
+#[cfg(feature = "std")]
+pub use self::address::Address;
 
 /// Version of the protocol as appearing in network message headers.
 ///
