@@ -739,9 +739,7 @@ fn sign_psbt_taproot(
         Some(_) => keypair, // no tweak for script spend
     };
 
-    // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-    let msg = secp256k1::Message::from_digest_slice(hash.as_byte_array())
-        .expect("tap sighash is 32 bytes long");
+    let msg = secp256k1::Message::from_digest(hash.to_byte_array());
     let sig = secp.sign_schnorr(&msg, &keypair);
 
     let final_signature = taproot::Signature { sig, hash_ty };

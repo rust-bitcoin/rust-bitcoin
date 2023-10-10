@@ -131,10 +131,7 @@ mod message_signing {
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash,
         ) -> Result<PublicKey, MessageSignatureError> {
-            // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-            let msg = secp256k1::Message::from_digest_slice(msg_hash.as_byte_array())
-                .expect("sh256d hash is 32 bytes long");
-
+            let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
             Ok(PublicKey { inner: pubkey, compressed: self.compressed })
         }
@@ -231,10 +228,7 @@ mod tests {
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
-        // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-        let msg = secp256k1::Message::from_digest_slice(msg_hash.as_byte_array())
-            .expect("sh256d hash is 32 bytes long");
-
+        let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
         let secp_sig = secp.sign_ecdsa_recoverable(&msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
