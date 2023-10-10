@@ -405,7 +405,9 @@ impl VarInt {
 
 /// Implements `From<T> for VarInt`.
 ///
-/// `VarInt`s are consensus encoded as `u64`s so we store them as such. Casting from any integer size smaller than or equal to `u64` is always safe and the cast value is correctly handled by `consensus_encode`.
+/// `VarInt`s are consensus encoded as `u64`s so we store them as such. Casting from any integer
+/// size smaller than or equal to `u64` is always safe and the cast value is correctly handled by
+/// `consensus_encode`.
 macro_rules! impl_var_int_from {
     ($($ty:tt),*) => {
         $(
