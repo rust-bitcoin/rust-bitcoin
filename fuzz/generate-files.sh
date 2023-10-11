@@ -53,18 +53,18 @@ on:
 jobs:
   fuzz:
     if: \${{ !github.event.act }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         fuzz_target: [
-$(for name in $(listTargetNames); do echo "$name,"; done)
+$(for name in $(listTargetNames); do echo "          $name,"; done)
         ]
     steps:
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
         id: cache-fuzz
         with:
           path: |
@@ -72,11 +72,9 @@ $(for name in $(listTargetNames); do echo "$name,"; done)
             fuzz/target
             target
           key: cache-\${{ matrix.target }}-\${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.58
-          override: true
-          profile: minimal
+          toolchain: '1.65.0'
       - name: fuzz
         run: |
           if [[ "\${{ matrix.fuzz_target }}" =~ ^bitcoin ]]; then
@@ -85,7 +83,7 @@ $(for name in $(listTargetNames); do echo "$name,"; done)
           echo "Using RUSTFLAGS \$RUSTFLAGS"
           cd fuzz && ./fuzz.sh "\${{ matrix.fuzz_target }}"
       - run: echo "\${{ matrix.fuzz_target }}" >executed_\${{ matrix.fuzz_target }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: executed_\${{ matrix.fuzz_target }}
           path: executed_\${{ matrix.fuzz_target }}
@@ -95,8 +93,8 @@ $(for name in $(listTargetNames); do echo "$name,"; done)
     needs: fuzz
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v3
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
