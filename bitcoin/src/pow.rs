@@ -67,18 +67,6 @@ macro_rules! do_impl {
 pub struct Work(U256);
 
 impl Work {
-    /// Lowest possible work value for Mainnet. See comment on [`Params::pow_limit`] for more info.
-    pub const MAINNET_MIN: Work = Work(U256(0x0000_0000_ffff_0000_0000_0000_0000_0000_u128, 0));
-
-    /// Lowest possible work value for Testnet. See comment on [`Params::pow_limit`] for more info.
-    pub const TESTNET_MIN: Work = Work(U256(0x0000_0000_ffff_0000_0000_0000_0000_0000_u128, 0));
-
-    /// Lowest possible work value for Signet. See comment on [`Params::pow_limit`] for more info.
-    pub const SIGNET_MIN: Work = Work(U256(0x0000_0377_ae00_0000_0000_0000_0000_0000_u128, 0));
-
-    /// Lowest possible work value for Regtest. See comment on [`Params::pow_limit`] for more info.
-    pub const REGTEST_MIN: Work = Work(U256(0x7fff_ff00_0000_0000_0000_0000_0000_0000_u128, 0));
-
     /// Converts this [`Work`] to [`Target`].
     pub fn to_target(self) -> Target { Target(self.0.inverse()) }
 
@@ -127,6 +115,27 @@ impl Target {
     // In Bitcoind this is ~(u256)0 >> 32 stored as a floating-point type so it gets truncated, hence
     // the low 208 bits are all zero.
     pub const MAX: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The maximum **attainable** target value on mainnet.
+    ///
+    /// Not all target values are attainable because consensus code uses the compact format to
+    /// represent targets (see `CompactTarget`).
+    pub const MAX_ATTAINABLE_MAINNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The proof of work limit on testnet.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L208
+    pub const MAX_ATTAINABLE_TESTNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
+
+    /// The proof of work limit on regtest.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L411
+    pub const MAX_ATTAINABLE_REGTEST: Self = Target(U256(0x7FFF_FF00u128 << 96, 0));
+
+    /// The proof of work limit on signet.
+    // Taken from Bitcoin Core but had lossy conversion to/from compact form.
+    // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
+    pub const MAX_ATTAINABLE_SIGNET: Self = Target(U256(0x0377_ae00 << 80, 0));
 
     /// The maximum possible target (see [`Target::MAX`]).
     ///
