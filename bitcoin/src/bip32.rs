@@ -21,7 +21,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use serde;
 
 use crate::base58;
-use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
+use crate::crypto::key::{self, Keypair, PrivateKey, PublicKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::Network;
@@ -579,8 +579,8 @@ impl Xpriv {
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
-    pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> KeyPair {
-        KeyPair::from_seckey_slice(secp, &self.private_key[..])
+    pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
+        Keypair::from_seckey_slice(secp, &self.private_key[..])
             .expect("BIP32 internal private key representation is broken")
     }
 

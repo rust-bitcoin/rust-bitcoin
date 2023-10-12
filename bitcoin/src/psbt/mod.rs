@@ -405,51 +405,31 @@ impl Psbt {
         match self.output_type(input_index)? {
             Bare => {
                 let sighash = cache.legacy_signature_hash(input_index, spk, hash_ty.to_u32())?;
-                // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-                Ok((
-                    Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long"),
-                    hash_ty,
-                ))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Sh => {
                 let script_code =
                     input.redeem_script.as_ref().ok_or(SignError::MissingRedeemScript)?;
                 let sighash =
                     cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?;
-                // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-                Ok((
-                    Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long"),
-                    hash_ty,
-                ))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Wpkh => {
                 let sighash = cache.p2wpkh_signature_hash(input_index, spk, utxo.value, hash_ty)?;
-                // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-                Ok((
-                    Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long"),
-                    hash_ty,
-                ))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             ShWpkh => {
                 let redeem_script = input.redeem_script.as_ref().expect("checked above");
                 let sighash =
                     cache.p2wpkh_signature_hash(input_index, redeem_script, utxo.value, hash_ty)?;
-                // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-                Ok((
-                    Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long"),
-                    hash_ty,
-                ))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Wsh | ShWsh => {
                 let witness_script =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
                 let sighash =
                     cache.p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty)?;
-                // TODO: After upgrade of secp change this to Message::from_digest(sighash.to_byte_array()).
-                Ok((
-                    Message::from_slice(sighash.as_byte_array()).expect("sighash is 32 bytes long"),
-                    hash_ty,
-                ))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Tr => {
                 // This PSBT signing API is WIP, taproot to come shortly.
