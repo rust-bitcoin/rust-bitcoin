@@ -404,24 +404,19 @@ impl Witness {
     /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
-        let len = self.len();
-        self.last()
-            .map(|last_elem| {
-                // From BIP341:
-                // If there are at least two witness elements, and the first byte of
-                // the last element is 0x50, this last element is called annex a
-                // and is removed from the witness stack.
-                if len >= 2 && last_elem.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                    // account for the extra item removed from the end
-                    3
-                } else {
-                    // otherwise script is 2nd from last
-                    2
-                }
-            })
-            .filter(|&script_pos_from_last| len >= script_pos_from_last)
-            .and_then(|script_pos_from_last| self.nth(len - script_pos_from_last))
-            .map(Script::from_bytes)
+        self.last().and_then(|last| {
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
+                self.nth(self.len() - 3).map(Script::from_bytes)
+            } else if self.len() >= 2 {
+                self.nth(self.len() - 2).map(Script::from_bytes)
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -707,16 +702,8 @@ mod test {
         let witness_serialized: Vec<u8> = serialize(&witness_vec);
         let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
 
-        let witness = Witness {
-            content: append_u32_vec(witness_serialized[1..].to_vec(), &[0, 5]),
-            witness_elements: 2,
-            indices_start: 7,
-        };
-        let witness_annex = Witness {
-            content: append_u32_vec(witness_serialized_annex[1..].to_vec(), &[0, 5, 7]),
-            witness_elements: 3,
-            indices_start: 9,
-        };
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
