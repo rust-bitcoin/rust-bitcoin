@@ -14,7 +14,7 @@ use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::prelude::*;
-use crate::taproot::TAPROOT_ANNEX_PREFIX;
+use crate::taproot::{TAPROOT_ANNEX_PREFIX, ControlBlock};
 use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -398,6 +398,40 @@ impl Witness {
             }
         })
     }
+
+    /// Get the raw taproot control block following BIP341 rules.
+    ///
+    /// This does not guarantee that this represents a P2TR [`Witness`]. It
+    /// merely gets the last or second to last element depending on the first
+    /// byte of the last element being equal to 0x50. See
+    /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
+    /// check whether this is actually a Taproot witness.
+    pub fn raw_taproot_control_block(&self) -> Option<&[u8]> {
+        self.last().and_then(|last| {
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
+                Some(self.nth(self.len() - 2).unwrap())
+            } else if self.len() >= 2 && last.first() != Some(&TAPROOT_ANNEX_PREFIX) {
+                Some(last)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Get the taproot control block following BIP341 rules.
+    ///
+    /// This does not guarantee that this represents a P2TR [`Witness`]. It
+    /// merely gets the last or second to last element depending on the first
+    /// byte of the last element being equal to 0x50. See
+    /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
+    /// check whether this is actually a Taproot witness.
+    pub fn taproot_control_block(&self) -> Option<ControlBlock> {
+        self.raw_taproot_control_block().and_then(|cb| ControlBlock::decode(cb).ok())
+    }
 }
 
 impl Index<usize> for Witness {
@@ -692,6 +726,30 @@ mod test {
 
         let invalid_witness = Witness::from_slice(&[annex.clone()]);
         assert!(invalid_witness.tapscript().is_none());
+    }
+
+    #[test]
+    fn test_get_control_block() {
+        let tapscript = hex!("deadbeef");
+        let control_block = hex!("02");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness = Witness::from_slice(&[tapscript.clone(), control_block.clone()]);
+        let witness_annex = Witness::from_slice(&[tapscript.clone(), control_block.clone(), annex.clone()]);
+
+        // With or without annex, the tapscript should be returned.
+        assert_eq!(witness.raw_taproot_control_block(), Some(&control_block[..]));
+        assert_eq!(witness_annex.raw_taproot_control_block(), Some(&control_block[..]));
+
+        let invalid_witness = Witness::from_slice(&[control_block.clone(), annex.clone()]);
+        assert!(invalid_witness.raw_taproot_control_block().is_none());
+
+        let invalid_witness = Witness::from_slice(&[control_block.clone()]);
+        assert!(invalid_witness.raw_taproot_control_block().is_none());
+
+        let invalid_witness = Witness::from_slice(&[annex.clone()]);
+        assert!(invalid_witness.raw_taproot_control_block().is_none());
     }
 
     #[test]
