@@ -27,7 +27,7 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std", "hex/std"]
-no-std = ["core2", "hashes/alloc", "hashes/core2", "bech32/alloc", "secp256k1/alloc", "hex/alloc", "hex/core2"]
+no-std = ["core2", "hashes/alloc", "hashes/core2", "bech32/alloc", "secp256k1/alloc", "hex/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true

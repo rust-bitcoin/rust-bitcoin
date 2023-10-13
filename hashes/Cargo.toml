@@ -18,7 +18,7 @@ std = ["alloc", "hex/std"]
 alloc = ["hex/alloc"]
 serde-std = ["serde/std"]
 # If you want I/O you must enable either "std" or "core2".
-core2 = ["actual-core2", "hex/core2"]
+core2 = ["actual-core2"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
 
