@@ -25,9 +25,8 @@ fn main() {
         .expect("invalid Rust minor version");
 
     // print cfg for all interesting versions less than or equal to minor
-    // 46 adds `track_caller`
     // 55 adds `kind()` to `ParseIntError`
-    for version in &[46, 55] {
+    for version in &[55] {
         if *version <= minor {
             println!("cargo:rustc-cfg=rust_v_1_{}", version);
         }
