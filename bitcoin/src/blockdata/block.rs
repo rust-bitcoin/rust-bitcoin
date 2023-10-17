@@ -33,7 +33,7 @@ use crate::{io, merkle_tree, VarInt};
 /// ### Bitcoin Core References
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
-#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Header {
@@ -90,6 +90,20 @@ impl Header {
 
     /// Returns the total work of the block.
     pub fn work(&self) -> Work { self.target().to_work() }
+}
+
+impl fmt::Debug for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Header")
+            .field("block_hash", &self.block_hash())
+            .field("version", &self.version)
+            .field("prev_blockhash", &self.prev_blockhash)
+            .field("merkle_root", &self.merkle_root)
+            .field("time", &self.time)
+            .field("bits", &self.bits)
+            .field("nonce", &self.nonce)
+            .finish()
+    }
 }
 
 /// Bitcoin block version number.
