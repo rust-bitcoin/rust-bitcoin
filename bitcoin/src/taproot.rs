@@ -1818,7 +1818,6 @@ mod test {
         {
             let tree = TapTree::try_from(builder.clone()).unwrap();
             // test roundtrip serialization with serde_test
-            #[rustfmt::skip]
             assert_tokens(&tree.readable(), &[
                 Token::Seq { len: Some(10) },
                 Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("51"), Token::U8(192), Token::TupleVariantEnd,
@@ -1831,7 +1830,6 @@ mod test {
 
             let node_info = TapTree::try_from(builder.clone()).unwrap().into_node_info();
             // test roundtrip serialization with serde_test
-            #[rustfmt::skip]
             assert_tokens(&node_info.readable(), &[
                 Token::Seq { len: Some(10) },
                 Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("51"), Token::U8(192), Token::TupleVariantEnd,

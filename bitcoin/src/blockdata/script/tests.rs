@@ -11,7 +11,6 @@ use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey};
 
 #[test]
-#[rustfmt::skip]
 fn script() {
     let mut comp = vec![];
     let mut script = Builder::new();

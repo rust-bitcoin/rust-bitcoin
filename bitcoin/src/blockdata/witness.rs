@@ -56,7 +56,6 @@ impl fmt::Debug for Witness {
 }
 
 fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-    #[rustfmt::skip]
     let comma_or_close = |current_index, last_index| {
         if current_index == last_index { "]" } else { ", " }
     };

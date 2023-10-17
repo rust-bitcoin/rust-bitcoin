@@ -23,7 +23,6 @@ use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
-#[rustfmt::skip]
 pub(crate) const UINT256_ONE: [u8; 32] = [
     1, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0,
@@ -1470,7 +1469,6 @@ mod tests {
     }
 
     #[test]
-    #[rustfmt::skip] // Allow long function call `taproot_signature_hash`.
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
             version: transaction::Version::TWO,
