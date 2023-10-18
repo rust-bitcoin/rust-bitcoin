@@ -50,11 +50,11 @@ use crate::hash_types::{InputsHash, SpecialTransactionPayloadHash, Txid};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ProviderUpdateRevocationPayload {
-    version: u16,
-    pro_tx_hash: Txid,
-    reason: u16,
-    inputs_hash: InputsHash,
-    payload_sig: BLSSignature,
+    pub version: u16,
+    pub pro_tx_hash: Txid,
+    pub reason: u16,
+    pub inputs_hash: InputsHash,
+    pub payload_sig: BLSSignature,
 }
 
 impl ProviderUpdateRevocationPayload {

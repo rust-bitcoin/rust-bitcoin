@@ -65,19 +65,19 @@ use crate::Network;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ProviderRegistrationPayload {
-    version: u16,
-    provider_type: u16,
-    provider_mode: u16,
-    collateral_outpoint: OutPoint,
-    ip_address: u128,
-    port: u16,
-    owner_key_hash: PubkeyHash,
-    operator_public_key: BLSPublicKey,
-    voting_key_hash: PubkeyHash,
-    operator_reward: u16,
-    script_payout: ScriptBuf,
-    inputs_hash: InputsHash,
-    payload_sig: Vec<u8>,
+    pub version: u16,
+    pub provider_type: u16,
+    pub provider_mode: u16,
+    pub collateral_outpoint: OutPoint,
+    pub ip_address: u128,
+    pub port: u16,
+    pub owner_key_hash: PubkeyHash,
+    pub operator_public_key: BLSPublicKey,
+    pub voting_key_hash: PubkeyHash,
+    pub operator_reward: u16,
+    pub script_payout: ScriptBuf,
+    pub inputs_hash: InputsHash,
+    pub payload_sig: Vec<u8>,
 }
 
 impl ProviderRegistrationPayload {

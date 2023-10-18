@@ -51,13 +51,13 @@ use crate::hash_types::{InputsHash, SpecialTransactionPayloadHash, Txid};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ProviderUpdateServicePayload {
-    version: u16,
-    pro_tx_hash: Txid,
-    ip_address: u128,
-    port: u16,
-    script_payout: ScriptBuf,
-    inputs_hash: InputsHash,
-    payload_sig: BLSSignature,
+    pub version: u16,
+    pub pro_tx_hash: Txid,
+    pub ip_address: u128,
+    pub port: u16,
+    pub script_payout: ScriptBuf,
+    pub inputs_hash: InputsHash,
+    pub payload_sig: BLSSignature,
 }
 
 impl ProviderUpdateServicePayload {

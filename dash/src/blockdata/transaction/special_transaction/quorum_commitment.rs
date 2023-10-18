@@ -30,15 +30,15 @@ use crate::consensus::{Decodable, Encodable, encode};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct QuorumFinalizationCommitment {
-    version: u16,
-    llmq_type: u8,
-    quorum_hash: QuorumHash,
-    signers: Vec<u8>,
-    valid_members: Vec<u8>,
-    quorum_public_key: BLSPublicKey,
-    quorum_vvec_hash: QuorumVVecHash,
-    quorum_sig: BLSSignature,
-    sig: BLSSignature,
+    pub version: u16,
+    pub llmq_type: u8,
+    pub quorum_hash: QuorumHash,
+    pub signers: Vec<u8>,
+    pub valid_members: Vec<u8>,
+    pub quorum_public_key: BLSPublicKey,
+    pub quorum_vvec_hash: QuorumVVecHash,
+    pub quorum_sig: BLSSignature,
+    pub sig: BLSSignature,
 }
 
 impl QuorumFinalizationCommitment {

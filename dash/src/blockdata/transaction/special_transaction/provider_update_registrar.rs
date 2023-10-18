@@ -45,14 +45,14 @@ use crate::hash_types::{PubkeyHash, SpecialTransactionPayloadHash, Txid, InputsH
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ProviderUpdateRegistrarPayload {
-    version: u16,
-    pro_tx_hash: Txid,
-    provider_mode: u16,
-    operator_public_key: BLSPublicKey,
-    voting_key_hash: PubkeyHash,
-    script_payout: ScriptBuf,
-    inputs_hash: InputsHash,
-    payload_sig: Vec<u8>, // TODO: Need to figure out, is this signature BLS Signature (length 96)
+    pub version: u16,
+    pub pro_tx_hash: Txid,
+    pub provider_mode: u16,
+    pub operator_public_key: BLSPublicKey,
+    pub voting_key_hash: PubkeyHash,
+    pub script_payout: ScriptBuf,
+    pub inputs_hash: InputsHash,
+    pub payload_sig: Vec<u8>, // TODO: Need to figure out, is this signature BLS Signature (length 96)
 }
 
 impl ProviderUpdateRegistrarPayload {

@@ -32,13 +32,13 @@ use crate::consensus::{Decodable, Encodable, encode};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct CoinbasePayload {
-    version: u16,
-    height: u32,
-    merkle_root_masternode_list: MerkleRootMasternodeList,
-    merkle_root_quorums: MerkleRootQuorums,
-    best_cl_height: Option<u32>,
-    best_cl_signature: Option<Vec<u8>>,
-    asset_locked_amount: Option<u64>,
+    pub version: u16,
+    pub height: u32,
+    pub merkle_root_masternode_list: MerkleRootMasternodeList,
+    pub merkle_root_quorums: MerkleRootQuorums,
+    pub best_cl_height: Option<u32>,
+    pub best_cl_signature: Option<Vec<u8>>,
+    pub asset_locked_amount: Option<u64>,
 }
 
 impl CoinbasePayload {
