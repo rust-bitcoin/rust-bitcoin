@@ -1,8 +1,11 @@
-# Unreleased (changelog done for PRs merged as of June 24)
+# 0.31.1 - 2023-10-18
 
 - Bump MSRV to Rust 1.48.0 [#1729](https://github.com/rust-bitcoin/rust-bitcoin/pull/1729)
-- Add new example code for signature verification[#1776](https://github.com/rust-bitcoin/rust-bitcoin/pull/1776)
-- Manually implement `Debug` on `Witness`[#1913](https://github.com/rust-bitcoin/rust-bitcoin/pull/1913)
+- Add new example code for signature verification [#1776](https://github.com/rust-bitcoin/rust-bitcoin/pull/1776)
+- Manually implement `Debug` on `Witness` [#1913](https://github.com/rust-bitcoin/rust-bitcoin/pull/1913)
+- Use new bech32 API [#1951](https://github.com/rust-bitcoin/rust-bitcoin/pull/1951) and [#2117](https://github.com/rust-bitcoin/rust-bitcoin/pull/2117)
+- Upgrade to `secp256k1 v0.28.0` [#2098](https://github.com/rust-bitcoin/rust-bitcoin/pull/2098)
+- Upgrade to `base64 v0.21.3` [#2032](https://github.com/rust-bitcoin/rust-bitcoin/pull/2032)
 
 - API Improvements:
   - Add kilo weight unit conversion [#1735](https://github.com/rust-bitcoin/rust-bitcoin/pull/1735)
@@ -26,6 +29,13 @@
   - Implement `From<PublicKey> for XOnlyPublicKey` [#1901](https://github.com/rust-bitcoin/rust-bitcoin/pull/1901)
   - Implement `From<secp256k1::PublicKey> for bitcoin::PublicKey` [#1949](https://github.com/rust-bitcoin/rust-bitcoin/pull/1949)
   - Add `DerivationPath::to_u32_vec` [#1946](https://github.com/rust-bitcoin/rust-bitcoin/pull/1946)
+  - Use `Target` as type for `pow_limit` [#2107](https://github.com/rust-bitcoin/rust-bitcoin/pull/2107)
+  - Add `Witness::p2wpkh` constructor [#2084](https://github.com/rust-bitcoin/rust-bitcoin/pull/2084)
+  - Make `Instruction` be able to read the script number [#2081](https://github.com/rust-bitcoin/rust-bitcoin/pull/2081)
+  - Add `Script::is_mulitsig` [#2078](https://github.com/rust-bitcoin/rust-bitcoin/pull/2078)
+  - Count sigops for `Transaction` [#2073](https://github.com/rust-bitcoin/rust-bitcoin/pull/2073)
+  - Add `Psbt` fee checks [#2064](https://github.com/rust-bitcoin/rust-bitcoin/pull/2064)
+  - Add `transaction::Version` data type [2006] [#2020](https://github.com/rust-bitcoin/rust-bitcoin/pull/2020)
 
 - Moves, Removes, and renames:
   - Move witness types to the script module [#1846](https://github.com/rust-bitcoin/rust-bitcoin/pull/1846)
@@ -34,11 +44,20 @@
   - Rename `TaprootSpendInfo::as_script_map` to `script_map` [#1897](https://github.com/rust-bitcoin/rust-bitcoin/pull/1897)
   - Rename `Script::empty` to `Script::new` [#1925](https://github.com/rust-bitcoin/rust-bitcoin/pull/1925)
   - Rename `PartiallySignedTransaction` to `Psbt` [#1938](https://github.com/rust-bitcoin/rust-bitcoin/pull/1938)
+  - Rename `XpubIdenifier` to `XKeyIdentifier` [#2021](https://github.com/rust-bitcoin/rust-bitcoin/pull/2021)
+  - Rename `ExtendedPubKey` to `Xpub` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
+  - Rename `ExtendedPrivKey` to `Xpriv` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
+  - Remove `_v0` from various function names (eg, `new_v0_p2wpkh`) [#1994](https://github.com/rust-bitcoin/rust-bitcoin/pull/1994)
+  - Remove `SighashCache::segwit_signature_hash` (add `p2wpkh_signiture_hash` and `p2wsh_signature_hash`) [#1995](https://github.com/rust-bitcoin/rust-bitcoin/pull/1995)
+  - Reexport all the hash types from the crate root [#1998](https://github.com/rust-bitcoin/rust-bitcoin/pull/1998)
+  - Rename `opcodes::All` to `Opcode` [#1995](https://github.com/rust-bitcoin/rust-bitcoin/pull/1995)
+  - Removed `TxOut::default()`, the same logic now exists as `TxOut::NULL` [#1811](https://github.com/rust-bitcoin/rust-bitcoin/pull/1811) and [#1838](https://github.com/rust-bitcoin/rust-bitcoin/pull/1838)
 
 - Error handling improvements:
   - Improve `hashes::Error` [#1873](https://github.com/rust-bitcoin/rust-bitcoin/pull/1873)
   - Add `ValidationError` [#1874](https://github.com/rust-bitcoin/rust-bitcoin/pull/1874)
   - Improve `crypto::taproot` error type [#1895](https://github.com/rust-bitcoin/rust-bitcoin/pull/1895)
+  - Audit error types code base wide [#2101](https://github.com/rust-bitcoin/rust-bitcoin/pull/2101)
 
 # 0.30.1 - 2023-07-16
 
