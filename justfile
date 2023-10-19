@@ -16,3 +16,7 @@ lint:
 # Check the formatting
 format:
   cargo +nightly fmt --all --check
+
+# Update the recent and minimal lock files.
+update-lock-files:
+  contrib/update-lock-files.sh
