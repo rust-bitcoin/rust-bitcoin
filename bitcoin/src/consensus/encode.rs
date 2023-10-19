@@ -22,6 +22,7 @@ use hashes::{sha256, sha256d, Hash};
 use internals::write_err;
 
 use crate::bip152::{PrefilledTransaction, ShortId};
+use crate::blockdata::block;
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 use crate::io::{self, Cursor, Read};
@@ -626,6 +627,7 @@ macro_rules! impl_vec {
     };
 }
 impl_vec!(BlockHash);
+impl_vec!(block::Header);
 impl_vec!(FilterHash);
 impl_vec!(FilterHeader);
 impl_vec!(TxMerkleNode);
