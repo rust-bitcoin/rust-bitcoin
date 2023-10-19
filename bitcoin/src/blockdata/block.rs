@@ -10,6 +10,7 @@
 use core::fmt;
 
 use hashes::{sha256d, HashEngine};
+use internals::compact_size;
 use io::{BufRead, Write};
 
 use super::Weight;
@@ -21,7 +22,6 @@ use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, Wtxid};
-use crate::VarInt;
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
@@ -330,7 +330,7 @@ impl Block {
     fn base_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += compact_size::encoded_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.base_size()).sum::<usize>();
 
         size
@@ -343,7 +343,7 @@ impl Block {
     pub fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += compact_size::encoded_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
 
         size

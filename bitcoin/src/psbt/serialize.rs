@@ -6,6 +6,7 @@
 //! according to the BIP-174 specification.
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use internals::compact_size;
 use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
@@ -22,7 +23,7 @@ use crate::taproot::{
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-use crate::VarInt;
+
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -355,8 +356,8 @@ impl Serialize for TapTree {
         let capacity = self
             .script_leaves()
             .map(|l| {
-                l.script().len() + VarInt::from(l.script().len()).size() // script version
-            + 1 // Merkle branch
+                l.script().len() + compact_size::encoded_size(l.script().len()) // script version
+            + 1 // merkle branch
             + 1 // leaf version
             })
             .sum::<usize>();
