@@ -12,7 +12,8 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::str;
 
-use crate::{ripemd160, sha256, FromSliceError};
+use crate::prelude::*;
+use crate::{ripemd160, sha256};
 
 crate::internal_macros::hash_type! {
     160,
@@ -20,6 +21,31 @@ crate::internal_macros::hash_type! {
     "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))",
     "crate::util::json_hex_string::len_20"
 }
+
+/// Creates a HASH160 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{hash160, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = hash160::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{hash160, prelude::*};
+/// let hash = hash160::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "cf0f12e3599bb7a4037562a44d09870fc1f2799f");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
 
 type HashEngine = sha256::HashEngine;
 

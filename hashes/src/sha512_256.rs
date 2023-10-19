@@ -11,7 +11,8 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::str;
 
-use crate::{sha512, FromSliceError};
+use crate::prelude::*;
+use crate::sha512;
 
 crate::internal_macros::hash_type! {
     256,
@@ -19,6 +20,31 @@ crate::internal_macros::hash_type! {
     "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 alogrithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>. ",
     "crate::util::json_hex_string::len_32"
 }
+
+/// Creates a SHA512_256 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha512_256, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = sha512_256::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let _hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha512_256, prelude::*};
+/// let hash = sha512_256::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "f345af7e31cf0f2dffb5510f7bf2d606c64926ec3ae7a93b53897c31dfbcb895");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
 
 fn from_engine(e: HashEngine) -> Hash {
     let mut ret = [0; 32];
@@ -34,6 +60,11 @@ fn from_engine(e: HashEngine) -> Hash {
 /// <https://eprint.iacr.org/2010/548.pdf>.
 #[derive(Clone)]
 pub struct HashEngine(sha512::HashEngine);
+
+impl HashEngine {
+    /// Extracts a hash from the current state of this engine.
+    pub fn extract(self) -> Hash { from_engine(self) }
+}
 
 impl Default for HashEngine {
     #[rustfmt::skip]

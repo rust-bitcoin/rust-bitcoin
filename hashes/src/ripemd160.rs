@@ -8,7 +8,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{FromSliceError, HashEngine as _};
+use crate::prelude::*;
 
 crate::internal_macros::hash_type! {
     160,
@@ -16,6 +16,31 @@ crate::internal_macros::hash_type! {
     "Output of the RIPEMD160 hash function.",
     "crate::util::json_hex_string::len_20"
 }
+
+/// Creates a RIPEMD160 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{ripemd160, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = ripemd160::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let _hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{ripemd160, prelude::*};
+/// let hash = ripemd160::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "6ff070a19bb860169c0b4074dc97f166735f521e");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
 
 #[cfg(not(hashes_fuzz))]
 fn from_engine(mut e: HashEngine) -> Hash {
@@ -52,6 +77,11 @@ pub struct HashEngine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 5],
     length: usize,
+}
+
+impl HashEngine {
+    /// Extracts a hash from the current state of this engine.
+    pub fn extract(self) -> Hash { from_engine(self) }
 }
 
 impl Default for HashEngine {

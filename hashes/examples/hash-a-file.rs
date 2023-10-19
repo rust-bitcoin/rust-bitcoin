@@ -10,14 +10,13 @@ const FILE: &str = "a mock text file \n a line of text \n and another one \n";
 fn main() {
     // This would usually be BufReader::new(File::open(path)?);
     let reader = io::Cursor::new(&FILE);
-
-    let mut engine = sha256::Hash::engine();
+    let mut engine = sha256::engine();
 
     for line in reader.lines() {
         let line = line.expect("line read failed");
         engine.input(line.as_bytes());
     }
-    let hash = sha256::Hash::from_engine(engine);
+    let hash = engine.extract();
 
     println!("\n\t{}", hash);
 }

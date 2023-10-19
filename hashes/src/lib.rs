@@ -11,58 +11,71 @@
 //!
 //! Hashing a single byte slice or a string:
 //!
-//! ```rust
-//! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
+//! ```
+//! use bitcoin_hashes::{sha1, prelude::*};
 //!
 //! let bytes = [0u8; 5];
-//! let hash_of_bytes = sha256::Hash::hash(&bytes);
-//! let hash_of_string = sha256::Hash::hash("some string".as_bytes());
+//! let hash_of_bytes = sha1::hash(&bytes);
+//! let hash_of_string = sha1::hash("some string".as_bytes());
+//! ```
+//!
+//!
+//! Hashing multiple byte slices:
+//!
+//! ```no_run
+//! # #[cfg(feature = "std")] {
+//! use std::io::{self, BufRead};
+//! use bitcoin_hashes::{sha256, prelude::*};
+//!
+//! const FILE: &str = "path/to/file";
+//! let reader = io::Cursor::new(&FILE); // In real code, this could be a `File` or `TcpStream`.
+//! let mut engine = sha256::engine();
+//!
+//! for line in reader.lines() {
+//!     let line = line.expect("line read failed");
+//!     engine.input(line.as_bytes());
+//! }
+//! let hash = engine.extract();
+//! # }
 //! ```
 //!
 //!
 //! Hashing content from a reader:
 //!
-//! ```rust
-//! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
-//!
-//! #[cfg(std)]
+//! ```
 //! # fn main() -> std::io::Result<()> {
-//! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
-//! let mut engine = sha256::HashEngine::default();
-//! std::io::copy(&mut reader, &mut engine)?;
-//! let hash = sha256::Hash::from_engine(engine);
-//! # Ok(())
-//! # }
+//! # #[cfg(feature = "std")] {
+//! use bitcoin_hashes::{ripemd160, prelude::*};
 //!
-//! #[cfg(not(std))]
-//! # fn main() {}
+//! let mut reader: &[u8] = b"hello"; // In real code, this could be a `File` or `TcpStream`.
+//! let mut engine = ripemd160::engine();
+//! std::io::copy(&mut reader, &mut engine).expect("handle error");
+//! let hash = engine.extract();
+//! # Ok(()) }
+//! # #[cfg(not(feature = "std"))] { fn main()  {} }}
 //! ```
 //!
 //!
-//! Hashing content by [`std::io::Write`] on HashEngine:
+//! Hashing content using [`std::io::Write`]:
 //!
-//! ```rust
-//! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
-//! use std::io::Write;
-//!
-//! #[cfg(std)]
+//! ```
 //! # fn main() -> std::io::Result<()> {
+//! # #[cfg(feature = "std")] {
+//! use std::io::Write;
+//! use bitcoin_hashes::{sha512, prelude::*};
+//!
 //! let mut part1: &[u8] = b"hello";
 //! let mut part2: &[u8] = b" ";
 //! let mut part3: &[u8] = b"world";
-//! let mut engine = sha256::HashEngine::default();
-//! engine.write_all(part1)?;
-//! engine.write_all(part2)?;
-//! engine.write_all(part3)?;
-//! let hash = sha256::Hash::from_engine(engine);
-//! # Ok(())
-//! # }
+//! let mut engine = sha512::HashEngine::default();
 //!
-//! #[cfg(not(std))]
-//! # fn main() {}
+//! engine.write_all(part1).expect("handle error");
+//! engine.write_all(part2).expect("handle error");
+//! engine.write_all(part3).expect("handle error");
+//!
+//! let hash = engine.extract();
+//! # Ok(()) }
+//! # #[cfg(not(feature = "std"))] { fn main()  {} }}
 //! ```
 
 // Coding conventions
