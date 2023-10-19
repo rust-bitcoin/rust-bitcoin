@@ -227,8 +227,7 @@ impl Encodable for Witness {
         let content_with_indices_len = self.content.len();
         let indices_size = self.witness_elements * 4;
         let content_len = content_with_indices_len - indices_size;
-        w.emit_slice(&self.content[..content_len])?;
-        Ok(content_len + len.size())
+        Ok(w.emit_slice(&self.content[..content_len])? + len.size())
     }
 }
 

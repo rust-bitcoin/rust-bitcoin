@@ -150,8 +150,7 @@ impl Encodable for AddrV2 {
         ) -> Result<usize, io::Error> {
             let len = network.consensus_encode(w)?
                 + VarInt::from(bytes.len()).consensus_encode(w)?
-                + bytes.len();
-            w.emit_slice(bytes)?;
+                + w.emit_slice(bytes)?;
             Ok(len)
         }
         Ok(match *self {
