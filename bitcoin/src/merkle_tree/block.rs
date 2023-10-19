@@ -47,7 +47,7 @@ use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
@@ -439,7 +439,7 @@ impl Encodable for PartialMerkleTree {
         ret += self.hashes.consensus_encode(w)?;
 
         let nb_bytes_for_bits = (self.bits.len() + 7) / 8;
-        ret += encode::VarInt::from(nb_bytes_for_bits).consensus_encode(w)?;
+        ret += w.emit_varint(nb_bytes_for_bits)?;
         for chunk in self.bits.chunks(8) {
             let mut byte = 0u8;
             for (i, bit) in chunk.iter().enumerate() {
@@ -458,7 +458,7 @@ impl Decodable for PartialMerkleTree {
         let num_transactions: u32 = Decodable::consensus_decode(r)?;
         let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode(r)?;
 
-        let nb_bytes_for_bits = encode::VarInt::consensus_decode(r)?.0 as usize;
+        let nb_bytes_for_bits = r.read_varint()? as usize;
         let mut bits = vec![false; nb_bytes_for_bits * 8];
         for chunk in bits.chunks_mut(8) {
             let byte = u8::consensus_decode(r)?;

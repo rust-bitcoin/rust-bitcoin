@@ -12,7 +12,7 @@ use hashes::{sha256d, Hash};
 use io::{BufRead, Write};
 
 use crate::blockdata::{block, transaction};
-use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
+use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -334,7 +334,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += VarInt::from(self.0.len()).consensus_encode(w)?;
+        len += w.emit_varint(self.0.len())?;
         for header in self.0.iter() {
             len += header.consensus_encode(w)?;
             len += 0u8.consensus_encode(w)?;
@@ -407,7 +407,7 @@ impl Decodable for HeaderDeserializationWrapper {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        let len = VarInt::consensus_decode(r)?.0;
+        let len = r.read_varint()?;
         // should be above usual number of items to avoid
         // allocation
         let mut ret = Vec::with_capacity(core::cmp::min(1024 * 16, len as usize));

@@ -130,7 +130,6 @@ pub use crate::{
     blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
     blockdata::weight::Weight,
     blockdata::witness::{self, Witness},
-    consensus::encode::VarInt,
     crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
