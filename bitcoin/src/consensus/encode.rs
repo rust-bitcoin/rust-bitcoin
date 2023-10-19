@@ -209,7 +209,7 @@ pub trait WriteExt: Write {
     fn emit_bool(&mut self, v: bool) -> Result<(), io::Error>;
 
     /// Outputs a byte slice.
-    fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error>;
+    fn emit_slice(&mut self, v: &[u8]) -> Result<usize, io::Error>;
 }
 
 /// Extensions of `Read` to decode data as per Bitcoin consensus.
@@ -274,7 +274,10 @@ impl<W: Write + ?Sized> WriteExt for W {
     #[inline]
     fn emit_bool(&mut self, v: bool) -> Result<(), io::Error> { self.write_all(&[v as u8]) }
     #[inline]
-    fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error> { self.write_all(v) }
+    fn emit_slice(&mut self, v: &[u8]) -> Result<usize, io::Error> {
+        self.write_all(v)?;
+        Ok(v.len())
+    }
 }
 
 impl<R: Read + ?Sized> ReadExt for R {
@@ -546,8 +549,7 @@ impl Encodable for String {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len().to_u64()).consensus_encode(w)?;
-        w.emit_slice(b)?;
-        Ok(vi_len + b.len())
+        Ok(vi_len + w.emit_slice(b)?)
     }
 }
 
@@ -564,8 +566,7 @@ impl Encodable for Cow<'static, str> {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len().to_u64()).consensus_encode(w)?;
-        w.emit_slice(b)?;
-        Ok(vi_len + b.len())
+        Ok(vi_len + w.emit_slice(b)?)
     }
 }
 
@@ -586,8 +587,7 @@ macro_rules! impl_array {
                 &self,
                 w: &mut W,
             ) -> core::result::Result<usize, io::Error> {
-                w.emit_slice(&self[..])?;
-                Ok(self.len())
+                Ok(w.emit_slice(&self[..])?)
             }
         }
 
@@ -701,8 +701,7 @@ pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
     w: &mut W,
 ) -> Result<usize, io::Error> {
     let vi_len = VarInt(data.len().to_u64()).consensus_encode(w)?;
-    w.emit_slice(data)?;
-    Ok(vi_len + data.len())
+    Ok(vi_len + w.emit_slice(data)?)
 }
 
 struct ReadBytesFromFiniteReaderOpts {
@@ -779,8 +778,7 @@ impl Encodable for CheckedData {
             .expect("network message use u32 as length")
             .consensus_encode(w)?;
         self.checksum().consensus_encode(w)?;
-        w.emit_slice(&self.data)?;
-        Ok(8 + self.data.len())
+        Ok(8 + w.emit_slice(&self.data)?)
     }
 }
 
