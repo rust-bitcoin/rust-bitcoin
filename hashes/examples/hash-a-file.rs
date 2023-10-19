@@ -2,7 +2,8 @@
 
 use std::io::{self, BufRead};
 
-use bitcoin_hashes::{sha256, Hash as _, HashEngine as _};
+use bitcoin_hashes::prelude::*;
+use bitcoin_hashes::sha256;
 
 const FILE: &str = "a mock text file \n a line of text \n and another one \n";
 

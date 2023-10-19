@@ -106,6 +106,13 @@ pub mod _export {
     }
 }
 
+/// Re-export common traits/types.
+///
+/// Enables downstream users to import with: `use hashes::prelude::*`;
+pub mod prelude {
+    pub use crate::{FromSliceError, Hash as _, HashEngine as _};
+}
+
 #[cfg(feature = "schemars")]
 extern crate schemars;
 
