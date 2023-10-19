@@ -26,10 +26,10 @@ macro_rules! hex_script {
     };
 }
 
-macro_rules! hex_psbt {
-    ($s:expr) => {
-        Psbt::deserialize(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
-    };
+#[track_caller]
+fn hex_psbt(s: &str) -> Psbt {
+    let v: Vec<u8> = Vec::from_hex(s).expect("valid hex digits");
+    Psbt::deserialize(&v).expect("valid magic and valid separators")
 }
 
 #[test]
@@ -206,8 +206,7 @@ fn create_transaction() -> Transaction {
 fn create_psbt(tx: Transaction) -> Psbt {
     // String from BIP 174 test vector.
     let expected_psbt_hex = include_str!("data/create_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
-
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
     let psbt = Psbt::from_unsigned_tx(tx).unwrap();
 
     assert_eq!(psbt, expected_psbt);
@@ -236,7 +235,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     ];
 
     let expected_psbt_hex = include_str!("data/update_1_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let mut input_0 = psbt.inputs[0].clone();
 
@@ -293,7 +292,7 @@ fn bip32_derivation(
 /// Does the second update according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
 fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/update_2_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let ty = PsbtSighashType::from_str("SIGHASH_ALL").unwrap();
 
@@ -333,7 +332,7 @@ fn parse_and_verify_keys(
 /// Does the first signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
 fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_1_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = sign(psbt, key_map);
 
@@ -344,7 +343,7 @@ fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 /// Does the second signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
 fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_2_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = sign(psbt, key_map);
 
@@ -355,7 +354,7 @@ fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 /// Does the combine according to the BIP, returns the combined PSBT. Verifies against BIP 174 test vector.
 fn combine(mut this: Psbt, that: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/combine_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     this.combine(that).expect("failed to combine PSBTs");
 
@@ -367,7 +366,7 @@ fn combine(mut this: Psbt, that: Psbt) -> Psbt {
 /// test vector.
 fn finalize(psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/finalize_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = finalize_psbt(psbt);
 
@@ -394,7 +393,7 @@ fn combine_lexicographically() {
     let psbt_2_hex = include_str!("data/lex_psbt_2_hex");
 
     let expected_psbt_hex = include_str!("data/lex_combine_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let v = Vec::from_hex(psbt_1_hex).unwrap();
     let mut psbt_1 = Psbt::deserialize(&v).expect("failed to deserialize psbt 1");
