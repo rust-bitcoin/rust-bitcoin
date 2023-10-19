@@ -203,7 +203,7 @@ impl Script {
     #[inline]
     pub fn p2pkh_public_key_hash_bytes(&self) -> Option<&[u8]> {
         if self.is_p2pkh() {
-            Some(&self.0[2..22])
+            Some(&self.0[3..23])
         } else {
             None
         }
