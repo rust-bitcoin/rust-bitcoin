@@ -30,7 +30,8 @@ use crate::{Script, VarInt};
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization without the initial varint indicating the
-    /// number of elements (which is stored in `witness_elements`).
+    /// number of elements (which is stored in `witness_elements`) concatenated at the end with a
+    /// 4-byte index for each item within the first part of the content.
     content: Vec<u8>,
 
     /// The number of elements in the witness.
