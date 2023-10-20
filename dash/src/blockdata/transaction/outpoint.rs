@@ -42,7 +42,7 @@ crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txi
 
 impl From<[u8; 36]> for OutPoint {
     fn from(buffer: [u8; 36]) -> Self {
-        let (mut left, right) = buffer.split_at(32);
+        let (left, right) = buffer.split_at(32);
         let index: [u8; 4] = right.try_into().expect("OutPoint vout is not 4 bytes");
         Self {
             txid: deserialize(left).expect("OutPoint txid is not 32 bytes"),
@@ -114,6 +114,30 @@ impl Decodable for OutPoint {
             txid: Decodable::consensus_decode(r)?,
             vout: Decodable::consensus_decode(r)?,
         })
+    }
+}
+
+impl TryInto<[u8; 32]> for OutPoint {
+    type Error = io::Error;
+
+    fn try_into(self) -> Result<[u8; 32], Self::Error> {
+        let mut buffer = [0u8; 32];
+
+        self.consensus_encode(&mut buffer)?;
+
+        Ok(buffer.into_inner())
+    }
+}
+
+impl TryInto<Vec<u8>> for OutPoint {
+    type Error = io::Error;
+
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        let mut buffer = Vec::new();
+
+        self.consensus_encode(&mut buffer)?;
+
+        Ok(buffer)
     }
 }
 
