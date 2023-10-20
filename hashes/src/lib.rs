@@ -78,6 +78,8 @@
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
+// Exclude clippy lints we don't think are valuable
+#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 
 #[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
 extern crate actual_core2 as core2;
