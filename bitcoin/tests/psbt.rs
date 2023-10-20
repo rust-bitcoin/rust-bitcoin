@@ -20,17 +20,14 @@ use bitcoin::{
 
 const NETWORK: Network = Network::Testnet;
 
-macro_rules! hex_script {
-    ($s:expr) => {
-        <ScriptBuf>::from_hex($s).unwrap()
-    };
-}
-
 #[track_caller]
 fn hex_psbt(s: &str) -> Psbt {
     let v: Vec<u8> = Vec::from_hex(s).expect("valid hex digits");
     Psbt::deserialize(&v).expect("valid magic and valid separators")
 }
+
+#[track_caller]
+fn hex_script(s: &str) -> ScriptBuf { ScriptBuf::from_hex(s).expect("valid hex digits") }
 
 #[test]
 fn bip174_psbt_workflow() {
@@ -244,7 +241,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let v = Vec::from_hex(previous_tx_1).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
     input_0.non_witness_utxo = Some(tx);
-    input_0.redeem_script = Some(hex_script!(redeem_script_0));
+    input_0.redeem_script = Some(hex_script(redeem_script_0));
     input_0.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![0, 1]);
 
     let mut input_1 = psbt.inputs[1].clone();
@@ -253,8 +250,8 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let tx: Transaction = deserialize(&v).unwrap();
     input_1.witness_utxo = Some(tx.output[1].clone());
 
-    input_1.redeem_script = Some(hex_script!(redeem_script_1));
-    input_1.witness_script = Some(hex_script!(witness_script));
+    input_1.redeem_script = Some(hex_script(redeem_script_1));
+    input_1.witness_script = Some(hex_script(witness_script));
     input_1.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![2, 3]);
 
     psbt.inputs = vec![input_0, input_1];
