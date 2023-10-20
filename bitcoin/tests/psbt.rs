@@ -203,6 +203,7 @@ fn create_transaction() -> Transaction {
 }
 
 /// Creates the initial PSBT, called by the Creator. Verifies against BIP 174 test vector.
+#[track_caller]
 fn create_psbt(tx: Transaction) -> Psbt {
     // String from BIP 174 test vector.
     let expected_psbt_hex = include_str!("data/create_psbt_hex");
@@ -214,6 +215,7 @@ fn create_psbt(tx: Transaction) -> Psbt {
 }
 
 /// Updates `psbt` according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     // Strings from BIP 174 test vector.
     let previous_tx_0 = include_str!("data/previous_tx_0_hex");
@@ -290,6 +292,7 @@ fn bip32_derivation(
 }
 
 /// Does the second update according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/update_2_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
@@ -330,6 +333,7 @@ fn parse_and_verify_keys(
 }
 
 /// Does the first signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_1_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
@@ -341,6 +345,7 @@ fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the second signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_2_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
@@ -352,6 +357,7 @@ fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the combine according to the BIP, returns the combined PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn combine(mut this: Psbt, that: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/combine_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
@@ -364,6 +370,7 @@ fn combine(mut this: Psbt, that: Psbt) -> Psbt {
 
 /// Does the finalize step according to the BIP, returns the combined PSBT. Verifies against BIP 174
 /// test vector.
+#[track_caller]
 fn finalize(psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/finalize_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
@@ -388,6 +395,7 @@ fn extract_transaction(psbt: Psbt) -> Transaction {
 }
 
 /// Combines two PSBTs lexicographically according to the BIP. Verifies against BIP 174 test vector.
+#[track_caller]
 fn combine_lexicographically() {
     let psbt_1_hex = include_str!("data/lex_psbt_1_hex");
     let psbt_2_hex = include_str!("data/lex_psbt_2_hex");
