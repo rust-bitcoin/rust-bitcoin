@@ -117,11 +117,11 @@ impl Decodable for OutPoint {
     }
 }
 
-impl TryInto<[u8; 32]> for OutPoint {
+impl TryInto<[u8; 36]> for OutPoint {
     type Error = io::Error;
 
-    fn try_into(self) -> Result<[u8; 32], Self::Error> {
-        let mut buffer = [0u8; 32];
+    fn try_into(self) -> Result<[u8; 36], Self::Error> {
+        let mut buffer = io::Cursor::new([0u8; 36]);
 
         self.consensus_encode(&mut buffer)?;
 
