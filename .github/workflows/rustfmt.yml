@@ -1,0 +1,26 @@
+name: Nightly rustfmt
+on:
+  schedule:
+    - cron: "0 0 * * 0" # runs weekly on Sunday at 00:00
+  workflow_dispatch: # allows manual triggering
+jobs:
+  format:
+    name: Nightly rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - name: Run Nightly rustfmt
+        run: cargo +nightly fmt
+      - name: Get the current date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: Automated nightly rustfmt (${{ env.date }})
+          body: |
+           Automated nightly `rustfmt` changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+          commit-message: ${{ env.date }} automated rustfmt nightly 
+          labels: rustfmt
