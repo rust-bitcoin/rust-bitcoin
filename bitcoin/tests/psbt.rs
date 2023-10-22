@@ -20,17 +20,14 @@ use bitcoin::{
 
 const NETWORK: Network = Network::Testnet;
 
-macro_rules! hex_script {
-    ($s:expr) => {
-        <ScriptBuf>::from_hex($s).unwrap()
-    };
+#[track_caller]
+fn hex_psbt(s: &str) -> Psbt {
+    let v: Vec<u8> = Vec::from_hex(s).expect("valid hex digits");
+    Psbt::deserialize(&v).expect("valid magic and valid separators")
 }
 
-macro_rules! hex_psbt {
-    ($s:expr) => {
-        Psbt::deserialize(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
-    };
-}
+#[track_caller]
+fn hex_script(s: &str) -> ScriptBuf { ScriptBuf::from_hex(s).expect("valid hex digits") }
 
 #[test]
 fn bip174_psbt_workflow() {
@@ -203,11 +200,11 @@ fn create_transaction() -> Transaction {
 }
 
 /// Creates the initial PSBT, called by the Creator. Verifies against BIP 174 test vector.
+#[track_caller]
 fn create_psbt(tx: Transaction) -> Psbt {
     // String from BIP 174 test vector.
     let expected_psbt_hex = include_str!("data/create_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
-
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
     let psbt = Psbt::from_unsigned_tx(tx).unwrap();
 
     assert_eq!(psbt, expected_psbt);
@@ -215,6 +212,7 @@ fn create_psbt(tx: Transaction) -> Psbt {
 }
 
 /// Updates `psbt` according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     // Strings from BIP 174 test vector.
     let previous_tx_0 = include_str!("data/previous_tx_0_hex");
@@ -236,14 +234,14 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     ];
 
     let expected_psbt_hex = include_str!("data/update_1_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let mut input_0 = psbt.inputs[0].clone();
 
     let v = Vec::from_hex(previous_tx_1).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
     input_0.non_witness_utxo = Some(tx);
-    input_0.redeem_script = Some(hex_script!(redeem_script_0));
+    input_0.redeem_script = Some(hex_script(redeem_script_0));
     input_0.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![0, 1]);
 
     let mut input_1 = psbt.inputs[1].clone();
@@ -252,8 +250,8 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let tx: Transaction = deserialize(&v).unwrap();
     input_1.witness_utxo = Some(tx.output[1].clone());
 
-    input_1.redeem_script = Some(hex_script!(redeem_script_1));
-    input_1.witness_script = Some(hex_script!(witness_script));
+    input_1.redeem_script = Some(hex_script(redeem_script_1));
+    input_1.witness_script = Some(hex_script(witness_script));
     input_1.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![2, 3]);
 
     psbt.inputs = vec![input_0, input_1];
@@ -291,9 +289,10 @@ fn bip32_derivation(
 }
 
 /// Does the second update according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/update_2_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let ty = PsbtSighashType::from_str("SIGHASH_ALL").unwrap();
 
@@ -331,9 +330,10 @@ fn parse_and_verify_keys(
 }
 
 /// Does the first signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_1_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = sign(psbt, key_map);
 
@@ -342,9 +342,10 @@ fn signer_one_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the second signing according to the BIP, returns the signed PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt {
     let expected_psbt_hex = include_str!("data/sign_2_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = sign(psbt, key_map);
 
@@ -353,9 +354,10 @@ fn signer_two_sign(psbt: Psbt, key_map: BTreeMap<bitcoin::PublicKey, PrivateKey>
 }
 
 /// Does the combine according to the BIP, returns the combined PSBT. Verifies against BIP 174 test vector.
+#[track_caller]
 fn combine(mut this: Psbt, that: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/combine_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     this.combine(that).expect("failed to combine PSBTs");
 
@@ -365,9 +367,10 @@ fn combine(mut this: Psbt, that: Psbt) -> Psbt {
 
 /// Does the finalize step according to the BIP, returns the combined PSBT. Verifies against BIP 174
 /// test vector.
+#[track_caller]
 fn finalize(psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/finalize_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let psbt = finalize_psbt(psbt);
 
@@ -389,12 +392,13 @@ fn extract_transaction(psbt: Psbt) -> Transaction {
 }
 
 /// Combines two PSBTs lexicographically according to the BIP. Verifies against BIP 174 test vector.
+#[track_caller]
 fn combine_lexicographically() {
     let psbt_1_hex = include_str!("data/lex_psbt_1_hex");
     let psbt_2_hex = include_str!("data/lex_psbt_2_hex");
 
     let expected_psbt_hex = include_str!("data/lex_combine_psbt_hex");
-    let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
     let v = Vec::from_hex(psbt_1_hex).unwrap();
     let mut psbt_1 = Psbt::deserialize(&v).expect("failed to deserialize psbt 1");
