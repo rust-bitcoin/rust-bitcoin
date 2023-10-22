@@ -138,6 +138,18 @@ NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
 is necessary to support current MSRV, incompatible with `stable` and newer cargo
 versions.
 
+### Deprecation and Versioning
+
+Whenever any part of your code wants to mention the version number the code will
+be released in, primarily in deprecation notices, you should use the string
+`NEXT_RELEASE` (verbatim), so that the release preparation script can detect the
+change and the correct version number can be filled in in preparation of the
+release.
+
+```rust
+    #[deprecated(since = "NEXT_RELEASE", note = "use alternative_method() instead")]
+```
+
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
