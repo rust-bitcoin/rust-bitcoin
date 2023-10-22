@@ -125,6 +125,18 @@ adhere to the ideas presented in the following two blog posts:
 - [How to Write a Git Commit Message](https://cbea.ms/git-commit/)
 - [Write Better Commits, Build Better Projects](https://github.blog/2022-06-30-write-better-commits-build-better-projects/)
 
+### Deprecation and Versioning
+
+Whenever any part of your code wants to mention the version number the code will
+be released in, primarily in deprecation notices, you should use the string
+`TBD` (verbatim), so that the release preparation script can detect the
+change and the correct version number can be filled in in preparation of the
+release.
+
+```rust
+    #[deprecated(since = "TBD", note = "use `alternative_method()` instead")]
+```
+
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
