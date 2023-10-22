@@ -195,12 +195,6 @@ any of the following conditions:
 
 Library reflects Bitcoin Core approach whenever possible.
 
-### Formatting
-
-The repository currently uses `rustfmt` (WIP, some directories are excluded). We use nightly
-features so to run the formatter use `cargo +nightly fmt`. (Remember that your editor may be
-configured to fmt with a stable toolchain, this will result in many unwanted changes.)
-
 ### Naming conventions
 
 Naming of data structures/enums and their fields/variants must follow names used
