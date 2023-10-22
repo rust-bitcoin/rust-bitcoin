@@ -93,7 +93,6 @@ impl crate::HashEngine for HashEngine {
 #[cfg(feature = "small-hash")]
 #[macro_use]
 mod small_hash {
-    #[rustfmt::skip]
     pub(super) fn round(a: u32, _b: u32, c: u32, _d: u32, e: u32,
                         x: u32, bits: u32, add: u32, round: u32,
     ) -> (u32, u32) {
@@ -424,7 +423,6 @@ mod tests {
             output_str: &'static str,
         }
 
-        #[rustfmt::skip]
         let tests = vec![
             // Test messages from FIPS 180-1
             Test {
@@ -512,7 +510,6 @@ mod tests {
 
         use crate::{ripemd160, Hash};
 
-        #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [
             0x13, 0x20, 0x72, 0xdf,
             0x69, 0x09, 0x33, 0x83,

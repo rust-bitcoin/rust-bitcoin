@@ -605,7 +605,6 @@ pub type SigningKeys = BTreeMap<usize, Vec<PublicKey>>;
 /// Map of input index -> the error encountered while attempting to sign that input.
 pub type SigningErrors = BTreeMap<usize, SignError>;
 
-#[rustfmt::skip]
 macro_rules! impl_get_key_for_set {
     ($set:ident) => {
 
@@ -635,7 +634,6 @@ impl_get_key_for_set!(BTreeSet);
 #[cfg(feature = "std")]
 impl_get_key_for_set!(HashSet);
 
-#[rustfmt::skip]
 macro_rules! impl_get_key_for_map {
     ($map:ident) => {
 

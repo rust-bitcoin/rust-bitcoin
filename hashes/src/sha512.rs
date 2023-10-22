@@ -23,7 +23,6 @@ pub struct HashEngine {
 }
 
 impl Default for HashEngine {
-    #[rustfmt::skip]
     fn default() -> Self {
         HashEngine {
             h: [
@@ -38,7 +37,6 @@ impl Default for HashEngine {
 
 impl HashEngine {
     /// Constructs a hash engine suitable for use inside the default `sha512_256::HashEngine`.
-    #[rustfmt::skip]
     pub(crate) fn sha512_256() -> Self {
         HashEngine {
             h: [
@@ -139,7 +137,6 @@ fn sigma1(x: u64) -> u64 { x.rotate_left(45) ^ x.rotate_left(3) ^ (x >> 6) }
 mod small_hash {
     use super::*;
 
-    #[rustfmt::skip]
     pub(super) fn round(a: u64, b: u64, c: u64, d: &mut u64, e: u64,
                         f: u64, g: u64, h: &mut u64, k: u64, w: u64,
     ) {
@@ -149,7 +146,6 @@ mod small_hash {
         *d = d.wrapping_add(t1);
         *h = t1.wrapping_add(t2);
     }
-    #[rustfmt::skip]
     pub(super) fn later_round(a: u64, b: u64, c: u64, d: &mut u64, e: u64,
                               f: u64, g: u64, h: &mut u64, k: u64, w: u64,
                               w1: u64, w2: u64, w3: u64,
@@ -319,7 +315,6 @@ mod tests {
             output_str: &'static str,
         }
 
-        #[rustfmt::skip]
         let tests = vec![
             // Test vectors computed with `sha512sum`
             Test {
@@ -391,7 +386,6 @@ mod tests {
 
         use crate::{sha512, Hash};
 
-        #[rustfmt::skip]
         static HASH_BYTES: [u8; 64] = [
             0x8b, 0x41, 0xe1, 0xb7, 0x8a, 0xd1, 0x15, 0x21,
             0x11, 0x3c, 0x52, 0xff, 0x18, 0x2a, 0x1b, 0x8e,

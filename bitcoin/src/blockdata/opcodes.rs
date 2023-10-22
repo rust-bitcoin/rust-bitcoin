@@ -361,7 +361,6 @@ impl Opcode {
             (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
 
             // 15 opcodes illegal in Legacy context
-            #[rustfmt::skip]
             (OP_CAT, ctx) | (OP_SUBSTR, ctx)
             | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
             | (OP_INVERT, ctx)

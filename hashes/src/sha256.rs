@@ -206,7 +206,6 @@ const fn sigma1(x: u32) -> u32 { x.rotate_left(15) ^ x.rotate_left(13) ^ (x >> 1
 mod small_hash {
     use super::*;
 
-    #[rustfmt::skip]
     pub(super) const fn round(a: u32, b: u32, c: u32, d: u32, e: u32,
                               f: u32, g: u32, h: u32, k: u32, w: u32) -> (u32, u32) {
         let t1 =
@@ -214,7 +213,6 @@ mod small_hash {
         let t2 = Sigma0(a).wrapping_add(Maj(a, b, c));
         (d.wrapping_add(t1), t1.wrapping_add(t2))
     }
-    #[rustfmt::skip]
     pub(super) const fn later_round(a: u32, b: u32, c: u32, d: u32, e: u32,
                                     f: u32, g: u32, h: u32, k: u32, w: u32,
                                     w1: u32, w2: u32, w3: u32,
@@ -831,7 +829,6 @@ mod tests {
             output_str: &'static str,
         }
 
-        #[rustfmt::skip]
         let tests = vec![
             // Examples from wikipedia
             Test {
@@ -885,7 +882,6 @@ mod tests {
     }
 
     #[test]
-    #[rustfmt::skip]
     fn midstate() {
         // Test vector obtained by doing an asset issuance on Elements
         let mut engine = sha256::Hash::engine();
@@ -944,14 +940,12 @@ mod tests {
         // Test that a specific midstate results in a specific hash. Midstate was
         // obtained by applying sha256 to sha256("MuSig coefficient")||sha256("MuSig
         // coefficient").
-        #[rustfmt::skip]
         static MIDSTATE: [u8; 32] = [
             0x0f, 0xd0, 0x69, 0x0c, 0xfe, 0xfe, 0xae, 0x97,
             0x99, 0x6e, 0xac, 0x7f, 0x5c, 0x30, 0xd8, 0x64,
             0x8c, 0x4a, 0x05, 0x73, 0xac, 0xa1, 0xa2, 0x2f,
             0x6f, 0x43, 0xb8, 0x01, 0x85, 0xce, 0x27, 0xcd,
         ];
-        #[rustfmt::skip]
         static HASH_EXPECTED: [u8; 32] = [
             0x18, 0x84, 0xe4, 0x72, 0x40, 0x4e, 0xf4, 0x5a,
             0xb4, 0x9c, 0x4e, 0xa4, 0x9a, 0xe6, 0x23, 0xa8,
@@ -998,7 +992,6 @@ mod tests {
     fn sha256_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
-        #[rustfmt::skip]
         static HASH_BYTES: [u8; 32] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7,
             0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6, 0x3d, 0x97,

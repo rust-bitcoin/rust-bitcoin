@@ -43,7 +43,6 @@ mod tests {
             output_str: &'static str,
         }
 
-        #[rustfmt::skip]
         let tests = vec![
             // Test vector copied out of rust-bitcoin
             Test {
@@ -89,7 +88,6 @@ mod tests {
 
         use crate::{sha256d, Hash};
 
-        #[rustfmt::skip]
         static HASH_BYTES: [u8; 32] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7,
             0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6, 0x3d, 0x97,
