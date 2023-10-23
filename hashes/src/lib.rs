@@ -142,6 +142,7 @@ use std::io;
 
 #[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
 use core2::io;
+#[doc(inline)]
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
