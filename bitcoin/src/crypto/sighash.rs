@@ -1237,7 +1237,6 @@ impl<E> EncodeSigningDataResult<E> {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
     /// }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // E is not Copy so we consume self.
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {
         match self {
             EncodeSigningDataResult::SighashSingleBug => Ok(true),
