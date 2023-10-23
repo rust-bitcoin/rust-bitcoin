@@ -66,7 +66,6 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 ///     _ => panic!("handle invalid comparison error"),
 /// };
 /// ```
-#[allow(clippy::derive_ord_xor_partial_ord)]
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockTime {
     /// A block height lock time value.
