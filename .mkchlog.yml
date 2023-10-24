@@ -1,0 +1,23 @@
+# mkchlog was introduced after this commit
+skip-commits-up-to: 1eb6e0c7d85fbc5e3f265de069b91be2cb722359
+
+sections:
+    security:
+        title: Security
+        description: This section contains very important security-related changes.
+        subsections:
+            vuln_fixes:
+                title: Fixed vulnerabilities
+    breaking:
+        title: Breaking changes
+    feat:
+        title: New features
+    bug:
+        title: Fixed bugs
+    perf:
+        title: Performance improvements
+    doc:
+        title: Documentation changes
+    dev:
+        title: Development
+        description: Internal development changes

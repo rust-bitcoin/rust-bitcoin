@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - master
+      - 'test-ci/**'
+  pull_request:
+
+name: Check changelog
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # This is critically important!
+          # The action won't work without this
+          fetch-depth: 0
+      - name: Check commits
+        uses: Kixunil/mkchlog-action@master
