@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::iter::FromIterator;
+
 fn main() {
     let rustc = std::env::var_os("RUSTC");
     let rustc = rustc.as_ref().map(std::path::Path::new).unwrap_or_else(|| "rustc".as_ref());
@@ -21,10 +24,37 @@ fn main() {
     let minor = version_components
         .next()
         .unwrap_or("0")
-        .parse::<u64>()
+        .parse::<usize>()
         .expect("invalid Rust minor version");
 
-    for version in &[53, 55, 60] {
+    let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR");
+    let manifest_dir = manifest_dir.as_ref().map(std::path::Path::new).unwrap();
+    let parent = manifest_dir.parent().unwrap();
+
+    assert!(std::env::set_current_dir(parent).is_ok());
+    let git_grep = std::process::Command::new("git")
+        .arg("grep")
+        .arg("rust_v_1_")
+        .output()
+        .unwrap_or_else(|_| panic!("Failed to run `git grep rust_v_1_`"));
+
+    let stdout: String =
+        String::from_utf8(git_grep.stdout).expect("git grep produced non-UTF-8 output");
+
+    let locations: Vec<_> = stdout.rmatch_indices("rust_v_1").collect();
+    let z = locations
+        .iter()
+        .map(|(i, _)| &stdout[i + 9..i + 11])
+        .map(|minor| minor.parse::<usize>().unwrap_or(0))
+        .filter(|&minor| minor != 0);
+    let set: HashSet<usize> = HashSet::from_iter(z);
+    let mut included_versions: Vec<_> = set.into_iter().collect();
+    included_versions.sort();
+
+    let versions = vec![53, 55, 60];
+    assert_eq!(versions, included_versions, "Unexpected version");
+
+    for version in &versions {
         if *version <= minor {
             println!("cargo:rustc-cfg=rust_v_1_{}", version);
         }
