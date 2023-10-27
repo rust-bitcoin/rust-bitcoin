@@ -35,7 +35,8 @@
   - Add `Script::is_mulitsig` [#2078](https://github.com/rust-bitcoin/rust-bitcoin/pull/2078)
   - Count sigops for `Transaction` [#2073](https://github.com/rust-bitcoin/rust-bitcoin/pull/2073)
   - Add `Psbt` fee checks [#2064](https://github.com/rust-bitcoin/rust-bitcoin/pull/2064)
-  - Add `transaction::Version` data type [2006] [#2020](https://github.com/rust-bitcoin/rust-bitcoin/pull/2020)
+  - Add version bytes consts [#2020](https://github.com/rust-bitcoin/rust-bitcoin/pull/2020)
+  - Add `transaction::Version` data type [#2006](https://github.com/rust-bitcoin/rust-bitcoin/pull/2006)
 
 - Moves, Removes, and renames:
   - Move witness types to the script module [#1846](https://github.com/rust-bitcoin/rust-bitcoin/pull/1846)
