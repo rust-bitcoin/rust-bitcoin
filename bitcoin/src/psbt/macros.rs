@@ -1,60 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 #[allow(unused_macros)]
-macro_rules! hex_psbt {
-    ($s:expr) => {
-        <$crate::psbt::Psbt>::deserialize(
-            &<$crate::prelude::Vec<u8> as $crate::hex::FromHex>::from_hex($s).unwrap(),
-        )
-    };
-}
-
-#[cfg(test)]
-macro_rules! psbt_with_values {
-    ($input:expr, $output:expr) => {
-        Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
-                lock_time: absolute::LockTime::ZERO,
-                input: vec![TxIn {
-                    previous_output: OutPoint {
-                        txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126"
-                            .parse()
-                            .unwrap(),
-                        vout: 0,
-                    },
-                    script_sig: ScriptBuf::new(),
-                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                    witness: Witness::default(),
-                }],
-                output: vec![TxOut {
-                    value: Amount::from_sat($output),
-                    script_pubkey: ScriptBuf::from_hex(
-                        "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
-                    )
-                    .unwrap(),
-                }],
-            },
-            xpub: Default::default(),
-            version: 0,
-            proprietary: BTreeMap::new(),
-            unknown: BTreeMap::new(),
-
-            inputs: vec![Input {
-                witness_utxo: Some(TxOut {
-                    value: Amount::from_sat($input),
-                    script_pubkey: ScriptBuf::from_hex(
-                        "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
-                    )
-                    .unwrap(),
-                }),
-                ..Default::default()
-            }],
-            outputs: vec![],
-        }
-    };
-}
-
 macro_rules! combine {
     ($thing:ident, $slf:ident, $other:ident) => {
         if let (&None, Some($thing)) = (&$slf.$thing, $other.$thing) {
