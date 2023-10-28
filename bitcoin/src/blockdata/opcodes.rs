@@ -30,7 +30,7 @@ use crate::prelude::*;
 /// </details>
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Opcode {
-    code: u8,
+    pub(crate) code: u8,
 }
 
 pub use self::all::*;
