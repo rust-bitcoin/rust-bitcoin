@@ -10,7 +10,8 @@ use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
-    opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
+    opcode_to_verify, parse_asm, Builder, Instruction, ParseAsmError, PushBytes, Script,
+    ScriptHash, WScriptHash,
 };
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -193,6 +194,15 @@ impl ScriptBuf {
     ///
     /// This method doesn't (re)allocate.
     pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
+
+    /// Parse a Script in ASM format.
+    ///
+    /// NOTE: Receiving an [Ok] result from this function **ONLY** means that
+    /// our script interpreter could interpret the script, but it gives **no
+    /// guarantees** on the validity of the resulting script.
+    pub fn parse_asm(asm: &str) -> Result<Self, ParseAsmError> {
+        parse_asm(asm)
+    }
 
     /// Converts the script into a byte vector.
     ///
