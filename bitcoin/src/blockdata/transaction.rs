@@ -349,9 +349,9 @@ impl Sequence {
     /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki]>
     const MIN_NO_RBF: Self = Sequence(0xFFFFFFFE);
     /// BIP-68 relative lock time disable flag mask.
-    const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x80000000;
+    pub(crate) const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x80000000;
     /// BIP-68 relative lock time type flag mask.
-    const LOCK_TYPE_MASK: u32 = 0x00400000;
+    pub(crate) const LOCK_TYPE_MASK: u32 = 0x00400000;
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
