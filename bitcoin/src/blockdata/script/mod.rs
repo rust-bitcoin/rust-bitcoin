@@ -699,11 +699,11 @@ pub enum AsmParseErrorKind {
 /// Error from parsing Script ASM.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseAsmError {
-    /// The index of the instruction causing the error.
+    /// The position of the instruction that caused the error.
     ///
-    /// This index is counted from 0 and incremented after
+    /// The value is (line, word) with word incremented after
     /// every chunk of whitespace.
-    pub index: usize,
+    pub position: (usize, usize),
 
     /// The kind of error that occurred.
     pub kind: AsmParseErrorKind,
@@ -726,18 +726,30 @@ fn try_parse_raw_hex(hex: &str, buf: &mut Vec<u8>) -> bool {
     true
 }
 
+/// Create an iterator over instruction words and their position in the file.
+fn iter_words(asm: &str) -> impl Iterator<Item = ((usize, usize), &str)> {
+    asm.lines().enumerate().flat_map(|(line_idx, line)| {
+        // We use an ugly trick with take_while to skip comment lines so
+        // that we don't have to Box the iterators.
+        let skip = line.starts_with("#") || line.starts_with("//");
+        line.split_whitespace().enumerate().take_while(move |_| !skip).map(move |(word_idx, word)| {
+            ((line_idx, word_idx), word)
+        })
+    })
+}
+
 /// Parse a Script in ASM format.
 pub(super) fn parse_asm(asm: &str) -> Result<ScriptBuf, ParseAsmError> {
     use std::convert::TryFrom;
 
-    fn err(index: usize, kind: AsmParseErrorKind) -> ParseAsmError {
-        ParseAsmError { index, kind }
+    fn err(position: (usize, usize), kind: AsmParseErrorKind) -> ParseAsmError {
+        ParseAsmError { position, kind }
     }
 
     let mut buf = Vec::with_capacity(65);
     let mut builder = Builder::new();
-    let mut words = asm.split_whitespace().enumerate();
-    while let Some((idx, mut word)) = words.next() {
+    let mut words = iter_words(asm);
+    while let Some((pos, mut word)) = words.next() {
         // We have this special case in our formatter.
         if word == "OP_0" {
             builder = builder.push_opcode(OP_PUSHBYTES_0);
@@ -747,9 +759,9 @@ pub(super) fn parse_asm(asm: &str) -> Result<ScriptBuf, ParseAsmError> {
         if let Ok(op) = Opcode::from_str(word) {
             // check for push opcodes
             if op.code <= OP_PUSHDATA4.code {
-                let (_, push) = words.next().ok_or(err(idx+1, AsmParseErrorKind::UnexpectedEOF))?;
+                let (next, push) = words.next().ok_or(err(pos, AsmParseErrorKind::UnexpectedEOF))?;
                 if !try_parse_raw_hex(push, &mut buf) {
-                    return Err(err(idx+1, AsmParseErrorKind::InvalidHex));
+                    return Err(err(next, AsmParseErrorKind::InvalidHex));
                 }
 
                 // NB our API doesn't actually allow us to make byte pushes with
@@ -768,14 +780,14 @@ pub(super) fn parse_asm(asm: &str) -> Result<ScriptBuf, ParseAsmError> {
                     n if n < 0x100000000 => {
                         opcodes::OP_PUSHDATA4
                     }
-                    _ => return Err(err(idx+1, AsmParseErrorKind::PushExceedsMaxSize)),
+                    _ => return Err(err(next, AsmParseErrorKind::PushExceedsMaxSize)),
                 };
                 if op != expected_push_op {
-                    return Err(err(idx, AsmParseErrorKind::NonMinimalBytePush));
+                    return Err(err(pos, AsmParseErrorKind::NonMinimalBytePush));
                 }
 
                 let push = <&PushBytes>::try_from(&buf[..])
-                    .map_err(|_| err(idx+1, AsmParseErrorKind::PushExceedsMaxSize))?;
+                    .map_err(|_| err(next, AsmParseErrorKind::PushExceedsMaxSize))?;
                 builder = builder.push_slice(push);
             } else {
                 builder = builder.push_opcode(op);
@@ -802,10 +814,10 @@ pub(super) fn parse_asm(asm: &str) -> Result<ScriptBuf, ParseAsmError> {
 
         if try_parse_raw_hex(word, &mut buf) {
             let push = <&PushBytes>::try_from(&buf[..])
-                .map_err(|_| err(idx, AsmParseErrorKind::PushExceedsMaxSize))?;
+                .map_err(|_| err(pos, AsmParseErrorKind::PushExceedsMaxSize))?;
             builder = builder.push_slice(push);
         } else {
-            return Err(err(idx, AsmParseErrorKind::UnknownInstruction));
+            return Err(err(pos, AsmParseErrorKind::UnknownInstruction));
         }
     }
 
