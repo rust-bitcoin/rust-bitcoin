@@ -36,7 +36,7 @@ pub struct Opcode {
     code: u8,
 }
 
-use self::all::*;
+pub use self::all::*;
 
 macro_rules! all_opcodes {
     ($($op:ident => $val:expr, $doc:expr);*) => {
