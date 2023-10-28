@@ -57,6 +57,10 @@ name = "bitcoin_outpoint_string"
 path = "fuzz_targets/bitcoin/outpoint_string.rs"
 
 [[bin]]
+name = "bitcoin_script_asm_roundtrip"
+path = "fuzz_targets/bitcoin/script_asm_roundtrip.rs"
+
+[[bin]]
 name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 
