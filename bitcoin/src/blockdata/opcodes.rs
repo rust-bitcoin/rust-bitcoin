@@ -9,7 +9,7 @@
 #![allow(non_camel_case_types)]
 
 use core::convert::From;
-use core::fmt;
+use core::{fmt, str};
 
 use internals::debug_from_display;
 #[cfg(feature = "serde")]
@@ -73,6 +73,19 @@ macro_rules! all_opcodes {
                         $op => fmt::Display::fmt(stringify!($op), f),
                     )+
                 }
+            }
+        }
+
+        impl str::FromStr for Opcode {
+            type Err = ();
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                $(
+                    // NB all opcodes begin with OP_
+                    if s == stringify!($op) || s == &stringify!($op)[3..] {
+                        return Ok($op);
+                    }
+                )+
+                Err(())
             }
         }
     }
