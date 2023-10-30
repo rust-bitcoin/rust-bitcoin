@@ -4,16 +4,22 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+mod error;
+
 use core::str::FromStr;
 use core::{fmt, iter};
 
 use hex::FromHex;
-use internals::write_err;
 use io::Write;
+use secp256k1;
 
 use crate::prelude::*;
 use crate::script::PushBytes;
-use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
+use crate::sighash::EcdsaSighashType;
+
+#[rustfmt::skip]
+#[doc(inline)]
+pub use self::error::Error;
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -201,78 +207,4 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter { (*self).iter() }
-}
-
-/// An ECDSA signature-related error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Hex decoding error.
-    Hex(hex::HexToBytesError),
-    /// Non-standard sighash type.
-    SighashType(NonStandardSighashTypeError),
-    /// Signature was empty.
-    EmptySignature,
-    /// A secp256k1 error.
-    Secp256k1(secp256k1::Error),
-}
-
-internals::impl_from_infallible!(Error);
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
-            SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
-            EmptySignature => write!(f, "empty ECDSA signature"),
-            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            Hex(ref e) => Some(e),
-            Secp256k1(ref e) => Some(e),
-            SighashType(ref e) => Some(e),
-            EmptySignature => None,
-        }
-    }
-}
-
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
-}
-
-impl From<NonStandardSighashTypeError> for Error {
-    fn from(e: NonStandardSighashTypeError) -> Self { Self::SighashType(e) }
-}
-
-impl From<hex::HexToBytesError> for Error {
-    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn write_serialized_signature() {
-        let hex = "3046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab45";
-        let sig = Signature {
-            signature: secp256k1::ecdsa::Signature::from_str(hex).unwrap(),
-            sighash_type: EcdsaSighashType::All,
-        };
-
-        let mut buf = vec![];
-        sig.serialize_to_writer(&mut buf).expect("write failed");
-
-        assert_eq!(sig.to_vec(), buf)
-    }
 }
