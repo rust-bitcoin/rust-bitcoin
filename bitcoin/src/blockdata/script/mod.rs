@@ -85,6 +85,9 @@ pub use self::{
     push_bytes::*,
 };
 
+/// The default maximum size of scriptints.
+const DEFAULT_MAX_SCRIPTINT_SIZE: usize = 4;
+
 hashes::hash_newtype! {
     /// A hash of Bitcoin Script bytecode.
     pub struct ScriptHash(hash160::Hash);
@@ -156,6 +159,13 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     len
 }
 
+/// Returns minimally encoded scriptint as a byte vector.
+pub fn scriptint_vec(n: i64) -> Vec<u8> {
+    let mut buf = [0u8; 8];
+    let len = write_scriptint(&mut buf, n);
+    buf[0..len].to_vec()
+}
+
 /// Decodes an integer in script(minimal CScriptNum) format.
 ///
 /// Notice that this fails on overflow: the result is the same as in
@@ -174,30 +184,7 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 ///
 /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
-    let last = match v.last() {
-        Some(last) => last,
-        None => return Ok(0),
-    };
-    if v.len() > 4 {
-        return Err(Error::NumericOverflow);
-    }
-    // Comment and code copied from Bitcoin Core:
-    // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
-    // If the most-significant-byte - excluding the sign bit - is zero
-    // then we're not minimal. Note how this test also rejects the
-    // negative-zero encoding, 0x80.
-    if (*last & 0x7f) == 0 {
-        // One exception: if there's more than one byte and the most
-        // significant bit of the second-most-significant-byte is set
-        // it would conflict with the sign bit. An example of this case
-        // is +-255, which encode to 0xff00 and 0xff80 respectively.
-        // (big-endian).
-        if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
-            return Err(Error::NonMinimalPush);
-        }
-    }
-
-    Ok(scriptint_parse(v))
+    read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, true)
 }
 
 /// Decodes an integer in script format without non-minimal error.
@@ -206,11 +193,46 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// See [`read_scriptint`] for a description of some subtleties of
 /// this function.
 pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
+    read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, false)
+}
+
+/// Decodes an interger in script format with flexible size limit.
+///
+/// Note that in the majority of cases, you will want to use either
+/// [read_scriptint] or [read_scriptint_non_minimal] instead.
+///
+/// Panics if max_size exceeds 8.
+pub fn read_scriptint_size(v: &[u8], max_size: usize, minimal: bool) -> Result<i64, Error> {
+    assert!(max_size <= 8);
+
+    if v.len() > max_size {
+        return Err(Error::NumericOverflow);
+    }
+
     if v.is_empty() {
         return Ok(0);
     }
-    if v.len() > 4 {
-        return Err(Error::NumericOverflow);
+
+    if minimal {
+        let last = match v.last() {
+            Some(last) => last,
+            None => return Ok(0),
+        };
+        // Comment and code copied from Bitcoin Core:
+        // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
+        // If the most-significant-byte - excluding the sign bit - is zero
+        // then we're not minimal. Note how this test also rejects the
+        // negative-zero encoding, 0x80.
+        if (*last & 0x7f) == 0 {
+            // One exception: if there's more than one byte and the most
+            // significant bit of the second-most-significant-byte is set
+            // it would conflict with the sign bit. An example of this case
+            // is +-255, which encode to 0xff00 and 0xff80 respectively.
+            // (big-endian).
+            if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
+                return Err(Error::NonMinimalPush);
+            }
+        }
     }
 
     Ok(scriptint_parse(v))
