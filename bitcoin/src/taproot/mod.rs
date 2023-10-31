@@ -1973,7 +1973,7 @@ mod test {
     }
 
     fn bip_341_read_json() -> serde_json::Value {
-        let json_str = include_str!("../tests/data/bip341_tests.json");
+        let json_str = include_str!("../../tests/data/bip341_tests.json");
         serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }
