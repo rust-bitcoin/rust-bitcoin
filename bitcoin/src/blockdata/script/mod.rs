@@ -729,10 +729,8 @@ fn try_parse_raw_hex(hex: &str, buf: &mut Vec<u8>) -> bool {
 /// Create an iterator over instruction words and their position in the file.
 fn iter_words(asm: &str) -> impl Iterator<Item = ((usize, usize), &str)> {
     asm.lines().enumerate().flat_map(|(line_idx, line)| {
-        // We use an ugly trick with take_while to skip comment lines so
-        // that we don't have to Box the iterators.
-        let skip = line.starts_with("#") || line.starts_with("//");
-        line.split_whitespace().enumerate().take_while(move |_| !skip).map(move |(word_idx, word)| {
+        let content = line.splitn(2, "#").next().unwrap().splitn(2, "//").next().unwrap();
+        content.split_whitespace().enumerate().map(move |(word_idx, word)| {
             ((line_idx, word_idx), word)
         })
     })
