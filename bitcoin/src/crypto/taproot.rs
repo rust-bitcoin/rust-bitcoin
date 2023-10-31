@@ -8,7 +8,6 @@
 use core::fmt;
 
 use internals::write_err;
-pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::prelude::*;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
