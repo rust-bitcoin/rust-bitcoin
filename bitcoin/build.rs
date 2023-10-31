@@ -1,10 +1,13 @@
+const MSRV_MINOR: u64 = 48;
+
 fn main() {
-    let rustc = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
+    let rustc = std::env::var_os("RUSTC");
+    let rustc = rustc.as_ref().map(std::path::Path::new).unwrap_or_else(|| "rustc".as_ref());
     let output = std::process::Command::new(rustc)
         .arg("--version")
         .output()
-        .expect("Failed to run rustc --version");
-    assert!(output.status.success(), "Failed to get rust version");
+        .unwrap_or_else(|error| panic!("Failed to run `{:?} --version`: {:?}", rustc, error));
+    assert!(output.status.success(), "{:?} -- version returned non-zero exit code", rustc);
     let stdout = String::from_utf8(output.stdout).expect("rustc produced non-UTF-8 output");
     let version_prefix = "rustc ";
     if !stdout.starts_with(version_prefix) {
@@ -16,16 +19,15 @@ fn main() {
     let version = &version[..end];
     let mut version_components = version.split('.');
     let major = version_components.next().unwrap();
-    assert_eq!(major, "1", "Unexpected Rust version");
+    assert_eq!(major, "1", "Unexpected Rust major version");
     let minor = version_components
         .next()
         .unwrap_or("0")
         .parse::<u64>()
         .expect("invalid Rust minor version");
 
-    for activate_version in &[53, 60] {
-        if minor >= *activate_version {
-            println!("cargo:rustc-cfg=rust_v_1_{}", activate_version);
-        }
+    // print cfg for all interesting versions less than or equal to minor
+    for version in MSRV_MINOR..=minor {
+        println!("cargo:rustc-cfg=rust_v_1_{}", version);
     }
 }
