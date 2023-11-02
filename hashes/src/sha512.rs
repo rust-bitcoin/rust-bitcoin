@@ -12,6 +12,34 @@ use crate::{FromSliceError, HashEngine as _};
 
 crate::internal_macros::hash_trait_impls!(512, false);
 
+#[cfg(not(hashes_fuzz))]
+pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
+    // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
+    let data_len = e.length as u64;
+
+    let zeroes = [0; BLOCK_SIZE - 16];
+    e.input(&[0x80]);
+    if e.length % BLOCK_SIZE > zeroes.len() {
+        e.input(&zeroes);
+    }
+    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
+    e.input(&zeroes[..pad_length]);
+    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
+
+    e.input(&[0; 8]);
+    e.input(&(8 * data_len).to_be_bytes());
+    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
+
+    Hash(e.midstate())
+}
+
+#[cfg(hashes_fuzz)]
+pub(crate) fn from_engine(e: HashEngine) -> Hash {
+    let mut hash = e.midstate();
+    hash[0] ^= 0xff; // Make this distinct from SHA-256
+    Hash(hash)
+}
+
 pub(crate) const BLOCK_SIZE: usize = 128;
 
 /// Engine to compute SHA512 hash function.
@@ -93,34 +121,6 @@ impl Hash {
     fn internal_new(arr: [u8; 64]) -> Self { Hash(arr) }
 
     fn internal_engine() -> HashEngine { Default::default() }
-}
-
-#[cfg(not(hashes_fuzz))]
-pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
-    let data_len = e.length as u64;
-
-    let zeroes = [0; BLOCK_SIZE - 16];
-    e.input(&[0x80]);
-    if e.length % BLOCK_SIZE > zeroes.len() {
-        e.input(&zeroes);
-    }
-    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
-
-    e.input(&[0; 8]);
-    e.input(&(8 * data_len).to_be_bytes());
-    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
-
-    Hash(e.midstate())
-}
-
-#[cfg(hashes_fuzz)]
-pub(crate) fn from_engine(e: HashEngine) -> Hash {
-    let mut hash = e.midstate();
-    hash[0] ^= 0xff; // Make this distinct from SHA-256
-    Hash(hash)
 }
 
 #[allow(non_snake_case)]
