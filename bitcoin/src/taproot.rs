@@ -1211,7 +1211,6 @@ impl ControlBlock {
     /// # Errors
     ///
     /// - [`TaprootError::InvalidControlBlockSize`] if `sl` is not of size 1 + 32 + 32N for any N >= 0.
-    /// - [`TaprootError::InvalidParity`] if first byte of `sl` is not a valid output key parity.
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
@@ -1221,8 +1220,11 @@ impl ControlBlock {
         {
             return Err(TaprootError::InvalidControlBlockSize(sl.len()));
         }
-        let output_key_parity =
-            secp256k1::Parity::from_i32((sl[0] & 1) as i32).map_err(TaprootError::InvalidParity)?;
+        let output_key_parity = match sl[0] & 1 {
+            0 => secp256k1::Parity::Even,
+            1 => secp256k1::Parity::Odd,
+            _ => unreachable!(),
+        };
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
         let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
@@ -1505,8 +1507,6 @@ pub enum TaprootError {
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key.
     InvalidInternalKey(secp256k1::Error),
-    /// Invalid parity for internal key.
-    InvalidParity(secp256k1::InvalidParityValue),
     /// Empty tap tree.
     EmptyTree,
 }
@@ -1537,7 +1537,6 @@ impl fmt::Display for TaprootError {
             InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
-            InvalidParity(_) => write!(f, "invalid parity value for internal key"),
             EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
@@ -1554,7 +1553,6 @@ impl std::error::Error for TaprootError {
             | InvalidMerkleTreeDepth(_)
             | InvalidTaprootLeafVersion(_)
             | InvalidControlBlockSize(_)
-            | InvalidParity(_)
             | EmptyTree => None,
         }
     }
