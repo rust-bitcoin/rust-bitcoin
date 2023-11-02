@@ -166,6 +166,39 @@ pub fn scriptint_vec(n: i64) -> Vec<u8> {
     buf[0..len].to_vec()
 }
 
+/// Ways parsing script integers might fail.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScriptIntError {
+    /// Something did a non-minimal push; for more information see
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
+    NonMinimalPush,
+    /// Tried to read an array off the stack as a number when it was more than 4 bytes.
+    NumericOverflow,
+}
+
+impl fmt::Display for ScriptIntError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ScriptIntError::*;
+
+        match *self {
+            NonMinimalPush => f.write_str("non-minimal datapush"),
+            NumericOverflow =>
+                f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptIntError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ScriptIntError::*;
+
+        match *self {
+            NonMinimalPush | NumericOverflow => None,
+        }
+    }
+}
+
 /// Decodes an integer in script(minimal CScriptNum) format.
 ///
 /// Notice that this fails on overflow: the result is the same as in
@@ -183,7 +216,7 @@ pub fn scriptint_vec(n: i64) -> Vec<u8> {
 /// This is basically a ranged type implementation.
 ///
 /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
-pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
+pub fn read_scriptint(v: &[u8]) -> Result<i64, ScriptIntError> {
     read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, true)
 }
 
@@ -192,7 +225,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// The overflow error for slices over 4 bytes long is still there.
 /// See [`read_scriptint`] for a description of some subtleties of
 /// this function.
-pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
+pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, ScriptIntError> {
     read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, false)
 }
 
@@ -202,11 +235,11 @@ pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
 /// [read_scriptint] or [read_scriptint_non_minimal] instead.
 ///
 /// Panics if max_size exceeds 8.
-pub fn read_scriptint_size(v: &[u8], max_size: usize, minimal: bool) -> Result<i64, Error> {
+pub fn read_scriptint_size(v: &[u8], max_size: usize, minimal: bool) -> Result<i64, ScriptIntError> {
     assert!(max_size <= 8);
 
     if v.len() > max_size {
-        return Err(Error::NumericOverflow);
+        return Err(ScriptIntError::NumericOverflow);
     }
 
     if v.is_empty() {
@@ -230,7 +263,7 @@ pub fn read_scriptint_size(v: &[u8], max_size: usize, minimal: bool) -> Result<i
             // is +-255, which encode to 0xff00 and 0xff80 respectively.
             // (big-endian).
             if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
-                return Err(Error::NonMinimalPush);
+                return Err(ScriptIntError::NonMinimalPush);
             }
         }
     }
@@ -893,6 +926,15 @@ impl std::error::Error for Error {
             | NumericOverflow
             | UnknownSpentOutput(_)
             | Serialization => None,
+        }
+    }
+}
+
+impl From<ScriptIntError> for Error {
+    fn from(e: ScriptIntError) -> Error {
+        match e {
+            ScriptIntError::NonMinimalPush => Error::NonMinimalPush,
+            ScriptIntError::NumericOverflow => Error::NumericOverflow,
         }
     }
 }

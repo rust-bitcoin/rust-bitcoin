@@ -326,8 +326,8 @@ fn scriptint_round_trip() {
 fn non_minimal_scriptints() {
     assert_eq!(read_scriptint(&[0x80, 0x00]), Ok(0x80));
     assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
-    assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
-    assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
+    assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(ScriptIntError::NonMinimalPush));
+    assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(ScriptIntError::NonMinimalPush));
 
     assert_eq!(read_scriptint_non_minimal(&[0x80, 0x00]), Ok(0x80));
     assert_eq!(read_scriptint_non_minimal(&[0xff, 0x00]), Ok(0xff));
