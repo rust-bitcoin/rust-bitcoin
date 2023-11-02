@@ -10,7 +10,12 @@ use core::{cmp, str};
 
 use crate::{FromSliceError, HashEngine as _};
 
-crate::internal_macros::hash_trait_impls!(512, false);
+crate::internal_macros::hash_type! {
+    512,
+    false,
+    "Output of the SHA512 hash function.",
+    "crate::util::json_hex_string::len_64"
+}
 
 #[cfg(not(hashes_fuzz))]
 pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
@@ -103,24 +108,6 @@ impl crate::HashEngine for HashEngine {
     fn n_bytes_hashed(&self) -> usize { self.length }
 
     engine_input_impl!();
-}
-
-/// Output of the SHA512 hash function.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
-#[repr(transparent)]
-pub struct Hash(
-    #[cfg_attr(
-        feature = "schemars",
-        schemars(schema_with = "crate::util::json_hex_string::len_64")
-    )]
-    [u8; 64],
-);
-
-impl Hash {
-    fn internal_new(arr: [u8; 64]) -> Self { Hash(arr) }
-
-    fn internal_engine() -> HashEngine { Default::default() }
 }
 
 #[allow(non_snake_case)]
