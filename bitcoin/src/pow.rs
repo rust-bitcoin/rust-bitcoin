@@ -137,12 +137,6 @@ impl Target {
     // https://github.com/bitcoin/bitcoin/blob/8105bce5b384c72cf08b25b7c5343622754e7337/src/kernel/chainparams.cpp#L348
     pub const MAX_ATTAINABLE_SIGNET: Self = Target(U256(0x0377_ae00 << 80, 0));
 
-    /// The maximum possible target (see [`Target::MAX`]).
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Target::MAX`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> Self { Target::MAX }
-
     /// Computes the [`Target`] value from a compact representation.
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>

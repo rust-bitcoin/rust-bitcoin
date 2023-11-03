@@ -328,10 +328,6 @@ impl Block {
         size
     }
 
-    /// Returns the stripped size of the block.
-    #[deprecated(since = "0.31.0", note = "use Block::base_size() instead")]
-    pub fn strippedsize(&self) -> usize { self.base_size() }
-
     /// Returns the coinbase transaction, if one is present.
     pub fn coinbase(&self) -> Option<&Transaction> { self.txdata.first() }
 

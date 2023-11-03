@@ -31,14 +31,6 @@ pub const DIFFCHANGE_INTERVAL: u32 = 2016;
 /// How much time on average should occur between diffchanges.
 pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
-#[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
-/// The maximum allowed weight for a block, see BIP 141 (network rule).
-pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
-
-#[deprecated(since = "0.31.0", note = "Use Weight::MIN_TRANSACTION instead")]
-/// The minimum transaction weight for a valid serialized transaction.
-pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
-
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 /// The maximum allowed number of signature check operations in a block.

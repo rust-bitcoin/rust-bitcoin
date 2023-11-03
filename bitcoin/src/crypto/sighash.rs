@@ -856,20 +856,6 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Encodes the BIP143 signing data for any flag type into a given object implementing a
     /// [`std::io::Write`] trait.
-    #[deprecated(since = "0.31.0", note = "use segwit_v0_encode_signing_data_to instead")]
-    pub fn segwit_encode_signing_data_to<Write: io::Write>(
-        &mut self,
-        writer: Write,
-        input_index: usize,
-        script_code: &Script,
-        value: Amount,
-        sighash_type: EcdsaSighashType,
-    ) -> Result<(), Error> {
-        self.segwit_v0_encode_signing_data_to(writer, input_index, script_code, value, sighash_type)
-    }
-
-    /// Encodes the BIP143 signing data for any flag type into a given object implementing a
-    /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
     /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
@@ -931,26 +917,6 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         self.tx.borrow().lock_time.consensus_encode(&mut writer)?;
         sighash_type.to_u32().consensus_encode(&mut writer)?;
         Ok(())
-    }
-
-    /// Computes the BIP143 sighash for any flag type.
-    #[deprecated(since = "0.31.0", note = "use (p2wpkh|p2wsh)_signature_hash instead")]
-    pub fn segwit_signature_hash(
-        &mut self,
-        input_index: usize,
-        script_code: &Script,
-        value: Amount,
-        sighash_type: EcdsaSighashType,
-    ) -> Result<SegwitV0Sighash, Error> {
-        let mut enc = SegwitV0Sighash::engine();
-        self.segwit_v0_encode_signing_data_to(
-            &mut enc,
-            input_index,
-            script_code,
-            value,
-            sighash_type,
-        )?;
-        Ok(SegwitV0Sighash::from_engine(enc))
     }
 
     /// Computes the BIP143 sighash to spend a p2wpkh transaction for any flag type.
@@ -1235,7 +1201,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, Amount::ONE_SAT, EcdsaSighashType::All);
+    ///     let _sighash = sig_hasher.p2wpkh_signature_hash(inp, prevout_script, Amount::ONE_SAT, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }

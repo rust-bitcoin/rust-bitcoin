@@ -14,7 +14,6 @@ use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::sighash::EcdsaSighashType;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 use crate::{Script, VarInt};
 
@@ -288,10 +287,6 @@ impl Witness {
     /// Returns the number of elements this witness holds.
     pub fn len(&self) -> usize { self.witness_elements }
 
-    /// Returns the bytes required when this Witness is consensus encoded.
-    #[deprecated(since = "0.31.0", note = "use size instead")]
-    pub fn serialized_len(&self) -> usize { self.size() }
-
     /// Returns the number of bytes this witness contributes to a transactions total size.
     pub fn size(&self) -> usize {
         let mut size: usize = 0;
@@ -344,21 +339,6 @@ impl Witness {
         self.content[end_varint..end_varint + new_element.len()].copy_from_slice(new_element);
     }
 
-    /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
-    /// witness, requires an allocation.
-    #[deprecated(since = "0.30.0", note = "use push_ecdsa_signature instead")]
-    pub fn push_bitcoin_signature(
-        &mut self,
-        signature: &secp256k1::ecdsa::SerializedSignature,
-        hash_type: EcdsaSighashType,
-    ) {
-        // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
-        let mut sig = [0; 73];
-        sig[..signature.len()].copy_from_slice(signature);
-        sig[signature.len()] = hash_type as u8;
-        self.push(&sig[..signature.len() + 1]);
-    }
-
     /// Pushes, as a new element on the witness, an ECDSA signature.
     ///
     /// Pushes the DER encoded signature + sighash_type, requires an allocation.
@@ -401,7 +381,7 @@ impl Witness {
     /// This does not guarantee that this represents a P2TR [`Witness`]. It
     /// merely gets the second to last or third to last element depending on
     /// the first byte of the last element being equal to 0x50. See
-    /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
+    /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
         let len = self.len();
@@ -562,6 +542,7 @@ mod test {
 
     use super::*;
     use crate::consensus::{deserialize, serialize};
+    use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {

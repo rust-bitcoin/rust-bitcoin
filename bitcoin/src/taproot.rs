@@ -291,10 +291,6 @@ impl TaprootSpendInfo {
         info
     }
 
-    /// Returns the internal script map.
-    #[deprecated(since = "0.31.0", note = "use Self::script_map instead")]
-    pub fn as_script_map(&self) -> &ScriptMerkleProofMap { self.script_map() }
-
     /// Constructs a [`ControlBlock`] for particular script with the given version.
     ///
     /// # Returns

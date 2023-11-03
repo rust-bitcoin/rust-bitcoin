@@ -329,12 +329,6 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
-    /// The maximum allowable sequence number.
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Sequence::MAX`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> Self { Self::MAX }
-
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
     pub fn enables_absolute_lock_time(&self) -> bool { *self != Sequence::MAX }
@@ -789,10 +783,6 @@ impl Transaction {
         self.weight().to_vbytes_ceil() as usize
     }
 
-    /// Returns the size of this transaction excluding the witness data.
-    #[deprecated(since = "0.31.0", note = "Use Transaction::base_size() instead")]
-    pub fn strippedsize(&self) -> usize { self.base_size() }
-
     /// Checks if this is a coinbase transaction.
     ///
     /// The first transaction in the block distributes the mining reward and is called the coinbase
@@ -803,10 +793,6 @@ impl Transaction {
     pub fn is_coinbase(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
-
-    /// Checks if this is a coinbase transaction.
-    #[deprecated(since = "0.31.0", note = "use is_coinbase instead")]
-    pub fn is_coin_base(&self) -> bool { self.is_coinbase() }
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
     ///

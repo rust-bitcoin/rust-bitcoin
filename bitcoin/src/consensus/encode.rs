@@ -385,11 +385,6 @@ impl_int_encodable!(i64, read_i64, emit_i64);
 
 #[allow(clippy::len_without_is_empty)] // VarInt has on concept of 'is_empty'.
 impl VarInt {
-    /// Gets the length of this VarInt when encoded.
-    #[inline]
-    #[deprecated(since = "0.31.0", note = "use size instead")]
-    pub const fn len(&self) -> usize { self.size() }
-
     /// Returns the number of bytes this varint contributes to a transaction size.
     ///
     /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
