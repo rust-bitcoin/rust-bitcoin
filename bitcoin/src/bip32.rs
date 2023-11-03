@@ -6,8 +6,6 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
-#![allow(deprecated)] // Remove once we remove XpubIdentifier.
-
 use core::convert::TryInto;
 use core::default::Default;
 use core::ops::Index;
@@ -55,10 +53,6 @@ impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
 
 hash_newtype! {
-    /// XpubIdentifier as defined in BIP-32.
-    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use XKeyIdentifier instead")]
-    pub struct XpubIdentifier(hash160::Hash);
-
     /// Extended key identifier as defined in BIP-32.
     pub struct XKeyIdentifier(hash160::Hash);
 }
