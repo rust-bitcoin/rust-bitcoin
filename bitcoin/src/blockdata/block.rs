@@ -69,6 +69,9 @@ impl Header {
     pub fn target(&self) -> Target { self.bits.into() }
 
     /// Computes the popular "difficulty" measure for mining.
+    ///
+    /// Difficulty represents how difficult the current target makes it to find a block, relative to
+    /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
     pub fn difficulty(&self) -> u128 { self.target().difficulty() }
 
     /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
