@@ -507,17 +507,7 @@ impl fmt::Display for TweakedPublicKey {
 }
 
 /// Untweaked BIP-340 key pair
-#[deprecated(since = "0.31.0", note = "use UntweakedKeypair instead")]
-#[allow(deprecated)]
-pub type UntweakedKeyPair = UntweakedKeypair;
-
-/// Untweaked BIP-340 key pair
 pub type UntweakedKeypair = Keypair;
-
-/// Tweaked BIP-340 key pair
-#[deprecated(since = "0.31.0", note = "use TweakedKeypair instead")]
-#[allow(deprecated)]
-pub type TweakedKeyPair = TweakedKeypair;
 
 /// Tweaked BIP-340 key pair
 ///

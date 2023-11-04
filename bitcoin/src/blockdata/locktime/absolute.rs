@@ -407,18 +407,6 @@ impl Height {
     /// The maximum absolute block height.
     pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
 
-    /// The minimum absolute block height (0), the genesis block.
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MIN`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
-    pub const fn min_value() -> Self { Self::MIN }
-
-    /// The maximum absolute block height.
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MAX`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> Self { Self::MAX }
-
     /// Constructs a new block height.
     ///
     /// # Errors
@@ -488,18 +476,6 @@ impl Time {
 
     /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Time(u32::max_value());
-
-    /// The minimum absolute block time.
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MIN`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
-    pub const fn min_value() -> Self { Self::MIN }
-
-    /// The maximum absolute block time.
-    ///
-    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MAX`].
-    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> Self { Self::MAX }
 
     /// Constructs a new block time.
     ///

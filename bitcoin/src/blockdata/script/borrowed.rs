@@ -149,25 +149,7 @@ impl Script {
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     #[inline]
-    #[deprecated(since = "0.31.0", note = "use to_p2wsh instead")]
-    pub fn to_v0_p2wsh(&self) -> ScriptBuf { self.to_p2wsh() }
-
-    /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-    /// script").
-    #[inline]
     pub fn to_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_p2wsh(&self.wscript_hash()) }
-
-    /// Computes P2TR output with a given internal key and a single script spending path equal to
-    /// the current script, assuming that the script is a Tapscript.
-    #[inline]
-    #[deprecated(since = "0.31.0", note = "use to_p2tr instead")]
-    pub fn to_v1_p2tr<C: Verification>(
-        &self,
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-    ) -> ScriptBuf {
-        self.to_p2tr(secp, internal_key)
-    }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
@@ -331,21 +313,11 @@ impl Script {
 
     /// Checks whether a script pubkey is a P2WSH output.
     #[inline]
-    #[deprecated(since = "0.31.0", note = "use is_p2wsh instead")]
-    pub fn is_v0_p2wsh(&self) -> bool { self.is_p2wsh() }
-
-    /// Checks whether a script pubkey is a P2WSH output.
-    #[inline]
     pub fn is_p2wsh(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
     }
-
-    /// Checks whether a script pubkey is a P2WPKH output.
-    #[inline]
-    #[deprecated(since = "0.31.0", note = "use is_p2wpkh instead")]
-    pub fn is_v0_p2wpkh(&self) -> bool { self.is_p2wpkh() }
 
     /// Checks whether a script pubkey is a P2WPKH output.
     #[inline]
@@ -362,11 +334,6 @@ impl Script {
             None
         }
     }
-
-    /// Checks whether a script pubkey is a P2TR output.
-    #[inline]
-    #[deprecated(since = "0.31.0", note = "use is_p2tr instead")]
-    pub fn is_v1_p2tr(&self) -> bool { self.is_p2tr() }
 
     /// Checks whether a script pubkey is a P2TR output.
     #[inline]
