@@ -50,7 +50,7 @@ pub struct Params {
 
 impl Params {
     /// Creates parameters set for the given network.
-    pub fn new(network: Network) -> Self {
+    pub const fn new(network: Network) -> Self {
         match network {
             Network::Bitcoin => Params {
                 network: Network::Bitcoin,
