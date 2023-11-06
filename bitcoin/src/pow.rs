@@ -19,6 +19,7 @@ use crate::hash_types::BlockHash;
 use crate::io::{self, Read, Write};
 use crate::prelude::String;
 use crate::string::FromHexStr;
+use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -223,8 +224,14 @@ impl Target {
     /// [max]: Target::max
     /// [target]: crate::blockdata::block::Header::target
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn difficulty(&self) -> u128 {
-        let d = Target::MAX.0 / self.0;
+    pub fn difficulty(&self, network: Network) -> u128 {
+        let max = match network {
+            Network::Bitcoin => Target::MAX_ATTAINABLE_MAINNET,
+            Network::Testnet => Target::MAX_ATTAINABLE_TESTNET,
+            Network::Signet => Target::MAX_ATTAINABLE_SIGNET,
+            Network::Regtest => Target::MAX_ATTAINABLE_REGTEST,
+        };
+        let d = max.0 / self.0;
         d.saturating_to_u128()
     }
 
