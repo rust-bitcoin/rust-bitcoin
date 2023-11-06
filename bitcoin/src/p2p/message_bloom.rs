@@ -48,7 +48,7 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,

@@ -690,7 +690,7 @@ impl Amount {
 
 impl Decodable for Amount {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Amount(Decodable::consensus_decode(r)?))
     }
 }

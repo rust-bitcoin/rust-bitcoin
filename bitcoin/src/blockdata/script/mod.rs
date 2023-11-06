@@ -588,7 +588,7 @@ impl Encodable for ScriptBuf {
 
 impl Decodable for ScriptBuf {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))

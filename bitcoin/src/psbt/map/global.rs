@@ -71,7 +71,7 @@ impl Map for Psbt {
 }
 
 impl Psbt {
-    pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode_global<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;

@@ -109,7 +109,7 @@ impl Encodable for RejectReason {
 }
 
 impl Decodable for RejectReason {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0x01 => RejectReason::Malformed,
             0x10 => RejectReason::Invalid,

@@ -16,7 +16,7 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
 use crate::hash_types::BlockHash;
-use crate::io::{self, Read, Write};
+use crate::io::{self, BufRead, Write};
 use crate::prelude::String;
 use crate::string::FromHexStr;
 
@@ -294,7 +294,7 @@ impl Encodable for CompactTarget {
 
 impl Decodable for CompactTarget {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         u32::consensus_decode(r).map(CompactTarget)
     }
 }

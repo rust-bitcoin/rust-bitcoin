@@ -422,11 +422,12 @@ where
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
     iterator: core::iter::Fuse<I>,
+    buf: Option<u8>,
     error: Option<E>,
 }
 
 impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
-    fn new(iterator: I) -> Self { IterReader { iterator: iterator.fuse(), error: None } }
+    fn new(iterator: I) -> Self { IterReader { iterator: iterator.fuse(), buf: None, error: None } }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
         use crate::StdError;
@@ -447,8 +448,16 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
 }
 
 impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> io::Read for IterReader<E, I> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    fn read(&mut self, mut buf: &mut [u8]) -> io::Result<usize> {
         let mut count = 0;
+        if let Some(first) = self.buf {
+            if buf.is_empty() {
+                return Ok(0);
+            }
+            buf[0] = first;
+            buf = &mut buf[1..];
+            count += 1;
+        }
         for (dst, src) in buf.iter_mut().zip(&mut self.iterator) {
             match src {
                 Ok(byte) => *dst = byte,
@@ -461,6 +470,34 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> io::Read for IterReader<E
             count += 1;
         }
         Ok(count)
+    }
+}
+
+impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> io::BufRead for IterReader<E, I> {
+    fn fill_buf(&mut self) -> Result<&[u8], io::Error> {
+        // matching on reference rather than using `ref` confuses borrow checker
+        if let Some(ref byte) = self.buf {
+            Ok(core::slice::from_ref(byte))
+        } else {
+            match self.iterator.next() {
+                Some(Ok(byte)) => {
+                    self.buf = Some(byte);
+                    Ok(core::slice::from_ref(self.buf.as_ref().expect("we've just filled it")))
+                },
+                Some(Err(error)) => {
+                    self.error = Some(error);
+                    Err(io::ErrorKind::Other.into())
+                },
+                None => Ok(&[]),
+            }
+        }
+    }
+
+    fn consume(&mut self, len: usize) {
+        debug_assert!(len <= 1);
+        if len > 0 {
+            self.buf = None;
+        }
     }
 }
 

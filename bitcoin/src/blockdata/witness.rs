@@ -12,7 +12,7 @@ use core::ops::Index;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::io::{self, Read, Write};
+use crate::io::{self, BufRead, Write};
 use crate::prelude::*;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 use crate::{Script, VarInt};
@@ -124,7 +124,7 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
