@@ -148,6 +148,8 @@ impl<T: Hash> Hash for Hmac<T> {
     type Engine = HmacEngine<T>;
     type Bytes = T::Bytes;
 
+    fn engine() -> Self::Engine { Default::default() }
+
     fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
         let ihash = T::from_engine(e.iengine);
         e.oengine.input(&ihash[..]);

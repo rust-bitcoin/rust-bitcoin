@@ -140,7 +140,7 @@ use core2::io;
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
-pub trait HashEngine: Clone + Default {
+pub trait HashEngine: Clone {
     /// Byte array representing the internal state of the hash engine.
     type MidState;
 
@@ -186,7 +186,7 @@ pub trait Hash:
     type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
-    fn engine() -> Self::Engine { Self::Engine::default() }
+    fn engine() -> Self::Engine;
 
     /// Produces a hash from the current state of a given engine.
     fn from_engine(e: Self::Engine) -> Self;
