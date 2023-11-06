@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! `std` / `core2` Impls.
+//! `std` / `io` Impls.
 //!
-//! Implementations of traits defined in `std` / `core2` and not in `core`.
+//! Implementations of traits defined in `std` / `io` and not in `core`.
 //!
 
 use bitcoin_io::impl_write;

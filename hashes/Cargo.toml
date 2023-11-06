@@ -17,8 +17,8 @@ default = ["std"]
 std = ["alloc", "hex/std", "bitcoin-io/std"]
 alloc = ["hex/alloc"]
 serde-std = ["serde/std"]
-# If you want I/O you must enable either "std" or "core2".
-core2 = ["bitcoin-io/core2", "hex/core2"]
+# If you want I/O you must enable either "std" or "io".
+io = ["bitcoin-io"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
 

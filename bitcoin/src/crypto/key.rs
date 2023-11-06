@@ -84,7 +84,7 @@ impl PublicKey {
 
         reader.read_exact(&mut bytes[1..])?;
         Self::from_slice(bytes).map_err(|e| {
-            // Need a static string for core2
+            // Need a static string for no-std io
             #[cfg(feature = "std")]
             let reason = e;
             #[cfg(not(feature = "std"))]
