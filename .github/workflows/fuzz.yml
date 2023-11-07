@@ -26,6 +26,7 @@ jobs:
           bitcoin_deserialize_witness,
           bitcoin_deser_net_msg,
           bitcoin_outpoint_string,
+          bitcoin_script_asm_roundtrip,
           bitcoin_script_bytes_to_asm_fmt,
           hashes_cbor,
           hashes_json,

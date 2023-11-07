@@ -10,7 +10,8 @@ use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
-    opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
+    opcode_to_verify, parse_asm, Builder, Instruction, ParseAsmError, PushBytes, Script,
+    ScriptHash, WScriptHash,
 };
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
@@ -169,6 +170,15 @@ impl ScriptBuf {
     /// This method doesn't (re)allocate.
     pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
 
+    /// Parse a Script in ASM format.
+    ///
+    /// NOTE: Receiving an [Ok] result from this function **ONLY** means that
+    /// our script interpreter could interpret the script, but it gives **no
+    /// guarantees** on the validity of the resulting script.
+    pub fn parse_asm(asm: &str) -> Result<Self, ParseAsmError> {
+        parse_asm(asm)
+    }
+
     /// Converts the script into a byte vector.
     ///
     /// This method doesn't (re)allocate.
@@ -188,20 +198,20 @@ impl ScriptBuf {
     fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
         match data.len() as u64 {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
+            n if n < opcodes::OP_PUSHDATA1.to_u8() as u64 => {
                 self.0.push(n as u8);
             }
             n if n < 0x100 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
+                self.0.push(opcodes::OP_PUSHDATA1.to_u8());
                 self.0.push(n as u8);
             }
             n if n < 0x10000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
+                self.0.push(opcodes::OP_PUSHDATA2.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
             }
             n if n < 0x100000000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
+                self.0.push(opcodes::OP_PUSHDATA4.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push(((n / 0x100) % 0x100) as u8);
                 self.0.push(((n / 0x10000) % 0x100) as u8);
