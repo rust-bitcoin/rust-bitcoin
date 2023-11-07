@@ -14,6 +14,7 @@ use hex::FromHex;
 use internals::write_err;
 
 use crate::crypto::ecdsa;
+use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
@@ -252,7 +253,7 @@ hashes::hash_newtype! {
     /// SegWit version of a public key hash.
     pub struct WPubkeyHash(hash160::Hash);
 }
-crate::hash_types::impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }
