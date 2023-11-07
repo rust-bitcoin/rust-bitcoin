@@ -14,9 +14,9 @@ use hashes::{sha256d, Hash, HashEngine};
 
 use super::Weight;
 use crate::blockdata::script;
-use crate::blockdata::transaction::Transaction;
+use crate::blockdata::transaction::{Transaction, Txid, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{impl_hashencode, Txid, Wtxid};
+use crate::hash_types::impl_hashencode;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;

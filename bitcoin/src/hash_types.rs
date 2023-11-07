@@ -59,30 +59,15 @@ mod newtypes {
     use hashes::{sha256d, hash_newtype};
 
     hash_newtype! {
-        /// A bitcoin transaction hash/transaction ID.
-        ///
-        /// For compatibility with the existing Bitcoin infrastructure and historical
-        /// and current versions of the Bitcoin Core software itself, this and
-        /// other [`sha256d::Hash`] types, are serialized in reverse
-        /// byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
-        /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-        pub struct Txid(sha256d::Hash);
-
-        /// A bitcoin witness transaction ID.
-        pub struct Wtxid(sha256d::Hash);
-
         /// Filter hash, as defined in BIP-157
         pub struct FilterHash(sha256d::Hash);
         /// Filter header, as defined in BIP-157
         pub struct FilterHeader(sha256d::Hash);
     }
 
-    impl_hashencode!(Txid);
-    impl_hashencode!(Wtxid);
-
     impl_hashencode!(FilterHash);
     impl_hashencode!(FilterHeader);
 }
 
 #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use crate::T instead")]
-pub use crate::{BlockHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode};
+pub use crate::{BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode, Wtxid};
