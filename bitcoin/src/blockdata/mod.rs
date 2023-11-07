@@ -54,7 +54,7 @@ pub mod locktime {
         //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-        use io::{BufRead, Write};
+        use io::Write;
 
         pub use crate::consensus::encode::{self, Decodable, Encodable};
 
@@ -70,12 +70,7 @@ pub mod locktime {
             }
         }
 
-        impl Decodable for LockTime {
-            #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                u32::consensus_decode(r).map(LockTime::from_consensus)
-            }
-        }
+        crate::impl_decodable_using_decode!(LockTime);
     }
 
     pub mod relative {

@@ -56,6 +56,11 @@ sha256t_hash_newtype! {
     pub struct TapTweakHash(_);
 }
 
+consensus_encoding::hash_decoder! {
+    TapLeafHash => pub TapLeafHashDecoder;
+}
+crate::impl_decodable_using_decode!(TapLeafHash);
+
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the Merkle root.

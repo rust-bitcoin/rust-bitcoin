@@ -354,6 +354,7 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 // not a trait impl because we panic on some variants
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
     match error {
+        ConsensusError::Io(error) if error.kind() == io::ErrorKind::InvalidData => E::custom(error),
         ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
         ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",

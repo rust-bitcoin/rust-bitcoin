@@ -27,6 +27,7 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 [dependencies]
 base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+consensus-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus-encoding", features = ["hashes", "primitives"] }
 hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }

@@ -19,6 +19,15 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 pub use vec::*;
 
+#[cfg(feature = "hashes")]
+pub use hashes;
+
+#[cfg(feature = "units")]
+use units::Amount;
+
+#[cfg(feature = "primitives")]
+use actual_primitives::{Sequence, absolute::LockTime};
+
 pub use push_decode::{self, Encoder, Decoder, ReadError};
 use push_decode::int::LittleEndian;
 use push_decode::decoders::combinators::Then;
@@ -115,12 +124,26 @@ macro_rules! impl_struct_decode {
         $decoder_vis enum $error {
             $($(#[$($variant_attr)*])* $variant(<<$ty as $crate::Decode>::Decoder as $crate::Decoder>::Error),)*
         }
+
+        #[cfg(feature = "std")]
+        impl std::error::Error for $error
+            where Self: std::fmt::Display $(, <<$ty as $crate::Decode>::Decoder as $crate::Decoder>::Error: std::error::Error + 'static)*
+        {
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+                match self {
+                    $(
+                        Self::$variant(error) => Some(error),
+                    )*
+                }
+            }
+        }
     }
 }
 
 /// Implements `Decode` and a `Decoder` for given hash type.
 ///
 /// This directly reads the appropriate amount of bytes without transformation.
+#[cfg(feature = "hashes")]
 #[macro_export]
 macro_rules! hash_decoder {
     ($($hash_type:ty => $vis:vis $decoder:ident;)*) => {
@@ -134,7 +157,7 @@ macro_rules! hash_decoder {
                 #[doc = stringify!($crate)]
                 #[doc = "::Decoder) trait."]
                 #[derive(Debug, Default)]
-                $vis struct $decoder($crate::push_decode::decoders::ByteArrayDecoder<{<$hash_type>::LEN}>) using $hash_type => <$hash_type>::from_byte_array;
+                $vis struct $decoder($crate::push_decode::decoders::ByteArrayDecoder<{<$hash_type as $crate::hashes::Hash>::LEN}>) using $hash_type => <$hash_type as $crate::hashes::Hash>::from_byte_array;
             )*
         }
 
@@ -168,13 +191,27 @@ macro_rules! mapped_decoder {
     }
 }
 
+#[cfg(feature = "units")]
+mapped_decoder! {
+    Amount => #[derive(Default)] pub struct AmountDecoder(<u64 as Decode>::Decoder) using Amount::from_sat;
+}
+
+#[cfg(feature = "primitives")]
+mapped_decoder! {
+    Sequence => #[derive(Default)] pub struct SequenceDecoder(<u32 as Decode>::Decoder) using Sequence;
+}
+
+#[cfg(feature = "primitives")]
+mapped_decoder! {
+    LockTime => #[derive(Default)] pub struct LockTimeDecoder(<u32 as Decode>::Decoder) using LockTime::from_consensus;
+}
+
 /// Decodes a varint.
 ///
 /// For more information about decoder see the documentation of the [`Decoder`] trait.
 #[derive(Default, Debug, Clone)]
 pub struct VarIntDecoder {
-    buf: [u8; 9],
-    pos: usize,
+    buf: internals::array_vec::ArrayVec<u8, 9>,
 }
 
 impl Decoder for VarIntDecoder {
@@ -183,10 +220,9 @@ impl Decoder for VarIntDecoder {
 
     fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
         if bytes.is_empty() { return Ok(()); }
-        if self.pos == 0 {
-            self.buf[0] = bytes[0];
+        if self.buf.is_empty() {
+            self.buf.push(bytes[0]);
             *bytes = &bytes[1..];
-            self.pos += 1;
         }
         let max_len = match self.buf[0] {
             0xFF => 9,
@@ -194,27 +230,24 @@ impl Decoder for VarIntDecoder {
             0xFD => 3,
             _ => 1
         };
-        let to_copy = bytes.len().min(max_len - self.pos);
-        self.buf[self.pos..(self.pos + to_copy)].copy_from_slice(&bytes[..to_copy]);
-        self.pos += to_copy;
+        let to_copy = bytes.len().min(max_len - self.buf.len());
+        self.buf.extend_from_slice(&bytes[..to_copy]);
         *bytes = &bytes[to_copy..];
         Ok(())
     }
 
     fn end(self) -> Result<Self::Value, Self::Error> {
-        fn check_len(pos: usize, required: usize) -> Result<(), VarIntDecodeError> {
-            if pos < required {
-                Err(VarIntDecodeError::UnexpectedEnd { required, received: pos })
-            } else {
-                Ok(())
-            }
+        fn arr<const N: usize>(slice: &[u8]) -> Result<[u8; N], VarIntDecodeError> {
+            slice.try_into().map_err(|_| {
+                VarIntDecodeError::UnexpectedEnd { required: N, received: slice.len() }
+            })
         }
 
-        check_len(self.pos, 1)?;
-        match self.buf[0] {
+        let (first, payload) = self.buf.split_first()
+            .ok_or(VarIntDecodeError::UnexpectedEnd { required: 1, received: 0 })?;
+        match *first {
             0xFF => {
-                check_len(self.pos, 9)?;
-                let x =  u64::from_le_bytes(self.buf[1..9].try_into().expect("statically known"));
+                let x =  u64::from_le_bytes(arr(payload)?);
                 if x < 0x100000000 {
                     Err(VarIntDecodeError::NonMinimal { value: x })
                 } else {
@@ -222,8 +255,7 @@ impl Decoder for VarIntDecoder {
                 }
             },
             0xFE => {
-                check_len(self.pos, 5)?;
-                let x =  u32::from_le_bytes(self.buf[1..5].try_into().expect("statically known"));
+                let x =  u32::from_le_bytes(arr(payload)?);
                 if x < 0x10000 {
                     Err(VarIntDecodeError::NonMinimal { value: x.into() })
                 } else {
@@ -231,8 +263,7 @@ impl Decoder for VarIntDecoder {
                 }
             },
             0xFD => {
-                check_len(self.pos, 3)?;
-                let x =  u16::from_le_bytes(self.buf[1..3].try_into().expect("statically known"));
+                let x =  u16::from_le_bytes(arr(payload)?);
                 if x < 0xFD {
                     Err(VarIntDecodeError::NonMinimal { value: x.into() })
                 } else {
@@ -253,17 +284,26 @@ pub enum VarIntDecodeError {
     NonMinimal { value: u64 },
 }
 
+impl fmt::Display for VarIntDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UnexpectedEnd { required: 1, received: 0 } => write!(f, "required at least one byte but the input is empty"),
+            Self::UnexpectedEnd { required, received: 0 } => write!(f, "required at least {} bytes but the input is empty", required),
+            Self::UnexpectedEnd { required, received } => write!(f, "required at least {} bytes but only {} bytes were received", required, received),
+            Self::NonMinimal { value } => write!(f, "the value {} was not encoded minimally", value),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for VarIntDecodeError {}
+
 #[cfg(feature = "alloc")]
 mod vec {
     use super::*;
     use alloc::vec::Vec;
 
-    /*
-    impl<T: Decode> Decode for Vec<T> where T::Decoder: Default {
-        type Decoder = VecDecoder<T>;
-    }
-    */
-
+    #[allow(clippy::type_complexity)] // doesn't seem really that complex
     pub struct VecDecoder<T: Decode>(Then<VarIntDecoder, InnerVecDecoder<T>, fn (u64) -> InnerVecDecoder<T>>) where T::Decoder: Default;
 
     impl<T: Decode> Decoder for VecDecoder<T> where T::Decoder: Default {
@@ -272,14 +312,20 @@ mod vec {
 
         fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
             self.0.decode_chunk(bytes).map_err(|error| {
-                error.map_left(VecDecodeError::Length).map_right(VecDecodeError::Element).either_into()
+                error
+                    .map_left(VecDecodeError::Length)
+                    .map_right(|(error, position)| VecDecodeError::Element { error, position })
+                    .either_into()
             })
         }
 
         fn end(self) -> Result<Self::Value, Self::Error> {
             // TODO: unexpected end
             self.0.end().map_err(|error| {
-                error.map_left(VecDecodeError::Length).map_right(VecDecodeError::Element).either_into()
+                error
+                    .map_left(VecDecodeError::Length)
+                    .map_right(|(error, position)| VecDecodeError::Element { error, position })
+                    .either_into()
             })
         }
     }
@@ -292,11 +338,37 @@ mod vec {
         }
     }
 
+    /// Returned when decoding a varint-prefixed `Vec` of decodable element fails to parse.
     #[derive(Debug)]
     pub enum VecDecodeError<E> {
+        /// Failed decoding length (varint).
         Length(VarIntDecodeError),
-        Element(E),
+        /// Failed to decode element .
+        Element { error: E, position: usize },
         UnexpectedEnd,
+    }
+
+    impl<E: fmt::Display> fmt::Display for VecDecodeError<E> {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            use internals::write_err;
+
+            match self {
+                Self::Length(error) => write_err!(f, "failed to parse length"; error),
+                Self::Element { error, position } => write_err!(f, "failed to parse element at position {} (starting from 0)", position; error),
+                Self::UnexpectedEnd => write!(f, "the input reached end (EOF) unexpectedly"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl<E: std::error::Error + 'static> std::error::Error for VecDecodeError<E> {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            match self {
+                Self::Length(error) => Some(error),
+                Self::Element { error, .. } => Some(error),
+                Self::UnexpectedEnd => None,
+            }
+        }
     }
 
     impl<T: Decode> Default for VecDecoder<T> where T::Decoder: Default {
@@ -331,13 +403,13 @@ mod vec {
 
     impl<T: Decode> Decoder for InnerVecDecoder<T> where T::Decoder: Default {
         type Value = Vec<T>;
-        type Error = <T::Decoder as Decoder>::Error;
+        type Error = (<T::Decoder as Decoder>::Error, usize);
 
         fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
             while self.vec.len() < self.required {
-                self.decoder.decode_chunk(bytes)?;
+                self.decoder.decode_chunk(bytes).map_err(|error| (error, self.vec.len()))?;
                 if !bytes.is_empty() {
-                    let item = core::mem::take(&mut self.decoder).end()?;
+                    let item = self.decoder.take().map_err(|error| (error, self.vec.len()))?;
                     self.vec.push(item);
                 } else {
                     return Ok(())
@@ -350,7 +422,7 @@ mod vec {
             while self.vec.len() < self.required {
                 // If the item is zero-sized this will just produce enough
                 // If the item is not zero sized this will error which is what we want
-                let item = core::mem::take(&mut self.decoder).end()?;
+                let item = self.decoder.take().map_err(|error| (error, self.vec.len()))?;
                 self.vec.push(item);
             }
             Ok(self.vec)
@@ -361,6 +433,7 @@ mod vec {
 #[cfg(test)]
 mod tests {
     use super::Decode;
+    use core::fmt;
 
     #[test]
     fn impl_struct_de() {
@@ -373,6 +446,15 @@ mod tests {
             (Foo, FooDecodeError) => struct Decoder {
                 Bar { bar: u32 },
                 Baz { baz: u64 },
+            }
+        }
+
+        impl fmt::Display for FooDecodeError {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self {
+                    FooDecodeError::Bar(error) => fmt::Display::fmt(error, f),
+                    FooDecodeError::Baz(error) => fmt::Display::fmt(error, f),
+                }
             }
         }
 
