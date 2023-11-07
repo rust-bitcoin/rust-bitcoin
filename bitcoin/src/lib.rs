@@ -121,6 +121,7 @@ pub mod taproot;
 pub use crate::{
     address::{Address, AddressType},
     amount::{Amount, Denomination, SignedAmount},
+    bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
     blockdata::block::{self, Block, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment},
     blockdata::constants,
@@ -137,7 +138,6 @@ pub use crate::{
     crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
-    hash_types::{FilterHash, FilterHeader},
     merkle_tree::MerkleBlock,
     network::Network,
     pow::{CompactTarget, Target, Work},

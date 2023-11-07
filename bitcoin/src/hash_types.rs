@@ -49,25 +49,8 @@ macro_rules! impl_asref_push_bytes {
 }
 pub(crate) use impl_asref_push_bytes;
 
-// newtypes module is solely here so we can rustfmt::skip.
-#[rustfmt::skip]
-#[doc(inline)]
-pub use newtypes::*;
-
-#[rustfmt::skip]
-mod newtypes {
-    use hashes::{sha256d, hash_newtype};
-
-    hash_newtype! {
-        /// Filter hash, as defined in BIP-157
-        pub struct FilterHash(sha256d::Hash);
-        /// Filter header, as defined in BIP-157
-        pub struct FilterHeader(sha256d::Hash);
-    }
-
-    impl_hashencode!(FilterHash);
-    impl_hashencode!(FilterHeader);
-}
-
 #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use crate::T instead")]
-pub use crate::{BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode, Wtxid};
+pub use crate::{
+    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode,
+    Wtxid,
+};
