@@ -25,6 +25,7 @@ macro_rules! impl_hashencode {
         }
     };
 }
+pub(crate) use impl_hashencode;
 
 #[rustfmt::skip]
 macro_rules! impl_asref_push_bytes {
@@ -69,15 +70,6 @@ mod newtypes {
 
         /// A bitcoin witness transaction ID.
         pub struct Wtxid(sha256d::Hash);
-        /// A bitcoin block hash.
-        pub struct BlockHash(sha256d::Hash);
-
-        /// A hash of the Merkle tree branch or root for transactions
-        pub struct TxMerkleNode(sha256d::Hash);
-        /// A hash corresponding to the Merkle tree root for witness data
-        pub struct WitnessMerkleNode(sha256d::Hash);
-        /// A hash corresponding to the witness structure commitment in the coinbase transaction
-        pub struct WitnessCommitment(sha256d::Hash);
 
         /// Filter hash, as defined in BIP-157
         pub struct FilterHash(sha256d::Hash);
@@ -87,23 +79,10 @@ mod newtypes {
 
     impl_hashencode!(Txid);
     impl_hashencode!(Wtxid);
-    impl_hashencode!(BlockHash);
-
-    impl_hashencode!(TxMerkleNode);
-    impl_hashencode!(WitnessMerkleNode);
 
     impl_hashencode!(FilterHash);
     impl_hashencode!(FilterHeader);
-
-    impl From<Txid> for TxMerkleNode {
-        fn from(txid: Txid) -> Self {
-            Self::from(txid.0)
-        }
-    }
-
-    impl From<Wtxid> for WitnessMerkleNode {
-        fn from(wtxid: Wtxid) -> Self {
-            Self::from(wtxid.0)
-        }
-    }
 }
+
+#[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use crate::T instead")]
+pub use crate::{BlockHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode};
