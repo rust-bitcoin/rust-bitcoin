@@ -49,7 +49,7 @@ use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
-use crate::hash_types::impl_hashencode;
+use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
