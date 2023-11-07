@@ -65,14 +65,17 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+use consensus_encoding::mapped_decoder;
+use consensus_encoding::push_decode::decoders::{ByteVecDecoder, combinators::Then};
+use crate::consensus::encode::{VarIntDecoder, MAX_VEC_SIZE};
 use hashes::{hash160, sha256};
-use io::{BufRead, Write};
+use io::Write;
 #[cfg(feature = "serde")]
 use serde;
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::Encodable;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::prelude::*;
 use crate::{io, OutPoint};
@@ -592,12 +595,19 @@ impl Encodable for ScriptBuf {
     }
 }
 
-impl Decodable for ScriptBuf {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
+crate::impl_decodable_using_decode!(ScriptBuf);
+
+mapped_decoder! {
+    ScriptBuf => pub struct ScriptDecoder(Then<VarIntDecoder, ByteVecDecoder, fn(u64) -> ByteVecDecoder>) using ScriptBuf::from;
+}
+
+impl Default for ScriptDecoder {
+    fn default() -> Self {
+        use consensus_encoding::Decoder;
+
+        ScriptDecoder(VarIntDecoder::default().then(|len| {
+            ByteVecDecoder::with_reserve_limit(len as usize, MAX_VEC_SIZE)
+        }))
     }
 }
 

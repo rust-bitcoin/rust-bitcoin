@@ -10,6 +10,7 @@ use core::fmt::{self, Write as _};
 use core::str::FromStr;
 use core::{default, ops};
 
+use consensus_encoding::{mapped_decoder, Decode};
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
 use internals::error::InputString;
@@ -742,6 +743,10 @@ impl Amount {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
     }
+}
+
+mapped_decoder! {
+    Amount => #[derive(Default)] pub struct AmountDecoder(<u64 as Decode>::Decoder) using Amount::from_sat;
 }
 
 impl default::Default for Amount {

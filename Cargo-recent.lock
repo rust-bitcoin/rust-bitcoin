@@ -36,6 +36,7 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
@@ -55,6 +56,8 @@ dependencies = [
 name = "bitcoin-consensus-encoding"
 version = "0.0.1-preview"
 dependencies = [
+ "bitcoin-internals",
+ "bitcoin_hashes",
  "push_decode",
 ]
 
@@ -84,6 +87,7 @@ version = "0.1.0"
 name = "bitcoin-units"
 version = "0.1.0"
 dependencies = [
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "serde",
  "serde_json",
@@ -271,9 +275,9 @@ dependencies = [
 
 [[package]]
 name = "push_decode"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5bd55041efdbac9f02b6ab05faf9836141b4297a623be8f6ee59de1fca1bff8"
+checksum = "704d18e38492fac1966cc154028b33512154b6eb0aa19412297c8a0d46007b1e"
 dependencies = [
  "either",
 ]

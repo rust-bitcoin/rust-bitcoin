@@ -36,6 +36,12 @@ impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
+consensus_encoding::hash_decoder! {
+    BlockHash => pub BlockHashDecoder;
+    TxMerkleNode => pub TxMerkleNodeDecoder;
+    WitnessMerkleNode => pub WitnessMerkleNodeDecoder;
+}
+
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
 }

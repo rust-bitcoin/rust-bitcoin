@@ -10,13 +10,13 @@ use core::cmp::{Ordering, PartialOrd};
 use core::{fmt, mem};
 
 use internals::write_err;
-use io::{BufRead, Write};
+use io::Write;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::absolute;
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::encode::Encodable;
 use crate::error::ParseIntError;
 use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
@@ -343,11 +343,10 @@ impl Encodable for LockTime {
     }
 }
 
-impl Decodable for LockTime {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(LockTime::from_consensus)
-    }
+crate::impl_decodable_using_decode!(LockTime);
+
+consensus_encoding::mapped_decoder! {
+    LockTime => #[derive(Default)] pub struct LockTimeDecoder(<u32 as consensus_encoding::Decode>::Decoder) using LockTime::from_consensus;
 }
 
 #[cfg(feature = "serde")]

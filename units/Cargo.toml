@@ -23,6 +23,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
+consensus-encoding = { package = "bitcoin-consensus-encoding", path = "../consensus-encoding" }
 
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
