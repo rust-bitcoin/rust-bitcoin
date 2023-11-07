@@ -123,10 +123,11 @@ mod tests {
         pub struct TestHashTag;
 
         impl sha256t::Tag for TestHashTag {
-            fn engine() -> sha256::HashEngine {
+            fn engine() -> sha256t::HashEngine {
                 // The TapRoot TapLeaf midstate.
                 let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-                sha256::HashEngine::from_midstate(midstate, 64)
+                let engine = sha256::HashEngine::from_midstate(midstate, 64);
+                sha256t::HashEngine::from_pretagged(engine)
             }
         }
 

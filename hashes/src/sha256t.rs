@@ -10,12 +10,10 @@ use core::{cmp, str};
 
 use crate::{sha256, FromSliceError};
 
-type HashEngine = sha256::HashEngine;
-
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
 pub trait Tag {
     /// Returns a hash engine that is pre-tagged and is ready to be used for the data.
-    fn engine() -> sha256::HashEngine;
+    fn engine() -> HashEngine;
 }
 
 /// Output of the SHA256t hash function.
@@ -62,10 +60,33 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 
 crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
 
-fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
+fn from_engine<T: Tag>(e: HashEngine) -> Hash<T> {
     use crate::Hash as _;
 
-    Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
+    Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
+}
+
+/// Engine to compute SHA256 hash function.
+#[derive(Clone)]
+pub struct HashEngine(pub(crate) sha256::HashEngine);
+
+impl HashEngine {
+    /// Creates a `sh256t::HashEngine` from a `sha256::Midstate`.
+    ///
+    /// Assumes the tag has been hashed twice already into the `engine`.
+    pub fn from_pretagged(engine: sha256::HashEngine) -> HashEngine { Self(engine) }
+}
+
+impl crate::HashEngine for HashEngine {
+    type MidState = sha256::Midstate;
+
+    fn midstate(&self) -> Self::MidState { self.0.midstate() }
+
+    const BLOCK_SIZE: usize = 64;
+
+    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
+
+    fn input(&mut self, inp: &[u8]) { self.0.input(inp) }
 }
 
 /// Macro used to define a newtype tagged hash.
@@ -113,11 +134,11 @@ macro_rules! sha256t_hash_newtype {
 
         impl $crate::sha256t::Tag for $tag {
             #[inline]
-            fn engine() -> $crate::sha256::HashEngine {
+            fn engine() -> $crate::sha256t::HashEngine {
                 const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
                 #[allow(unused)]
                 const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
+                $crate::sha256t::HashEngine::from_pretagged($crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1))
             }
         }
 
@@ -159,6 +180,7 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[cfg(feature = "alloc")]
     use crate::Hash;
     use crate::{sha256, sha256t};
@@ -173,10 +195,10 @@ mod tests {
     pub struct TestHashTag;
 
     impl sha256t::Tag for TestHashTag {
-        fn engine() -> sha256::HashEngine {
+        fn engine() -> HashEngine {
             // The TapRoot TapLeaf midstate.
             let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-            sha256::HashEngine::from_midstate(midstate, 64)
+            HashEngine(sha256::HashEngine::from_midstate(midstate, 64))
         }
     }
 

@@ -1561,7 +1561,7 @@ mod test {
     use core::str::FromStr;
 
     use hashes::sha256t::Tag;
-    use hashes::{sha256, Hash, HashEngine};
+    use hashes::{sha256, sha256t, Hash, HashEngine};
     use hex::FromHex;
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
 
@@ -1577,12 +1577,12 @@ mod test {
         serde_test::{assert_tokens, Token},
     };
 
-    fn tag_engine(tag_name: &str) -> sha256::HashEngine {
+    fn tag_engine(tag_name: &str) -> sha256t::HashEngine {
         let mut engine = sha256::Hash::engine();
         let tag_hash = sha256::Hash::hash(tag_name.as_bytes());
         engine.input(tag_hash.as_ref());
         engine.input(tag_hash.as_ref());
-        engine
+        sha256t::HashEngine::from_pretagged(engine)
     }
 
     #[test]

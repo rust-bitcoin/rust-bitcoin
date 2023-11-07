@@ -5,7 +5,7 @@
 //! Implementations of traits defined in `std` / `core2` and not in `core`.
 //!
 
-use crate::{hmac, io, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
+use crate::{hmac, io, ripemd160, sha1, sha256, sha256t, sha512, siphash24, HashEngine};
 
 impl io::Write for sha1::HashEngine {
     fn flush(&mut self) -> io::Result<()> { Ok(()) }
@@ -17,6 +17,15 @@ impl io::Write for sha1::HashEngine {
 }
 
 impl io::Write for sha256::HashEngine {
+    fn flush(&mut self) -> io::Result<()> { Ok(()) }
+
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.input(buf);
+        Ok(buf.len())
+    }
+}
+
+impl io::Write for sha256t::HashEngine {
     fn flush(&mut self) -> io::Result<()> { Ok(()) }
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
