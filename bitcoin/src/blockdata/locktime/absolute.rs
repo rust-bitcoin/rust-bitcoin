@@ -7,7 +7,7 @@
 //!
 
 use core::cmp::{Ordering, PartialOrd};
-use core::{fmt, mem};
+use core::{fmt, mem, ops};
 
 use internals::write_err;
 use io::{Read, Write};
@@ -16,6 +16,7 @@ use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::absolute;
+use crate::blockdata::locktime::relative; // For math operations.
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
@@ -440,6 +441,94 @@ impl Height {
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Increments height by 1, saturating at `Height::MAX`.
+    #[inline]
+    pub const fn increment(self) -> Height { self.saturating_add(1) }
+
+    /// Decrements height by 1, saturating at `Height::MIN`.
+    #[inline]
+    pub const fn decrement(self) -> Height { self.saturating_sub(1) }
+
+    /// Checked integer addition.
+    ///
+    /// Computes self + rhs, returning `None` if result would overflow `Height::MAX`.
+    #[inline]
+    pub const fn checked_add(self, rhs: u32) -> Option<Self> {
+        match self.0.checked_add(rhs) {
+            Some(sum) if sum <= Height::MAX.0 => Some(Height(sum)),
+            _ => None,
+        }
+    }
+
+    /// Saturating integer addition.
+    ///
+    /// Computes self + rhs, saturating at `Height::MAX` instead of overflowing.
+    #[inline]
+    pub const fn saturating_add(self, rhs: u32) -> Height {
+        let x = self.0.saturating_add(rhs);
+        if x <= Self::MAX.0 {
+            Height(x)
+        } else {
+            Self::MAX
+        }
+    }
+
+    /// Checked integer subtraction.
+    ///
+    /// Computes self - rhs, returning `None` if result would overflow `Height::MIN`.
+    #[inline]
+    pub const fn checked_sub(self, rhs: u32) -> Option<Height> {
+        match self.0.checked_sub(rhs) {
+            Some(x) => Some(Height(x)),
+            None => None,
+        }
+    }
+
+    /// Saturating integer subtraction.
+    ///
+    /// Computes self - rhs, saturating at `Height::MIN` instead of overflowing.
+    #[inline]
+    pub const fn saturating_sub(self, rhs: u32) -> Height { Height(self.0.saturating_sub(rhs)) }
+
+    /// Checked integer multiplication.
+    ///
+    /// Computes self * rhs, returning `None` if result would overflow `Height::MAX`.
+    #[inline]
+    pub const fn checked_mul(self, rhs: u32) -> Option<Self> {
+        match self.0.checked_mul(rhs) {
+            Some(x) if x <= Height::MAX.0 => Some(Height(x)),
+            _ => None,
+        }
+    }
+
+    /// Saturating integer division.
+    ///
+    /// Computes self * rhs, saturating at `Height::MAX` instead of overflowing.
+    #[inline]
+    pub const fn saturating_mul(self, rhs: u32) -> Height {
+        let x = self.0.saturating_mul(rhs);
+        if x <= Self::MAX.0 {
+            Height(x)
+        } else {
+            Self::MAX
+        }
+    }
+
+    /// Checked integer division.
+    ///
+    /// Division cannot overflow, this is provided for uniformity with other checked functions.
+    #[inline]
+    pub const fn checked_div(self, rhs: u32) -> Option<Height> {
+        Some(Height(self.0.saturating_div(rhs)))
+    }
+
+    /// Saturating integer division.
+    ///
+    /// Division cannot overflow, this is provided for uniformity with other saturating functions.
+    #[inline]
+    #[cfg(rust_v_1_58)]
+    pub const fn saturating_div(self, rhs: u32) -> Height { Height(self.0.saturating_div(rhs)) }
 }
 
 impl_parse_str_from_int_fallible!(Height, u32, from_consensus, Error);
@@ -455,6 +544,176 @@ impl FromHexStr for Height {
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let height = crate::parse::hex_u32(s)?;
         Self::from_consensus(height)
+    }
+}
+
+impl ops::Add<relative::Height> for Height {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: relative::Height) -> Self::Output {
+        match self.checked_add(rhs.value().into()) {
+            Some(height) => height,
+            None => panic!("attempted to add height with overflow"),
+        }
+    }
+}
+
+impl ops::Add<u32> for Height {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: u32) -> Self::Output {
+        let height = self.0 + rhs;
+        Height::from_consensus(height).expect("attempted to add with overflow")
+    }
+}
+
+impl ops::Add<Height> for u32 {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: Height) -> Self::Output { rhs + self }
+}
+
+impl ops::Sub<relative::Height> for Height {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: relative::Height) -> Self::Output {
+        match self.checked_sub(rhs.value().into()) {
+            Some(height) => height,
+            None => panic!("attempted to sub height with overflow"),
+        }
+    }
+}
+
+impl ops::Sub<u32> for Height {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: u32) -> Self::Output {
+        let height = self.0 - rhs;
+        Height::from_consensus(height).expect("non-panicing sub as a valid height")
+    }
+}
+
+impl ops::Sub<Height> for u32 {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: Height) -> Self::Output { rhs - self }
+}
+
+impl ops::Mul<relative::Height> for Height {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: relative::Height) -> Self::Output {
+        match self.checked_mul(rhs.value().into()) {
+            Some(height) => height,
+            None => panic!("attempted to mul height with overflow"),
+        }
+    }
+}
+
+impl ops::Mul<u32> for Height {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: u32) -> Self::Output {
+        let height = self.0 * rhs;
+        Height::from_consensus(height).expect("attempted to mul height with overflow")
+    }
+}
+
+impl ops::Mul<Height> for u32 {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: Height) -> Self::Output { rhs.mul(self) }
+}
+
+impl ops::Div<relative::Height> for Height {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: relative::Height) -> Self::Output {
+        match self.checked_div(rhs.value().into()) {
+            Some(height) => height,
+            None => unreachable!("div never overflows"),
+        }
+    }
+}
+
+impl ops::Div<u32> for Height {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: u32) -> Self::Output {
+        let height = self.0 / rhs;
+        Height::from_consensus(height).expect("div never overflows")
+    }
+}
+
+impl ops::Div<Height> for u32 {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: Height) -> Self::Output { rhs / self }
+}
+
+impl ops::AddAssign<relative::Height> for Height {
+    #[inline]
+    fn add_assign(&mut self, rhs: relative::Height) {
+        let rhs: u32 = rhs.value().into();
+        let height = self.0 + rhs;
+        *self = Height::from_consensus(height).expect("attempted to add with overflow");
+    }
+}
+
+impl ops::AddAssign<u32> for Height {
+    #[inline]
+    fn add_assign(&mut self, rhs: u32) {
+        let height = self.0 + rhs;
+        *self = Height::from_consensus(height).expect("attempted to add with overflow");
+    }
+}
+
+impl ops::SubAssign<relative::Height> for Height {
+    fn sub_assign(&mut self, rhs: relative::Height) {
+        let rhs: u32 = rhs.value().into();
+        let height = self.0 - rhs;
+        *self = Height::from_consensus(height).expect("non-panicing sub is a valid height");
+    }
+}
+
+impl ops::SubAssign<u32> for Height {
+    fn sub_assign(&mut self, rhs: u32) {
+        let height = self.0 - rhs;
+        *self = Height::from_consensus(height).expect("non-panicing sub is a valid height");
+    }
+}
+
+impl ops::MulAssign<relative::Height> for Height {
+    #[inline]
+    fn mul_assign(&mut self, rhs: relative::Height) {
+        let rhs: u32 = rhs.value().into();
+        let height = self.0 * rhs;
+        *self = Height::from_consensus(height).expect("attempted to mul with overflow");
+    }
+}
+
+impl ops::MulAssign<u32> for Height {
+    #[inline]
+    fn mul_assign(&mut self, rhs: u32) {
+        let height = self.0 * rhs;
+        *self = Height::from_consensus(height).expect("attempted to mul with overflow");
+    }
+}
+
+impl ops::DivAssign<relative::Height> for Height {
+    #[inline]
+    fn div_assign(&mut self, rhs: relative::Height) {
+        let rhs: u32 = rhs.value().into();
+        let height = self.0 / rhs;
+        *self = Height::from_consensus(height).expect("div never overflows");
+    }
+}
+
+impl ops::DivAssign<u32> for Height {
+    #[inline]
+    fn div_assign(&mut self, rhs: u32) {
+        let height = self.0 / rhs;
+        *self = Height::from_consensus(height).expect("div never overflows");
     }
 }
 
@@ -823,5 +1082,29 @@ mod tests {
     fn incorrect_units_do_not_imply() {
         let lock = LockTime::from_consensus(750_005);
         assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
+    }
+
+    #[test]
+    fn absolute_height_checked_add() {
+        let h = Height(Height::MAX.0 - 1);
+        assert_eq!(h.checked_add(1), Some(Height::MAX));
+    }
+
+    #[test]
+    fn absolute_height_checked_add_overlflow() {
+        let h = Height::MAX;
+        assert!(h.checked_add(1).is_none())
+    }
+
+    #[test]
+    fn absolute_height_saturating_add() {
+        let h = Height(Height::MAX.0 - 1);
+        assert_eq!(h.saturating_add(1), Height::MAX);
+    }
+
+    #[test]
+    fn absolute_height_saturating_add_overlflow() {
+        let h = Height::MAX;
+        assert_eq!(h.saturating_add(1), Height::MAX);
     }
 }

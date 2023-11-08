@@ -6,7 +6,7 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::fmt;
+use core::{fmt, ops};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -208,6 +208,83 @@ impl Height {
     /// Returns the inner `u16` value.
     #[inline]
     pub fn value(self) -> u16 { self.0 }
+
+    /// Increments height by 1, saturating at `Height::MAX`.
+    #[inline]
+    pub const fn increment(self) -> Height { self.saturating_add(1) }
+
+    /// Decrements height by 1, saturating at `Height::MIN`.
+    #[inline]
+    pub const fn decrement(self) -> Height { self.saturating_sub(1) }
+
+    /// Checked integer addition.
+    ///
+    /// Computes self + rhs, returning `None` if result would overflow `Height::MAX`.
+    #[inline]
+    pub const fn checked_add(self, rhs: u16) -> Option<Self> {
+        match self.0.checked_add(rhs) {
+            Some(x) => Some(Height(x)),
+            None => None,
+        }
+    }
+
+    /// Saturating integer addition.
+    ///
+    /// Computes self + rhs, saturating at `Height::MAX` instead of overflowing.
+    #[inline]
+    pub const fn saturating_add(self, rhs: u16) -> Height { Height(self.0.saturating_add(rhs)) }
+
+    /// Checked integer subtraction.
+    ///
+    /// Computes self - rhs, returning `None` if result would overflow `Height::MIN`.
+    #[inline]
+    pub const fn checked_sub(self, rhs: u16) -> Option<Height> {
+        match self.0.checked_sub(rhs) {
+            Some(x) => Some(Height(x)),
+            None => None,
+        }
+    }
+
+    /// Saturating integer subtraction.
+    ///
+    /// Computes self - rhs, saturating at `Height::MIN` instead of overflowing.
+    #[inline]
+    pub const fn saturating_sub(self, rhs: u16) -> Height { Height(self.0.saturating_sub(rhs)) }
+
+    /// Checked integer multiplication.
+    ///
+    /// Computes self * rhs, returning `None` if result would overflow `Height::MAX`.
+    #[inline]
+    pub const fn checked_mul(self, rhs: u16) -> Option<Self> {
+        match self.0.checked_mul(rhs) {
+            Some(x) => Some(Height(x)),
+            None => None,
+        }
+    }
+
+    /// Saturating integer division.
+    ///
+    /// Computes self * rhs, saturating at `Height::MAX` instead of overflowing.
+    #[inline]
+    pub const fn saturating_mul(self, rhs: u16) -> Height { Height(self.0.saturating_mul(rhs)) }
+
+    /// Checked integer division.
+    ///
+    /// Division cannot overflow, this is provided for uniformity with other checked functions.
+    #[inline]
+    pub const fn checked_div(self, rhs: u16) -> Option<Height> {
+        match self.0.checked_div(rhs) {
+            Some(x) => Some(Height(x)),
+            None => None,
+        }
+    }
+
+    /// Saturating integer division.
+    ///
+    /// Division cannot overflow, this is provided for uniformity with other saturating functions.
+    #[inline]
+    #[cfg(rust_v_1_58)]
+    pub const fn saturating_div(self, rhs: u16) -> Height { Height(self.0.saturating_div(rhs)) }
 }
 
 impl From<u16> for Height {
@@ -219,6 +296,116 @@ impl_parse_str_from_int_infallible!(Height, u16, from);
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl ops::Add for Height {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: Height) -> Self::Output { Height(self.0 + rhs.0) }
+}
+
+impl ops::Add<u16> for Height {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: u16) -> Self::Output { Height(self.0 + rhs) }
+}
+
+impl ops::Add<Height> for u16 {
+    type Output = Height;
+    #[inline]
+    fn add(self, rhs: Height) -> Self::Output { Height(rhs.0 + self) }
+}
+
+impl ops::Sub for Height {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: Height) -> Self::Output { Height(self.0 - rhs.0) }
+}
+
+impl ops::Sub<u16> for Height {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: u16) -> Self::Output { Height(self.0 - rhs) }
+}
+
+impl ops::Sub<Height> for u16 {
+    type Output = Height;
+    #[inline]
+    fn sub(self, rhs: Height) -> Self::Output { Height(self - rhs.0) }
+}
+
+impl ops::Mul for Height {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: Height) -> Self::Output { Height(self.0 * rhs.0) }
+}
+
+impl ops::Mul<u16> for Height {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: u16) -> Self::Output { Height(self.0 * rhs) }
+}
+
+impl ops::Mul<Height> for u16 {
+    type Output = Height;
+    #[inline]
+    fn mul(self, rhs: Height) -> Self::Output { Height(self * rhs.0) }
+}
+
+impl ops::Div for Height {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: Height) -> Self::Output { Height(self.0 / rhs.0) }
+}
+
+impl ops::Div<u16> for Height {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: u16) -> Self::Output { Height(self.0 / rhs) }
+}
+
+impl ops::Div<Height> for u16 {
+    type Output = Height;
+    #[inline]
+    fn div(self, rhs: Height) -> Self::Output { Height(self / rhs.0) }
+}
+
+impl ops::AddAssign for Height {
+    #[inline]
+    fn add_assign(&mut self, rhs: Height) { self.0.add_assign(rhs.0) }
+}
+
+impl ops::AddAssign<u16> for Height {
+    #[inline]
+    fn add_assign(&mut self, rhs: u16) { self.0.add_assign(rhs) }
+}
+
+impl ops::SubAssign for Height {
+    fn sub_assign(&mut self, rhs: Height) { self.0.sub_assign(rhs.0) }
+}
+
+impl ops::SubAssign<u16> for Height {
+    fn sub_assign(&mut self, rhs: u16) { self.0.sub_assign(rhs) }
+}
+
+impl ops::MulAssign for Height {
+    #[inline]
+    fn mul_assign(&mut self, rhs: Height) { self.0.mul_assign(rhs.0) }
+}
+
+impl ops::MulAssign<u16> for Height {
+    #[inline]
+    fn mul_assign(&mut self, rhs: u16) { self.0.mul_assign(rhs) }
+}
+
+impl ops::DivAssign for Height {
+    #[inline]
+    fn div_assign(&mut self, rhs: Height) { self.0.div_assign(rhs.0) }
+}
+
+impl ops::DivAssign<u16> for Height {
+    #[inline]
+    fn div_assign(&mut self, rhs: u16) { self.0.div_assign(rhs) }
 }
 
 /// A relative lock time lock-by-blocktime value.
