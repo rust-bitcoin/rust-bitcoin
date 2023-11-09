@@ -896,7 +896,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 lock_time: self_.lock_time,
                 input: vec![],
                 output: vec![],
-                special_transaction_payload: None,
+                special_transaction_payload: self_.special_transaction_payload.clone(),
             };
             // Add all inputs necessary..
             if anyone_can_pay {
