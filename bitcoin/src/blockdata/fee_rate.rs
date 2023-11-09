@@ -82,10 +82,12 @@ impl FeeRate {
 
     /// Checked weight multiplication.
     ///
-    /// Computes `self * rhs` where rhs is of type Weight. `None` is returned if an overflow
-    /// occurred.
+    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate.
+    ///
+    /// `None` is returned if an overflow occurred.
     pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
-        self.0.checked_mul(rhs.to_wu()).map(Amount::from_sat)
+        let sats = self.0.checked_mul(rhs.to_wu())?.checked_add(999)? / 1000;
+        Some(Amount::from_sat(sats))
     }
 
     /// Calculates fee by multiplying this fee rate by weight, in weight units, returning `None`
@@ -95,13 +97,14 @@ impl FeeRate {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```
     /// # use bitcoin::{absolute, transaction, FeeRate, Transaction};
     /// # // Dummy transaction.
     /// # let tx = Transaction { version: transaction::Version::ONE, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
     ///
     /// let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/vbyte is valid");
-    /// let fee = rate.fee_wu(tx.weight());
+    /// let fee = rate.fee_wu(tx.weight()).unwrap();
+    /// assert_eq!(fee.to_sat(), tx.vsize() as u64);
     /// ```
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
@@ -209,12 +212,20 @@ mod tests {
 
     #[test]
     fn checked_weight_mul_test() {
-        let weight = Weight::from_wu(10);
-        let fee: Amount = FeeRate(10).checked_mul_by_weight(weight).expect("expected Amount");
+        let weight = Weight::from_vb(10).unwrap();
+        let fee: Amount = FeeRate::from_sat_per_vb(10)
+            .unwrap()
+            .checked_mul_by_weight(weight)
+            .expect("expected Amount");
         assert_eq!(Amount::from_sat(100), fee);
 
         let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
+
+        let weight = Weight::from_vb(3).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        assert_eq!(Amount::from_sat(9), fee);
     }
 
     #[test]
