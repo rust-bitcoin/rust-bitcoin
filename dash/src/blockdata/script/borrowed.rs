@@ -199,6 +199,17 @@ impl Script {
     #[inline]
     pub fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
 
+    /// Returns the public key hash if this script is P2PKH.
+    #[inline]
+    pub fn p2pkh_public_key_hash_bytes(&self) -> Option<&[u8]> {
+        if self.is_p2pkh() {
+            Some(&self.0[3..23])
+        } else {
+            None
+        }
+    }
+
+
     /// Returns the public key if this script is P2PK with a **valid** public key.
     ///
     /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
