@@ -221,6 +221,11 @@ mod tests {
 
         let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
+
+        let weight = Weight::from_vb(3).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        assert_eq!(Amount::from_sat(9), fee);
     }
 
     #[test]
