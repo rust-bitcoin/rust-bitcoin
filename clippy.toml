@@ -1,2 +1,2 @@
-msrv = "1.48.0"
+msrv = "1.56.1"
 too-many-arguments-threshold = 13

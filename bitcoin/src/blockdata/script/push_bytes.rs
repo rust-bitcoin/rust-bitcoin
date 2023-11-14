@@ -16,10 +16,8 @@ pub use self::primitive::*;
 /// break invariants. Therefore auditing this module should be sufficient.
 mod primitive {
     use core::convert::{TryFrom, TryInto};
-    #[cfg(rust_v_1_53)]
-    use core::ops::Bound;
     use core::ops::{
-        Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+        Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
     };
 
     use super::PushBytesError;
@@ -105,10 +103,9 @@ mod primitive {
         RangeTo<usize>,
         RangeFull,
         RangeInclusive<usize>,
-        RangeToInclusive<usize>
+        RangeToInclusive<usize>,
+        (Bound<usize>, Bound<usize>)
     );
-    #[cfg(rust_v_1_53)]
-    delegate_index!((Bound<usize>, Bound<usize>));
 
     impl Index<usize> for PushBytes {
         type Output = u8;

@@ -2,9 +2,9 @@
 
 use core::convert::{TryFrom, TryInto};
 use core::fmt;
-#[cfg(rust_v_1_53)]
-use core::ops::Bound;
-use core::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use core::ops::{
+    Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+};
 
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
@@ -653,7 +653,6 @@ delegate_index!(
     RangeTo<usize>,
     RangeFull,
     RangeInclusive<usize>,
-    RangeToInclusive<usize>
+    RangeToInclusive<usize>,
+    (Bound<usize>, Bound<usize>)
 );
-#[cfg(rust_v_1_53)]
-delegate_index!((Bound<usize>, Bound<usize>));

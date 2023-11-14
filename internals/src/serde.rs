@@ -47,7 +47,6 @@ mod impls {
             })
         }
 
-        #[cfg(rust_v_1_55)]
         fn try_into_de_error<E>(self, expected: Option<&dyn de::Expected>) -> Result<E, Self>
         where
             E: de::Error,
@@ -60,14 +59,6 @@ mod impls {
                 Empty => Ok(E::invalid_value(de::Unexpected::Str(""), expected)),
                 _ => Err(self),
             }
-        }
-
-        #[cfg(not(rust_v_1_55))]
-        fn try_into_de_error<E>(self, _expected: Option<&dyn de::Expected>) -> Result<E, Self>
-        where
-            E: de::Error,
-        {
-            Err(self)
         }
     }
 }
