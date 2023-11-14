@@ -1,6 +1,6 @@
 [package]
 authors = ["Riccardo Casatta <riccardo@casatta.it>", "Dev Random <c1.devrandom@niftybox.net>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 name = "embedded"
 version = "0.1.0"

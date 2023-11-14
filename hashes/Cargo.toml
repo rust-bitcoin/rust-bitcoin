@@ -9,7 +9,7 @@ description = "Hash functions used by the rust-bitcoin eccosystem"
 categories = ["algorithms"]
 keywords = [ "crypto", "bitcoin", "hash", "digest" ]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 exclude = ["tests", "contrib"]
 
 [features]
