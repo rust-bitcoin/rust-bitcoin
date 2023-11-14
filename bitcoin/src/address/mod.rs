@@ -26,6 +26,8 @@
 //! bitcoin = { version = "...", features = ["rand-std"] }
 //! ```
 
+pub mod error;
+
 use core::convert::{TryFrom, TryInto};
 use core::fmt;
 use core::marker::PhantomData;
@@ -49,9 +51,11 @@ use crate::prelude::*;
 use crate::script::PushBytesBuf;
 use crate::taproot::TapNodeHash;
 
-/// Error code for the address module.
-pub mod error;
-pub use self::error::{Error, ParseError, UnknownAddressTypeError};
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    error::{Error, ParseError, UnknownAddressTypeError},
+};
 
 /// The different types of addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

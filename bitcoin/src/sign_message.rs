@@ -8,9 +8,12 @@
 
 use hashes::{sha256d, Hash, HashEngine};
 
+use crate::consensus::{encode, Encodable};
+
+#[rustfmt::skip]
+#[doc(inline)]
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
-use crate::consensus::{encode, Encodable};
 
 /// The prefix for signed messages using Bitcoin's message signing protocol.
 pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";

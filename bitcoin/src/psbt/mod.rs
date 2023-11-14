@@ -7,6 +7,13 @@
 //! except we define PSBTs containing non-standard sighash types as invalid.
 //!
 
+#[macro_use]
+mod macros;
+mod error;
+mod map;
+pub mod raw;
+pub mod serialize;
+
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
@@ -23,16 +30,12 @@ use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::{Amount, FeeRate};
 
-#[macro_use]
-mod macros;
-pub mod raw;
-pub mod serialize;
-
-mod error;
-pub use self::error::Error;
-
-mod map;
-pub use self::map::{Input, Output, PsbtSighashType};
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    map::{Input, Output, PsbtSighashType},
+    error::Error,
+};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

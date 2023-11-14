@@ -5,10 +5,12 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::ops::{Deref, DerefMut};
 
-pub use primitive::*;
-
 #[allow(unused)]
 use crate::prelude::*;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::primitive::*;
 
 /// This module only contains required operations so that outside functions wouldn't accidentally
 /// break invariants. Therefore auditing this module should be sufficient.

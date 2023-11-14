@@ -47,7 +47,10 @@ macro_rules! impl_asref_push_bytes {
     };
 }
 pub(crate) use impl_asref_push_bytes;
+
 // newtypes module is solely here so we can rustfmt::skip.
+#[rustfmt::skip]
+#[doc(inline)]
 pub use newtypes::*;
 
 #[rustfmt::skip]

@@ -23,8 +23,6 @@ use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
-#[cfg(feature = "bitcoinconsensus")]
-pub use crate::consensus::validation::TxVerifyError;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
@@ -35,6 +33,11 @@ use crate::script::Push;
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
 use crate::{io, Amount, VarInt};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[cfg(feature = "bitcoinconsensus")]
+#[doc(inline)]
+pub use crate::consensus::validation::TxVerifyError;
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;

@@ -16,12 +16,17 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::{encode, Decodable, Encodable};
-pub use crate::hash_types::BlockHash;
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::{io, merkle_tree, Network, VarInt};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use crate::{
+    hash_types::BlockHash,
+};
 
 /// Bitcoin block header.
 ///

@@ -16,5 +16,9 @@ pub mod transaction;
 pub mod weight;
 pub mod witness;
 
-pub use fee_rate::FeeRate;
-pub use weight::Weight;
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    fee_rate::FeeRate,
+    weight::Weight
+};

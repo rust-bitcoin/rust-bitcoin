@@ -47,6 +47,16 @@
 //! At the time of writing there's only one operation using the cache - `push_verify`, so the cache
 //! is minimal but we may extend it in the future if needed.
 
+mod borrowed;
+mod builder;
+mod instruction;
+mod owned;
+mod push_bytes;
+#[cfg(test)]
+mod tests;
+pub mod witness_program;
+pub mod witness_version;
+
 use alloc::rc::Rc;
 #[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
 use alloc::sync::Arc;
@@ -65,21 +75,15 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::prelude::*;
 use crate::{io, OutPoint};
 
-mod borrowed;
-mod builder;
-mod instruction;
-mod owned;
-mod push_bytes;
-#[cfg(test)]
-mod tests;
-pub mod witness_program;
-pub mod witness_version;
-
-pub use self::borrowed::*;
-pub use self::builder::*;
-pub use self::instruction::*;
-pub use self::owned::*;
-pub use self::push_bytes::*;
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    borrowed::*,
+    builder::*,
+    instruction::*,
+    owned::*,
+    push_bytes::*,
+};
 
 hashes::hash_newtype! {
     /// A hash of Bitcoin Script bytecode.
