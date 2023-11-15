@@ -1323,6 +1323,26 @@ impl InputWeightPrediction {
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
     pub const P2WPKH_MAX: Self = InputWeightPrediction::from_slice(0, &[73, 33]);
 
+    /// Input weight prediction corresponding to spending of a P2PKH output with the largest possible
+    /// DER-encoded signature, and a compressed public key.
+    ///
+    /// If the input in your transaction uses P2PKH with a compressed key, you can use this instead of
+    /// [`InputWeightPrediction::new`].
+    ///
+    /// This is useful when you **do not** use [signature grinding] and want to ensure you are not
+    /// under-paying. See [`ground_p2pkh_compressed`](Self::ground_p2pkh_compressed) if you do use
+    /// signature grinding.
+    ///
+    /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
+    pub const P2PKH_COMPRESSED_MAX: Self = InputWeightPrediction::from_slice(107, &[]);
+
+    /// Input weight prediction corresponding to spending of a P2PKH output with the largest possible
+    /// DER-encoded signature, and an uncompressed public key.
+    ///
+    /// If the input in your transaction uses P2PKH with an uncompressed key, you can use this instead of
+    /// [`InputWeightPrediction::new`].
+    pub const P2PKH_UNCOMPRESSED_MAX: Self = InputWeightPrediction::from_slice(139, &[]);
+
     /// Input weight prediction corresponding to spending of taproot output using the key and
     /// default sighash.
     ///
@@ -1355,6 +1375,27 @@ impl InputWeightPrediction {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
         InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
+    }
+
+    /// Input weight prediction corresponding to spending of a P2PKH output using [signature
+    /// grinding], and a compressed public key.
+    ///
+    /// If the input in your transaction uses compressed P2PKH and you use signature grinding you
+    /// can use this instead of [`InputWeightPrediction::new`]. See
+    /// [`P2PKH_COMPRESSED_MAX`](Self::P2PKH_COMPRESSED_MAX) if you don't use signature grinding.
+    ///
+    /// Note: `bytes_to_grind` is usually `1` because of exponential cost of higher values.
+    ///
+    /// # Panics
+    ///
+    /// The funcion panics in const context and debug builds if `bytes_to_grind` is higher than 62.
+    ///
+    /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
+    pub const fn ground_p2pkh_compressed(bytes_to_grind: usize) -> Self {
+        // Written to trigger const/debug panic for unreasonably high values.
+        let der_signature_size = 10 + (62 - bytes_to_grind);
+
+        InputWeightPrediction::from_slice(2 + 33 + der_signature_size, &[])
     }
 
     /// Computes the prediction for a single input.
