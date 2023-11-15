@@ -241,7 +241,7 @@ easy and good test coverage of the codebase is an important goal. Refactoring
 the project to enable fine-grained unit testing is also an ongoing effort.
 
 Various methods of testing are in use (e.g. fuzzing, mutation), please see
-the [readme](./REAME.md) for more information.
+the [readme](./README.md) for more information.
 
 
 ## Going further
