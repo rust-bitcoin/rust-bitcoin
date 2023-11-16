@@ -10,13 +10,14 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, siphash24, Hash};
+use hashes::{sha256, siphash24, RawHash};
 use internals::impl_array_newtype;
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::{block, io, Block, BlockHash, Transaction};
+use crate::{block, io, Block, Transaction};
+use crate::blockdata::block::BlockHash;
 
 /// A BIP-152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -376,7 +377,7 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hash_types::TxMerkleNode;
+    use crate::merkle_tree::TxMerkleNode;
     use crate::{
         Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
         Witness,
@@ -387,7 +388,7 @@ mod test {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
-                previous_output: OutPoint::new(Txid::hash(nonce), 0),
+                previous_output: OutPoint::new(Txid::from_raw_hash(hashes::hash(nonce)), 0),
                 script_sig: ScriptBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
@@ -400,8 +401,8 @@ mod test {
         Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::hash(&[0]),
-                merkle_root: TxMerkleNode::hash(&[1]),
+                prev_blockhash: BlockHash::from_raw_hash(hashes::hash(&[0])),
+                merkle_root: TxMerkleNode::from_raw_hash(hashes::hash(&[1])),
                 time: 2,
                 bits: CompactTarget::from_consensus(3),
                 nonce: 4,
@@ -469,7 +470,7 @@ mod test {
             {
                 // test serialization
                 let raw: Vec<u8> = serialize(&BlockTransactionsRequest {
-                    block_hash: Hash::all_zeros(),
+                    block_hash: BlockHash::all_zeros(),
                     indexes: testcase.1,
                 });
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
@@ -491,7 +492,7 @@ mod test {
     #[should_panic] // 'attempt to add with overflow' in consensus_encode()
     fn test_getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
-            block_hash: Hash::all_zeros(),
+            block_hash: BlockHash::all_zeros(),
             indexes: vec![core::u64::MAX],
         });
     }

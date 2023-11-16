@@ -104,7 +104,7 @@ impl crate::HashEngine for HashEngine {
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     pub fn hash_again(&self) -> sha256d::Hash {
-        crate::Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0)
+        crate::Hash::from_byte_array(<Self as crate::RawHash>::hash(&self.0).0)
     }
 
     /// Computes hash from `bytes` in `const` context.
@@ -819,7 +819,7 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256, Hash, HashEngine};
+    use crate::{sha256, Hash, HashEngine, RawHash};
 
     #[test]
     #[cfg(feature = "alloc")]

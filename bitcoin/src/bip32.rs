@@ -12,7 +12,7 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine, RawHash};
 use internals::{impl_array_newtype, write_err};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
@@ -33,6 +33,11 @@ const VERSION_BYTES_MAINNET_PRIVATE: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
 const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
 /// Version bytes for extended private keys on any of the testnet networks.
 const VERSION_BYTES_TESTNETS_PRIVATE: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
+
+hash_newtype! {
+    /// XpubIdentifier as defined in BIP-32.
+    pub struct XpubIdentifier(hash160::Hash);
+}
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -811,7 +816,7 @@ impl Xpub {
     pub fn identifier(&self) -> XKeyIdentifier {
         let mut engine = XKeyIdentifier::engine();
         engine.write_all(&self.public_key.serialize()).expect("engines don't error");
-        XKeyIdentifier::from_engine(engine)
+        XKeyIdentifier(engine.finalize())
     }
 
     /// Returns the first four bytes of the identifier

@@ -52,7 +52,7 @@ impl io::Write for siphash24::HashEngine {
     }
 }
 
-impl<T: crate::Hash> io::Write for hmac::HmacEngine<T> {
+impl<T: crate::RawHash> io::Write for hmac::HmacEngine<T> {
     fn flush(&mut self) -> io::Result<()> { Ok(()) }
 
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -64,7 +64,7 @@ impl<T: crate::Hash> io::Write for hmac::HmacEngine<T> {
 #[cfg(test)]
 mod tests {
     use super::io::Write;
-    use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, Hash};
+    use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, RawHash};
 
     macro_rules! write_test {
         ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {

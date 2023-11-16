@@ -9,7 +9,7 @@
 use core::convert::TryInto;
 use core::{fmt, iter, slice, str};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, RawHash};
 
 use crate::prelude::*;
 

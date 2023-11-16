@@ -7,8 +7,8 @@
 //! ```
 //! # use bitcoin::{merkle_tree, Txid};
 //! # use bitcoin::hashes::Hash;
-//! # let tx1 = Txid::all_zeros();  // Dummy hash values.
-//! # let tx2 = Txid::all_zeros();
+//! # let tx1 = Txid::all_zeros().to_raw_hash();  // Dummy hash values.
+//! # let tx2 = Txid::all_zeros().to_raw_hash();
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
 //! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
 //! ```
@@ -18,7 +18,7 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-use hashes::Hash;
+use hashes::RawHash;
 
 use crate::consensus::encode::Encodable;
 use crate::io;
@@ -26,7 +26,7 @@ use crate::prelude::*;
 
 #[rustfmt::skip]
 #[doc(inline)]
-pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
+pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree, TxMerkleNode};
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
@@ -40,8 +40,8 @@ pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    T: RawHash + Encodable,
+    <T as RawHash>::Engine: io::Write,
 {
     match hashes.len() {
         0 => None,
@@ -58,8 +58,8 @@ where
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    T: RawHash + Encodable,
+    <T as RawHash>::Engine: io::Write,
     I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
@@ -90,8 +90,8 @@ where
 // `hashes` must contain at least one hash.
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    T: RawHash + Encodable,
+    <T as RawHash>::Engine: io::Write,
 {
     if hashes.len() == 1 {
         return hashes[0];
@@ -127,7 +127,7 @@ mod tests {
 
         let hashes_iter = block.txdata.iter().map(|obj| obj.txid().to_raw_hash());
 
-        let mut hashes_array: [sha256d::Hash; 15] = [Hash::all_zeros(); 15];
+        let mut hashes_array: [sha256d::Hash; 15] = [RawHash::all_zeros(); 15];
         for (i, hash) in hashes_iter.clone().enumerate() {
             hashes_array[i] = hash;
         }

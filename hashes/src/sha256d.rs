@@ -19,7 +19,7 @@ crate::internal_macros::hash_type! {
 type HashEngine = sha256::HashEngine;
 
 fn from_engine(e: sha256::HashEngine) -> Hash {
-    use crate::Hash as _;
+    use crate::RawHash as _;
 
     let sha2 = sha256::Hash::from_engine(e);
     let sha2d = sha256::Hash::hash(&sha2[..]);
@@ -34,7 +34,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha256, sha256d, Hash, HashEngine};
+        use crate::{sha256, sha256d, Hash, HashEngine, RawHash};
 
         #[derive(Clone)]
         struct Test {

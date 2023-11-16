@@ -24,7 +24,7 @@ crate::internal_macros::hash_type! {
 type HashEngine = sha256::HashEngine;
 
 fn from_engine(e: HashEngine) -> Hash {
-    use crate::Hash as _;
+    use crate::RawHash as _;
 
     let sha2 = sha256::Hash::from_engine(e);
     let rmd = ripemd160::Hash::hash(&sha2[..]);
@@ -39,7 +39,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{hash160, Hash, HashEngine};
+        use crate::{hash160, Hash, HashEngine, RawHash};
 
         #[derive(Clone)]
         #[cfg(feature = "alloc")]
@@ -84,7 +84,7 @@ mod tests {
             for ch in test.input {
                 engine.input(&[ch]);
             }
-            let manual_hash = Hash::from_engine(engine);
+            let manual_hash = RawHash::from_engine(engine);
             assert_eq!(hash, manual_hash);
             assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
         }

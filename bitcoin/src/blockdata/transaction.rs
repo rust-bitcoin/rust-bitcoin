@@ -15,7 +15,7 @@ use core::convert::TryFrom;
 use core::default::Default;
 use core::{cmp, fmt, str};
 
-use hashes::{self, sha256d, Hash};
+use hashes::{self, hash_newtype, sha256d, RawHash, HashEngine};
 use internals::write_err;
 
 use super::Weight;
@@ -24,7 +24,6 @@ use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
@@ -43,6 +42,37 @@ pub use crate::consensus::validation::TxVerifyError;
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
 const SEGWIT_FLAG: u8 = 0x01;
+
+hash_newtype! {
+    /// A bitcoin transaction hash/transaction ID.
+    ///
+    /// For compatibility with the existing Bitcoin infrastructure and historical
+    /// and current versions of the Bitcoin Core software itself, this and
+    /// other [`sha256d::Hash`] types, are serialized in reverse
+    /// byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
+    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+    pub struct Txid(sha256d::Hash);
+
+    /// A bitcoin witness transaction ID.
+    pub struct Wtxid(sha256d::Hash);
+}
+
+crate::hash_types::impl_hashencode!(Txid);
+crate::hash_types::impl_hashencode!(Wtxid);
+
+impl Txid {
+    /// Returns zeroed hash (used in coinbase transaction)
+    pub fn all_zeros() -> Self {
+        Txid(RawHash::all_zeros())
+    }
+}
+
+impl Wtxid {
+    /// Returns zeroed hash (used in first hash of witness commitment)
+    pub fn all_zeros() -> Self {
+        Wtxid(RawHash::all_zeros())
+    }
+}
 
 /// A reference to a transaction output.
 ///
@@ -71,7 +101,7 @@ impl OutPoint {
     ///
     /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
+    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
     ///
@@ -684,7 +714,7 @@ impl Transaction {
         self.input.consensus_encode(&mut enc).expect("engines don't error");
         self.output.consensus_encode(&mut enc).expect("engines don't error");
         self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid::from_engine(enc)
+        Txid(enc.finalize())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -695,7 +725,7 @@ impl Transaction {
     pub fn wtxid(&self) -> Wtxid {
         let mut enc = Wtxid::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid::from_engine(enc)
+        Wtxid(enc.finalize())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.

@@ -418,7 +418,7 @@ mod tests {
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();
-        builder = builder.add_hidden_node(3, TapNodeHash::all_zeros()).unwrap();
+        builder = builder.add_hidden_node(3, TapNodeHash::from_byte_array(Default::default())).unwrap();
         assert!(TapTree::try_from(builder).is_err());
     }
 

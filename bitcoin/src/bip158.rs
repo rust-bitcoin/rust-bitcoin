@@ -42,17 +42,27 @@ use core::cmp::{self, Ordering};
 use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
-use hashes::{siphash24, Hash};
+use hashes::{sha256d, siphash24, Hash, hash_newtype};
 use internals::write_err;
 
-use crate::blockdata::block::Block;
+use crate::blockdata::block::{Block, BlockHash};
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
-use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 use crate::io;
 use crate::prelude::*;
+
+hash_newtype! {
+    /// Filter hash, as defined in BIP-157
+    pub struct FilterHash(sha256d::Hash);
+
+    /// Filter header, as defined in BIP-157
+    pub struct FilterHeader(sha256d::Hash);
+}
+
+crate::hash_types::impl_hashencode!(FilterHash);
+crate::hash_types::impl_hashencode!(FilterHeader);
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -108,7 +118,7 @@ impl FilterHash {
         let mut header_data = [0u8; 64];
         header_data[0..32].copy_from_slice(&self[..]);
         header_data[32..64].copy_from_slice(&previous_filter_header[..]);
-        FilterHeader::hash(&header_data)
+        FilterHeader(hashes::hash(&header_data))
     }
 }
 
@@ -136,7 +146,7 @@ impl BlockFilter {
     ///
     /// [BIP 157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
-        let filter_hash = FilterHash::hash(self.content.as_slice());
+        let filter_hash = FilterHash(hashes::hash(self.content.as_slice()));
         filter_hash.filter_header(previous_filter_header)
     }
 
@@ -561,7 +571,6 @@ mod test {
 
     use super::*;
     use crate::consensus::encode::deserialize;
-    use crate::hash_types::BlockHash;
     use crate::ScriptBuf;
 
     #[test]

@@ -9,7 +9,7 @@ use core::fmt::{self, Write};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::{hash160, Hash};
+use hashes::{hash160, Hash, hash_newtype};
 use hex::FromHex;
 use internals::write_err;
 
@@ -55,14 +55,12 @@ impl PublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key
-    pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
+    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(self.with_serialized(hashes::hash)) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
-            Some(WPubkeyHash::from_byte_array(
-                hash160::Hash::hash(&self.inner.serialize()).to_byte_array(),
-            ))
+            Some(WPubkeyHash(hashes::hash(&self.inner.serialize())))
         } else {
             // We can't create witness pubkey hashes for an uncompressed
             // public keys

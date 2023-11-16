@@ -14,7 +14,7 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash, HashEngine, RawHash};
 use internals::write_err;
 
 use crate::blockdata::witness::Witness;
@@ -404,17 +404,11 @@ impl<'s> ScriptPath<'s> {
     }
     /// Creates a new `ScriptPath` structure using default leaf version value.
     pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
+
+    #[inline]
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
-        let mut enc = TapLeafHash::engine();
-
-        self.leaf_version
-            .to_consensus()
-            .consensus_encode(&mut enc)
-            .expect("writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
-
-        TapLeafHash::from_engine(enc)
+        TapLeafHash::from_script(self.script, self.leaf_version)
     }
 }
 
@@ -809,7 +803,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             leaf_hash_code_separator,
             sighash_type,
         )?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Computes the BIP341 sighash for a key spend.
@@ -828,7 +822,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             None,
             sighash_type,
         )?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Computes the BIP341 sighash for a script spend.
@@ -851,7 +845,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             Some((leaf_hash.into(), 0xFFFFFFFF)),
             sighash_type,
         )?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Encodes the BIP143 signing data for any flag type into a given object implementing a
@@ -908,7 +902,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         {
             let mut single_enc = LegacySighash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
-            let hash = LegacySighash::from_engine(single_enc);
+            let hash = LegacySighash(single_enc.finalize());
             writer.write_all(&hash[..])?;
         } else {
             writer.write_all(&zero_hash[..])?;
@@ -940,7 +934,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         )?;
-        Ok(SegwitV0Sighash::from_engine(enc))
+        Ok(SegwitV0Sighash(enc.finalize()))
     }
 
     /// Computes the BIP143 sighash to spend a p2wsh transaction for any flag type.
@@ -959,7 +953,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         )?;
-        Ok(SegwitV0Sighash::from_engine(enc))
+        Ok(SegwitV0Sighash(enc.finalize()))
     }
 
     /// Encodes the legacy signing data from which a signature hash for a given input index with a
@@ -1123,7 +1117,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         {
             Ok(LegacySighash::from_byte_array(UINT256_ONE))
         } else {
-            Ok(LegacySighash::from_engine(enc))
+            Ok(LegacySighash(enc.finalize()))
         }
     }
 
@@ -1265,10 +1259,10 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::hashes::{Hash, hex::FromHex, RawHash};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # let mut writer = LegacySighash::engine();
+    /// # let mut writer = hashes::sha256::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -1312,7 +1306,7 @@ impl<E> EncodeSigningDataResult<E> {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::HashEngine;
+    use hashes::{HashEngine, RawHash, sha256t::Tag};
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
@@ -1392,7 +1386,7 @@ mod tests {
         let expected = hex!("04e808aad07a40b3767a1442fead79af6ef7e7c9316d82dec409bb31e77699b0");
         let mut enc = TapSighash::engine();
         enc.input(&bytes);
-        let hash = TapSighash::from_engine(enc);
+        let hash = TapSighash(enc.finalize());
         assert_eq!(expected, hash.to_byte_array());
     }
 
@@ -2028,5 +2022,18 @@ mod tests {
         bip143_p2wsh_nested_in_p2sh_sighash_all_plus_anyonecanpay, AllPlusAnyoneCanPay, "2a67f03e63a6a422125878b40b82da593be8d4efaafe88ee528af6e5a9955c6e";
         bip143_p2wsh_nested_in_p2sh_sighash_none_plus_anyonecanpay, NonePlusAnyoneCanPay, "781ba15f3779d5542ce8ecb5c18716733a5ee42a6f51488ec96154934e2c890a";
         bip143_p2wsh_nested_in_p2sh_sighash_single_plus_anyonecanpay, SinglePlusAnyoneCanPay, "511e8e52ed574121fc1b654970395502128263f62662e076dc6baf05c2e6a99b";
+    }
+
+    #[test]
+    fn tap_sighash_hash() {
+        assert_eq!(
+            TapSighash(TapSighashTag::engine().finalize()).to_string(),
+            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
+        );
+
+        assert_eq!(
+            TapSighash(hashes::hash(&[0])).to_string(),
+            "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
+        );
     }
 }
