@@ -282,6 +282,7 @@ impl PrivateKey {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
         PrivateKey::new(secret_key, network)
     }
+
     /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
     /// and the specified network
     pub fn new(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
