@@ -8,7 +8,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{FromSliceError, HashEngine as _};
+use crate::prelude::*;
 
 crate::internal_macros::hash_type! {
     160,
@@ -16,6 +16,31 @@ crate::internal_macros::hash_type! {
     "Output of the SHA1 hash function.",
     "crate::util::json_hex_string::len_20"
 }
+
+/// Creates a SHA1 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha1, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = sha1::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let _hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha1, prelude::*};
+/// let hash = sha1::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "af12d71a1227018e1ccdcb8e2d96853268a6e69d");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
 
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
@@ -44,6 +69,11 @@ pub struct HashEngine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 5],
     length: usize,
+}
+
+impl HashEngine {
+    /// Extracts a hash from the current state of this engine.
+    pub fn extract(self) -> Hash { from_engine(self) }
 }
 
 impl Default for HashEngine {

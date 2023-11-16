@@ -8,7 +8,8 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{sha256, FromSliceError};
+use crate::prelude::*;
+use crate::sha256;
 
 type HashEngine = sha256::HashEngine;
 
@@ -21,6 +22,12 @@ pub trait Tag {
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
 pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
+
+/// Creates a SHA256t hash engine.
+pub fn engine<T: Tag>() -> HashEngine { Hash::<T>::engine() }
+
+/// Hashes some `bytes`.
+pub fn hash<T: Tag>(bytes: &[u8]) -> Hash<T> { Hash::hash(bytes) }
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
@@ -160,7 +167,7 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "alloc")]
-    use crate::Hash;
+    use crate::prelude::*;
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
@@ -204,5 +211,15 @@ mod tests {
             NewTypeHash::hash(&[0]).to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
         );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn module_api() {
+        use crate::sha256t;
+
+        let mut engine = sha256t::engine::<NewTypeTag>();
+        engine.input(b"some bytes");
+        let _hash = engine.extract();
     }
 }

@@ -39,3 +39,7 @@ actual-core2 = { package = "core2", version = "0.3.2", default-features = false,
 [dev-dependencies]
 serde_test = "1.0"
 serde_json = "1.0"
+
+[[example]]
+name = "hash-a-file"
+required-features = ["std"]

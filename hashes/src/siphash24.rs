@@ -7,7 +7,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, mem, ptr, str};
 
-use crate::{FromSliceError, Hash as _, HashEngine as _};
+use crate::prelude::*;
 
 crate::internal_macros::hash_type! {
     64,
@@ -15,6 +15,31 @@ crate::internal_macros::hash_type! {
     "Output of the SipHash24 hash function.",
     "crate::util::json_hex_string::len_8"
 }
+
+/// Creates a SIPHASH24 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{siphash24, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = siphash24::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let _hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{siphash24, prelude::*};
+/// let hash = siphash24::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "a959da88f2a364c1");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
 
 #[cfg(not(hashes_fuzz))]
 fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
@@ -112,6 +137,9 @@ impl HashEngine {
 
     /// Retrieves the keys of this engine.
     pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
+
+    /// Extracts a hash from the current state of this engine.
+    pub fn extract(self) -> Hash { from_engine(self) }
 
     #[inline]
     fn c_rounds(state: &mut State) {

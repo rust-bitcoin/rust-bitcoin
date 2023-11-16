@@ -8,7 +8,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{FromSliceError, HashEngine as _};
+use crate::prelude::*;
 
 crate::internal_macros::hash_type! {
     512,
@@ -47,12 +47,88 @@ pub(crate) fn from_engine(e: HashEngine) -> Hash {
 
 pub(crate) const BLOCK_SIZE: usize = 128;
 
+/// Output of the SHA512 hash function.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[repr(transparent)]
+pub struct Hash(
+    #[cfg_attr(
+        feature = "schemars",
+        schemars(schema_with = "crate::util::json_hex_string::len_64")
+    )]
+    [u8; 64],
+);
+
+impl Hash {
+    fn internal_new(arr: [u8; 64]) -> Self { Hash(arr) }
+
+    fn internal_engine() -> HashEngine { Default::default() }
+}
+
+/// Creates a SHA512 hash engine.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha512, prelude::*};
+///
+/// // Hash bytes with an engine, `engine.input()` can be called in a loop.
+/// let mut engine = sha512::engine();
+/// engine.input(b"some bytes for the hash engine");
+/// let _hash = engine.extract();
+/// ```
+pub fn engine() -> HashEngine { Hash::engine() }
+
+/// Hashes some `bytes`.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_hashes::{sha512, prelude::*};
+/// let hash = sha512::hash(b"hash this byte string").to_string();
+/// assert_eq!(hash, "ef5dfe5df933b10e1faac13c2d73a311b3eccdec3425599c9c71ebedcaf73de9f173887d5d5aae7c00abfc933e7ab83c44c15c66f8a887c07ce418aa70e70f38");
+/// ```
+pub fn hash(bytes: &[u8]) -> Hash { Hash::hash(bytes) }
+
+#[cfg(not(hashes_fuzz))]
+pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
+    // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
+    let data_len = e.length as u64;
+
+    let zeroes = [0; BLOCK_SIZE - 16];
+    e.input(&[0x80]);
+    if e.length % BLOCK_SIZE > zeroes.len() {
+        e.input(&zeroes);
+    }
+    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
+    e.input(&zeroes[..pad_length]);
+    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
+
+    e.input(&[0; 8]);
+    e.input(&(8 * data_len).to_be_bytes());
+    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
+
+    Hash(e.midstate())
+}
+
+#[cfg(hashes_fuzz)]
+pub(crate) fn from_engine(e: HashEngine) -> Hash {
+    let mut hash = e.midstate();
+    hash[0] ^= 0xff; // Make this distinct from SHA-256
+    Hash(hash)
+}
+
 /// Engine to compute SHA512 hash function.
 #[derive(Clone)]
 pub struct HashEngine {
     h: [u64; 8],
     length: usize,
     buffer: [u8; BLOCK_SIZE],
+}
+
+impl HashEngine {
+    /// Extracts a hash from the current state of this engine.
+    pub fn extract(self) -> Hash { from_engine(self) }
 }
 
 impl Default for HashEngine {
