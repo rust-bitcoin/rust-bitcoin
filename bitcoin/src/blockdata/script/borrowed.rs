@@ -220,7 +220,7 @@ impl Script {
     ///
     /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
     /// This happens when the public key is invalid (e.g. the point not being on the curve).
-    /// It also implies the script is unspendable.
+    /// In this situation the script is unspendable.
     #[inline]
     pub fn p2pk_public_key(&self) -> Option<PublicKey> {
         PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
@@ -521,12 +521,12 @@ impl Script {
         InstructionIndices::from_instructions(self.instructions_minimal())
     }
 
-    /// Writes the assembly decoding of the script to the formatter.
+    /// Writes the human-readable assembly representation of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         bytes_to_asm_fmt(self.as_ref(), f)
     }
 
-    /// Returns the assembly decoding of the script.
+    /// Returns the human-readable assembly representation of the script.
     pub fn to_asm_string(&self) -> String {
         let mut buf = String::new();
         self.fmt_asm(&mut buf).unwrap();
@@ -537,7 +537,7 @@ impl Script {
     ///
     /// This is a more convenient and performant way to write `format!("{:x}", script)`.
     /// For better performance you should generally prefer displaying the script but if `String` is
-    /// required (this is common in tests) this method is can be used.
+    /// required (this is common in tests) this method can be used.
     pub fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
 
     /// Returns the first opcode of the script (if there is any).
