@@ -1,3 +1,7 @@
+# 0.30.2 - 2023-11-16
+
+- Expose valid (min, max) difficulty transition thresholds [#1820](Expose valid (min, max) difficulty transition thresholds)
+
 # 0.30.1 - 2023-07-16
 
 - Fix compilation when [`RUSTFLAGS=--cfg=bench` is set](https://github.com/rust-bitcoin/rust-bitcoin/pull/1943)
