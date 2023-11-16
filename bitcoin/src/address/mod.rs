@@ -58,7 +58,7 @@ pub use self::{
 };
 
 /// The different types of addresses.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum AddressType {
     /// Pay to pubkey hash.
@@ -100,7 +100,7 @@ impl FromStr for AddressType {
 }
 
 /// The method used to produce an address.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Payload {
     /// P2PKH address.
     PubkeyHash(PubkeyHash),
@@ -169,12 +169,12 @@ pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + U
 
 /// Marker that address's network has been successfully validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NetworkChecked {}
 
 /// Marker that address's network has not yet been validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NetworkUnchecked {}
 
 impl NetworkValidation for NetworkChecked {
@@ -189,7 +189,7 @@ impl NetworkValidation for NetworkUnchecked {
 /// An `Address` is composed of a payload and a network. This struct represents the inner
 /// representation of an address without the network validation tag, which is used to ensure that
 /// addresses are used only on the appropriate network.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct AddressInner {
     payload: Payload,
     network: Network,
@@ -282,7 +282,7 @@ struct AddressInner {
 /// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
 /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
 /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 ///
 /// The `#[repr(transparent)]` attribute is used to guarantee that the layout of the
 /// `Address` struct is the same as the layout of the `AddressInner` struct. This attribute is
