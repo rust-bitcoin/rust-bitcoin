@@ -15,7 +15,7 @@ use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
     absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    Transaction, TxIn, TxOut, WifKey, Witness,
 };
 
 const NETWORK: Network = Network::Testnet;
@@ -120,12 +120,14 @@ fn bip174_psbt_workflow() {
 fn build_extended_private_key() -> Xpriv {
     // Strings from BIP 174 test vector.
     let extended_private_key = "tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSUUbTVeFszDE23Ki6TBB5nCefAdHkK8Fm3qMQR6sHwA56zqRmKmxnHk37JkiFzvncDqoKmPWubu7hDF";
-    let seed = "cUkG8i1RFfWGWy5ziR11zJ5V4U4W3viSFCfyJmZnvQaUsd1xuF3T";
+    let wif_str = "cUkG8i1RFfWGWy5ziR11zJ5V4U4W3viSFCfyJmZnvQaUsd1xuF3T";
 
     let xpriv = Xpriv::from_str(extended_private_key).unwrap();
 
-    let sk = PrivateKey::from_wif(seed).unwrap();
-    let seeded = Xpriv::new_master(NETWORK, &sk.inner.secret_bytes()).unwrap();
+    let wif = WifKey::from_str(wif_str).unwrap();
+    assert_eq!(wif.network, NETWORK); // Sanity check.
+
+    let seeded = Xpriv::new_master(NETWORK, &wif.key.inner.secret_bytes()).unwrap();
     assert_eq!(xpriv, seeded);
 
     xpriv
@@ -316,13 +318,13 @@ fn parse_and_verify_keys(
 
     let mut key_map = BTreeMap::new();
     for (secret_key, derivation_path) in sk_path.iter() {
-        let wif_priv = PrivateKey::from_wif(secret_key).expect("failed to parse key");
+        let wif = WifKey::from_str(secret_key).expect("failed to parse key");
 
         let path =
             derivation_path.into_derivation_path().expect("failed to convert derivation path");
         let derived_priv =
             ext_priv.derive_priv(secp, &path).expect("failed to derive ext priv key").to_priv();
-        assert_eq!(wif_priv, derived_priv);
+        assert_eq!(wif.key, derived_priv);
         let derived_pub = derived_priv.public_key(secp);
         key_map.insert(derived_pub, derived_priv);
     }

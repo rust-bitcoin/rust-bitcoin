@@ -567,9 +567,7 @@ impl Xpriv {
     }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
-    pub fn to_priv(self) -> PrivateKey {
-        PrivateKey { compressed: true, network: self.network, inner: self.private_key }
-    }
+    pub fn to_priv(self) -> PrivateKey { PrivateKey::new(self.private_key) }
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
@@ -701,7 +699,7 @@ impl Xpub {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(self) -> PublicKey { PublicKey { compressed: true, inner: self.public_key } }
+    pub fn to_pub(self) -> PublicKey { PublicKey::new(self.public_key) }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.

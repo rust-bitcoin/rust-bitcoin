@@ -39,7 +39,7 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
     ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, WifKey, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -202,8 +202,21 @@ fn serde_regression_child_number() {
 }
 
 #[test]
+fn serde_regression_wif_key() {
+    let wif = WifKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+    let got = serialize(&wif).unwrap();
+    let want = include_bytes!("data/serde/wif_key_bincode") as &[_];
+    assert_eq!(got, want)
+}
+
+#[test]
 fn serde_regression_private_key() {
-    let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+    let sk = secp256k1::SecretKey::from_str(
+        "e714e76bdd67ad9f495683c37934148f4efc25ce3f01652c8a906498339e1f3a",
+    )
+    .unwrap();
+
+    let sk = PrivateKey::new(sk);
     let got = serialize(&sk).unwrap();
     let want = include_bytes!("data/serde/private_key_bincode") as &[_];
     assert_eq!(got, want)

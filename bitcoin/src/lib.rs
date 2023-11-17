@@ -148,7 +148,7 @@ pub use crate::{
     blockdata::witness::{self, Witness},
     consensus::encode::VarInt,
     crypto::ecdsa,
-    crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey},
+    crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey, WifKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid},
     merkle_tree::MerkleBlock,
