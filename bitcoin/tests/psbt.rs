@@ -14,11 +14,9 @@ use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
-    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
+    absolute, Amount, Denomination, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, WifKey, Witness,
 };
-
-const NETWORK: Network = Network::Testnet;
 
 #[track_caller]
 fn hex_psbt(s: &str) -> Psbt {
@@ -125,9 +123,8 @@ fn build_extended_private_key() -> Xpriv {
     let xpriv = Xpriv::from_str(extended_private_key).unwrap();
 
     let wif = WifKey::from_str(wif_str).unwrap();
-    assert_eq!(wif.network, NETWORK); // Sanity check.
 
-    let seeded = Xpriv::new_master(NETWORK, &wif.key.inner.secret_bytes()).unwrap();
+    let seeded = Xpriv::new_master(wif.network.into(), &wif.key.inner.secret_bytes()).unwrap();
     assert_eq!(xpriv, seeded);
 
     xpriv
