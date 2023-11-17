@@ -40,7 +40,7 @@ fn main() -> ! {
     let hex = "7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd";
     let v = Vec::from_hex(hex).unwrap();
     let sk = SecretKey::from_slice(&v).unwrap();
-    let sk = PrivateKey::new(sk, Network::Bitcoin);
+    let sk = PrivateKey::new(sk);
 
     let mut buf_ful = vec![AlignedType::zeroed(); size];
     let secp = Secp256k1::preallocated_new(&mut buf_ful).unwrap();

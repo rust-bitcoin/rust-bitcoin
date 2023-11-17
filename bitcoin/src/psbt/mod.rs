@@ -1926,7 +1926,7 @@ mod tests {
         let secp = Secp256k1::new();
 
         let sk = SecretKey::new(&mut thread_rng());
-        let priv_key = PrivateKey::new(sk, crate::Network::Regtest);
+        let priv_key = PrivateKey::new(sk);
         let pk = PublicKey::from_private_key(&secp, &priv_key);
 
         (priv_key, pk, secp)
