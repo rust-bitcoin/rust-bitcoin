@@ -35,13 +35,12 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key
+    /// Constructs a compressed ECDSA public key from the provided Secp256k1 key.
     pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: true, inner: key.into() }
     }
 
-    /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
-    /// public key
+    /// Constructs an uncompressed (legacy) ECDSA public key from the provided Secp256k1 key.
     pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: false, inner: key.into() }
     }
