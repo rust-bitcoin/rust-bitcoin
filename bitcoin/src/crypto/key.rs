@@ -11,7 +11,7 @@ use hex::FromHex;
 use internals::write_err;
 
 use crate::crypto::ecdsa;
-use crate::network::Network;
+use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
@@ -624,15 +624,15 @@ pub struct WifKey {
     /// The private key.
     pub key: PrivateKey,
     /// The associated network to use this key on.
-    pub network: Network,
+    pub kind: NetworkKind,
 }
 
 impl fmt::Display for WifKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 34];
-        ret[0] = match self.network {
-            Network::Bitcoin => 128,
-            Network::Testnet | Network::Signet | Network::Regtest => 239,
+        ret[0] = match self.kind {
+            NetworkKind::Real => 128,
+            NetworkKind::Test => 239,
         };
         ret[1..33].copy_from_slice(&self.key.inner[..]);
         let privkey = if self.key.compressed {
@@ -658,9 +658,9 @@ impl FromStr for WifKey {
             }
         };
 
-        let network = match data[0] {
-            128 => Network::Bitcoin,
-            239 => Network::Testnet,
+        let kind = match data[0] {
+            128 => NetworkKind::Real,
+            239 => NetworkKind::Test,
             x => {
                 return Err(Error::Base58(base58::Error::InvalidAddressVersion(x)));
             }
@@ -668,7 +668,7 @@ impl FromStr for WifKey {
 
         Ok(WifKey {
             key: PrivateKey { compressed, inner: secp256k1::SecretKey::from_slice(&data[1..33])? },
-            network,
+            kind,
         })
     }
 }
@@ -740,23 +740,23 @@ mod tests {
     use super::*;
     use crate::address::Address;
     use crate::io;
-    use crate::network::Network::{Bitcoin, Testnet};
+    use crate::network::NetworkKind;
 
     #[test]
     fn wif() {
         // testnet compressed
         let wif = WifKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(wif.network, Testnet);
+        assert_eq!(wif.kind, NetworkKind::Test);
         assert!(wif.key.compressed);
         assert_eq!(&wif.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh(&wif.key.public_key(&secp), wif.network.into());
+        let pk = Address::p2pkh(&wif.key.public_key(&secp), wif.kind);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // mainnet uncompressed
         let wif = WifKey::from_str("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(wif.network, Bitcoin);
+        assert_eq!(wif.kind, NetworkKind::Real);
         assert!(!wif.key.compressed);
         assert_eq!(&wif.to_string(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
@@ -765,7 +765,7 @@ mod tests {
         assert!(!pk.compressed);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
-        let addr = Address::p2pkh(&pk, wif.network.into());
+        let addr = Address::p2pkh(&pk, wif.kind);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk.compressed = true;
         assert_eq!(
