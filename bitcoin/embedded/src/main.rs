@@ -8,13 +8,15 @@ extern crate bitcoin;
 
 use alloc::string::ToString;
 use alloc::vec;
+use alloc::vec::Vec;
 use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
 // use panic_halt as _;
 use bitcoin::{Address, Network, PrivateKey};
+use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
-use bitcoin::secp256k1::Secp256k1;
+use bitcoin::secp256k1::{Secp256k1, SecretKey};
 
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};
@@ -35,16 +37,17 @@ fn main() -> ! {
     hprintln!("secp buf size {}", size*16).unwrap();
 
     // Load a private key
-    let raw = "L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D";
-    let pk = PrivateKey::from_wif(raw).unwrap();
-    hprintln!("Seed WIF: {}", pk).unwrap();
+    let hex = "7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd";
+    let v = Vec::from_hex(hex).unwrap();
+    let sk = SecretKey::from_slice(&v).unwrap();
+    let sk = PrivateKey::new(sk, Network::Bitcoin);
 
     let mut buf_ful = vec![AlignedType::zeroed(); size];
     let secp = Secp256k1::preallocated_new(&mut buf_ful).unwrap();
 
     // Derive address
-    let pubkey = pk.public_key(&secp);
-    let address = Address::p2wpkh(&pubkey, Network::Bitcoin).unwrap();
+    let pk = sk.public_key(&secp);
+    let address = Address::p2wpkh(&pk, Network::Bitcoin).unwrap();
     hprintln!("Address: {}", address).unwrap();
 
     assert_eq!(address.to_string(), "bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993".to_string());
