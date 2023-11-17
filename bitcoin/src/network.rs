@@ -31,6 +31,31 @@ use crate::constants::ChainHash;
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
+/// What kind of network we are on.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum NetworkKind {
+    /// The real Bitcoin network.
+    Real,
+    /// Some testnet network.
+    Test,
+}
+
+impl NetworkKind {
+    /// Returns true if this is real mainnet bitcoin.
+    pub fn is_mainnet(&self) -> bool { *self == NetworkKind::Real }
+}
+
+impl From<Network> for NetworkKind {
+    fn from(n: Network) -> Self {
+        use Network::*;
+
+        match n {
+            Bitcoin => NetworkKind::Real,
+            Testnet | Signet | Regtest => NetworkKind::Test,
+        }
+    }
+}
+
 /// The cryptocurrency network to act on.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

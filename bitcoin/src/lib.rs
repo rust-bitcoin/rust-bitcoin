@@ -152,7 +152,7 @@ pub use crate::{
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid},
     merkle_tree::MerkleBlock,
-    network::Network,
+    network::{Network, NetworkKind},
     pow::{CompactTarget, Target, Work},
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
