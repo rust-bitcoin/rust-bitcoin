@@ -48,7 +48,7 @@ use crate::blockdata::script::{
     self, PushBytesBuf, PushBytesErrorReport, Script, ScriptBuf, ScriptHash,
 };
 use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::network::Network;
+use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
@@ -233,7 +233,7 @@ impl LegacyP2shPrefix {
 /// Known bech32 human-readable parts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-enum KnownHrp {
+pub enum KnownHrp {
     /// The main Bitcoin network.
     Mainnet,
     /// The test networks, testnet and signet.
@@ -244,7 +244,7 @@ enum KnownHrp {
 
 impl KnownHrp {
     /// Creates a `KnownHrp` from `network`.
-    fn from_network(network: Network) -> Self {
+    pub fn from_network(network: Network) -> Self {
         use Network::*;
 
         match network {
@@ -255,7 +255,7 @@ impl KnownHrp {
     }
 
     /// Creates a `KnownHrp` from a [`bech32::Hrp`].
-    fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
+    pub fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
         if hrp == bech32::hrp::BC {
             Ok(Self::Mainnet)
         } else if hrp.is_valid_on_testnet() || hrp.is_valid_on_signet() {
@@ -268,11 +268,26 @@ impl KnownHrp {
     }
 
     /// Converts, infallibly a known HRP to a [`bech32::Hrp`].
-    fn to_hrp(self) -> Hrp {
+    pub fn to_hrp(self) -> Hrp {
         match self {
             Self::Mainnet => bech32::hrp::BC,
             Self::Testnets => bech32::hrp::TB,
             Self::Regtest => bech32::hrp::BCRT,
+        }
+    }
+}
+
+impl From<Network> for KnownHrp {
+    fn from(n: Network) -> Self { Self::from_network(n) }
+}
+
+impl From<NetworkKind> for KnownHrp {
+    fn from(kind: NetworkKind) -> Self {
+        match kind {
+            NetworkKind::Real => KnownHrp::Mainnet,
+            // This is not entirely true, regtest does not use "tb" but who cares, if you really
+            // do care then don't pass `NetworkKind` to functions that accept `T: Into<KnownHrp>`.
+            NetworkKind::Test => KnownHrp::Testnets,
         }
     }
 }
@@ -452,9 +467,12 @@ impl Address {
     /// # Errors
     ///
     /// Will only return an error if an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2wpkh<H>(pk: &PublicKey, hrp: H) -> Result<Address, Error>
+    where
+        H: Into<KnownHrp>,
+    {
         let program = pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?;
-        Address::segwit(WitnessVersion::V0, program, network)
+        Address::segwit(WitnessVersion::V0, program, hrp)
     }
 
     /// Creates a pay to script address that embeds a witness pay to public key.
@@ -475,9 +493,12 @@ impl Address {
     }
 
     /// Creates a witness pay to script hash address.
-    pub fn p2wsh(script: &Script, network: Network) -> Result<Address, Error> {
+    pub fn p2wsh<H>(script: &Script, hrp: H) -> Result<Address, Error>
+    where
+        H: Into<KnownHrp>,
+    {
         let program = script.wscript_hash();
-        Address::segwit(WitnessVersion::V0, program, network)
+        Address::segwit(WitnessVersion::V0, program, hrp)
     }
 
     /// Creates a pay to script address that embeds a witness pay to script hash address.
@@ -489,43 +510,49 @@ impl Address {
     }
 
     /// Creates a pay to taproot address from an untweaked key.
-    pub fn p2tr<C: Verification>(
+    pub fn p2tr<C: Verification, H: Into<KnownHrp>>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
-        network: Network,
+        hrp: H,
     ) -> Result<Address, Error> {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         let program = output_key.to_inner().serialize();
-        Address::segwit(WitnessVersion::V1, program, network)
+        Address::segwit(WitnessVersion::V1, program, hrp)
     }
 
-    fn segwit<P>(version: WitnessVersion, program: P, network: Network) -> Result<Address, Error>
+    // `hrp` can be `Network`, `NetworkKind`, or KnownHrp.
+    fn segwit<P, H>(version: WitnessVersion, program: P, hrp: H) -> Result<Address, Error>
     where
         P: TryInto<PushBytesBuf>,
         <P as TryInto<PushBytesBuf>>::Error: PushBytesErrorReport,
+        H: Into<KnownHrp>,
     {
-        let hrp = KnownHrp::from_network(network);
         let program = WitnessProgram::new(version, program)?;
-        let inner = AddressInner::Segwit { program, hrp };
+        let inner = AddressInner::Segwit { program, hrp: hrp.into() };
         Ok(Self(inner, PhantomData))
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
     ///
     /// This method is not recommended for use, [`Address::p2tr()`] should be used where possible.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2tr_tweaked<H>(output_key: TweakedPublicKey, hrp: H) -> Result<Address, Error>
+    where
+        H: Into<KnownHrp>,
+    {
         let program = output_key.to_inner().serialize();
-        Address::segwit(WitnessVersion::V1, program, network)
+        Address::segwit(WitnessVersion::V1, program, hrp)
     }
 
     /// Creates an address from an arbitrary witness program.
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
-    pub fn from_witness_program(program: WitnessProgram, network: Network) -> Address {
-        let hrp = KnownHrp::from_network(network);
-        let inner = AddressInner::Segwit { program, hrp };
+    pub fn from_witness_program<H>(program: WitnessProgram, hrp: H) -> Address
+    where
+        H: Into<KnownHrp>,
+    {
+        let inner = AddressInner::Segwit { program, hrp: hrp.into() };
         Address(inner, PhantomData)
     }
 
