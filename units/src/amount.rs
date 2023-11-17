@@ -12,6 +12,7 @@ use core::{default, ops};
 
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
+use internals::write_err;
 
 #[cfg(feature = "alloc")]
 use crate::prelude::{String, ToString};
@@ -115,7 +116,7 @@ impl fmt::Display for Denomination {
 }
 
 impl FromStr for Denomination {
-    type Err = ParseAmountError;
+    type Err = ParseDenominationError;
 
     /// Convert from a str to Denomination.
     ///
@@ -125,15 +126,15 @@ impl FromStr for Denomination {
     ///
     /// Due to ambiguity between mega and milli, pico and peta we prohibit usage of leading capital 'M', 'P'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::ParseAmountError::*;
+        use self::ParseDenominationError::*;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(PossiblyConfusingDenomination(s.to_string()));
+            return Err(PossiblyConfusing(s.to_string()));
         };
 
         let form = self::Denomination::forms(s);
 
-        form.ok_or_else(|| UnknownDenomination(s.to_string()))
+        form.ok_or_else(|| Unknown(s.to_string()))
     }
 }
 
@@ -153,10 +154,8 @@ pub enum ParseAmountError {
     InputTooLarge,
     /// Invalid character in input.
     InvalidCharacter(char),
-    /// The denomination was unknown.
-    UnknownDenomination(String),
-    /// The denomination has multiple possible interpretations.
-    PossiblyConfusingDenomination(String),
+    /// Invalid denomination.
+    InvalidDenomination(ParseDenominationError),
 }
 
 impl fmt::Display for ParseAmountError {
@@ -170,8 +169,45 @@ impl fmt::Display for ParseAmountError {
             InvalidFormat => f.write_str("invalid number format"),
             InputTooLarge => f.write_str("input string was too large"),
             InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
-            UnknownDenomination(ref d) => write!(f, "unknown denomination: {}", d),
-            PossiblyConfusingDenomination(ref d) => {
+            InvalidDenomination(ref e) => write_err!(f, "invalid denomination"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseAmountError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseAmountError::*;
+
+        match *self {
+            Negative | TooBig | TooPrecise | InvalidFormat | InputTooLarge
+            | InvalidCharacter(_) => None,
+            InvalidDenomination(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<ParseDenominationError> for ParseAmountError {
+    fn from(e: ParseDenominationError) -> Self { Self::InvalidDenomination(e) }
+}
+
+/// An error during amount parsing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseDenominationError {
+    /// The denomination was unknown.
+    Unknown(String),
+    /// The denomination has multiple possible interpretations.
+    PossiblyConfusing(String),
+}
+
+impl fmt::Display for ParseDenominationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ParseDenominationError::*;
+
+        match *self {
+            Unknown(ref d) => write!(f, "unknown denomination: {}", d),
+            PossiblyConfusing(ref d) => {
                 let (letter, upper, lower) = match d.chars().next() {
                     Some('M') => ('M', "Mega", "milli"),
                     Some('P') => ('P', "Peta", "pico"),
@@ -185,19 +221,12 @@ impl fmt::Display for ParseAmountError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ParseAmountError {
+impl std::error::Error for ParseDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseAmountError::*;
+        use ParseDenominationError::*;
 
         match *self {
-            Negative
-            | TooBig
-            | TooPrecise
-            | InvalidFormat
-            | InputTooLarge
-            | InvalidCharacter(_)
-            | UnknownDenomination(_)
-            | PossiblyConfusingDenomination(_) => None,
+            Unknown(_) | PossiblyConfusing(_) => None,
         }
     }
 }
@@ -1968,10 +1997,19 @@ mod tests {
         use super::ParseAmountError as E;
 
         assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x')));
-        assert_eq!(Amount::from_str("xBTC"), Err(E::UnknownDenomination("xBTC".into())));
-        assert_eq!(Amount::from_str("5 BTC BTC"), Err(E::UnknownDenomination("BTC BTC".into())));
+        assert_eq!(
+            Amount::from_str("xBTC"),
+            Err(ParseDenominationError::Unknown("xBTC".into()).into())
+        );
+        assert_eq!(
+            Amount::from_str("5 BTC BTC"),
+            Err(ParseDenominationError::Unknown("BTC BTC".into()).into())
+        );
         assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B')));
-        assert_eq!(Amount::from_str("5 5 BTC"), Err(E::UnknownDenomination("5 BTC".into())));
+        assert_eq!(
+            Amount::from_str("5 5 BTC"),
+            Err(ParseDenominationError::Unknown("5 BTC".into()).into())
+        );
 
         #[track_caller]
         fn case(s: &str, expected: Result<Amount, ParseAmountError>) {
@@ -1985,7 +2023,7 @@ mod tests {
             assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
         }
 
-        case("5 BCH", Err(E::UnknownDenomination("BCH".to_string())));
+        case("5 BCH", Err(ParseDenominationError::Unknown("BCH".into()).into()));
 
         case("-1 BTC", Err(E::Negative));
         case("-0.0 BTC", Err(E::Negative));
@@ -2109,11 +2147,11 @@ mod tests {
 
         assert_eq!(
             Amount::from_str("42 satoshi BTC"),
-            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            Err(ParseDenominationError::Unknown("satoshi BTC".to_owned()).into()),
         );
         assert_eq!(
             SignedAmount::from_str("-42 satoshi BTC"),
-            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            Err(ParseDenominationError::Unknown("satoshi BTC".to_owned()).into()),
         );
     }
 
@@ -2333,7 +2371,7 @@ mod tests {
         for denom in confusing.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
-                Err(ParseAmountError::PossiblyConfusingDenomination(_)) => {}
+                Err(ParseDenominationError::PossiblyConfusing(_)) => {}
                 Err(e) => panic!("unexpected error: {}", e),
             }
         }
@@ -2346,7 +2384,7 @@ mod tests {
         for denom in unknown.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
-                Err(ParseAmountError::UnknownDenomination(_)) => {}
+                Err(ParseDenominationError::Unknown(_)) => {}
                 Err(e) => panic!("unexpected error: {}", e),
             }
         }
