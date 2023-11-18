@@ -50,7 +50,7 @@ pub struct Params {
 
 impl Params {
     /// Creates parameters set for the given network.
-    pub fn new(network: Network) -> Self {
+    pub const fn new(network: Network) -> Self {
         match network {
             Network::Bitcoin => Params {
                 network: Network::Bitcoin,
@@ -114,5 +114,29 @@ impl Params {
     /// Calculates the number of blocks between difficulty adjustments.
     pub fn difficulty_adjustment_interval(&self) -> u64 {
         self.pow_target_timespan / self.pow_target_spacing
+    }
+}
+
+impl From<Network> for Params {
+    fn from(value: Network) -> Self {
+        Self::new(value)
+    }
+}
+
+impl From<&Network> for Params {
+    fn from(value: &Network) -> Self {
+        Self::new(*value)
+    }
+}
+
+impl From<Network> for &'static Params {
+    fn from(value: Network) -> Self {
+        value.params()
+    }
+}
+
+impl From<&Network> for &'static Params {
+    fn from(value: &Network) -> Self {
+        value.params()
     }
 }
