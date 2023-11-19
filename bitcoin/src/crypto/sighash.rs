@@ -673,9 +673,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Encodes the BIP341 signing data for any flag type into a given object implementing a
     /// [`io::Write`] trait.
-    pub fn taproot_encode_signing_data_to<Write: io::Write, T: Borrow<TxOut>>(
+    pub fn taproot_encode_signing_data_to<Write: io::Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
-        mut writer: Write,
+        writer: &mut Write,
         input_index: usize,
         prevouts: &Prevouts<T>,
         annex: Option<Annex>,
@@ -687,18 +687,18 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
         // epoch
-        0u8.consensus_encode(&mut writer)?;
+        0u8.consensus_encode(writer)?;
 
         // * Control:
         // hash_type (1).
-        (sighash_type as u8).consensus_encode(&mut writer)?;
+        (sighash_type as u8).consensus_encode(writer)?;
 
         // * Transaction Data:
         // nVersion (4): the nVersion of the transaction.
-        self.tx.borrow().version.consensus_encode(&mut writer)?;
+        self.tx.borrow().version.consensus_encode(writer)?;
 
         // nLockTime (4): the nLockTime of the transaction.
-        self.tx.borrow().lock_time.consensus_encode(&mut writer)?;
+        self.tx.borrow().lock_time.consensus_encode(writer)?;
 
         // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
         //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
@@ -706,16 +706,16 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //     sha_scriptpubkeys (32): the SHA256 of the serialization of all spent output scriptPubKeys.
         //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
         if !anyone_can_pay {
-            self.common_cache().prevouts.consensus_encode(&mut writer)?;
-            self.taproot_cache(prevouts.get_all()?).amounts.consensus_encode(&mut writer)?;
-            self.taproot_cache(prevouts.get_all()?).script_pubkeys.consensus_encode(&mut writer)?;
-            self.common_cache().sequences.consensus_encode(&mut writer)?;
+            self.common_cache().prevouts.consensus_encode(writer)?;
+            self.taproot_cache(prevouts.get_all()?).amounts.consensus_encode(writer)?;
+            self.taproot_cache(prevouts.get_all()?).script_pubkeys.consensus_encode(writer)?;
+            self.common_cache().sequences.consensus_encode(writer)?;
         }
 
         // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
         //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
         if sighash != TapSighashType::None && sighash != TapSighashType::Single {
-            self.common_cache().outputs.consensus_encode(&mut writer)?;
+            self.common_cache().outputs.consensus_encode(writer)?;
         }
 
         // * Data about this input:
@@ -728,7 +728,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if leaf_hash_code_separator.is_some() {
             spend_type |= 2u8;
         }
-        spend_type.consensus_encode(&mut writer)?;
+        spend_type.consensus_encode(writer)?;
 
         // If hash_type & 0x80 equals SIGHASH_ANYONECANPAY:
         //      outpoint (36): the COutPoint of this input (32-byte hash + 4-byte little-endian).
@@ -742,12 +742,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     inputs_size: self.tx.borrow().input.len(),
                 })?;
             let previous_output = prevouts.get(input_index)?;
-            txin.previous_output.consensus_encode(&mut writer)?;
-            previous_output.value.consensus_encode(&mut writer)?;
-            previous_output.script_pubkey.consensus_encode(&mut writer)?;
-            txin.sequence.consensus_encode(&mut writer)?;
+            txin.previous_output.consensus_encode(writer)?;
+            previous_output.value.consensus_encode(writer)?;
+            previous_output.script_pubkey.consensus_encode(writer)?;
+            txin.sequence.consensus_encode(writer)?;
         } else {
-            (input_index as u32).consensus_encode(&mut writer)?;
+            (input_index as u32).consensus_encode(writer)?;
         }
 
         // If an annex is present (the lowest bit of spend_type is set):
@@ -757,7 +757,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc = sha256::Hash::engine();
             annex.consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(&mut writer)?;
+            hash.consensus_encode(writer)?;
         }
 
         // * Data about this output:
@@ -775,7 +775,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 })?
                 .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(&mut writer)?;
+            hash.consensus_encode(writer)?;
         }
 
         //     if (scriptpath):
@@ -783,9 +783,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //         ss += bytes([0])
         //         ss += struct.pack("<i", codeseparator_pos)
         if let Some((hash, code_separator_pos)) = leaf_hash_code_separator {
-            hash.as_byte_array().consensus_encode(&mut writer)?;
-            KEY_VERSION_0.consensus_encode(&mut writer)?;
-            code_separator_pos.consensus_encode(&mut writer)?;
+            hash.as_byte_array().consensus_encode(writer)?;
+            KEY_VERSION_0.consensus_encode(writer)?;
+            code_separator_pos.consensus_encode(writer)?;
         }
 
         Ok(())
@@ -860,9 +860,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
     /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
-    pub fn segwit_v0_encode_signing_data_to<Write: io::Write>(
+    pub fn segwit_v0_encode_signing_data_to<Write: io::Write + ?Sized>(
         &mut self,
-        mut writer: Write,
+        writer: &mut Write,
         input_index: usize,
         script_code: &Script,
         value: Amount,
@@ -872,21 +872,21 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
-        self.tx.borrow().version.consensus_encode(&mut writer)?;
+        self.tx.borrow().version.consensus_encode(writer)?;
 
         if !anyone_can_pay {
-            self.segwit_cache().prevouts.consensus_encode(&mut writer)?;
+            self.segwit_cache().prevouts.consensus_encode(writer)?;
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            zero_hash.consensus_encode(writer)?;
         }
 
         if !anyone_can_pay
             && sighash != EcdsaSighashType::Single
             && sighash != EcdsaSighashType::None
         {
-            self.segwit_cache().sequences.consensus_encode(&mut writer)?;
+            self.segwit_cache().sequences.consensus_encode(writer)?;
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            zero_hash.consensus_encode(writer)?;
         }
 
         {
@@ -896,14 +896,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     inputs_size: self.tx.borrow().input.len(),
                 })?;
 
-            txin.previous_output.consensus_encode(&mut writer)?;
-            script_code.consensus_encode(&mut writer)?;
-            value.consensus_encode(&mut writer)?;
-            txin.sequence.consensus_encode(&mut writer)?;
+            txin.previous_output.consensus_encode(writer)?;
+            script_code.consensus_encode(writer)?;
+            value.consensus_encode(writer)?;
+            txin.sequence.consensus_encode(writer)?;
         }
 
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
-            self.segwit_cache().outputs.consensus_encode(&mut writer)?;
+            self.segwit_cache().outputs.consensus_encode(writer)?;
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
         {
             let mut single_enc = LegacySighash::engine();
@@ -914,8 +914,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             writer.write_all(&zero_hash[..])?;
         }
 
-        self.tx.borrow().lock_time.consensus_encode(&mut writer)?;
-        sighash_type.to_u32().consensus_encode(&mut writer)?;
+        self.tx.borrow().lock_time.consensus_encode(writer)?;
+        sighash_type.to_u32().consensus_encode(writer)?;
         Ok(())
     }
 
@@ -984,9 +984,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<Write: io::Write + ?Sized, U: Into<u32>>(
         &self,
-        writer: Write,
+        writer: &mut Write,
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
@@ -1011,9 +1011,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<Write: io::Write>(
+        fn encode_signing_data_to_inner<Write: io::Write + ?Sized>(
             self_: &Transaction,
-            mut writer: Write,
+            writer: &mut Write,
             input_index: usize,
             script_pubkey: &Script,
             sighash_type: u32,
@@ -1074,8 +1074,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 _ => unreachable!(),
             };
             // hash the result
-            tx.consensus_encode(&mut writer)?;
-            sighash_type.to_le_bytes().consensus_encode(&mut writer)?;
+            tx.consensus_encode(writer)?;
+            sighash_type.to_le_bytes().consensus_encode(writer)?;
             Ok(())
         }
 

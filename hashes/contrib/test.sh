@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="serde serde-std std core2 alloc"
+FEATURES="serde serde-std std io alloc"
 
 cargo --version
 rustc --version

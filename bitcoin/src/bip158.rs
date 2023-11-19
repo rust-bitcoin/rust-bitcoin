@@ -271,9 +271,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
-        let mut decoder = reader;
-        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
-        let reader = &mut decoder;
+        let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped =
@@ -316,9 +314,7 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
-        let mut decoder = reader;
-        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
-        let reader = &mut decoder;
+        let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped =
@@ -393,7 +389,7 @@ impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
         mapped.sort_unstable();
 
         // write number of elements as varint
-        let mut wrote = VarInt::from(mapped.len()).consensus_encode(&mut self.writer)?;
+        let mut wrote = VarInt::from(mapped.len()).consensus_encode(self.writer)?;
 
         // write out deltas of sorted values into a Golonb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
@@ -442,7 +438,7 @@ impl GcsFilter {
     /// Golomb-Rice decodes a number from a bit stream (parameter 2^k).
     fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
     where
-        R: io::Read,
+        R: io::Read + ?Sized,
     {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
@@ -459,13 +455,13 @@ impl GcsFilter {
 }
 
 /// Bitwise stream reader.
-pub struct BitStreamReader<'a, R> {
+pub struct BitStreamReader<'a, R: ?Sized> {
     buffer: [u8; 1],
     offset: u8,
     reader: &'a mut R,
 }
 
-impl<'a, R: io::Read> BitStreamReader<'a, R> {
+impl<'a, R: io::Read + ?Sized> BitStreamReader<'a, R> {
     /// Creates a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }

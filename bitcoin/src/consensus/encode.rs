@@ -320,7 +320,7 @@ pub trait Decodable: Sized {
     /// instead.
     #[inline]
     fn consensus_decode<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(reader.take(MAX_VEC_SIZE as u64).by_ref())
+        Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -643,11 +643,11 @@ impl_vec!((u32, Address));
 #[cfg(feature = "std")]
 impl_vec!(AddrV2Message);
 
-pub(crate) fn consensus_encode_with_size<W: io::Write>(
+pub(crate) fn consensus_encode_with_size<W: io::Write + ?Sized>(
     data: &[u8],
-    mut w: W,
+    w: &mut W,
 ) -> Result<usize, io::Error> {
-    let vi_len = VarInt(data.len() as u64).consensus_encode(&mut w)?;
+    let vi_len = VarInt(data.len() as u64).consensus_encode(w)?;
     w.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
@@ -662,8 +662,8 @@ struct ReadBytesFromFiniteReaderOpts {
 /// This function relies on reader being bound in amount of data
 /// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
 #[inline]
-fn read_bytes_from_finite_reader<D: io::Read>(
-    mut d: D,
+fn read_bytes_from_finite_reader<D: io::Read + ?Sized>(
+    d: &mut D,
     mut opts: ReadBytesFromFiniteReaderOpts,
 ) -> Result<Vec<u8>, Error> {
     let mut ret = vec![];
@@ -1234,7 +1234,7 @@ mod tests {
         for chunk_size in 1..20 {
             assert_eq!(
                 read_bytes_from_finite_reader(
-                    io::Cursor::new(&data),
+                    &mut io::Cursor::new(&data),
                     ReadBytesFromFiniteReaderOpts { len: data.len(), chunk_size }
                 )
                 .unwrap(),

@@ -38,9 +38,9 @@ dependencies = [
  "bech32",
  "bincode",
  "bitcoin-internals",
+ "bitcoin-io",
  "bitcoin_hashes",
  "bitcoinconsensus",
- "core2",
  "hex-conservative",
  "hex_lit",
  "mutagen",
@@ -70,10 +70,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-io"
+version = "0.1.0"
+
+[[package]]
 name = "bitcoin_hashes"
 version = "0.13.0"
 dependencies = [
- "core2",
+ "bitcoin-io",
  "hex-conservative",
  "schemars",
  "serde",
@@ -110,15 +114,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
 
 [[package]]
-name = "core2"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cf12d2dad3ed124aa116f59561428478993d69ab81ae4d30e5349c9c5b5a5f6"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "dyn-clone"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -146,9 +141,6 @@ name = "hex-conservative"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "30ed443af458ccb6d81c1e7e661545f94d3176752fb1df2f543b902a1e0f51e2"
-dependencies = [
- "core2",
-]
 
 [[package]]
 name = "hex_lit"
@@ -190,12 +182,6 @@ name = "libc"
 version = "0.2.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74dfca3d9957906e8d1e6a0b641dc9a59848e793f1da2165889fd4f62d10d79c"
-
-[[package]]
-name = "memchr"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e01e64d9017d18e7fc09d8e4fe0e28ff6931019e979fb8019319db7ca827f8a6"
 
 [[package]]
 name = "memmap2"
