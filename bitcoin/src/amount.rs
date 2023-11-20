@@ -11,7 +11,7 @@ use core::fmt::{self, Write};
 use core::str::FromStr;
 use core::{default, ops};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::{decode, Decodable, Encodable};
 use crate::io;
 use crate::prelude::*;
 
@@ -690,7 +690,7 @@ impl Amount {
 
 impl Decodable for Amount {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Ok(Amount(Decodable::consensus_decode(r)?))
     }
 }

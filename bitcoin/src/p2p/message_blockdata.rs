@@ -8,7 +8,7 @@
 
 use hashes::{sha256d, Hash as _};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::{decode, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
@@ -81,7 +81,7 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
             0 => Inventory::Error,
@@ -148,7 +148,7 @@ mod tests {
     use hex::test_hex_unwrap as hex;
 
     use super::{GetBlocksMessage, GetHeadersMessage, Vec};
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
 
     #[test]
     fn getblocks_message_test() {

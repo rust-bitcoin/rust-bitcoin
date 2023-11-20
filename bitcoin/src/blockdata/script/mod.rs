@@ -71,7 +71,7 @@ use serde;
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{decode, encode, Decodable, Encodable};
 use crate::prelude::*;
 use crate::{io, OutPoint};
 
@@ -579,7 +579,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 impl Encodable for Script {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(&self.0, w)
+        encode::consensus_encode_with_size(&self.0, w)
     }
 }
 
@@ -594,7 +594,7 @@ impl Decodable for ScriptBuf {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, decode::Error> {
         Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
     }
 }

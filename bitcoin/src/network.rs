@@ -9,11 +9,10 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::Network;
-//! use bitcoin::consensus::encode::serialize;
+//! use bitcoin::{consensus, Network};
 //!
 //! let network = Network::Bitcoin;
-//! let bytes = serialize(&network.magic());
+//! let bytes = consensus::serialize(&network.magic());
 //!
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
@@ -286,7 +285,7 @@ impl TryFrom<ChainHash> for Network {
 #[cfg(test)]
 mod tests {
     use super::Network;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
 
     #[test]

@@ -1,11 +1,10 @@
 use bitcoin::address::Address;
 use bitcoin::blockdata::script;
-use bitcoin::consensus::encode;
-use bitcoin::Network;
+use bitcoin::{consensus, Network};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let s: Result<script::ScriptBuf, _> = encode::deserialize(data);
+    let s: Result<script::ScriptBuf, _> = consensus::deserialize(data);
     if let Ok(script) = s {
         let _: Result<Vec<script::Instruction>, script::Error> = script.instructions().collect();
 
@@ -35,7 +34,7 @@ fn do_test(data: &[u8]) {
             }
         }
         assert_eq!(b.into_script(), script);
-        assert_eq!(data, &encode::serialize(&script)[..]);
+        assert_eq!(data, &consensus::serialize(&script)[..]);
 
         // Check if valid address and if that address roundtrips.
         if let Ok(addr) = Address::from_script(&script, Network::Bitcoin) {

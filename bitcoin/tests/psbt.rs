@@ -8,14 +8,13 @@ use std::str::FromStr;
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::blockdata::opcodes::OP_0;
 use bitcoin::blockdata::{script, transaction};
-use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
-    absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    absolute, consensus, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 const NETWORK: Network = Network::Testnet;
@@ -239,7 +238,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let mut input_0 = psbt.inputs[0].clone();
 
     let v = Vec::from_hex(previous_tx_1).unwrap();
-    let tx: Transaction = deserialize(&v).unwrap();
+    let tx: Transaction = consensus::deserialize(&v).unwrap();
     input_0.non_witness_utxo = Some(tx);
     input_0.redeem_script = Some(hex_script(redeem_script_0));
     input_0.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![0, 1]);
@@ -247,7 +246,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     let mut input_1 = psbt.inputs[1].clone();
 
     let v = Vec::from_hex(previous_tx_0).unwrap();
-    let tx: Transaction = deserialize(&v).unwrap();
+    let tx: Transaction = consensus::deserialize(&v).unwrap();
     input_1.witness_utxo = Some(tx.output[1].clone());
 
     input_1.redeem_script = Some(hex_script(redeem_script_1));
@@ -385,7 +384,7 @@ fn extract_transaction(psbt: Psbt) -> Transaction {
 
     let tx = psbt.extract_tx_unchecked_fee_rate();
 
-    let got = serialize_hex(&tx);
+    let got = consensus::serialize_hex(&tx);
     assert_eq!(got, expected_tx_hex);
 
     tx

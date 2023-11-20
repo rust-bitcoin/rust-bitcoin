@@ -9,8 +9,7 @@ use core::convert::TryInto;
 use core::fmt;
 use core::ops::Index;
 
-use crate::consensus::encode::{Error, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::{decode, Decodable, Encodable, WriteExt, MAX_VEC_SIZE};
 use crate::crypto::ecdsa;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
@@ -124,12 +123,12 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
         if witness_elements > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation {
+            return Err(decode::Error::OversizedVectorAllocation {
                 requested: witness_elements,
                 max: MAX_VEC_SIZE,
             });
@@ -152,18 +151,18 @@ impl Decodable for Witness {
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor
                     .checked_add(element_size)
-                    .ok_or(self::Error::OversizedVectorAllocation {
+                    .ok_or(decode::Error::OversizedVectorAllocation {
                         requested: usize::MAX,
                         max: MAX_VEC_SIZE,
                     })?
                     .checked_add(element_size_varint_len)
-                    .ok_or(self::Error::OversizedVectorAllocation {
+                    .ok_or(decode::Error::OversizedVectorAllocation {
                         requested: usize::MAX,
                         max: MAX_VEC_SIZE,
                     })?;
 
                 if required_len > MAX_VEC_SIZE + witness_index_space {
-                    return Err(self::Error::OversizedVectorAllocation {
+                    return Err(decode::Error::OversizedVectorAllocation {
                         requested: required_len,
                         max: MAX_VEC_SIZE,
                     });

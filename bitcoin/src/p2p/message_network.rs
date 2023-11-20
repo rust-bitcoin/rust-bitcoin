@@ -8,7 +8,7 @@
 
 use hashes::sha256d;
 
-use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::consensus::{decode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
@@ -109,7 +109,7 @@ impl Encodable for RejectReason {
 }
 
 impl Decodable for RejectReason {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Ok(match r.read_u8()? {
             0x01 => RejectReason::Malformed,
             0x10 => RejectReason::Invalid,
@@ -119,7 +119,7 @@ impl Decodable for RejectReason {
             0x41 => RejectReason::Dust,
             0x42 => RejectReason::Fee,
             0x43 => RejectReason::Checkpoint,
-            _ => return Err(encode::Error::ParseFailed("unknown reject code")),
+            _ => return Err(decode::Error::ParseFailed("unknown reject code")),
         })
     }
 }
@@ -145,7 +145,7 @@ mod tests {
     use hex::test_hex_unwrap as hex;
 
     use super::{Reject, RejectReason, VersionMessage};
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
 
     #[test]

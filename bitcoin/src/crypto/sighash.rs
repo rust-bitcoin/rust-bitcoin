@@ -1264,17 +1264,16 @@ impl<E> EncodeSigningDataResult<E> {
     /// the recommended pattern to handle this is:
     ///
     /// ```rust
-    /// # use bitcoin::consensus::deserialize;
     /// # use bitcoin::hashes::{Hash, hex::FromHex};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
-    /// # use bitcoin::Transaction;
+    /// # use bitcoin::{consensus, Transaction};
     /// # let mut writer = LegacySighash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
     /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
-    /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
+    /// # let tx: Transaction = consensus::deserialize(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
     /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
     ///         .is_sighash_single_bug()

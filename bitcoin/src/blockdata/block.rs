@@ -15,7 +15,7 @@ use hashes::{Hash, HashEngine};
 use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{decode, Decodable, Encodable};
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::pow::{CompactTarget, Target, Work};
@@ -191,7 +191,7 @@ impl Encodable for Version {
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, decode::Error> {
         Decodable::consensus_decode(r).map(Version)
     }
 }
@@ -466,7 +466,7 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
 
     #[test]
     fn test_coinbase_and_bip34() {

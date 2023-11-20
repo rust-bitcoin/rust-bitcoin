@@ -11,7 +11,7 @@ use hashes::{sha256d, Hash};
 use crate::consensus::decode::{
     self, Decodable, ReadBytesFromFiniteReaderOpts, ReadExt, MAX_VEC_SIZE,
 };
-use crate::consensus::encode::{Encodable, WriteExt};
+use crate::consensus::{Encodable, WriteExt};
 use crate::io;
 use crate::prelude::*;
 

@@ -24,7 +24,8 @@ use crate::prelude::*;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    encode::{Decodable, Encodable, ReadExt, WriteExt},
+    decode::{Decodable, ReadExt, MAX_VEC_SIZE},
+    encode::{Encodable, WriteExt},
     params::Params,
     types::{CheckedData, VarInt},
 };
