@@ -118,25 +118,17 @@ impl Params {
 }
 
 impl From<Network> for Params {
-    fn from(value: Network) -> Self {
-        Self::new(value)
-    }
+    fn from(value: Network) -> Self { Self::new(value) }
 }
 
 impl From<&Network> for Params {
-    fn from(value: &Network) -> Self {
-        Self::new(*value)
-    }
+    fn from(value: &Network) -> Self { Self::new(*value) }
 }
 
 impl From<Network> for &'static Params {
-    fn from(value: Network) -> Self {
-        value.params()
-    }
+    fn from(value: Network) -> Self { value.params() }
 }
 
 impl From<&Network> for &'static Params {
-    fn from(value: &Network) -> Self {
-        value.params()
-    }
+    fn from(value: &Network) -> Self { value.params() }
 }
