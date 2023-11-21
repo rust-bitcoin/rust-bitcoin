@@ -8,7 +8,7 @@
 
 use hashes::{sha256d, Hash, HashEngine};
 
-use crate::consensus::{encode, Encodable};
+use crate::consensus::{self, Encodable};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -200,7 +200,7 @@ mod message_signing {
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let mut engine = sha256d::Hash::engine();
     engine.input(BITCOIN_SIGNED_MSG_PREFIX);
-    let msg_len = encode::VarInt::from(msg.len());
+    let msg_len = consensus::VarInt::from(msg.len());
     msg_len.consensus_encode(&mut engine).expect("engines don't error");
     engine.input(msg.as_bytes());
     sha256d::Hash::from_engine(engine)

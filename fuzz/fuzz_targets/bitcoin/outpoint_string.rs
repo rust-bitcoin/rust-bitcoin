@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use bitcoin::blockdata::transaction::OutPoint;
-use bitcoin::consensus::encode;
+use bitcoin::consensus;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
@@ -27,9 +27,9 @@ fn do_test(data: &[u8]) {
         }
         Err(_) => {
             // If we can't deserialize as a string, try consensus deserializing
-            let res: Result<OutPoint, _> = encode::deserialize(data);
+            let res: Result<OutPoint, _> = consensus::deserialize(data);
             if let Ok(deser) = res {
-                let ser = encode::serialize(&deser);
+                let ser = consensus::serialize(&deser);
                 assert_eq!(ser, data);
                 let string = deser.to_string();
                 match OutPoint::from_str(&string) {

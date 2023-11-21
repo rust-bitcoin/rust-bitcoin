@@ -387,7 +387,7 @@ the case and how we broke both `rust-miniscript` and BDK.
 - Refactor `CommandString`.
 - Refactor `Reject` message.
 - Rename `RejectReason` enum variants.
-- Refactor `encode::Error`.
+- Refactor `consensus::Error`.
 - Implement `Default` for `TxIn`.
 - Implement `std::hash::Hash` for `Inventory`.
 - Implement `Copy` for `InvType` enum.
@@ -423,7 +423,7 @@ the case and how we broke both `rust-miniscript` and BDK.
     * Now supports segwit addresses with version >0.
     * Add `Address::from_script` constructor.
     * Add `Address::address_type` inspector.
-    * Parsing now returns an `address::Error` instead of `encode::Error`.
+    * Parsing now returns an `address::Error` instead of `consensus::Error`.
     * Removed `bitcoin_bech32` dependency for bech32 payloads.
 * bip143: Rename `witness_script` to `script_code`
 * Rename `BlockHeader::spv_validate` to `validate_pow`

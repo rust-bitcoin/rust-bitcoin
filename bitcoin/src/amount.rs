@@ -11,9 +11,9 @@ use core::fmt::{self, Write};
 use core::str::FromStr;
 use core::{default, ops};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::io;
+use crate::consensus::{Decodable, Encodable};
 use crate::prelude::*;
+use crate::{consensus, io};
 
 /// A set of denominations in which amounts can be expressed.
 ///
@@ -690,7 +690,7 @@ impl Amount {
 
 impl Decodable for Amount {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, consensus::Error> {
         Ok(Amount(Decodable::consensus_decode(r)?))
     }
 }

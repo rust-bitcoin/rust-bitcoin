@@ -6,7 +6,7 @@
 //! conform to Bitcoin consensus.
 //!
 
-pub mod encode;
+mod encode;
 mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
@@ -16,10 +16,11 @@ pub mod validation;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
+    encode::{deserialize, deserialize_partial, serialize, serialize_hex, Decodable, Encodable, Error, ReadExt, WriteExt, VarInt, CheckedData, MAX_VEC_SIZE},
     params::Params,
 };
 
+pub(crate) use self::encode::consensus_encode_with_size;
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
 pub use self::validation::{

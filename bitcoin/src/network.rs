@@ -10,7 +10,7 @@
 //!
 //! ```rust
 //! use bitcoin::Network;
-//! use bitcoin::consensus::encode::serialize;
+//! use bitcoin::consensus::serialize;
 //!
 //! let network = Network::Bitcoin;
 //! let bytes = serialize(&network.magic());
@@ -286,7 +286,7 @@ impl TryFrom<ChainHash> for Network {
 #[cfg(test)]
 mod tests {
     use super::Network;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
 
     #[test]

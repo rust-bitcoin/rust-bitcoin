@@ -9,8 +9,7 @@ use core::convert::TryInto;
 use core::fmt;
 use core::ops::Index;
 
-use crate::consensus::encode::{Error, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::{Decodable, Encodable, Error, WriteExt, MAX_VEC_SIZE};
 use crate::crypto::ecdsa;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;

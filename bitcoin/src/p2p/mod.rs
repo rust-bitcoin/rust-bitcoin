@@ -27,7 +27,7 @@ use core::{fmt, ops};
 use hex::FromHex;
 use internals::{debug_from_display, write_err};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::{self, Decodable, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::{io, Network};
 
@@ -198,7 +198,7 @@ impl Encodable for ServiceFlags {
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, consensus::Error> {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }
@@ -290,7 +290,7 @@ impl Encodable for Magic {
 }
 
 impl Decodable for Magic {
-    fn consensus_decode<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, consensus::Error> {
         Ok(Magic(Decodable::consensus_decode(reader)?))
     }
 }

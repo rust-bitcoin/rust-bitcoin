@@ -8,7 +8,7 @@ use std::str::FromStr;
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::blockdata::opcodes::OP_0;
 use bitcoin::blockdata::{script, transaction};
-use bitcoin::consensus::encode::{deserialize, serialize_hex};
+use bitcoin::consensus::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;

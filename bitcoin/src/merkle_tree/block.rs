@@ -46,7 +46,7 @@ use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::weight::Weight;
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::{self, Decodable, Encodable};
 use crate::hash_types::{TxMerkleNode, Txid};
 use crate::io;
 use crate::prelude::*;
@@ -152,7 +152,7 @@ impl Encodable for MerkleBlock {
 }
 
 impl Decodable for MerkleBlock {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, consensus::Error> {
         Ok(MerkleBlock {
             header: Decodable::consensus_decode(r)?,
             txn: Decodable::consensus_decode(r)?,
@@ -440,7 +440,7 @@ impl Encodable for PartialMerkleTree {
         ret += self.hashes.consensus_encode(w)?;
 
         let nb_bytes_for_bits = (self.bits.len() + 7) / 8;
-        ret += encode::VarInt::from(nb_bytes_for_bits).consensus_encode(w)?;
+        ret += consensus::VarInt::from(nb_bytes_for_bits).consensus_encode(w)?;
         for chunk in self.bits.chunks(8) {
             let mut byte = 0u8;
             for (i, bit) in chunk.iter().enumerate() {
@@ -455,11 +455,11 @@ impl Encodable for PartialMerkleTree {
 impl Decodable for PartialMerkleTree {
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, consensus::Error> {
         let num_transactions: u32 = Decodable::consensus_decode(r)?;
         let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode(r)?;
 
-        let nb_bytes_for_bits = encode::VarInt::consensus_decode(r)?.0 as usize;
+        let nb_bytes_for_bits = consensus::VarInt::consensus_decode(r)?.0 as usize;
         let mut bits = vec![false; nb_bytes_for_bits * 8];
         for chunk in bits.chunks_mut(8) {
             let byte = u8::consensus_decode(r)?;
@@ -540,7 +540,7 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
     use crate::hash_types::TxMerkleNode;
     use crate::{Block, Txid};
