@@ -16,8 +16,7 @@ use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
 
-use super::encode::Error as ConsensusError;
-use super::{Decodable, Encodable};
+use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::io;
 
 /// Hex-encoding strategy
@@ -365,12 +364,12 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 
 enum DecodeError<E> {
     TooManyBytes,
-    Consensus(ConsensusError),
+    Consensus(encode::Error),
     Other(E),
 }
 
 // not a trait impl because we panic on some variants
-fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
+fn consensus_error_into_serde<E: serde::de::Error>(error: encode::Error) -> E {
     use crate::consensus::encode::Error::*;
     match error {
         Io(error) => panic!("unexpected IO error {:?}", error),
@@ -434,9 +433,9 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
             },
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
-            (Err(ConsensusError::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
+            (Err(encode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
             (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
-            (Err(ConsensusError::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
+            (Err(encode::Error::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
         }
     }
