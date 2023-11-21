@@ -263,8 +263,7 @@ impl From<&PublicKey> for PubkeyHash {
 }
 
 /// A Bitcoin ECDSA private key
-#[derive(Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -365,11 +364,6 @@ impl PrivateKey {
 
 impl fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
-}
-
-#[cfg(not(feature = "std"))]
-impl fmt::Debug for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "[private key data]") }
 }
 
 impl FromStr for PrivateKey {
@@ -1090,5 +1084,26 @@ mod tests {
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn private_key_debug_is_obfuscated() {
+        let sk =
+            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        let want = "PrivateKey { compressed: true, network: Testnet, inner: SecretKey(#32014e414fdce702) }";
+        let got = format!("{:?}", sk);
+        assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(all(not(feature = "std"), feature = "no-std"))]
+    fn private_key_debug_is_obfuscated() {
+        let sk =
+            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        // Why is this not shortened? In rust-secp256k1/src/secret it is printed with "#{:016x}"?
+        let want = "PrivateKey { compressed: true, network: Testnet, inner: SecretKey(#7217ac58fbad8880a91032107b82cb6c5422544b426c350ee005cf509f3dbf7b) }";
+        let got = format!("{:?}", sk);
+        assert_eq!(got, want)
     }
 }
