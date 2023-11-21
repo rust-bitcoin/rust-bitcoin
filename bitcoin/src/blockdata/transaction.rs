@@ -2153,6 +2153,56 @@ mod tests {
             assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
         }
     }
+
+    #[test]
+    fn weight_predictions() {
+        // TXID 3d3381f968e3a73841cba5e73bf47dcea9f25a9f7663c51c81f1db8229a309a0
+        let tx_raw = hex!(
+            "01000000000103fc9aa70afba04da865f9821734b556cca9fb5710\
+             fc1338b97fba811033f755e308000000000000000019b37457784d\
+             d04936f011f733b8016c247a9ef08d40007a54a5159d1fc62ee216\
+             00000000000000004c4f2937c6ccf8256d9711a19df1ae62172297\
+             0bf46be925ff15f490efa1633d01000000000000000002c0e1e400\
+             0000000017a9146983f776902c1d1d0355ae0962cb7bc69e9afbde\
+             8706a1e600000000001600144257782711458506b89f255202d645\
+             e25c41144702483045022100dcada0499865a49d0aab8cb113c5f8\
+             3fd5a97abc793f97f3f53aa4b9d1192ed702202094c7934666a30d\
+             6adb1cc9e3b6bc14d2ffebd3200f3908c40053ef2df640b5012103\
+             15434bb59b615a383ae87316e784fc11835bb97fab33fdd2578025\
+             e9968d516e0247304402201d90b3197650569eba4bc0e0b1e2dca7\
+             7dfac7b80d4366f335b67e92e0546e4402203b4be1d443ad7e3a5e\
+             a92aafbcdc027bf9ccf5fe68c0bc8f3ebb6ab806c5464c012103e0\
+             0d92b0fe60731a54fdbcc6920934159db8ffd69d55564579b69a22\
+             ec5bb7530247304402205ab83b734df818e64d8b9e86a8a75f9d00\
+             5c0c6e1b988d045604853ab9ccbde002205a580235841df609d6bd\
+             67534bdcd301999b18e74e197e9e476cdef5fdcbf822012102ebb3\
+             e8a4638ede4721fb98e44e3a3cd61fecfe744461b85e0b6a6a1017\
+             5d5aca00000000"
+        );
+
+        let tx = Transaction::consensus_decode::<&[u8]>(&mut tx_raw.as_ref()).unwrap();
+        let input_weights = vec![
+            InputWeightPrediction::P2WPKH_MAX,
+            InputWeightPrediction::ground_p2wpkh(1),
+            InputWeightPrediction::ground_p2wpkh(1),
+        ];
+        // Outputs: [P2SH, P2WPKH]
+
+        // Confirm the transaction's predicted weight matches its actual weight.
+        let predicted = predict_weight(input_weights, tx.script_pubkey_lens());
+        let expected = tx.weight();
+        assert_eq!(predicted, expected);
+
+        // Confirm signature grinding input weight predictions are aligned with constants.
+        assert_eq!(
+            InputWeightPrediction::ground_p2wpkh(0).weight(),
+            InputWeightPrediction::P2WPKH_MAX.weight()
+        );
+        assert_eq!(
+            InputWeightPrediction::ground_p2pkh_compressed(0).weight(),
+            InputWeightPrediction::P2PKH_COMPRESSED_MAX.weight()
+        );
+    }
 }
 
 #[cfg(bench)]
