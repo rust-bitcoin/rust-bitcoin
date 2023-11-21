@@ -1202,7 +1202,7 @@ where
         |(count, partial_input_weight, inputs_with_witnesses), prediction| {
             (
                 count + 1,
-                partial_input_weight + prediction.script_size * 4 + prediction.witness_size,
+                partial_input_weight + prediction.weight().to_wu() as usize,
                 inputs_with_witnesses + (prediction.witness_size > 0) as usize,
             )
         },
@@ -1276,7 +1276,7 @@ pub const fn predict_weight_from_slices(
     let mut i = 0;
     while i < inputs.len() {
         let prediction = inputs[i];
-        partial_input_weight += prediction.script_size * 4 + prediction.witness_size;
+        partial_input_weight += prediction.weight().to_wu() as usize;
         inputs_with_witnesses += (prediction.witness_size > 0) as usize;
         i += 1;
     }
@@ -1439,6 +1439,12 @@ impl InputWeightPrediction {
         let script_size = input_script_len + VarInt(input_script_len as u64).size();
 
         InputWeightPrediction { script_size, witness_size }
+    }
+
+    /// Tallies the total weight added to a transaction by an input with this weight prediction,
+    /// not counting potential witness flag bytes or the witness count varint.
+    pub const fn weight(&self) -> Weight {
+        Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
     }
 }
 
