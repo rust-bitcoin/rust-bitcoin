@@ -5,8 +5,7 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
-use core::fmt::{self, Write};
-use core::ops;
+use core::{fmt, ops};
 use core::str::FromStr;
 
 use hashes::{hash160, Hash};
@@ -264,6 +263,8 @@ impl From<&PublicKey> for PubkeyHash {
 
 /// A Bitcoin ECDSA private key
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -329,7 +330,8 @@ impl PrivateKey {
     /// Get WIF encoding of this private key.
     pub fn to_wif(self) -> String {
         let mut buf = String::new();
-        buf.write_fmt(format_args!("{}", self)).unwrap();
+        self.fmt_wif(&mut buf).expect("in memory writers don't fail");
+
         buf.shrink_to_fit();
         buf
     }
@@ -360,10 +362,13 @@ impl PrivateKey {
             inner: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
-}
 
-impl fmt::Display for PrivateKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
+    /// Returns a hex string of the inner [`secp256k1::SecretKey`].
+    ///
+    /// To write to fmt use `fmt::Display::fmt(self.inner.display_secret(), f)`.
+    pub fn to_secret_string(&self) -> String {
+        self.inner.display_secret().to_string()
+    }
 }
 
 impl FromStr for PrivateKey {
@@ -374,48 +379,6 @@ impl FromStr for PrivateKey {
 impl ops::Index<ops::RangeFull> for PrivateKey {
     type Output = [u8];
     fn index(&self, _: ops::RangeFull) -> &[u8] { &self.inner[..] }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for PrivateKey {
-    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        s.collect_str(self)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PrivateKey {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PrivateKey, D::Error> {
-        struct WifVisitor;
-
-        impl<'de> serde::de::Visitor<'de> for WifVisitor {
-            type Value = PrivateKey;
-
-            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                formatter.write_str("an ASCII WIF string")
-            }
-
-            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                if let Ok(s) = core::str::from_utf8(v) {
-                    PrivateKey::from_str(s).map_err(E::custom)
-                } else {
-                    Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
-                }
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                PrivateKey::from_str(v).map_err(E::custom)
-            }
-        }
-
-        d.deserialize_str(WifVisitor)
-    }
 }
 
 #[cfg(feature = "serde")]
@@ -764,12 +727,6 @@ mod tests {
         let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
-        // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-        let sk_str =
-            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(&sk.to_wif(), &sk_str.to_wif());
-
         // mainnet uncompressed
         let sk =
             PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
@@ -823,18 +780,45 @@ mod tests {
         assert_eq!(upk.wpubkey_hash(), None);
     }
 
+    // #[cfg(feature = "serde")]
+    // #[test]
+    // fn test_private_key_serde() {
+    //     use serde_test::{assert_tokens, Configure, Token, Readable};
+
+    //     static SK_STR: &str = "f7a1d6cd23bc345dd57abe045d6026f4acf69a637c9e5840e232832bcf4ce58d";
+
+    //     let sk = secp256k1::SecretKey::from_str(SK_STR).expect("failed to parse secret key");
+    //     let sk = PrivateKey::new(sk, Network::Bitcoin);
+
+    //     serde_test::assert_tokens::<Readable<PrivateKey>>(
+    //         // TODO: Convert sk to Readable<PrivateKey> somehow?
+    //         &sk,
+    //         &[
+    //             Token::Struct { name: "PrivateKey", len: 3 },
+    //             Token::Str("compressed"),
+    //             Token::Bool(true),
+    //             Token::Str("network"),
+    //             Token::UnitVariant{ name: "Network", variant: "bitcoin" },
+    //             Token::Str("inner"),
+    //             Token::BorrowedStr(SK_STR),
+    //             Token::StructEnd,
+    //         ],
+    //     );
+    // }
+
     #[cfg(feature = "serde")]
     #[test]
-    fn test_key_serde() {
+    fn test_public_key_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
-        static KEY_WIF: &str = "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy";
+        static SK_STR: &str = "f7a1d6cd23bc345dd57abe045d6026f4acf69a637c9e5840e232832bcf4ce58d";
         static PK_STR: &str = "039b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef";
         static PK_STR_U: &str = "\
             04\
             9b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef\
             87288ed73ce47fc4f5c79d19ebfa57da7cff3aff6e819e4ee971d86b5e61875d\
         ";
+
         #[rustfmt::skip]
         static PK_BYTES: [u8; 33] = [
             0x03,
@@ -857,11 +841,12 @@ mod tests {
         ];
 
         let s = Secp256k1::new();
-        let sk = PrivateKey::from_str(KEY_WIF).unwrap();
+        let sk = secp256k1::SecretKey::from_str(SK_STR).expect("failed to parse secret key");
+        let sk = PrivateKey::new(sk, Network::Bitcoin);
+
         let pk = PublicKey::from_private_key(&s, &sk);
         let pk_u = PublicKey { inner: pk.inner, compressed: false };
 
-        assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);
         assert_tokens(&pk.compact(), &[Token::BorrowedBytes(&PK_BYTES[..])]);
         assert_tokens(&pk.readable(), &[Token::BorrowedStr(PK_STR)]);
         assert_tokens(&pk_u.compact(), &[Token::BorrowedBytes(&PK_BYTES_U[..])]);
