@@ -371,23 +371,23 @@ enum DecodeError<E> {
 
 // not a trait impl because we panic on some variants
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
+    use crate::consensus::encode::Error::*;
     match error {
-        ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
-        ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
+        Io(error) => panic!("unexpected IO error {:?}", error),
+        OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",
             requested, max
         )),
-        ConsensusError::InvalidChecksum { expected, actual } => E::invalid_value(
+        InvalidChecksum { expected, actual } => E::invalid_value(
             Unexpected::Bytes(&actual),
             &DisplayExpected(format_args!(
                 "checksum {:02x}{:02x}{:02x}{:02x}",
                 expected[0], expected[1], expected[2], expected[3]
             )),
         ),
-        ConsensusError::NonMinimalVarInt =>
-            E::custom(format_args!("compact size was not encoded minimally")),
-        ConsensusError::ParseFailed(msg) => E::custom(msg),
-        ConsensusError::UnsupportedSegwitFlag(flag) =>
+        NonMinimalVarInt => E::custom(format_args!("compact size was not encoded minimally")),
+        ParseFailed(msg) => E::custom(msg),
+        UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
     }
 }
