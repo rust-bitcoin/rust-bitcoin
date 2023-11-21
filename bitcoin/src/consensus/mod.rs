@@ -7,7 +7,7 @@
 //!
 
 pub mod encode;
-pub mod params;
+mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
 #[cfg(feature = "bitcoinconsensus")]
