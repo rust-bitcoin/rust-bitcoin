@@ -335,6 +335,27 @@ sure, feel free to ask. If we determine panicking is more practical it must be d
 panics that could theoretically occur because of bugs in our code must not be documented.
 
 
+#### Derives
+
+We try to use standard set of derives if it makes sense:
+
+```
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Foo {
+    Bar,
+    Baz,
+}
+```
+
+For types that do should not form a total or partial order, or that technically do but it does not
+make sense to compare them, we use the `Ordered` trait from the
+[`ordered`](https://crates.io/crates/ordered) crate. See `absolute::LockTime` for an example.
+
+For error types you likely want to use `#[derive(Debug, Clone, PartialEq, Eq)]`.
+
+See [Errors](#errors) section.
+
+
 #### Attributes
 
 - `#[track_caller]`: Used on functions that panic on invalid arguments
