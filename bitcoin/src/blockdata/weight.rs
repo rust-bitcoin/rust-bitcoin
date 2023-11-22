@@ -135,6 +135,82 @@ impl fmt::Display for Weight {
     }
 }
 
+impl From<Weight> for u64 {
+    fn from(value: Weight) -> Self { value.to_wu() }
+}
+
+impl Add for Weight {
+    type Output = Weight;
+
+    fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
+}
+
+impl AddAssign for Weight {
+    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
+}
+
+impl Sub for Weight {
+    type Output = Weight;
+
+    fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
+}
+
+impl SubAssign for Weight {
+    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
+}
+
+impl Mul<u64> for Weight {
+    type Output = Weight;
+
+    fn mul(self, rhs: u64) -> Self::Output { Weight(self.0 * rhs) }
+}
+
+impl Mul<Weight> for u64 {
+    type Output = Weight;
+
+    fn mul(self, rhs: Weight) -> Self::Output { Weight(self * rhs.0) }
+}
+
+impl MulAssign<u64> for Weight {
+    fn mul_assign(&mut self, rhs: u64) { self.0 *= rhs }
+}
+
+impl Div<u64> for Weight {
+    type Output = Weight;
+
+    fn div(self, rhs: u64) -> Self::Output { Weight(self.0 / rhs) }
+}
+
+impl Div<Weight> for Weight {
+    type Output = u64;
+
+    fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
+}
+
+impl DivAssign<u64> for Weight {
+    fn div_assign(&mut self, rhs: u64) { self.0 /= rhs }
+}
+
+impl core::iter::Sum for Weight {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        Weight(iter.map(Weight::to_wu).sum())
+    }
+}
+
+impl<'a> core::iter::Sum<&'a Weight> for Weight {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Weight>,
+    {
+        iter.cloned().sum()
+    }
+}
+
+crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -254,79 +330,3 @@ mod tests {
         assert_eq!(None, result);
     }
 }
-
-impl From<Weight> for u64 {
-    fn from(value: Weight) -> Self { value.to_wu() }
-}
-
-impl Add for Weight {
-    type Output = Weight;
-
-    fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
-}
-
-impl AddAssign for Weight {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
-}
-
-impl Sub for Weight {
-    type Output = Weight;
-
-    fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
-}
-
-impl SubAssign for Weight {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
-}
-
-impl Mul<u64> for Weight {
-    type Output = Weight;
-
-    fn mul(self, rhs: u64) -> Self::Output { Weight(self.0 * rhs) }
-}
-
-impl Mul<Weight> for u64 {
-    type Output = Weight;
-
-    fn mul(self, rhs: Weight) -> Self::Output { Weight(self * rhs.0) }
-}
-
-impl MulAssign<u64> for Weight {
-    fn mul_assign(&mut self, rhs: u64) { self.0 *= rhs }
-}
-
-impl Div<u64> for Weight {
-    type Output = Weight;
-
-    fn div(self, rhs: u64) -> Self::Output { Weight(self.0 / rhs) }
-}
-
-impl Div<Weight> for Weight {
-    type Output = u64;
-
-    fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
-}
-
-impl DivAssign<u64> for Weight {
-    fn div_assign(&mut self, rhs: u64) { self.0 /= rhs }
-}
-
-impl core::iter::Sum for Weight {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        Weight(iter.map(Weight::to_wu).sum())
-    }
-}
-
-impl<'a> core::iter::Sum<&'a Weight> for Weight {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Weight>,
-    {
-        iter.cloned().sum()
-    }
-}
-
-crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
