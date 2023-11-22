@@ -13,8 +13,7 @@ use crate::{FromSliceError, HashEngine as _};
 crate::internal_macros::hash_type! {
     512,
     false,
-    "Output of the SHA512 hash function.",
-    "crate::util::json_hex_string::len_64"
+    "Output of the SHA512 hash function."
 }
 
 #[cfg(not(hashes_fuzz))]

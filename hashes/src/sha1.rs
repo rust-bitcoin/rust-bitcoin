@@ -13,8 +13,7 @@ use crate::{FromSliceError, HashEngine as _};
 crate::internal_macros::hash_type! {
     160,
     false,
-    "Output of the SHA1 hash function.",
-    "crate::util::json_hex_string::len_20"
+    "Output of the SHA1 hash function."
 }
 
 fn from_engine(mut e: HashEngine) -> Hash {

@@ -196,19 +196,32 @@ pub(crate) use hash_trait_impls;
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
-    ($bits:expr, $reverse:expr, $doc:literal, $schemars:literal) => {
+    ($bits:expr, $reverse:expr, $doc:literal) => {
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        #[cfg_attr(feature = "schemars", derive(crate::schemars::JsonSchema))]
         #[repr(transparent)]
-        pub struct Hash(
-            #[cfg_attr(feature = "schemars", schemars(schema_with = $schemars))] [u8; $bits / 8],
-        );
+        pub struct Hash([u8; $bits / 8]);
 
         impl Hash {
             fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
             fn internal_engine() -> HashEngine { Default::default() }
+        }
+
+        #[cfg(feature = "schemars")]
+        impl schemars::JsonSchema for Hash {
+            fn schema_name() -> String { "Hash".to_owned() }
+
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                let len = $bits / 8;
+                let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+                schema.string = Some(Box::new(schemars::schema::StringValidation {
+                    max_length: Some(len * 2),
+                    min_length: Some(len * 2),
+                    pattern: Some("[0-9a-fA-F]+".to_owned()),
+                }));
+                schema.into()
+            }
         }
 
         crate::internal_macros::hash_trait_impls!($bits, $reverse);
