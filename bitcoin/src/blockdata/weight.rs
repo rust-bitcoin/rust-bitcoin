@@ -54,6 +54,21 @@ impl Weight {
         vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
     }
 
+    /// Constructs `Weight` from virtual bytes in const context.
+    pub const fn from_vb_const(vb: u64) -> Weight {
+        match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
+            Some(weight) => Weight(weight),
+            None => {
+                // TODO replace with panic!() when MSRV = 1.57+
+                #[allow(unconditional_panic)]
+                // disabling this lint until panic!() can be used.
+                #[allow(clippy::let_unit_value)]
+                let _int_overflow_scaling_weight = [(); 0][1];
+                Weight(0)
+            }
+        }
+    }
+
     /// Constructs `Weight` from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
@@ -148,6 +163,12 @@ mod tests {
 
         let vb = Weight::from_vb(u64::MAX);
         assert_eq!(None, vb);
+    }
+
+    #[test]
+    fn from_vb_const() {
+        const WU: Weight = Weight::from_vb_const(1);
+        assert_eq!(Weight(4), WU);
     }
 
     #[test]
