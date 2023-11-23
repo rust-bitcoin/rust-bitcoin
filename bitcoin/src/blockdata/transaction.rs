@@ -61,7 +61,7 @@ crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txi
 
 impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
-    const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
+    pub const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
 
     /// Creates a new [`OutPoint`].
     #[inline]
@@ -317,7 +317,7 @@ impl Sequence {
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
 
     /// The number of bytes that a sequence number contributes to the size of a transaction.
-    const SIZE: usize = 4; // Serialized length of a u32.
+    pub const SIZE: usize = 4; // Serialized length of a u32.
 
     /// The lowest sequence number that does not opt-in for replace-by-fee.
     ///
