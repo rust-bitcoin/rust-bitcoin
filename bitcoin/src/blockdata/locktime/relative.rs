@@ -6,7 +6,6 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::convert::TryFrom;
 use core::fmt;
 
 #[cfg(all(test, mutate))]

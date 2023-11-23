@@ -18,7 +18,6 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use core::convert::TryFrom;
 use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;

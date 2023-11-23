@@ -6,8 +6,6 @@
 //! according to the BIP-174 specification.
 //!
 
-use core::convert::{TryFrom, TryInto};
-
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use secp256k1::{self, XOnlyPublicKey};
 
@@ -386,8 +384,6 @@ fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_r
 
 #[cfg(test)]
 mod tests {
-    use core::convert::TryFrom;
-
     use super::*;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,

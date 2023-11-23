@@ -6,7 +6,6 @@
 //!
 
 use core::cmp::Reverse;
-use core::convert::TryFrom;
 use core::fmt;
 use core::iter::FusedIterator;
 

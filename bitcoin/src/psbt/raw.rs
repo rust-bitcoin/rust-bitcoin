@@ -6,7 +6,6 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 //!
 
-use core::convert::TryFrom;
 use core::fmt;
 
 use super::serialize::{Deserialize, Serialize};

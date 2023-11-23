@@ -20,7 +20,6 @@ pub mod message_filter;
 #[cfg(feature = "std")]
 pub mod message_network;
 
-use core::convert::TryFrom;
 use core::str::FromStr;
 use core::{fmt, ops};
 
