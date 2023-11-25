@@ -227,9 +227,8 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn kilo_weight_constructor_panic() {
-        Weight::from_kwu(u64::MAX).expect("expected weight unit");
+    fn kilo_weight_constructor_overflow() {
+        assert!(Weight::from_kwu(u64::MAX).is_none())
     }
 
     #[test]
