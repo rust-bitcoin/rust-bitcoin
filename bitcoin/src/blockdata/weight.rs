@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn kilo_weight_constructor() {
-        assert_eq!(Weight(1_000), Weight::from_kwu(1).expect("expected weight unit"));
+        assert_eq!(Weight(1_000), Weight::from_kwu(1).unwrap());
     }
 
     #[test]
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn from_vb() {
-        let weight = Weight::from_vb(1).expect("expected weight unit");
+        let weight = Weight::from_vb(1).unwrap();
         assert_eq!(Weight(4), weight);
 
         let weight = Weight::from_vb(u64::MAX);
@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     fn checked_add() {
-        let result = Weight(1).checked_add(Weight(1)).expect("expected weight unit");
+        let result = Weight(1).checked_add(Weight(1)).unwrap();
         assert_eq!(Weight(2), result);
 
         let result = Weight::MAX.checked_add(Weight(1));
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn checked_sub() {
-        let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
+        let result = Weight(1).checked_sub(Weight(1)).unwrap();
         assert_eq!(Weight::ZERO, result);
 
         let result = Weight::MIN.checked_sub(Weight(1));
@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn checked_mul() {
-        let result = Weight(2).checked_mul(2).expect("expected weight unit");
+        let result = Weight(2).checked_mul(2).unwrap();
         assert_eq!(Weight(4), result);
 
         let result = Weight::MAX.checked_mul(2);
@@ -313,7 +313,7 @@ mod tests {
 
     #[test]
     fn checked_div() {
-        let result = Weight(2).checked_div(2).expect("expected weight unit");
+        let result = Weight(2).checked_div(2).unwrap();
         assert_eq!(Weight(1), result);
 
         let result = Weight(2).checked_div(0);
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn scale_by_witness_factor() {
-        let result = Weight(1).scale_by_witness_factor().expect("expected weight unit");
+        let result = Weight(1).scale_by_witness_factor().unwrap();
         assert_eq!(Weight(4), result);
 
         let result = Weight::MAX.scale_by_witness_factor();
