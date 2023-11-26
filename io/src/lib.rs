@@ -15,7 +15,6 @@
 
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(any(feature = "alloc", feature = "std"))]
@@ -24,10 +23,10 @@ extern crate alloc;
 /// Standard I/O stream definitions which are API-equivalent to `std`'s `io` module. See
 /// [`std::io`] for more info.
 pub mod io {
-    use core::convert::TryInto;
-    use core::fmt::{Debug, Display, Formatter};
     #[cfg(any(feature = "alloc", feature = "std"))]
     use alloc::boxed::Box;
+    use core::convert::TryInto;
+    use core::fmt::{Debug, Display, Formatter};
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     mod sealed {
@@ -38,14 +37,10 @@ pub mod io {
             fn into(self) -> Box<dyn Debug + Send + Sync + 'static>;
         }
         impl IntoBoxDynDebug for &str {
-            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> {
-                Box::new(String::from(self))
-            }
+            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(String::from(self)) }
         }
         impl IntoBoxDynDebug for String {
-            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> {
-                Box::new(self)
-            }
+            fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(self) }
         }
     }
 
@@ -71,9 +66,7 @@ pub mod io {
             Self { kind, error: Some(error.into()) }
         }
 
-        pub fn kind(&self) -> ErrorKind {
-            self.kind
-        }
+        pub fn kind(&self) -> ErrorKind { self.kind }
     }
 
     impl From<ErrorKind> for Error {
@@ -219,9 +212,7 @@ pub mod io {
             Ok(())
         }
         #[inline]
-        fn take(&mut self, limit: u64) -> Take<Self> {
-            Take { reader: self, remaining: limit }
-        }
+        fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
     }
 
     pub struct Take<'a, R: Read + ?Sized> {
@@ -263,17 +254,11 @@ pub mod io {
     }
     impl<T: AsRef<[u8]>> Cursor<T> {
         #[inline]
-        pub fn new(inner: T) -> Self {
-            Cursor { inner, pos: 0 }
-        }
+        pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
         #[inline]
-        pub fn position(&self) -> u64 {
-            self.pos
-        }
+        pub fn position(&self) -> u64 { self.pos }
         #[inline]
-        pub fn into_inner(self) -> T {
-            self.inner
-        }
+        pub fn into_inner(self) -> T { self.inner }
     }
     impl<T: AsRef<[u8]>> Read for Cursor<T> {
         #[inline]
@@ -282,7 +267,9 @@ pub mod io {
             let start_pos = self.pos.try_into().unwrap_or(inner.len());
             let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
             buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
-            self.pos = self.pos.saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
+            self.pos = self
+                .pos
+                .saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
             Ok(read)
         }
     }
@@ -313,9 +300,7 @@ pub mod io {
             Ok(<W as std::io::Write>::write(self, buf)?)
         }
         #[inline]
-        fn flush(&mut self) -> Result<()> {
-            Ok(<W as std::io::Write>::flush(self)?)
-        }
+        fn flush(&mut self) -> Result<()> { Ok(<W as std::io::Write>::flush(self)?) }
     }
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
@@ -347,9 +332,7 @@ pub mod io {
     #[cfg(not(feature = "std"))]
     impl Write for Sink {
         #[inline]
-        fn write(&mut self, buf: &[u8]) -> Result<usize> {
-            Ok(buf.len())
-        }
+        fn write(&mut self, buf: &[u8]) -> Result<usize> { Ok(buf.len()) }
         #[inline]
         fn write_all(&mut self, _: &[u8]) -> Result<()> { Ok(()) }
         #[inline]
@@ -358,9 +341,7 @@ pub mod io {
     #[cfg(feature = "std")]
     impl std::io::Write for Sink {
         #[inline]
-        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            Ok(buf.len())
-        }
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> { Ok(buf.len()) }
         #[inline]
         fn write_all(&mut self, _: &[u8]) -> std::io::Result<()> { Ok(()) }
         #[inline]
@@ -398,7 +379,6 @@ macro_rules! impl_write {
         }
     }
 }
-
 
 #[macro_export]
 /// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
