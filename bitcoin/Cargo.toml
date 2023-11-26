@@ -9,7 +9,8 @@ description = "General purpose library for using and interoperating with Bitcoin
 categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56.1"
 exclude = ["tests", "contrib"]
 
 [features]

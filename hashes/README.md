@@ -9,7 +9,7 @@ since these are needed to display hashes anway.
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features on **Rust 1.48.0**.
+This library should always compile with any combination of features on **Rust 1.56.1**.
 
 
 To build with the MSRV you will need to pin `serde` (if you have either the `serde` or the

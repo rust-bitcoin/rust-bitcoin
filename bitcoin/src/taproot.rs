@@ -6,7 +6,6 @@
 //!
 
 use core::cmp::Reverse;
-use core::convert::TryFrom;
 use core::fmt;
 use core::iter::FusedIterator;
 
@@ -1845,7 +1844,7 @@ mod test {
         let tree_info = builder.finalize(&secp, internal_key).unwrap();
         let output_key = tree_info.output_key();
 
-        for script in vec![a, b, c, d, e] {
+        for script in [a, b, c, d, e] {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(

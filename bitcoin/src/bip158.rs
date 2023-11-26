@@ -39,7 +39,6 @@
 //!
 
 use core::cmp::{self, Ordering};
-use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
 use hashes::{siphash24, Hash};

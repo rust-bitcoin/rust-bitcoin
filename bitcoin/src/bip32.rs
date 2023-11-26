@@ -6,7 +6,6 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
-use core::convert::TryInto;
 use core::default::Default;
 use core::ops::Index;
 use core::str::FromStr;

@@ -5,7 +5,6 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
-use core::convert::TryInto;
 use core::fmt;
 use core::ops::Index;
 

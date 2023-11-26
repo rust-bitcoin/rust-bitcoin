@@ -1,5 +1,6 @@
 [workspace]
 members = ["bitcoin", "hashes", "internals", "fuzz", "io"]
+resolver = "2"
 
 [patch.crates-io.bitcoin]
 path = "bitcoin"

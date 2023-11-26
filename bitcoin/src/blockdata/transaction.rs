@@ -11,7 +11,6 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use core::convert::TryFrom;
 use core::default::Default;
 use core::{cmp, fmt, str};
 

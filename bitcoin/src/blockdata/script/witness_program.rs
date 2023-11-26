@@ -7,7 +7,6 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
-use core::convert::TryInto;
 use core::fmt;
 
 use crate::blockdata::script::witness_version::WitnessVersion;

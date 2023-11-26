@@ -6,7 +6,6 @@
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 //!
 
-use core::convert::TryFrom;
 use core::{fmt, iter};
 
 use hashes::{sha256d, Hash};

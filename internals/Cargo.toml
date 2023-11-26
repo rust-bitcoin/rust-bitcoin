@@ -9,7 +9,8 @@ description = "Internal types and macros used by rust-bitcoin ecosystem"
 categories = ["cryptography::cryptocurrencies"]
 keywords = ["internal"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56.1"
 exclude = ["tests", "contrib"]
 
 [features]

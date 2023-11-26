@@ -66,7 +66,7 @@ jobs:
         run: ./contrib/test.sh
 
   MSRV:
-    name: Test - 1.48.0 toolchain
+    name: Test - 1.56.1 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -76,7 +76,7 @@ jobs:
       - name: Checkout Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.48.0"
+          toolchain: "1.56.1"
       - name: Running test script
         env:
           DO_FEATURE_MATRIX: true

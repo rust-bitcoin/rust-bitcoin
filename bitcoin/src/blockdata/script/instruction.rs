@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::convert::TryInto;
-
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::{read_uint_iter, Error, PushBytes, Script, ScriptBuf, UintError};
 

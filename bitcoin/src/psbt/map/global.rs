@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::convert::TryFrom;
-
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::MAX_VEC_SIZE;

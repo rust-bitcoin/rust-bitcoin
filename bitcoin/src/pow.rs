@@ -834,8 +834,6 @@ impl crate::serde::Serialize for U256 {
 #[cfg(feature = "serde")]
 impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        use core::convert::TryInto;
-
         use hex::FromHex;
 
         use crate::serde::de;
