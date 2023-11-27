@@ -135,126 +135,6 @@ impl fmt::Display for Weight {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn weight_constructor() {
-        assert_eq!(Weight::ZERO, Weight::from_wu(0));
-        assert_eq!(Weight::ZERO, Weight::from_wu_usize(0_usize));
-    }
-
-    #[test]
-    fn kilo_weight_constructor() {
-        assert_eq!(Weight(1_000), Weight::from_kwu(1).expect("expected weight unit"));
-    }
-
-    #[test]
-    #[should_panic]
-    fn kilo_weight_constructor_panic() {
-        Weight::from_kwu(u64::MAX).expect("expected weight unit");
-    }
-
-    #[test]
-    fn from_vb() {
-        let vb = Weight::from_vb(1).expect("expected weight unit");
-        assert_eq!(Weight(4), vb);
-
-        let vb = Weight::from_vb(u64::MAX);
-        assert_eq!(None, vb);
-    }
-
-    #[test]
-    fn from_vb_const() {
-        const WU: Weight = Weight::from_vb_const(1);
-        assert_eq!(Weight(4), WU);
-    }
-
-    #[test]
-    fn from_vb_unchecked() {
-        let vb = Weight::from_vb_unchecked(1);
-        assert_eq!(Weight(4), vb);
-    }
-
-    #[test]
-    #[should_panic]
-    fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
-
-    #[test]
-    fn from_witness_data_size() {
-        let witness_data_size = 1;
-        assert_eq!(Weight(witness_data_size), Weight::from_witness_data_size(witness_data_size));
-    }
-
-    #[test]
-    fn from_non_witness_data_size() {
-        assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
-    }
-
-    #[test]
-    fn to_kwu_floor() {
-        assert_eq!(1, Weight(1_000).to_kwu_floor());
-    }
-
-    #[test]
-    fn to_vb_floor() {
-        assert_eq!(1, Weight(4).to_vbytes_floor());
-        assert_eq!(1, Weight(5).to_vbytes_floor());
-    }
-
-    #[test]
-    fn to_vb_ceil() {
-        assert_eq!(1, Weight(4).to_vbytes_ceil());
-        assert_eq!(2, Weight(5).to_vbytes_ceil());
-    }
-
-    #[test]
-    fn checked_add() {
-        let result = Weight(1).checked_add(Weight(1)).expect("expected weight unit");
-        assert_eq!(Weight(2), result);
-
-        let result = Weight::MAX.checked_add(Weight(1));
-        assert_eq!(None, result);
-    }
-
-    #[test]
-    fn checked_sub() {
-        let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
-        assert_eq!(Weight::ZERO, result);
-
-        let result = Weight::MIN.checked_sub(Weight(1));
-        assert_eq!(None, result);
-    }
-
-    #[test]
-    fn checked_mul() {
-        let result = Weight(2).checked_mul(2).expect("expected weight unit");
-        assert_eq!(Weight(4), result);
-
-        let result = Weight::MAX.checked_mul(2);
-        assert_eq!(None, result);
-    }
-
-    #[test]
-    fn checked_div() {
-        let result = Weight(2).checked_div(2).expect("expected weight unit");
-        assert_eq!(Weight(1), result);
-
-        let result = Weight(2).checked_div(0);
-        assert_eq!(None, result);
-    }
-
-    #[test]
-    fn scale_by_witness_factor() {
-        let result = Weight(1).scale_by_witness_factor().expect("expected weight unit");
-        assert_eq!(Weight(4), result);
-
-        let result = Weight::MAX.scale_by_witness_factor();
-        assert_eq!(None, result);
-    }
-}
-
 impl From<Weight> for u64 {
     fn from(value: Weight) -> Self { value.to_wu() }
 }
@@ -330,3 +210,122 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
 }
 
 crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn weight_constructor() {
+        assert_eq!(Weight::ZERO, Weight::from_wu(0));
+        assert_eq!(Weight::ZERO, Weight::from_wu_usize(0_usize));
+    }
+
+    #[test]
+    fn kilo_weight_constructor() {
+        assert_eq!(Weight(1_000), Weight::from_kwu(1).unwrap());
+    }
+
+    #[test]
+    fn kilo_weight_constructor_overflow() {
+        assert!(Weight::from_kwu(u64::MAX).is_none())
+    }
+
+    #[test]
+    fn from_vb() {
+        let weight = Weight::from_vb(1).unwrap();
+        assert_eq!(Weight(4), weight);
+
+        let weight = Weight::from_vb(u64::MAX);
+        assert_eq!(None, weight);
+    }
+
+    #[test]
+    fn from_vb_const() {
+        const WU: Weight = Weight::from_vb_const(1);
+        assert_eq!(Weight(4), WU);
+    }
+
+    #[test]
+    fn from_vb_unchecked() {
+        let weight = Weight::from_vb_unchecked(1);
+        assert_eq!(Weight(4), weight);
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
+
+    #[test]
+    fn from_witness_data_size() {
+        let witness_data_size = 1;
+        assert_eq!(Weight(witness_data_size), Weight::from_witness_data_size(witness_data_size));
+    }
+
+    #[test]
+    fn from_non_witness_data_size() {
+        assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
+    }
+
+    #[test]
+    fn to_kwu_floor() {
+        assert_eq!(1, Weight(1_000).to_kwu_floor());
+    }
+
+    #[test]
+    fn to_vb_floor() {
+        assert_eq!(1, Weight(4).to_vbytes_floor());
+        assert_eq!(1, Weight(5).to_vbytes_floor());
+    }
+
+    #[test]
+    fn to_vb_ceil() {
+        assert_eq!(1, Weight(4).to_vbytes_ceil());
+        assert_eq!(2, Weight(5).to_vbytes_ceil());
+    }
+
+    #[test]
+    fn checked_add() {
+        let result = Weight(1).checked_add(Weight(1)).unwrap();
+        assert_eq!(Weight(2), result);
+
+        let result = Weight::MAX.checked_add(Weight(1));
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_sub() {
+        let result = Weight(1).checked_sub(Weight(1)).unwrap();
+        assert_eq!(Weight::ZERO, result);
+
+        let result = Weight::MIN.checked_sub(Weight(1));
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_mul() {
+        let result = Weight(2).checked_mul(2).unwrap();
+        assert_eq!(Weight(4), result);
+
+        let result = Weight::MAX.checked_mul(2);
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_div() {
+        let result = Weight(2).checked_div(2).unwrap();
+        assert_eq!(Weight(1), result);
+
+        let result = Weight(2).checked_div(0);
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn scale_by_witness_factor() {
+        let result = Weight(1).scale_by_witness_factor().unwrap();
+        assert_eq!(Weight(4), result);
+
+        let result = Weight::MAX.scale_by_witness_factor();
+        assert_eq!(None, result);
+    }
+}
