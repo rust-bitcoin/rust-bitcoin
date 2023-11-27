@@ -65,7 +65,7 @@ mod newtypes {
         /// other [`sha256d::Hash`] types, are serialized in reverse
         /// byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
         /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-        pub struct Txid(sha256d::Hash); 
+        pub struct Txid(sha256d::Hash);
 
         /// A bitcoin witness transaction ID.
         pub struct Wtxid(sha256d::Hash);
@@ -94,4 +94,16 @@ mod newtypes {
 
     impl_hashencode!(FilterHash);
     impl_hashencode!(FilterHeader);
+
+    impl From<Txid> for TxMerkleNode {
+        fn from(txid: Txid) -> Self {
+            Self::from(txid.0)
+        }
+    }
+
+    impl From<Wtxid> for WitnessMerkleNode {
+        fn from(wtxid: Wtxid) -> Self {
+            Self::from(wtxid.0)
+        }
+    }
 }
