@@ -209,6 +209,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::network::NetworkKind;
 
     #[test]
     fn test_signed_msg_hash() {
@@ -243,12 +244,14 @@ mod tests {
             .try_into()
             .expect("compressed was set to true");
 
+        let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
+        assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
         let p2wpkh = Address::p2wpkh(&pubkey, Network::Bitcoin);
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
-        let p2shwpkh = Address::p2shwpkh(&pubkey, Network::Bitcoin);
+        let p2shwpkh = Address::p2shwpkh(&pubkey, NetworkKind::Main);
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
@@ -266,7 +269,7 @@ mod tests {
         use secp256k1;
 
         use crate::crypto::key::PublicKey;
-        use crate::{Address, Network};
+        use crate::{Address, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";
@@ -283,7 +286,7 @@ mod tests {
             PublicKey::from_slice(&BASE64_STANDARD.decode(pubkey_base64).expect("base64 string"))
                 .expect("pubkey slice");
 
-        let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);
+        let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
         assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
     }
 }
