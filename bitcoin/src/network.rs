@@ -36,7 +36,6 @@ use crate::prelude::{String, ToOwned};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
-#[non_exhaustive]
 pub enum Network {
     /// Mainnet Bitcoin.
     Bitcoin,
