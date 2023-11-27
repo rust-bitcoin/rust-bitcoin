@@ -209,7 +209,6 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::network::NetworkKind;
 
     #[test]
     fn test_signed_msg_hash() {
@@ -227,7 +226,7 @@ mod tests {
 
         use secp256k1;
 
-        use crate::{Address, AddressType, Network};
+        use crate::{Address, AddressType, Network, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
