@@ -575,7 +575,7 @@ impl Xpriv {
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
     pub fn to_priv(self) -> PrivateKey {
-        PrivateKey { compressed: true, network: self.network, inner: self.private_key }
+        PrivateKey { compressed: true, network: self.network.into(), inner: self.private_key }
     }
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal

@@ -16,7 +16,7 @@ use io::{Read, Write};
 
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
-use crate::network::Network;
+use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
@@ -390,8 +390,8 @@ impl From<&CompressedPublicKey> for WPubkeyHash {
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
-    /// The network on which this key should be used
-    pub network: Network,
+    /// The network kind on which this key should be used
+    pub network: NetworkKind,
     /// The actual ECDSA key
     pub inner: secp256k1::SecretKey,
 }
@@ -400,20 +400,23 @@ impl PrivateKey {
     /// Constructs new compressed ECDSA private key using the secp256k1 algorithm and
     /// a secure random number generator.
     #[cfg(feature = "rand-std")]
-    pub fn generate(network: Network) -> PrivateKey {
+    pub fn generate(network: impl Into<NetworkKind>) -> PrivateKey {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
-        PrivateKey::new(secret_key, network)
+        PrivateKey::new(secret_key, network.into())
     }
     /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
     /// and the specified network
-    pub fn new(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
-        PrivateKey { compressed: true, network, inner: key }
+    pub fn new(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> PrivateKey {
+        PrivateKey { compressed: true, network: network.into(), inner: key }
     }
 
     /// Constructs uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
     /// private key and the specified network
-    pub fn new_uncompressed(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
-        PrivateKey { compressed: false, network, inner: key }
+    pub fn new_uncompressed(
+        key: secp256k1::SecretKey,
+        network: impl Into<NetworkKind>,
+    ) -> PrivateKey {
+        PrivateKey { compressed: false, network: network.into(), inner: key }
     }
 
     /// Creates a public key from this private key
@@ -428,17 +431,16 @@ impl PrivateKey {
     pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
 
     /// Deserialize a private key from a slice
-    pub fn from_slice(data: &[u8], network: Network) -> Result<PrivateKey, Error> {
+    pub fn from_slice(data: &[u8], network: impl Into<NetworkKind>) -> Result<PrivateKey, Error> {
         Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
     }
 
     /// Format the private key to WIF format.
+    #[rustfmt::skip]
     pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
-        ret[0] = match self.network {
-            Network::Bitcoin => 128,
-            Network::Testnet | Network::Signet | Network::Regtest => 239,
-        };
+        ret[0] = if self.network.is_mainnet() { 128 } else { 239 };
+
         ret[1..33].copy_from_slice(&self.inner[..]);
         let privkey = if self.compressed {
             ret[33] = 1;
@@ -470,8 +472,8 @@ impl PrivateKey {
         };
 
         let network = match data[0] {
-            128 => Network::Bitcoin,
-            239 => Network::Testnet,
+            128 => NetworkKind::Main,
+            239 => NetworkKind::Test,
             x => {
                 return Err(Error::Base58(base58::Error::InvalidAddressVersion(x)));
             }
@@ -953,14 +955,14 @@ mod tests {
 
     use super::*;
     use crate::address::Address;
-    use crate::network::Network::{Bitcoin, Testnet};
+    use crate::network::NetworkKind;
 
     #[test]
     fn test_key_derivation() {
         // testnet compressed
         let sk =
             PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, Testnet);
+        assert_eq!(sk.network, NetworkKind::Test);
         assert!(sk.compressed);
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
@@ -977,7 +979,7 @@ mod tests {
         // mainnet uncompressed
         let sk =
             PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, Bitcoin);
+        assert_eq!(sk.network, NetworkKind::Main);
         assert!(!sk.compressed);
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
@@ -1295,7 +1297,7 @@ mod tests {
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        let want = "PrivateKey { compressed: true, network: Testnet, inner: SecretKey(#32014e414fdce702) }";
+        let want = "PrivateKey { compressed: true, network: Test, inner: SecretKey(#32014e414fdce702) }";
         let got = format!("{:?}", sk);
         assert_eq!(got, want)
     }
