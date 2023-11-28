@@ -54,8 +54,12 @@ impl Weight {
         vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
     }
 
-    /// Constructs `Weight` from virtual bytes in const context.
-    pub const fn from_vb_const(vb: u64) -> Weight {
+    /// Constructs `Weight` from virtual bytes panicking on overflow.
+    ///
+    /// # Panics
+    ///
+    /// If the conversion from virtual bytes overflows.
+    pub const fn from_vb_unwrap(vb: u64) -> Weight {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Weight(weight),
             None => {
@@ -167,7 +171,7 @@ mod tests {
 
     #[test]
     fn from_vb_const() {
-        const WU: Weight = Weight::from_vb_const(1);
+        const WU: Weight = Weight::from_vb_unwrap(1);
         assert_eq!(Weight(4), WU);
     }
 
