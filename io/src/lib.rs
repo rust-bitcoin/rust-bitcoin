@@ -34,12 +34,15 @@ mod sealed {
     use alloc::boxed::Box;
     use alloc::string::String;
     use core::fmt::Debug;
+
     pub trait IntoBoxDynDebug {
         fn into(self) -> Box<dyn Debug + Send + Sync + 'static>;
     }
+
     impl IntoBoxDynDebug for &str {
         fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(String::from(self)) }
     }
+
     impl IntoBoxDynDebug for String {
         fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(self) }
     }
@@ -54,6 +57,7 @@ pub struct Error {
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     error: Option<Box<dyn Debug + Send + Sync + 'static>>,
 }
+
 impl Error {
     #[cfg(feature = "std")]
     pub fn new<E>(kind: ErrorKind, error: E) -> Error
@@ -62,6 +66,7 @@ impl Error {
     {
         Self { kind, error: Some(error.into()) }
     }
+
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
         Self { kind, error: Some(error.into()) }
@@ -96,6 +101,7 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.error.as_ref().and_then(|e| e.as_ref().source())
     }
+
     #[allow(deprecated)]
     fn description(&self) -> &str {
         match self.error.as_ref() {
@@ -103,6 +109,7 @@ impl std::error::Error for Error {
             None => self.kind.description(),
         }
     }
+
     #[allow(deprecated)]
     fn cause(&self) -> Option<&dyn std::error::Error> {
         self.error.as_ref().and_then(|e| e.as_ref().cause())
@@ -114,6 +121,7 @@ impl Error {
     pub fn get_ref(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
         self.error.as_deref()
     }
+
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
         self.error.as_deref()
@@ -156,12 +164,14 @@ macro_rules! define_errorkind {
                     $(Self::$kind => stringify!($kind)),*
                 }
             }
+
             #[cfg(feature = "std")]
             fn to_std(self) -> std::io::ErrorKind {
                 match self {
                     $(Self::$kind => std::io::ErrorKind::$kind),*
                 }
             }
+
             #[cfg(feature = "std")]
             fn from_std(o: std::io::ErrorKind) -> ErrorKind {
                 match o {
@@ -200,6 +210,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
 pub trait Read {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
+
     #[inline]
     fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -212,6 +223,7 @@ pub trait Read {
         }
         Ok(())
     }
+
     #[inline]
     fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
 }
@@ -220,6 +232,7 @@ pub struct Take<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     remaining: u64,
 }
+
 impl<'a, R: Read + ?Sized> Read for Take<'a, R> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
@@ -253,14 +266,18 @@ pub struct Cursor<T> {
     inner: T,
     pos: u64,
 }
+
 impl<T: AsRef<[u8]>> Cursor<T> {
     #[inline]
     pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
+
     #[inline]
     pub fn position(&self) -> u64 { self.pos }
+
     #[inline]
     pub fn into_inner(self) -> T { self.inner }
 }
+
 impl<T: AsRef<[u8]>> Read for Cursor<T> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
@@ -278,6 +295,7 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
 /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
 pub trait Write {
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
+
     fn flush(&mut self) -> Result<()>;
 
     #[inline]
@@ -300,6 +318,7 @@ impl<W: std::io::Write> Write for W {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         Ok(<W as std::io::Write>::write(self, buf)?)
     }
+
     #[inline]
     fn flush(&mut self) -> Result<()> { Ok(<W as std::io::Write>::flush(self)?) }
 }
@@ -311,6 +330,7 @@ impl Write for alloc::vec::Vec<u8> {
         self.extend_from_slice(buf);
         Ok(buf.len())
     }
+
     #[inline]
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
@@ -324,30 +344,38 @@ impl<'a> Write for &'a mut [u8] {
         *self = &mut core::mem::take(self)[cnt..];
         Ok(cnt)
     }
+
     #[inline]
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
 /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
 pub struct Sink;
+
 #[cfg(not(feature = "std"))]
 impl Write for Sink {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize> { Ok(buf.len()) }
+
     #[inline]
     fn write_all(&mut self, _: &[u8]) -> Result<()> { Ok(()) }
+
     #[inline]
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
+
 #[cfg(feature = "std")]
 impl std::io::Write for Sink {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> { Ok(buf.len()) }
+
     #[inline]
     fn write_all(&mut self, _: &[u8]) -> std::io::Result<()> { Ok(()) }
+
     #[inline]
     fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
 }
+
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
 pub fn sink() -> Sink { Sink }
 
