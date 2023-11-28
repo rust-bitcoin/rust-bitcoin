@@ -15,6 +15,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
+std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
 serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde"]
@@ -22,26 +23,18 @@ secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 
-# At least one of std, no-std must be enabled.
-#
-# The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
-# Instead no-std enables additional features required for this crate to be usable without std.
-# As a result, both can be enabled without conflict.
-std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std"]
-no-std = ["bech32/alloc", "hashes/alloc", "hashes/io", "hex/alloc", "io/alloc", "secp256k1/alloc"]
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-bech32 = { version = "0.10.0-beta", default-features = false }
-hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false }
-hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
+bech32 = { version = "0.10.0-beta", default-features = false, features = ["alloc"] }
+hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false, features = ["alloc", "io"] }
+hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }
 hex_lit = "0.1.1"
 internals = { package = "bitcoin-internals", version = "0.2.0" }
-io = { package = "bitcoin-io", version = "0.1", default-features = false }
-secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes"] }
+io = { package = "bitcoin-io", version = "0.1", default-features = false, features = ["alloc"] }
+secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes", "alloc"] }
 
 base64 = { version = "0.21.3", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.

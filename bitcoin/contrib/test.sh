@@ -61,37 +61,15 @@ echo "********* Testing default *************"
 # Then test with the default features
 cargo test --verbose
 
-if [ "$DO_NO_STD" = true ]
-then
-    echo "********* Testing no-std build *************"
-    # Build no_std, to make sure that cfg(test) doesn't hide any issues
-    cargo build --locked --verbose --features="no-std" --no-default-features
-
-    # Build std + no_std, to make sure they are not incompatible
-    cargo build --locked --verbose --features="no-std"
-
-    # Test no_std
-    cargo test --locked --verbose --features="no-std" --no-default-features
-
-    # Build all features
-    cargo build --locked --verbose --features="no-std $FEATURES" --no-default-features
-
-    # Build specific features
-    for feature in ${FEATURES}
-    do
-        cargo build --locked --verbose --features="no-std $feature" --no-default-features
-    done
-
-    cargo run --locked --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
-    cargo run --locked --no-default-features --features no-std --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
-fi
-
 # Test each feature
 for feature in ${FEATURES}
 do
     echo "********* Testing $feature *************"
     cargo test --locked --verbose --features="$feature"
 done
+
+cargo run --locked --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+cargo run --locked --no-default-features --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 
 cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
 cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
