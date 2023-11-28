@@ -29,6 +29,16 @@ impl Error {
     }
 
     pub fn kind(&self) -> ErrorKind { self.kind }
+
+    #[cfg(feature = "std")]
+    pub fn get_ref(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
+        self.error.as_deref()
+    }
+
+    #[cfg(all(feature = "alloc", not(feature = "std")))]
+    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
+        self.error.as_deref()
+    }
 }
 
 impl From<ErrorKind> for Error {
@@ -69,18 +79,6 @@ impl std::error::Error for Error {
     #[allow(deprecated)]
     fn cause(&self) -> Option<&dyn std::error::Error> {
         self.error.as_ref().and_then(|e| e.as_ref().cause())
-    }
-}
-
-impl Error {
-    #[cfg(feature = "std")]
-    pub fn get_ref(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
-        self.error.as_deref()
-    }
-
-    #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
-        self.error.as_deref()
     }
 }
 
