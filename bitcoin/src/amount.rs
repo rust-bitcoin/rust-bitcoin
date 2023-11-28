@@ -12,7 +12,6 @@ use core::str::FromStr;
 use core::{default, ops};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::io;
 use crate::prelude::*;
 
 /// A set of denominations in which amounts can be expressed.

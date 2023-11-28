@@ -10,6 +10,7 @@ use core::cmp::{Ordering, PartialOrd};
 use core::{fmt, mem};
 
 use internals::write_err;
+use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
@@ -17,7 +18,6 @@ use mutagen::mutate;
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
-use crate::io::{self, Read, Write};
 use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 use crate::string::FromHexStr;

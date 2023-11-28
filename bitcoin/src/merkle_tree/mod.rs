@@ -21,7 +21,6 @@ use core::iter;
 use hashes::Hash;
 
 use crate::consensus::encode::Encodable;
-use crate::io;
 use crate::prelude::*;
 
 #[rustfmt::skip]

@@ -9,6 +9,7 @@
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
+use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
@@ -16,7 +17,6 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
 use crate::hash_types::BlockHash;
-use crate::io::{self, Read, Write};
 use crate::prelude::String;
 use crate::string::FromHexStr;
 use crate::Network;
