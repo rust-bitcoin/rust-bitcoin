@@ -11,13 +11,13 @@
 #[cfg(not(feature = "std"))]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
-        impl<$($bounded_ty: $bounds),*> $crate::io::Write for $ty {
+        impl<$($bounded_ty: $bounds),*> $crate::Write for $ty {
             #[inline]
-            fn write(&mut self, buf: &[u8]) -> $crate::io::Result<usize> {
+            fn write(&mut self, buf: &[u8]) -> $crate::Result<usize> {
                 $write_fn(self, buf)
             }
             #[inline]
-            fn flush(&mut self) -> $crate::io::Result<()> {
+            fn flush(&mut self) -> $crate::Result<()> {
                 $flush_fn(self)
             }
         }
