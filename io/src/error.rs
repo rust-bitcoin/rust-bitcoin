@@ -2,8 +2,10 @@
 use alloc::boxed::Box;
 use core::fmt::{Debug, Display, Formatter};
 
+/// A specialized `Result` type for I/O operations.
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// The error type for I/O operations of the `Read`, `Write`, `Seek`, and associated traits.
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind,
@@ -15,6 +17,7 @@ pub struct Error {
 }
 
 impl Error {
+    /// Creates a new I/O error from a known kind of error as well as an arbitrary error payload.
     #[cfg(feature = "std")]
     pub fn new<E>(kind: ErrorKind, error: E) -> Error
     where
@@ -23,18 +26,22 @@ impl Error {
         Self { kind, error: Some(error.into()) }
     }
 
+    /// Creates a new I/O error from a known kind of error as well as an arbitrary error payload.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
         Self { kind, error: Some(error.into()) }
     }
 
+    /// Returns the corresponding `ErrorKind` for this error.
     pub fn kind(&self) -> ErrorKind { self.kind }
 
+    /// Returns a reference to the inner error if one exists.
     #[cfg(feature = "std")]
     pub fn get_ref(&self) -> Option<&(dyn std::error::Error + Send + Sync + 'static)> {
         self.error.as_deref()
     }
 
+    /// Returns a reference to the inner error if one exists.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
         self.error.as_deref()
@@ -101,15 +108,19 @@ impl From<Error> for std::io::Error {
 }
 
 macro_rules! define_errorkind {
-    ($($kind: ident),*) => {
+    ($($doc:literal, $kind:ident),*) => {
         #[non_exhaustive]
         #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-        /// A minimal subset of [`std::io::ErrorKind`] which is used for [`Error`]. Note that, as with
-        /// [`std::io`], only [`Self::Interrupted`] has defined semantics in this crate, all other
-        /// variants are provided here only to provide higher-fidelity conversions to and from
-        /// [`std::io::Error`].
+        /// A minimal subset of [`std::io::ErrorKind`] which is used for [`Error`].
+        ///
+        /// Note that, as with [`std::io`], only [`Self::Interrupted`] has defined semantics in this
+        /// crate, all other variants are provided here only to provide higher-fidelity conversions
+        /// to and from [`std::io::Error`].
         pub enum ErrorKind {
-            $($kind),*
+            $(
+                #[doc = $doc]
+                $kind
+            ),*
         }
 
         impl ErrorKind {
@@ -138,23 +149,41 @@ macro_rules! define_errorkind {
 }
 
 define_errorkind!(
+    "An entity was not found, often a file.",
     NotFound,
+    "The operation lacked the necessary privileges to complete.",
     PermissionDenied,
+    "The connection was refused by the remote server.",
     ConnectionRefused,
+    "The connection was reset by the remote server.",
     ConnectionReset,
+    "The connection was aborted (terminated) by the remote server.",
     ConnectionAborted,
+    "The network operation failed because it was not connected yet.",
     NotConnected,
+    "A socket address could not be bound because the address is already in use elsewhere.",
     AddrInUse,
+    "A nonexistent interface was requested or the requested address was not local.",
     AddrNotAvailable,
+    "The operation failed because a pipe was closed.",
     BrokenPipe,
+    "An entity already exists, often a file.",
     AlreadyExists,
+    "The operation needs to block to complete, but the blocking operation was requested to not occur.",
     WouldBlock,
+    "A parameter was incorrect.",
     InvalidInput,
+    "Data not valid for the operation were encountered.",
     InvalidData,
+    "The I/O operation’s timeout expired, causing it to be canceled.",
     TimedOut,
+    "An error returned when an operation could not be completed because a call to `write` returned `Ok(0)`.",
     WriteZero,
+    "This operation was interrupted.",
     Interrupted,
+    "An error returned when an operation could not be completed because an “end of file” was reached prematurely.",
     UnexpectedEof,
+    "A custom error that does not fall under any other I/O error kind.",
     // Note: Any time we bump the MSRV any new error kinds should be added here!
     Other
 );

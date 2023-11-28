@@ -16,6 +16,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+// Coding conventions
+#![warn(missing_docs)]
 
 #[cfg(any(feature = "alloc", feature = "std"))]
 extern crate alloc;
@@ -32,8 +34,11 @@ use core::convert::TryInto;
 
 /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
 pub trait Read {
+    /// Pull some bytes from this source into the specified buffer, returning how
+    /// many bytes were read.
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
 
+    /// Read the exact number of bytes required to fill buf.
     #[inline]
     fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -47,10 +52,12 @@ pub trait Read {
         Ok(())
     }
 
+    /// Creates an adapter which will read at most `limit` bytes from it.
     #[inline]
     fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
 }
 
+/// Reader adapter which limits the bytes read from an underlying reader.
 pub struct Take<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     remaining: u64,
@@ -85,18 +92,22 @@ impl Read for &[u8] {
     }
 }
 
+/// A Cursor wraps an in-memory buffer and provides it with a `Seek` implementation.
 pub struct Cursor<T> {
     inner: T,
     pos: u64,
 }
 
 impl<T: AsRef<[u8]>> Cursor<T> {
+    /// Creates a new cursor wrapping the provided underlying in-memory buffer.
     #[inline]
     pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
 
+    /// Returns the current position of this cursor.
     #[inline]
     pub fn position(&self) -> u64 { self.pos }
 
+    /// Consumes this cursor, returning the underlying value.
     #[inline]
     pub fn into_inner(self) -> T { self.inner }
 }
@@ -117,10 +128,14 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
 
 /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
 pub trait Write {
+    /// Write a buffer into this writer, returning how many bytes were written.
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
 
+    /// Flush this output stream, ensuring that all intermediately buffered contents
+    /// reach their destination.
     fn flush(&mut self) -> Result<()>;
 
+    /// Attempts to write an entire buffer into this writer.
     #[inline]
     fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
