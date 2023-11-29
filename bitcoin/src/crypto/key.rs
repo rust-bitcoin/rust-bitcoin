@@ -58,15 +58,13 @@ impl PublicKey {
     pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
-    pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
+    pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPubkeyError> {
         if self.compressed {
-            Some(WPubkeyHash::from_byte_array(
+            Ok(WPubkeyHash::from_byte_array(
                 hash160::Hash::hash(&self.inner.serialize()).to_byte_array(),
             ))
         } else {
-            // We can't create witness pubkey hashes for an uncompressed
-            // public keys
-            None
+            Err(UncompressedPubkeyError)
         }
     }
 
@@ -746,6 +744,22 @@ impl From<hex::HexToArrayError> for Error {
     fn from(e: hex::HexToArrayError) -> Self { Error::Hex(e) }
 }
 
+/// Segwit public keys must always be compressed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct UncompressedPubkeyError;
+
+impl fmt::Display for UncompressedPubkeyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("segwit public keys must always be compressed")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UncompressedPubkeyError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -826,7 +840,7 @@ mod tests {
             pk.wpubkey_hash().unwrap().to_string(),
             "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
         );
-        assert_eq!(upk.wpubkey_hash(), None);
+        assert!(upk.wpubkey_hash().is_err());
     }
 
     #[cfg(feature = "serde")]

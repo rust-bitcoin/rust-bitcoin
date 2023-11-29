@@ -424,10 +424,7 @@ impl Address {
     /// # Errors
     /// Will only return an error if an uncompressed public key is provided.
     pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
-        let prog = WitnessProgram::new(
-            WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?,
-        )?;
+        let prog = WitnessProgram::new(WitnessVersion::V0, pk.wpubkey_hash()?)?;
         let payload = Payload::WitnessProgram(prog);
         Ok(Address(AddressInner { network, payload }, PhantomData))
     }
@@ -439,9 +436,7 @@ impl Address {
     /// # Errors
     /// Will only return an Error if an uncompressed public key is provided.
     pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
-        let builder = script::Builder::new()
-            .push_int(0)
-            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
+        let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash()?);
 
         let payload = Payload::ScriptHash(builder.into_script().script_hash());
         Ok(Address(AddressInner { network, payload }, PhantomData))
@@ -802,7 +797,7 @@ mod tests {
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
-    use crate::crypto::key::PublicKey;
+    use crate::crypto::key::{PublicKey, UncompressedPubkeyError};
     use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address) {
@@ -903,7 +898,7 @@ mod tests {
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Bitcoin).unwrap_err(), UncompressedPubkeyError.into());
     }
 
     #[test]
@@ -932,7 +927,7 @@ mod tests {
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Bitcoin).unwrap_err(), UncompressedPubkeyError.into());
     }
 
     #[test]

@@ -6,6 +6,7 @@ use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
+use crate::crypto::key;
 use crate::prelude::String;
 use crate::{base58, Network};
 
@@ -18,7 +19,7 @@ pub enum Error {
     /// A witness program error.
     WitnessProgram(witness_program::Error),
     /// An uncompressed pubkey was used where it is not allowed.
-    UncompressedPubkey,
+    UncompressedPubkey(key::UncompressedPubkeyError),
     /// Address size more than 520 bytes is not allowed.
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
@@ -41,8 +42,7 @@ impl fmt::Display for Error {
         match *self {
             WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            UncompressedPubkey =>
-                write!(f, "an uncompressed pubkey was used where it is not allowed"),
+            UncompressedPubkey(ref e) => write_err!(f, "uncompressed pubkey"; e),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
             NetworkValidation { required, found, ref address } => {
@@ -66,12 +66,14 @@ impl std::error::Error for Error {
         match self {
             WitnessVersion(e) => Some(e),
             WitnessProgram(e) => Some(e),
-            UncompressedPubkey
-            | ExcessiveScriptSize
-            | UnrecognizedScript
-            | NetworkValidation { .. } => None,
+            UncompressedPubkey(e) => Some(e),
+            ExcessiveScriptSize | UnrecognizedScript | NetworkValidation { .. } => None,
         }
     }
+}
+
+impl From<key::UncompressedPubkeyError> for Error {
+    fn from(e: key::UncompressedPubkeyError) -> Self { Self::UncompressedPubkey(e) }
 }
 
 impl From<witness_version::TryFromError> for Error {
