@@ -17,7 +17,7 @@ pub struct InputString(Storage);
 impl InputString {
     /// Displays a message saying `failed to parse <self> as <what>`.
     ///
-    /// This is normally used whith the `write_err!` macro.
+    /// This is normally used with the `write_err!` macro.
     pub fn display_cannot_parse<'a, T>(&'a self, what: &'a T) -> CannotParse<'a, T>
     where
         T: fmt::Display + ?Sized,
