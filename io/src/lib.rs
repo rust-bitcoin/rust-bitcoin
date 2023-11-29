@@ -199,4 +199,5 @@ impl std::io::Write for Sink {
 }
 
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
+#[inline]
 pub fn sink() -> Sink { Sink }
