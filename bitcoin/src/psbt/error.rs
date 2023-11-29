@@ -6,10 +6,9 @@ use internals::write_err;
 
 use crate::bip32::Xpub;
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::encode;
 use crate::prelude::*;
 use crate::psbt::raw;
-use crate::{hashes, io};
+use crate::{consensus, hashes, io};
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -71,7 +70,7 @@ pub enum Error {
     /// global extended public key has inconsistent key sources
     CombineInconsistentKeySources(Box<Xpub>),
     /// Serialization error in bitcoin consensus-encoded structures
-    ConsensusEncoding(encode::Error),
+    ConsensusEncoding(consensus::Error),
     /// Negative fee
     NegativeFee,
     /// Integer overflow in fee calculation
@@ -206,8 +205,8 @@ impl From<hashes::FromSliceError> for Error {
     fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
 }
 
-impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Self { Error::ConsensusEncoding(e) }
+impl From<consensus::Error> for Error {
+    fn from(e: consensus::Error) -> Self { Error::ConsensusEncoding(e) }
 }
 
 impl From<io::Error> for Error {

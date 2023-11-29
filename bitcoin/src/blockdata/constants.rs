@@ -191,7 +191,7 @@ mod test {
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
-    use crate::consensus::encode::serialize;
+    use crate::consensus::serialize;
     use crate::network::Network;
 
     #[test]

@@ -18,7 +18,7 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 use internals::write_err;
 
 use crate::blockdata::witness::Witness;
-use crate::consensus::{encode, Encodable};
+use crate::consensus::{self, Encodable};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
@@ -1231,7 +1231,7 @@ impl<'a> Annex<'a> {
 
 impl<'a> Encodable for Annex<'a> {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        encode::consensus_encode_with_size(self.0, w)
+        consensus::consensus_encode_with_size(self.0, w)
     }
 }
 

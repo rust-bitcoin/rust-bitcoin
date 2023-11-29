@@ -5,7 +5,7 @@ use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
-use bitcoin::consensus::{encode, Decodable};
+use bitcoin::consensus::{self, Decodable};
 use bitcoin::p2p::{self, address, message, message_network};
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
@@ -33,7 +33,7 @@ fn main() {
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
-        let _ = stream.write_all(encode::serialize(&first_message).as_slice());
+        let _ = stream.write_all(consensus::serialize(&first_message).as_slice());
         println!("Sent version message");
 
         // Setup StreamReader
@@ -51,7 +51,7 @@ fn main() {
                         message::NetworkMessage::Verack,
                     );
 
-                    let _ = stream.write_all(encode::serialize(&second_message).as_slice());
+                    let _ = stream.write_all(consensus::serialize(&second_message).as_slice());
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {

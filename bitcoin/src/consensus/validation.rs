@@ -11,9 +11,7 @@ use internals::write_err;
 use crate::amount::Amount;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::{OutPoint, Transaction, TxOut};
-#[cfg(doc)]
 use crate::consensus;
-use crate::consensus::encode;
 
 /// Verifies spend of an input script.
 ///
@@ -87,7 +85,7 @@ where
     S: FnMut(&OutPoint) -> Option<TxOut>,
     F: Into<u32>,
 {
-    let serialized_tx = encode::serialize(tx);
+    let serialized_tx = consensus::serialize(tx);
     let flags: u32 = flags.into();
     for (idx, input) in tx.input.iter().enumerate() {
         if let Some(output) = spent(&input.previous_output) {

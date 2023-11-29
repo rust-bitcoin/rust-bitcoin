@@ -5,7 +5,7 @@
 //! This module describes BIP37 Connection Bloom filtering network messages.
 //!
 
-use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::consensus::{self, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
 
@@ -47,12 +47,12 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, consensus::Error> {
         Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,
             2 => BloomFlags::PubkeyOnly,
-            _ => return Err(encode::Error::ParseFailed("unknown bloom flag")),
+            _ => return Err(consensus::Error::ParseFailed("unknown bloom flag")),
         })
     }
 }
