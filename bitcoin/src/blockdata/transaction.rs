@@ -960,9 +960,9 @@ impl Transaction {
                 return true;
             }
         }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // no inputs means we use pre-BIP141 serialization (see
         // `Transaction` docs for full explanation).
-        self.input.is_empty()
+        !self.input.is_empty()
     }
 }
 
