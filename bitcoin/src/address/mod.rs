@@ -479,8 +479,6 @@ impl Address {
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
-    ///
-    /// This method is not recommended for use, [`Address::p2tr()`] should be used where possible.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
         let prog = WitnessProgram::new(WitnessVersion::V1, output_key.to_inner().serialize())
             .expect("taproot output key has len 32 <= 40");
