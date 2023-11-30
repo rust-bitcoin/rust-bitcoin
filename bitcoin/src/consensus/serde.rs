@@ -18,7 +18,6 @@ use serde::{Deserializer, Serializer};
 
 use super::encode::Error as ConsensusError;
 use super::{Decodable, Encodable};
-use crate::io;
 
 /// Hex-encoding strategy
 pub struct Hex<Case = hex::Lower>(PhantomData<Case>)

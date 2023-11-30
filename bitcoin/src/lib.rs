@@ -74,6 +74,9 @@ pub extern crate hashes;
 /// Re-export the `hex-conservative` crate.
 pub extern crate hex;
 
+/// Re-export the `bitcoin-io` crate.
+pub extern crate io;
+
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
@@ -113,7 +116,6 @@ pub mod sign_message;
 pub mod string;
 pub mod taproot;
 
-use bitcoin_io::io;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

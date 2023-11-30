@@ -66,7 +66,7 @@ impl_write!(
 
 #[cfg(test)]
 mod tests {
-    use bitcoin_io::io::Write;
+    use bitcoin_io::Write;
 
     use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, Hash};
 

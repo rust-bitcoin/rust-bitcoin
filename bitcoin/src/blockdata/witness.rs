@@ -8,10 +8,11 @@
 use core::fmt;
 use core::ops::Index;
 
+use io::{Read, Write};
+
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 use crate::{Script, VarInt};

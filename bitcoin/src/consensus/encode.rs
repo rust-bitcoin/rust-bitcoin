@@ -20,12 +20,12 @@ use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
 use internals::write_err;
+use io::{Cursor, Read};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::block;
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
-use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},
