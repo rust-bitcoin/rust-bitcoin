@@ -164,10 +164,13 @@ impl Decodable for AssetUnlockBaseTransactionInfo {
 
 #[cfg(test)]
 mod tests {
+    use core::str::FromStr;
     use hashes::Hash;
+    use hashes::hex::FromHex;
     use crate::consensus::Encodable;
     use crate::transaction::special_transaction::asset_unlock::unqualified_asset_unlock::{AssetUnlockBasePayload, AssetUnlockBaseTransactionInfo};
-    use crate::{ScriptBuf, TxOut};
+    use crate::{consensus, PublicKey, QuorumHash, ScriptBuf, TxOut};
+    use crate::transaction::special_transaction::asset_unlock::request_info::AssetUnlockRequestInfo;
 
     #[test]
     fn size() {
@@ -189,5 +192,84 @@ mod tests {
         assert_eq!(payload.size(), want);
         let actual = payload.consensus_encode(&mut Vec::new()).unwrap();
         assert_eq!(actual, want);
+    }
+
+    #[test]
+    fn test() {
+        // let private_key
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+
+
+        let output_script = ScriptBuf::new_p2pkh(&pubkey.pubkey_hash());
+
+        let tx_out = TxOut {
+            value: 1000,
+            script_pubkey: output_script,
+        };
+
+        let withdrawal_transaction = AssetUnlockBaseTransactionInfo {
+            version: 1,
+            lock_time: 0,
+            output: vec![tx_out],
+            base_payload: AssetUnlockBasePayload {
+                version: 1,
+                index: 0,
+                fee: 1300
+            },
+        };
+
+        let mut asset_unlock_info_bytes_serialized: Vec<u8> = vec![];
+        withdrawal_transaction.consensus_encode(&mut asset_unlock_info_bytes_serialized).unwrap();
+
+        let request_info = AssetUnlockRequestInfo {
+            request_height: 0,
+            quorum_hash: QuorumHash::all_zeros(),
+        };
+
+        let mut request_info_bytes_serialized: Vec<u8> = vec![];
+        request_info.consensus_encode(&mut request_info_bytes_serialized).unwrap();
+
+        let mut asset_unlock_tx_with_request_info_bytes = vec![];
+        request_info.consensus_append_to_base_encode(
+            asset_unlock_info_bytes_serialized.clone(),
+            &mut asset_unlock_tx_with_request_info_bytes,
+        ).unwrap();
+
+        let len = asset_unlock_tx_with_request_info_bytes.len();
+        let (asset_unlock_info_bytes, request_info_bytes) = asset_unlock_tx_with_request_info_bytes.split_at_mut(len - 36);
+        // let (request_info_bytes, asset_unlock_info_bytes) = asset_unlock_tx_with_request_info_bytes.split_at_mut(36);
+
+        let deserializaed_withdrawal_transaction: AssetUnlockBaseTransactionInfo = consensus::encode::deserialize(&asset_unlock_info_bytes).unwrap();
+        let request_info: AssetUnlockRequestInfo = consensus::encode::deserialize(&request_info_bytes).unwrap();
+
+        println!("deserializaed_withdrawal_transaction: {:?}", deserializaed_withdrawal_transaction);
+        println!("deserializaed_request_info: {:?}", request_info);
+
+        let mut tx_bytes = Vec::from_hex("010009000001c8000000000000001976a914c35b782432294088e354bc28aa56d95736cb630288ac0000000001000000000000000070f915129f05000053c006055af6d0ae9aa9627df8615a71c312421a28c4712c8add83c8e1bfdadd").unwrap();
+        let len = tx_bytes.len();
+        let (asset_unlock_info_bytes, request_info_bytes) = tx_bytes.split_at_mut(len - 36);
+        let deserializaed_withdrawal_transaction: AssetUnlockBaseTransactionInfo = consensus::encode::deserialize(&asset_unlock_info_bytes).unwrap();
+        let request_info: AssetUnlockRequestInfo = consensus::encode::deserialize(&request_info_bytes).unwrap();
+        println!("deserializaed_withdrawal_transaction 2: {:?}", deserializaed_withdrawal_transaction);
+        println!("deserializaed_request_info: {:?}", request_info);
+        // let request_info: AssetUnlockRequestInfo = consensus::encode::deserialize(&request_info_bytes).unwrap();
+        // println!("{:?}", request_info);
+
+        // [1, 0, 9, 0, 0, 1, 200, 0, 0, 0, 0, 0, 0, 0, 25, 118, 169, 20, 37, 71, 51, 84, 63, 142, 114, 112, 122, 75, 72, 144, 114, 138, 210, 149, 75, 161, 203, 249, 136, 172, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 70, 161, 4, 0]
+        // [1, 0, 9, 0, 0, 1, 232, 3, 0, 0, 0, 0, 0, 0, 25, 118, 169, 20, 187, 27, 168, 113, 128, 20, 177, 194, 132, 210, 184, 221, 117, 143, 242, 61, 38, 72, 205, 91, 136, 172, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 20, 5, 0, 0]
+        // [1, 0, 9, 0, 0, 1, 232, 3, 0, 0, 0, 0, 0, 0, 7, 106, 5, 1, 2, 3, 4, 5, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 20, 5, 0, 0]
+        // let deserializaed_withdrawal_transaction: AssetUnlockBaseTransactionInfo = consensus::encode::deserialize(&bytes).unwrap();
+
+        // println!("bytes: {:?}", bytes);
+    }
+
+    #[test]
+    fn test_deserialize_info() {
+        let bytes = Vec::from_hex("010009000001c8000000000000001976a914c35b782432294088e354bc28aa56d95736cb630288ac0000000001000000000000000070f915129f05000053c006055af6d0ae9aa9627df8615a71c312421a28c4712c8add83c8e1bfdadd")
+            .unwrap();
+
+        let decoded_info: AssetUnlockRequestInfo = consensus::encode::deserialize(&bytes).unwrap();
+        println!("decoded_info: {:?}", decoded_info);
     }
 }
