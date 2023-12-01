@@ -1067,9 +1067,17 @@ impl SignedAmount {
         if self.is_negative() {
             Err(ParseAmountError::Negative)
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64))
+            Ok(self.unchecked_to_unsigned())
         }
     }
+
+    /// Converts to an [Amount].
+    ///
+    /// Unlike [`SignedAmount::to_unsigned`], this method will panic instead of error.
+    pub fn unchecked_to_unsigned(self) -> Amount {
+        Amount::from_sat(self.to_sat() as u64)
+    }
+
 }
 
 impl default::Default for SignedAmount {
