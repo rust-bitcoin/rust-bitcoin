@@ -12,9 +12,9 @@ main () {
 
             # Check if there is any mention of NEXT_RELEASE which means the
             # next version number should be filled in.
-            if grep -qr NEXT.RELEASE ./$crate; then
+            if grep -qr "since = \"TBD" ./$crate; then
                 echo Version number needs to be filled in following places:
-                grep -r NEXT.RELEASE ./$crate
+                grep -r "since = \"TBD" ./$crate
                 exit 1
             fi
 
