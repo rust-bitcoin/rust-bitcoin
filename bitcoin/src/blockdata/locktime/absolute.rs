@@ -389,6 +389,20 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
+#[cfg(feature = "ordered")]
+impl ordered::ArbitraryOrd for LockTime {
+    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
+        use LockTime::*;
+
+        match (self, other) {
+            (Blocks(_), Seconds(_)) => Ordering::Less,
+            (Seconds(_), Blocks(_)) => Ordering::Greater,
+            (Blocks(this), Blocks(that)) => this.cmp(that),
+            (Seconds(this), Seconds(that)) => this.cmp(that),
+        }
+    }
+}
+
 /// An absolute block height, guaranteed to always contain a valid height value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
