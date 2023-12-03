@@ -115,9 +115,7 @@ impl Error {
         self.error.as_deref()
     }
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
-        self.error.as_deref()
-    }
+    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> { self.error.as_deref() }
 }
 
 #[cfg(feature = "std")]
@@ -268,9 +266,8 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
         let start_pos = self.pos.try_into().unwrap_or(inner.len());
         let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
         buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
-        self.pos = self
-            .pos
-            .saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
+        self.pos =
+            self.pos.saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
         Ok(read)
     }
 }
@@ -350,4 +347,3 @@ impl std::io::Write for Sink {
 }
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
 pub fn sink() -> Sink { Sink }
-

@@ -116,7 +116,6 @@ pub mod sign_message;
 pub mod string;
 pub mod taproot;
 
-
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use crate::{
