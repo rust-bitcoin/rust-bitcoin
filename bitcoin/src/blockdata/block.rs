@@ -643,9 +643,8 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use test::{black_box, Bencher};
-
     use io::sink;
+    use test::{black_box, Bencher};
 
     use super::Block;
     use crate::consensus::{deserialize, Decodable, Encodable};
