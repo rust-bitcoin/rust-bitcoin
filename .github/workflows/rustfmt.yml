@@ -19,6 +19,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
+          author: Fmt Bot <bot@example.com>
           title: Automated nightly rustfmt (${{ env.date }})
           body: |
            Automated nightly `rustfmt` changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
