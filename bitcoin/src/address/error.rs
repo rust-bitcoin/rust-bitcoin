@@ -43,7 +43,7 @@ impl fmt::Display for Error {
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
             NetworkValidation { required, ref address } => {
                 write!(f, "address ")?;
-                address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
+                fmt::Display::fmt(&address.0, f)?;
                 write!(f, " is not valid on {}", required)
             }
             Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),

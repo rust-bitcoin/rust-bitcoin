@@ -380,7 +380,7 @@ struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_internal(fmt) }
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0 .0, fmt) }
 }
 
 #[cfg(feature = "serde")]
@@ -403,11 +403,6 @@ impl<V: NetworkValidation> Address<V> {
     /// is invalid in the context of `NetworkUnchecked`.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
         unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
-    }
-
-    /// Format the address for the usage by `Debug` and `Display` implementations.
-    fn fmt_internal(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, fmt)
     }
 }
 
@@ -759,16 +754,16 @@ impl From<Address> for script::ScriptBuf {
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
 impl fmt::Display for Address {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(fmt) }
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, fmt) }
 }
 
 impl<V: NetworkValidation> fmt::Debug for Address<V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if V::IS_CHECKED {
-            self.fmt_internal(f)
+            fmt::Display::fmt(&self.0, f)
         } else {
             write!(f, "Address<NetworkUnchecked>(")?;
-            self.fmt_internal(f)?;
+            fmt::Display::fmt(&self.0, f)?;
             write!(f, ")")
         }
     }
