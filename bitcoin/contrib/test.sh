@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="base64 bitcoinconsensus serde rand secp-recovery"
+FEATURES="std rand-std rand serde secp-recovery bitcoinconsensus-std base64 bitcoinconsensus"
 
 if [ "$DO_COV" = true ]
 then
@@ -22,6 +22,13 @@ fi
 if cargo --version | grep beta; then
     STABLE=false
 fi
+
+# Make all cargo invocations verbose
+export CARGO_TERM_VERBOSE=true
+
+# Defaults / sanity checks
+cargo build
+cargo test
 
 if [ "$DO_LINT" = true ]
 then
@@ -53,20 +60,25 @@ then
     fi
 fi
 
-echo "********* Testing std *************"
-# Test without any features other than std first
-cargo test --locked --verbose --no-default-features --features="std"
+if [ "$DO_FEATURE_MATRIX" = true ]; then
+    cargo build --locked --no-default-features
+    cargo test --locked --no-default-features
 
-echo "********* Testing default *************"
-# Then test with the default features
-cargo test --verbose
-
-# Test each feature
-for feature in ${FEATURES}
-do
-    echo "********* Testing $feature *************"
-    cargo test --locked --verbose --features="$feature"
-done
+    # All features
+    cargo build --locked --no-default-features --features="$FEATURES"
+    cargo test --locked --no-default-features --features="$FEATURES"
+    # Single features
+    for feature in ${FEATURES}
+    do
+        cargo build --locked --no-default-features --features="$feature"
+        cargo test --locked --no-default-features --features="$feature"
+		# All combos of two features
+		for featuretwo in ${FEATURES}; do
+			cargo build --locked --no-default-features --features="$feature $featuretwo"
+			cargo test --locked --no-default-features --features="$feature $featuretwo"
+		done
+    done
+fi
 
 cargo run --locked --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 cargo run --locked --no-default-features --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
