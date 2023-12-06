@@ -22,8 +22,6 @@
 //! * `serde` - (dependency), implements `serde`-based serialization and
 //!                 deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `no-std` - enables additional features required for this crate to be usable
-//!              without std. Does **not** disable `std`.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
 //!                            to this crate so it knows how to implement
 //!                            `std::error::Error`. At this time there's a hack to
@@ -40,9 +38,6 @@
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
 // Exclude clippy lints we don't think are valuable
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-
-#[cfg(not(any(feature = "std", feature = "no-std")))]
-compile_error!("at least one of the `std` or `no-std` features must be enabled");
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
