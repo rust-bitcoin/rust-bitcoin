@@ -1,16 +1,11 @@
 //! Rust-Bitcoin IO Library
 //!
-//! Because the core `std::io` module is not yet exposed in `no-std` Rust, building `no-std`
-//! applications which require reading and writing objects via standard traits is not generally
-//! possible. While there is ongoing work to improve this situation, this module is not likely to
-//! be available for applications with broad rustc version support for some time.
+//! The `std::io` module is not exposed in `no-std` Rust so building `no-std` applications which
+//! require reading and writing objects via standard traits is not generally possible. Thus, this
+//! library exists to export a minmal version of `std::io`'s traits which we use in `rust-bitcoin`
+//! so that we can support `no-std` applications.
 //!
-//! Thus, this library exists to export a minmal version of `std::io`'s traits which `no-std`
-//! applications may need. With the `std` feature, these traits are also implemented for the
-//! `std::io` traits, allowing standard objects to be used wherever the traits from this crate are
-//! required.
-//!
-//! This traits are not one-for-one drop-ins, but are as close as possible while still implementing
+//! These traits are not one-for-one drop-ins, but are as close as possible while still implementing
 //! `std::io`'s traits without unnecessary complexity.
 
 #![cfg_attr(not(feature = "std"), no_std)]
