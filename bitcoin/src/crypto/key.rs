@@ -11,6 +11,7 @@ use core::str::FromStr;
 
 use hashes::{hash160, Hash};
 use hex::FromHex;
+use io::{Read, Write};
 use internals::write_err;
 
 use crate::crypto::ecdsa;
@@ -70,7 +71,7 @@ impl PublicKey {
     }
 
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+    pub fn write_into<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         self.with_serialized(|bytes| writer.write_all(bytes))
     }
 
@@ -78,7 +79,7 @@ impl PublicKey {
     ///
     /// This internally reads the first byte before reading the rest, so
     /// use of a `BufReader` is recommended.
-    pub fn read_from<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, io::Error> {
+    pub fn read_from<R: Read + ?Sized>(reader: &mut R) -> Result<Self, io::Error> {
         let mut bytes = [0; 65];
 
         reader.read_exact(&mut bytes[0..1])?;

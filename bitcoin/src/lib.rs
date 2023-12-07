@@ -142,7 +142,7 @@ pub use crate::{
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
-    use crate::io;
+    use crate::io::Write;
 
     /// A writer which will move data into the void.
     pub struct Sink {
@@ -152,7 +152,7 @@ mod io_extras {
     /// Creates an instance of a writer which will successfully consume all data.
     pub const fn sink() -> Sink { Sink { _priv: () } }
 
-    impl io::Write for Sink {
+    impl Write for Sink {
         #[inline]
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> { Ok(buf.len()) }
 

@@ -19,6 +19,7 @@ use core::cmp::min;
 use core::iter;
 
 use hashes::Hash;
+use io::Write;
 
 use crate::consensus::encode::Encodable;
 use crate::prelude::*;
@@ -40,7 +41,7 @@ pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
     T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    <T as Hash>::Engine: Write,
 {
     match hashes.len() {
         0 => None,
@@ -58,7 +59,7 @@ where
 pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    <T as Hash>::Engine: Write,
     I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
@@ -90,7 +91,7 @@ where
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
 where
     T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
+    <T as Hash>::Engine: Write,
 {
     if hashes.len() == 1 {
         return hashes[0];

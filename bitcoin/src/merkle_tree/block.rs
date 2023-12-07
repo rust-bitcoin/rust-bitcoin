@@ -41,6 +41,7 @@
 use core::fmt;
 
 use hashes::Hash;
+use io::{Read, Write};
 
 use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block, TxMerkleNode};
@@ -143,14 +144,14 @@ impl MerkleBlock {
 }
 
 impl Encodable for MerkleBlock {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = self.header.consensus_encode(w)? + self.txn.consensus_encode(w)?;
         Ok(len)
     }
 }
 
 impl Decodable for MerkleBlock {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(MerkleBlock {
             header: Decodable::consensus_decode(r)?,
             txn: Decodable::consensus_decode(r)?,
@@ -433,7 +434,7 @@ impl PartialMerkleTree {
 }
 
 impl Encodable for PartialMerkleTree {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut ret = self.num_transactions.consensus_encode(w)?;
         ret += self.hashes.consensus_encode(w)?;
 
@@ -451,7 +452,7 @@ impl Encodable for PartialMerkleTree {
 }
 
 impl Decodable for PartialMerkleTree {
-    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let num_transactions: u32 = Decodable::consensus_decode(r)?;

@@ -9,6 +9,7 @@
 use core::{fmt, iter};
 
 use hashes::{sha256d, Hash};
+use io::{Read, Write};
 
 use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
@@ -98,7 +99,7 @@ impl AsRef<str> for CommandString {
 
 impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
@@ -109,7 +110,7 @@ impl Encodable for CommandString {
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
             if u > 0 {
@@ -334,7 +335,7 @@ struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
 impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt::from(self.0.len()).consensus_encode(w)?;
         for header in self.0.iter() {
@@ -346,7 +347,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
 }
 
 impl Encodable for NetworkMessage {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
             NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
@@ -391,7 +392,7 @@ impl Encodable for NetworkMessage {
 }
 
 impl Encodable for RawNetworkMessage {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.magic.consensus_encode(w)?;
         len += self.command().consensus_encode(w)?;
@@ -406,7 +407,7 @@ struct HeaderDeserializationWrapper(Vec<block::Header>);
 
 impl Decodable for HeaderDeserializationWrapper {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let len = VarInt::consensus_decode(r)?.0;
@@ -425,13 +426,13 @@ impl Decodable for HeaderDeserializationWrapper {
     }
 
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
     }
 }
 
 impl Decodable for RawNetworkMessage {
-    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let magic = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -530,7 +531,7 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
     }
 }

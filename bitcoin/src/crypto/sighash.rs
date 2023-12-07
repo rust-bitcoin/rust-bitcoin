@@ -16,12 +16,13 @@ use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 use internals::write_err;
+use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
-use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -673,7 +674,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Encodes the BIP341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
-    pub fn taproot_encode_signing_data_to<W: io::Write + ?Sized, T: Borrow<TxOut>>(
+    pub fn taproot_encode_signing_data_to<W: Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
         writer: &mut W,
         input_index: usize,
@@ -860,7 +861,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
     /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
-    pub fn segwit_v0_encode_signing_data_to<W: io::Write + ?Sized>(
+    pub fn segwit_v0_encode_signing_data_to<W: Write + ?Sized>(
         &mut self,
         writer: &mut W,
         input_index: usize,
@@ -984,7 +985,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: io::Write + ?Sized, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<W: Write + ?Sized, U: Into<u32>>(
         &self,
         writer: &mut W,
         input_index: usize,
@@ -1011,7 +1012,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<W: io::Write + ?Sized>(
+        fn encode_signing_data_to_inner<W: Write + ?Sized>(
             self_: &Transaction,
             writer: &mut W,
             input_index: usize,
@@ -1239,7 +1240,7 @@ impl<'a> Annex<'a> {
 }
 
 impl<'a> Encodable for Annex<'a> {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
     }
 }
