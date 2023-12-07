@@ -140,27 +140,6 @@ pub use crate::{
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 
-#[cfg(not(feature = "std"))]
-mod io_extras {
-    use crate::io::Write;
-
-    /// A writer which will move data into the void.
-    pub struct Sink {
-        _priv: (),
-    }
-
-    /// Creates an instance of a writer which will successfully consume all data.
-    pub const fn sink() -> Sink { Sink { _priv: () } }
-
-    impl Write for Sink {
-        #[inline]
-        fn write(&mut self, buf: &[u8]) -> io::Result<usize> { Ok(buf.len()) }
-
-        #[inline]
-        fn flush(&mut self) -> io::Result<()> { Ok(()) }
-    }
-}
-
 #[rustfmt::skip]
 mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
@@ -178,11 +157,7 @@ mod prelude {
     #[cfg(any(feature = "std", test))]
     pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
-    #[cfg(feature = "std")]
     pub use crate::io::sink;
-
-    #[cfg(not(feature = "std"))]
-    pub use crate::io_extras::sink;
 
     pub use hex::DisplayHex;
 }
