@@ -24,6 +24,7 @@ mod error;
 mod macros;
 
 use core::convert::TryInto;
+use core::cmp;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
@@ -59,7 +60,7 @@ pub struct Take<'a, R: Read + ?Sized> {
 impl<'a, R: Read + ?Sized> Read for Take<'a, R> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let len = core::cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
+        let len = cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
         let read = self.reader.read(&mut buf[..len])?;
         self.remaining -= read.try_into().unwrap_or(self.remaining);
         Ok(read)
@@ -78,7 +79,7 @@ impl<R: std::io::Read> Read for R {
 impl Read for &[u8] {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let cnt = core::cmp::min(self.len(), buf.len());
+        let cnt = cmp::min(self.len(), buf.len());
         buf[..cnt].copy_from_slice(&self[..cnt]);
         *self = &self[cnt..];
         Ok(cnt)
