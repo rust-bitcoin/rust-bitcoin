@@ -673,9 +673,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Encodes the BIP341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
-    pub fn taproot_encode_signing_data_to<Write: io::Write + ?Sized, T: Borrow<TxOut>>(
+    pub fn taproot_encode_signing_data_to<W: io::Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
-        writer: &mut Write,
+        writer: &mut W,
         input_index: usize,
         prevouts: &Prevouts<T>,
         annex: Option<Annex>,
@@ -860,9 +860,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
     /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
-    pub fn segwit_v0_encode_signing_data_to<Write: io::Write + ?Sized>(
+    pub fn segwit_v0_encode_signing_data_to<W: io::Write + ?Sized>(
         &mut self,
-        writer: &mut Write,
+        writer: &mut W,
         input_index: usize,
         script_code: &Script,
         value: Amount,
@@ -984,9 +984,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<Write: io::Write + ?Sized, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<W: io::Write + ?Sized, U: Into<u32>>(
         &self,
-        writer: &mut Write,
+        writer: &mut W,
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
@@ -1011,9 +1011,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<Write: io::Write + ?Sized>(
+        fn encode_signing_data_to_inner<W: io::Write + ?Sized>(
             self_: &Transaction,
-            writer: &mut Write,
+            writer: &mut W,
             input_index: usize,
             script_pubkey: &Script,
             sighash_type: u32,
