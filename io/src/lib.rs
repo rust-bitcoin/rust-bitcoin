@@ -23,10 +23,10 @@ extern crate alloc;
 mod error;
 mod macros;
 
+use core::convert::TryInto;
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
-
-use core::convert::TryInto;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
