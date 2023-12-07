@@ -5,7 +5,7 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
-use core::fmt::{self, Write};
+use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 

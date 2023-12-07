@@ -6,7 +6,7 @@
 //! We refer to the documentation on the types for more information.
 
 use core::cmp::Ordering;
-use core::fmt::{self, Write};
+use core::fmt::{self, Write as _};
 use core::str::FromStr;
 use core::{default, ops};
 
