@@ -671,7 +671,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Destroys the cache and recovers the stored transaction.
     pub fn into_transaction(self) -> R { self.tx }
 
-    /// Encodes the BIP341 signing data for any flag type into a given object implementing a
+    /// Encodes the BIP341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
@@ -854,7 +854,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         Ok(TapSighash::from_engine(enc))
     }
 
-    /// Encodes the BIP143 signing data for any flag type into a given object implementing a
+    /// Encodes the BIP143 signing data for any flag type into a given object implementing the
     /// [`std::io::Write`] trait.
     ///
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
