@@ -26,8 +26,6 @@ mod macros;
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
 
-/// Standard I/O stream definitions which are API-equivalent to `std`'s `io` module. See
-/// [`std::io`] for more info.
 use core::convert::TryInto;
 
 pub type Result<T> = core::result::Result<T, Error>;
