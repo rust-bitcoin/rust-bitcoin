@@ -1058,8 +1058,12 @@ impl<'leaf> ScriptLeaf<'leaf> {
 pub struct TaprootMerkleBranch(Vec<TapNodeHash>);
 
 impl TaprootMerkleBranch {
-    /// Returns a reference to the inner vector of hashes.
+    /// Returns a reference to the slice of hashes.
+    #[deprecated(since = "TBD", note = "Use `as_slice` instead")]
     pub fn as_inner(&self) -> &[TapNodeHash] { &self.0 }
+
+    /// Returns a reference to the slice of hashes.
+    pub fn as_slice(&self) -> &[TapNodeHash] { &self.0 }
 
     /// Returns the number of nodes in this merkle proof.
     pub fn len(&self) -> usize { self.0.len() }
@@ -1136,7 +1140,11 @@ impl TaprootMerkleBranch {
     }
 
     /// Returns the inner list of hashes.
+    #[deprecated(since = "TBD", note = "Use `into_vec` instead")]
     pub fn into_inner(self) -> Vec<TapNodeHash> { self.0 }
+
+    /// Returns the list of hashes stored in a `Vec`.
+    pub fn into_vec(self) -> Vec<TapNodeHash> { self.0 }
 }
 
 macro_rules! impl_try_from {
@@ -1233,7 +1241,7 @@ impl ControlBlock {
     /// Returns the size of control block. Faster and more efficient than calling
     /// `Self::serialize().len()`. Can be handy for fee estimation.
     pub fn size(&self) -> usize {
-        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.as_inner().len()
+        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.len()
     }
 
     /// Serializes to a writer.
@@ -1275,7 +1283,7 @@ impl ControlBlock {
         // Initially the curr_hash is the leaf hash
         let mut curr_hash = TapNodeHash::from_script(script, self.leaf_version);
         // Verify the proof
-        for elem in self.merkle_branch.as_inner() {
+        for elem in self.merkle_branch.as_slice() {
             // Recalculate the curr hash as parent hash
             curr_hash = TapNodeHash::from_node_hashes(curr_hash, *elem);
         }
