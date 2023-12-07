@@ -1118,20 +1118,20 @@ impl TaprootMerkleBranch {
     ///
     /// The number of bytes written to the writer.
     pub fn encode<Write: io::Write + ?Sized>(&self, writer: &mut Write) -> io::Result<usize> {
-        for hash in self.0.iter() {
+        for hash in self {
             writer.write_all(hash.as_ref())?;
         }
-        Ok(self.0.len() * TapNodeHash::LEN)
+        Ok(self.len() * TapNodeHash::LEN)
     }
 
     /// Serializes `self` as bytes.
     pub fn serialize(&self) -> Vec<u8> {
-        self.0.iter().flat_map(|e| e.as_byte_array()).copied().collect::<Vec<u8>>()
+        self.iter().flat_map(|e| e.as_byte_array()).copied().collect::<Vec<u8>>()
     }
 
     /// Appends elements to proof.
     fn push(&mut self, h: TapNodeHash) -> Result<(), TaprootBuilderError> {
-        if self.0.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
+        if self.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(TaprootBuilderError::InvalidMerkleTreeDepth(self.0.len()))
         } else {
             self.0.push(h);
@@ -1192,6 +1192,62 @@ impl_try_from_array!(
 
 impl From<TaprootMerkleBranch> for Vec<TapNodeHash> {
     fn from(branch: TaprootMerkleBranch) -> Self { branch.0 }
+}
+
+impl<'a> IntoIterator for &'a TaprootMerkleBranch {
+    type IntoIter = core::slice::Iter<'a, TapNodeHash>;
+    type Item = &'a TapNodeHash;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut TaprootMerkleBranch {
+    type IntoIter = core::slice::IterMut<'a, TapNodeHash>;
+    type Item = &'a mut TapNodeHash;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
+impl core::ops::Deref for TaprootMerkleBranch {
+    type Target = [TapNodeHash];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl core::ops::DerefMut for TaprootMerkleBranch {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl AsRef<[TapNodeHash]> for TaprootMerkleBranch {
+    fn as_ref(&self) -> &[TapNodeHash] {
+        &self.0
+    }
+}
+
+impl AsMut<[TapNodeHash]> for TaprootMerkleBranch {
+    fn as_mut(&mut self) -> &mut [TapNodeHash] {
+        &mut self.0
+    }
+}
+
+impl Borrow<[TapNodeHash]> for TaprootMerkleBranch {
+    fn borrow(&self) -> &[TapNodeHash] {
+        &self.0
+    }
+}
+
+impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranch {
+    fn borrow_mut(&mut self) -> &mut [TapNodeHash] {
+        &mut self.0
+    }
 }
 
 /// Control block data structure used in Tapscript satisfaction.
@@ -1283,7 +1339,7 @@ impl ControlBlock {
         // Initially the curr_hash is the leaf hash
         let mut curr_hash = TapNodeHash::from_script(script, self.leaf_version);
         // Verify the proof
-        for elem in self.merkle_branch.as_slice() {
+        for elem in &self.merkle_branch {
             // Recalculate the curr hash as parent hash
             curr_hash = TapNodeHash::from_node_hashes(curr_hash, *elem);
         }
