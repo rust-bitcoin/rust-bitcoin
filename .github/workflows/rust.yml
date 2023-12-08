@@ -22,7 +22,6 @@ jobs:
       - name: Running test script
         env:
           DO_COV: true
-          DO_LINT: true
           AS_DEPENDENCY: false
           DO_DOCS: true
           DO_FEATURE_MATRIX: true
@@ -54,8 +53,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Checkout Toolchain
         uses: dtolnay/rust-toolchain@nightly
+      - name: Install clippy
+        run: rustup component add clippy
       - name: Running test script
         env:
+          DO_LINT: true
           DO_FMT: false
           DO_BENCH: true
           AS_DEPENDENCY: false
