@@ -11,7 +11,7 @@
 use core::fmt;
 
 use hashes::{sha256d, Hash, HashEngine};
-use io::{Read, Write};
+use io::{BufRead, Write};
 
 use super::Weight;
 use crate::blockdata::script;
@@ -207,7 +207,7 @@ impl Encodable for Version {
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version)
     }
 }

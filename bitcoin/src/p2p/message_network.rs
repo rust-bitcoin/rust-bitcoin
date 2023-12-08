@@ -7,7 +7,7 @@
 //!
 
 use hashes::sha256d;
-use io::{Read, Write};
+use io::{BufRead, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
@@ -110,7 +110,7 @@ impl Encodable for RejectReason {
 }
 
 impl Decodable for RejectReason {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0x01 => RejectReason::Malformed,
             0x10 => RejectReason::Invalid,

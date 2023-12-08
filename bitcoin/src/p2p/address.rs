@@ -9,7 +9,7 @@
 use core::{fmt, iter};
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
-use io::{Read, Write};
+use io::{BufRead, Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
 use crate::p2p::ServiceFlags;
@@ -75,7 +75,7 @@ impl Encodable for Address {
 
 impl Decodable for Address {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Address {
             services: Decodable::consensus_decode(r)?,
             address: read_be_address(r)?,
@@ -167,7 +167,7 @@ impl Encodable for AddrV2 {
 }
 
 impl Decodable for AddrV2 {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let network_id = u8::consensus_decode(r)?;
         let len = VarInt::consensus_decode(r)?.0;
         if len > 512 {
@@ -285,7 +285,7 @@ impl Encodable for AddrV2Message {
 }
 
 impl Decodable for AddrV2Message {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(AddrV2Message {
             time: Decodable::consensus_decode(r)?,
             services: ServiceFlags::from(VarInt::consensus_decode(r)?.0),

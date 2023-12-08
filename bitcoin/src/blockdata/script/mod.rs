@@ -66,7 +66,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use io::{Read, Write};
+use io::{BufRead, Write};
 #[cfg(feature = "serde")]
 use serde;
 
@@ -594,7 +594,7 @@ impl Encodable for ScriptBuf {
 
 impl Decodable for ScriptBuf {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))

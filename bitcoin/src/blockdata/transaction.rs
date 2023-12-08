@@ -16,7 +16,7 @@ use core::{cmp, fmt, str};
 
 use hashes::{self, sha256d, Hash};
 use internals::write_err;
-use io::{Read, Write};
+use io::{BufRead, Write};
 
 use super::Weight;
 use crate::blockdata::fee_rate::FeeRate;
@@ -1025,7 +1025,7 @@ impl Encodable for Version {
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version)
     }
 }
@@ -1039,7 +1039,7 @@ impl Encodable for OutPoint {
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(OutPoint {
             txid: Decodable::consensus_decode(r)?,
             vout: Decodable::consensus_decode(r)?,
@@ -1058,7 +1058,7 @@ impl Encodable for TxIn {
 }
 impl Decodable for TxIn {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         Ok(TxIn {
@@ -1077,7 +1077,7 @@ impl Encodable for Sequence {
 }
 
 impl Decodable for Sequence {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Sequence)
     }
 }
@@ -1107,7 +1107,7 @@ impl Encodable for Transaction {
 }
 
 impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let version = Version::consensus_decode_from_finite_reader(r)?;

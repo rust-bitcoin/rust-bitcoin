@@ -43,7 +43,7 @@ use core::fmt::{self, Display, Formatter};
 
 use hashes::{sha256d, siphash24, Hash};
 use internals::write_err;
-use io::{Read, Write};
+use io::{BufRead, Write};
 
 use crate::blockdata::block::{Block, BlockHash};
 use crate::blockdata::script::Script;
@@ -245,7 +245,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: Read + ?Sized,
+        R: BufRead + ?Sized,
     {
         self.reader.match_any(reader, query)
     }
@@ -255,7 +255,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: Read + ?Sized,
+        R: BufRead + ?Sized,
     {
         self.reader.match_all(reader, query)
     }
@@ -278,7 +278,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: Read + ?Sized,
+        R: BufRead + ?Sized,
     {
         let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
@@ -321,7 +321,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: Read + ?Sized,
+        R: BufRead + ?Sized,
     {
         let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
@@ -447,7 +447,7 @@ impl GcsFilter {
     /// Golomb-Rice decodes a number from a bit stream (parameter 2^k).
     fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
     where
-        R: Read + ?Sized,
+        R: BufRead + ?Sized,
     {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
@@ -470,7 +470,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
     reader: &'a mut R,
 }
 
-impl<'a, R: Read + ?Sized> BitStreamReader<'a, R> {
+impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
     /// Creates a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }
