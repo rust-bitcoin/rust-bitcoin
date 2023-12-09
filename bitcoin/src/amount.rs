@@ -784,6 +784,14 @@ impl FromStr for Amount {
     fn from_str(s: &str) -> Result<Self, Self::Err> { Amount::from_str_with_denomination(s) }
 }
 
+impl TryFrom<SignedAmount> for Amount {
+    type Error = ParseAmountError;
+
+    fn try_from(signed_amount: SignedAmount) -> Result<Self, Self::Error> {
+        signed_amount.to_unsigned()
+    }
+}
+
 impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
@@ -1155,6 +1163,14 @@ impl FromStr for SignedAmount {
     type Err = ParseAmountError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> { SignedAmount::from_str_with_denomination(s) }
+}
+
+impl TryFrom<Amount> for SignedAmount {
+    type Error = ParseAmountError;
+
+    fn try_from(amount: Amount) -> Result<Self, Self::Error> {
+        amount.to_signed()
+    }
 }
 
 impl core::iter::Sum for SignedAmount {
@@ -1974,6 +1990,38 @@ mod tests {
         assert_eq!(sa(i64::MAX).to_unsigned(), Ok(ua(i64::MAX as u64)));
 
         assert_eq!(sa(i64::MAX).to_unsigned().unwrap().to_signed(), Ok(sa(i64::MAX)));
+    }
+
+    #[test]
+    fn test_signed_amount_try_from_amount() {
+        let ua = Amount::from_sat(123);
+        let sa = SignedAmount::try_from(ua);
+
+        assert_eq!(sa, Ok(SignedAmount(123)));
+    }
+
+    #[test]
+    fn test_amount_try_from_negative_signed_amount() {
+        let sa = SignedAmount(-123);
+        let ua = Amount::try_from(sa);
+
+        assert_eq!(ua, Err(ParseAmountError::Negative))
+    }
+
+    #[test]
+    fn test_signed_amount_try_from_amount_too_big() {
+        let ua = Amount::MAX;
+        let sa = SignedAmount::try_from(ua);
+
+        assert_eq!(sa, Err(ParseAmountError::TooBig))
+    }
+
+    #[test]
+    fn test_amount_try_from_signed_amount() {
+        let sa = SignedAmount::from_sat(123);
+        let ua = Amount::try_from(sa);
+
+        assert_eq!(ua, Ok(Amount(123)));
     }
 
     #[test]
