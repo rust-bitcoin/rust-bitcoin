@@ -10,6 +10,7 @@ use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
 use super::PushBytes;
+use crate::blockdata::fee_rate::FeeRate;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_version::WitnessVersion;
@@ -390,21 +391,51 @@ impl Script {
 
     /// Returns the minimum value an output with this script should have in order to be
     /// broadcastable on today's Bitcoin network.
-    pub fn dust_value(&self) -> crate::Amount {
+    ///
+    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+    /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
+    ///
+    /// To use a custom value, use [`minimal_non_dust_custom`].
+    ///
+    /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
+    pub fn minimal_non_dust(&self) -> crate::Amount {
+        self.minimal_non_dust_inner(DUST_RELAY_TX_FEE.into())
+    }
+
+    /// Returns the minimum value an output with this script should have in order to be
+    /// broadcastable on today's Bitcoin network.
+    ///
+    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+    /// This function lets you set the fee rate used in dust calculation.
+    ///
+    /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
+    ///
+    /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
+    ///
+    /// [`minimal_non_dust`]: Script::minimal_non_dust
+    pub fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
+        self.minimal_non_dust_inner(dust_relay_fee.to_sat_per_kwu() * 4)
+    }
+
+    fn minimal_non_dust_inner(&self, dust_relay_fee: u64) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-        let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (i.e. 3 sat/vByte)
-        if self.is_op_return() {
-            0
-        } else if self.is_witness_program() {
-            32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
-            8 + // The serialized size of the TxOut's amount field
-            self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-        } else {
-            32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
-            8 + // The serialized size of the TxOut's amount field
-            self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-        };
+        let sats = dust_relay_fee.checked_mul(
+                if self.is_op_return() {
+                    0
+                } else if self.is_witness_program() {
+                    32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
+                } else {
+                    32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
+                }
+            ).expect("dust_relay_fee or script length should not be absurdly large") /
+            1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
+            // Note: We ensure the division happens at the end, since Core performs the division at the end.
+            //       This will make sure none of the implicit floor operations mess with the value.
 
         crate::Amount::from_sat(sats)
     }
