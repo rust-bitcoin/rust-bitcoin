@@ -12,10 +12,10 @@
 use core::fmt;
 use core::marker::PhantomData;
 
+use io::{Read, Write};
 use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
-use io::{Read, Write};
 
 use super::encode::Error as ConsensusError;
 use super::{Decodable, Encodable};

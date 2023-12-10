@@ -363,10 +363,7 @@ macro_rules! impl_int_encodable {
         }
         impl Encodable for $ty {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
                 w.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
@@ -586,10 +583,7 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
                 let mut len = 0;
                 len += VarInt(self.len() as u64).consensus_encode(w)?;
                 for c in self.iter() {

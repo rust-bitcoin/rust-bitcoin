@@ -11,8 +11,8 @@ use core::str::FromStr;
 
 use hashes::{hash160, Hash};
 use hex::FromHex;
-use io::{Read, Write};
 use internals::write_err;
+use io::{Read, Write};
 
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
