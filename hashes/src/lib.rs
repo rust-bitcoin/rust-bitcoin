@@ -197,6 +197,19 @@ pub trait Hash:
         Self::from_engine(engine)
     }
 
+    /// Hashes all the byte slices retrieved from the iterator together.
+    fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+    where
+        B: AsRef<[u8]>,
+        I: IntoIterator<Item = B>,
+    {
+        let mut engine = Self::engine();
+        for slice in byte_slices {
+            engine.input(slice.as_ref());
+        }
+        Self::from_engine(engine)
+    }
+
     /// Flag indicating whether user-visible serializations of this hash
     /// should be backward. For some reason Satoshi decided this should be
     /// true for `Sha256dHash`, so here we are.
