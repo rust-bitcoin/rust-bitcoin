@@ -5,7 +5,8 @@
 //! This module describes BIP157 Client Side Block Filtering network messages.
 //!
 
-use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
+use crate::bip158::{FilterHash, FilterHeader};
+use crate::blockdata::block::BlockHash;
 use crate::internal_macros::impl_consensus_encoding;
 
 /// getcfilters message

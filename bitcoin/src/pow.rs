@@ -13,10 +13,10 @@ use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
+use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
-use crate::hash_types::BlockHash;
 use crate::prelude::String;
 use crate::string::FromHexStr;
 use crate::Network;

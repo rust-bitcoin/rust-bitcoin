@@ -72,6 +72,7 @@ use serde;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::internal_macros::impl_asref_push_bytes;
 use crate::prelude::*;
 use crate::{io, OutPoint};
 
@@ -91,7 +92,7 @@ hashes::hash_newtype! {
     /// SegWit version of a Bitcoin Script bytecode hash.
     pub struct WScriptHash(sha256::Hash);
 }
-crate::hash_types::impl_asref_push_bytes!(ScriptHash, WScriptHash);
+impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }

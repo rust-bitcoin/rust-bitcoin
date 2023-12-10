@@ -23,9 +23,9 @@ use internals::write_err;
 use io::{Cursor, Read};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
-use crate::blockdata::block;
+use crate::bip158::{FilterHash, FilterHeader};
+use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
-use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},

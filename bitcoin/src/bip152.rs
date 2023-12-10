@@ -373,10 +373,10 @@ mod test {
     use hex::FromHex;
 
     use super::*;
+    use crate::blockdata::block::TxMerkleNode;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hash_types::TxMerkleNode;
     use crate::{
         Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
         Witness,

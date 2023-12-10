@@ -43,11 +43,10 @@ use core::fmt;
 use hashes::Hash;
 
 use self::MerkleBlockError::*;
-use crate::blockdata::block::{self, Block};
-use crate::blockdata::transaction::Transaction;
+use crate::blockdata::block::{self, Block, TxMerkleNode};
+use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::hash_types::{TxMerkleNode, Txid};
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
@@ -540,8 +539,6 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    #[cfg(feature = "rand-std")]
-    use crate::hash_types::TxMerkleNode;
     use crate::{Block, Txid};
 
     #[cfg(feature = "rand-std")]

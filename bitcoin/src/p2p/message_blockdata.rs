@@ -8,8 +8,9 @@
 
 use hashes::{sha256d, Hash as _};
 
+use crate::blockdata::block::BlockHash;
+use crate::blockdata::transaction::{Txid, Wtxid};
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::hash_types::{BlockHash, Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
 use crate::{io, p2p};
