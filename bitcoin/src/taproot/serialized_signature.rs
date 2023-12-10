@@ -11,8 +11,7 @@ use core::{fmt, ops};
 
 pub use into_iter::IntoIter;
 
-use super::Signature;
-use super::SigFromSliceError;
+use super::{SigFromSliceError, Signature};
 
 pub(crate) const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 
@@ -58,9 +57,7 @@ impl PartialOrd for SerializedSignature {
 }
 
 impl Ord for SerializedSignature {
-    fn cmp(&self, other: &SerializedSignature) -> core::cmp::Ordering {
-        (**self).cmp(&**other)
-    }
+    fn cmp(&self, other: &SerializedSignature) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
 impl PartialOrd<[u8]> for SerializedSignature {
@@ -76,9 +73,7 @@ impl PartialOrd<SerializedSignature> for [u8] {
 }
 
 impl core::hash::Hash for SerializedSignature {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        (**self).hash(state)
-    }
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { (**self).hash(state) }
 }
 
 impl AsRef<[u8]> for SerializedSignature {
@@ -117,23 +112,17 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 }
 
 impl From<Signature> for SerializedSignature {
-    fn from(value: Signature) -> Self {
-        Self::from_signature(&value)
-    }
+    fn from(value: Signature) -> Self { Self::from_signature(&value) }
 }
 
 impl<'a> From<&'a Signature> for SerializedSignature {
-    fn from(value: &'a Signature) -> Self {
-        Self::from_signature(value)
-    }
+    fn from(value: &'a Signature) -> Self { Self::from_signature(value) }
 }
 
 impl TryFrom<SerializedSignature> for Signature {
     type Error = SigFromSliceError;
 
-    fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> {
-        value.to_signature()
-    }
+    fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
 }
 
 impl<'a> TryFrom<&'a SerializedSignature> for Signature {
@@ -169,7 +158,9 @@ impl SerializedSignature {
     /// Convert the serialized signature into the Signature struct.
     /// (This deserializes it)
     #[inline]
-    pub fn to_signature(&self) -> Result<Signature, SigFromSliceError> { Signature::from_slice(self) }
+    pub fn to_signature(&self) -> Result<Signature, SigFromSliceError> {
+        Signature::from_slice(self)
+    }
 
     /// Create a SerializedSignature from a Signature.
     /// (this serializes it)

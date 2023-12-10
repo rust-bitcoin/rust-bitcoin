@@ -34,9 +34,7 @@ impl Error {
     }
 
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> {
-        self.error.as_deref()
-    }
+    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> { self.error.as_deref() }
 }
 
 impl From<ErrorKind> for Error {
