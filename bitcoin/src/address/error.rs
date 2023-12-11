@@ -17,8 +17,6 @@ pub enum Error {
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
     WitnessProgram(witness_program::Error),
-    /// An uncompressed pubkey was used where it is not allowed.
-    UncompressedPubkey,
     /// Address size more than 520 bytes is not allowed.
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
@@ -27,11 +25,11 @@ pub enum Error {
     NetworkValidation {
         /// Network that was required.
         required: Network,
-        /// Network on which the address was found to be valid.
-        found: Network,
         /// The address itself
         address: Address<NetworkUnchecked>,
     },
+    /// Unknown hrp for current bitcoin networks (in bech32 address).
+    UnknownHrp(UnknownHrpError),
 }
 
 impl fmt::Display for Error {
@@ -41,19 +39,14 @@ impl fmt::Display for Error {
         match *self {
             WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            UncompressedPubkey =>
-                write!(f, "an uncompressed pubkey was used where it is not allowed"),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
-            NetworkValidation { required, found, ref address } => {
+            NetworkValidation { required, ref address } => {
                 write!(f, "address ")?;
-                address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
-                write!(
-                    f,
-                    " belongs to network {} which is different from required {}",
-                    found, required
-                )
+                fmt::Display::fmt(&address.0, f)?;
+                write!(f, " is not valid on {}", required)
             }
+            Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
         }
     }
 }
@@ -66,10 +59,8 @@ impl std::error::Error for Error {
         match self {
             WitnessVersion(e) => Some(e),
             WitnessProgram(e) => Some(e),
-            UncompressedPubkey
-            | ExcessiveScriptSize
-            | UnrecognizedScript
-            | NetworkValidation { .. } => None,
+            UnknownHrp(e) => Some(e),
+            ExcessiveScriptSize | UnrecognizedScript | NetworkValidation { .. } => None,
         }
     }
 }
@@ -110,6 +101,8 @@ pub enum ParseError {
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
     WitnessProgram(witness_program::Error),
+    /// Tried to parse an unknown HRP.
+    UnknownHrp(UnknownHrpError),
 }
 
 impl fmt::Display for ParseError {
@@ -121,6 +114,7 @@ impl fmt::Display for ParseError {
             Bech32(ref e) => write_err!(f, "bech32 segwit decoding error"; e),
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            UnknownHrp(ref e) => write_err!(f, "tried to parse an unknown hrp"; e),
         }
     }
 }
@@ -135,6 +129,7 @@ impl std::error::Error for ParseError {
             Bech32(ref e) => Some(e),
             WitnessVersion(ref e) => Some(e),
             WitnessProgram(ref e) => Some(e),
+            UnknownHrp(ref e) => Some(e),
         }
     }
 }
@@ -153,4 +148,22 @@ impl From<witness_version::TryFromError> for ParseError {
 
 impl From<witness_program::Error> for ParseError {
     fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
+}
+
+impl From<UnknownHrpError> for ParseError {
+    fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
+}
+
+/// Unknown HRP error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct UnknownHrpError(pub String);
+
+impl fmt::Display for UnknownHrpError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "unknown hrp: {}", self.0) }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnknownHrpError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }

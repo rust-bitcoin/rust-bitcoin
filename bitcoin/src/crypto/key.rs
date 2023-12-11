@@ -59,15 +59,13 @@ impl PublicKey {
     pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
-    pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
+    pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPubkeyError> {
         if self.compressed {
-            Some(WPubkeyHash::from_byte_array(
+            Ok(WPubkeyHash::from_byte_array(
                 hash160::Hash::hash(&self.inner.serialize()).to_byte_array(),
             ))
         } else {
-            // We can't create witness pubkey hashes for an uncompressed
-            // public keys
-            None
+            Err(UncompressedPubkeyError)
         }
     }
 
@@ -741,6 +739,22 @@ impl From<hex::HexToArrayError> for Error {
     fn from(e: hex::HexToArrayError) -> Self { Error::Hex(e) }
 }
 
+/// Segwit public keys must always be compressed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct UncompressedPubkeyError;
+
+impl fmt::Display for UncompressedPubkeyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("segwit public keys must always be compressed")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UncompressedPubkeyError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -762,7 +776,7 @@ mod tests {
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
+        let pk = Address::p2pkh(sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
@@ -783,7 +797,7 @@ mod tests {
         assert!(!pk.compressed);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
         assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
-        let addr = Address::p2pkh(&pk, sk.network);
+        let addr = Address::p2pkh(pk, sk.network);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk.compressed = true;
         assert_eq!(
@@ -821,7 +835,7 @@ mod tests {
             pk.wpubkey_hash().unwrap().to_string(),
             "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
         );
-        assert_eq!(upk.wpubkey_hash(), None);
+        assert!(upk.wpubkey_hash().is_err());
     }
 
     #[cfg(feature = "serde")]
