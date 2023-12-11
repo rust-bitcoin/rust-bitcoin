@@ -1,0 +1,31 @@
+[package]
+name = "bitcoin-units"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+description = "Basic Bitcoin numeric units such as amount"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "newtypes"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc", "internals/std"]
+alloc = ["internals/alloc"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+internals = { package = "bitcoin-internals", version = "0.2.0" }
+
+serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
+
+[dev-dependencies]
+serde_test = "1.0"
+serde_json = "1.0"

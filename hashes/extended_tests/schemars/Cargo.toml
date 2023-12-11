@@ -24,3 +24,6 @@ path = "../../../internals"
 
 [patch.crates-io.bitcoin-io]
 path = "../../../io"
+
+[patch.crates-io.bitcoin-units]
+path = "../../../units"

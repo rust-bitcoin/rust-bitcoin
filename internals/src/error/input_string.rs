@@ -17,7 +17,29 @@ pub struct InputString(Storage);
 impl InputString {
     /// Displays a message saying `failed to parse <self> as <what>`.
     ///
-    /// This is normally used whith the `write_err!` macro.
+    /// This is normally used with the `write_err!` macro.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use core::fmt;
+    /// use bitcoin_internals::error::InputString;
+    /// use bitcoin_internals::write_err;
+    ///
+    /// /// An example parsing error including the parse error from core.
+    /// #[derive(Debug, Clone, PartialEq, Eq)]
+    /// pub struct ParseError {
+    ///     input: InputString,
+    ///     error: core::num::ParseIntError,
+    /// }
+    ///
+    /// impl fmt::Display for ParseError {
+    ///     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    ///         // Outputs "failed to parse '<input string>' as foo"
+    ///         write_err!(f, "{}", self.input.display_cannot_parse("foo"); self.error)
+    ///     }
+    /// }
+    /// ```
     pub fn display_cannot_parse<'a, T>(&'a self, what: &'a T) -> CannotParse<'a, T>
     where
         T: fmt::Display + ?Sized,
@@ -28,6 +50,24 @@ impl InputString {
     /// Formats a message saying `<self> is not a known <what>`.
     ///
     /// This is normally used in leaf parse errors (with no source) when parsing an enum.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use core::fmt;
+    /// use bitcoin_internals::error::InputString;
+    ///
+    /// /// An example parsing error.
+    /// #[derive(Debug, Clone, PartialEq, Eq)]
+    /// pub struct ParseError(InputString);
+    ///
+    /// impl fmt::Display for ParseError {
+    ///     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    ///         // Outputs "'<input string>' is not a known foo"
+    ///         self.0.unknown_variant("foo", f)
+    ///     }
+    /// }
+    /// ```
     pub fn unknown_variant<T>(&self, what: &T, f: &mut fmt::Formatter) -> fmt::Result
     where
         T: fmt::Display + ?Sized,
