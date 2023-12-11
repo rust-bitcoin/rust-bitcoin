@@ -45,7 +45,7 @@ use crate::blockdata::constants::{
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, PushBytesBuf, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{self, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PubkeyHash, PublicKey, CompressedPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -441,23 +441,23 @@ impl Address {
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
     pub fn p2wpkh(
-        pk: &PublicKey,
+        pk: &CompressedPublicKey,
         network: Network,
-    ) -> Result<Address, key::UncompressedPubkeyError> {
-        let program = WitnessProgram::p2wpkh(pk)?;
-        Ok(Address::from_witness_program(program, network))
+    ) -> Self {
+        let program = WitnessProgram::p2wpkh(pk);
+        Address::from_witness_program(program, network)
     }
 
     /// Creates a pay to script address that embeds a witness pay to public key.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(
-        pk: &PublicKey,
+        pk: &CompressedPublicKey,
         network: Network,
-    ) -> Result<Address, key::UncompressedPubkeyError> {
-        let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash()?);
+    ) -> Self {
+        let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash();
-        Ok(Address::p2sh_from_hash(script_hash, network))
+        Address::p2sh_from_hash(script_hash, network)
     }
 
     /// Creates a witness pay to script hash address.
@@ -838,7 +838,7 @@ mod tests {
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
-    use crate::crypto::key::{PublicKey, UncompressedPubkeyError};
+    use crate::crypto::key::PublicKey;
     use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address, network: Network) {
@@ -926,17 +926,13 @@ mod tests {
     #[test]
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
-        let mut key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
-            .parse::<PublicKey>()
+        let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
+            .parse::<CompressedPublicKey>()
             .unwrap();
-        let addr = Address::p2wpkh(&key, Bitcoin).unwrap();
+        let addr = Address::p2wpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr, Bitcoin);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin).unwrap_err(), UncompressedPubkeyError);
     }
 
     #[test]
@@ -955,17 +951,13 @@ mod tests {
     #[test]
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
-        let mut key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
-            .parse::<PublicKey>()
+        let key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
+            .parse::<CompressedPublicKey>()
             .unwrap();
-        let addr = Address::p2shwpkh(&key, Bitcoin).unwrap();
+        let addr = Address::p2shwpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr, Bitcoin);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin).unwrap_err(), UncompressedPubkeyError);
     }
 
     #[test]

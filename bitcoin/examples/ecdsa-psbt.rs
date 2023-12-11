@@ -39,7 +39,7 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction,
+    transaction, Address, Amount, Network, OutPoint, CompressedPublicKey, ScriptBuf, Sequence, Transaction,
     TxIn, TxOut, Witness,
 };
 
@@ -201,7 +201,7 @@ impl WatchOnly {
         let mut input = Input { witness_utxo: Some(previous_output()), ..Default::default() };
 
         let pk = self.input_xpub.to_pub();
-        let wpkh = pk.wpubkey_hash().expect("a compressed pubkey");
+        let wpkh = pk.wpubkey_hash();
 
         let redeem_script = ScriptBuf::new_p2wpkh(&wpkh);
         input.redeem_script = Some(redeem_script);
@@ -209,7 +209,7 @@ impl WatchOnly {
         let fingerprint = self.master_fingerprint;
         let path = input_derivation_path()?;
         let mut map = BTreeMap::new();
-        map.insert(pk.inner, (fingerprint, path));
+        map.insert(pk.0, (fingerprint, path));
         input.bip32_derivation = map;
 
         let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
@@ -251,12 +251,12 @@ impl WatchOnly {
     fn change_address<C: Verification>(
         &self,
         secp: &Secp256k1<C>,
-    ) -> Result<(PublicKey, Address, DerivationPath)> {
+    ) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
         let path = [ChildNumber::from_normal_idx(1)?, ChildNumber::from_normal_idx(0)?];
         let derived = self.account_0_xpub.derive_pub(secp, &path)?;
 
         let pk = derived.to_pub();
-        let addr = Address::p2wpkh(&pk, NETWORK)?;
+        let addr = Address::p2wpkh(&pk, NETWORK);
         let path = path.into_derivation_path()?;
 
         Ok((pk, addr, path))
