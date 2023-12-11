@@ -171,7 +171,7 @@ mod prelude {
     pub use alloc::sync;
 
     #[cfg(any(feature = "std", test))]
-    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc, sync};
+    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc, sync};
 
     #[cfg(all(not(feature = "std"), not(test)))]
     pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
