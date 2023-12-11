@@ -40,8 +40,8 @@ pub use self::amount::{Amount, ParseAmountError, SignedAmount};
 #[rustfmt::skip]
 mod prelude {
     #[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
-    pub use alloc::{string::{String, ToString}, borrow::ToOwned};
+    pub use alloc::string::{String, ToString};
 
     #[cfg(any(feature = "std", test))]
-    pub use std::{string::{String, ToString}, borrow::ToOwned};
+    pub use std::string::{String, ToString};
 }
