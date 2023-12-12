@@ -7,6 +7,7 @@
 //!
 
 use hashes::{sha256d, Hash as _};
+use io::{Read, Write};
 
 use crate::blockdata::block::BlockHash;
 use crate::blockdata::transaction::{Txid, Wtxid};
@@ -61,7 +62,7 @@ impl Inventory {
 
 impl Encodable for Inventory {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         macro_rules! encode_inv {
             ($code:expr, $item:expr) => {
                 u32::consensus_encode(&$code, w)? + $item.consensus_encode(w)?
@@ -82,7 +83,7 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
             0 => Inventory::Error,

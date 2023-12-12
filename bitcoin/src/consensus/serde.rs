@@ -12,6 +12,7 @@
 use core::fmt;
 use core::marker::PhantomData;
 
+use io::{Read, Write};
 use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
@@ -268,7 +269,7 @@ impl<'a, W: fmt::Write, E: EncodeBytes> IoWrapper<'a, W, E> {
     fn actually_flush(&mut self) -> fmt::Result { self.encoder.flush(&mut self.writer) }
 }
 
-impl<'a, W: fmt::Write, E: EncodeBytes> io::Write for IoWrapper<'a, W, E> {
+impl<'a, W: fmt::Write, E: EncodeBytes> Write for IoWrapper<'a, W, E> {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         match self.encoder.encode_chunk(&mut self.writer, bytes) {
             Ok(()) => Ok(bytes.len()),
@@ -338,7 +339,7 @@ struct BinWriter<S: SerializeSeq> {
     error: Option<S::Error>,
 }
 
-impl<S: SerializeSeq> io::Write for BinWriter<S> {
+impl<S: SerializeSeq> Write for BinWriter<S> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> { self.write_all(buf).map(|_| buf.len()) }
 
     fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
@@ -441,7 +442,7 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     }
 }
 
-impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> io::Read for IterReader<E, I> {
+impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> Read for IterReader<E, I> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut count = 0;
         for (dst, src) in buf.iter_mut().zip(&mut self.iterator) {

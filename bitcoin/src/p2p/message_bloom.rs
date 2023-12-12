@@ -5,6 +5,8 @@
 //! This module describes BIP37 Connection Bloom filtering network messages.
 //!
 
+use io::{Read, Write};
+
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 
@@ -35,7 +37,7 @@ pub enum BloomFlags {
 }
 
 impl Encodable for BloomFlags {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         w.write_all(&[match self {
             BloomFlags::None => 0,
             BloomFlags::All => 1,
@@ -46,7 +48,7 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,

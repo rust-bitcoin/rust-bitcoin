@@ -12,6 +12,7 @@ use std::error;
 
 use hashes::{sha256, siphash24, Hash};
 use internals::impl_array_newtype;
+use io::{Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
@@ -73,14 +74,14 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 
 impl Encodable for PrefilledTransaction {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         Ok(VarInt::from(self.idx).consensus_encode(w)? + self.tx.consensus_encode(w)?)
     }
 }
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = VarInt::consensus_decode(r)?.0;
         let idx = u16::try_from(idx)
             .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
@@ -129,14 +130,14 @@ impl ShortId {
 
 impl Encodable for ShortId {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
@@ -258,7 +259,7 @@ impl Encodable for BlockTransactionsRequest {
     ///
     /// Panics if the index overflows [`u64::MAX`]. This happens when [`BlockTransactionsRequest::indexes`]
     /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded VarInts.
         len += VarInt(self.indexes.len() as u64).consensus_encode(w)?;
@@ -272,7 +273,7 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode(r)?,
             indexes: {

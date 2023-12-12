@@ -43,6 +43,7 @@ use core::fmt::{self, Display, Formatter};
 
 use hashes::{sha256d, siphash24, Hash};
 use internals::write_err;
+use io::{Read, Write};
 
 use crate::blockdata::block::{Block, BlockHash};
 use crate::blockdata::script::Script;
@@ -175,7 +176,7 @@ pub struct BlockFilterWriter<'a, W> {
     writer: GcsFilterWriter<'a, W>,
 }
 
-impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
+impl<'a, W: Write> BlockFilterWriter<'a, W> {
     /// Creates a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().to_byte_array();
@@ -244,7 +245,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: io::Read + ?Sized,
+        R: Read + ?Sized,
     {
         self.reader.match_any(reader, query)
     }
@@ -254,7 +255,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: io::Read + ?Sized,
+        R: Read + ?Sized,
     {
         self.reader.match_all(reader, query)
     }
@@ -277,7 +278,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: io::Read + ?Sized,
+        R: Read + ?Sized,
     {
         let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
@@ -320,7 +321,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: io::Read + ?Sized,
+        R: Read + ?Sized,
     {
         let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
         // map hashes to [0, n_elements << grp]
@@ -371,7 +372,7 @@ pub struct GcsFilterWriter<'a, W> {
     m: u64,
 }
 
-impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
+impl<'a, W: Write> GcsFilterWriter<'a, W> {
     /// Creates a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
     pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
         GcsFilterWriter { filter: GcsFilter::new(k0, k1, p), writer, elements: BTreeSet::new(), m }
@@ -429,7 +430,7 @@ impl GcsFilter {
         n: u64,
     ) -> Result<usize, io::Error>
     where
-        W: io::Write,
+        W: Write,
     {
         let mut wrote = 0;
         let mut q = n >> self.p;
@@ -446,7 +447,7 @@ impl GcsFilter {
     /// Golomb-Rice decodes a number from a bit stream (parameter 2^k).
     fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
     where
-        R: io::Read + ?Sized,
+        R: Read + ?Sized,
     {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
@@ -469,7 +470,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
     reader: &'a mut R,
 }
 
-impl<'a, R: io::Read + ?Sized> BitStreamReader<'a, R> {
+impl<'a, R: Read + ?Sized> BitStreamReader<'a, R> {
     /// Creates a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }
@@ -516,7 +517,7 @@ pub struct BitStreamWriter<'a, W> {
     writer: &'a mut W,
 }
 
-impl<'a, W: io::Write> BitStreamWriter<'a, W> {
+impl<'a, W: Write> BitStreamWriter<'a, W> {
     /// Creates a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
     pub fn new(writer: &'a mut W) -> BitStreamWriter<'a, W> {
         BitStreamWriter { buffer: [0u8], writer, offset: 0 }

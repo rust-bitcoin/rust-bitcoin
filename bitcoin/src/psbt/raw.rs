@@ -8,6 +8,8 @@
 
 use core::fmt;
 
+use io::{Read, Write};
+
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
     self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
@@ -72,7 +74,7 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    pub(crate) fn decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
 
         if byte_size == 0 {
@@ -135,7 +137,7 @@ impl Deserialize for Pair {
 }
 
 impl Pair {
-    pub(crate) fn decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
     }
 }
@@ -144,7 +146,7 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u8> + Into<u8>,
 {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(w)? + 1;
         w.emit_u8(self.subtype.into())?;
         w.write_all(&self.key)?;
@@ -157,7 +159,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u8> + Into<u8>,
 {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_u8()?);
         let key = read_to_end(r)?;
@@ -194,7 +196,7 @@ where
 }
 
 // core2 doesn't have read_to_end
-pub(crate) fn read_to_end<D: io::Read + ?Sized>(d: &mut D) -> Result<Vec<u8>, io::Error> {
+pub(crate) fn read_to_end<D: Read + ?Sized>(d: &mut D) -> Result<Vec<u8>, io::Error> {
     let mut result = vec![];
     let mut buf = [0u8; 64];
     loop {
