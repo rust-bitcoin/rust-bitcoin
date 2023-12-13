@@ -59,10 +59,6 @@ pub extern crate base64;
 /// Encodes and decodes the Bech32 forrmat.
 pub extern crate bech32;
 
-/// Bitcoin's libbitcoinconsensus with Rust binding.
-#[cfg(feature = "bitcoinconsensus")]
-extern crate bitcoinconsensus;
-
 /// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
 
