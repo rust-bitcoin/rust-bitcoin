@@ -9,7 +9,8 @@ description = "Simple I/O traits for no-std (and std) environments"
 categories = ["no-std"]
 keywords = [ "io", "no-std" ]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
+rust-version = "1.56.1"
 exclude = ["tests", "contrib"]
 
 [features]
