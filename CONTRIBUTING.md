@@ -255,6 +255,49 @@ pub use {
 }
 ```
 
+#### Return `Self`
+
+Use `Self` as the return type instead of naming the type. When constructing the return value use
+`Self` or the type name, whichever you prefer.
+
+```rust
+/// A counter that is always smaller than 100.
+pub struct Counter(u32);
+
+impl Counter {
+    /// Constructs a new `Counter`.
+    pub fn new() -> Self { Self(0) }
+
+    /// Returns a counter if it is possible to create one from x.
+    pub fn maybe(x: u32) -> Option<Self> {
+        match x {
+            x if x >= 100 => None,
+            c => Some(Counter(c)),
+        }
+    }
+}
+
+impl TryFrom<u32> for Counter {
+    type Error = TooBigError;
+
+    fn try_from(x: u32) -> Result<Self, Self::Error> {
+        if x >= 100 {
+            return Err(TooBigError);
+        }
+        Ok(Counter(x))
+    }
+}
+```
+
+When constructing the return value for error enums use `Self`.
+
+```rust
+impl From<foo::Error> for LongDescriptiveError {
+    fn from(e: foo::Error) -> Self { Self::Foo(e) }
+}
+```
+
+
 #### Errors
 
 Return as much context as possible with errors e.g., if an error was encountered parsing a string
