@@ -28,7 +28,7 @@ mod message_signing {
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
-    use crate::crypto::key::PublicKey;
+    use crate::crypto::key::LegacyPublicKey;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,10 +133,10 @@ mod message_signing {
             &self,
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash,
-        ) -> Result<PublicKey, MessageSignatureError> {
+        ) -> Result<LegacyPublicKey, MessageSignatureError> {
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
-            Ok(PublicKey { inner: pubkey, compressed: self.compressed })
+            Ok(LegacyPublicKey { inner: pubkey, compressed: self.compressed })
         }
 
         /// Verify that the signature signs the message and was signed by the given address.
@@ -265,7 +265,7 @@ mod tests {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
         use secp256k1;
 
-        use crate::crypto::key::PublicKey;
+        use crate::crypto::key::LegacyPublicKey;
         use crate::{Address, Network};
 
         let secp = secp256k1::Secp256k1::new();
@@ -280,7 +280,7 @@ mod tests {
             super::MessageSignature::from_base64(signature_base64).expect("message signature");
 
         let pubkey =
-            PublicKey::from_slice(&BASE64_STANDARD.decode(pubkey_base64).expect("base64 string"))
+            LegacyPublicKey::from_slice(&BASE64_STANDARD.decode(pubkey_base64).expect("base64 string"))
                 .expect("pubkey slice");
 
         let p2pkh = Address::p2pkh(pubkey, Network::Bitcoin);

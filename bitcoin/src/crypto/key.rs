@@ -27,25 +27,29 @@ pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, X
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
 
+/// Temporary alias for `PublicKey` intended to make migration easier.
+#[deprecated(since = "TBD", note = "Use LegacyPublicKey")]
+pub type PublicKey = LegacyPublicKey;
+
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PublicKey {
+pub struct LegacyPublicKey {
     /// Whether this public key should be serialized as compressed
     pub compressed: bool,
     /// The actual ECDSA key
     pub inner: secp256k1::PublicKey,
 }
 
-impl PublicKey {
+impl LegacyPublicKey {
     /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key
-    pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
-        PublicKey { compressed: true, inner: key.into() }
+    pub fn new(key: impl Into<secp256k1::PublicKey>) -> LegacyPublicKey {
+        LegacyPublicKey { compressed: true, inner: key.into() }
     }
 
     /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
     /// public key
-    pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
-        PublicKey { compressed: false, inner: key.into() }
+    pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> LegacyPublicKey {
+        LegacyPublicKey { compressed: false, inner: key.into() }
     }
 
     fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
@@ -112,14 +116,14 @@ impl PublicKey {
     /// Serialize the public key into a `SortKey`.
     ///
     /// `SortKey` is not too useful by itself, but it can be used to sort a
-    /// `[PublicKey]` slice using `sort_unstable_by_key`, `sort_by_cached_key`,
+    /// `[LegacyPublicKey]` slice using `sort_unstable_by_key`, `sort_by_cached_key`,
     /// `sort_by_key`, or any of the other `*_by_key` methods on slice.
-    /// Pass the method into the sort method directly. (ie. `PublicKey::to_sort_key`)
+    /// Pass the method into the sort method directly. (ie. `LegacyPublicKey::to_sort_key`)
     ///
     /// This method of sorting is in line with Bitcoin Core's implementation of
     /// sorting keys for output descriptors such as `sortedmulti()`.
     ///
-    /// If every `PublicKey` in the slice is `compressed == true` then this will sort
+    /// If every `LegacyPublicKey` in the slice is `compressed == true` then this will sort
     /// the keys in a
     /// [BIP67](https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki)
     /// compliant way.
@@ -130,7 +134,7 @@ impl PublicKey {
     /// use std::str::FromStr;
     /// use bitcoin::PublicKey;
     ///
-    /// let pk = |s| PublicKey::from_str(s).unwrap();
+    /// let pk = |s| LegacyPublicKey::from_str(s).unwrap();
     ///
     /// let mut unsorted = [
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
@@ -155,7 +159,7 @@ impl PublicKey {
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
     /// ];
     ///
-    /// unsorted.sort_unstable_by_key(|k| PublicKey::to_sort_key(*k));
+    /// unsorted.sort_unstable_by_key(|k| LegacyPublicKey::to_sort_key(*k));
     ///
     /// assert_eq!(unsorted, sorted);
     /// ```
@@ -176,7 +180,7 @@ impl PublicKey {
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
+    pub fn from_slice(data: &[u8]) -> Result<LegacyPublicKey, Error> {
         let compressed = match data.len() {
             33 => true,
             65 => false,
@@ -189,14 +193,14 @@ impl PublicKey {
             return Err(Error::InvalidKeyPrefix(data[0]));
         }
 
-        Ok(PublicKey { compressed, inner: secp256k1::PublicKey::from_slice(data)? })
+        Ok(LegacyPublicKey { compressed, inner: secp256k1::PublicKey::from_slice(data)? })
     }
 
     /// Computes the public key as supposed to be used with this secret
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
         sk: &PrivateKey,
-    ) -> PublicKey {
+    ) -> LegacyPublicKey {
         sk.public_key(secp)
     }
 
@@ -211,19 +215,19 @@ impl PublicKey {
     }
 }
 
-impl From<secp256k1::PublicKey> for PublicKey {
-    fn from(pk: secp256k1::PublicKey) -> PublicKey { PublicKey::new(pk) }
+impl From<secp256k1::PublicKey> for LegacyPublicKey {
+    fn from(pk: secp256k1::PublicKey) -> LegacyPublicKey { LegacyPublicKey::new(pk) }
 }
 
-impl From<PublicKey> for XOnlyPublicKey {
-    fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
+impl From<LegacyPublicKey> for XOnlyPublicKey {
+    fn from(pk: LegacyPublicKey) -> XOnlyPublicKey { pk.inner.into() }
 }
 
-/// An opaque return type for PublicKey::to_sort_key
+/// An opaque return type for LegacyPublicKey::to_sort_key
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(u8, [u8; 32], [u8; 32]);
 
-impl fmt::Display for PublicKey {
+impl fmt::Display for LegacyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // TODO: fast hex encoding
         self.with_serialized(|bytes| {
@@ -235,12 +239,12 @@ impl fmt::Display for PublicKey {
     }
 }
 
-impl FromStr for PublicKey {
+impl FromStr for LegacyPublicKey {
     type Err = Error;
-    fn from_str(s: &str) -> Result<PublicKey, Error> {
+    fn from_str(s: &str) -> Result<LegacyPublicKey, Error> {
         match s.len() {
-            66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
-            130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
+            66 => LegacyPublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
+            130 => LegacyPublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
             len => Err(Error::InvalidHexLength(len)),
         }
     }
@@ -254,12 +258,12 @@ hashes::hash_newtype! {
 }
 impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
-impl From<PublicKey> for PubkeyHash {
-    fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }
+impl From<LegacyPublicKey> for PubkeyHash {
+    fn from(key: LegacyPublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
-impl From<&PublicKey> for PubkeyHash {
-    fn from(key: &PublicKey) -> PubkeyHash { key.pubkey_hash() }
+impl From<&LegacyPublicKey> for PubkeyHash {
+    fn from(key: &LegacyPublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
 /// An always-compressed Bitcoin ECDSA public key
@@ -346,10 +350,10 @@ impl FromStr for CompressedPublicKey {
     }
 }
 
-impl TryFrom<PublicKey> for CompressedPublicKey {
+impl TryFrom<LegacyPublicKey> for CompressedPublicKey {
     type Error = UncompressedPubkeyError;
 
-    fn try_from(value: PublicKey) -> Result<Self, Self::Error> {
+    fn try_from(value: LegacyPublicKey) -> Result<Self, Self::Error> {
         if value.compressed {
             Ok(CompressedPublicKey(value.inner))
         } else {
@@ -358,9 +362,9 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
     }
 }
 
-impl From<CompressedPublicKey> for PublicKey {
+impl From<CompressedPublicKey> for LegacyPublicKey {
     fn from(value: CompressedPublicKey) -> Self {
-        PublicKey::new(value.0)
+        LegacyPublicKey::new(value.0)
     }
 }
 
@@ -417,8 +421,8 @@ impl PrivateKey {
     }
 
     /// Creates a public key from this private key
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
-        PublicKey {
+    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> LegacyPublicKey {
+        LegacyPublicKey {
             compressed: self.compressed,
             inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner),
         }
@@ -543,7 +547,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
 
 #[cfg(feature = "serde")]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
-impl serde::Serialize for PublicKey {
+impl serde::Serialize for LegacyPublicKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
             s.collect_str(self)
@@ -554,13 +558,13 @@ impl serde::Serialize for PublicKey {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PublicKey {
-    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
+impl<'de> serde::Deserialize<'de> for LegacyPublicKey {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<LegacyPublicKey, D::Error> {
         if d.is_human_readable() {
             struct HexVisitor;
 
             impl<'de> serde::de::Visitor<'de> for HexVisitor {
-                type Value = PublicKey;
+                type Value = LegacyPublicKey;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("an ASCII hex string")
@@ -571,7 +575,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
                     E: serde::de::Error,
                 {
                     if let Ok(hex) = core::str::from_utf8(v) {
-                        PublicKey::from_str(hex).map_err(E::custom)
+                        LegacyPublicKey::from_str(hex).map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                     }
@@ -581,7 +585,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
                 where
                     E: serde::de::Error,
                 {
-                    PublicKey::from_str(v).map_err(E::custom)
+                    LegacyPublicKey::from_str(v).map_err(E::custom)
                 }
             }
             d.deserialize_str(HexVisitor)
@@ -589,7 +593,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
             struct BytesVisitor;
 
             impl<'de> serde::de::Visitor<'de> for BytesVisitor {
-                type Value = PublicKey;
+                type Value = LegacyPublicKey;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("a bytestring")
@@ -599,7 +603,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
                 where
                     E: serde::de::Error,
                 {
-                    PublicKey::from_slice(v).map_err(E::custom)
+                    LegacyPublicKey::from_slice(v).map_err(E::custom)
                 }
             }
 
@@ -883,7 +887,7 @@ pub enum Error {
     InvalidKeyPrefix(u8),
     /// Hex decoding error.
     Hex(hex::HexToArrayError),
-    /// `PublicKey` hex should be 66 or 130 digits long.
+    /// `LegacyPublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
 
@@ -985,7 +989,7 @@ mod tests {
         let mut pk = sk.public_key(&secp);
         assert!(!pk.compressed);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
-        assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
+        assert_eq!(pk, LegacyPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
         let addr = Address::p2pkh(pk, sk.network);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk.compressed = true;
@@ -995,7 +999,7 @@ mod tests {
         );
         assert_eq!(
             pk,
-            PublicKey::from_str(
+            LegacyPublicKey::from_str(
                 "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             )
             .unwrap()
@@ -1004,22 +1008,22 @@ mod tests {
 
     #[test]
     fn test_pubkey_hash() {
-        let pk = PublicKey::from_str(
+        let pk = LegacyPublicKey::from_str(
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let upk = LegacyPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(pk.pubkey_hash().to_string(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
         assert_eq!(upk.pubkey_hash().to_string(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
     }
 
     #[test]
     fn test_wpubkey_hash() {
-        let pk = PublicKey::from_str(
+        let pk = LegacyPublicKey::from_str(
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let upk = LegacyPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(
             pk.wpubkey_hash().unwrap().to_string(),
             "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
@@ -1062,8 +1066,8 @@ mod tests {
 
         let s = Secp256k1::new();
         let sk = PrivateKey::from_str(KEY_WIF).unwrap();
-        let pk = PublicKey::from_private_key(&s, &sk);
-        let pk_u = PublicKey { inner: pk.inner, compressed: false };
+        let pk = LegacyPublicKey::from_private_key(&s, &sk);
+        let pk_u = LegacyPublicKey { inner: pk.inner, compressed: false };
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);
         assert_tokens(&pk.compact(), &[Token::BorrowedBytes(&PK_BYTES[..])]);
@@ -1072,7 +1076,7 @@ mod tests {
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
     }
 
-    fn random_key(mut seed: u8) -> PublicKey {
+    fn random_key(mut seed: u8) -> LegacyPublicKey {
         loop {
             let mut data = [0; 65];
             for byte in &mut data[..] {
@@ -1082,12 +1086,12 @@ mod tests {
             }
             if data[0] % 2 == 0 {
                 data[0] = 4;
-                if let Ok(key) = PublicKey::from_slice(&data[..]) {
+                if let Ok(key) = LegacyPublicKey::from_slice(&data[..]) {
                     return key;
                 }
             } else {
                 data[0] = 2 + (data[0] >> 7);
-                if let Ok(key) = PublicKey::from_slice(&data[..33]) {
+                if let Ok(key) = LegacyPublicKey::from_slice(&data[..33]) {
                     return key;
                 }
             }
@@ -1107,27 +1111,27 @@ mod tests {
         let mut dec_keys = vec![];
         let mut cursor = io::Cursor::new(&v);
         for _ in 0..N_KEYS {
-            dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
+            dec_keys.push(LegacyPublicKey::read_from(&mut cursor).expect("reading from vec"));
         }
 
         assert_eq!(keys, dec_keys);
 
         // sanity checks
-        assert!(PublicKey::read_from(&mut cursor).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[4; 64][..])).is_err());
+        assert!(LegacyPublicKey::read_from(&mut cursor).is_err());
+        assert!(LegacyPublicKey::read_from(&mut io::Cursor::new(&[])).is_err());
+        assert!(LegacyPublicKey::read_from(&mut io::Cursor::new(&[0; 33][..])).is_err());
+        assert!(LegacyPublicKey::read_from(&mut io::Cursor::new(&[2; 32][..])).is_err());
+        assert!(LegacyPublicKey::read_from(&mut io::Cursor::new(&[0; 65][..])).is_err());
+        assert!(LegacyPublicKey::read_from(&mut io::Cursor::new(&[4; 64][..])).is_err());
     }
 
     #[test]
     fn pubkey_to_sort_key() {
-        let key1 = PublicKey::from_str(
+        let key1 = LegacyPublicKey::from_str(
             "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
         )
         .unwrap();
-        let key2 = PublicKey { inner: key1.inner, compressed: false };
+        let key2 = LegacyPublicKey { inner: key1.inner, compressed: false };
         let expected1 = SortKey(
             2,
             <[u8; 32]>::from_hex(
@@ -1154,11 +1158,11 @@ mod tests {
     #[test]
     fn pubkey_sort() {
         struct Vector {
-            input: Vec<PublicKey>,
-            expect: Vec<PublicKey>,
+            input: Vec<LegacyPublicKey>,
+            expect: Vec<LegacyPublicKey>,
         }
         let fmt =
-            |v: Vec<_>| v.into_iter().map(|s| PublicKey::from_str(s).unwrap()).collect::<Vec<_>>();
+            |v: Vec<_>| v.into_iter().map(|s| LegacyPublicKey::from_str(s).unwrap()).collect::<Vec<_>>();
         let vectors = vec![
             // Start BIP67 vectors
             // Vector 1
@@ -1255,7 +1259,7 @@ mod tests {
             },
         ];
         for mut vector in vectors {
-            vector.input.sort_by_cached_key(|k| PublicKey::to_sort_key(*k));
+            vector.input.sort_by_cached_key(|k| LegacyPublicKey::to_sort_key(*k));
             assert_eq!(vector.input, vector.expect);
         }
     }
@@ -1268,8 +1272,8 @@ mod tests {
         let secp = Secp256k1::new();
         let kp = Keypair::new(&secp, &mut rand::thread_rng());
 
-        let _ = PublicKey::new(kp);
-        let _ = PublicKey::new_uncompressed(kp);
+        let _ = LegacyPublicKey::new(kp);
+        let _ = LegacyPublicKey::new_uncompressed(kp);
     }
 
     #[test]
@@ -1277,15 +1281,15 @@ mod tests {
         // Sanity checks, we accept string length 130 digits.
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
-        assert!(PublicKey::from_str(s).is_ok());
+        assert!(LegacyPublicKey::from_str(s).is_ok());
         // And 66 digits.
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
         assert_eq!(s.len(), 66);
-        assert!(PublicKey::from_str(s).is_ok());
+        assert!(LegacyPublicKey::from_str(s).is_ok());
 
         let s = "aoeusthb";
         assert_eq!(s.len(), 8);
-        let res = PublicKey::from_str(s);
+        let res = LegacyPublicKey::from_str(s);
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
     }

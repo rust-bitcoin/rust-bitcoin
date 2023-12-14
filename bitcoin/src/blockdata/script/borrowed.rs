@@ -19,7 +19,7 @@ use crate::blockdata::script::{
     ScriptHash, WScriptHash,
 };
 use crate::consensus::Encodable;
-use crate::key::{PublicKey, UntweakedPublicKey};
+use crate::key::{LegacyPublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
@@ -223,8 +223,8 @@ impl Script {
     /// This happens when the public key is invalid (e.g. the point not being on the curve).
     /// In this situation the script is unspendable.
     #[inline]
-    pub fn p2pk_public_key(&self) -> Option<PublicKey> {
-        PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
+    pub fn p2pk_public_key(&self) -> Option<LegacyPublicKey> {
+        LegacyPublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
     }
 
     /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
