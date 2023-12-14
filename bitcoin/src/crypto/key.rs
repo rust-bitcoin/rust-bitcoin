@@ -13,6 +13,7 @@ use hashes::{hash160, Hash};
 use hex::FromHex;
 use internals::write_err;
 use io::{Read, Write};
+use internals::array_vec::ArrayVec;
 
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
@@ -161,17 +162,11 @@ impl PublicKey {
     /// ```
     pub fn to_sort_key(self) -> SortKey {
         if self.compressed {
-            let bytes = self.inner.serialize();
-            let mut res = [0; 32];
-            res[..].copy_from_slice(&bytes[1..33]);
-            SortKey(bytes[0], res, [0; 32])
+            let buf = ArrayVec::from_slice(&self.inner.serialize());
+            SortKey(buf)
         } else {
-            let bytes = self.inner.serialize_uncompressed();
-            let mut res_left = [0; 32];
-            let mut res_right = [0; 32];
-            res_left[..].copy_from_slice(&bytes[1..33]);
-            res_right[..].copy_from_slice(&bytes[33..65]);
-            SortKey(bytes[0], res_left, res_right)
+            let buf = ArrayVec::from_slice(&self.inner.serialize_uncompressed());
+            SortKey(buf)
         }
     }
 
@@ -221,7 +216,7 @@ impl From<PublicKey> for XOnlyPublicKey {
 
 /// An opaque return type for PublicKey::to_sort_key
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-pub struct SortKey(u8, [u8; 32], [u8; 32]);
+pub struct SortKey(ArrayVec<u8, 65>);
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -1128,25 +1123,17 @@ mod tests {
         )
         .unwrap();
         let key2 = PublicKey { inner: key1.inner, compressed: false };
-        let expected1 = SortKey(
-            2,
-            <[u8; 32]>::from_hex(
-                "ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
-            )
-            .unwrap(),
-            [0_u8; 32],
-        );
-        let expected2 = SortKey(
-            4,
-            <[u8; 32]>::from_hex(
-                "ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
-            )
-            .unwrap(),
-            <[u8; 32]>::from_hex(
-                "1794e7f3d5e420641a3bc690067df5541470c966cbca8c694bf39aa16d836918",
+        let arrayvec1 = ArrayVec::from_slice(
+            &<[u8; 33]>::from_hex(
+                "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
             )
             .unwrap(),
         );
+        let expected1 = SortKey(arrayvec1);
+        let arrayvec2 = ArrayVec::from_slice(&<[u8; 65]>::from_hex(
+            "04ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f81794e7f3d5e420641a3bc690067df5541470c966cbca8c694bf39aa16d836918",
+        ).unwrap());
+        let expected2 = SortKey(arrayvec2);
         assert_eq!(key1.to_sort_key(), expected1);
         assert_eq!(key2.to_sort_key(), expected2);
     }
