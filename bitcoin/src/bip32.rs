@@ -19,7 +19,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use serde;
 
 use crate::base58;
-use crate::crypto::key::{self, Keypair, PrivateKey, PublicKey};
+use crate::crypto::key::{self, Keypair, PrivateKey, CompressedPublicKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::prelude::*;
@@ -708,7 +708,7 @@ impl Xpub {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(self) -> PublicKey { PublicKey { compressed: true, inner: self.public_key } }
+    pub fn to_pub(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.

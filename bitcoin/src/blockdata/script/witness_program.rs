@@ -14,7 +14,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{PushBytes, PushBytesBuf, PushBytesErrorReport, Script};
-use crate::crypto::key::{self, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::taproot::TapNodeHash;
 
 /// The segregated witness program.
@@ -67,10 +67,9 @@ impl WitnessProgram {
     }
 
     /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
-    pub fn p2wpkh(pk: &PublicKey) -> Result<Self, key::UncompressedPubkeyError> {
-        let hash = pk.wpubkey_hash()?;
-        let program = WitnessProgram::new_p2wpkh(hash.to_byte_array());
-        Ok(program)
+    pub fn p2wpkh(pk: &CompressedPublicKey) -> Self {
+        let hash = pk.wpubkey_hash();
+        WitnessProgram::new_p2wpkh(hash.to_byte_array())
     }
 
     /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
