@@ -8,7 +8,7 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
 use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::CompressedPublicKey;
+use bitcoin::{Network, NetworkKind, CompressedPublicKey};
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -26,10 +26,7 @@ fn main() {
 
     let seed_hex = &args[1];
     println!("Seed: {}", seed_hex);
-
-    // default network as mainnet
-    let network = bitcoin::Network::Bitcoin;
-    println!("Network: {:?}", network);
+    println!("Using mainnet network");
 
     let seed = Vec::from_hex(seed_hex).unwrap();
 
@@ -39,7 +36,7 @@ fn main() {
     let secp = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
 
     // calculate root key from seed
-    let root = Xpriv::new_master(network, &seed).unwrap();
+    let root = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
     println!("Root key: {}", root);
 
     // derive child xpub
@@ -53,6 +50,6 @@ fn main() {
     // manually creating indexes this time
     let zero = ChildNumber::from_normal_idx(0).unwrap();
     let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(&CompressedPublicKey(public_key), network);
+    let address = Address::p2wpkh(&CompressedPublicKey(public_key), Network::Bitcoin);
     println!("First receiving address: {}", address);
 }
