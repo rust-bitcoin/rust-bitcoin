@@ -25,7 +25,7 @@ use secp256k1::{Message, Secp256k1, Signing};
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
-use crate::crypto::key::{PrivateKey, PublicKey};
+use crate::crypto::key::{PrivateKey, LegacyPublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::{Amount, FeeRate};
@@ -344,7 +344,7 @@ impl Psbt {
         input_index: usize,
         cache: &mut SighashCache<T>,
         secp: &Secp256k1<C>,
-    ) -> Result<Vec<PublicKey>, SignError>
+    ) -> Result<Vec<LegacyPublicKey>, SignError>
     where
         C: Signing,
         T: Borrow<Transaction>,
@@ -359,7 +359,7 @@ impl Psbt {
         for (pk, key_source) in input.bip32_derivation.iter() {
             let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(LegacyPublicKey::new(*pk)), secp) {
                 sk
             } else {
                 continue;
@@ -556,7 +556,7 @@ impl Psbt {
 #[non_exhaustive]
 pub enum KeyRequest {
     /// Request a private key using the associated public key.
-    Pubkey(PublicKey),
+    Pubkey(LegacyPublicKey),
     /// Request a private key using BIP-32 fingerprint and derivation path.
     Bip32(KeySource),
 }
@@ -603,7 +603,7 @@ impl GetKey for Xpriv {
 }
 
 /// Map of input index -> pubkey associated with secret key used to create signature for that input.
-pub type SigningKeys = BTreeMap<usize, Vec<PublicKey>>;
+pub type SigningKeys = BTreeMap<usize, Vec<LegacyPublicKey>>;
 
 /// Map of input index -> the error encountered while attempting to sign that input.
 pub type SigningErrors = BTreeMap<usize, SignError>;
@@ -642,7 +642,7 @@ impl_get_key_for_set!(HashSet);
 macro_rules! impl_get_key_for_map {
     ($map:ident) => {
 
-impl GetKey for $map<PublicKey, PrivateKey> {
+impl GetKey for $map<LegacyPublicKey, PrivateKey> {
     type Error = GetKeyError;
 
     fn get_key<C: Signing>(
@@ -1920,14 +1920,14 @@ mod tests {
     }
 
     #[cfg(feature = "rand-std")]
-    fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
+    fn gen_keys() -> (PrivateKey, LegacyPublicKey, Secp256k1<All>) {
         use secp256k1::rand::thread_rng;
 
         let secp = Secp256k1::new();
 
         let sk = SecretKey::new(&mut thread_rng());
         let priv_key = PrivateKey::new(sk, crate::Network::Regtest);
-        let pk = PublicKey::from_private_key(&secp, &priv_key);
+        let pk = LegacyPublicKey::from_private_key(&secp, &priv_key);
 
         (priv_key, pk, secp)
     }

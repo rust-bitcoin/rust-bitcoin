@@ -38,7 +38,7 @@ use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
+    ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, LegacyPublicKey,
     ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
@@ -144,7 +144,7 @@ fn serde_regression_witness() {
 #[test]
 fn serde_regression_address() {
     let s = include_str!("data/serde/public_key_hex");
-    let pk = PublicKey::from_str(s.trim()).unwrap();
+    let pk = LegacyPublicKey::from_str(s.trim()).unwrap();
     let addr = Address::p2pkh(pk, Network::Bitcoin);
 
     let got = serialize(&addr).unwrap();
@@ -212,7 +212,7 @@ fn serde_regression_private_key() {
 #[test]
 fn serde_regression_public_key() {
     let s = include_str!("data/serde/public_key_hex");
-    let pk = PublicKey::from_str(s.trim()).unwrap();
+    let pk = LegacyPublicKey::from_str(s.trim()).unwrap();
     let got = serialize(&pk).unwrap();
     let want = include_bytes!("data/serde/public_key_bincode") as &[_];
     assert_eq!(got, want)

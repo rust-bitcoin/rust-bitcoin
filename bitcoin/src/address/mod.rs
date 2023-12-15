@@ -8,12 +8,12 @@
 //!
 //! ```rust
 //! # #[cfg(feature = "rand-std")] {
-//! use bitcoin::{Address, PublicKey, Network};
+//! use bitcoin::{Address, LegacyPublicKey, Network};
 //! use bitcoin::secp256k1::{rand, Secp256k1};
 //!
 //! // Generate random key pair.
 //! let s = Secp256k1::new();
-//! let public_key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
+//! let public_key = LegacyPublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
 //!
 //! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
@@ -45,7 +45,7 @@ use crate::blockdata::constants::{
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, PushBytesBuf, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{PubkeyHash, PublicKey, CompressedPublicKey, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PubkeyHash, LegacyPublicKey, CompressedPublicKey, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -627,7 +627,7 @@ impl Address {
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the segwit redeem hash generated from the
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
-    pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
+    pub fn is_related_to_pubkey(&self, pubkey: &LegacyPublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
@@ -838,7 +838,7 @@ mod tests {
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
-    use crate::crypto::key::PublicKey;
+    use crate::crypto::key::LegacyPublicKey;
     use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address, network: Network) {
@@ -881,12 +881,12 @@ mod tests {
 
     #[test]
     fn test_p2pkh_from_key() {
-        let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse::<PublicKey>().unwrap();
+        let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse::<LegacyPublicKey>().unwrap();
         let addr = Address::p2pkh(key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = "03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f"
-            .parse::<PublicKey>()
+            .parse::<LegacyPublicKey>()
             .unwrap();
         let addr = Address::p2pkh(key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
@@ -1163,12 +1163,12 @@ mod tests {
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
 
         let result = address.is_related_to_pubkey(&pubkey);
         assert!(result);
 
-        let unused_pubkey = PublicKey::from_str(
+        let unused_pubkey = LegacyPublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
@@ -1184,12 +1184,12 @@ mod tests {
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
 
         let result = address.is_related_to_pubkey(&pubkey);
         assert!(result);
 
-        let unused_pubkey = PublicKey::from_str(
+        let unused_pubkey = LegacyPublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
@@ -1205,12 +1205,12 @@ mod tests {
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
 
         let result = address.is_related_to_pubkey(&pubkey);
         assert!(result);
 
-        let unused_pubkey = PublicKey::from_str(
+        let unused_pubkey = LegacyPublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
@@ -1226,12 +1226,12 @@ mod tests {
             .expect("testnet");
 
         let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
 
         let result = address.is_related_to_pubkey(&pubkey);
         assert!(result);
 
-        let unused_pubkey = PublicKey::from_str(
+        let unused_pubkey = LegacyPublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
@@ -1241,7 +1241,7 @@ mod tests {
     #[test]
     fn test_is_related_to_pubkey_p2tr() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
@@ -1257,7 +1257,7 @@ mod tests {
         let result = address.is_related_to_pubkey(&pubkey);
         assert!(result);
 
-        let unused_pubkey = PublicKey::from_str(
+        let unused_pubkey = LegacyPublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
@@ -1267,7 +1267,7 @@ mod tests {
     #[test]
     fn test_is_related_to_xonly_pubkey() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let pubkey = LegacyPublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
         let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);

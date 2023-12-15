@@ -126,7 +126,7 @@ pub use crate::{
     blockdata::witness::{self, Witness},
     consensus::encode::VarInt,
     crypto::ecdsa,
-    crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
+    crypto::key::{self, PrivateKey, PubkeyHash, LegacyPublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::Network,
@@ -135,6 +135,9 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+
+#[allow(deprecated)] 
+pub use crate::key::PublicKey;
 
 #[rustfmt::skip]
 mod prelude {

@@ -15,7 +15,7 @@ use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
+use crate::crypto::key::LegacyPublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
@@ -129,7 +129,7 @@ impl Deserialize for ScriptBuf {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> { Ok(Self::from(bytes.to_vec())) }
 }
 
-impl Serialize for PublicKey {
+impl Serialize for LegacyPublicKey {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
@@ -137,9 +137,9 @@ impl Serialize for PublicKey {
     }
 }
 
-impl Deserialize for PublicKey {
+impl Deserialize for LegacyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        PublicKey::from_slice(bytes).map_err(Error::InvalidPublicKey)
+        LegacyPublicKey::from_slice(bytes).map_err(Error::InvalidPublicKey)
     }
 }
 

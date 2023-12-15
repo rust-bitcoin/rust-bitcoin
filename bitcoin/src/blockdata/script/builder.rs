@@ -10,7 +10,7 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
 use crate::blockdata::transaction::Sequence;
-use crate::key::PublicKey;
+use crate::key::LegacyPublicKey;
 use crate::prelude::*;
 
 /// An Object which can be used to construct a script piece by piece.
@@ -64,7 +64,7 @@ impl Builder {
     }
 
     /// Adds instructions to push a public key onto the stack.
-    pub fn push_key(self, key: &PublicKey) -> Builder {
+    pub fn push_key(self, key: &LegacyPublicKey) -> Builder {
         if key.compressed {
             self.push_slice(key.inner.serialize())
         } else {
