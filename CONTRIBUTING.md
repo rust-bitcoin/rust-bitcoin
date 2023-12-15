@@ -18,8 +18,6 @@ changes to this document in a pull request.
   * [Peer review](#peer-review)
   * [Repository maintainers](#repository-maintainers)
 - [Coding conventions](#coding-conventions)
-  * [Formatting](#formatting)
-  * [MSRV](#msrv)
   * [Naming conventions](#naming-conventions)
   * [Upgrading dependencies](#upgrading-dependencies)
   * [Unsafe code](#unsafe-code)
@@ -378,6 +376,27 @@ Add Panics section if any input to the function can trigger a panic.
 Generally we prefer to have non-panicking APIs but it is impractical in some cases. If you're not
 sure, feel free to ask. If we determine panicking is more practical it must be documented. Internal
 panics that could theoretically occur because of bugs in our code must not be documented.
+
+
+#### Derives
+
+We try to use standard set of derives if it makes sense:
+
+```
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Foo {
+    Bar,
+    Baz,
+}
+```
+
+For types that do should not form a total or partial order, or that technically do but it does not
+make sense to compare them, we use the `Ordered` trait from the
+[`ordered`](https://crates.io/crates/ordered) crate. See `absolute::LockTime` for an example.
+
+For error types you likely want to use `#[derive(Debug, Clone, PartialEq, Eq)]`.
+
+See [Errors](#errors) section.
 
 
 #### Attributes
