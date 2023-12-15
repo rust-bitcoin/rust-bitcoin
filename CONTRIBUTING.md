@@ -18,8 +18,6 @@ changes to this document in a pull request.
   * [Peer review](#peer-review)
   * [Repository maintainers](#repository-maintainers)
 - [Coding conventions](#coding-conventions)
-  * [Formatting](#formatting)
-  * [MSRV](#msrv)
   * [Naming conventions](#naming-conventions)
   * [Upgrading dependencies](#upgrading-dependencies)
   * [Unsafe code](#unsafe-code)
