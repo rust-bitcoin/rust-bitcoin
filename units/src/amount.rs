@@ -302,7 +302,7 @@ fn parse_signed_to_satoshi(
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
-            let last_n = unsigned_abs(precision_diff).into();
+            let last_n = precision_diff.unsigned_abs().into();
             if is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
                     Ok(0) => return Ok((is_negative, 0)),
@@ -416,9 +416,6 @@ fn dec_width(mut num: u64) -> usize {
     width
 }
 
-// NIH due to MSRV, impl copied from `core::i8::unsigned_abs` (introduced in Rust 1.51.1).
-fn unsigned_abs(x: i8) -> u8 { x.wrapping_abs() as u8 }
-
 fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
     for _ in 0..count {
         f.write_char(c)?;
@@ -452,7 +449,7 @@ fn fmt_satoshi_in(
             trailing_decimal_zeros = options.precision.unwrap_or(0);
         }
         Ordering::Less => {
-            let precision = unsigned_abs(precision);
+            let precision = precision.unsigned_abs();
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
             num_after_decimal_point = satoshi % divisor;
@@ -990,15 +987,10 @@ impl SignedAmount {
         SignedAmount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Returns the absolute value as satoshis.
-    ///
-    /// This is the implementation of `unsigned_abs()` copied from `core` to support older MSRV.
-    fn to_sat_abs(self) -> u64 { self.to_sat().wrapping_abs() as u64 }
-
     /// Create an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
-            sats_abs: self.to_sat_abs(),
+            sats_abs: self.unsigned_abs().to_sat(),
             is_negative: self.is_negative(),
             style: DisplayStyle::FixedDenomination { denomination, show_denomination: false },
         }
@@ -1010,7 +1002,7 @@ impl SignedAmount {
     /// avoid confusion the denomination is always shown.
     pub fn display_dynamic(self) -> Display {
         Display {
-            sats_abs: self.to_sat_abs(),
+            sats_abs: self.unsigned_abs().to_sat(),
             is_negative: self.is_negative(),
             style: DisplayStyle::DynamicDenomination,
         }
@@ -1021,7 +1013,7 @@ impl SignedAmount {
     /// Does not include the denomination.
     #[rustfmt::skip]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.to_sat_abs(), self.is_negative(), f, denom, false, FormatOptions::default())
+        fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -1046,6 +1038,9 @@ impl SignedAmount {
 
     /// Get the absolute value of this [SignedAmount].
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
+
+    /// Get the absolute value of this [SignedAmount] returning `Amount`.
+    pub fn unsigned_abs(self) -> Amount { Amount(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [SignedAmount].
     ///
