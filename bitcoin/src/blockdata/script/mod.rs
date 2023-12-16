@@ -56,6 +56,7 @@ mod push_bytes;
 mod tests;
 pub mod witness_program;
 pub mod witness_version;
+pub mod template;
 
 use alloc::rc::Rc;
 #[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
@@ -85,6 +86,7 @@ pub use self::{
     instruction::*,
     owned::*,
     push_bytes::*,
+    template::{Template, RawTemplate, SegWitTemplate, RawSegWitTemplate},
 };
 
 hashes::hash_newtype! {

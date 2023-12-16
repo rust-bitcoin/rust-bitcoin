@@ -278,6 +278,16 @@ mod primitive {
         }
     }
 
+    impl<'a> TryFrom<&'a [u8]> for PushBytesBuf {
+        type Error = PushBytesError;
+
+        fn try_from(slice: &'a [u8]) -> Result<Self, Self::Error> {
+            // check len
+            let _: &PushBytes = slice.try_into()?;
+            Ok(PushBytesBuf(slice.to_owned()))
+        }
+    }
+
     impl ToOwned for PushBytes {
         type Owned = PushBytesBuf;
 

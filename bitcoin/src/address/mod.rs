@@ -28,7 +28,6 @@
 
 pub mod error;
 
-use core::convert::{TryFrom, TryInto};
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
@@ -513,25 +512,15 @@ impl Address {
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(script: &Script, network: Network) -> Result<Address, Error> {
-        if script.is_p2pkh() {
-            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
-            let hash = PubkeyHash::from_byte_array(bytes);
-            Ok(Address::p2pkh(hash, network))
-        } else if script.is_p2sh() {
-            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
-            let hash = ScriptHash::from_byte_array(bytes);
-            Ok(Address::p2sh_from_hash(hash, network))
-        } else if script.is_witness_program() {
-            let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
+        use AddressInner::*;
 
-            let buf = PushBytesBuf::try_from(script.as_bytes()[2..].to_vec())
-                .expect("is_witness_program guarantees len <= 42 bytes");
-            let version = WitnessVersion::try_from(opcode)?;
-            let program = WitnessProgram::new(version, buf)?;
-            Ok(Address::from_witness_program(program, network))
-        } else {
-            Err(Error::UnrecognizedScript)
-        }
+        let inner = match script.template() {
+            Some(script::Template::P2Pkh(hash)) => P2pkh { hash, network: network.into(), },
+            Some(script::Template::P2Sh(hash)) => P2sh { hash, network: network.into(), },
+            Some(script::Template::SegWit(segwit)) => Segwit { program: segwit.into_witness_program(), hrp: network.into(), },
+            None | Some(script::Template::P2Pk(_)) | Some(script::Template::OpReturn(_))=> return Err(Error::UnrecognizedScript),
+        };
+        Ok(Address(inner, PhantomData))
     }
 
     /// Generates a script pubkey spending to this address.
@@ -1241,8 +1230,6 @@ mod tests {
 
     #[test]
     fn test_fail_address_from_script() {
-        use crate::witness_program;
-
         let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
         let bad_p2wsh = ScriptBuf::from_hex(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
@@ -1256,7 +1243,7 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
             Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
-            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
+            Err(Error::UnrecognizedScript)
         );
     }
 
