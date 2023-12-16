@@ -145,6 +145,45 @@ impl FromStr for Denomination {
     }
 }
 
+
+/// An error during amount parsing amount with denomination.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseError {
+    /// Invalid amount.
+    Amount(ParseAmountError),
+
+    /// Invalid denomination.
+    Denomination(ParseDenominationError),
+}
+
+impl From<ParseAmountError> for ParseError {
+    fn from(e: ParseAmountError) -> Self { Self::Amount(e) }
+}
+
+impl From<ParseDenominationError> for ParseError {
+    fn from(e: ParseDenominationError) -> Self { Self::Denomination(e) }
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseError::Amount(error) => write_err!(f, "invalid amount"; error),
+            ParseError::Denomination(error) => write_err!(f, "invalid denomination"; error),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ParseError::Amount(error) => Some(error),
+            ParseError::Denomination(error) => Some(error),
+        }
+    }
+}
+
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -161,8 +200,6 @@ pub enum ParseAmountError {
     InputTooLarge,
     /// Invalid character in input.
     InvalidCharacter(char),
-    /// Invalid denomination.
-    InvalidDenomination(ParseDenominationError),
 }
 
 impl fmt::Display for ParseAmountError {
@@ -176,7 +213,6 @@ impl fmt::Display for ParseAmountError {
             InvalidFormat => f.write_str("invalid number format"),
             InputTooLarge => f.write_str("input string was too large"),
             InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
-            InvalidDenomination(ref e) => write_err!(f, "invalid denomination"; e),
         }
     }
 }
@@ -189,13 +225,8 @@ impl std::error::Error for ParseAmountError {
         match *self {
             Negative | TooBig | TooPrecise | InvalidFormat | InputTooLarge
             | InvalidCharacter(_) => None,
-            InvalidDenomination(ref e) => Some(e),
         }
     }
-}
-
-impl From<ParseDenominationError> for ParseAmountError {
-    fn from(e: ParseDenominationError) -> Self { Self::InvalidDenomination(e) }
 }
 
 /// An error during amount parsing.
@@ -358,7 +389,7 @@ fn parse_signed_to_satoshi(
     Ok((is_negative, value))
 }
 
-fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseAmountError> {
+fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseError> {
     let (i, j) = if let Some(i) = s.find(' ') {
         (i, i + 1)
     } else {
@@ -621,9 +652,9 @@ impl Amount {
     /// [Self::to_string_with_denomination] or with [fmt::Display].
     /// If you want to parse only the amount without the denomination,
     /// use [Self::from_str_in].
-    pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseAmountError> {
+    pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        Amount::from_str_in(amt, denom)
+        Amount::from_str_in(amt, denom).map_err(Into::into)
     }
 
     /// Express this [Amount] as a floating-point value in the given denomination.
@@ -822,7 +853,7 @@ impl ops::DivAssign<u64> for Amount {
 }
 
 impl FromStr for Amount {
-    type Err = ParseAmountError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> { Amount::from_str_with_denomination(s) }
 }
@@ -954,9 +985,9 @@ impl SignedAmount {
     /// [Self::to_string_with_denomination] or with [fmt::Display].
     /// If you want to parse only the amount without the denomination,
     /// use [Self::from_str_in].
-    pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseAmountError> {
+    pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        SignedAmount::from_str_in(amt, denom)
+        SignedAmount::from_str_in(amt, denom).map_err(Into::into)
     }
 
     /// Express this [SignedAmount] as a floating-point value in the given denomination.
@@ -1193,7 +1224,7 @@ impl ops::DivAssign<i64> for SignedAmount {
 }
 
 impl FromStr for SignedAmount {
-    type Err = ParseAmountError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> { SignedAmount::from_str_with_denomination(s) }
 }
@@ -1627,7 +1658,7 @@ mod tests {
 
             let s = format!("-0 {}", denom);
             match Amount::from_str(&s) {
-                Err(e) => assert_eq!(e, ParseAmountError::Negative),
+                Err(e) => assert_eq!(e, ParseError::Amount(ParseAmountError::Negative)),
                 Ok(_) => panic!("Unsigned amount from {}", s),
             }
             match SignedAmount::from_str(&s) {
@@ -2026,7 +2057,7 @@ mod tests {
 
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x')));
+        assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x').into()));
         assert_eq!(
             Amount::from_str("xBTC"),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
@@ -2035,25 +2066,39 @@ mod tests {
             Amount::from_str("5 BTC BTC"),
             Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
         );
-        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B')));
+        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B').into()));
         assert_eq!(
             Amount::from_str("5 5 BTC"),
             Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
         );
 
         #[track_caller]
-        fn case(s: &str, expected: Result<Amount, ParseAmountError>) {
+        fn ok_case(s: &str, expected: Amount) {
+            assert_eq!(Amount::from_str(s).unwrap(), expected);
+            assert_eq!(Amount::from_str(&s.replace(' ', "")).unwrap(), expected);
+        }
+
+        #[track_caller]
+        fn case(s: &str, expected: Result<Amount, impl Into<ParseError>>) {
+            let expected = expected.map_err(Into::into);
             assert_eq!(Amount::from_str(s), expected);
             assert_eq!(Amount::from_str(&s.replace(' ', "")), expected);
         }
 
         #[track_caller]
-        fn scase(s: &str, expected: Result<SignedAmount, ParseAmountError>) {
+        fn ok_scase(s: &str, expected: SignedAmount) {
+            assert_eq!(SignedAmount::from_str(s).unwrap(), expected);
+            assert_eq!(SignedAmount::from_str(&s.replace(' ', "")).unwrap(), expected);
+        }
+
+        #[track_caller]
+        fn scase(s: &str, expected: Result<SignedAmount, impl Into<ParseError>>) {
+            let expected = expected.map_err(Into::into);
             assert_eq!(SignedAmount::from_str(s), expected);
             assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
         }
 
-        case("5 BCH", Err(Unknown(UnknownDenominationError("BCH".into())).into()));
+        case("5 BCH", Err(Unknown(UnknownDenominationError("BCH".into()))));
 
         case("-1 BTC", Err(E::Negative));
         case("-0.0 BTC", Err(E::Negative));
@@ -2064,13 +2109,13 @@ mod tests {
         scase("-200000000000 BTC", Err(E::TooBig));
         case("18446744073709551616 sat", Err(E::TooBig));
 
-        case(".5 bits", Ok(Amount::from_sat(50)));
-        scase("-.5 bits", Ok(SignedAmount::from_sat(-50)));
-        case("0.00253583 BTC", Ok(Amount::from_sat(253583)));
-        scase("-5 satoshi", Ok(SignedAmount::from_sat(-5)));
-        case("0.10000000 BTC", Ok(Amount::from_sat(100_000_00)));
-        scase("-100 bits", Ok(SignedAmount::from_sat(-10_000)));
-        scase(&format!("{} SAT", i64::MIN), Ok(SignedAmount::from_sat(i64::MIN)));
+        ok_case(".5 bits", Amount::from_sat(50));
+        ok_scase("-.5 bits", SignedAmount::from_sat(-50));
+        ok_case("0.00253583 BTC", Amount::from_sat(253583));
+        ok_scase("-5 satoshi", SignedAmount::from_sat(-5));
+        ok_case("0.10000000 BTC", Amount::from_sat(100_000_00));
+        ok_scase("-100 bits", SignedAmount::from_sat(-10_000));
+        ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
     }
 
     #[test]
