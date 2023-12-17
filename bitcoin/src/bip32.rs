@@ -19,7 +19,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use serde;
 
 use crate::base58;
-use crate::crypto::key::{self, Keypair, PrivateKey, CompressedPublicKey};
+use crate::crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::NetworkKind;
 use crate::prelude::*;

@@ -557,10 +557,7 @@ impl TxOut {
     ///
     /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
     pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
-        TxOut {
-            value: script_pubkey.minimal_non_dust(),
-            script_pubkey,
-        }
+        TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
     }
 
     /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
@@ -575,10 +572,7 @@ impl TxOut {
     ///
     /// [`minimal_non_dust`]: TxOut::minimal_non_dust
     pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
-        TxOut {
-            value: script_pubkey.minimal_non_dust_custom(dust_relay_fee),
-            script_pubkey,
-        }
+        TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
     }
 }
 

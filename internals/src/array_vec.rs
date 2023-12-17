@@ -11,6 +11,7 @@ pub use safety_boundary::ArrayVec;
 // inside it!
 mod safety_boundary {
     use core::mem::MaybeUninit;
+
     use crate::const_tools::cond_const;
 
     /// A growable contiguous collection backed by array.
@@ -100,82 +101,66 @@ mod safety_boundary {
 /// memcpy.
 #[allow(clippy::non_canonical_clone_impl)]
 impl<T: Copy, const CAP: usize> Clone for ArrayVec<T, CAP> {
-    fn clone(&self) -> Self {
-        Self::from_slice(self)
-    }
+    fn clone(&self) -> Self { Self::from_slice(self) }
 }
-
 
 impl<T: Copy, const CAP: usize> core::ops::Deref for ArrayVec<T, CAP> {
     type Target = [T];
 
-    fn deref(&self) -> &Self::Target {
-        self.as_slice()
-    }
+    fn deref(&self) -> &Self::Target { self.as_slice() }
 }
 
 impl<T: Copy, const CAP: usize> core::ops::DerefMut for ArrayVec<T, CAP> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_mut_slice()
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_slice() }
 }
 
 impl<T: Copy + Eq, const CAP: usize> Eq for ArrayVec<T, CAP> {}
 
-impl<T: Copy + PartialEq, const CAP1: usize, const CAP2: usize> PartialEq<ArrayVec<T, CAP2>> for ArrayVec<T, CAP1> {
-    fn eq(&self, other: &ArrayVec<T, CAP2>) -> bool {
-        **self == **other
-    }
+impl<T: Copy + PartialEq, const CAP1: usize, const CAP2: usize> PartialEq<ArrayVec<T, CAP2>>
+    for ArrayVec<T, CAP1>
+{
+    fn eq(&self, other: &ArrayVec<T, CAP2>) -> bool { **self == **other }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize> PartialEq<[T]> for ArrayVec<T, CAP> {
-    fn eq(&self, other: &[T]) -> bool {
-        **self == *other
-    }
+    fn eq(&self, other: &[T]) -> bool { **self == *other }
 }
 
 impl<T: Copy + PartialEq, const CAP: usize> PartialEq<ArrayVec<T, CAP>> for [T] {
-    fn eq(&self, other: &ArrayVec<T, CAP>) -> bool {
-        *self == **other
-    }
+    fn eq(&self, other: &ArrayVec<T, CAP>) -> bool { *self == **other }
 }
 
-impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<[T; LEN]> for ArrayVec<T, CAP> {
-    fn eq(&self, other: &[T; LEN]) -> bool {
-        **self == *other
-    }
+impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<[T; LEN]>
+    for ArrayVec<T, CAP>
+{
+    fn eq(&self, other: &[T; LEN]) -> bool { **self == *other }
 }
 
-impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<ArrayVec<T, CAP>> for [T; LEN] {
-    fn eq(&self, other: &ArrayVec<T, CAP>) -> bool {
-        *self == **other
-    }
+impl<T: Copy + PartialEq, const CAP: usize, const LEN: usize> PartialEq<ArrayVec<T, CAP>>
+    for [T; LEN]
+{
+    fn eq(&self, other: &ArrayVec<T, CAP>) -> bool { *self == **other }
 }
 
 impl<T: Copy + Ord, const CAP: usize> Ord for ArrayVec<T, CAP> {
-    fn cmp(&self, other: &ArrayVec<T, CAP>) -> core::cmp::Ordering {
-        (**self).cmp(&**other)
-    }
+    fn cmp(&self, other: &ArrayVec<T, CAP>) -> core::cmp::Ordering { (**self).cmp(&**other) }
 }
 
-impl<T: Copy + PartialOrd, const CAP1: usize, const CAP2: usize> PartialOrd<ArrayVec<T, CAP2>> for ArrayVec<T, CAP1> {
+impl<T: Copy + PartialOrd, const CAP1: usize, const CAP2: usize> PartialOrd<ArrayVec<T, CAP2>>
+    for ArrayVec<T, CAP1>
+{
     fn partial_cmp(&self, other: &ArrayVec<T, CAP2>) -> Option<core::cmp::Ordering> {
         (**self).partial_cmp(&**other)
     }
 }
 
 impl<T: Copy + fmt::Debug, const CAP: usize> fmt::Debug for ArrayVec<T, CAP> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(&**self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&**self, f) }
 }
 
 impl<T: Copy + core::hash::Hash, const CAP: usize> core::hash::Hash for ArrayVec<T, CAP> {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        core::hash::Hash::hash(&**self, state)
-    }
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
 }
-
 
 #[cfg(test)]
 mod tests {

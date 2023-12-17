@@ -45,7 +45,9 @@ use crate::blockdata::constants::{
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, PushBytesBuf, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{PubkeyHash, PublicKey, CompressedPublicKey, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{
+    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+};
 use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -390,10 +392,7 @@ impl Address {
     /// Creates a witness pay to public key address from a public key.
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
-    pub fn p2wpkh(
-        pk: &CompressedPublicKey,
-        network: Network,
-    ) -> Self {
+    pub fn p2wpkh(pk: &CompressedPublicKey, network: Network) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
         Address::from_witness_program(program, network)
     }
@@ -401,10 +400,7 @@ impl Address {
     /// Creates a pay to script address that embeds a witness pay to public key.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwpkh(
-        pk: &CompressedPublicKey,
-        network: impl Into<NetworkKind>,
-    ) -> Address {
+    pub fn p2shwpkh(pk: &CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
         let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash();
         Address::p2sh_from_hash(script_hash, network)

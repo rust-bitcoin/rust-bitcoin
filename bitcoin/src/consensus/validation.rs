@@ -57,7 +57,8 @@ pub fn verify_script_with_flags<F: Into<u32>>(
         spending_tx,
         index,
         flags.into(),
-    ).map_err(BitcoinconsensusError)
+    )
+    .map_err(BitcoinconsensusError)
 }
 
 /// Verifies that this transaction is able to spend its inputs.

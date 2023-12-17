@@ -5,8 +5,8 @@
 //! This module provides support for taproot tagged hashes.
 //!
 
-pub mod serialized_signature;
 pub mod merkle_branch;
+pub mod serialized_signature;
 
 use core::cmp::Reverse;
 use core::fmt;

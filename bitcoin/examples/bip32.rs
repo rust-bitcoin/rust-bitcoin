@@ -8,7 +8,7 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
 use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::{Network, NetworkKind, CompressedPublicKey};
+use bitcoin::{CompressedPublicKey, Network, NetworkKind};
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,

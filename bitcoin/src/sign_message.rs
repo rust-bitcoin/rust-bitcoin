@@ -238,7 +238,8 @@ mod tests {
 
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = super::MessageSignature::from_str(&signature.to_string()).unwrap();
-        let pubkey = signature2.recover_pubkey(&secp, msg_hash)
+        let pubkey = signature2
+            .recover_pubkey(&secp, msg_hash)
             .unwrap()
             .try_into()
             .expect("compressed was set to true");

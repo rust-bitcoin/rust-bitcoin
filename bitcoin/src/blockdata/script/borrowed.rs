@@ -420,22 +420,22 @@ impl Script {
     fn minimal_non_dust_inner(&self, dust_relay_fee: u64) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-        let sats = dust_relay_fee.checked_mul(
-                if self.is_op_return() {
-                    0
-                } else if self.is_witness_program() {
-                    32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
+        let sats = dust_relay_fee
+            .checked_mul(if self.is_op_return() {
+                0
+            } else if self.is_witness_program() {
+                32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
                     self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-                } else {
-                    32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
+            } else {
+                32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
                     self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-                }
-            ).expect("dust_relay_fee or script length should not be absurdly large") /
-            1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
-            // Note: We ensure the division happens at the end, since Core performs the division at the end.
-            //       This will make sure none of the implicit floor operations mess with the value.
+            })
+            .expect("dust_relay_fee or script length should not be absurdly large")
+            / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
+                    // Note: We ensure the division happens at the end, since Core performs the division at the end.
+                    //       This will make sure none of the implicit floor operations mess with the value.
 
         crate::Amount::from_sat(sats)
     }

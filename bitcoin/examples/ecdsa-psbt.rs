@@ -39,8 +39,8 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, CompressedPublicKey, ScriptBuf, Sequence, Transaction,
-    TxIn, TxOut, Witness,
+    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence,
+    Transaction, TxIn, TxOut, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
