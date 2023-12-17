@@ -11,9 +11,9 @@ use core::str::FromStr;
 
 use hashes::{hash160, Hash};
 use hex::FromHex;
+use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
-use internals::array_vec::ArrayVec;
 
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
@@ -299,9 +299,7 @@ impl CompressedPublicKey {
     ///
     /// Note that this can be used as a sort key to get BIP67-compliant sorting.
     /// That's why this type doesn't have the `to_sort_key` method - it would duplicate this one.
-    pub fn to_bytes(&self) -> [u8; 33] {
-        self.0.serialize()
-    }
+    pub fn to_bytes(&self) -> [u8; 33] { self.0.serialize() }
 
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
@@ -354,9 +352,7 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
 }
 
 impl From<CompressedPublicKey> for PublicKey {
-    fn from(value: CompressedPublicKey) -> Self {
-        PublicKey::new(value.0)
-    }
+    fn from(value: CompressedPublicKey) -> Self { PublicKey::new(value.0) }
 }
 
 impl From<CompressedPublicKey> for XOnlyPublicKey {
@@ -378,7 +374,6 @@ impl From<CompressedPublicKey> for WPubkeyHash {
 impl From<&CompressedPublicKey> for WPubkeyHash {
     fn from(key: &CompressedPublicKey) -> Self { key.wpubkey_hash() }
 }
-
 
 /// A Bitcoin ECDSA private key
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -1284,7 +1279,8 @@ mod tests {
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        let want = "PrivateKey { compressed: true, network: Test, inner: SecretKey(#32014e414fdce702) }";
+        let want =
+            "PrivateKey { compressed: true, network: Test, inner: SecretKey(#32014e414fdce702) }";
         let got = format!("{:?}", sk);
         assert_eq!(got, want)
     }

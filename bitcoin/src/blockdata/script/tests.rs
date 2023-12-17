@@ -6,10 +6,10 @@ use hashes::Hash;
 use hex_lit::hex;
 
 use super::*;
-use crate::FeeRate;
 use crate::blockdata::opcodes;
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey};
+use crate::FeeRate;
 
 #[test]
 #[rustfmt::skip]
@@ -651,7 +651,10 @@ fn defult_dust_value_tests() {
     let script_p2wpkh = Builder::new().push_int(0).push_slice([42; 20]).into_script();
     assert!(script_p2wpkh.is_p2wpkh());
     assert_eq!(script_p2wpkh.minimal_non_dust(), crate::Amount::from_sat(294));
-    assert_eq!(script_p2wpkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)), crate::Amount::from_sat(588));
+    assert_eq!(
+        script_p2wpkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
+        crate::Amount::from_sat(588)
+    );
 
     let script_p2pkh = Builder::new()
         .push_opcode(OP_DUP)
@@ -662,7 +665,10 @@ fn defult_dust_value_tests() {
         .into_script();
     assert!(script_p2pkh.is_p2pkh());
     assert_eq!(script_p2pkh.minimal_non_dust(), crate::Amount::from_sat(546));
-    assert_eq!(script_p2pkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)), crate::Amount::from_sat(1092));
+    assert_eq!(
+        script_p2pkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
+        crate::Amount::from_sat(1092)
+    );
 }
 
 #[test]

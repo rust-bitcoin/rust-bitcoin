@@ -940,11 +940,11 @@ impl SignedAmount {
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom)? {
             // (negative, amount)
-            (false, sat) if sat > i64::MAX as u64     => Err(ParseAmountError::TooBig),
-            (false, sat)                              => Ok(SignedAmount(sat as i64)),
+            (false, sat) if sat > i64::MAX as u64 => Err(ParseAmountError::TooBig),
+            (false, sat) => Ok(SignedAmount(sat as i64)),
             (true, sat) if sat == i64::MAX as u64 + 1 => Ok(SignedAmount(i64::MIN)),
-            (true, sat) if sat > i64::MAX as u64 + 1  => Err(ParseAmountError::TooBig),
-            (true, sat)                               => Ok(SignedAmount(-(sat as i64))),
+            (true, sat) if sat > i64::MAX as u64 + 1 => Err(ParseAmountError::TooBig),
+            (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
 

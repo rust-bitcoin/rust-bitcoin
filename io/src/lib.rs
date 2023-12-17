@@ -23,8 +23,8 @@ extern crate alloc;
 mod error;
 mod macros;
 
-use core::convert::TryInto;
 use core::cmp;
+use core::convert::TryInto;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
