@@ -33,6 +33,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: '1.65.0'
+      - name: build
+        run: cargo build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: target
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.65.0'
       - name: fuzz
         run: |
           if [[ "${{ matrix.fuzz_target }}" =~ ^bitcoin ]]; then
