@@ -38,6 +38,7 @@
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
 // Exclude clippy lints we don't think are valuable
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
+#![allow(clippy::uninhabited_references)] // falsely claims that 100% safe code is UB
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
