@@ -353,8 +353,7 @@ impl<N: NetworkValidation> serde::Serialize for Address<N> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
-    /// Returns a reference to the unchecked address, which is dangerous to use if the address
-    /// is invalid in the context of `NetworkUnchecked`.
+    /// Returns a reference to the address as if it was unchecked.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
         unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
     }
