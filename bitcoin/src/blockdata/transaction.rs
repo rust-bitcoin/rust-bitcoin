@@ -1929,7 +1929,8 @@ mod tests {
         let mut witness: Vec<_> = spending.input[1].witness.to_vec();
         witness[0][10] = 42;
         spending.input[1].witness = Witness::from_slice(&witness);
-        match spending
+
+        let error = spending
             .verify(|point: &OutPoint| {
                 if let Some(tx) = spent3.remove(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
@@ -1937,8 +1938,9 @@ mod tests {
                 None
             })
             .err()
-            .unwrap()
-        {
+            .unwrap();
+
+        match error {
             TxVerifyError::ScriptVerification(_) => {}
             _ => panic!("Wrong error type"),
         }
