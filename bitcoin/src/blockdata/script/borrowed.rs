@@ -16,7 +16,7 @@ use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
-    ScriptHash, WScriptHash,
+    ScriptHash, WScriptHash, RawTemplate, Template,
 };
 use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey};
@@ -169,6 +169,34 @@ impl Script {
     #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
         self.0.first().and_then(|opcode| WitnessVersion::try_from(Opcode::from(*opcode)).ok())
+    }
+
+    /// Returns a template which the script matches (if any).
+    pub fn raw_template(&self) -> Option<RawTemplate<'_>> {
+        if let Some(bytes) = self.p2pk_pubkey_bytes() {
+            Some(RawTemplate::P2Pk(bytes.try_into().expect("p2pk_pubkey_bytes returns correct len")))
+        } else if self.is_p2pkh() {
+            Some(RawTemplate::P2Pkh(self.0[3..23].try_into().expect("statically known len")))
+        } else if self.is_p2sh() {
+            Some(RawTemplate::P2Sh(self.0[2..22].try_into().expect("statically known len")))
+        } else if self.is_p2wpkh() {
+            Some(RawTemplate::p2wpkh(self.0[2..22].try_into().expect("statically known len")))
+        } else if self.is_p2wsh() {
+            Some(RawTemplate::p2wsh(self.0[2..34].try_into().expect("statically known len")))
+        } else if self.is_p2tr() {
+            Some(RawTemplate::p2tr(self.0[2..34].try_into().expect("statically known len")))
+        } else if self.is_witness_program() {
+            RawTemplate::raw_segwit_script_pubkey(&self)
+        } else if self.is_op_return() {
+            Some(RawTemplate::OpReturn(&self.0[1..]))
+        } else {
+            None
+        }
+    }
+
+    /// Returns a valid template which the script matches (if any).
+    pub fn template(&self) -> Option<Template> {
+        self.raw_template()?.try_into().ok()
     }
 
     /// Checks whether a script pubkey is a P2SH output.

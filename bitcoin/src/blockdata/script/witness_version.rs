@@ -76,6 +76,11 @@ impl WitnessVersion {
     pub fn to_fe(self) -> Fe32 {
         Fe32::try_from(self.to_num()).expect("0-16 are valid fe32 values")
     }
+
+    /// Returns the opcode associated with this version.
+    pub fn to_opcode(self) -> Opcode {
+        self.into()
+    }
 }
 
 /// Prints [`WitnessVersion`] number (from 0 to 16) as integer, without any prefix or suffix.
