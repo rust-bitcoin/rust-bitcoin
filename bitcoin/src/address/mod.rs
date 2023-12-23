@@ -44,7 +44,7 @@ use crate::blockdata::constants::{
 };
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{self, PushBytesBuf, Script, ScriptBuf, ScriptHash};
+use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
 };
@@ -520,10 +520,8 @@ impl Address {
         } else if script.is_witness_program() {
             let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
 
-            let buf = PushBytesBuf::try_from(script.as_bytes()[2..].to_vec())
-                .expect("is_witness_program guarantees len <= 42 bytes");
             let version = WitnessVersion::try_from(opcode)?;
-            let program = WitnessProgram::new(version, buf)?;
+            let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
             Ok(Address::from_witness_program(program, network))
         } else {
             Err(Error::UnrecognizedScript)
@@ -727,8 +725,7 @@ impl FromStr for Address<NetworkUnchecked> {
     fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
         if let Ok((hrp, witness_version, data)) = bech32::segwit::decode(s) {
             let version = WitnessVersion::try_from(witness_version)?;
-            let buf = PushBytesBuf::try_from(data).expect("bech32 guarantees valid program length");
-            let program = WitnessProgram::new(version, buf)
+            let program = WitnessProgram::new(version, &data)
                 .expect("bech32 guarantees valid program length for witness");
 
             let hrp = KnownHrp::from_hrp(hrp)?;
@@ -924,10 +921,10 @@ mod tests {
     #[test]
     fn test_non_existent_segwit_version() {
         // 40-byte program
-        let program = PushBytesBuf::from(hex!(
+        let program = hex!(
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
-        ));
-        let program = WitnessProgram::new(WitnessVersion::V13, program).expect("valid program");
+        );
+        let program = WitnessProgram::new(WitnessVersion::V13, &program).expect("valid program");
 
         let addr = Address::from_witness_program(program, Bitcoin);
         roundtrips(&addr, Bitcoin);
