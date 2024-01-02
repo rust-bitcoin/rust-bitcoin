@@ -67,6 +67,8 @@ impl Weight {
                 #[allow(unconditional_panic)]
                 // disabling this lint until panic!() can be used.
                 #[allow(clippy::let_unit_value)]
+                // disabling this lint until panic!() can be used.
+                #[allow(clippy::out_of_bounds_indexing)]
                 let _int_overflow_scaling_weight = [(); 0][1];
                 Weight(0)
             }
