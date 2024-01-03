@@ -10,12 +10,19 @@
 use core::fmt;
 
 use hashes::Hash as _;
+use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{PushBytes, PushBytesBuf, PushBytesErrorReport, Script};
+use crate::blockdata::script::{PushBytes, Script};
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::taproot::TapNodeHash;
+
+/// The minimum byte size of a segregated witness program.
+pub const MIN_SIZE: usize = 2;
+
+/// The maximum byte size of a segregated witness program.
+pub const MAX_SIZE: usize = 40;
 
 /// The segregated witness program.
 ///
@@ -27,43 +34,41 @@ pub struct WitnessProgram {
     /// The segwit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
-    program: PushBytesBuf,
+    program: ArrayVec<u8, MAX_SIZE>,
 }
 
 impl WitnessProgram {
-    /// Creates a new witness program.
-    pub fn new<P>(version: WitnessVersion, program: P) -> Result<Self, Error>
-    where
-        P: TryInto<PushBytesBuf>,
-        <P as TryInto<PushBytesBuf>>::Error: PushBytesErrorReport,
-    {
+    /// Creates a new witness program, copying the content from the given byte slice.
+    pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
         use Error::*;
 
-        let program = program.try_into().map_err(|error| InvalidLength(error.input_len()))?;
-        if program.len() < 2 || program.len() > 40 {
-            return Err(InvalidLength(program.len()));
+        let program_len = bytes.len();
+        if program_len < MIN_SIZE || program_len > MAX_SIZE {
+            return Err(InvalidLength(program_len));
         }
 
         // Specific segwit v0 check. These addresses can never spend funds sent to them.
-        if version == WitnessVersion::V0 && (program.len() != 20 && program.len() != 32) {
-            return Err(InvalidSegwitV0Length(program.len()));
+        if version == WitnessVersion::V0 && (program_len != 20 && program_len != 32) {
+            return Err(InvalidSegwitV0Length(program_len));
         }
+
+        let program = ArrayVec::from_slice(bytes);
         Ok(WitnessProgram { version, program })
     }
 
     /// Creates a [`WitnessProgram`] from a 20 byte pubkey hash.
     fn new_p2wpkh(program: [u8; 20]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: program.into() }
+        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Creates a [`WitnessProgram`] from a 32 byte script hash.
     fn new_p2wsh(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: program.into() }
+        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Creates a [`WitnessProgram`] from a 32 byte serialize taproot xonly pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V1, program: program.into() }
+        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
 
     /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
@@ -99,7 +104,12 @@ impl WitnessProgram {
     pub fn version(&self) -> WitnessVersion { self.version }
 
     /// Returns the witness program.
-    pub fn program(&self) -> &PushBytes { &self.program }
+    pub fn program(&self) -> &PushBytes {
+        self.program
+            .as_slice()
+            .try_into()
+            .expect("witness programs are always smaller than max size of PushBytes")
+    }
 
     /// Returns true if this witness program is for a P2WPKH output.
     pub fn is_p2wpkh(&self) -> bool {
