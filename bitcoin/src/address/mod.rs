@@ -353,8 +353,7 @@ impl<N: NetworkValidation> serde::Serialize for Address<N> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
-    /// Returns a reference to the unchecked address, which is dangerous to use if the address
-    /// is invalid in the context of `NetworkUnchecked`.
+    /// Returns a reference to the address as if it was unchecked.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
         unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
     }
@@ -630,10 +629,12 @@ impl Address {
 /// Methods that can be called only on `Address<NetworkUnchecked>`.
 impl Address<NetworkUnchecked> {
     /// Returns a reference to the checked address.
+    ///
     /// This function is dangerous in case the address is not a valid checked address.
     pub fn assume_checked_ref(&self) -> &Address {
         unsafe { &*(self as *const Address<NetworkUnchecked> as *const Address) }
     }
+
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
     /// regtest and signet addresse use the same prefix instead of multiple different ones. When
     /// parsing, such addresses are always assumed to be testnet addresses (the same is true for
