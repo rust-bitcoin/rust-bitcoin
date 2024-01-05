@@ -213,7 +213,7 @@ impl ScriptBuf {
         self.0.extend_from_slice(data.as_bytes());
     }
 
-    /// Computes the sum of `len` and the lenght of an appropriate push opcode.
+    /// Computes the sum of `len` and the length of an appropriate push opcode.
     pub(in crate::blockdata::script) fn reserved_len_for_slice(len: usize) -> usize {
         len + match len {
             0..=0x4b => 1,
@@ -277,7 +277,7 @@ impl ScriptBuf {
 
     /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
     ///
-    /// This method reallocates if the capacity is greater than lenght of the script but should not
+    /// This method reallocates if the capacity is greater than length of the script but should not
     /// when they are equal. If you know beforehand that you need to create a script of exact size
     /// use [`reserve_exact`](Self::reserve_exact) before adding data to the script so that the
     /// reallocation can be avoided.

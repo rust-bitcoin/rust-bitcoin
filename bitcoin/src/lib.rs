@@ -61,7 +61,7 @@ pub extern crate base64;
 /// Encodes and decodes the Bech32 forrmat.
 pub extern crate bech32;
 
-/// Rust implementation of cryptographic hash function algorithems.
+/// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
 /// Re-export the `hex-conservative` crate.
