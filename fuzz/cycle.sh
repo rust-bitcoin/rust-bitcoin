@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Continuosly cycle over fuzz targets running each for 1 hour.
+# Continuously cycle over fuzz targets running each for 1 hour.
 # It uses chrt SCHED_IDLE so that other process takes priority.
 #
 # For hfuzz options see https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
