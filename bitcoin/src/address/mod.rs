@@ -132,9 +132,8 @@ impl NetworkValidation for NetworkUnchecked {
 
 /// The inner representation of an address, without the network validation tag.
 ///
-/// An `Address` is composed of a payload and a network. This struct represents the inner
-/// representation of an address without the network validation tag, which is used to ensure that
-/// addresses are used only on the appropriate network.
+/// This struct represents the inner representation of an address without the network validation
+/// tag, which is used to ensure that addresses are used only on the appropriate network.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
