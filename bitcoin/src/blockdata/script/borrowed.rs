@@ -593,22 +593,12 @@ impl Script {
     /// Iterates the script to find the last pushdata.
     ///
     /// Returns `None` if the instruction is an opcode or if the script is empty.
-    pub(crate) fn last_pushdata(&self) -> Option<Push> {
+    pub(crate) fn last_pushdata(&self) -> Option<&PushBytes> {
         match self.instructions().last() {
             // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
-            Some(Ok(Instruction::PushBytes(bytes))) => Some(Push::Data(bytes)),
+            Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
             // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
-            // By here we know that op is between OP_PUSHNUM_NEG AND OP_PUSHNUM_16 inclusive.
-            Some(Ok(Instruction::Op(op))) if op.to_u8() <= 0x60 => {
-                if op == OP_PUSHNUM_NEG1 {
-                    Some(Push::Num(-1))
-                } else if op == OP_RESERVED {
-                    Some(Push::Reserved)
-                } else {
-                    let num = (op.to_u8() - 0x50) as i8; // cast ok, num is [1, 16].
-                    Some(Push::Num(num))
-                }
-            }
+            // However we are only interested in the pushdata so we can ignore them.
             _ => None,
         }
     }
@@ -624,19 +614,6 @@ impl Script {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
     }
-}
-
-/// Data pushed by "push" opcodes.
-///
-/// "push" opcodes are defined by Bitcoin Core as OP_PUSHBYTES_, OP_PUSHDATA, OP_PUSHNUM_, and
-/// OP_RESERVED i.e., everything less than OP_PUSHNUM_16 (0x60) . (TODO: Add link to core code).
-pub(crate) enum Push<'a> {
-    /// All the OP_PUSHBYTES_ and OP_PUSHDATA_ opcodes.
-    Data(&'a PushBytes),
-    /// All the OP_PUSHNUM_ opcodes (-1, 1, 2, .., 16)
-    Num(i8),
-    /// OP_RESERVED
-    Reserved,
 }
 
 /// Iterator over bytes of a script
