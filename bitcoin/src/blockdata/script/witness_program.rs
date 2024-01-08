@@ -29,7 +29,7 @@ pub const MAX_SIZE: usize = 40;
 /// The segregated witness program is technically only the program bytes _excluding_ the witness
 /// version, however we maintain length invariants on the `program` that are governed by the version
 /// number, therefore we carry the version number around along with the program bytes.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessProgram {
     /// The segwit version associated with this witness program.
     version: WitnessVersion,
