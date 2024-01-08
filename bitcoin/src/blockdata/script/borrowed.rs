@@ -353,7 +353,11 @@ impl Script {
         }
     }
 
-    /// Checks whether a script can be proven to have no satisfying input.
+    /// Checks whether a script is trivially known to have no satisfying input.
+    ///
+    /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
+    /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
+    #[deprecated(since = "TBD", note = "The method is not very useful, you might want `is_op_return`")]
     #[inline]
     pub fn is_provably_unspendable(&self) -> bool {
         use crate::blockdata::opcodes::Class::{IllegalOp, ReturnOp};
