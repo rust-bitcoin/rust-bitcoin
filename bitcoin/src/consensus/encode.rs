@@ -26,7 +26,7 @@ use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "p2p"))]
 use crate::p2p::{
     address::{AddrV2Message, Address},
     message_blockdata::Inventory,
@@ -630,11 +630,11 @@ impl_vec!(VarInt);
 impl_vec!(ShortId);
 impl_vec!(PrefilledTransaction);
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "p2p"))]
 impl_vec!(Inventory);
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "p2p"))]
 impl_vec!((u32, Address));
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "p2p"))]
 impl_vec!(AddrV2Message);
 
 pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
@@ -845,7 +845,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::{deserialize_partial, Decodable, Encodable};
-    #[cfg(feature = "std")]
+    #[cfg(all(feature = "std", feature = "p2p"))]
     use crate::p2p::{message_blockdata::Inventory, Address};
 
     #[test]
@@ -1136,9 +1136,9 @@ mod tests {
         test_len_is_max_vec::<TxIn>();
         test_len_is_max_vec::<Vec<u8>>();
         test_len_is_max_vec::<u64>();
-        #[cfg(feature = "std")]
+        #[cfg(all(feature = "std", feature = "p2p"))]
         test_len_is_max_vec::<(u32, Address)>();
-        #[cfg(feature = "std")]
+        #[cfg(all(feature = "std", feature = "p2p"))]
         test_len_is_max_vec::<Inventory>();
     }
 

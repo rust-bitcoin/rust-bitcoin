@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="std rand-std rand serde secp-recovery bitcoinconsensus-std base64 bitcoinconsensus"
+FEATURES="std rand-std rand serde secp-recovery bitcoinconsensus-std base64 bitcoinconsensus p2p"
 
 if [ "$DO_COV" = true ]
 then
@@ -34,7 +34,7 @@ if [ "$DO_LINT" = true ]
 then
     cargo clippy --locked --all-features --all-targets -- -D warnings
     cargo clippy --locked --example bip32 -- -D warnings
-    cargo clippy --locked --example handshake --features=rand-std -- -D warnings
+    cargo clippy --locked --example handshake --features=rand-std,p2p -- -D warnings
     cargo clippy --locked --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
     cargo clippy --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
     cargo clippy --locked --example sign-tx-taproot --features=rand-std -- -D warnings

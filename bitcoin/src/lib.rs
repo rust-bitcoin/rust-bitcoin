@@ -16,6 +16,7 @@
 //! ## Available feature flags
 //!
 //! * `std` - the usual dependency on `std` (default).
+//! * `p2p` - Enables the `p2p` module (support for the p2p network).
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
@@ -86,6 +87,7 @@ mod parse;
 #[cfg(feature = "serde")]
 mod serde_utils;
 
+#[cfg(feature = "p2p")]
 #[macro_use]
 pub mod p2p;
 pub mod address;

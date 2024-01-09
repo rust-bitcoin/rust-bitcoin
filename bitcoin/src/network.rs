@@ -9,6 +9,7 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
+//! # #[cfg(feature = "p2p")] {
 //! use bitcoin::Network;
 //! use bitcoin::consensus::encode::serialize;
 //!
@@ -16,6 +17,7 @@
 //! let bytes = serialize(&network.magic());
 //!
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
+//! # }
 //! ```
 
 use core::fmt;
@@ -28,6 +30,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::consensus::Params;
 use crate::constants::ChainHash;
+#[cfg(feature = "p2p")]
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
@@ -81,13 +84,16 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
+    /// # #[cfg(feature = "p2p")] {
     /// use bitcoin::p2p::Magic;
     /// use bitcoin::Network;
     /// use std::convert::TryFrom;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
     /// assert_eq!(None, Network::from_magic(Magic::from_bytes([0xFF, 0xFF, 0xFF, 0xFF])));
+    /// # }
     /// ```
+    #[cfg(feature = "p2p")]
     pub fn from_magic(magic: Magic) -> Option<Network> { Network::try_from(magic).ok() }
 
     /// Return the network magic bytes, which should be encoded little-endian
@@ -96,12 +102,15 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
+    /// # #[cfg(feature = "p2p")] {
     /// use bitcoin::p2p::Magic;
     /// use bitcoin::Network;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
+    /// # }
     /// ```
+    #[cfg(feature = "p2p")]
     pub fn magic(self) -> Magic { Magic::from(self) }
 
     /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
@@ -313,9 +322,9 @@ impl TryFrom<ChainHash> for Network {
 mod tests {
     use super::Network;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::p2p::ServiceFlags;
 
     #[test]
+    #[cfg(feature = "p2p")]
     fn serialize_test() {
         assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
         assert_eq!(serialize(&Network::Testnet.magic()), &[0x0b, 0x11, 0x09, 0x07]);
@@ -343,7 +352,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "p2p")]
     fn service_flags_test() {
+        use crate::p2p::ServiceFlags;
+
         let all = [
             ServiceFlags::NETWORK,
             ServiceFlags::GETUTXO,

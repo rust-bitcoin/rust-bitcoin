@@ -16,6 +16,7 @@ exclude = ["tests", "contrib"]
 [features]
 default = [ "std", "secp-recovery" ]
 std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
+p2p = []
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
 serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde"]
@@ -57,7 +58,7 @@ name = "bip32"
 
 [[example]]
 name = "handshake"
-required-features = ["std", "rand-std"]
+required-features = ["std", "rand-std", "p2p"]
 
 [[example]]
 name = "ecdsa-psbt"
