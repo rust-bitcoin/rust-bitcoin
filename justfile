@@ -11,7 +11,7 @@ check:
 
 # Lint everything.
 lint:
-  cargo clippy --workspace --all-targets --all-features -- --deny warnings
+  cargo +nightly clippy --workspace --all-targets --all-features -- --deny warnings
 
 # Check the formatting
 format:
