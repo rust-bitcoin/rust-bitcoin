@@ -283,7 +283,7 @@ impl std::error::Error for Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
+    fn from(e: io::Error) -> Self { Self::Io(e.kind()) }
 }
 
 impl From<PrevoutsSizeError> for Error {
