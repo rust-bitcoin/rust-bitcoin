@@ -132,9 +132,8 @@ impl NetworkValidation for NetworkUnchecked {
 
 /// The inner representation of an address, without the network validation tag.
 ///
-/// An `Address` is composed of a payload and a network. This struct represents the inner
-/// representation of an address without the network validation tag, which is used to ensure that
-/// addresses are used only on the appropriate network.
+/// This struct represents the inner representation of an address without the network validation
+/// tag, which is used to ensure that addresses are used only on the appropriate network.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
@@ -319,11 +318,8 @@ impl From<Network> for KnownHrp {
 /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
 /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-///
-/// The `#[repr(transparent)]` attribute is used to guarantee that the layout of the
-/// `Address` struct is the same as the layout of the `AddressInner` struct. This attribute is
-/// an implementation detail and users should not rely on it in their code.
-///
+// The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
+// is an implementation detail and users should not rely on it in their code.
 #[repr(transparent)]
 pub struct Address<V = NetworkChecked>(AddressInner, PhantomData<V>)
 where
