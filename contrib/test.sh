@@ -2,30 +2,40 @@
 
 set -ex
 
-CRATES="bitcoin hashes units internals fuzz"
-DEPS="recent minimal"
+main() {
+    run_per_crate_test_scripts
+}
 
-for dep in $DEPS
-do
-    cp "Cargo-$dep.lock" Cargo.lock
-    for crate in ${CRATES}
+run_per_crate_test_scripts() {
+    local crates="bitcoin hashes units internals fuzz"
+    local deps="recent minimal"
+
+    for dep in ${deps}
     do
-        (
-            cd "$crate"
-            ./contrib/test.sh
-        )
-    done
-    if [ "$dep" = recent ];
-    then
-        # We always test committed dependencies but we want to warn if they could've been updated
-        cargo update
-        if diff Cargo-recent.lock Cargo.lock;
+        cp "Cargo-$dep.lock" Cargo.lock
+        for crate in ${crates}
+        do
+            (
+                cd "$crate"
+                ./contrib/test.sh
+            )
+        done
+        if [ "$dep" = recent ];
         then
-            echo Dependencies are up to date
-        else
-            echo "::warning file=Cargo-recent.lock::Dependencies could be updated"
+            # We always test committed dependencies but we want to warn if they could've been updated
+            cargo update
+            if diff Cargo-recent.lock Cargo.lock;
+            then
+                echo Dependencies are up to date
+            else
+                echo "::warning file=Cargo-recent.lock::Dependencies could be updated"
+            fi
         fi
-    fi
-done
+    done
+}
 
+#
+# Main script
+#
+main "$@"
 exit 0
