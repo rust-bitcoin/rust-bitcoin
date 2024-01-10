@@ -17,8 +17,8 @@ fi
 export CARGO_TERM_VERBOSE=true
 
 # Defaults / sanity checks
-cargo --locked build
-cargo --locked test
+cargo build --locked
+cargo test --locked
 
 if [ "$DO_LINT" = true ]
 then
