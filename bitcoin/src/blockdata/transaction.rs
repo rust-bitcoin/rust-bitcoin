@@ -993,6 +993,83 @@ impl Transaction {
         // `Transaction` docs for full explanation).
         self.input.is_empty()
     }
+
+    /// Returns a reference to the input at `input_index` if it exists.
+    #[inline]
+    pub fn tx_in(&self, input_index: usize) -> Result<&TxIn, InputsIndexError> {
+        self.input
+            .get(input_index)
+            .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
+    }
+
+    /// Returns a reference to the output at `output_index` if it exists.
+    #[inline]
+    pub fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
+        self.output
+            .get(output_index)
+            .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
+    }
+}
+
+/// Error attempting to do an out of bounds access on the transaction inputs vector.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct InputsIndexError(pub IndexOutOfBoundsError);
+
+impl fmt::Display for InputsIndexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "invalid input index"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InputsIndexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+impl From<IndexOutOfBoundsError> for InputsIndexError {
+    fn from(e: IndexOutOfBoundsError) -> Self { Self(e) }
+}
+
+/// Error attempting to do an out of bounds access on the transaction outputs vector.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct OutputsIndexError(pub IndexOutOfBoundsError);
+
+impl fmt::Display for OutputsIndexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write_err!(f, "invalid output index"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for OutputsIndexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+}
+
+impl From<IndexOutOfBoundsError> for OutputsIndexError {
+    fn from(e: IndexOutOfBoundsError) -> Self { Self(e) }
+}
+
+/// Error attempting to do an out of bounds access on a vector.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct IndexOutOfBoundsError {
+    /// Attempted index access.
+    pub index: usize,
+    /// Length of the vector where access was attempted.
+    pub length: usize,
+}
+
+impl fmt::Display for IndexOutOfBoundsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "index {} is out-of-bounds for vector with length {}", self.index, self.length)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IndexOutOfBoundsError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 /// The transaction version.
