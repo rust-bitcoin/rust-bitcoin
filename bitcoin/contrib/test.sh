@@ -32,14 +32,6 @@ cargo test
 
 if [ "$DO_LINT" = true ]
 then
-    cargo clippy --locked --all-features --all-targets -- -D warnings
-    cargo clippy --locked --example bip32 -- -D warnings
-    cargo clippy --locked --example handshake --features=rand-std -- -D warnings
-    cargo clippy --locked --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
-    cargo clippy --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
-    cargo clippy --locked --example sign-tx-taproot --features=rand-std -- -D warnings
-    cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
-
     # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
     # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
     duplicate_dependencies=$(

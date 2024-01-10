@@ -3,6 +3,11 @@
 set -ex
 
 main() {
+    if [ "$DO_LINT" = true ];
+    then
+        lint
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -32,6 +37,20 @@ run_per_crate_test_scripts() {
             fi
         fi
     done
+}
+
+lint() {
+    # Run clippy on the whole workspace - this does not lint any code in `examples/` directories.
+    cargo +nightly clippy --workspace
+
+    # Run clippy against all the examples - this should be an exhaustive list of examples.
+    # Verify with `fd .rs | grep examples/`
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example bip32 -- -D warnings
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example handshake --features=rand-std -- -D warnings
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example sign-tx-taproot --features=rand-std -- -D warnings
+    cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 }
 
 #

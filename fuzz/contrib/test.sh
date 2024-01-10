@@ -20,11 +20,6 @@ if cargo --version | grep "1\.41"; then
     cargo update -p half --precise 1.7.1
 fi
 
-if [ "$DO_LINT" = true ]
-then
-    cargo clippy --all-features --all-targets -- -D warnings
-fi
-
 # Defaults / sanity checks
 cargo build
 cargo test
