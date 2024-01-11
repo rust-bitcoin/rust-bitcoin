@@ -30,19 +30,3 @@ if [ "$DO_FEATURE_MATRIX" = true ]; then
     cargo build --locked --no-default-features --all-features
     cargo test --locked --no-default-features --all-features
 fi
-
-# Bench if told to, only works with non-stable toolchain (nightly, beta).
-if [ "$DO_BENCH" = true ]
-then
-    if [ "$NIGHTLY" = false ]
-    then
-        if [ -n "$RUSTUP_TOOLCHAIN" ]
-        then
-            echo "RUSTUP_TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
-        else
-            echo "DO_BENCH requires a nightly toolchain"
-        fi
-        exit 1
-    fi
-    RUSTFLAGS='--cfg=bench' cargo bench
-fi

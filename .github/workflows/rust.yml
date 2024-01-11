@@ -55,6 +55,21 @@ jobs:
           DO_DOCS: true
         run: ./contrib/test.sh
 
+  Bench:
+    name: Bench - nightly toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Running test script
+        env:
+          DO_BENCH: true
+        run: ./contrib/test.sh
+
   Stable:
     name: Test - stable toolchain
     runs-on: ubuntu-latest

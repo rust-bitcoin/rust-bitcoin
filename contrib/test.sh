@@ -26,6 +26,12 @@ main() {
         exit 0
     fi
 
+    if [ "$DO_BENCH" = true ];
+    then
+        bench
+        exit 0
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -95,6 +101,11 @@ build_docs_with_stable_toolchain() {
         RUSTDOCFLAGS="-D warnings" cargo +stable doc --all-features
         popd > /dev/null || exit 1
     done
+}
+
+# Bench only works with a non-stable toolchain (nightly, beta).
+bench() {
+    RUSTFLAGS='--cfg=bench' cargo bench
 }
 
 #

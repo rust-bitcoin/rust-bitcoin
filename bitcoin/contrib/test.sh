@@ -77,20 +77,6 @@ cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warning
 cargo run --locked --example sign-tx-taproot --features=rand-std -- -D warnings
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
-# Bench if told to, only works with non-stable toolchain (nightly, beta).
-if [ "$DO_BENCH" = true ]
-then
-    if [ "$STABLE" = true ]; then
-        if [ -n "$RUSTUP_TOOLCHAIN" ]; then
-            echo "RUSTUP_TOOLCHAIN is set to a stable toolchain but DO_BENCH requires a non-stable (beta, nightly) toolchain"
-        else
-            echo "DO_BENCH requires a non-stable (beta, nightly) toolchain"
-        fi
-        exit 1
-    fi
-    RUSTFLAGS='--cfg=bench' cargo bench
-fi
-
 # Use as dependency if told to
 if [ "$AS_DEPENDENCY" = true ]
 then
