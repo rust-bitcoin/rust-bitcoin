@@ -3,24 +3,25 @@
 set -ex
 
 FEATURES="std alloc serde"
+CARGO="cargo --locked"
 
-cargo --version
+$CARGO --version
 rustc --version
 
 # Defaults / sanity checks
-cargo build
-cargo test
+$CARGO build
+$CARGO test
 
 if [ "$DO_FEATURE_MATRIX" = true ]; then
     # No features
-    cargo build --locked --no-default-features
-    cargo test --locked --no-default-features
+    $CARGO build --no-default-features
+    $CARGO test --no-default-features
 
     # Default features (this is std and alloc)
-    cargo build --locked
-    cargo test --locked
+    $CARGO build --locked
+    $CARGO test --locked
 
     # All features
-    cargo build --locked --no-default-features --all-features
-    cargo test --locked --no-default-features --all-features
+    $CARGO build --no-default-features --all-features
+    $CARGO test --no-default-features --all-features
 fi
