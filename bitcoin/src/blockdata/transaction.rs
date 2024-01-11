@@ -1181,7 +1181,7 @@ impl From<&Transaction> for Wtxid {
 ///   of the to-be-constructed transaction.
 ///
 /// Note that lengths of the scripts and witness elements must be non-serialized, IOW *without* the
-/// preceding compact size. The lenght of preceding compact size is computed and added inside the
+/// preceding compact size. The length of preceding compact size is computed and added inside the
 /// function for convenience.
 ///
 /// If you  have the transaction already constructed (except for signatures) with a dummy value for

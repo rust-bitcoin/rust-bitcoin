@@ -176,7 +176,7 @@ fn p2pk_public_key_compressed_key_returns_some() {
 
 #[test]
 fn script_x_only_key() {
-    // Notice the "20" which prepends the keystr. That 20 is hexidecimal for "32". The Builder automatically adds the 32 opcode
+    // Notice the "20" which prepends the keystr. That 20 is hexadecimal for "32". The Builder automatically adds the 32 opcode
     // to our script in order to give a heads up to the script compiler that it should add the next 32 bytes to the stack.
     // From: https://github.com/bitcoin-core/btcdeb/blob/e8c2750c4a4702768c52d15640ed03bf744d2601/doc/tapscript-example.md?plain=1#L43
     const KEYSTR: &str = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
