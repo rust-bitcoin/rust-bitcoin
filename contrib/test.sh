@@ -8,16 +8,19 @@ main() {
     if [ "$DO_LINT" = true ];
     then
         lint
+        exit 0
     fi
 
     if [ "$DO_DOCSRS" = true ];
     then
         build_docs_with_nightly_toolchain
+        exit 0
     fi
 
     if [ "$DO_DOCS" = true ];
     then
         build_docs_with_stable_toolchain
+        exit 0
     fi
 
     run_per_crate_test_scripts
