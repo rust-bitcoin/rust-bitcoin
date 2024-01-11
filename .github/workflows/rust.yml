@@ -5,7 +5,7 @@ on:
       - 'test-ci/**'
   pull_request:
 
-name: Continuous integration
+name: CI
 
 jobs:
   Lint:
