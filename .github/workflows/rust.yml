@@ -194,7 +194,7 @@ jobs:
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
   ASAN:
-    name: Address sanitizer     # hashes crate only.
+    name: Address sanitizer
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Crate
@@ -206,7 +206,7 @@ jobs:
       - name: Running address sanitizer
         env:
           DO_ASAN: true
-        run: cd hashes && ./contrib/test.sh
+        run: ./contrib/test.sh
 
   WASM:
     name: WebAssembly Build # hashes crate only.

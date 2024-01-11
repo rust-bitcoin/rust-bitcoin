@@ -44,6 +44,12 @@ main() {
         exit 0
     fi
 
+    if [ "$DO_ASAN" = true ];
+    then
+        address_sanitizer
+        exit 0
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -142,6 +148,39 @@ do_schemars_test() {
     pushd "$REPO_DIR/hashes/extended_tests/schemars" > /dev/null
     cargo test
     popd > /dev/null
+}
+
+# TODO: Clean this up, note hashes/ uses `--lib` but fuzz/ doesn't - no other difference.
+address_sanitizer() {
+    pushd "$REPO_DIR/hashes" > /dev/null || exit 1
+
+    cargo clean
+    CC='clang -fsanitize=address -fno-omit-frame-pointer'                                          \
+      RUSTFLAGS='-Zsanitizer=address -Clinker=clang -Cforce-frame-pointers=yes'                    \
+      ASAN_OPTIONS='detect_leaks=1 detect_invalid_pointer_pairs=1 detect_stack_use_after_return=1' \
+      cargo +nightly test --lib --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+
+    cargo clean
+    CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                          \
+      RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'  \
+      cargo +nightly test --lib --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+
+    popd > /dev/null || exit 1
+
+    pushd "$REPO_DIR/fuzz" > /dev/null || exit 1
+
+    cargo clean
+    CC='clang -fsanitize=address -fno-omit-frame-pointer'                                          \
+      RUSTFLAGS='-Zsanitizer=address -Clinker=clang -Cforce-frame-pointers=yes'                    \
+      ASAN_OPTIONS='detect_leaks=1 detect_invalid_pointer_pairs=1 detect_stack_use_after_return=1' \
+      cargo +nightly test --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+
+    cargo clean
+    CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                          \
+      RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'  \
+      cargo +nightly test --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+
+    popd > /dev/null || exit 1
 }
 
 #
