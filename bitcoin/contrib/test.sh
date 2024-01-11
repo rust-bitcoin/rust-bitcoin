@@ -12,17 +12,6 @@ fi
 cargo --version
 rustc --version
 
-# Some tests require certain toolchain types.
-NIGHTLY=false
-STABLE=true
-if cargo --version | grep nightly; then
-    STABLE=false
-    NIGHTLY=true
-fi
-if cargo --version | grep beta; then
-    STABLE=false
-fi
-
 # Defaults / sanity checks
 cargo build
 cargo test

@@ -7,12 +7,6 @@ FEATURES="serde serde-std std io alloc"
 cargo --version
 rustc --version
 
-# Work out if we are using a nightly toolchain.
-NIGHTLY=false
-if cargo --version | grep nightly >/dev/null; then
-    NIGHTLY=true
-fi
-
 # Defaults / sanity checks
 cargo build
 cargo test
