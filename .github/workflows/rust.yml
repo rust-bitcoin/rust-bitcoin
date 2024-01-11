@@ -86,7 +86,6 @@ jobs:
           DO_COV: true
           AS_DEPENDENCY: false
           DO_FEATURE_MATRIX: true
-          DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
         run: ./contrib/test.sh
 
   Beta:
@@ -221,3 +220,18 @@ jobs:
         env:
           DO_WASM: true
         run: cd hashes && ./contrib/test.sh
+
+  Schemars:
+    name: Schemars - stable toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Running test script
+        env:
+          DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
+        run: ./contrib/test.sh

@@ -38,6 +38,12 @@ main() {
         exit 0
     fi
 
+    if [ "$DO_SCHEMARS_TESTS" = true ];
+    then
+        do_schemars_test
+        exit 0
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -131,6 +137,13 @@ use_bitcoin_as_a_dependency() {
 
     cargo test --verbose
 }
+
+do_schemars_test() {
+    pushd "$REPO_DIR/hashes/extended_tests/schemars" > /dev/null
+    cargo test
+    popd > /dev/null
+}
+
 #
 # Main script
 #
