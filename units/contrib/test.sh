@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="std alloc serde"
+# FEATURES="std alloc serde"
 CARGO="cargo --locked"
 
 $CARGO --version
