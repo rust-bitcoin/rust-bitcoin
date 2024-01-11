@@ -219,7 +219,7 @@ jobs:
       - name: Running WASM build
         env:
           DO_WASM: true
-        run: cd hashes && ./contrib/test.sh
+        run: ./contrib/test.sh
 
   Schemars:
     name: Schemars - stable toolchain

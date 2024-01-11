@@ -50,6 +50,12 @@ main() {
         exit 0
     fi
 
+    if [ "$DO_WASM" = true ];
+    then
+        wasm
+        exit 0
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -179,6 +185,19 @@ address_sanitizer() {
     CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                          \
       RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'  \
       cargo +nightly test --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+
+    popd > /dev/null || exit 1
+}
+
+wasm() {
+    pushd "$REPO_DIR/hashes" > /dev/null || exit 1
+
+    clang --version &&
+        CARGO_TARGET_DIR=wasm cargo install --force wasm-pack &&
+        printf '\n[target.wasm32-unknown-unknown.dev-dependencies]\nwasm-bindgen-test = "0.3"\n' >> Cargo.toml &&
+        printf '\n[lib]\ncrate-type = ["cdylib", "rlib"]\n' >> Cargo.toml &&
+        CC=clang-9 wasm-pack build &&
+        CC=clang-9 wasm-pack test --node;
 
     popd > /dev/null || exit 1
 }
