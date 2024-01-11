@@ -23,9 +23,6 @@ if cargo --version | grep beta; then
     STABLE=false
 fi
 
-# Make all cargo invocations verbose
-export CARGO_TERM_VERBOSE=true
-
 # Defaults / sanity checks
 cargo build
 cargo test

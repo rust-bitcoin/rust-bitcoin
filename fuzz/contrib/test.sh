@@ -7,9 +7,6 @@ FEATURES=""
 cargo --version
 rustc --version
 
-# Make all cargo invocations verbose
-export CARGO_TERM_VERBOSE=true
-
 # Defaults / sanity checks
 cargo build
 cargo test

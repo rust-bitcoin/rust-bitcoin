@@ -2,6 +2,9 @@
 
 set -ex
 
+# Make all cargo invocations verbose.
+export CARGO_TERM_VERBOSE=true
+
 REPO_DIR=$(git rev-parse --show-toplevel)
 
 main() {

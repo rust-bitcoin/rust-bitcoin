@@ -13,9 +13,6 @@ if cargo --version | grep nightly >/dev/null; then
     NIGHTLY=true
 fi
 
-# Make all cargo invocations verbose
-export CARGO_TERM_VERBOSE=true
-
 # Defaults / sanity checks
 cargo --locked build
 cargo --locked test
