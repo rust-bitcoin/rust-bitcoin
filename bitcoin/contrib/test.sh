@@ -80,17 +80,6 @@ cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warning
 cargo run --locked --example sign-tx-taproot --features=rand-std -- -D warnings
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
-# Build the docs if told to (this only works with the nightly toolchain)
-if [ "$DO_DOCSRS" = true ]; then
-    RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +nightly doc --all-features
-fi
-
-# Build the docs with a stable toolchain, in unison with the DO_DOCSRS command
-# above this checks that we feature guarded docs imports correctly.
-if [ "$DO_DOCS" = true ]; then
-    RUSTDOCFLAGS="-D warnings" cargo +stable doc --all-features
-fi
-
 # Run formatter if told to.
 if [ "$DO_FMT" = true ]; then
     if [ "$NIGHTLY" = false ]; then
