@@ -80,16 +80,6 @@ cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warning
 cargo run --locked --example sign-tx-taproot --features=rand-std -- -D warnings
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
-# Run formatter if told to.
-if [ "$DO_FMT" = true ]; then
-    if [ "$NIGHTLY" = false ]; then
-        echo "DO_FMT requires a nightly toolchain (consider using RUSTUP_TOOLCHAIN)"
-        exit 1
-    fi
-    rustup component add rustfmt
-    cargo fmt --check
-fi
-
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then

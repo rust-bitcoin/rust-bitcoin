@@ -36,13 +36,3 @@ if [ "$DO_FEATURE_MATRIX" = true ]; then
         cargo test --locked --no-default-features --features="$feature"
     done
 fi
-
-# Run formatter if told to.
-if [ "$DO_FMT" = true ]; then
-    if [ "$NIGHTLY" = false ]; then
-        echo "DO_FMT requires a nightly toolchain (consider using RUSTUP_TOOLCHAIN)"
-        exit 1
-    fi
-    rustup component add rustfmt
-    cargo fmt --check
-fi
