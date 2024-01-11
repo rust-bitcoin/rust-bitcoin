@@ -32,6 +32,12 @@ main() {
         exit 0
     fi
 
+    if [ "$AS_DEPENDENCY" = true ]
+    then
+        use_bitcoin_as_a_dependency
+        exit 0
+    fi
+
     run_per_crate_test_scripts
 }
 
@@ -108,6 +114,23 @@ bench() {
     RUSTFLAGS='--cfg=bench' cargo bench
 }
 
+# Checks that be can build/test an empty crate that uses bitcoin as a dependency.
+# TODO: Add comment about why we do this.
+use_bitcoin_as_a_dependency() {
+    cargo new dep_test 2> /dev/null # Mute warning about workspace, fixed below.
+    cd dep_test
+    printf 'bitcoin = { path = "../bitcoin", features = ["serde"] }\n\n' >> Cargo.toml
+    # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
+    printf '[workspace]\n\n' >> Cargo.toml
+
+    # We have to patch all the local crates same as we do in main workspace.
+    printf '[patch.crates-io.bitcoin_hashes]\npath = "../hashes"\n\n' >> Cargo.toml
+    printf '[patch.crates-io.bitcoin-internals]\npath = "../internals"\n\n' >> Cargo.toml
+    printf '[patch.crates-io.bitcoin-io]\npath = "../io"\n\n' >> Cargo.toml
+    printf '[patch.crates-io.bitcoin-units]\npath = "../units"\n\n' >> Cargo.toml
+
+    cargo test --verbose
+}
 #
 # Main script
 #

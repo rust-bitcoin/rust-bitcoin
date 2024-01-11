@@ -65,15 +65,3 @@ cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
 cargo run --locked --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
 cargo run --locked --example sign-tx-taproot --features=rand-std -- -D warnings
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
-
-# Use as dependency if told to
-if [ "$AS_DEPENDENCY" = true ]
-then
-    cargo new dep_test 2> /dev/null # Mute warning about workspace, fixed below.
-    cd dep_test
-    echo 'bitcoin = { path = "..", features = ["serde"] }\n\n' >> Cargo.toml
-    # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
-    echo '[workspace]\n\n' >> Cargo.toml
-
-    cargo test --verbose
-fi
