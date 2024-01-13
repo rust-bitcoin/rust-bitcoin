@@ -1676,13 +1676,13 @@ mod tests {
     }
 
     #[test]
-    fn u256_wrapping_add_wraps_at_boundry() {
+    fn u256_wrapping_add_wraps_at_boundary() {
         assert_eq!(U256::MAX.wrapping_add(U256::ONE), U256::ZERO);
         assert_eq!(U256::MAX.wrapping_add(U256::from(2_u8)), U256::ONE);
     }
 
     #[test]
-    fn u256_wrapping_sub_wraps_at_boundry() {
+    fn u256_wrapping_sub_wraps_at_boundary() {
         assert_eq!(U256::ZERO.wrapping_sub(U256::ONE), U256::MAX);
         assert_eq!(U256::ONE.wrapping_sub(U256::from(2_u8)), U256::MAX);
     }
