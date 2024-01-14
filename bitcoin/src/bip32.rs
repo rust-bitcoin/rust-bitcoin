@@ -19,7 +19,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use serde;
 
 use crate::base58;
-use crate::crypto::key::{self, CompressedPublicKey, Keypair, PrivateKey};
+use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::NetworkKind;
 use crate::prelude::*;
@@ -532,18 +532,6 @@ impl std::error::Error for Error {
             | UnknownVersion(_)
             | WrongExtendedKeyLength(_)
             | InvalidPublicKeyHexLength(_) => None,
-        }
-    }
-}
-
-impl From<key::Error> for Error {
-    fn from(err: key::Error) -> Self {
-        match err {
-            key::Error::Base58(e) => Error::Base58(e),
-            key::Error::Secp256k1(e) => Error::Secp256k1(e),
-            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
-            key::Error::Hex(e) => Error::Hex(e),
-            key::Error::InvalidHexLength(got) => Error::InvalidPublicKeyHexLength(got),
         }
     }
 }
