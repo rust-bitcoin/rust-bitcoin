@@ -611,9 +611,6 @@ impl Amount {
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if satoshi > i64::MAX as u64 {
-            return Err(ParseAmountError::TooBig);
-        }
         Ok(Amount::from_sat(satoshi))
     }
 
@@ -1714,10 +1711,8 @@ mod tests {
         assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
-        assert_eq!(
-            f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
-            Err(ParseAmountError::TooBig)
-        );
+        assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
+
         assert_eq!(
             f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
             Err(ParseAmountError::TooBig)
@@ -1781,10 +1776,7 @@ mod tests {
         // make sure satoshi > i64::MAX is checked.
         let amount = Amount::from_sat(i64::MAX as u64);
         assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
-        assert_eq!(
-            Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat),
-            Err(E::TooBig)
-        );
+        assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
 
         assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
         // exactly 50 chars.
@@ -2115,10 +2107,7 @@ mod tests {
             ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
             Ok(ua_sat(1_000_000_000_000))
         );
-        assert_eq!(
-            ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
-            Err(ParseAmountError::TooBig)
-        );
+        assert!(ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
 
         assert_eq!(
             sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin),
