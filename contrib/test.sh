@@ -14,6 +14,12 @@ main() {
         exit 0
     fi
 
+    if [ "$DO_DUP_DEPS" = true ];
+    then
+        dup_deps
+        exit 0
+    fi
+
     if [ "$DO_DOCSRS" = true ];
     then
         build_docs_with_nightly_toolchain
@@ -99,6 +105,28 @@ lint() {
     cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example sign-tx-segwit-v0 --features=rand-std -- -D warnings
     cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example sign-tx-taproot --features=rand-std -- -D warnings
     cargo +nightly clippy --manifest-path bitcoin/Cargo.toml --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
+}
+
+# We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
+# in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
+dup_deps() {
+    pushd "$REPO_DIR/bitcoin" > /dev/null || exit 1
+
+    duplicate_dependencies=$(
+        # Only show the actual duplicated deps, not their reverse tree, then
+        # whitelist the 'syn' crate which is duplicated but it's not our fault.
+        cargo tree  --target=all --all-features --duplicates \
+            | grep '^[0-9A-Za-z]' \
+            | grep -v 'syn' \
+            | wc -l
+                          )
+    if [ "$duplicate_dependencies" -ne 0 ]; then
+        echo "Dependency tree is broken, contains duplicates"
+        cargo tree  --target=all --all-features --duplicates
+        exit 1
+    fi
+
+    popd > /dev/null || exit 1
 }
 
 # Build the docs with a nightly toolchain, in unison with the function

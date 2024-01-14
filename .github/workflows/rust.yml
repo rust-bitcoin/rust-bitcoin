@@ -25,6 +25,23 @@ jobs:
           DO_LINT: true
         run: ./contrib/test.sh
 
+  Dups:
+    name: Duplicate dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install clippy
+        run: rustup component add clippy
+      - name: Running test script
+        env:
+          DO_DUP_DEPS: true
+        run: ./contrib/test.sh
+
   Docsrs:
     name: Docsrs build - nightly toolchain
     runs-on: ubuntu-latest
