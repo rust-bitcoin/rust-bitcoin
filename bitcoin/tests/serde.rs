@@ -174,8 +174,8 @@ fn serde_regression_extended_pub_key() {
 fn serde_regression_ecdsa_sig() {
     let s = include_str!("data/serde/ecdsa_sig_hex");
     let sig = ecdsa::Signature {
-        sig: secp256k1::ecdsa::Signature::from_str(s.trim()).unwrap(),
-        hash_ty: EcdsaSighashType::All,
+        signature: secp256k1::ecdsa::Signature::from_str(s.trim()).unwrap(),
+        sighash_type: EcdsaSighashType::All,
     };
 
     let got = serialize(&sig).unwrap();
@@ -348,8 +348,8 @@ fn serde_regression_proprietary_key() {
 fn serde_regression_taproot_sig() {
     let s = include_str!("data/serde/taproot_sig_hex");
     let sig = taproot::Signature {
-        sig: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
-        hash_ty: TapSighashType::All,
+        signature: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
+        sighash_type: TapSighashType::All,
     };
 
     let got = serialize(&sig).unwrap();

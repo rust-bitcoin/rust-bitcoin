@@ -586,10 +586,10 @@ impl TapSighashType {
     }
 
     /// Constructs a [`TapSighashType`] from a raw `u8`.
-    pub fn from_consensus_u8(hash_ty: u8) -> Result<Self, InvalidSighashTypeError> {
+    pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
         use TapSighashType::*;
 
-        Ok(match hash_ty {
+        Ok(match sighash_type {
             0x00 => Default,
             0x01 => All,
             0x02 => None,
