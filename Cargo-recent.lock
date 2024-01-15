@@ -44,6 +44,7 @@ dependencies = [
  "hex-conservative",
  "hex_lit",
  "mutagen",
+ "ordered",
  "secp256k1",
  "serde",
  "serde_json",
@@ -233,6 +234,12 @@ dependencies = [
  "mutagen-core",
  "proc-macro2",
 ]
+
+[[package]]
+name = "ordered"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f0642533dea0bb58bd5cae31bafc1872429f0f12ac8c61fe2b4ba44f80b959b"
 
 [[package]]
 name = "ppv-lite86"
