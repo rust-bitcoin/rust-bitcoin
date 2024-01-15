@@ -8,7 +8,7 @@
 
 use core::fmt;
 
-use io::{BufRead, Read, Write};
+use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
@@ -162,7 +162,11 @@ where
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_u8()?);
-        let key = read_to_end(r)?;
+
+        // The limit is a DOS protection mechanism the exact value is not
+        // important, 1024 bytes is bigger than any key should be.
+        let mut key = vec![];
+        let _ = r.read_to_limit(&mut key, 1024)?;
 
         Ok(ProprietaryKey { prefix, subtype, key })
     }
@@ -193,18 +197,4 @@ where
 
         Ok(deserialize(&key.key)?)
     }
-}
-
-pub(crate) fn read_to_end<D: Read + ?Sized>(d: &mut D) -> Result<Vec<u8>, io::Error> {
-    let mut result = vec![];
-    let mut buf = [0u8; 64];
-    loop {
-        match d.read(&mut buf) {
-            Ok(0) => break,
-            Ok(n) => result.extend_from_slice(&buf[0..n]),
-            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
-            Err(e) => return Err(e),
-        };
-    }
-    Ok(result)
 }
