@@ -2,8 +2,7 @@
 
 set -ex
 
-CRATES="bitcoin hashes units internals fuzz"
-DEPS="recent minimal"
+. contrib/test_vars.sh
 
 for dep in $DEPS
 do

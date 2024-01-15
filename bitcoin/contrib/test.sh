@@ -21,10 +21,6 @@ fi
 # Make all cargo invocations verbose
 export CARGO_TERM_VERBOSE=true
 
-# Defaults / sanity checks
-cargo build
-cargo test
-
 if [ "$DO_LINT" = true ]
 then
     cargo clippy --locked --all-features --all-targets -- -D warnings
@@ -53,26 +49,6 @@ then
         cargo tree  --target=all --all-features --duplicates
         exit 1
     fi
-fi
-
-if [ "$DO_FEATURE_MATRIX" = true ]; then
-    cargo build --locked --no-default-features
-    cargo test --locked --no-default-features
-
-    # All features
-    cargo build --locked --no-default-features --features="$FEATURES"
-    cargo test --locked --no-default-features --features="$FEATURES"
-    # Single features
-    for feature in ${FEATURES}
-    do
-        cargo build --locked --no-default-features --features="$feature"
-        cargo test --locked --no-default-features --features="$feature"
-		# All combos of two features
-		for featuretwo in ${FEATURES}; do
-			cargo build --locked --no-default-features --features="$feature $featuretwo"
-			cargo test --locked --no-default-features --features="$feature $featuretwo"
-		done
-    done
 fi
 
 cargo run --locked --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
