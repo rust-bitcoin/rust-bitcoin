@@ -66,10 +66,10 @@ fn main() {
 
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
     let msg = Message::from(sighash);
-    let sig = secp.sign_ecdsa(&msg, &sk);
+    let signature = secp.sign_ecdsa(&msg, &sk);
 
     // Update the witness stack.
-    let signature = bitcoin::ecdsa::Signature { sig, hash_ty: EcdsaSighashType::All };
+    let signature = bitcoin::ecdsa::Signature { signature, sighash_type };
     let pk = sk.public_key(&secp);
     *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&signature, &pk);
 

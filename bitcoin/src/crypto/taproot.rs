@@ -18,10 +18,10 @@ use crate::taproot::serialized_signature::{self, SerializedSignature};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Signature {
-    /// The underlying schnorr signature
-    pub sig: secp256k1::schnorr::Signature,
-    /// The corresponding hash type
-    pub hash_ty: TapSighashType,
+    /// The underlying schnorr signature.
+    pub signature: secp256k1::schnorr::Signature,
+    /// The corresponding hash type.
+    pub sighash_type: TapSighashType,
 }
 
 impl Signature {
@@ -30,14 +30,14 @@ impl Signature {
         match sl.len() {
             64 => {
                 // default type
-                let sig = secp256k1::schnorr::Signature::from_slice(sl)?;
-                Ok(Signature { sig, hash_ty: TapSighashType::Default })
+                let signature = secp256k1::schnorr::Signature::from_slice(sl)?;
+                Ok(Signature { signature, sighash_type: TapSighashType::Default })
             }
             65 => {
-                let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
-                let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)?;
-                let sig = secp256k1::schnorr::Signature::from_slice(sig)?;
-                Ok(Signature { sig, hash_ty })
+                let (sighash_type, signature) = sl.split_last().expect("Slice len checked == 65");
+                let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
+                let signature = secp256k1::schnorr::Signature::from_slice(signature)?;
+                Ok(Signature { signature, sighash_type })
             }
             len => Err(SigFromSliceError::InvalidSignatureSize(len)),
         }
@@ -48,11 +48,11 @@ impl Signature {
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
     pub fn to_vec(self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
-        let mut ser_sig = self.sig.as_ref().to_vec();
-        if self.hash_ty == TapSighashType::Default {
+        let mut ser_sig = self.signature.as_ref().to_vec();
+        if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
         } else {
-            ser_sig.push(self.hash_ty as u8);
+            ser_sig.push(self.sighash_type as u8);
         }
         ser_sig
     }
@@ -63,13 +63,13 @@ impl Signature {
     /// You can get a slice from it using deref coercions or turn it into an iterator.
     pub fn serialize(self) -> SerializedSignature {
         let mut buf = [0; serialized_signature::MAX_LEN];
-        let ser_sig = self.sig.serialize();
+        let ser_sig = self.signature.serialize();
         buf[..64].copy_from_slice(&ser_sig);
-        let len = if self.hash_ty == TapSighashType::Default {
+        let len = if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
             64
         } else {
-            buf[64] = self.hash_ty as u8;
+            buf[64] = self.sighash_type as u8;
             65
         };
         SerializedSignature::from_raw_parts(buf, len)

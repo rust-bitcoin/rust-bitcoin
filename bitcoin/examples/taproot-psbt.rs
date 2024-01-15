@@ -282,14 +282,14 @@ fn generate_bip86_key_spend_tx(
     let unsigned_tx = psbt.unsigned_tx.clone();
     psbt.inputs.iter_mut().enumerate().try_for_each::<_, Result<(), Box<dyn std::error::Error>>>(
         |(vout, input)| {
-            let hash_ty = input
+            let sighash_type = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.taproot_hash_ty().ok())
                 .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 vout,
                 &sighash::Prevouts::All(input_txouts.as_slice()),
-                hash_ty,
+                sighash_type,
             )?;
 
             let (_, (_, derivation_path)) = input
@@ -304,7 +304,7 @@ fn generate_bip86_key_spend_tx(
                 None,
                 input,
                 hash,
-                hash_ty,
+                sighash_type,
                 secp,
             );
 
@@ -512,7 +512,7 @@ impl BenefactorWallet {
             psbt.outputs = vec![Output::default()];
             psbt.unsigned_tx.lock_time = absolute::LockTime::ZERO;
 
-            let hash_ty = input
+            let sighash_type = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.taproot_hash_ty().ok())
                 .unwrap_or(TapSighashType::All);
@@ -522,7 +522,7 @@ impl BenefactorWallet {
                     value: input_value,
                     script_pubkey: prevout_script_pubkey,
                 }]),
-                hash_ty,
+                sighash_type,
             )?;
 
             {
@@ -538,7 +538,7 @@ impl BenefactorWallet {
                     None,
                     input,
                     hash,
-                    hash_ty,
+                    sighash_type,
                     &self.secp,
                 );
             }
@@ -654,7 +654,7 @@ impl BeneficiaryWallet {
             let secret_key =
                 self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_priv().inner;
             for lh in leaf_hashes {
-                let hash_ty = TapSighashType::All;
+                let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
                     0,
                     &sighash::Prevouts::All(&[TxOut {
@@ -662,7 +662,7 @@ impl BeneficiaryWallet {
                         script_pubkey: input_script_pubkey.clone(),
                     }]),
                     *lh,
-                    hash_ty,
+                    sighash_type,
                 )?;
                 sign_psbt_taproot(
                     &secret_key,
@@ -670,7 +670,7 @@ impl BeneficiaryWallet {
                     Some(*lh),
                     &mut psbt.inputs[0],
                     hash,
-                    hash_ty,
+                    sighash_type,
                     &self.secp,
                 );
             }
@@ -730,7 +730,7 @@ fn sign_psbt_taproot(
     leaf_hash: Option<TapLeafHash>,
     psbt_input: &mut psbt::Input,
     hash: TapSighash,
-    hash_ty: TapSighashType,
+    sighash_type: TapSighashType,
     secp: &Secp256k1<secp256k1::All>,
 ) {
     let keypair = secp256k1::Keypair::from_seckey_slice(secp, secret_key.as_ref()).unwrap();
@@ -740,9 +740,9 @@ fn sign_psbt_taproot(
     };
 
     let msg = secp256k1::Message::from_digest(hash.to_byte_array());
-    let sig = secp.sign_schnorr(&msg, &keypair);
+    let signature = secp.sign_schnorr(&msg, &keypair);
 
-    let final_signature = taproot::Signature { sig, hash_ty };
+    let final_signature = taproot::Signature { signature, sighash_type };
 
     if let Some(lh) = leaf_hash {
         psbt_input.tap_script_sigs.insert((pubkey, lh), final_signature);

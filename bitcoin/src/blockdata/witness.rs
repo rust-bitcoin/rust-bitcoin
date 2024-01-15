@@ -637,9 +637,9 @@ mod test {
         // The very first signature in block 734,958
         let sig_bytes =
             hex!("304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541");
-        let sig = secp256k1::ecdsa::Signature::from_der(&sig_bytes).unwrap();
+        let signature = secp256k1::ecdsa::Signature::from_der(&sig_bytes).unwrap();
         let mut witness = Witness::default();
-        let signature = crate::ecdsa::Signature { sig, hash_ty: EcdsaSighashType::All };
+        let signature = crate::ecdsa::Signature { signature, sighash_type: EcdsaSighashType::All };
         witness.push_ecdsa_signature(&signature);
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")

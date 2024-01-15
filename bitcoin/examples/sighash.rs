@@ -44,7 +44,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
-        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.hash_ty)
+        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from_digest(sighash.to_byte_array());
@@ -93,9 +93,9 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
         let sig = ecdsa::Signature::from_slice(instr.unwrap().push_bytes().unwrap().as_bytes())
             .expect("failed to parse sig");
         let sighash = cache
-            .legacy_signature_hash(inp_idx, script_code, sig.hash_ty.to_u32())
+            .legacy_signature_hash(inp_idx, script_code, sig.sighash_type.to_u32())
             .expect("failed to compute sighash");
-        println!("Legacy sighash: {:x} (sighash flag {})", sighash, sig.hash_ty);
+        println!("Legacy sighash: {:x} (sighash flag {})", sighash, sig.sighash_type);
     }
 }
 
@@ -126,9 +126,14 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
         assert!((70..=72).contains(&sig_len), "signature length {} out of bounds", sig_len);
         //here we assume that all sighash_flags are the same. Can they be different?
         let sighash = cache
-            .p2wsh_signature_hash(inp_idx, witness_script, Amount::from_sat(value), sig.hash_ty)
+            .p2wsh_signature_hash(
+                inp_idx,
+                witness_script,
+                Amount::from_sat(value),
+                sig.sighash_type,
+            )
             .expect("failed to compute sighash");
-        println!("Segwit p2wsh sighash: {:x} ({})", sighash, sig.hash_ty);
+        println!("Segwit p2wsh sighash: {:x} ({})", sighash, sig.sighash_type);
     }
 }
 
