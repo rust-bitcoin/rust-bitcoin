@@ -1170,12 +1170,13 @@ impl From<&Transaction> for Wtxid {
 
 /// Computes the value of an output accounting for the cost of spending it.
 ///
-/// The effective value is the value of an output value minus the amount to spend it.  That is, the
-/// effective_value can be calculated as: value - (fee_rate * weight).
+/// The effective value is the value of an output minus the cost to spend it.  That is, the
+/// effective value can be calculated as: value - (fee_rate * weight).
 ///
-/// Note: the effective value of a [`Transaction`] may increase less than the effective value of
-/// a [`TxOut`] when adding another [`TxOut`] to the transaction.  This happens when the new
-/// [`TxOut`] added causes the output length `VarInt` to increase its encoding length.
+/// Note: adding an input to a [`Transaction`] the effective value of the transaction may increase
+/// by less than the effective value of the added input. This happens when adding the new input
+/// causes the transaction's input length `VarInt` to increase its encoding length. In other words,
+/// the more bytes a transaction has the more you spend on fees thus the effective value is lower.
 ///
 /// # Arguments
 ///
