@@ -32,6 +32,13 @@ pub struct VersionMessage {
     /// The network address of the peer sending the message
     pub sender: Address,
     /// A random nonce used to detect loops in the network
+    ///
+    /// The nonce can be used to detect situations when a node accidentally
+    /// connects to itself. Set it to a random value and, in case of incoming
+    /// connections, compare the value - same values mean self-connection.
+    ///
+    /// If your application uses P2P to only fetch the data and doesn't listen
+    /// you may just set it to 0.
     pub nonce: u64,
     /// A string describing the peer's software
     pub user_agent: String,
