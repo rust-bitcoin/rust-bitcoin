@@ -2041,7 +2041,7 @@ mod tests {
 
     #[test]
     fn huge_witness() {
-        deserialize::<Transaction>(&hex!(include_str!("../../tests/data/huge_witness.hex").trim()))
+        deserialize::<Transaction>(&hex!(include_str!("../../../tests/data/huge_witness.hex").trim()))
             .unwrap();
     }
 
