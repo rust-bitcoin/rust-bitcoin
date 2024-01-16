@@ -226,12 +226,6 @@ pub struct TxIn {
 }
 
 impl TxIn {
-    /// Returns the input base weight.
-    ///
-    /// Base weight excludes the witness and script.
-    const BASE_WEIGHT: Weight =
-        Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
-
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
@@ -1192,7 +1186,10 @@ pub fn effective_value(
     satisfaction_weight: Weight,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TxIn::BASE_WEIGHT)?;
+    let previous_output_weight = Weight::from_vb_unwrap(OutPoint::SIZE as u64);
+    let sequence_weight = Weight::from_vb_unwrap(Sequence::SIZE as u64);
+    let weight = satisfaction_weight.checked_add(previous_output_weight)?.checked_add(sequence_weight)?;
+
     let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
