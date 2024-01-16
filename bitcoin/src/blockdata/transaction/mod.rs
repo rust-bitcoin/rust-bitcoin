@@ -11,6 +11,8 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
+pub mod extended;
+
 use core::default::Default;
 use core::{cmp, fmt, str};
 

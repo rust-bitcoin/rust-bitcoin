@@ -102,6 +102,109 @@ pub trait AsMutTransaction: AsTransaction {
     fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError>;
 }
 
+/// Represents types containing transaction data with extended inputs.
+pub trait AsExtendedTransaction: AsTransaction {
+    /// Extra data associated with the input
+    ///
+    /// This can be used to pass additioanl per-input data (e.g. as BIP32 path) to the signer. The
+    /// presence of the data is statically enforced by the type system.
+    ///
+    /// If there is no extra data this is usually `()` (the unit type).
+    type Extra;
+
+    /// Returns th previous output corresponding to the input at `index`
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut>;
+
+    /// Returns the extra data associated with the input at `index`.
+    ///
+    /// Returns `None` if *and only if* `index` is out of bounds. This MUST NOT return `None` if
+    /// extra data is not present. Either set `Extra` to `()` if there's never extra data or return
+    /// `Option<&Option<YourTypeHere>>`.
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra>;
+}
+
+/// Represents mutably-accessible types containing transaction data with extended inputs.
+pub trait AsMutExtendedTransaction: AsExtendedTransaction {
+    /// Returns mutable reference to the extra data associated with the input at `index`.
+    ///
+    /// Returns `None` if *and only if* `index` is out of bounds. This MUST NOT return `None` if
+    /// extra data is not present. Either set `Extra` to `()` if there's never extra data or return
+    /// `Option<&mut Option<YourTypeHere>>`.
+    fn mut_extra_at(&mut self, index: usize) -> Option<&mut Self::Extra>;
+}
+
+impl<T: AsExtendedTransaction + ?Sized> AsExtendedTransaction for &'_ T {
+    type Extra = T::Extra;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        (**self).prev_output_at(index)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        (**self).extra_at(index)
+    }
+}
+
+impl<T: AsExtendedTransaction + ?Sized> AsExtendedTransaction for &'_ mut T {
+    type Extra = T::Extra;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        (**self).prev_output_at(index)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        (**self).extra_at(index)
+    }
+}
+
+impl<T: AsMutExtendedTransaction + ?Sized> AsMutExtendedTransaction for &'_ mut T {
+    fn mut_extra_at(&mut self, index: usize) -> Option<&mut Self::Extra> {
+        (**self).mut_extra_at(index)
+    }
+}
+
+impl<T: AsExtendedTransaction + ?Sized> AsExtendedTransaction for Box<T> {
+    type Extra = T::Extra;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        (**self).prev_output_at(index)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        (**self).extra_at(index)
+    }
+}
+
+impl<T: AsMutExtendedTransaction + ?Sized> AsMutExtendedTransaction for Box<T> {
+    fn mut_extra_at(&mut self, index: usize) -> Option<&mut Self::Extra> {
+        (**self).mut_extra_at(index)
+    }
+}
+
+impl<T: AsExtendedTransaction + ?Sized> AsExtendedTransaction for alloc::rc::Rc<T> {
+    type Extra = T::Extra;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        (**self).prev_output_at(index)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        (**self).extra_at(index)
+    }
+}
+
+impl<T: AsExtendedTransaction + ?Sized> AsExtendedTransaction for alloc::sync::Arc<T> {
+    type Extra = T::Extra;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        (**self).prev_output_at(index)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        (**self).extra_at(index)
+    }
+}
+
 impl AsTransaction for Transaction {
     fn inputs_len(&self) -> usize {
         self.input.len()
@@ -134,6 +237,56 @@ impl AsMutTransaction for Transaction {
     }
 }
 
+impl<T> AsTransaction for transaction::extended::ExtendedTransaction<T> {
+    fn inputs_len(&self) -> usize {
+        self.inputs.len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        self.tx_in(index).map(|input| &input.txin)
+    }
+
+    fn outputs_len(&self) -> usize {
+        self.outputs.len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        self.tx_out(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        self.version
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        self.lock_time
+    }
+}
+
+impl<T> AsMutTransaction for transaction::extended::ExtendedTransaction<T> {
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError> {
+        self.tx_in_mut(index).map(|input| &mut input.txin)
+    }
+}
+
+impl<T> AsExtendedTransaction for transaction::extended::ExtendedTransaction<T> {
+    type Extra = T;
+
+    fn prev_output_at(&self, index: usize) -> Option<&TxOut> {
+        self.inputs.get(index).map(|input| &input.previous_output)
+    }
+
+    fn extra_at(&self, index: usize) -> Option<&Self::Extra> {
+        self.inputs.get(index).map(|input| &input.extra)
+    }
+}
+
+impl<T> AsMutExtendedTransaction for transaction::extended::ExtendedTransaction<T> {
+    fn mut_extra_at(&mut self, index: usize) -> Option<&mut Self::Extra> {
+        self.inputs.get_mut(index).map(|input| &mut input.extra)
+    }
+}
+
 trait AsTransactionExt: AsTransaction {
     fn inputs(&self) -> Inputs<'_, Self> {
         Inputs(self)
@@ -156,6 +309,12 @@ impl<'a, T: AsTransaction + ?Sized> Inputs<'a, T> {
 
     fn iter(&self) -> impl Iterator<Item=&'a TxIn> + Clone {
         (0..self.0.inputs_len()).map(|i| self.0.input_at(i).unwrap())
+    }
+}
+
+impl<'a, T: AsExtendedTransaction + ?Sized> Inputs<'a, T> {
+    fn iter_prevouts(&self) -> impl Iterator<Item=&'a TxOut> + Clone {
+        (0..self.0.inputs_len()).map(|i| self.0.prev_output_at(i).unwrap())
     }
 }
 
@@ -341,7 +500,12 @@ pub struct SighashCache<T: AsTransaction> {
     /// `T: AsTransaction` allows us to use borrowed and mutable borrowed types,
     /// the latter in particular is necessary for [`SighashCache::witness_mut`].
     tx: T,
+    cache: Cache,
+}
 
+/// Inner cache actually holding cached data.
+#[derive(Debug, Default)]
+struct Cache {
     /// Common cache for taproot and segwit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
@@ -350,6 +514,211 @@ pub struct SighashCache<T: AsTransaction> {
 
     /// Cache for taproot v1 inputs.
     taproot_cache: Option<TaprootCache>,
+}
+
+impl Cache {
+    fn common_cache(&mut self, tx: &(impl AsTransaction + ?Sized)) -> &CommonCache {
+        Self::common_cache_minimal_borrow(&mut self.common_cache, tx)
+    }
+
+    fn common_cache_minimal_borrow<'a>(common_cache: &'a mut Option<CommonCache>, tx: &(impl AsTransaction + ?Sized)) -> &'a CommonCache {
+        common_cache.get_or_insert_with(|| {
+            let mut enc_prevouts = sha256::Hash::engine();
+            let mut enc_sequences = sha256::Hash::engine();
+            for txin in tx.inputs().iter() {
+                txin.previous_output.consensus_encode(&mut enc_prevouts).unwrap();
+                txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
+            }
+            CommonCache {
+                prevouts: sha256::Hash::from_engine(enc_prevouts),
+                sequences: sha256::Hash::from_engine(enc_sequences),
+                outputs: {
+                    let mut enc = sha256::Hash::engine();
+                    for txout in tx.outputs().iter() {
+                        txout.consensus_encode(&mut enc).unwrap();
+                    }
+                    sha256::Hash::from_engine(enc)
+                },
+            }
+        })
+    }
+
+    fn segwit_cache(&mut self, tx: &(impl AsTransaction + ?Sized)) -> &SegwitCache {
+        let common_cache = &mut self.common_cache;
+        self.segwit_cache.get_or_insert_with(|| {
+            let common_cache = Self::common_cache_minimal_borrow(common_cache, tx);
+            SegwitCache {
+                prevouts: common_cache.prevouts.hash_again(),
+                sequences: common_cache.sequences.hash_again(),
+                outputs: common_cache.outputs.hash_again(),
+            }
+        })
+    }
+
+    fn taproot_cache<T: Borrow<TxOut>>(&mut self, prevouts: impl IntoIterator<Item=T>) -> &TaprootCache {
+        self.taproot_cache.get_or_insert_with(|| {
+            let mut enc_amounts = sha256::Hash::engine();
+            let mut enc_script_pubkeys = sha256::Hash::engine();
+            for prevout in prevouts {
+                prevout.borrow().value.consensus_encode(&mut enc_amounts).unwrap();
+                prevout.borrow().script_pubkey.consensus_encode(&mut enc_script_pubkeys).unwrap();
+            }
+            TaprootCache {
+                amounts: sha256::Hash::from_engine(enc_amounts),
+                script_pubkeys: sha256::Hash::from_engine(enc_script_pubkeys),
+            }
+        })
+    }
+
+    fn taproot_encode_signing_data_with_checked_prevouts_to<'a, W: Write + ?Sized>(
+        &mut self,
+        tx: &(impl AsTransaction + ?Sized),
+        writer: &mut W,
+        input_index: usize,
+        prevouts: CheckedPrevouts<&TxOut, impl IntoIterator<Item=&'a TxOut> + Clone>,
+        annex: Option<Annex>,
+        leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
+        sighash_type: TapSighashType,
+    ) -> Result<(), SigningDataError<TaprootErrorInner>> {
+
+        let (sighash, _) = sighash_type.split_anyonecanpay_flag();
+
+        // epoch
+        0u8.consensus_encode(writer)?;
+
+        // * Control:
+        // hash_type (1).
+        (sighash_type as u8).consensus_encode(writer)?;
+
+        // * Transaction Data:
+        // nVersion (4): the nVersion of the transaction.
+        tx.version().consensus_encode(writer)?;
+
+        // nLockTime (4): the nLockTime of the transaction.
+        tx.lock_time().consensus_encode(writer)?;
+
+        // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
+        //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
+        //     sha_amounts (32): the SHA256 of the serialization of all spent output amounts.
+        //     sha_scriptpubkeys (32): the SHA256 of the serialization of all spent output scriptPubKeys.
+        //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
+        if let CheckedPrevouts::All(prevouts) = &prevouts {
+            self.common_cache(tx).prevouts.consensus_encode(writer)?;
+            self.taproot_cache(prevouts.clone()).amounts.consensus_encode(writer)?;
+            self.taproot_cache(prevouts.clone()).script_pubkeys.consensus_encode(writer)?;
+            self.common_cache(tx).sequences.consensus_encode(writer)?;
+        }
+
+        // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
+        //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
+        if sighash != TapSighashType::None && sighash != TapSighashType::Single {
+            self.common_cache(tx).outputs.consensus_encode(writer)?;
+        }
+
+        // * Data about this input:
+        // spend_type (1): equal to (ext_flag * 2) + annex_present, where annex_present is 0
+        // if no annex is present, or 1 otherwise
+        let mut spend_type = 0u8;
+        if annex.is_some() {
+            spend_type |= 1u8;
+        }
+        if leaf_hash_code_separator.is_some() {
+            spend_type |= 2u8;
+        }
+        spend_type.consensus_encode(writer)?;
+
+        // If hash_type & 0x80 equals SIGHASH_ANYONECANPAY:
+        //      outpoint (36): the COutPoint of this input (32-byte hash + 4-byte little-endian).
+        //      amount (8): value of the previous output spent by this input.
+        //      scriptPubKey (35): scriptPubKey of the previous output spent by this input, serialized as script inside CTxOut. Its size is always 35 bytes.
+        //      nSequence (4): nSequence of this input.
+        if let CheckedPrevouts::One(previous_output) = prevouts {
+            let txin = tx.input_at(input_index).map_err(SigningDataError::sighash)?;
+            txin.previous_output.consensus_encode(writer)?;
+            previous_output.value.consensus_encode(writer)?;
+            previous_output.script_pubkey.consensus_encode(writer)?;
+            txin.sequence.consensus_encode(writer)?;
+        } else {
+            (input_index as u32).consensus_encode(writer)?;
+        }
+
+        // If an annex is present (the lowest bit of spend_type is set):
+        //      sha_annex (32): the SHA256 of (compact_size(size of annex) || annex), where annex
+        //      includes the mandatory 0x50 prefix.
+        if let Some(annex) = annex {
+            let mut enc = sha256::Hash::engine();
+            annex.consensus_encode(&mut enc)?;
+            let hash = sha256::Hash::from_engine(enc);
+            hash.consensus_encode(writer)?;
+        }
+
+        // * Data about this output:
+        // If hash_type & 3 equals SIGHASH_SINGLE:
+        //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
+        if sighash == TapSighashType::Single {
+            let mut enc = sha256::Hash::engine();
+            tx
+                .output_at(input_index)
+                .map_err(SingleMissingOutputError::from_oob)
+                .map_err(SigningDataError::sighash)?
+                .consensus_encode(&mut enc)?;
+            let hash = sha256::Hash::from_engine(enc);
+            hash.consensus_encode(writer)?;
+        }
+
+        //     if (scriptpath):
+        //         ss += TaggedHash("TapLeaf", bytes([leaf_ver]) + ser_string(script))
+        //         ss += bytes([0])
+        //         ss += struct.pack("<i", codeseparator_pos)
+        if let Some((hash, code_separator_pos)) = leaf_hash_code_separator {
+            hash.as_byte_array().consensus_encode(writer)?;
+            KEY_VERSION_0.consensus_encode(writer)?;
+            code_separator_pos.consensus_encode(writer)?;
+        }
+
+        Ok(())
+    }
+}
+
+enum TaprootErrorInner {
+    /// Requested index is greater or equal than the number of inputs in the transaction.
+    InputsIndex(transaction::InputsIndexError),
+    /// Using `SIGHASH_SINGLE` without a "corresponding output" (an output with the same index as
+    /// the input being verified) is a validation failure.
+    SingleMissingOutput(SingleMissingOutputError),
+}
+
+impl From<SingleMissingOutputError> for TaprootErrorInner {
+    fn from(value: SingleMissingOutputError) -> Self {
+        Self::SingleMissingOutput(value)
+    }
+}
+
+impl From<transaction::InputsIndexError> for TaprootErrorInner {
+    fn from(value: transaction::InputsIndexError) -> Self {
+        Self::InputsIndex(value)
+    }
+}
+
+impl TaprootErrorInner {
+    fn assert_not_input_oob(self) -> SingleMissingOutputError {
+        match self {
+            Self::SingleMissingOutput(error) => error,
+            Self::InputsIndex(error) => {
+                // The library enforces validity
+                panic!("index {} greater than {}; this should never happen", error.0.index, error.0.length)
+            },
+        }
+    }
+}
+
+impl From<TaprootErrorInner> for TaprootError {
+    fn from(value: TaprootErrorInner) -> Self {
+        match value {
+            TaprootErrorInner::InputsIndex(error) => Self::InputsIndex(error),
+            TaprootErrorInner::SingleMissingOutput(error) => Self::SingleMissingOutput(error),
+        }
+    }
 }
 
 /// Common values cached between segwit and taproot inputs.
@@ -392,6 +761,11 @@ where
     /// When `SIGHASH_ANYONECANPAY` is not provided, or when the caller is giving all prevouts so
     /// the same variable can be used for multiple inputs.
     All(&'u [T]),
+}
+
+enum CheckedPrevouts<T, I> {
+    One(T),
+    All(I),
 }
 
 const KEY_VERSION_0: u8 = 0u8;
@@ -831,7 +1205,7 @@ impl<R: AsTransaction> SighashCache<R> {
     /// sighashes to be valid, no fields in the transaction may change except for script_sig and
     /// witness.
     pub fn new(tx: R) -> Self {
-        SighashCache { tx, common_cache: None, taproot_cache: None, segwit_cache: None }
+        SighashCache { tx, cache: Default::default() }
     }
 
     /// Returns the reference to the cached transaction.
@@ -852,106 +1226,15 @@ impl<R: AsTransaction> SighashCache<R> {
         sighash_type: TapSighashType,
     ) -> Result<(), SigningDataError<TaprootError>> {
         prevouts.check_all(&self.tx).map_err(SigningDataError::sighash)?;
-
-        let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
-
-        // epoch
-        0u8.consensus_encode(writer)?;
-
-        // * Control:
-        // hash_type (1).
-        (sighash_type as u8).consensus_encode(writer)?;
-
-        // * Transaction Data:
-        // nVersion (4): the nVersion of the transaction.
-        self.tx.version().consensus_encode(writer)?;
-
-        // nLockTime (4): the nLockTime of the transaction.
-        self.tx.lock_time().consensus_encode(writer)?;
-
-        // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
-        //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
-        //     sha_amounts (32): the SHA256 of the serialization of all spent output amounts.
-        //     sha_scriptpubkeys (32): the SHA256 of the serialization of all spent output scriptPubKeys.
-        //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
-        if !anyone_can_pay {
-            self.common_cache().prevouts.consensus_encode(writer)?;
-            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?).amounts.consensus_encode(writer)?;
-            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?).script_pubkeys.consensus_encode(writer)?;
-            self.common_cache().sequences.consensus_encode(writer)?;
-        }
-
-        // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
-        //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
-        if sighash != TapSighashType::None && sighash != TapSighashType::Single {
-            self.common_cache().outputs.consensus_encode(writer)?;
-        }
-
-        // * Data about this input:
-        // spend_type (1): equal to (ext_flag * 2) + annex_present, where annex_present is 0
-        // if no annex is present, or 1 otherwise
-        let mut spend_type = 0u8;
-        if annex.is_some() {
-            spend_type |= 1u8;
-        }
-        if leaf_hash_code_separator.is_some() {
-            spend_type |= 2u8;
-        }
-        spend_type.consensus_encode(writer)?;
-
-        // If hash_type & 0x80 equals SIGHASH_ANYONECANPAY:
-        //      outpoint (36): the COutPoint of this input (32-byte hash + 4-byte little-endian).
-        //      amount (8): value of the previous output spent by this input.
-        //      scriptPubKey (35): scriptPubKey of the previous output spent by this input, serialized as script inside CTxOut. Its size is always 35 bytes.
-        //      nSequence (4): nSequence of this input.
-        if anyone_can_pay {
-            let txin = &self.tx.input_at(input_index).map_err(TaprootError::from).map_err(SigningDataError::Sighash)?;
-            let previous_output = prevouts.get(input_index).map_err(TaprootError::from).map_err(SigningDataError::Sighash)?;
-            txin.previous_output.consensus_encode(writer)?;
-            previous_output.value.consensus_encode(writer)?;
-            previous_output.script_pubkey.consensus_encode(writer)?;
-            txin.sequence.consensus_encode(writer)?;
+        let (_, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
+        let prevouts = if anyone_can_pay {
+            CheckedPrevouts::One(prevouts.get(input_index).map_err(SigningDataError::sighash)?)
         } else {
-            (input_index as u32).consensus_encode(writer)?;
-        }
+            CheckedPrevouts::All(prevouts.get_all().map_err(SigningDataError::sighash)?.iter().map(Borrow::borrow))
+        };
 
-        // If an annex is present (the lowest bit of spend_type is set):
-        //      sha_annex (32): the SHA256 of (compact_size(size of annex) || annex), where annex
-        //      includes the mandatory 0x50 prefix.
-        if let Some(annex) = annex {
-            let mut enc = sha256::Hash::engine();
-            annex.consensus_encode(&mut enc)?;
-            let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(writer)?;
-        }
-
-        // * Data about this output:
-        // If hash_type & 3 equals SIGHASH_SINGLE:
-        //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
-        if sighash == TapSighashType::Single {
-            let mut enc = sha256::Hash::engine();
-            self.tx
-                .output_at(input_index)
-                .map_err(|_| TaprootError::SingleMissingOutput(SingleMissingOutputError {
-                    input_index,
-                    outputs_length: self.tx.outputs().len(),
-                })).map_err(SigningDataError::Sighash)?
-                .consensus_encode(&mut enc)?;
-            let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(writer)?;
-        }
-
-        //     if (scriptpath):
-        //         ss += TaggedHash("TapLeaf", bytes([leaf_ver]) + ser_string(script))
-        //         ss += bytes([0])
-        //         ss += struct.pack("<i", codeseparator_pos)
-        if let Some((hash, code_separator_pos)) = leaf_hash_code_separator {
-            hash.as_byte_array().consensus_encode(writer)?;
-            KEY_VERSION_0.consensus_encode(writer)?;
-            code_separator_pos.consensus_encode(writer)?;
-        }
-
-        Ok(())
+        self.cache.taproot_encode_signing_data_with_checked_prevouts_to(&self.tx, writer, input_index, prevouts, annex, leaf_hash_code_separator, sighash_type)
+            .map_err(SigningDataError::convert)
     }
 
     /// Computes the BIP341 sighash for any flag type.
@@ -1281,62 +1564,8 @@ impl<R: AsTransaction> SighashCache<R> {
         }
     }
 
-    #[inline]
-    fn common_cache(&mut self) -> &CommonCache {
-        Self::common_cache_minimal_borrow(&mut self.common_cache, &self.tx)
-    }
-
-    fn common_cache_minimal_borrow<'a>(
-        common_cache: &'a mut Option<CommonCache>,
-        tx: &impl AsTransaction,
-    ) -> &'a CommonCache {
-        common_cache.get_or_insert_with(|| {
-            let mut enc_prevouts = sha256::Hash::engine();
-            let mut enc_sequences = sha256::Hash::engine();
-            for txin in tx.inputs().iter() {
-                txin.previous_output.consensus_encode(&mut enc_prevouts).unwrap();
-                txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
-            }
-            CommonCache {
-                prevouts: sha256::Hash::from_engine(enc_prevouts),
-                sequences: sha256::Hash::from_engine(enc_sequences),
-                outputs: {
-                    let mut enc = sha256::Hash::engine();
-                    for txout in tx.outputs().iter() {
-                        txout.consensus_encode(&mut enc).unwrap();
-                    }
-                    sha256::Hash::from_engine(enc)
-                },
-            }
-        })
-    }
-
     fn segwit_cache(&mut self) -> &SegwitCache {
-        let common_cache = &mut self.common_cache;
-        let tx = self.tx.borrow();
-        self.segwit_cache.get_or_insert_with(|| {
-            let common_cache = Self::common_cache_minimal_borrow(common_cache, tx);
-            SegwitCache {
-                prevouts: common_cache.prevouts.hash_again(),
-                sequences: common_cache.sequences.hash_again(),
-                outputs: common_cache.outputs.hash_again(),
-            }
-        })
-    }
-
-    fn taproot_cache<T: Borrow<TxOut>>(&mut self, prevouts: &[T]) -> &TaprootCache {
-        self.taproot_cache.get_or_insert_with(|| {
-            let mut enc_amounts = sha256::Hash::engine();
-            let mut enc_script_pubkeys = sha256::Hash::engine();
-            for prevout in prevouts {
-                prevout.borrow().value.consensus_encode(&mut enc_amounts).unwrap();
-                prevout.borrow().script_pubkey.consensus_encode(&mut enc_script_pubkeys).unwrap();
-            }
-            TaprootCache {
-                amounts: sha256::Hash::from_engine(enc_amounts),
-                script_pubkeys: sha256::Hash::from_engine(enc_script_pubkeys),
-            }
-        })
+        self.cache.segwit_cache(&self.tx)
     }
 }
 
@@ -1371,6 +1600,91 @@ impl<R: AsMutTransaction> SighashCache<R> {
     /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.mut_input_at(input_index).map(|i| &mut i.witness).ok()
+    }
+}
+
+impl<R: AsExtendedTransaction> SighashCache<R> {
+    /// Sign all inputs using the prevouts present in the extended transaction.
+    ///
+    /// This calls the `signer` with a handle for each input that allows you to sign each input.
+    /// Signing is not enforced so you can simply ignore some inputs.
+    ///
+    /// This has two advantages: simpler API since you don't have to deal with prevouts, assuming
+    /// you already have something that implements `ExtendedTransaction`, statically enforced
+    /// absence of out-of-bouns errors.
+    pub fn sign_all(&mut self, mut signer: impl FnMut(Input<'_, R>)) {
+        for i in 0..self.tx.inputs().len() {
+            signer(Input {
+                index: i,
+                cache: self,
+            })
+        }
+    }
+}
+
+/// An input that is being signed.
+pub struct Input<'a, Transaction: AsExtendedTransaction> {
+    index: usize,
+    cache: &'a mut SighashCache<Transaction>,
+}
+
+impl<'a, T: AsExtendedTransaction> Input<'a, T> {
+    /// Returns the index of the currently-signed input.
+    pub fn index(&self) -> usize {
+        self.index
+    }
+
+    /// Returns extra data associated with the input.
+    pub fn extra(&self) -> &T::Extra {
+        self.cache.tx.extra_at(self.index).expect("index is always valid")
+    }
+
+    /// Encodes taproot signing data to the provided writer.
+    pub fn taproot_encode_signing_data_to<W: Write>(
+        &mut self,
+        writer: &mut W,
+        annex: Option<Annex>,
+        leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
+        sighash_type: TapSighashType,
+    ) -> Result<(), SigningDataError<SingleMissingOutputError>> {
+        let (_, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
+        let prevouts = if anyone_can_pay {
+            let prev_out = self.cache.tx.prev_output_at(self.index)
+                .expect("index is always valid");
+            CheckedPrevouts::One(prev_out)
+        } else {
+            let prevouts = self.cache.tx.inputs()
+                .iter_prevouts();
+            CheckedPrevouts::All(prevouts)
+        };
+
+        self.cache.cache.taproot_encode_signing_data_with_checked_prevouts_to(&self.cache.tx, writer, self.index, prevouts, annex, leaf_hash_code_separator, sighash_type)
+            .map_err(|error| {
+                match error {
+                    SigningDataError::Io(error) => SigningDataError::Io(error),
+                    // The API guarantees a valid index
+                    SigningDataError::Sighash(error) => SigningDataError::Sighash(error.assert_not_input_oob()),
+                }
+            })
+    }
+}
+
+impl<'a, T: AsMutTransaction + AsExtendedTransaction> Input<'a, T> {
+    /// Returns a mutable reference to the witness of the signed input.
+    ///
+    /// This can be used to add the signature to the witness.
+    pub fn witness_mut(&mut self) -> &mut Witness {
+        self.cache.witness_mut(self.index).expect("index is always valid")
+    }
+}
+
+impl<'a, T: AsMutExtendedTransaction> Input<'a, T> {
+    /// Returns a mutable reference to the extra data.
+    ///
+    /// This can be used to add the signature to the extra data which can be added to the
+    /// transaction later. (e.g. in case of PSBT)
+    pub fn extra_mut(&mut self) -> &mut T::Extra {
+        self.cache.tx.mut_extra_at(self.index).expect("index is always valid")
     }
 }
 
@@ -1512,6 +1826,15 @@ pub struct SingleMissingOutputError {
     pub input_index: usize,
     /// Length of the output vector.
     pub outputs_length: usize,
+}
+
+impl SingleMissingOutputError {
+    fn from_oob(error: transaction::OutputsIndexError) -> Self {
+        Self {
+            input_index: error.0.index,
+            outputs_length: error.0.length,
+        }
+    }
 }
 
 impl fmt::Display for SingleMissingOutputError {
@@ -1659,6 +1982,13 @@ impl<E> SigningDataError<E> {
 
     fn sighash<E2: Into<E>>(error: E2) -> Self {
         Self::Sighash(error.into())
+    }
+
+    fn convert<E2: From<E>>(self) -> SigningDataError<E2> {
+        match self {
+            Self::Io(error) => SigningDataError::Io(error),
+            Self::Sighash(error) => SigningDataError::Sighash(error.into()),
+        }
     }
 }
 
@@ -1930,13 +2260,8 @@ mod tests {
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::AllPlusAnyoneCanPay),
             Err(TaprootError::PrevoutsIndex(PrevoutsIndexError::InvalidOneIndex))
         );
-        assert_eq!(
-            c.taproot_signature_hash(10, &prevout, None, None, TapSighashType::AllPlusAnyoneCanPay),
-            Err(InputsIndexError(IndexOutOfBoundsError {
-                index: 10,
-                length: 1
-            }).into())
-        );
+        assert!(
+            c.taproot_signature_hash(10, &prevout, None, None, TapSighashType::AllPlusAnyoneCanPay).is_err());
         let prevout = Prevouts::One(0, &tx_out);
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::SinglePlusAnyoneCanPay),
@@ -2144,11 +2469,11 @@ mod tests {
 
         let expected = key_path.intermediary;
         // Compute all caches
-        assert_eq!(expected.hash_amounts, cache.taproot_cache(&utxos).amounts);
-        assert_eq!(expected.hash_outputs, cache.common_cache().outputs);
-        assert_eq!(expected.hash_prevouts, cache.common_cache().prevouts);
-        assert_eq!(expected.hash_script_pubkeys, cache.taproot_cache(&utxos).script_pubkeys);
-        assert_eq!(expected.hash_sequences, cache.common_cache().sequences);
+        assert_eq!(expected.hash_amounts, cache.cache.taproot_cache(&utxos).amounts);
+        assert_eq!(expected.hash_outputs, cache.cache.common_cache(&raw_unsigned_tx).outputs);
+        assert_eq!(expected.hash_prevouts, cache.cache.common_cache(&raw_unsigned_tx).prevouts);
+        assert_eq!(expected.hash_script_pubkeys, cache.cache.taproot_cache(&utxos).script_pubkeys);
+        assert_eq!(expected.hash_sequences, cache.cache.common_cache(&raw_unsigned_tx).sequences);
 
         for mut inp in key_path.input_spending {
             let tx_ind = inp.given.txin_index;
