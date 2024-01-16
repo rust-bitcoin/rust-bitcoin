@@ -11,18 +11,20 @@
 //! handle its complexity efficiently. Computing these hashes is as simple as creating
 //! [`SighashCache`] and calling its methods.
 
-use core::borrow::{Borrow, BorrowMut};
+use core::borrow::Borrow;
 use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 use internals::write_err;
 use io::Write;
 
+use crate::blockdata::transaction;
+use crate::locktime::absolute;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
-use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -64,13 +66,279 @@ sha256t_hash_newtype! {
     pub struct TapSighash(_);
 }
 
+/// Represents types containing transaction data.
+///
+/// This is most often `Transaction` but types that contain transaction data but have different
+/// layout may implement this to allow signing without having to construct `Transaction`.
+pub trait AsTransaction {
+    /// Returns the number of inputs in the transaction.
+    fn inputs_len(&self) -> usize;
+
+    /// Returns an input at given `index`.
+    ///
+    /// Returns `None` if `index > self.inputs_len()`.
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError>;
+
+    /// Returns the number of outputs in the transaction.
+    fn outputs_len(&self) -> usize;
+
+    /// Returns an output at given `index`.
+    ///
+    /// Returns `None` if `index > self.outputs_len()`.
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError>;
+
+    /// Returns transaction version.
+    fn version(&self) -> transaction::Version;
+
+    /// Returns transaction lock time.
+    fn lock_time(&self) -> absolute::LockTime;
+}
+
+/// Represents mutably-acessible types containing transaction data.
+pub trait AsMutTransaction: AsTransaction {
+    /// Returns a mutable reference to the input at given `index`.
+    ///
+    /// Returns `None` if `index > self.inputs_len()`.
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError>;
+}
+
+impl AsTransaction for Transaction {
+    fn inputs_len(&self) -> usize {
+        self.input.len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        self.tx_in(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        self.output.len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        self.tx_out(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        self.version
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        self.lock_time
+    }
+}
+
+impl AsMutTransaction for Transaction {
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError> {
+        self.tx_in_mut(index)
+    }
+}
+
+trait AsTransactionExt: AsTransaction {
+    fn inputs(&self) -> Inputs<'_, Self> {
+        Inputs(self)
+    }
+
+    fn outputs(&self) -> Outputs<'_, Self> {
+        Outputs(self)
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransactionExt for T {}
+
+/// A proxy for accessing transaction inputs
+struct Inputs<'a, T: ?Sized>(&'a T);
+
+impl<'a, T: AsTransaction + ?Sized> Inputs<'a, T> {
+    fn len(&self) -> usize {
+        self.0.inputs_len()
+    }
+
+    fn iter(&self) -> impl Iterator<Item=&'a TxIn> + Clone {
+        (0..self.0.inputs_len()).map(|i| self.0.input_at(i).unwrap())
+    }
+}
+
+impl<T: AsTransaction + ?Sized> core::ops::Index<usize> for Inputs<'_, T> {
+    type Output = TxIn;
+
+    #[track_caller]
+    fn index(&self, i: usize) -> &Self::Output {
+        self.0.input_at(i).unwrap()
+    }
+}
+
+/// A proxy for accessing transaction outputs
+struct Outputs<'a, T: ?Sized>(&'a T);
+
+impl<'a, T: AsTransaction + ?Sized> Outputs<'a, T> {
+    fn len(&self) -> usize {
+        self.0.outputs_len()
+    }
+
+    fn iter(&self) -> impl Iterator<Item=&'a TxOut> + Clone {
+        (0..self.0.outputs_len()).map(|i| self.0.output_at(i).unwrap())
+    }
+}
+
+impl<T: AsTransaction + ?Sized> core::ops::Index<usize> for Outputs<'_, T> {
+    type Output = TxOut;
+
+    #[track_caller]
+    fn index(&self, i: usize) -> &Self::Output {
+        self.0.output_at(i).unwrap()
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransaction for &'_ T {
+    fn inputs_len(&self) -> usize {
+        (**self).inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        (**self).input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        (**self).outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        (**self).output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        (**self).version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        (**self).lock_time()
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransaction for &'_ mut T {
+    fn inputs_len(&self) -> usize {
+        (**self).inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        (**self).input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        (**self).outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        (**self).output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        (**self).version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        (**self).lock_time()
+    }
+}
+
+impl<T: AsMutTransaction + ?Sized> AsMutTransaction for &'_ mut T {
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError> {
+        (**self).mut_input_at(index)
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransaction for Box<T> {
+    fn inputs_len(&self) -> usize {
+        (**self).inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        (**self).input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        (**self).outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        (**self).output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        (**self).version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        (**self).lock_time()
+    }
+}
+
+impl<T: AsMutTransaction + ?Sized> AsMutTransaction for Box<T> {
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError> {
+        (**self).mut_input_at(index)
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransaction for alloc::rc::Rc<T> {
+    fn inputs_len(&self) -> usize {
+        (**self).inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        (**self).input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        (**self).outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        (**self).output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        (**self).version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        (**self).lock_time()
+    }
+}
+
+impl<T: AsTransaction + ?Sized> AsTransaction for alloc::sync::Arc<T> {
+    fn inputs_len(&self) -> usize {
+        (**self).inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        (**self).input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        (**self).outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        (**self).output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        (**self).version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        (**self).lock_time()
+    }
+}
+
 impl_thirty_two_byte_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
-pub struct SighashCache<T: Borrow<Transaction>> {
+pub struct SighashCache<T: AsTransaction> {
     /// Access to transaction required for transaction introspection. Moreover, type
-    /// `T: Borrow<Transaction>` allows us to use borrowed and mutable borrowed types,
+    /// `T: AsTransaction` allows us to use borrowed and mutable borrowed types,
     /// the latter in particular is necessary for [`SighashCache::witness_mut`].
     tx: T,
 
@@ -202,9 +470,9 @@ impl<'u, T> Prevouts<'u, T>
 where
     T: Borrow<TxOut>,
 {
-    fn check_all(&self, tx: &Transaction) -> Result<(), PrevoutsSizeError> {
+    fn check_all(&self, tx: &(impl AsTransaction + ?Sized)) -> Result<(), PrevoutsSizeError> {
         if let Prevouts::All(prevouts) = self {
-            if prevouts.len() != tx.input.len() {
+            if prevouts.len() != tx.inputs().len() {
                 return Err(PrevoutsSizeError);
             }
         }
@@ -556,7 +824,7 @@ impl std::error::Error for SighashTypeParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-impl<R: Borrow<Transaction>> SighashCache<R> {
+impl<R: AsTransaction> SighashCache<R> {
     /// Constructs a new `SighashCache` from an unsigned transaction.
     ///
     /// The sighash components are computed in a lazy manner when required. For the generated
@@ -567,7 +835,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Returns the reference to the cached transaction.
-    pub fn transaction(&self) -> &Transaction { self.tx.borrow() }
+    pub fn transaction(&self) -> &R { &self.tx }
 
     /// Destroys the cache and recovers the stored transaction.
     pub fn into_transaction(self) -> R { self.tx }
@@ -583,7 +851,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: TapSighashType,
     ) -> Result<(), SigningDataError<TaprootError>> {
-        prevouts.check_all(self.tx.borrow()).map_err(SigningDataError::sighash)?;
+        prevouts.check_all(&self.tx).map_err(SigningDataError::sighash)?;
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
@@ -596,10 +864,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         // * Transaction Data:
         // nVersion (4): the nVersion of the transaction.
-        self.tx.borrow().version.consensus_encode(writer)?;
+        self.tx.version().consensus_encode(writer)?;
 
         // nLockTime (4): the nLockTime of the transaction.
-        self.tx.borrow().lock_time.consensus_encode(writer)?;
+        self.tx.lock_time().consensus_encode(writer)?;
 
         // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
         //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
@@ -637,8 +905,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //      scriptPubKey (35): scriptPubKey of the previous output spent by this input, serialized as script inside CTxOut. Its size is always 35 bytes.
         //      nSequence (4): nSequence of this input.
         if anyone_can_pay {
-            let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
-            let previous_output = prevouts.get(input_index).map_err(SigningDataError::sighash)?;
+            let txin = &self.tx.input_at(input_index).map_err(TaprootError::from).map_err(SigningDataError::Sighash)?;
+            let previous_output = prevouts.get(input_index).map_err(TaprootError::from).map_err(SigningDataError::Sighash)?;
             txin.previous_output.consensus_encode(writer)?;
             previous_output.value.consensus_encode(writer)?;
             previous_output.script_pubkey.consensus_encode(writer)?;
@@ -663,12 +931,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if sighash == TapSighashType::Single {
             let mut enc = sha256::Hash::engine();
             self.tx
-                .borrow()
-                .output
-                .get(input_index)
-                .ok_or(TaprootError::SingleMissingOutput(SingleMissingOutputError {
+                .output_at(input_index)
+                .map_err(|_| TaprootError::SingleMissingOutput(SingleMissingOutputError {
                     input_index,
-                    outputs_length: self.tx.borrow().output.len(),
+                    outputs_length: self.tx.outputs().len(),
                 })).map_err(SigningDataError::Sighash)?
                 .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
@@ -769,7 +1035,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
-        self.tx.borrow().version.consensus_encode(writer)?;
+        self.tx.version().consensus_encode(writer)?;
 
         if !anyone_can_pay {
             self.segwit_cache().prevouts.consensus_encode(writer)?;
@@ -787,7 +1053,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         }
 
         {
-            let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
+            let txin = &self.tx.input_at(input_index).map_err(SigningDataError::sighash)?;
             txin.previous_output.consensus_encode(writer)?;
             script_code.consensus_encode(writer)?;
             value.consensus_encode(writer)?;
@@ -796,17 +1062,17 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(writer)?;
-        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
+        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.outputs().len()
         {
             let mut single_enc = LegacySighash::engine();
-            self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
+            self.tx.outputs()[input_index].consensus_encode(&mut single_enc)?;
             let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(&hash[..])?;
         } else {
             writer.write_all(&zero_hash[..])?;
         }
 
-        self.tx.borrow().lock_time.consensus_encode(writer)?;
+        self.tx.lock_time().consensus_encode(writer)?;
         sighash_type.to_u32().consensus_encode(writer)?;
         Ok(())
     }
@@ -884,7 +1150,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         sighash_type: U,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
-        if let Err(e) = self.tx.borrow().tx_in(input_index) {
+        if let Err(e) = self.tx.input_at(input_index) {
             return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
         }
         let sighash_type: u32 = sighash_type.into();
@@ -892,7 +1158,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if is_invalid_use_of_sighash_single(
             sighash_type,
             input_index,
-            self.tx.borrow().output.len(),
+            self.tx.outputs().len(),
         ) {
             // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
             // will result in the data written to the writer being hashed, however the correct
@@ -902,7 +1168,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         }
 
         fn encode_signing_data_to_inner<W: Write + ?Sized>(
-            self_: &Transaction,
+            self_: &(impl AsTransaction + ?Sized),
             writer: &mut W,
             input_index: usize,
             script_pubkey: &Script,
@@ -913,22 +1179,21 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
             // Build tx to sign
             let mut tx = Transaction {
-                version: self_.version,
-                lock_time: self_.lock_time,
+                version: self_.version(),
+                lock_time: self_.lock_time(),
                 input: vec![],
                 output: vec![],
             };
             // Add all inputs necessary..
             if anyone_can_pay {
                 tx.input = vec![TxIn {
-                    previous_output: self_.input[input_index].previous_output,
+                    previous_output: self_.inputs()[input_index].previous_output,
                     script_sig: script_pubkey.to_owned(),
-                    sequence: self_.input[input_index].sequence,
+                    sequence: self_.inputs()[input_index].sequence,
                     witness: Witness::default(),
                 }];
             } else {
-                tx.input = Vec::with_capacity(self_.input.len());
-                for (n, input) in self_.input.iter().enumerate() {
+                for (n, input) in self_.inputs().iter().enumerate() {
                     tx.input.push(TxIn {
                         previous_output: input.previous_output,
                         script_sig: if n == input_index {
@@ -950,13 +1215,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             }
             // ..then all outputs
             tx.output = match sighash {
-                EcdsaSighashType::All => self_.output.clone(),
+                EcdsaSighashType::All => self_.outputs().iter().cloned().collect(),
                 EcdsaSighashType::Single => {
-                    let output_iter = self_
-                        .output
+                    let output_iter = self_.outputs()
                         .iter()
-                        .take(input_index + 1) // sign all outputs up to and including this one, but erase
-                        .enumerate() // all of them except for this one
+                        .take(input_index + 1) // sign all outputs up to and including this one, but erase all of them except for this one
+                        .enumerate()
                         .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::NULL });
                     output_iter.collect()
                 }
@@ -971,7 +1235,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         EncodeSigningDataResult::WriteResult(
             encode_signing_data_to_inner(
-                self.tx.borrow(),
+                &self.tx,
                 writer,
                 input_index,
                 script_pubkey,
@@ -1019,17 +1283,17 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     #[inline]
     fn common_cache(&mut self) -> &CommonCache {
-        Self::common_cache_minimal_borrow(&mut self.common_cache, self.tx.borrow())
+        Self::common_cache_minimal_borrow(&mut self.common_cache, &self.tx)
     }
 
     fn common_cache_minimal_borrow<'a>(
         common_cache: &'a mut Option<CommonCache>,
-        tx: &Transaction,
+        tx: &impl AsTransaction,
     ) -> &'a CommonCache {
         common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
-            for txin in tx.input.iter() {
+            for txin in tx.inputs().iter() {
                 txin.previous_output.consensus_encode(&mut enc_prevouts).unwrap();
                 txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
             }
@@ -1038,7 +1302,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 sequences: sha256::Hash::from_engine(enc_sequences),
                 outputs: {
                     let mut enc = sha256::Hash::engine();
-                    for txout in tx.output.iter() {
+                    for txout in tx.outputs().iter() {
                         txout.consensus_encode(&mut enc).unwrap();
                     }
                     sha256::Hash::from_engine(enc)
@@ -1076,7 +1340,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 }
 
-impl<R: BorrowMut<Transaction>> SighashCache<R> {
+impl<R: AsMutTransaction> SighashCache<R> {
     /// Allows modification of witnesses.
     ///
     /// As a lint against accidental changes to the transaction that would invalidate the cache and
@@ -1106,7 +1370,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// [`segwit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
     /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
-        self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
+        self.tx.mut_input_at(input_index).map(|i| &mut i.witness).ok()
     }
 }
 

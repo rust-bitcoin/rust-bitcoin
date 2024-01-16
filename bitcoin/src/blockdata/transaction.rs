@@ -1031,12 +1031,30 @@ impl Transaction {
             .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
     }
 
+    /// Returns a reference to the input at `input_index` if it exists.
+    #[inline]
+    pub fn tx_in_mut(&mut self, input_index: usize) -> Result<&mut TxIn, InputsIndexError> {
+        let len = self.input.len();
+        self.input
+            .get_mut(input_index)
+            .ok_or(IndexOutOfBoundsError { index: input_index, length: len }.into())
+    }
+
     /// Returns a reference to the output at `output_index` if it exists.
     #[inline]
     pub fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
         self.output
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
+    }
+
+    /// Returns a reference to the output at `output_index` if it exists.
+    #[inline]
+    pub fn tx_out_mut(&mut self, output_index: usize) -> Result<&mut TxOut, OutputsIndexError> {
+        let len = self.input.len();
+        self.output
+            .get_mut(output_index)
+            .ok_or(IndexOutOfBoundsError { index: output_index, length: len }.into())
     }
 }
 
