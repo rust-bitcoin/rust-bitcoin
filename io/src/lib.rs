@@ -47,6 +47,19 @@ pub trait Read {
     fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
 }
 
+/// A trait describing an input stream that uses an internal buffer when reading.
+pub trait BufRead: Read {
+    /// Returns data read from this reader, filling the internal buffer if needed.
+    fn fill_buf(&mut self) -> Result<&[u8]>;
+
+    /// Marks the buffered data up to amount as consumed.
+    ///
+    /// # Panics
+    ///
+    /// May panic if `amount` is greater than amount of data read by `fill_buf`.
+    fn consume(&mut self, amount: usize);
+}
+
 pub struct Take<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     remaining: u64,
@@ -62,12 +75,45 @@ impl<'a, R: Read + ?Sized> Read for Take<'a, R> {
     }
 }
 
+// Impl copied from Rust stdlib.
+impl<'a, R: BufRead + ?Sized> BufRead for Take<'a, R> {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        // Don't call into inner reader at all at EOF because it may still block
+        if self.remaining == 0 {
+            return Ok(&[]);
+        }
+
+        let buf = self.reader.fill_buf()?;
+        // Cast length to a u64 instead of casting `remaining` to a `usize`
+        // (in case `remaining > u32::MAX` and we are on a 32 bit machine).
+        let cap = cmp::min(buf.len() as u64, self.remaining) as usize;
+        Ok(&buf[..cap])
+    }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) {
+        assert!(amount as u64 <= self.remaining);
+        self.remaining -= amount as u64;
+        self.reader.consume(amount);
+    }
+}
+
 #[cfg(feature = "std")]
 impl<R: std::io::Read> Read for R {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         Ok(<R as std::io::Read>::read(self, buf)?)
     }
+}
+
+#[cfg(feature = "std")]
+impl<R: std::io::BufRead + Read + ?Sized> BufRead for R {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> { Ok(std::io::BufRead::fill_buf(self)?) }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
 }
 
 #[cfg(not(feature = "std"))]
@@ -79,6 +125,16 @@ impl Read for &[u8] {
         *self = &self[cnt..];
         Ok(cnt)
     }
+}
+
+#[cfg(not(feature = "std"))]
+impl BufRead for &[u8] {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> { Ok(self) }
+
+    // This panics if amount is out of bounds, same as the std version.
+    #[inline]
+    fn consume(&mut self, amount: usize) { *self = &self[amount..] }
 }
 
 pub struct Cursor<T> {
@@ -107,6 +163,20 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
         self.pos =
             self.pos.saturating_add(read.try_into().unwrap_or(u64::max_value() /* unreachable */));
         Ok(read)
+    }
+}
+
+impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        let inner: &[u8] = self.inner.as_ref();
+        Ok(&inner[self.pos as usize..])
+    }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) {
+        assert!(amount <= self.inner.as_ref().len());
+        self.pos += amount as u64;
     }
 }
 
@@ -197,3 +267,30 @@ impl std::io::Write for Sink {
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
 #[inline]
 pub fn sink() -> Sink { Sink }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn buf_read_fill_and_consume_slice() {
+        let data = [0_u8, 1, 2];
+
+        let mut slice = &data[..];
+
+        let fill = BufRead::fill_buf(&mut slice).unwrap();
+        assert_eq!(fill.len(), 3);
+        assert_eq!(fill, &[0_u8, 1, 2]);
+        slice.consume(2);
+
+        let fill = BufRead::fill_buf(&mut slice).unwrap();
+        assert_eq!(fill.len(), 1);
+        assert_eq!(fill, &[2_u8]);
+        slice.consume(1);
+
+        // checks we can attempt to read from a now-empty reader.
+        let fill = BufRead::fill_buf(&mut slice).unwrap();
+        assert_eq!(fill.len(), 0);
+        assert_eq!(fill, &[]);
+    }
+}

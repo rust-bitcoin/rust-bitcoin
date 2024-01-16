@@ -22,7 +22,7 @@ macro_rules! impl_consensus_encoding {
         impl $crate::consensus::Decodable for $thing {
 
             #[inline]
-            fn consensus_decode_from_finite_reader<R: $crate::io::Read + ?Sized>(
+            fn consensus_decode_from_finite_reader<R: $crate::io::BufRead + ?Sized>(
                 r: &mut R,
             ) -> Result<$thing, $crate::consensus::encode::Error> {
                 Ok($thing {
@@ -31,7 +31,7 @@ macro_rules! impl_consensus_encoding {
             }
 
             #[inline]
-            fn consensus_decode<R: $crate::io::Read + ?Sized>(
+            fn consensus_decode<R: $crate::io::BufRead + ?Sized>(
                 r: &mut R,
             ) -> Result<$thing, $crate::consensus::encode::Error> {
                 let mut r = r.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
@@ -202,7 +202,7 @@ macro_rules! impl_hashencode {
         }
 
         impl $crate::consensus::Decodable for $hashtype {
-            fn consensus_decode<R: $crate::io::Read + ?Sized>(r: &mut R) -> Result<Self, $crate::consensus::encode::Error> {
+            fn consensus_decode<R: $crate::io::BufRead + ?Sized>(r: &mut R) -> Result<Self, $crate::consensus::encode::Error> {
                 use $crate::hashes::Hash;
                 Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
             }

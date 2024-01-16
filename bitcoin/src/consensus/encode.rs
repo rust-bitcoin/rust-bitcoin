@@ -20,7 +20,7 @@ use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
 use internals::write_err;
-use io::{Cursor, Read, Write};
+use io::{Cursor, BufRead, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
@@ -301,7 +301,7 @@ pub trait Decodable: Sized {
     ///   avoid creating redundant `Take` wrappers. Failure to do so might result only in a tiny
     ///   performance hit.
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         reader: &mut R,
     ) -> Result<Self, Error> {
         // This method is always strictly less general than, `consensus_decode`, so it's safe and
@@ -319,7 +319,7 @@ pub trait Decodable: Sized {
     /// for types that override [`Self::consensus_decode_from_finite_reader`]
     /// instead.
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(reader: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, Error> {
         Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE as u64))
     }
 }
@@ -357,7 +357,7 @@ macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
                 ReadExt::$meth_dec(r)
             }
         }
@@ -440,7 +440,7 @@ impl Encodable for VarInt {
 
 impl Decodable for VarInt {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let n = ReadExt::read_u8(r)?;
         match n {
             0xFF => {
@@ -482,7 +482,7 @@ impl Encodable for bool {
 
 impl Decodable for bool {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<bool, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<bool, Error> {
         ReadExt::read_bool(r)
     }
 }
@@ -499,7 +499,7 @@ impl Encodable for String {
 
 impl Decodable for String {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<String, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<String, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
             .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
     }
@@ -517,7 +517,7 @@ impl Encodable for Cow<'static, str> {
 
 impl Decodable for Cow<'static, str> {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Cow<'static, str>, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Cow<'static, str>, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
             .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
             .map(Cow::Owned)
@@ -539,7 +539,7 @@ macro_rules! impl_array {
 
         impl Decodable for [u8; $size] {
             #[inline]
-            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
                 let mut ret = [0; $size];
                 r.read_slice(&mut ret)?;
                 Ok(ret)
@@ -560,7 +560,7 @@ impl_array!(33);
 
 impl Decodable for [u16; 8] {
     #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut res = [0; 8];
         for item in &mut res {
             *item = Decodable::consensus_decode(r)?;
@@ -595,7 +595,7 @@ macro_rules! impl_vec {
 
         impl Decodable for Vec<$type> {
             #[inline]
-            fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
+            fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
                 r: &mut R,
             ) -> Result<Self, Error> {
                 let len = VarInt::consensus_decode_from_finite_reader(r)?.0;
@@ -685,7 +685,7 @@ impl Encodable for Vec<u8> {
 
 impl Decodable for Vec<u8> {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let len = VarInt::consensus_decode(r)?.0 as usize;
         // most real-world vec of bytes data, wouldn't be larger than 128KiB
         let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 };
@@ -702,7 +702,7 @@ impl Encodable for Box<[u8]> {
 
 impl Decodable for Box<[u8]> {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         <Vec<u8>>::consensus_decode_from_finite_reader(r).map(From::from)
     }
 }
@@ -727,7 +727,7 @@ impl Encodable for CheckedData {
 
 impl Decodable for CheckedData {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let len = u32::consensus_decode_from_finite_reader(r)? as usize;
 
         let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(r)?;
@@ -787,7 +787,7 @@ macro_rules! tuple_encode {
         impl<$($x: Decodable),*> Decodable for ($($x),*) {
             #[inline]
             #[allow(non_snake_case)]
-            fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
                 Ok(($({let $x = Decodable::consensus_decode(r)?; $x }),*))
             }
         }
@@ -809,7 +809,7 @@ impl Encodable for sha256d::Hash {
 }
 
 impl Decodable for sha256d::Hash {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }
@@ -821,7 +821,7 @@ impl Encodable for sha256::Hash {
 }
 
 impl Decodable for sha256::Hash {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }
@@ -833,7 +833,7 @@ impl Encodable for TapLeafHash {
 }
 
 impl Decodable for TapLeafHash {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }

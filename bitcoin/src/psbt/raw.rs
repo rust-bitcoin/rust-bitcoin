@@ -8,7 +8,7 @@
 
 use core::fmt;
 
-use io::{Read, Write};
+use io::{BufRead, Read, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
@@ -74,7 +74,7 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    pub(crate) fn decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
 
         if byte_size == 0 {
@@ -137,7 +137,7 @@ impl Deserialize for Pair {
 }
 
 impl Pair {
-    pub(crate) fn decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
     }
 }
@@ -159,7 +159,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u8> + Into<u8>,
 {
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_u8()?);
         let key = read_to_end(r)?;
