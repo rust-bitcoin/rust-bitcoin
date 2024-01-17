@@ -1096,16 +1096,15 @@ mod tests {
             k.write_into(&mut v).expect("writing into vec");
         }
 
+        let mut reader = v.as_slice();
         let mut dec_keys = vec![];
-        let mut cursor = io::Cursor::new(&v);
         for _ in 0..N_KEYS {
-            dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
+            dec_keys.push(PublicKey::read_from(&mut reader).expect("reading from vec"));
         }
-
         assert_eq!(keys, dec_keys);
+        assert!(PublicKey::read_from(&mut reader).is_err());
 
         // sanity checks
-        assert!(PublicKey::read_from(&mut cursor).is_err());
         assert!(PublicKey::read_from(&mut io::Cursor::new(&[])).is_err());
         assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 33][..])).is_err());
         assert!(PublicKey::read_from(&mut io::Cursor::new(&[2; 32][..])).is_err());
