@@ -1105,11 +1105,12 @@ mod tests {
         assert!(PublicKey::read_from(&mut reader).is_err());
 
         // sanity checks
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(&mut io::Cursor::new(&[4; 64][..])).is_err());
+        let mut empty: &[u8] = &[];
+        assert!(PublicKey::read_from(&mut empty).is_err());
+        assert!(PublicKey::read_from(&mut &[0; 33][..]).is_err());
+        assert!(PublicKey::read_from(&mut &[2; 32][..]).is_err());
+        assert!(PublicKey::read_from(&mut &[0; 65][..]).is_err());
+        assert!(PublicKey::read_from(&mut &[4; 64][..]).is_err());
     }
 
     #[test]
