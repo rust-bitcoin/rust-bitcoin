@@ -89,9 +89,10 @@ pub struct Take<'a, R: Read + ?Sized> {
 }
 
 impl<'a, R: Read + ?Sized> Take<'a, R> {
+    /// Reads all bytes until EOF from the underlying reader into `buf`.
     #[cfg(any(feature = "alloc", feature = "std"))]
     #[inline]
-    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
+    pub fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         let mut read: usize = 0;
         let mut chunk = [0u8; 64];
         loop {
