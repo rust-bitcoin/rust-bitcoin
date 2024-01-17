@@ -22,7 +22,7 @@ use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
-use crate::{Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -677,7 +677,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         annex: Option<Annex>,
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: TapSighashType,
-    ) -> Result<(), Error> {
+    ) -> Result<(), TaprootError> {
         prevouts.check_all(self.tx.borrow())?;
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -732,11 +732,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //      scriptPubKey (35): scriptPubKey of the previous output spent by this input, serialized as script inside CTxOut. Its size is always 35 bytes.
         //      nSequence (4): nSequence of this input.
         if anyone_can_pay {
-            let txin =
-                &self.tx.borrow().input.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
-                    index: input_index,
-                    inputs_size: self.tx.borrow().input.len(),
-                })?;
+            let txin = &self.tx.borrow().tx_in(input_index)?;
             let previous_output = prevouts.get(input_index)?;
             txin.previous_output.consensus_encode(writer)?;
             previous_output.value.consensus_encode(writer)?;
@@ -765,10 +761,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 .borrow()
                 .output
                 .get(input_index)
-                .ok_or(Error::SingleWithoutCorrespondingOutput {
-                    index: input_index,
-                    outputs_size: self.tx.borrow().output.len(),
-                })?
+                .ok_or(TaprootError::SingleMissingOutput(SingleMissingOutputError {
+                    input_index,
+                    outputs_length: self.tx.borrow().output.len(),
+                }))?
                 .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
             hash.consensus_encode(writer)?;
@@ -795,7 +791,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         annex: Option<Annex>,
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: TapSighashType,
-    ) -> Result<TapSighash, Error> {
+    ) -> Result<TapSighash, TaprootError> {
         let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
@@ -814,7 +810,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         prevouts: &Prevouts<T>,
         sighash_type: TapSighashType,
-    ) -> Result<TapSighash, Error> {
+    ) -> Result<TapSighash, TaprootError> {
         let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
@@ -837,7 +833,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         prevouts: &Prevouts<T>,
         leaf_hash: S,
         sighash_type: TapSighashType,
-    ) -> Result<TapSighash, Error> {
+    ) -> Result<TapSighash, TaprootError> {
         let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
@@ -1242,6 +1238,105 @@ impl<'a> Encodable for Annex<'a> {
     }
 }
 
+/// Error computing a taproot sighash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum TaprootError {
+    /// Index out of bounds when accessing transaction input vector.
+    InputsIndex(transaction::InputsIndexError),
+    /// Can happen only when using `*_encode_signing_*` methods with custom writers, engines
+    /// like those used in `*_signature_hash` methods do not error.
+    Io(io::ErrorKind),
+    /// Using `SIGHASH_SINGLE` requires an output at the same index is the input.
+    SingleMissingOutput(SingleMissingOutputError),
+    /// Prevouts size error.
+    PrevoutsSize(PrevoutsSizeError),
+    /// Prevouts index error.
+    PrevoutsIndex(PrevoutsIndexError),
+    /// Prevouts kind error.
+    PrevoutsKind(PrevoutsKindError),
+    /// Invalid Sighash type.
+    InvalidSighashType(u32),
+}
+
+impl fmt::Display for TaprootError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use TaprootError::*;
+
+        match *self {
+            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
+            Io(error_kind) => write!(f, "write failed: {:?}", error_kind),
+            SingleMissingOutput(ref e) => write_err!(f, "sighash single"; e),
+            PrevoutsSize(ref e) => write_err!(f, "prevouts size"; e),
+            PrevoutsIndex(ref e) => write_err!(f, "prevouts index"; e),
+            PrevoutsKind(ref e) => write_err!(f, "prevouts kind"; e),
+            InvalidSighashType(hash_ty) => write!(f, "invalid taproot sighash type : {} ", hash_ty),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TaprootError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TaprootError::*;
+
+        match *self {
+            InputsIndex(ref e) => Some(e),
+            SingleMissingOutput(ref e) => Some(e),
+            PrevoutsSize(ref e) => Some(e),
+            PrevoutsIndex(ref e) => Some(e),
+            PrevoutsKind(ref e) => Some(e),
+            Io(_) | InvalidSighashType(_) => None,
+        }
+    }
+}
+
+impl From<transaction::InputsIndexError> for TaprootError {
+    fn from(e: transaction::InputsIndexError) -> Self { Self::InputsIndex(e) }
+}
+
+impl From<io::Error> for TaprootError {
+    fn from(e: io::Error) -> Self { Self::Io(e.kind()) }
+}
+
+impl From<PrevoutsSizeError> for TaprootError {
+    fn from(e: PrevoutsSizeError) -> Self { Self::PrevoutsSize(e) }
+}
+
+impl From<PrevoutsKindError> for TaprootError {
+    fn from(e: PrevoutsKindError) -> Self { Self::PrevoutsKind(e) }
+}
+
+impl From<PrevoutsIndexError> for TaprootError {
+    fn from(e: PrevoutsIndexError) -> Self { Self::PrevoutsIndex(e) }
+}
+
+/// Using `SIGHASH_SINGLE` requires an output at the same index as the input.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct SingleMissingOutputError {
+    /// Input index.
+    pub input_index: usize,
+    /// Length of the output vector.
+    pub outputs_length: usize,
+}
+
+impl fmt::Display for SingleMissingOutputError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "sighash single requires an output at the same index as the input \
+             (input index: {}, outputs length: {})",
+            self.input_index, self.outputs_length
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for SingleMissingOutputError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+}
+
 /// Annex must be at least one byte long and the first bytes must be `0x50`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -1275,9 +1370,9 @@ impl std::error::Error for AnnexError {
     }
 }
 
-fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len: usize) -> bool {
+fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {
     let ty = EcdsaSighashType::from_consensus(sighash);
-    ty == EcdsaSighashType::Single && input_index >= output_len
+    ty == EcdsaSighashType::Single && input_index >= outputs_len
 }
 
 /// Result of [`SighashCache::legacy_encode_signing_data_to`].
@@ -1556,6 +1651,8 @@ mod tests {
     #[test]
     #[rustfmt::skip] // Allow long function call `taproot_signature_hash`.
     fn test_sighash_errors() {
+        use crate::transaction::{IndexOutOfBoundsError, InputsIndexError};
+
         let dumb_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
@@ -1569,38 +1666,38 @@ mod tests {
         let empty_prevouts : Prevouts<TxOut> = Prevouts::All(&empty_vec);
         assert_eq!(
             c.taproot_signature_hash(0, &empty_prevouts, None, None, TapSighashType::All),
-            Err(Error::PrevoutsSize(PrevoutsSizeError))
+            Err(TaprootError::PrevoutsSize(PrevoutsSizeError))
         );
         let two = vec![TxOut::NULL, TxOut::NULL];
         let too_many_prevouts = Prevouts::All(&two);
         assert_eq!(
             c.taproot_signature_hash(0, &too_many_prevouts, None, None, TapSighashType::All),
-            Err(Error::PrevoutsSize(PrevoutsSizeError))
+            Err(TaprootError::PrevoutsSize(PrevoutsSizeError))
         );
         let tx_out = TxOut::NULL;
         let prevout = Prevouts::One(1, &tx_out);
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::All),
-            Err(Error::PrevoutsKind(PrevoutsKindError))
+            Err(TaprootError::PrevoutsKind(PrevoutsKindError))
         );
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::AllPlusAnyoneCanPay),
-            Err(Error::PrevoutsIndex(PrevoutsIndexError::InvalidOneIndex))
+            Err(TaprootError::PrevoutsIndex(PrevoutsIndexError::InvalidOneIndex))
         );
         assert_eq!(
             c.taproot_signature_hash(10, &prevout, None, None, TapSighashType::AllPlusAnyoneCanPay),
-            Err(Error::IndexOutOfInputsBounds {
+            Err(InputsIndexError(IndexOutOfBoundsError {
                 index: 10,
-                inputs_size: 1
-            })
+                length: 1
+            }).into())
         );
         let prevout = Prevouts::One(0, &tx_out);
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::SinglePlusAnyoneCanPay),
-            Err(Error::SingleWithoutCorrespondingOutput {
-                index: 0,
-                outputs_size: 0
-            })
+            Err(TaprootError::SingleMissingOutput(SingleMissingOutputError {
+                input_index: 0,
+                outputs_length: 0
+            }))
         );
         assert_eq!(
             c.legacy_signature_hash(10, Script::new(), 0u32),
