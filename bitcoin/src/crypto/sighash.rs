@@ -235,9 +235,6 @@ pub enum Error {
     /// `SIGHASH_ANYONECANPAY`.
     PrevoutsKind(PrevoutsKindError),
 
-    /// Annex must be at least one byte long and the first bytes must be `0x50`.
-    WrongAnnex,
-
     /// Invalid Sighash type.
     InvalidSighashType(u32),
 
@@ -256,7 +253,6 @@ impl fmt::Display for Error {
             PrevoutsSize(ref e) => write_err!(f, "prevouts size"; e),
             PrevoutsIndex(ref e) => write_err!(f, "prevouts index"; e),
             PrevoutsKind(ref e) => write_err!(f, "prevouts kind"; e),
-            WrongAnnex => write!(f, "annex must be at least one byte long and the first bytes must be `0x50`"),
             InvalidSighashType(hash_ty) => write!(f, "Invalid taproot signature hash type : {} ", hash_ty),
             NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
         }
@@ -275,7 +271,6 @@ impl std::error::Error for Error {
             Io(_)
             | IndexOutOfInputsBounds { .. }
             | SingleWithoutCorrespondingOutput { .. }
-            | WrongAnnex
             | InvalidSighashType(_)
             | NotP2wpkhScript => None,
         }
@@ -1227,11 +1222,13 @@ pub struct Annex<'a>(&'a [u8]);
 
 impl<'a> Annex<'a> {
     /// Creates a new `Annex` struct checking the first byte is `0x50`.
-    pub fn new(annex_bytes: &'a [u8]) -> Result<Self, Error> {
-        if annex_bytes.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-            Ok(Annex(annex_bytes))
-        } else {
-            Err(Error::WrongAnnex)
+    pub fn new(annex_bytes: &'a [u8]) -> Result<Self, AnnexError> {
+        use AnnexError::*;
+
+        match annex_bytes.first() {
+            Some(&TAPROOT_ANNEX_PREFIX) => Ok(Annex(annex_bytes)),
+            Some(other) => Err(IncorrectPrefix(*other)),
+            None => Err(Empty),
         }
     }
 
@@ -1242,6 +1239,39 @@ impl<'a> Annex<'a> {
 impl<'a> Encodable for Annex<'a> {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
+    }
+}
+
+/// Annex must be at least one byte long and the first bytes must be `0x50`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum AnnexError {
+    /// The annex is empty.
+    Empty,
+    /// Incorrect prefix byte in the annex.
+    IncorrectPrefix(u8),
+}
+
+impl fmt::Display for AnnexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use AnnexError::*;
+
+        match *self {
+            Empty => write!(f, "the annex is empty"),
+            IncorrectPrefix(byte) =>
+                write!(f, "incorrect prefix byte in the annex {:02x}, expecting 0x50", byte),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for AnnexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use AnnexError::*;
+
+        match *self {
+            Empty | IncorrectPrefix(_) => None,
+        }
     }
 }
 
@@ -1583,9 +1613,9 @@ mod tests {
 
     #[test]
     fn test_annex_errors() {
-        assert_eq!(Annex::new(&[]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&[0x51]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&[0x51, 0x50]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[]), Err(AnnexError::Empty));
+        assert_eq!(Annex::new(&[0x51]), Err(AnnexError::IncorrectPrefix(0x51)));
+        assert_eq!(Annex::new(&[0x51, 0x50]), Err(AnnexError::IncorrectPrefix(0x51)));
     }
 
     #[allow(clippy::too_many_arguments)]
