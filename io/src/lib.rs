@@ -161,7 +161,7 @@ impl<R: std::io::BufRead + Read + ?Sized> BufRead for R {
     fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "std"))] // Conflicts with blanket impl when "std" is enabled.
 impl Read for &[u8] {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
@@ -172,7 +172,7 @@ impl Read for &[u8] {
     }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "std"))] // Conflicts with blanket impl when "std" is enabled.
 impl BufRead for &[u8] {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> { Ok(self) }
