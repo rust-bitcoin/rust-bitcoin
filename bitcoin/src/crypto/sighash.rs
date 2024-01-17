@@ -859,7 +859,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_code: &Script,
         value: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<(), Error> {
+    ) -> Result<(), SegwitV0Error> {
         let zero_hash = sha256d::Hash::all_zeros();
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -882,12 +882,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         }
 
         {
-            let txin =
-                &self.tx.borrow().input.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
-                    index: input_index,
-                    inputs_size: self.tx.borrow().input.len(),
-                })?;
-
+            let txin = &self.tx.borrow().tx_in(input_index)?;
             txin.previous_output.consensus_encode(writer)?;
             script_code.consensus_encode(writer)?;
             value.consensus_encode(writer)?;
@@ -921,8 +916,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_pubkey: &Script,
         value: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<SegwitV0Sighash, Error> {
-        let script_code = script_pubkey.p2wpkh_script_code().ok_or(Error::NotP2wpkhScript)?;
+    ) -> Result<SegwitV0Sighash, P2wpkhError> {
+        let script_code = script_pubkey.p2wpkh_script_code().ok_or(P2wpkhError::NotP2wpkhScript)?;
 
         let mut enc = SegwitV0Sighash::engine();
         self.segwit_v0_encode_signing_data_to(
@@ -942,7 +937,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         witness_script: &Script,
         value: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<SegwitV0Sighash, Error> {
+    ) -> Result<SegwitV0Sighash, SegwitV0Error> {
         let mut enc = SegwitV0Sighash::engine();
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
@@ -1310,6 +1305,85 @@ impl From<PrevoutsKindError> for TaprootError {
 
 impl From<PrevoutsIndexError> for TaprootError {
     fn from(e: PrevoutsIndexError) -> Self { Self::PrevoutsIndex(e) }
+}
+
+/// Error computing a P2WPKH sighash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum P2wpkhError {
+    /// Error computing the sighash.
+    Sighash(SegwitV0Error),
+    /// Script is not a witness program for a p2wpkh output.
+    NotP2wpkhScript,
+}
+
+impl fmt::Display for P2wpkhError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use P2wpkhError::*;
+
+        match *self {
+            Sighash(ref e) => write_err!(f, "error encoding segwit v0 signing data"; e),
+            NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for P2wpkhError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use P2wpkhError::*;
+
+        match *self {
+            Sighash(ref e) => Some(e),
+            NotP2wpkhScript => None,
+        }
+    }
+}
+
+impl From<SegwitV0Error> for P2wpkhError {
+    fn from(e: SegwitV0Error) -> Self { Self::Sighash(e) }
+}
+
+/// Error computing the segwit sighash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum SegwitV0Error {
+    /// Index out of bounds when accessing transaction input vector.
+    InputsIndex(transaction::InputsIndexError),
+    /// Writer errored during consensus encoding.
+    Io(io::ErrorKind),
+}
+
+impl fmt::Display for SegwitV0Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use SegwitV0Error::*;
+
+        match *self {
+            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
+            Io(error_kind) => write!(f, "write failed: {:?}", error_kind),
+        }
+    }
+}
+
+
+#[cfg(feature = "std")]
+impl std::error::Error for SegwitV0Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use SegwitV0Error::*;
+
+        match *self {
+            InputsIndex(ref e) => Some(e),
+            Io(_) => None,
+        }
+    }
+}
+
+impl From<transaction::InputsIndexError> for SegwitV0Error {
+    fn from(e: transaction::InputsIndexError) -> Self { Self::InputsIndex(e) }
+}
+
+impl From<io::Error> for SegwitV0Error {
+    fn from(e: io::Error) -> Self { Self::Io(e.kind()) }
 }
 
 /// Using `SIGHASH_SINGLE` requires an output at the same index as the input.
