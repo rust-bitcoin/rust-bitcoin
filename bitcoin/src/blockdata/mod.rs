@@ -54,22 +54,13 @@ pub mod locktime {
         //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
         //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-        use io::Write;
-
         pub use crate::consensus::encode::{self, Decodable, Encodable};
 
         /// Re-export everything from the `primitives::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
         pub use primitives::locktime::absolute::*;
 
-        impl Encodable for LockTime {
-            #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-                let v = self.to_consensus_u32();
-                v.consensus_encode(w)
-            }
-        }
-
+        crate::impl_encodable_using_encode!(LockTime);
         crate::impl_decodable_using_decode!(LockTime);
     }
 

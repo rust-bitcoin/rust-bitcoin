@@ -82,7 +82,7 @@ pub extern crate secp256k1;
 extern crate actual_serde as serde;
 
 mod internal_macros;
-pub(crate) use consensus::encode::impl_decodable_using_decode;
+pub(crate) use consensus::encode::{impl_decodable_using_decode, impl_encodable_using_encode};
 #[cfg(feature = "serde")]
 mod serde_utils;
 

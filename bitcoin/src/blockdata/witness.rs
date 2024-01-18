@@ -8,13 +8,13 @@ use core::fmt;
 use core::ops::Index;
 
 use internals::write_err;
-use consensus_encoding::{Decode, Decoder};
 use consensus_encoding::push_decode::decoders::combinators::ThenTry;
+use consensus_encoding::{Decode, Decoder, EncodeTc, Encoder, VarIntEncoder, encoder_newtype};
 
 use crate::consensus::encode::{VarIntDecoder, VarIntDecodeError, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
-use crate::io::{self, Write};
+use crate::io;
 use crate::prelude::Vec;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
@@ -135,6 +135,7 @@ pub struct Iter<'a> {
 }
 
 crate::impl_decodable_using_decode!(Witness);
+crate::impl_encodable_using_encode!(Witness);
 
 impl Decode for Witness {
     type Decoder = WitnessDecoder;
@@ -337,6 +338,32 @@ impl fmt::Display for WitnessUnexpectedEndError {
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessUnexpectedEndError {}
 
+impl consensus_encoding::Encode for Witness {
+    const MIN_ENCODED_LEN: usize = 1;
+    const IS_KNOWN_LEN: bool = false;
+
+    fn encoder(&self) -> <Self as EncodeTc<'_>>::Encoder {
+        let first = consensus_encoding::VarIntEncoder::new(self.len() as u64);
+        let second = consensus_encoding::push_decode::encoders::BytesEncoder::new(&self.content[..self.indices_start]);
+
+        WitnessEncoder(first.chain(second))
+    }
+
+    fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+        let (len, max_steps) = VarIntEncoder::dyn_encoded_len(self.len() as u64, max_steps);
+
+        // The indices start after all data
+        (self.indices_start + len, max_steps)
+    }
+}
+
+encoder_newtype! {
+    /// Encoder of [`Witness`].
+    ///
+    /// For more information about encoders check the [`Encoder`](consensus_encoding::Encoder) trait.
+    Witness => pub struct WitnessEncoder<'a>(consensus_encoding::push_decode::encoders::combinators::Chain<consensus_encoding::VarIntEncoder, consensus_encoding::push_decode::encoders::BytesEncoder<&'a [u8]>>);
+}
+
 /// Correctness Requirements: value must always fit within u32
 #[inline]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
@@ -354,18 +381,6 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
         None
     } else {
         Some(u32::from_ne_bytes(bytes[start..end].try_into().expect("is u32 size")) as usize)
-    }
-}
-
-impl Encodable for Witness {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = VarInt::from(self.witness_elements);
-        len.consensus_encode(w)?;
-        let content_with_indices_len = self.content.len();
-        let indices_size = self.witness_elements * 4;
-        let content_len = content_with_indices_len - indices_size;
-        w.emit_slice(&self.content[..content_len])?;
-        Ok(content_len + len.size())
     }
 }
 
@@ -405,17 +420,17 @@ impl Witness {
             .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).size())
             .sum();
 
-        let mut content = vec![0u8; content_size + index_size];
-        let mut cursor = 0usize;
-        for (i, elem) in slice.iter().enumerate() {
-            encode_cursor(&mut content, content_size, i, cursor);
-            let elem_len_varint = VarInt::from(elem.as_ref().len());
-            elem_len_varint
-                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.size()])
-                .expect("writers on vec don't errors, space granted by content_size");
-            cursor += elem_len_varint.size();
-            content[cursor..cursor + elem.as_ref().len()].copy_from_slice(elem.as_ref());
-            cursor += elem.as_ref().len();
+        let mut content = Vec::with_capacity(content_size + index_size);
+        for elem in slice {
+            let elem = elem.as_ref();
+            VarIntEncoder::new(elem.len() as u64).write_to_vec(&mut content);
+            content.extend_from_slice(elem);
+        }
+        let mut cursor = 0u32;
+        for elem in slice {
+            let len = elem.as_ref().len();
+            content.extend_from_slice(&cursor.to_ne_bytes());
+            cursor += u32::try_from(VarIntEncoder::len(len as u64) + len).expect("Larger than u32");
         }
 
         Witness { witness_elements, content, indices_start: content_size }

@@ -41,6 +41,10 @@ consensus_encoding::hash_decoder! {
     BlockHash => pub BlockHashDecoder;
 }
 
+consensus_encoding::hash_encoder! {
+    BlockHash;
+}
+
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but

@@ -71,6 +71,11 @@ consensus_encoding::hash_decoder! {
     FilterHeader => pub FilterHeaderDecoder;
 }
 
+consensus_encoding::hash_encoder! {
+    FilterHash;
+    FilterHeader;
+}
+
 /// Errors for blockfilter.
 #[derive(Debug)]
 #[non_exhaustive]
