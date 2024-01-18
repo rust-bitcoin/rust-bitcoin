@@ -42,7 +42,7 @@ macro_rules! impl_array_newtype {
         impl<'a> core::convert::TryFrom<&'a [$ty]> for $thing {
             type Error = core::array::TryFromSliceError;
 
-            fn try_from(data: &'a [$ty]) -> Result<Self, Self::Error> {
+            fn try_from(data: &'a [$ty]) -> core::result::Result<Self, Self::Error> {
                 use core::convert::TryInto;
 
                 Ok($thing(data.try_into()?))
@@ -99,7 +99,7 @@ macro_rules! impl_array_newtype {
 macro_rules! debug_from_display {
     ($thing:ident) => {
         impl core::fmt::Debug for $thing {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
                 core::fmt::Display::fmt(self, f)
             }
         }

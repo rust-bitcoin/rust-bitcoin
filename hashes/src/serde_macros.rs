@@ -25,7 +25,7 @@ pub mod serde_details {
             formatter.write_str("an ASCII hex string")
         }
 
-        fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+        fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
         where
             E: de::Error,
         {
@@ -36,7 +36,7 @@ pub mod serde_details {
             }
         }
 
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        fn visit_str<E>(self, v: &str) -> core::result::Result<Self::Value, E>
         where
             E: de::Error,
         {
@@ -57,7 +57,7 @@ pub mod serde_details {
             formatter.write_str("a bytestring")
         }
 
-        fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+        fn visit_bytes<E>(self, v: &[u8]) -> core::result::Result<Self::Value, E>
         where
             E: de::Error,
         {
@@ -82,10 +82,10 @@ pub mod serde_details {
         const N: usize;
 
         /// Helper function to turn a deserialized slice into the correct hash type.
-        fn from_slice_delegated(sl: &[u8]) -> Result<Self, FromSliceError>;
+        fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, FromSliceError>;
 
         /// Do serde serialization.
-        fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        fn serialize<S: Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
             if s.is_human_readable() {
                 s.collect_str(self)
             } else {
@@ -94,7 +94,7 @@ pub mod serde_details {
         }
 
         /// Do serde deserialization.
-        fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        fn deserialize<'de, D: Deserializer<'de>>(d: D) -> core::result::Result<Self, D::Error> {
             if d.is_human_readable() {
                 d.deserialize_str(HexVisitor::<Self>(PhantomData))
             } else {
@@ -112,7 +112,7 @@ macro_rules! serde_impl(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {
             const N : usize = $len;
-            fn from_slice_delegated(sl: &[u8]) -> Result<Self, $crate::FromSliceError> {
+            fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, $crate::FromSliceError> {
                 #[allow(unused_imports)]
                 use $crate::Hash as _;
                 $t::from_slice(sl)
@@ -120,13 +120,13 @@ macro_rules! serde_impl(
         }
 
         impl<$($gen: $gent),*> $crate::serde::Serialize for $t<$($gen),*> {
-            fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
                 $crate::serde_macros::serde_details::SerdeHash::serialize(self, s)
             }
         }
 
         impl<'de $(, $gen: $gent)*> $crate::serde::Deserialize<'de> for $t<$($gen),*> {
-            fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> Result<$t<$($gen),*>, D::Error> {
+            fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t<$($gen),*>, D::Error> {
                 $crate::serde_macros::serde_details::SerdeHash::deserialize(d)
             }
         }

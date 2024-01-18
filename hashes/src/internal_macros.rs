@@ -104,7 +104,7 @@ macro_rules! hash_trait_impls {
 
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 use $crate::hex::{FromHex, HexToBytesIter};
                 use $crate::Hash;
 
@@ -151,7 +151,7 @@ macro_rules! hash_trait_impls {
                 from_engine(e)
             }
 
-            fn from_slice(sl: &[u8]) -> Result<Hash<$($gen),*>, FromSliceError> {
+            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
                 if sl.len() != $bits / 8 {
                     Err(FromSliceError{expected: Self::LEN, got: sl.len()})
                 } else {
