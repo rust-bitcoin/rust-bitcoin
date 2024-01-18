@@ -193,7 +193,7 @@ pub trait ReadExt: Read {
 macro_rules! encoder_fn {
     ($name:ident, $val_type:ty) => {
         #[inline]
-        fn $name(&mut self, v: $val_type) -> Result<(), io::Error> {
+        fn $name(&mut self, v: $val_type) -> core::result::Result<(), io::Error> {
             self.write_all(&v.to_le_bytes())
         }
     };
@@ -202,7 +202,7 @@ macro_rules! encoder_fn {
 macro_rules! decoder_fn {
     ($name:ident, $val_type:ty, $byte_len: expr) => {
         #[inline]
-        fn $name(&mut self) -> Result<$val_type, Error> {
+        fn $name(&mut self) -> core::result::Result<$val_type, Error> {
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(<$val_type>::from_le_bytes(val))
@@ -357,13 +357,13 @@ macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 ReadExt::$meth_dec(r)
             }
         }
         impl Encodable for $ty {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, io::Error> {
                 w.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
@@ -531,7 +531,7 @@ macro_rules! impl_array {
             fn consensus_encode<W: WriteExt + ?Sized>(
                 &self,
                 w: &mut W,
-            ) -> Result<usize, io::Error> {
+            ) -> core::result::Result<usize, io::Error> {
                 w.emit_slice(&self[..])?;
                 Ok(self.len())
             }
@@ -539,7 +539,7 @@ macro_rules! impl_array {
 
         impl Decodable for [u8; $size] {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 let mut ret = [0; $size];
                 r.read_slice(&mut ret)?;
                 Ok(ret)
@@ -583,7 +583,7 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, io::Error> {
                 let mut len = 0;
                 len += VarInt(self.len() as u64).consensus_encode(w)?;
                 for c in self.iter() {
@@ -597,7 +597,7 @@ macro_rules! impl_vec {
             #[inline]
             fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
                 r: &mut R,
-            ) -> Result<Self, Error> {
+            ) -> core::result::Result<Self, Error> {
                 let len = VarInt::consensus_decode_from_finite_reader(r)?.0;
                 // Do not allocate upfront more items than if the sequence of type
                 // occupied roughly quarter a block. This should never be the case
@@ -776,7 +776,7 @@ macro_rules! tuple_encode {
             fn consensus_encode<W: Write + ?Sized>(
                 &self,
                 w: &mut W,
-            ) -> Result<usize, io::Error> {
+            ) -> core::result::Result<usize, io::Error> {
                 let &($(ref $x),*) = self;
                 let mut len = 0;
                 $(len += $x.consensus_encode(w)?;)*
@@ -787,7 +787,7 @@ macro_rules! tuple_encode {
         impl<$($x: Decodable),*> Decodable for ($($x),*) {
             #[inline]
             #[allow(non_snake_case)]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
                 Ok(($({let $x = Decodable::consensus_decode(r)?; $x }),*))
             }
         }

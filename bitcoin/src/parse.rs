@@ -107,7 +107,7 @@ macro_rules! impl_tryfrom_str_from_int_infallible {
         impl core::convert::TryFrom<$from> for $to {
             type Error = $crate::error::ParseIntError;
 
-            fn try_from(s: $from) -> Result<Self, Self::Error> {
+            fn try_from(s: $from) -> core::result::Result<Self, Self::Error> {
                 $crate::parse::int::<$inner, $from>(s).map($to::$fn)
             }
         }
@@ -127,7 +127,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         impl core::str::FromStr for $to {
             type Err = $crate::error::ParseIntError;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
                 $crate::parse::int::<$inner, &str>(s).map($to::$fn)
             }
         }
@@ -144,7 +144,7 @@ macro_rules! impl_tryfrom_str_from_int_fallible {
         impl core::convert::TryFrom<$from> for $to {
             type Error = $err;
 
-            fn try_from(s: $from) -> Result<Self, Self::Error> {
+            fn try_from(s: $from) -> core::result::Result<Self, Self::Error> {
                 let u = $crate::parse::int::<$inner, $from>(s)?;
                 $to::$fn(u)
             }
@@ -165,7 +165,7 @@ macro_rules! impl_parse_str_from_int_fallible {
         impl core::str::FromStr for $to {
             type Err = $err;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
                 let u = $crate::parse::int::<$inner, &str>(s)?;
                 $to::$fn(u)
             }
