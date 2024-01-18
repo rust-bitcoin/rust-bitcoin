@@ -189,7 +189,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     /// Adds output scripts of the block to filter (excluding OP_RETURN scripts).
     pub fn add_output_scripts(&mut self) {
         for transaction in &self.block.txdata {
-            for output in &transaction.output {
+            for output in &transaction.outputs {
                 if !output.script_pubkey.is_op_return() {
                     self.add_element(output.script_pubkey.as_bytes());
                 }
@@ -208,7 +208,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
             .txdata
             .iter()
             .skip(1) // skip coinbase
-            .flat_map(|t| t.input.iter().map(|i| &i.previous_output))
+            .flat_map(|t| t.inputs.iter().map(|i| &i.previous_output))
             .map(script_for_coin)
         {
             match script {
@@ -589,7 +589,7 @@ mod test {
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
             for tx in block.txdata.iter().skip(1) {
-                for input in tx.input.iter() {
+                for input in tx.inputs.iter() {
                     txmap.insert(
                         input.previous_output,
                         ScriptBuf::from(hex!(si.next().unwrap().as_str().unwrap())),

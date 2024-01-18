@@ -656,9 +656,9 @@ pub struct Transaction {
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     pub lock_time: absolute::LockTime,
     /// List of transaction inputs.
-    pub input: Vec<TxIn>,
+    pub inputs: Vec<TxIn>,
     /// List of transaction outputs.
-    pub output: Vec<TxOut>,
+    pub outputs: Vec<TxOut>,
 }
 
 impl cmp::PartialOrd for Transaction {
@@ -669,8 +669,8 @@ impl cmp::Ord for Transaction {
         self.version
             .cmp(&other.version)
             .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
-            .then(self.input.cmp(&other.input))
-            .then(self.output.cmp(&other.output))
+            .then(self.inputs.cmp(&other.inputs))
+            .then(self.outputs.cmp(&other.outputs))
     }
 }
 
@@ -687,8 +687,8 @@ impl Transaction {
         let cloned_tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: self
-                .input
+            inputs: self
+                .inputs
                 .iter()
                 .map(|txin| TxIn {
                     script_sig: ScriptBuf::new(),
@@ -696,7 +696,7 @@ impl Transaction {
                     ..*txin
                 })
                 .collect(),
-            output: self.output.clone(),
+            outputs: self.outputs.clone(),
         };
         cloned_tx.txid().into()
     }
@@ -709,8 +709,8 @@ impl Transaction {
     pub fn txid(&self) -> Txid {
         let mut enc = Txid::engine();
         self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
+        self.inputs.consensus_encode(&mut enc).expect("engines don't error");
+        self.outputs.consensus_encode(&mut enc).expect("engines don't error");
         self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
         Txid::from_engine(enc)
     }
@@ -757,11 +757,11 @@ impl Transaction {
     pub fn base_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
-        size += VarInt::from(self.input.len()).size();
-        size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
+        size += VarInt::from(self.inputs.len()).size();
+        size += self.inputs.iter().map(|input| input.base_size()).sum::<usize>();
 
-        size += VarInt::from(self.output.len()).size();
-        size += self.output.iter().map(|input| input.size()).sum::<usize>();
+        size += VarInt::from(self.outputs.len()).size();
+        size += self.outputs.iter().map(|input| input.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
     }
@@ -778,9 +778,9 @@ impl Transaction {
             size += 2; // 1 byte for the marker and 1 for the flag.
         }
 
-        size += VarInt::from(self.input.len()).size();
+        size += VarInt::from(self.inputs.len()).size();
         size += self
-            .input
+            .inputs
             .iter()
             .map(|input| {
                 if self.use_segwit_serialization() {
@@ -791,8 +791,8 @@ impl Transaction {
             })
             .sum::<usize>();
 
-        size += VarInt::from(self.output.len()).size();
-        size += self.output.iter().map(|output| output.size()).sum::<usize>();
+        size += VarInt::from(self.outputs.len()).size();
+        size += self.outputs.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
     }
@@ -822,7 +822,7 @@ impl Transaction {
     /// all-zeros (creates satoshis "out of thin air").
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
-        self.input.len() == 1 && self.input[0].previous_output.is_null()
+        self.inputs.len() == 1 && self.inputs[0].previous_output.is_null()
     }
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
@@ -835,7 +835,7 @@ impl Transaction {
     /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
     /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     pub fn is_explicitly_rbf(&self) -> bool {
-        self.input.iter().any(|input| input.sequence.is_rbf())
+        self.inputs.iter().any(|input| input.sequence.is_rbf())
     }
 
     /// Returns true if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
@@ -855,7 +855,7 @@ impl Transaction {
     /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
     ///
     /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
-    pub fn is_lock_time_enabled(&self) -> bool { self.input.iter().any(|i| i.enables_lock_time()) }
+    pub fn is_lock_time_enabled(&self) -> bool { self.inputs.iter().any(|i| i.enables_lock_time()) }
 
     /// Returns an iterator over lengths of `script_pubkey`s in the outputs.
     ///
@@ -863,7 +863,7 @@ impl Transaction {
     /// constructed with a dummy value in the fee output which you'll adjust after calculating the
     /// weight.
     pub fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
-        self.output.iter().map(|txout| txout.script_pubkey.len())
+        self.outputs.iter().map(|txout| txout.script_pubkey.len())
     }
 
     /// Counts the total number of sigops.
@@ -896,11 +896,11 @@ impl Transaction {
     /// `count_p2sh_sigops` and `count_witness_sigops` respectively).
     fn count_p2pk_p2pkh_sigops(&self) -> usize {
         let mut count: usize = 0;
-        for input in &self.input {
+        for input in &self.inputs {
             // 0 for p2wpkh, p2wsh, and p2sh (including wrapped segwit).
             count = count.saturating_add(input.script_sig.count_sigops_legacy());
         }
-        for output in &self.output {
+        for output in &self.outputs {
             count = count.saturating_add(output.script_pubkey.count_sigops_legacy());
         }
         count
@@ -923,7 +923,7 @@ impl Transaction {
         }
 
         let mut count: usize = 0;
-        for input in &self.input {
+        for input in &self.inputs {
             if let Some(prevout) = spent(&input.previous_output) {
                 count = count.saturating_add(count_sigops(&prevout, input));
             }
@@ -974,7 +974,7 @@ impl Transaction {
         }
 
         let mut count: usize = 0;
-        for input in &self.input {
+        for input in &self.inputs {
             if let Some(prevout) = spent(&input.previous_output) {
                 count = count.saturating_add(count_sigops(prevout, input));
             }
@@ -984,14 +984,14 @@ impl Transaction {
 
     /// Returns whether or not to serialize transaction as specified in BIP-144.
     fn use_segwit_serialization(&self) -> bool {
-        for input in &self.input {
+        for input in &self.inputs {
             if !input.witness.is_empty() {
                 return true;
             }
         }
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
-        self.input.is_empty()
+        self.inputs.is_empty()
     }
 }
 
@@ -1098,15 +1098,15 @@ impl Encodable for Transaction {
 
         // Legacy transaction serialization format only includes inputs and outputs.
         if !self.use_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
+            len += self.inputs.consensus_encode(w)?;
+            len += self.outputs.consensus_encode(w)?;
         } else {
             // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
             len += SEGWIT_MARKER.consensus_encode(w)?;
             len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-            for input in &self.input {
+            len += self.inputs.consensus_encode(w)?;
+            len += self.outputs.consensus_encode(w)?;
+            for input in &self.inputs {
                 len += input.witness.consensus_encode(w)?;
             }
         }
@@ -1120,15 +1120,15 @@ impl Decodable for Transaction {
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let version = Version::consensus_decode_from_finite_reader(r)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
+        let inputs = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
-        if input.is_empty() {
+        if inputs.is_empty() {
             let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
                     let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
+                    let outputs = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
                     for txin in input.iter_mut() {
                         txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
                     }
@@ -1137,8 +1137,8 @@ impl Decodable for Transaction {
                     } else {
                         Ok(Transaction {
                             version,
-                            input,
-                            output,
+                            inputs,
+                            outputs,
                             lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
                         })
                     }
@@ -1150,8 +1150,8 @@ impl Decodable for Transaction {
         } else {
             Ok(Transaction {
                 version,
-                input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
+                inputs,
+                outputs: Decodable::consensus_decode_from_finite_reader(r)?,
                 lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
             })
         }
@@ -1642,15 +1642,15 @@ mod tests {
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::ONE);
-        assert_eq!(realtx.input.len(), 1);
+        assert_eq!(realtx.inputs.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
-            format!("{:x}", realtx.input[0].previous_output.txid),
+            format!("{:x}", realtx.inputs[0].previous_output.txid),
             "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string()
         );
-        assert_eq!(realtx.input[0].previous_output.vout, 1);
-        assert_eq!(realtx.output.len(), 1);
+        assert_eq!(realtx.inputs[0].previous_output.vout, 1);
+        assert_eq!(realtx.outputs.len(), 1);
         assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
@@ -1682,15 +1682,15 @@ mod tests {
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::TWO);
-        assert_eq!(realtx.input.len(), 1);
+        assert_eq!(realtx.inputs.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
-            format!("{:x}", realtx.input[0].previous_output.txid),
+            format!("{:x}", realtx.inputs[0].previous_output.txid),
             "7cac3cf9a112cf04901a51d605058615d56ffe6d04b45270e89d1720ea955859".to_string()
         );
-        assert_eq!(realtx.input[0].previous_output.vout, 1);
-        assert_eq!(realtx.output.len(), 1);
+        assert_eq!(realtx.inputs[0].previous_output.vout, 1);
+        assert_eq!(realtx.outputs.len(), 1);
         assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
@@ -1711,7 +1711,7 @@ mod tests {
 
         // Construct a transaction without the witness data.
         let mut tx_without_witness = realtx;
-        tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
+        tx_without_witness.inputs.iter_mut().for_each(|input| input.witness.clear());
         assert_eq!(tx_without_witness.total_size(), tx_without_witness.total_size());
         assert_eq!(tx_without_witness.total_size(), expected_strippedsize);
     }
@@ -1757,8 +1757,8 @@ mod tests {
         );
         let tx: Transaction = deserialize(&tx_bytes).expect("deserialize tx");
 
-        assert_eq!(tx.input.len(), 0);
-        assert_eq!(tx.output.len(), 1);
+        assert_eq!(tx.inputs.len(), 0);
+        assert_eq!(tx.outputs.len(), 1);
 
         let reser = serialize(&tx);
         assert_eq!(tx_bytes, reser);
@@ -1775,10 +1775,10 @@ mod tests {
             "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d"
         );
         // changing sigs does not affect it
-        tx.input[0].script_sig = ScriptBuf::new();
+        tx.inputs[0].script_sig = ScriptBuf::new();
         assert_eq!(old_ntxid, tx.ntxid());
         // changing pks does
-        tx.output[0].script_pubkey = ScriptBuf::new();
+        tx.outputs[0].script_pubkey = ScriptBuf::new();
         assert!(old_ntxid != tx.ntxid());
     }
 
@@ -2070,8 +2070,8 @@ mod tests {
         let empty_transaction_weight = Transaction {
             version: Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![],
-            output: vec![],
+            inputs: vec![],
+            outputs: vec![],
         }
         .weight();
 
@@ -2081,8 +2081,8 @@ mod tests {
             assert_eq!(*is_segwit, tx.use_segwit_serialization());
 
             let mut calculated_weight = empty_transaction_weight
-                + tx.input.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
-                + tx.output.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
+                + tx.inputs.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
+                + tx.outputs.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
 
             // The empty tx uses segwit serialization but a legacy tx does not.
             if !tx.use_segwit_serialization() {

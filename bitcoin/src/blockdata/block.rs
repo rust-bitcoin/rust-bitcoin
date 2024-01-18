@@ -251,7 +251,7 @@ impl Block {
     pub fn check_witness_commitment(&self) -> bool {
         const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+        if self.txdata.iter().all(|t| t.inputs.iter().all(|i| i.witness.is_empty())) {
             return true;
         }
 
@@ -266,16 +266,16 @@ impl Block {
 
         // Commitment is in the last output that starts with magic bytes.
         if let Some(pos) = coinbase
-            .output
+            .outputs
             .iter()
             .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
         {
             let commitment = WitnessCommitment::from_slice(
-                &coinbase.output[pos].script_pubkey.as_bytes()[6..38],
+                &coinbase.outputs[pos].script_pubkey.as_bytes()[6..38],
             )
             .unwrap();
             // Witness reserved value is in coinbase input witness.
-            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+            let witness_vec: Vec<_> = coinbase.inputs[0].witness.iter().collect();
             if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
                 if let Some(witness_root) = self.witness_root() {
                     return commitment
@@ -371,7 +371,7 @@ impl Block {
         }
 
         let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
-        let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
+        let input = cb.inputs.first().ok_or(Bip34Error::NotPresent)?;
         let push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)?;
         match push.map_err(|_| Bip34Error::NotPresent)? {
             script::Instruction::PushBytes(b) => {

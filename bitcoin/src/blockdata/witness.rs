@@ -711,19 +711,19 @@ mod test {
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
 
         let expected_wit = ["304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c01", "026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e95"];
-        for (i, wit_el) in tx.input[0].witness.iter().enumerate() {
+        for (i, wit_el) in tx.inputs[0].witness.iter().enumerate() {
             assert_eq!(expected_wit[i], wit_el.to_lower_hex_string());
         }
-        assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.inputs[0].witness.last().unwrap().to_lower_hex_string());
         assert_eq!(
             expected_wit[0],
-            tx.input[0].witness.second_to_last().unwrap().to_lower_hex_string()
+            tx.inputs[0].witness.second_to_last().unwrap().to_lower_hex_string()
         );
-        assert_eq!(expected_wit[0], tx.input[0].witness.nth(0).unwrap().to_lower_hex_string());
-        assert_eq!(expected_wit[1], tx.input[0].witness.nth(1).unwrap().to_lower_hex_string());
-        assert_eq!(None, tx.input[0].witness.nth(2));
-        assert_eq!(expected_wit[0], tx.input[0].witness[0].to_lower_hex_string());
-        assert_eq!(expected_wit[1], tx.input[0].witness[1].to_lower_hex_string());
+        assert_eq!(expected_wit[0], tx.inputs[0].witness.nth(0).unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.inputs[0].witness.nth(1).unwrap().to_lower_hex_string());
+        assert_eq!(None, tx.inputs[0].witness.nth(2));
+        assert_eq!(expected_wit[0], tx.inputs[0].witness[0].to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.inputs[0].witness[1].to_lower_hex_string());
 
         let tx_bytes_back = serialize(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);
