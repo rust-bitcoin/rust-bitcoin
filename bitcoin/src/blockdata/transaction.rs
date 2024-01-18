@@ -761,7 +761,7 @@ impl Transaction {
         size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
 
         size += VarInt::from(self.output.len()).size();
-        size += self.output.iter().map(|input| input.size()).sum::<usize>();
+        size += self.output.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
     }
