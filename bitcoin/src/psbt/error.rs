@@ -58,7 +58,7 @@ pub enum Error {
     NonStandardSighashType(u32),
     /// Invalid hash when parsing slice.
     InvalidHash(hashes::FromSliceError),
-    /// The pre-image must hash to the correponding psbt hash
+    /// The pre-image must hash to the corresponding psbt hash
     InvalidPreimageHashPair {
         /// Hash-type
         hash_type: PsbtHash,
