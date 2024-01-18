@@ -982,12 +982,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
-    ) -> EncodeSigningDataResult<Error> {
-        if input_index >= self.tx.borrow().input.len() {
-            return EncodeSigningDataResult::WriteResult(Err(Error::IndexOutOfInputsBounds {
-                index: input_index,
-                inputs_size: self.tx.borrow().input.len(),
-            }));
+    ) -> EncodeSigningDataResult<LegacyError> {
+        // Validate input_index.
+        if let Err(e) = self.tx.borrow().tx_in(input_index) {
+            return EncodeSigningDataResult::WriteResult(Err(e.into()));
         }
         let sighash_type: u32 = sighash_type.into();
 
@@ -1079,7 +1077,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 script_pubkey,
                 sighash_type,
             )
-            .map_err(|e| Error::Io(e.kind())),
+            .map_err(|e| LegacyError::Io(e.kind())),
         )
     }
 
@@ -1107,15 +1105,18 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: u32,
-    ) -> Result<LegacySighash, Error> {
-        let mut enc = LegacySighash::engine();
-        if self
-            .legacy_encode_signing_data_to(&mut enc, input_index, script_pubkey, sighash_type)
-            .is_sighash_single_bug()?
+    ) -> Result<LegacySighash, transaction::InputsIndexError> {
+        let mut engine = LegacySighash::engine();
+        match self
+            .legacy_encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_type)
+            .is_sighash_single_bug()
         {
-            Ok(LegacySighash::from_byte_array(UINT256_ONE))
-        } else {
-            Ok(LegacySighash::from_engine(enc))
+            Ok(true) => Ok(LegacySighash::from_byte_array(UINT256_ONE)),
+            Ok(false) => Ok(LegacySighash::from_engine(engine)),
+            Err(e) => match e {
+                LegacyError::InputsIndex(e) => Err(e),
+                LegacyError::Io(_) => unreachable!("engines don't error"),
+            },
         }
     }
 
@@ -1368,6 +1369,47 @@ impl std::error::Error for AnnexError {
             Empty | IncorrectPrefix(_) => None,
         }
     }
+}
+
+/// Error computing the legacy sighash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum LegacyError {
+    /// Index out of bounds when accessing transaction input vector.
+    InputsIndex(transaction::InputsIndexError),
+    /// Writer errored during consensus encoding.
+    Io(io::ErrorKind),
+}
+
+impl fmt::Display for LegacyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use LegacyError::*;
+
+        match *self {
+            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
+            Io(error_kind) => write!(f, "write failed: {:?}", error_kind),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for LegacyError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use LegacyError::*;
+
+        match *self {
+            InputsIndex(ref e) => Some(e),
+            Io(_) => None,
+        }
+    }
+}
+
+impl From<transaction::InputsIndexError> for LegacyError {
+    fn from(e: transaction::InputsIndexError) -> Self { Self::InputsIndex(e) }
+}
+
+impl From<io::Error> for LegacyError {
+    fn from(e: io::Error) -> Self { Self::Io(e.kind()) }
 }
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {
@@ -1701,10 +1743,10 @@ mod tests {
         );
         assert_eq!(
             c.legacy_signature_hash(10, Script::new(), 0u32),
-            Err(Error::IndexOutOfInputsBounds {
+            Err(InputsIndexError(IndexOutOfBoundsError {
                 index: 10,
-                inputs_size: 1
-            })
+                length: 1
+            }))
         );
     }
 

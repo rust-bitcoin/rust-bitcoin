@@ -409,14 +409,17 @@ impl Psbt {
 
         match self.output_type(input_index)? {
             Bare => {
-                let sighash = cache.legacy_signature_hash(input_index, spk, hash_ty.to_u32())?;
+                let sighash = cache
+                    .legacy_signature_hash(input_index, spk, hash_ty.to_u32())
+                    .expect("input checked above");
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Sh => {
                 let script_code =
                     input.redeem_script.as_ref().ok_or(SignError::MissingRedeemScript)?;
-                let sighash =
-                    cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?;
+                let sighash = cache
+                    .legacy_signature_hash(input_index, script_code, hash_ty.to_u32())
+                    .expect("input checked above");
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Wpkh => {
