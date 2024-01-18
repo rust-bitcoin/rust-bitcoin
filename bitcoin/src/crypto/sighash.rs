@@ -304,7 +304,7 @@ where
 {
     fn check_all(&self, tx: &Transaction) -> Result<(), PrevoutsSizeError> {
         if let Prevouts::All(prevouts) = self {
-            if prevouts.len() != tx.input.len() {
+            if prevouts.len() != tx.inputs.len() {
                 return Err(PrevoutsSizeError);
             }
         }
@@ -738,9 +738,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //      nSequence (4): nSequence of this input.
         if anyone_can_pay {
             let txin =
-                &self.tx.borrow().input.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
+                &self.tx.borrow().inputs.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
                     index: input_index,
-                    inputs_size: self.tx.borrow().input.len(),
+                    inputs_size: self.tx.borrow().inputs.len(),
                 })?;
             let previous_output = prevouts.get(input_index)?;
             txin.previous_output.consensus_encode(writer)?;
@@ -768,11 +768,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc = sha256::Hash::engine();
             self.tx
                 .borrow()
-                .output
+                .outputs
                 .get(input_index)
                 .ok_or(Error::SingleWithoutCorrespondingOutput {
                     index: input_index,
-                    outputs_size: self.tx.borrow().output.len(),
+                    outputs_size: self.tx.borrow().outputs.len(),
                 })?
                 .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
@@ -892,9 +892,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         {
             let txin =
-                &self.tx.borrow().input.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
+                &self.tx.borrow().inputs.get(input_index).ok_or(Error::IndexOutOfInputsBounds {
                     index: input_index,
-                    inputs_size: self.tx.borrow().input.len(),
+                    inputs_size: self.tx.borrow().inputs.len(),
                 })?;
 
             txin.previous_output.consensus_encode(writer)?;
@@ -905,10 +905,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(writer)?;
-        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
+        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().outputs.len()
         {
             let mut single_enc = LegacySighash::engine();
-            self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
+            self.tx.borrow().outputs[input_index].consensus_encode(&mut single_enc)?;
             let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(&hash[..])?;
         } else {
@@ -992,10 +992,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> EncodeSigningDataResult<Error> {
-        if input_index >= self.tx.borrow().input.len() {
+        if input_index >= self.tx.borrow().inputs.len() {
             return EncodeSigningDataResult::WriteResult(Err(Error::IndexOutOfInputsBounds {
                 index: input_index,
-                inputs_size: self.tx.borrow().input.len(),
+                inputs_size: self.tx.borrow().inputs.len(),
             }));
         }
         let sighash_type: u32 = sighash_type.into();
@@ -1003,7 +1003,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if is_invalid_use_of_sighash_single(
             sighash_type,
             input_index,
-            self.tx.borrow().output.len(),
+            self.tx.borrow().outputs.len(),
         ) {
             // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
             // will result in the data written to the writer being hashed, however the correct
@@ -1026,21 +1026,21 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut tx = Transaction {
                 version: self_.version,
                 lock_time: self_.lock_time,
-                input: vec![],
-                output: vec![],
+                inputs: vec![],
+                outputs: vec![],
             };
             // Add all inputs necessary..
             if anyone_can_pay {
-                tx.input = vec![TxIn {
-                    previous_output: self_.input[input_index].previous_output,
+                tx.inputs = vec![TxIn {
+                    previous_output: self_.inputs[input_index].previous_output,
                     script_sig: script_pubkey.to_owned(),
-                    sequence: self_.input[input_index].sequence,
+                    sequence: self_.inputs[input_index].sequence,
                     witness: Witness::default(),
                 }];
             } else {
-                tx.input = Vec::with_capacity(self_.input.len());
-                for (n, input) in self_.input.iter().enumerate() {
-                    tx.input.push(TxIn {
+                tx.inputs = Vec::with_capacity(self_.inputs.len());
+                for (n, input) in self_.inputs.iter().enumerate() {
+                    tx.inputs.push(TxIn {
                         previous_output: input.previous_output,
                         script_sig: if n == input_index {
                             script_pubkey.to_owned()
@@ -1060,11 +1060,11 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 }
             }
             // ..then all outputs
-            tx.output = match sighash {
-                EcdsaSighashType::All => self_.output.clone(),
+            tx.outputs = match sighash {
+                EcdsaSighashType::All => self_.outputs.clone(),
                 EcdsaSighashType::Single => {
                     let output_iter = self_
-                        .output
+                        .outputs
                         .iter()
                         .take(input_index + 1) // sign all outputs up to and including this one, but erase
                         .enumerate() // all of them except for this one
@@ -1140,7 +1140,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
-            for txin in tx.input.iter() {
+            for txin in tx.inputs.iter() {
                 txin.previous_output.consensus_encode(&mut enc_prevouts).unwrap();
                 txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
             }
@@ -1149,7 +1149,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 sequences: sha256::Hash::from_engine(enc_sequences),
                 outputs: {
                     let mut enc = sha256::Hash::engine();
-                    for txout in tx.output.iter() {
+                    for txout in tx.outputs.iter() {
                         txout.consensus_encode(&mut enc).unwrap();
                     }
                     sha256::Hash::from_engine(enc)
@@ -1217,7 +1217,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// [`segwit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
     /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
-        self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
+        self.tx.borrow_mut().inputs.get_mut(input_index).map(|i| &mut i.witness)
     }
 }
 
@@ -1342,8 +1342,8 @@ mod tests {
         let tx = Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
-            output: vec![TxOut::NULL],
+            inputs: vec![TxIn::default(), TxIn::default()],
+            outputs: vec![TxOut::NULL],
         };
         let script = ScriptBuf::new();
         let cache = SighashCache::new(&tx);
@@ -1529,8 +1529,8 @@ mod tests {
         let dumb_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default()],
-            output: vec![],
+            inputs: vec![TxIn::default()],
+            outputs: vec![],
         };
         let mut c = SighashCache::new(&dumb_tx);
 

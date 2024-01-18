@@ -159,7 +159,7 @@ fn create_transaction() -> Transaction {
     Transaction {
         version: transaction::Version::TWO,
         lock_time: absolute::LockTime::ZERO,
-        input: vec![
+        inputs: vec![
             TxIn {
                 previous_output: OutPoint {
                     txid: input_0.txid.parse().expect("failed to parse txid"),
@@ -179,7 +179,7 @@ fn create_transaction() -> Transaction {
                 witness: Witness::default(),
             },
         ],
-        output: vec![
+        outputs: vec![
             TxOut {
                 value: Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount"),
@@ -245,7 +245,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
 
     let v = Vec::from_hex(previous_tx_0).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
-    input_1.witness_utxo = Some(tx.output[1].clone());
+    input_1.witness_utxo = Some(tx.outputs[1].clone());
 
     input_1.redeem_script = Some(hex_script(redeem_script_1));
     input_1.witness_script = Some(hex_script(witness_script));
