@@ -42,6 +42,12 @@ consensus_encoding::hash_decoder! {
     WitnessMerkleNode => pub WitnessMerkleNodeDecoder;
 }
 
+consensus_encoding::hash_encoder! {
+    BlockHash;
+    TxMerkleNode;
+    WitnessMerkleNode;
+}
+
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
 }

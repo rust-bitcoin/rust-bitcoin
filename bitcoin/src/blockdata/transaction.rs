@@ -19,22 +19,21 @@ use hashes::{self, sha256d, Hash};
 use internals::write_err;
 use io::Write;
 
-use consensus_encoding::{Decoder, VecDecoder, VecDecodeError, impl_struct_decode, mapped_decoder};
+use consensus_encoding::{Decoder, VecDecoder, VecDecodeError, SliceEncoder, UnprefixedIterEncoder, impl_struct_decode, impl_struct_encode, mapped_decoder, encoder_newtype};
 use consensus_encoding::push_decode::decoders::U8Decoder;
 use super::Weight;
-use crate::blockdata::locktime::absolute::{self, Height, Time};
+use crate::blockdata::locktime::absolute::{self, Height, Time, LockTimeEncoder};
 use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::{Witness, WitnessDecoder, WitnessDecodeError};
 use crate::blockdata::FeeRate;
-use crate::consensus::Encodable;
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{impl_hashencode};
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
-use crate::{io, Amount, SignedAmount, VarInt, impl_decodable_using_decode};
+use crate::{io, Amount, SignedAmount, VarInt, impl_decodable_using_decode, impl_encodable_using_encode};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
@@ -58,6 +57,11 @@ impl_hashencode!(Wtxid);
 consensus_encoding::hash_decoder! {
     Txid => pub TxidDecoder;
     Wtxid => pub WtxidDecoder;
+}
+
+consensus_encoding::hash_encoder! {
+    Txid;
+    Wtxid;
 }
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
@@ -714,12 +718,9 @@ impl Transaction {
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::wtxid()`].
     pub fn txid(&self) -> Txid {
-        let mut enc = Txid::engine();
-        self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
-        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid::from_engine(enc)
+        use consensus_encoding::EncoderExt;
+
+        TransactionEncoder::custom(self, false).hash()
     }
 
     /// Computes the segwit version of the transaction id.
@@ -728,9 +729,9 @@ impl Transaction {
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::txid()`].
     pub fn wtxid(&self) -> Wtxid {
-        let mut enc = Wtxid::engine();
-        self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid::from_engine(enc)
+        use consensus_encoding::Encode;
+
+        self.hash_consensus_encoded()
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
@@ -1030,23 +1031,20 @@ impl Version {
     pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
 }
 
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
 impl_decodable_using_decode!(Version);
+impl_encodable_using_encode!(Version);
 
 mapped_decoder! {
     Version => #[derive(Default)] pub struct VersionDecoder(<i32 as consensus_encoding::Decode>::Decoder) using Version;
 }
 
+encoder_newtype! {
+    Version => pub struct VersionEncoder(consensus_encoding::IntEncoder<i32>) map i32 as |version: &Version| version.0;
+}
+
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
-
-impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl_struct_decode! {
     (TxOut, TxOutDecodeError) => pub struct TxOutDecoder {
@@ -1054,13 +1052,6 @@ impl_struct_decode! {
         Value { value: Amount },
         /// Error returned when parsing `ScriptBuf` fails.
         ScriptPubkey { script_pubkey: ScriptBuf },
-    }
-}
-
-impl Encodable for OutPoint {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(w)?;
-        Ok(len + self.vout.consensus_encode(w)?)
     }
 }
 
@@ -1073,7 +1064,20 @@ impl fmt::Display for TxOutDecodeError {
     }
 }
 
+impl_struct_encode! {
+    TxOut => pub struct TxOutEncoder {
+        Value { value: Amount },
+        ScriptPubkey { script_pubkey: ScriptBuf },
+    }
+
+    enum TxOutEncoderState<'_> { ... }
+}
+
+impl_decodable_using_decode!(TxOut);
+impl_encodable_using_encode!(TxOut);
+
 impl_decodable_using_decode!(OutPoint);
+impl_encodable_using_encode!(OutPoint);
 
 impl_struct_decode! {
     (OutPoint, OutPointDecodeError) => pub struct OutPointDecoder {
@@ -1084,14 +1088,13 @@ impl_struct_decode! {
     }
 }
 
-impl Encodable for TxIn {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.previous_output.consensus_encode(w)?;
-        len += self.script_sig.consensus_encode(w)?;
-        len += self.sequence.consensus_encode(w)?;
-        Ok(len)
+impl_struct_encode! {
+    OutPoint => pub struct OutPointEncoder {
+        Txid { txid: Txid },
+        VOut { vout: u32 },
     }
+
+    enum OutPointEncoderState<'_> { ... }
 }
 
 impl fmt::Display for OutPointDecodeError {
@@ -1104,6 +1107,7 @@ impl fmt::Display for OutPointDecodeError {
 }
 
 impl_decodable_using_decode!(TxIn);
+impl_encodable_using_encode!(TxIn);
 
 mapped_decoder! {
     TxIn => #[derive(Default)] pub struct TxInDecoder(NonWitnessTxInDecoder)
@@ -1116,6 +1120,16 @@ mapped_decoder! {
                 witness: Default::default()
         }
     };
+}
+
+impl_struct_encode! {
+    TxIn => pub struct TxInEncoder {
+        PreviousOutput { previous_output: OutPoint },
+        ScriptSig { script_sig: ScriptBuf },
+        Sequence { sequence: Sequence },
+    }
+
+    enum TxInEncoderState<'_> { ... }
 }
 
 pub use non_witness_txin::TxInDecodeError;
@@ -1155,39 +1169,143 @@ impl fmt::Display for TxInDecodeError {
     }
 }
 
-impl Encodable for Sequence {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
 impl_decodable_using_decode!(Sequence);
+impl_encodable_using_encode!(Sequence);
 
 mapped_decoder! {
     Sequence => #[derive(Default)] pub struct SequenceDecoder(<u32 as consensus_encoding::Decode>::Decoder) using Sequence;
 }
 
-impl Encodable for Transaction {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.version.consensus_encode(w)?;
+encoder_newtype! {
+    Sequence => pub struct SequenceEncoder(consensus_encoding::IntEncoder<u32>)
+        map u32 as |sequence: &Sequence| sequence.to_consensus_u32();
+}
 
-        // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.use_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-        } else {
-            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-            for input in &self.input {
-                len += input.witness.consensus_encode(w)?;
+consensus_encoding::gat_like! {
+    impl Encode for Transaction {
+        type Encoder<'a> = TransactionEncoder<'a>;
+
+        const MIN_ENCODED_LEN: usize = 4 + 1 + 1 + 4;
+        const IS_KNOWN_LEN: bool = false;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            TransactionEncoder::custom(self, self.use_segwit_serialization())
+        }
+
+        fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+            let (mut total_len, max_steps) = SliceEncoder::dyn_len(&self.input, max_steps);
+            if max_steps == 0 {
+                return (total_len, max_steps);
+            }
+            let (len, max_steps) = SliceEncoder::dyn_len(&self.output, max_steps - 1);
+            total_len += len;
+            if max_steps == 0 {
+                return (total_len, max_steps);
+            }
+            if self.use_segwit_serialization() {
+                total_len += 2;
+                let (len, max_steps) = UnprefixedIterEncoder::dyn_len(self.input.iter().map(|txin| &txin.witness), max_steps - 1);
+                total_len += len;
+                (total_len, max_steps)
+            } else {
+                (total_len, max_steps)
             }
         }
-        len += self.lock_time.consensus_encode(w)?;
-        Ok(len)
+    }
+}
+
+/// Encoder of [`Transaction`].
+///
+/// For more information about encoders check the [`Encoder`](consensus_encoding::Encoder) trait
+pub struct TransactionEncoder<'a> {
+    tx: &'a Transaction,
+    segwit: bool,
+    state: TransactionEncoderState<'a>,
+}
+
+impl<'a> TransactionEncoder<'a> {
+    fn custom(tx: &'a Transaction, segwit: bool) -> Self {
+        use consensus_encoding::Encode;
+
+        TransactionEncoder {
+            tx,
+            segwit,
+            state: TransactionEncoderState::Version(tx.version.encoder()),
+        }
+    }
+}
+
+enum TransactionEncoderState<'a> {
+    Version(VersionEncoder),
+    SegWitMarker,
+    Inputs(SliceEncoder<'a, TxIn>),
+    Outputs(SliceEncoder<'a, TxOut>),
+    Witnesses(UnprefixedIterEncoder<'a, Witness, core::iter::Map<core::slice::Iter<'a, TxIn>, for<'b> fn(&'b TxIn) -> &'b Witness>>),
+    LockTime(LockTimeEncoder),
+}
+
+impl<'a> consensus_encoding::Encoder for TransactionEncoder<'a> {
+    fn encoded_chunk(&self) -> &[u8] {
+        match &self.state {
+            TransactionEncoderState::Version(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::SegWitMarker => &[SEGWIT_MARKER, SEGWIT_FLAG],
+            TransactionEncoderState::Inputs(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::Outputs(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::Witnesses(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::LockTime(encoder) => encoder.encoded_chunk(),
+        }
+    }
+
+    fn next(&mut self) -> bool {
+        use consensus_encoding::Encode;
+
+        fn extract_witness(txin: &TxIn) -> &Witness {
+            &txin.witness
+        }
+
+        match &mut self.state {
+            TransactionEncoderState::Version(encoder) => {
+                if !encoder.next() {
+                    if self.segwit {
+                        self.state = TransactionEncoderState::SegWitMarker;
+                    } else {
+                        self.state = TransactionEncoderState::Inputs(SliceEncoder::new(&self.tx.input));
+                    }
+                }
+            }
+            TransactionEncoderState::SegWitMarker => {
+                self.state = TransactionEncoderState::Inputs(SliceEncoder::new(&self.tx.input));
+            }
+            TransactionEncoderState::Inputs(encoder) => {
+                if !encoder.next() {
+                    self.state = TransactionEncoderState::Outputs(SliceEncoder::new(&self.tx.output));
+                }
+            },
+            TransactionEncoderState::Outputs(encoder) => {
+                if !encoder.next() {
+                    if self.segwit {
+                        let encoder = UnprefixedIterEncoder::new(self.tx.input.iter().map(extract_witness as fn(&TxIn) -> &Witness));
+                        // witnesses can be empty when serializing 0-input transaction
+                        if encoder.encoded_chunk().is_empty() {
+                            self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                        } else {
+                            self.state = TransactionEncoderState::Witnesses(encoder);
+                        }
+                    } else {
+                        self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                    }
+                }
+            },
+            TransactionEncoderState::Witnesses(encoder) => {
+                if !encoder.next() {
+                    self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                }
+            },
+            TransactionEncoderState::LockTime(encoder) => {
+                return encoder.next();
+            },
+        }
+        true
     }
 }
 
@@ -1326,6 +1444,7 @@ impl Decoder for TransactionDecoder {
 }
 
 impl_decodable_using_decode!(Transaction);
+impl_encodable_using_encode!(Transaction);
 
 /// Returned when decoding of a transaction fails.
 #[derive(Debug)]
@@ -1747,7 +1866,7 @@ mod tests {
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::script::ScriptBuf;
-    use crate::consensus::encode::{Decodable, deserialize, serialize};
+    use crate::consensus::encode::{Decodable, Encodable, deserialize, serialize};
     use crate::sighash::EcdsaSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
@@ -1843,6 +1962,16 @@ mod tests {
     fn txin() {
         let txin: Result<TxIn, _> = deserialize(&hex!("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff"));
         assert!(txin.is_ok());
+    }
+
+    #[test]
+    fn txout() {
+        use consensus_encoding::Encode;
+        let expected = hex!("2a000000000000000115");
+        let txout: TxOut = deserialize(&expected).unwrap();
+        assert_eq!(txout.value.to_sat(), 42);
+        assert_eq!(txout.script_pubkey.as_bytes(), &[21]);
+        assert_eq!(txout.consensus_encode_to_vec(), expected);
     }
 
     #[test]

@@ -89,7 +89,7 @@ mod test_macros;
 mod internal_macros;
 #[macro_use]
 pub mod consensus;
-pub(crate) use consensus::encode::impl_decodable_using_decode;
+pub(crate) use consensus::encode::{impl_decodable_using_decode, impl_encodable_using_encode};
 mod parse;
 #[cfg(feature = "serde")]
 mod serde_utils;

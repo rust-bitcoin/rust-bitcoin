@@ -59,7 +59,11 @@ sha256t_hash_newtype! {
 consensus_encoding::hash_decoder! {
     TapLeafHash => pub TapLeafHashDecoder;
 }
+consensus_encoding::hash_encoder! {
+    TapLeafHash;
+}
 crate::impl_decodable_using_decode!(TapLeafHash);
+crate::impl_encodable_using_encode!(TapLeafHash);
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
