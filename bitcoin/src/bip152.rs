@@ -348,7 +348,7 @@ impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
     /// Construct a [BlockTransactions] from a [BlockTransactionsRequest] and
-    /// the corresponsing full [Block] by providing all requested transactions.
+    /// the corresponding full [Block] by providing all requested transactions.
     pub fn from_request(
         request: &BlockTransactionsRequest,
         block: &Block,

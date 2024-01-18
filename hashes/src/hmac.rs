@@ -44,7 +44,7 @@ pub struct HmacMidState<T: Hash> {
     pub outer: <T::Engine as HashEngine>::MidState,
 }
 
-/// Pair of underyling hash engines, used for the inner and outer hash of HMAC.
+/// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Clone)]
 pub struct HmacEngine<T: Hash> {
     iengine: T::Engine,

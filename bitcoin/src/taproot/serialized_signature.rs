@@ -223,7 +223,7 @@ mod into_iter {
         #[inline]
         fn nth(&mut self, n: usize) -> Option<Self::Item> {
             if n >= self.len() {
-                // upholds invariant becasue the values will be equal
+                // upholds invariant because the values will be equal
                 self.pos = self.signature.len();
                 None
             } else {
