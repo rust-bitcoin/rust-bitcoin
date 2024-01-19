@@ -1,0 +1,24 @@
+on:
+  - push
+  - pull_request
+
+name: Code coverage with llvm-cov
+
+jobs:
+  Coveralls:
+    name: Code coverage - stable toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Checkout Toolchain
+        # https://github.com/dtolnay/rust-toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage for tests
+        run: cargo llvm-cov --ignore-filename-regex fuzz --all-features --workspace --lcov --output-path lcov.info
+      - name: Upload report to coveralls
+        uses: coverallsapp/github-action@v2        
