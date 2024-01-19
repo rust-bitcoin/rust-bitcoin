@@ -1639,6 +1639,17 @@ mod tests {
     }
 
     #[test]
+    fn segwit_invalid_transaction() {
+        let tx_bytes = hex!("0000fd000001021921212121212121212121f8b372b0239cc1dff600000000004f4f4f4f4f4f4f4f000000000000000000000000000000333732343133380d000000000000000000000000000000ff000000000009000dff000000000000000800000000000000000d");
+        let tx: Result<Transaction, _> = deserialize(&tx_bytes);
+        assert!(tx.is_err());
+        assert!(tx
+            .unwrap_err()
+            .to_string()
+            .contains("witness flag set but no witnesses present"));
+    }
+
+    #[test]
     fn segwit_transaction() {
         let tx_bytes = hex!(
             "02000000000101595895ea20179de87052b4046dfe6fd515860505d6511a9004cf12a1f93cac7c01000000\
