@@ -773,8 +773,9 @@ impl Transaction {
     #[inline]
     pub fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
+	let use_segwit = self.use_segwit_serialization();
 
-        if self.use_segwit_serialization() {
+        if use_segwit {
             size += 2; // 1 byte for the marker and 1 for the flag.
         }
 
@@ -783,7 +784,7 @@ impl Transaction {
             .input
             .iter()
             .map(|input| {
-                if self.use_segwit_serialization() {
+                if use_segwit {
                     input.total_size()
                 } else {
                     input.base_size()
