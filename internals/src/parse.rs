@@ -9,7 +9,7 @@ macro_rules! impl_try_from_stringly {
         impl core::convert::TryFrom<$from> for $to {
             type Error = $error;
 
-            fn try_from(s: $from) -> Result<Self, Self::Error> {
+            fn try_from(s: $from) -> core::result::Result<Self, Self::Error> {
                 $func(AsRef::<str>::as_ref(s)).map_err(|source| <$error>::new(s, source))
             }
         }
@@ -36,7 +36,7 @@ macro_rules! impl_parse {
         impl core::str::FromStr for $type {
             type Err = $error;
 
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
                 $func(s).map_err(|source| <$error>::new(s, source))
             }
         }
@@ -64,7 +64,7 @@ macro_rules! impl_parse_and_serde {
         // We don't use `serde_string_impl` because we want to avoid allocating input.
         #[cfg(feature = "serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $type {
-            fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
+            fn deserialize<D>(deserializer: D) -> core::result::Result<$name, D::Error>
             where
                 D: $crate::serde::de::Deserializer<'de>,
             {
@@ -75,11 +75,11 @@ macro_rules! impl_parse_and_serde {
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                    fn expecting(&self, f: &mut Formatter) -> core::fmt::Result {
                         f.write_str($descr)
                     }
 
-                    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                    fn visit_str<E>(self, s: &str) -> core::result::Result<Self::Value, E>
                     where
                         E: $crate::serde::de::Error,
                     {
@@ -96,7 +96,7 @@ macro_rules! impl_parse_and_serde {
 
         #[cfg(feature = "serde")]
         impl $crate::serde::Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
             where
                 S: $crate::serde::Serializer,
             {
