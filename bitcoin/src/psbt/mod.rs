@@ -409,14 +409,17 @@ impl Psbt {
 
         match self.output_type(input_index)? {
             Bare => {
-                let sighash = cache.legacy_signature_hash(input_index, spk, hash_ty.to_u32())?;
+                let sighash = cache
+                    .legacy_signature_hash(input_index, spk, hash_ty.to_u32())
+                    .expect("input checked above");
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Sh => {
                 let script_code =
                     input.redeem_script.as_ref().ok_or(SignError::MissingRedeemScript)?;
-                let sighash =
-                    cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?;
+                let sighash = cache
+                    .legacy_signature_hash(input_index, script_code, hash_ty.to_u32())
+                    .expect("input checked above");
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Wpkh => {
@@ -767,8 +770,10 @@ pub enum SignError {
     NotEcdsa,
     /// The `scriptPubkey` is not a P2WPKH script.
     NotWpkh,
-    /// Sighash computation error.
-    SighashComputation(sighash::Error),
+    /// Sighash computation error (segwit v0 input).
+    SegwitV0Sighash(sighash::SegwitV0Error),
+    /// Sighash computation error (p2wpkh input).
+    P2wpkhSighash(sighash::P2wpkhError),
     /// Unable to determine the output type.
     UnknownOutputType,
     /// Unable to find key.
@@ -793,7 +798,8 @@ impl fmt::Display for SignError {
             MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
             NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
-            SighashComputation(ref e) => write!(f, "sighash: {}", e),
+            SegwitV0Sighash(ref e) => write_err!(f, "segwit v0 sighash"; e),
+            P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
             WrongSigningAlgorithm =>
@@ -809,7 +815,8 @@ impl std::error::Error for SignError {
         use SignError::*;
 
         match *self {
-            SighashComputation(ref e) => Some(e),
+            SegwitV0Sighash(ref e) => Some(e),
+            P2wpkhSighash(ref e) => Some(e),
             IndexOutOfBounds(ref e) => Some(e),
             InvalidSighashType
             | MissingInputUtxo
@@ -827,8 +834,12 @@ impl std::error::Error for SignError {
     }
 }
 
-impl From<sighash::Error> for SignError {
-    fn from(e: sighash::Error) -> Self { SignError::SighashComputation(e) }
+impl From<sighash::SegwitV0Error> for SignError {
+    fn from(e: sighash::SegwitV0Error) -> Self { Self::SegwitV0Sighash(e) }
+}
+
+impl From<sighash::P2wpkhError> for SignError {
+    fn from(e: sighash::P2wpkhError) -> Self { Self::P2wpkhSighash(e) }
 }
 
 impl From<IndexOutOfBoundsError> for SignError {
