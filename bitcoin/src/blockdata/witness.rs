@@ -8,7 +8,7 @@ use core::fmt;
 use core::ops::Index;
 
 use internals::write_err;
-use consensus_encoding::push_decode::decoders::combinators::ThenTry;
+use consensus_encoding::push_decode::decoders::combinators::ThenTryFnPtr;
 use consensus_encoding::{Decode, Decoder, EncodeTc, Encoder, VarIntEncoder, encoder_newtype};
 
 use crate::consensus::encode::{VarIntDecoder, VarIntDecodeError, MAX_VEC_SIZE};
@@ -141,7 +141,7 @@ impl Decode for Witness {
     type Decoder = WitnessDecoder;
 }
 
-type WitnessInnerDecoder = ThenTry<WitnessDecodeError, VarIntDecoder, WitnessDataDecoder, fn(u64) -> Result<WitnessDataDecoder, WitnessDecodeError>>;
+type WitnessInnerDecoder = ThenTryFnPtr<WitnessDecodeError, VarIntDecoder, WitnessDataDecoder>;
 
 /// A decoder used to decode [`Witness`].
 #[derive(Debug)]

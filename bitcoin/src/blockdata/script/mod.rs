@@ -65,7 +65,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use consensus_encoding::{mapped_decoder, EncodeTc};
-use consensus_encoding::push_decode::decoders::{ByteVecDecoder, combinators::Then};
+use consensus_encoding::push_decode::decoders::{ByteVecDecoder, combinators::ThenFnPtr};
 use crate::consensus::encode::{VarIntDecoder, MAX_VEC_SIZE};
 use hashes::{hash160, sha256};
 #[cfg(feature = "serde")]
@@ -623,7 +623,7 @@ crate::impl_encodable_using_encode!(ScriptBuf);
 crate::impl_decodable_using_decode!(ScriptBuf);
 
 mapped_decoder! {
-    ScriptBuf => pub struct ScriptDecoder(Then<VarIntDecoder, ByteVecDecoder, fn(u64) -> ByteVecDecoder>) using ScriptBuf::from;
+    ScriptBuf => pub struct ScriptDecoder(ThenFnPtr<VarIntDecoder, ByteVecDecoder>) using ScriptBuf::from;
 }
 
 impl Default for ScriptDecoder {
