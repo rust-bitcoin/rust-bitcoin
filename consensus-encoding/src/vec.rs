@@ -1,6 +1,7 @@
 use super::*;
 use alloc::vec::Vec;
 
+/// A decoder decoding length-prefixed Vec of decodable types.
 #[allow(clippy::type_complexity)] // doesn't seem really that complex
 pub struct VecDecoder<T: Decode>(Then<VarIntDecoder, InnerVecDecoder<T>, fn (u64) -> InnerVecDecoder<T>>) where T::Decoder: Default;
 
@@ -42,7 +43,13 @@ pub enum VecDecodeError<E> {
     /// Failed decoding length (varint).
     Length(VarIntDecodeError),
     /// Failed to decode element .
-    Element { error: E, position: usize },
+    Element {
+        /// The decoding error returned by the element's decoder.
+        error: E,
+        /// The position of the element that was being decoded when the error occurred.
+        position: usize
+    },
+    /// Returned when the decoder reaches end of stream (EOF).
     UnexpectedEnd,
 }
 
