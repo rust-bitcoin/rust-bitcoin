@@ -17,6 +17,6 @@ std = ["alloc", "push_decode/std"]
 alloc = ["push_decode/alloc"]
 
 [dependencies]
-push_decode = { version = "0.4.1", default-features = false }
+push_decode = { version = "0.4.2", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.13", optional = true, default-features = false }
 internals = { package = "bitcoin-internals", version = "0.2.0", default-features = false }

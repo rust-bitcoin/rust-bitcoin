@@ -1235,12 +1235,14 @@ impl<'a> TransactionEncoder<'a> {
     }
 }
 
+type WitnessesEncoder<'a> = UnprefixedIterEncoder<'a, Witness, core::iter::Map<core::slice::Iter<'a, TxIn>, for<'b> fn(&'b TxIn) -> &'b Witness>>;
+
 enum TransactionEncoderState<'a> {
     Version(VersionEncoder),
     SegWitMarker,
     Inputs(SliceEncoder<'a, TxIn>),
     Outputs(SliceEncoder<'a, TxOut>),
-    Witnesses(UnprefixedIterEncoder<'a, Witness, core::iter::Map<core::slice::Iter<'a, TxIn>, for<'b> fn(&'b TxIn) -> &'b Witness>>),
+    Witnesses(WitnessesEncoder<'a>),
     LockTime(LockTimeEncoder),
 }
 
@@ -1494,6 +1496,7 @@ impl fmt::Display for TransactionDecodeError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for TransactionDecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {

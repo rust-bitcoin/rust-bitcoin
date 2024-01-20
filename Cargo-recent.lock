@@ -275,9 +275,9 @@ dependencies = [
 
 [[package]]
 name = "push_decode"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "704d18e38492fac1966cc154028b33512154b6eb0aa19412297c8a0d46007b1e"
+checksum = "ace085aaf6d87413b78ccf0e629176e6f6b33019e740cd20400decb7bebc877e"
 dependencies = [
  "either",
 ]

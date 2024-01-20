@@ -71,7 +71,8 @@ ints!(u16, u32, u64, u128, i16, i32, i64, i128);
 
 #[cfg(test)]
 mod tests {
-    use super::{Decode, Encode};
+    use super::{Decode, Encode, impl_struct_decode, impl_struct_encode};
+    use core::fmt;
 
     #[test]
     fn impl_struct_de() {
@@ -84,6 +85,12 @@ mod tests {
             (Foo, FooDecodeError) => struct Decoder {
                 Bar { bar: u32 },
                 Baz { baz: u64 },
+            }
+        }
+
+        impl fmt::Display for FooDecodeError {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "fee error")
             }
         }
 

@@ -2,7 +2,7 @@ use super::{Encoder, VarIntEncoder, BufWrite};
 
 /// Associated type constructor for the [`Encode`] trait.
 ///
-/// **You shouldn't need to worry about this, use [`gat_like`] macro to just use GAT syntax.**
+/// **You shouldn't need to worry about this, use [`gat_like`](crate::gat_like) macro to just use the GAT syntax.**
 ///
 /// Since we want to support older MSRV we workaround lack of generics by implementing a separate
 /// supertrait that provides the associated type. We then reference this in the main `Encode`
@@ -35,8 +35,9 @@ pub trait Encode: for<'a> EncodeTc<'a> {
     /// subtracting how many steps this function took to compute the value.
     fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize);
 
-    /// Returns the recommended value to use in [`Vec::with_capacity`]/[`Vec::reserve`] when
-    /// serializing the value into a `Vec<u8>`.
+    /// Returns the recommended value to use in
+    /// [`Vec::with_capacity`](alloc::vec::Vec::with_capacity)/[`Vec::reserve`](alloc::vec::Vec::reserve)
+    /// when serializing the value into a `Vec<u8>`.
     ///
     /// `max_steps` represents the maximum cost of computation. In general the slower your
     /// allocator is the higher value should be chosen but the exact values should be determined by
