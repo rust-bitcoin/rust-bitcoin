@@ -1,9 +1,18 @@
 use super::{Encoder, VarIntEncoder, BufWrite};
 
+/// Associated type constructor for the [`Encode`] trait.
+///
+/// **You shouldn't need to worry about this, use [`gat_like`] macro to just use GAT syntax.**
+///
+/// Since we want to support older MSRV we workaround lack of generics by implementing a separate
+/// supertrait that provides the associated type. We then reference this in the main `Encode`
+/// trait.
 pub trait EncodeTc<'a> {
+    /// The encoder this type uses to consensus-encode itself.
     type Encoder: Encoder;
 }
 
+/// Represents types that can be natively consensus-encoded.
 pub trait Encode: for<'a> EncodeTc<'a> {
     /// Minimum number of bytes needed to encode this value.
     const MIN_ENCODED_LEN: usize;
@@ -13,8 +22,25 @@ pub trait Encode: for<'a> EncodeTc<'a> {
     /// Creates an encoder producing conensus-encoded `Self`.
     fn encoder(&self) -> <Self as EncodeTc<'_>>::Encoder;
 
+    /// The length of dynamic part of the value.
+    ///
+    /// This does **not** include known minimal length - the value of `MIN_ENCODED_LEN`. That one
+    /// is provided by `reserve_suggestion` instead.
+    ///
+    /// The argument limits the number of computational steps to take when computing the value. If
+    /// the argument is too low it'll return incomplete computation of the length. This was found
+    /// to be faster than computing the whole suggestion for vecs with many items.
+    ///
+    /// The function returns the length in the first argument and the new value of `max_steps` -
+    /// subtracting how many steps this function took to compute the value.
     fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize);
 
+    /// Returns the recommended value to use in [`Vec::with_capacity`]/[`Vec::reserve`] when
+    /// serializing the value into a `Vec<u8>`.
+    ///
+    /// `max_steps` represents the maximum cost of computation. In general the slower your
+    /// allocator is the higher value should be chosen but the exact values should be determined by
+    /// measurement.
     fn reserve_suggestion(&self, max_steps: usize) -> (usize, usize) {
         if Self::IS_KNOWN_LEN {
             debug_assert_eq!(self.dyn_encoded_len(usize::MAX).0, 0);
@@ -25,6 +51,10 @@ pub trait Encode: for<'a> EncodeTc<'a> {
         }
     }
 
+    /// Counts precisely how many bytes the value produces.
+    ///
+    /// As opposed to reserve_suggestion the returned value is always exactly the number of encoded
+    /// bytes unless the value overflows.
     fn count_consensus_bytes(&self) -> usize {
         if Self::IS_KNOWN_LEN {
             Self::MIN_ENCODED_LEN
@@ -72,7 +102,9 @@ pub trait Encode: for<'a> EncodeTc<'a> {
     }
 }
 
+/// Provides `Encoder` helpers related to bitcoin.
 pub trait EncoderExt: Encoder {
+    /// Hashes the bytes returned by the encoder.
     #[cfg(feature = "hashes")]
     fn hash<H: hashes::GeneralHash>(self) -> H {
         let mut engine = H::engine();
@@ -80,6 +112,7 @@ pub trait EncoderExt: Encoder {
         H::from_engine(engine)
     }
 
+    /// Feeds the bytes returned by the encoder to the given hash engine.
     #[cfg(feature = "hashes")]
     fn hash_to_engine<E: hashes::HashEngine>(mut self, engine: &mut E) {
         while !self.encoded_chunk().is_empty() {
@@ -93,6 +126,17 @@ pub trait EncoderExt: Encoder {
 
 impl<T: Encoder> EncoderExt for T {}
 
+/// Simulates GAT syntax when implementing [`Encode`].
+///
+/// *Using this trait is strongly recommended if you're not using other impl macros.*
+///
+/// When you use this macro you can write almost exact synax you would if `EncodeTc::Encoder` was a
+/// GAT of `Encode`. The only difference is that you simply write `Encode` in place of trait name
+/// (no paths, no renaming, no `use` needed).
+///
+/// The only known limitation is that you have to keep the order of items consistent: first the
+/// `type`, then `MIN_ENCODED_LEN`, then `IS_KNOWN_LEN`, then `fn encoder` and finally `fn
+/// dyn_encoded_len`.
 #[macro_export]
 macro_rules! gat_like {
     (impl$(<$($bounded_gen:tt)*>)? Encode for $value:ty { type Encoder<$lifetime:lifetime> = $encoder:ty $(where Self: $bound_lifetime:lifetime)?; const MIN_ENCODED_LEN: usize = $min_len:expr; const IS_KNOWN_LEN: bool = $is_known_len:expr; $(#[$($constructor_attr:tt)*])* fn encoder(&$self:ident) -> Self::Encoder<'_> { $($encoder_constructor:tt)* } $($remaining:tt)* }) => {
@@ -124,6 +168,7 @@ macro_rules! gat_like {
     }
 }
 
+/// Reexported for convenience.
 pub use push_decode::encoders::IntEncoder;
 
 // Note: this horrible macro is required because Rust doesn't allow generating match arms directly.
@@ -394,11 +439,17 @@ macro_rules! hash_encoder {
     }
 }
 
+/// Shorthand for `IterEncoder` created from a slice.
 pub type SliceEncoder<'a, T> = IterEncoder<'a, T, core::slice::Iter<'a, T>>;
 
+/// Encodes encodable items returned by an iterator.
+///
+/// The encoding is prefixed with varing denoting lentght, hence the `ExactSizeIterator`
+/// requirement.
 pub struct IterEncoder<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator>(push_decode::encoders::combinators::Chain<VarIntEncoder, UnprefixedIterEncoder<'a, T, I>>);
 
 impl<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator> IterEncoder<'a, T, I> {
+    /// Creates the encoder from an iterator or collection.
     pub fn new<U: IntoIterator<IntoIter=I>>(iter: U) -> Self {
         let iter = iter.into_iter();
         let first_encoder = VarIntEncoder::new(iter.len() as u64);
@@ -407,6 +458,11 @@ impl<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator> IterEncode
         IterEncoder(first_encoder.chain(second_encoder))
     }
 
+    /// Helps implementing `dyn_len` in the `Encode` implementation.
+    ///
+    /// Since this type is just an encoder that is not associated to a value this is a static
+    /// method. It consumes the iterator but most sensible cases will have `slice.iter().map()` or
+    /// similar so it can be cloned cheaply.
     pub fn dyn_len(iter: impl IntoIterator<IntoIter=I>, max_steps: usize) -> (usize, usize) {
         let iter = iter.into_iter();
         let (varint_len, max_steps) = VarIntEncoder::dyn_encoded_len(iter.len() as u64, max_steps);
@@ -418,9 +474,11 @@ impl<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator> IterEncode
     }
 }
 
+/// An iterator encoder that does *not* prepend its length (as varint) to the data.
 pub struct UnprefixedIterEncoder<'a, T: Encode, I: Iterator<Item=&'a T>>(InnerIterEncoder<'a, T, I>);
 
 impl<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator> UnprefixedIterEncoder<'a, T, I> {
+    /// Creates the encoder from an iterator or collection.
     pub fn new<U: IntoIterator<IntoIter=I>>(iter: U) -> Self {
         let mut iter = iter.into_iter().fuse();
         // Empty elements must be skipped
@@ -438,6 +496,11 @@ impl<'a, T: Encode + 'a, I: Iterator<Item=&'a T> + ExactSizeIterator> Unprefixed
         Self(state)
     }
 
+    /// Helps implementing `dyn_len` in the `Encode` implementation.
+    ///
+    /// Since this type is just an encoder that is not associated to a value this is a static
+    /// method. It consumes the iterator but most sensible cases will have `slice.iter().map()` or
+    /// similar so it can be cloned cheaply.
     pub fn dyn_len(iter: impl IntoIterator<IntoIter=I>, mut max_steps: usize) -> (usize, usize) {
         let iter = iter.into_iter();
         if max_steps == 0 {
@@ -508,4 +571,3 @@ impl<'a, T: Encode, I: Iterator<Item=&'a T>> Encoder for UnprefixedIterEncoder<'
         }
     }
 }
-

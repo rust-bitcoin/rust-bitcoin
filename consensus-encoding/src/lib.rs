@@ -8,6 +8,7 @@
 //! This library provides the tools needed to implement consensus decoding and encoding.
 //!
 
+#![warn(missing_docs)]
 #![no_std]
 
 #[cfg(feature = "std")]

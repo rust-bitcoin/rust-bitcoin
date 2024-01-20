@@ -78,6 +78,7 @@ pub struct VarIntEncoder {
 }
 
 impl VarIntEncoder {
+    /// Constructs the encoder encoding the given value.
     pub fn new(value: u64) -> Self {
         // In theory, varint consists of two parts: prefix and optional payload, so this could have
         // two states, one for each part. However we need to have some buffer anyway because of
@@ -105,6 +106,7 @@ impl VarIntEncoder {
         VarIntEncoder { buf }
     }
 
+    /// Returns the encoded length of a varint.
     pub fn len(value: u64) -> usize {
         Self::payload_len(value) + 1
     }
@@ -126,6 +128,7 @@ impl VarIntEncoder {
         }
     }
 
+    /// Helps implement `dyn_encoded_len` method on `Encode`.
     pub fn dyn_encoded_len(value: u64, max_steps: usize) -> (usize, usize) {
         if max_steps == 0 {
             return (0, 0)
@@ -148,8 +151,17 @@ impl Encoder for VarIntEncoder {
 /// Returned when decoding a var int fails.
 #[derive(Debug)]
 pub enum VarIntDecodeError {
-    UnexpectedEnd { required: usize, received: usize },
-    NonMinimal { value: u64 },
+    /// Returned when the decoder reaches end of stream (EOF).
+    UnexpectedEnd {
+        /// How many bytes were required.
+        required: usize,
+        /// How many bytes were received.
+        received: usize },
+    /// Returned when the encoding is not minimal
+    NonMinimal {
+        /// The encoded value.
+        value: u64
+    },
 }
 
 impl fmt::Display for VarIntDecodeError {
