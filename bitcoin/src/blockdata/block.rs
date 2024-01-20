@@ -289,7 +289,7 @@ impl Block {
 
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.txid().to_raw_hash());
+        let hashes = self.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
@@ -491,7 +491,7 @@ mod tests {
         let block: Block = deserialize(&hex!(BLOCK_HEX)).unwrap();
 
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
-        assert_eq!(block.coinbase().unwrap().txid().to_string(), cb_txid);
+        assert_eq!(block.coinbase().unwrap().compute_txid().to_string(), cb_txid);
 
         assert_eq!(block.bip34_block_height(), Ok(100_000));
 

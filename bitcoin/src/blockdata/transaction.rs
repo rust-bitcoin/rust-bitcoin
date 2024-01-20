@@ -698,15 +698,25 @@ impl Transaction {
                 .collect(),
             output: self.output.clone(),
         };
-        cloned_tx.txid().into()
+        cloned_tx.compute_txid().into()
     }
+
+    /// Computes the [`Txid`].
+    ///
+    /// This method is deprecated.  Use `compute_txid` instead.
+    #[deprecated(
+        since = "0.31.0",
+        note = "txid has been renamed to compute_txid to note that it's computationally expensive.  use compute_txid() instead."
+    )]
+    pub fn txid(&self) -> Txid { self.compute_txid() }
 
     /// Computes the [`Txid`].
     ///
     /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::wtxid()`].
-    pub fn txid(&self) -> Txid {
+    #[doc(alias = "txid")]
+    pub fn compute_txid(&self) -> Txid {
         let mut enc = Txid::engine();
         self.version.consensus_encode(&mut enc).expect("engines don't error");
         self.input.consensus_encode(&mut enc).expect("engines don't error");
@@ -1237,11 +1247,11 @@ impl Decodable for Transaction {
 }
 
 impl From<Transaction> for Txid {
-    fn from(tx: Transaction) -> Txid { tx.txid() }
+    fn from(tx: Transaction) -> Txid { tx.compute_txid() }
 }
 
 impl From<&Transaction> for Txid {
-    fn from(tx: &Transaction) -> Txid { tx.txid() }
+    fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
 }
 
 impl From<Transaction> for Wtxid {
@@ -1732,7 +1742,7 @@ mod tests {
         assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
-            format!("{:x}", realtx.txid()),
+            format!("{:x}", realtx.compute_txid()),
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
         assert_eq!(
@@ -1783,7 +1793,7 @@ mod tests {
         assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
-            format!("{:x}", realtx.txid()),
+            format!("{:x}", realtx.compute_txid()),
             "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string()
         );
         assert_eq!(
@@ -1911,7 +1921,7 @@ mod tests {
             "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4"
         );
         assert_eq!(
-            format!("{:x}", tx.txid()),
+            format!("{:x}", tx.compute_txid()),
             "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec"
         );
         assert_eq!(tx.weight(), Weight::from_wu(2718));
@@ -1932,7 +1942,7 @@ mod tests {
             "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd"
         );
         assert_eq!(
-            format!("{:x}", tx.txid()),
+            format!("{:x}", tx.compute_txid()),
             "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd"
         );
     }
@@ -2017,9 +2027,9 @@ mod tests {
             .as_slice()).unwrap();
 
         let mut spent = HashMap::new();
-        spent.insert(spent1.txid(), spent1);
-        spent.insert(spent2.txid(), spent2);
-        spent.insert(spent3.txid(), spent3);
+        spent.insert(spent1.compute_txid(), spent1);
+        spent.insert(spent2.compute_txid(), spent2);
+        spent.insert(spent3.compute_txid(), spent3);
         let mut spent2 = spent.clone();
         let mut spent3 = spent.clone();
 

@@ -127,8 +127,8 @@ impl fmt::Display for Error {
             UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
                 f,
                 "different unsigned transaction: expected {}, actual {}",
-                e.txid(),
-                a.txid()
+                e.compute_txid(),
+                a.compute_txid()
             ),
             NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
             InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),

@@ -425,7 +425,7 @@ impl BenefactorWallet {
             version: transaction::Version::TWO,
             lock_time,
             input: vec![TxIn {
-                previous_output: OutPoint { txid: tx.txid(), vout: 0 },
+                previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
                 script_sig: ScriptBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
@@ -568,7 +568,7 @@ impl BenefactorWallet {
                 version: transaction::Version::TWO,
                 lock_time,
                 input: vec![TxIn {
-                    previous_output: OutPoint { txid: tx.txid(), vout: 0 },
+                    previous_output: OutPoint { txid: tx.compute_txid(), vout: 0 },
                     script_sig: ScriptBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
