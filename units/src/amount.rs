@@ -975,8 +975,8 @@ impl SignedAmount {
             // (negative, amount)
             (false, sat) if sat > i64::MAX as u64 => Err(ParseAmountError::TooBig),
             (false, sat) => Ok(SignedAmount(sat as i64)),
-            (true, sat) if sat == i64::MAX as u64 + 1 => Ok(SignedAmount(i64::MIN)),
-            (true, sat) if sat > i64::MAX as u64 + 1 => Err(ParseAmountError::TooBig),
+            (true, sat) if sat == i64::MIN.unsigned_abs() => Ok(SignedAmount(i64::MIN)),
+            (true, sat) if sat > i64::MIN.unsigned_abs() => Err(ParseAmountError::TooBig),
             (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
