@@ -390,7 +390,7 @@ impl Psbt {
     /// Uses the [`EcdsaSighashType`] from this input if one is specified. If no sighash type is
     /// specified uses [`EcdsaSighashType::All`]. This function does not support scripts that
     /// contain `OP_CODESEPARATOR`.
-    pub fn sighash_ecdsa<T: Borrow<Transaction>>(
+    fn sighash_ecdsa<T: Borrow<Transaction>>(
         &self,
         input_index: usize,
         cache: &mut SighashCache<T>,
