@@ -81,7 +81,7 @@ ints!(u16, u32, u64, u128, i16, i32, i64, i128);
 
 #[cfg(test)]
 mod tests {
-    use super::{Decode, Encode};
+    use super::{Decode, Encode, impl_struct_decode, impl_struct_encode};
     use core::fmt;
 
     #[test]

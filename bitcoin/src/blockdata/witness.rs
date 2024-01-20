@@ -141,9 +141,11 @@ impl Decode for Witness {
     type Decoder = WitnessDecoder;
 }
 
+type WitnessInnerDecoder = ThenTry<WitnessDecodeError, VarIntDecoder, WitnessDataDecoder, fn(u64) -> Result<WitnessDataDecoder, WitnessDecodeError>>;
+
 /// A decoder used to decode [`Witness`].
 #[derive(Debug)]
-pub struct WitnessDecoder(ThenTry<WitnessDecodeError, VarIntDecoder, WitnessDataDecoder, fn(u64) -> Result<WitnessDataDecoder, WitnessDecodeError,>>);
+pub struct WitnessDecoder(WitnessInnerDecoder);
 
 impl Decoder for WitnessDecoder {
     type Value = Witness;
@@ -189,9 +191,8 @@ impl WitnessDataDecoder {
         // to avoid wasting space without reallocating
         let capacity = witness_elements * 5 + 128;
         let mut buf = Vec::with_capacity(capacity);
-        for _ in 0..(witness_elements * 4) {
-            buf.push(0);
-        }
+        // just to fill the beginning with zeroes, we still have more reserved
+        buf.resize(witness_elements * 4, 0);
 
         Ok(WitnessDataDecoder {
             witness_elements,
