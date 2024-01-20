@@ -24,20 +24,26 @@ pub const MIN_SIZE: usize = 2;
 /// The maximum byte size of a segregated witness program.
 pub const MAX_SIZE: usize = 40;
 
-/// The segregated witness program.
+/// The segregated witness script pubkey.
 ///
-/// The segregated witness program is technically only the program bytes _excluding_ the witness
-/// version, however we maintain length invariants on the `program` that are governed by the version
+/// This was originally incorrectly named `WitnessProgram` and is being renamed.
+#[deprecated = "the name is incorrect, use `SegwitScriptPubkey` instead"]
+pub type WitnessProgram = SegwitScriptPubkey;
+
+/// The segregated witness script pubkey.
+///
+/// The segregated witness script pubkey is the segwit program and the version.
+/// We maintain length invariants on the `program` that are governed by the version
 /// number, therefore we carry the version number around along with the program bytes.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct WitnessProgram {
+pub struct SegwitScriptPubkey {
     /// The segwit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
     program: ArrayVec<u8, MAX_SIZE>,
 }
 
-impl WitnessProgram {
+impl SegwitScriptPubkey {
     /// Creates a new witness program, copying the content from the given byte slice.
     pub fn new(version: WitnessVersion, bytes: &[u8]) -> Result<Self, Error> {
         use Error::*;
@@ -53,34 +59,34 @@ impl WitnessProgram {
         }
 
         let program = ArrayVec::from_slice(bytes);
-        Ok(WitnessProgram { version, program })
+        Ok(SegwitScriptPubkey { version, program })
     }
 
-    /// Creates a [`WitnessProgram`] from a 20 byte pubkey hash.
+    /// Creates a [`SegwitScriptPubkey`] from a 20 byte pubkey hash.
     fn new_p2wpkh(program: [u8; 20]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
+        SegwitScriptPubkey { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Creates a [`WitnessProgram`] from a 32 byte script hash.
+    /// Creates a [`SegwitScriptPubkey`] from a 32 byte script hash.
     fn new_p2wsh(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
+        SegwitScriptPubkey { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Creates a [`WitnessProgram`] from a 32 byte serialize taproot xonly pubkey.
+    /// Creates a [`SegwitScriptPubkey`] from a 32 byte serialize taproot xonly pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
-        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
+        SegwitScriptPubkey { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
+    /// Creates a [`SegwitScriptPubkey`] from `pk` for a P2WPKH output.
     pub fn p2wpkh(pk: &CompressedPublicKey) -> Self {
         let hash = pk.wpubkey_hash();
-        WitnessProgram::new_p2wpkh(hash.to_byte_array())
+        SegwitScriptPubkey::new_p2wpkh(hash.to_byte_array())
     }
 
-    /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
+    /// Creates a [`SegwitScriptPubkey`] from `script` for a P2WSH output.
     pub fn p2wsh(script: &Script) -> Self {
         let hash = script.wscript_hash();
-        WitnessProgram::new_p2wsh(hash.to_byte_array())
+        SegwitScriptPubkey::new_p2wsh(hash.to_byte_array())
     }
 
     /// Creates a pay to taproot address from an untweaked key.
@@ -91,13 +97,13 @@ impl WitnessProgram {
     ) -> Self {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         let pubkey = output_key.to_inner().serialize();
-        WitnessProgram::new_p2tr(pubkey)
+        SegwitScriptPubkey::new_p2tr(pubkey)
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         let pubkey = output_key.to_inner().serialize();
-        WitnessProgram::new_p2tr(pubkey)
+        SegwitScriptPubkey::new_p2tr(pubkey)
     }
 
     /// Returns the witness program version.

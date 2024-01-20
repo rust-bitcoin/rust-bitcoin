@@ -42,7 +42,7 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::script::witness_program::WitnessProgram;
+use crate::blockdata::script::witness_program::SegwitScriptPubkey;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
 use crate::crypto::key::{
@@ -138,7 +138,7 @@ impl NetworkValidation for NetworkUnchecked {
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
     P2sh { hash: ScriptHash, network: NetworkKind },
-    Segwit { program: WitnessProgram, hrp: KnownHrp },
+    Segwit { sw_script_pubkey: SegwitScriptPubkey, hrp: KnownHrp },
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
@@ -164,10 +164,10 @@ impl fmt::Display for AddressInner {
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
-            Segwit { program, hrp } => {
+            Segwit { sw_script_pubkey, hrp } => {
                 let hrp = hrp.to_hrp();
-                let version = program.version().to_fe();
-                let program = program.program().as_ref();
+                let version = sw_script_pubkey.version().to_fe();
+                let program = sw_script_pubkey.program().as_ref();
 
                 if fmt.alternate() {
                     bech32::segwit::encode_upper_to_fmt_unchecked(fmt, &hrp, version, program)
@@ -388,8 +388,8 @@ impl Address {
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
     pub fn p2wpkh(pk: &CompressedPublicKey, network: Network) -> Self {
-        let program = WitnessProgram::p2wpkh(pk);
-        Address::from_witness_program(program, network)
+        let script_pubkey = SegwitScriptPubkey::p2wpkh(pk);
+        Address::from_segwit_script_pubkey(script_pubkey, network)
     }
 
     /// Creates a pay to script address that embeds a witness pay to public key.
@@ -403,8 +403,8 @@ impl Address {
 
     /// Creates a witness pay to script hash address.
     pub fn p2wsh(script: &Script, network: Network) -> Address {
-        let program = WitnessProgram::p2wsh(script);
-        Address::from_witness_program(program, network)
+        let script_pubkey = SegwitScriptPubkey::p2wsh(script);
+        Address::from_segwit_script_pubkey(script_pubkey, network)
     }
 
     /// Creates a pay to script address that embeds a witness pay to script hash address.
@@ -423,24 +423,24 @@ impl Address {
         merkle_root: Option<TapNodeHash>,
         network: Network,
     ) -> Address {
-        let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
-        Address::from_witness_program(program, network)
+        let script_pubkey = SegwitScriptPubkey::p2tr(secp, internal_key, merkle_root);
+        Address::from_segwit_script_pubkey(script_pubkey, network)
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
-        let program = WitnessProgram::p2tr_tweaked(output_key);
-        Address::from_witness_program(program, network)
+        let script_pubkey = SegwitScriptPubkey::p2tr_tweaked(output_key);
+        Address::from_segwit_script_pubkey(script_pubkey, network)
     }
 
-    /// Creates an address from an arbitrary witness program.
+    /// Creates an address from an arbitrary segwit script pubkey.
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
     // TODO: This is still arguably wrong, could take a KnownHrp/Hrp instead of Network.
-    pub fn from_witness_program(program: WitnessProgram, network: Network) -> Address {
+    pub fn from_segwit_script_pubkey(segwit_script_pubkey: SegwitScriptPubkey, network: Network) -> Address {
         let hrp = KnownHrp::from_network(network);
-        let inner = AddressInner::Segwit { program, hrp };
+        let inner = AddressInner::Segwit { sw_script_pubkey: segwit_script_pubkey, hrp };
         Address(inner, PhantomData)
     }
 
@@ -454,12 +454,12 @@ impl Address {
         match self.0 {
             AddressInner::P2pkh { .. } => Some(AddressType::P2pkh),
             AddressInner::P2sh { .. } => Some(AddressType::P2sh),
-            AddressInner::Segwit { ref program, hrp: _ } =>
-                if program.is_p2wpkh() {
+            AddressInner::Segwit { ref sw_script_pubkey, hrp: _ } =>
+                if sw_script_pubkey.is_p2wpkh() {
                     Some(AddressType::P2wpkh)
-                } else if program.is_p2wsh() {
+                } else if sw_script_pubkey.is_p2wsh() {
                     Some(AddressType::P2wsh)
-                } else if program.is_p2tr() {
+                } else if sw_script_pubkey.is_p2tr() {
                     Some(AddressType::P2tr)
                 } else {
                     None
@@ -512,12 +512,12 @@ impl Address {
             let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
             let hash = ScriptHash::from_byte_array(bytes);
             Ok(Address::p2sh_from_hash(hash, network))
-        } else if script.is_witness_program() {
-            let opcode = script.first_opcode().expect("is_witness_program guarantees len > 4");
+        } else if script.is_segwit_script_pubkey() {
+            let opcode = script.first_opcode().expect("is_segwitw_script_pubkey guarantees len > 4");
 
             let version = WitnessVersion::try_from(opcode)?;
-            let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
-            Ok(Address::from_witness_program(program, network))
+            let script_pubkey = SegwitScriptPubkey::new(version, &script.as_bytes()[2..])?;
+            Ok(Address::from_segwit_script_pubkey(script_pubkey, network))
         } else {
             Err(Error::UnrecognizedScript)
         }
@@ -529,10 +529,10 @@ impl Address {
         match self.0 {
             P2pkh { ref hash, network: _ } => ScriptBuf::new_p2pkh(hash),
             P2sh { ref hash, network: _ } => ScriptBuf::new_p2sh(hash),
-            Segwit { ref program, hrp: _ } => {
-                let prog = program.program();
-                let version = program.version();
-                ScriptBuf::new_witness_program_unchecked(version, prog)
+            Segwit { ref sw_script_pubkey, hrp: _ } => {
+                let prog = sw_script_pubkey.program();
+                let version = sw_script_pubkey.version();
+                ScriptBuf::new_segwit_script_pubkey_unchecked(version, prog)
             }
         }
     }
@@ -598,8 +598,8 @@ impl Address {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Segwit { ref program, hrp: _ } if script.is_witness_program() =>
-                &script.as_bytes()[2..] == program.program().as_bytes(),
+            Segwit { ref sw_script_pubkey, hrp: _ } if script.is_segwit_script_pubkey() =>
+                &script.as_bytes()[2..] == sw_script_pubkey.program().as_bytes(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
         }
     }
@@ -617,7 +617,7 @@ impl Address {
         match self.0 {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
-            Segwit { ref program, hrp: _ } => program.program().as_bytes(),
+            Segwit { ref sw_script_pubkey, hrp: _ } => sw_script_pubkey.program().as_bytes(),
         }
     }
 }
@@ -657,7 +657,7 @@ impl Address<NetworkUnchecked> {
         match self.0 {
             P2pkh { hash: _, ref network } => *network == NetworkKind::from(n),
             P2sh { hash: _, ref network } => *network == NetworkKind::from(n),
-            Segwit { program: _, ref hrp } => *hrp == KnownHrp::from_network(n),
+            Segwit { sw_script_pubkey: _, ref hrp } => *hrp == KnownHrp::from_network(n),
         }
     }
 
@@ -687,7 +687,7 @@ impl Address<NetworkUnchecked> {
         let inner = match self.0 {
             P2pkh { hash, network } => P2pkh { hash, network },
             P2sh { hash, network } => P2sh { hash, network },
-            Segwit { program, hrp } => Segwit { program, hrp },
+            Segwit { sw_script_pubkey, hrp } => Segwit { sw_script_pubkey, hrp },
         };
         Address(inner, PhantomData)
     }
@@ -722,11 +722,11 @@ impl FromStr for Address<NetworkUnchecked> {
     fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
         if let Ok((hrp, witness_version, data)) = bech32::segwit::decode(s) {
             let version = WitnessVersion::try_from(witness_version)?;
-            let program = WitnessProgram::new(version, &data)
+            let sw_script_pubkey = SegwitScriptPubkey::new(version, &data)
                 .expect("bech32 guarantees valid program length for witness");
 
             let hrp = KnownHrp::from_hrp(hrp)?;
-            let inner = AddressInner::Segwit { program, hrp };
+            let inner = AddressInner::Segwit { sw_script_pubkey, hrp };
             return Ok(Address(inner, PhantomData));
         }
 
@@ -921,9 +921,9 @@ mod tests {
         let program = hex!(
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
         );
-        let program = WitnessProgram::new(WitnessVersion::V13, &program).expect("valid program");
+        let sw_script_pubkey = SegwitScriptPubkey::new(WitnessVersion::V13, &program).expect("valid program");
 
-        let addr = Address::from_witness_program(program, Bitcoin);
+        let addr = Address::from_segwit_script_pubkey(sw_script_pubkey, Bitcoin);
         roundtrips(&addr, Bitcoin);
     }
 
@@ -1231,7 +1231,7 @@ mod tests {
 
     #[test]
     fn test_fail_address_from_script() {
-        use crate::witness_program;
+        use crate::script;
 
         let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
         let bad_p2wsh = ScriptBuf::from_hex(
@@ -1246,7 +1246,7 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
             Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
-            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
+            Err(Error::SegwitScriptPubkey(script::segwit::Error::InvalidSegwitV0Length(17)))
         );
     }
 

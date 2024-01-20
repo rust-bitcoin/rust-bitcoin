@@ -5,7 +5,7 @@ use core::fmt;
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
-use crate::blockdata::script::{witness_program, witness_version};
+use crate::blockdata::script::{self, witness_version};
 use crate::prelude::String;
 use crate::{base58, Network};
 
@@ -16,7 +16,7 @@ pub enum Error {
     /// A witness version construction error.
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
-    WitnessProgram(witness_program::Error),
+    SegwitScriptPubkey(script::segwit::Error),
     /// Address size more than 520 bytes is not allowed.
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
@@ -38,7 +38,7 @@ impl fmt::Display for Error {
 
         match *self {
             WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            SegwitScriptPubkey(ref e) => write_err!(f, "witness program error"; e),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
             NetworkValidation { required, ref address } => {
@@ -58,7 +58,7 @@ impl std::error::Error for Error {
 
         match self {
             WitnessVersion(e) => Some(e),
-            WitnessProgram(e) => Some(e),
+            SegwitScriptPubkey(e) => Some(e),
             UnknownHrp(e) => Some(e),
             ExcessiveScriptSize | UnrecognizedScript | NetworkValidation { .. } => None,
         }
@@ -69,8 +69,8 @@ impl From<witness_version::TryFromError> for Error {
     fn from(e: witness_version::TryFromError) -> Error { Error::WitnessVersion(e) }
 }
 
-impl From<witness_program::Error> for Error {
-    fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
+impl From<script::segwit::Error> for Error {
+    fn from(e: script::segwit::Error) -> Error { Error::SegwitScriptPubkey(e) }
 }
 
 /// Address type is either invalid or not supported in rust-bitcoin.
@@ -100,7 +100,7 @@ pub enum ParseError {
     /// A witness version conversion/parsing error.
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
-    WitnessProgram(witness_program::Error),
+    SegwitScriptPubkey(script::segwit::Error),
     /// Tried to parse an unknown HRP.
     UnknownHrp(UnknownHrpError),
 }
@@ -113,7 +113,7 @@ impl fmt::Display for ParseError {
             Base58(ref e) => write_err!(f, "base58 error"; e),
             Bech32(ref e) => write_err!(f, "bech32 segwit decoding error"; e),
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            SegwitScriptPubkey(ref e) => write_err!(f, "witness program error"; e),
             UnknownHrp(ref e) => write_err!(f, "tried to parse an unknown hrp"; e),
         }
     }
@@ -128,7 +128,7 @@ impl std::error::Error for ParseError {
             Base58(ref e) => Some(e),
             Bech32(ref e) => Some(e),
             WitnessVersion(ref e) => Some(e),
-            WitnessProgram(ref e) => Some(e),
+            SegwitScriptPubkey(ref e) => Some(e),
             UnknownHrp(ref e) => Some(e),
         }
     }
@@ -146,8 +146,8 @@ impl From<witness_version::TryFromError> for ParseError {
     fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
 }
 
-impl From<witness_program::Error> for ParseError {
-    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
+impl From<script::segwit::Error> for ParseError {
+    fn from(e: script::segwit::Error) -> Self { Self::SegwitScriptPubkey(e) }
 }
 
 impl From<UnknownHrpError> for ParseError {

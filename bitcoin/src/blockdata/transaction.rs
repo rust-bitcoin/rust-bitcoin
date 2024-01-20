@@ -956,7 +956,7 @@ impl Transaction {
             let script_sig = &input.script_sig;
             let witness = &input.witness;
 
-            let witness_program = if prevout.script_pubkey.is_witness_program() {
+            let witness_program = if prevout.script_pubkey.is_segwit_script_pubkey() {
                 &prevout.script_pubkey
             } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
                 // If prevout is P2SH and scriptSig is push only

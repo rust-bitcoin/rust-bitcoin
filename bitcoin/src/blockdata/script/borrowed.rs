@@ -292,9 +292,19 @@ impl Script {
         instructions.next().is_none()
     }
 
-    /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
-    #[inline]
+    /// Checks whether a script pubkey is a Segregated Witness (segwit) script pubkey.
+    ///
+    /// This is being renamed to `is_segwit_script_pubkey` to be consistent with
+    /// [`SegwitScriptPubkey`](super::segwit::SegwitScriptPubkey) type which was previously
+    /// incorrectly named.
+    #[deprecated = "the name was misleading, use `is_segwit_script_pubkey` instead"]
     pub fn is_witness_program(&self) -> bool {
+        self.is_segwit_script_pubkey()
+    }
+
+    /// Checks whether a script pubkey is a Segregated Witness (segwit) script pubkey.
+    #[inline]
+    pub fn is_segwit_script_pubkey(&self) -> bool {
         // A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
         // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
         // special meaning. The value of the first push is called the "version byte". The following
@@ -430,7 +440,7 @@ impl Script {
         let sats = dust_relay_fee
             .checked_mul(if self.is_op_return() {
                 0
-            } else if self.is_witness_program() {
+            } else if self.is_segwit_script_pubkey() {
                 32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
                     self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
