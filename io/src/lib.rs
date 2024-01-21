@@ -67,7 +67,7 @@ pub trait Read {
     ///
     /// Similar to `std::io::Read::read_to_end` but with the DOS protection.
     #[doc(alias = "read_to_end")]
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
     #[inline]
     fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
         self.take(limit).read_to_end(buf)
@@ -97,7 +97,7 @@ pub struct Take<'a, R: Read + ?Sized> {
 
 impl<'a, R: Read + ?Sized> Take<'a, R> {
     /// Reads all bytes until EOF from the underlying reader into `buf`.
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
     #[inline]
     pub fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         let mut read: usize = 0;
