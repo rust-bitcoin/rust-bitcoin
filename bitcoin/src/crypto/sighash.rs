@@ -1270,7 +1270,6 @@ impl fmt::Display for SegwitV0Error {
     }
 }
 
-
 #[cfg(feature = "std")]
 impl std::error::Error for SegwitV0Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
