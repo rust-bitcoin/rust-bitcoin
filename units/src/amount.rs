@@ -1782,6 +1782,7 @@ mod tests {
         // make sure satoshi > i64::MAX is checked.
         let amount = Amount::from_sat(i64::MAX as u64);
         assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
+        assert!(SignedAmount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_err());
         assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
 
         assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
