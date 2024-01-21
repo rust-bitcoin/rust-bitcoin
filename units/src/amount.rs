@@ -1710,10 +1710,17 @@ mod tests {
         assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
+
+        // Amount can be grater than the max SignedAmount.
         assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
 
         assert_eq!(
             f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            Err(ParseAmountError::TooBig)
+        );
+
+        assert_eq!(
+            sf(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
             Err(ParseAmountError::TooBig)
         );
 
