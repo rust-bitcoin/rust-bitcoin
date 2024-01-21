@@ -1707,7 +1707,6 @@ mod tests {
         assert_eq!(f(-100.0, D::MilliSatoshi), Err(ParseAmountError::Negative));
         assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
         assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
         assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
