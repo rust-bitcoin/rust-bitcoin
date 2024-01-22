@@ -59,6 +59,12 @@ pub enum Denomination {
 }
 
 impl Denomination {
+    /// Convenience alias for `Denomination::Bitcoin`.
+    pub const BTC: Self = Denomination::Bitcoin;
+
+    /// Convenience alias for `Denomination::Satoshi`.
+    pub const SAT: Self = Denomination::Satoshi;
+
     /// The number of decimal places more than a satoshi.
     fn precision(self) -> i8 {
         match self {
