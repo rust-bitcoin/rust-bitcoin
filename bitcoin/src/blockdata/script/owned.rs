@@ -7,7 +7,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::blockdata::script::witness_program::WitnessProgram;
+use crate::blockdata::script::witness_program::SegwitScriptPubkey;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
@@ -100,14 +100,14 @@ impl ScriptBuf {
 
     /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
-        // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
+        // pubkey hash is 20 bytes long, so it's safe to use `new_segwit_script_pubkey_unchecked` (Segwitv0)
+        ScriptBuf::new_segwit_script_pubkey_unchecked(WitnessVersion::V0, pubkey_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_p2wsh(script_hash: &WScriptHash) -> Self {
-        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
+        // script hash is 32 bytes long, so it's safe to use `new_segwit_script_pubkey_unchecked` (Segwitv0)
+        ScriptBuf::new_segwit_script_pubkey_unchecked(WitnessVersion::V0, script_hash)
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
@@ -118,21 +118,21 @@ impl ScriptBuf {
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
-        // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
+        // output key is 32 bytes long, so it's safe to use `new_segwit_script_pubkey_unchecked` (Segwitv1)
+        ScriptBuf::new_segwit_script_pubkey_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
     pub fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
+        ScriptBuf::new_segwit_script_pubkey_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
-    pub fn new_witness_program(witness_program: &WitnessProgram) -> Self {
+    /// Generates P2WSH-type of scriptPubkey with a given [`SegwitScriptPubkey`].
+    pub fn new_segwit_script_pubkey(segwit_script_pubkey: &SegwitScriptPubkey) -> Self {
         Builder::new()
-            .push_opcode(witness_program.version().into())
-            .push_slice(witness_program.program())
+            .push_opcode(segwit_script_pubkey.version().into())
+            .push_slice(segwit_script_pubkey.program())
             .into_script()
     }
 
@@ -140,7 +140,7 @@ impl ScriptBuf {
     /// Does not do any checks on version or program length.
     ///
     /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
-    pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+    pub(crate) fn new_segwit_script_pubkey_unchecked<T: AsRef<PushBytes>>(
         version: WitnessVersion,
         program: T,
     ) -> Self {

@@ -54,8 +54,19 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
-pub mod witness_program;
+pub mod segwit;
 pub mod witness_version;
+
+#[deprecated = "the name is misleading, use segwit instead"]
+pub mod witness_program {
+    //! The segregated witness program as defined by [BIP141].
+    //!
+    //! The module is deprecated in favor of [`segwit`](super::segwit).
+    //!
+    //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
+
+    pub use super::segwit::*;
+}
 
 use alloc::rc::Rc;
 #[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]

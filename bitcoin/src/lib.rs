@@ -125,7 +125,7 @@ pub use crate::{
     blockdata::fee_rate::FeeRate,
     blockdata::locktime::{self, absolute, relative},
     blockdata::opcodes::{self, Opcode},
-    blockdata::script::witness_program::{self, WitnessProgram},
+    blockdata::script::segwit::SegwitScriptPubkey,
     blockdata::script::witness_version::{self, WitnessVersion},
     blockdata::script::{self, Script, ScriptBuf, ScriptHash, WScriptHash},
     blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
@@ -142,6 +142,11 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+
+#[allow(deprecated)]
+pub use crate::blockdata::script::segwit::WitnessProgram;
+#[allow(deprecated)]
+pub use crate::blockdata::script::witness_program;
 
 #[rustfmt::skip]
 mod prelude {
