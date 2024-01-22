@@ -985,10 +985,8 @@ impl Transaction {
 
     /// Returns whether or not to serialize transaction as specified in BIP-144.
     fn uses_segwit_serialization(&self) -> bool {
-        for input in &self.input {
-            if !input.witness.is_empty() {
-                return true;
-            }
+        if self.input.iter().any(|input| !input.witness.is_empty()) {
+            return true;
         }
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
