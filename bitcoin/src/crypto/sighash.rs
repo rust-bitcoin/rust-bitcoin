@@ -764,7 +764,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_code: &Script,
         value: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<(), SigningDataError<SegwitV0Error>> {
+    ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
         let zero_hash = sha256d::Hash::all_zeros();
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -842,7 +842,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         witness_script: &Script,
         value: Amount,
         sighash_type: EcdsaSighashType,
-    ) -> Result<SegwitV0Sighash, SegwitV0Error> {
+    ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
         let mut enc = SegwitV0Sighash::engine();
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
@@ -882,10 +882,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
-    ) -> EncodeSigningDataResult<SigningDataError<LegacyError>> {
+    ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
         if let Err(e) = self.tx.borrow().tx_in(input_index) {
-            return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e.into())));
+            return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
         }
         let sighash_type: u32 = sighash_type.into();
 
@@ -1013,7 +1013,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         {
             Ok(true) => Ok(LegacySighash::from_byte_array(UINT256_ONE)),
             Ok(false) => Ok(LegacySighash::from_engine(engine)),
-            Err(e) => Err(match e.unwrap_sighash() { LegacyError::InputsIndex(error) => error }),
+            Err(e) => Err(e.unwrap_sighash()),
         }
     }
 
@@ -1206,9 +1206,15 @@ impl From<PrevoutsIndexError> for TaprootError {
 #[non_exhaustive]
 pub enum P2wpkhError {
     /// Error computing the sighash.
-    Sighash(SegwitV0Error),
+    Sighash(transaction::InputsIndexError),
     /// Script is not a witness program for a p2wpkh output.
     NotP2wpkhScript,
+}
+
+impl From<transaction::InputsIndexError> for P2wpkhError {
+    fn from(value: transaction::InputsIndexError) -> Self {
+        P2wpkhError::Sighash(value)
+    }
 }
 
 impl fmt::Display for P2wpkhError {
@@ -1232,44 +1238,6 @@ impl std::error::Error for P2wpkhError {
             NotP2wpkhScript => None,
         }
     }
-}
-
-impl From<SegwitV0Error> for P2wpkhError {
-    fn from(e: SegwitV0Error) -> Self { Self::Sighash(e) }
-}
-
-/// Error computing the segwit sighash.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum SegwitV0Error {
-    /// Index out of bounds when accessing transaction input vector.
-    InputsIndex(transaction::InputsIndexError),
-}
-
-impl fmt::Display for SegwitV0Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use SegwitV0Error::*;
-
-        match *self {
-            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
-        }
-    }
-}
-
-
-#[cfg(feature = "std")]
-impl std::error::Error for SegwitV0Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use SegwitV0Error::*;
-
-        match *self {
-            InputsIndex(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<transaction::InputsIndexError> for SegwitV0Error {
-    fn from(e: transaction::InputsIndexError) -> Self { Self::InputsIndex(e) }
 }
 
 /// Using `SIGHASH_SINGLE` requires an output at the same index as the input.
@@ -1329,39 +1297,6 @@ impl std::error::Error for AnnexError {
             Empty | IncorrectPrefix(_) => None,
         }
     }
-}
-
-/// Error computing the legacy sighash.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum LegacyError {
-    /// Index out of bounds when accessing transaction input vector.
-    InputsIndex(transaction::InputsIndexError),
-}
-
-impl fmt::Display for LegacyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use LegacyError::*;
-
-        match *self {
-            InputsIndex(ref e) => write_err!(f, "inputs index"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for LegacyError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use LegacyError::*;
-
-        match *self {
-            InputsIndex(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<transaction::InputsIndexError> for LegacyError {
-    fn from(e: transaction::InputsIndexError) -> Self { Self::InputsIndex(e) }
 }
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {

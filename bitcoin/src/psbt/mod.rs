@@ -23,7 +23,7 @@ use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::transaction::{self, Transaction, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
@@ -436,7 +436,7 @@ impl Psbt {
                 let witness_script =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
                 let sighash =
-                    cache.p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty)?;
+                    cache.p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty).map_err(SignError::SegwitV0Sighash)?;
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Tr => {
@@ -771,7 +771,7 @@ pub enum SignError {
     /// The `scriptPubkey` is not a P2WPKH script.
     NotWpkh,
     /// Sighash computation error (segwit v0 input).
-    SegwitV0Sighash(sighash::SegwitV0Error),
+    SegwitV0Sighash(transaction::InputsIndexError),
     /// Sighash computation error (p2wpkh input).
     P2wpkhSighash(sighash::P2wpkhError),
     /// Unable to determine the output type.
@@ -832,10 +832,6 @@ impl std::error::Error for SignError {
             | Unsupported => None,
         }
     }
-}
-
-impl From<sighash::SegwitV0Error> for SignError {
-    fn from(e: sighash::SegwitV0Error) -> Self { Self::SegwitV0Sighash(e) }
 }
 
 impl From<sighash::P2wpkhError> for SignError {
