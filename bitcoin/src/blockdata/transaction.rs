@@ -773,9 +773,9 @@ impl Transaction {
     #[inline]
     pub fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
-	let use_segwit = self.use_segwit_serialization();
+	let uses_segwit = self.uses_segwit_serialization();
 
-        if use_segwit {
+        if uses_segwit {
             size += 2; // 1 byte for the marker and 1 for the flag.
         }
 
@@ -784,7 +784,7 @@ impl Transaction {
             .input
             .iter()
             .map(|input| {
-                if use_segwit {
+                if uses_segwit {
                     input.total_size()
                 } else {
                     input.base_size()
@@ -984,7 +984,7 @@ impl Transaction {
     }
 
     /// Returns whether or not to serialize transaction as specified in BIP-144.
-    fn use_segwit_serialization(&self) -> bool {
+    fn uses_segwit_serialization(&self) -> bool {
         for input in &self.input {
             if !input.witness.is_empty() {
                 return true;
@@ -1175,7 +1175,7 @@ impl Encodable for Transaction {
         len += self.version.consensus_encode(w)?;
 
         // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.use_segwit_serialization() {
+        if !self.uses_segwit_serialization() {
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
         } else {
@@ -2167,14 +2167,14 @@ mod tests {
         for (is_segwit, tx, expected_weight) in &txs {
             let txin_weight = if *is_segwit { TxIn::segwit_weight } else { TxIn::legacy_weight };
             let tx: Transaction = deserialize(Vec::from_hex(tx).unwrap().as_slice()).unwrap();
-            assert_eq!(*is_segwit, tx.use_segwit_serialization());
+            assert_eq!(*is_segwit, tx.uses_segwit_serialization());
 
             let mut calculated_weight = empty_transaction_weight
                 + tx.input.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
                 + tx.output.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
 
             // The empty tx uses segwit serialization but a legacy tx does not.
-            if !tx.use_segwit_serialization() {
+            if !tx.uses_segwit_serialization() {
                 calculated_weight -= Weight::from_wu(2);
             }
 
