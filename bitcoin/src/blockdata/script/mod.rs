@@ -65,14 +65,16 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+use consensus_encoding::{mapped_decoder, EncodeTc};
+use consensus_encoding::push_decode::decoders::{ByteVecDecoder, combinators::Then};
+use crate::consensus::encode::{VarIntDecoder, MAX_VEC_SIZE};
 use hashes::{hash160, sha256};
-use io::{BufRead, Write};
+use io::Write;
 #[cfg(feature = "serde")]
 use serde;
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::prelude::*;
 use crate::{io, OutPoint};
@@ -578,26 +580,38 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     }
 }
 
-impl Encodable for Script {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(&self.0, w)
+crate::impl_encodable_using_encode!(Script);
+crate::impl_encodable_using_encode!(ScriptBuf);
+crate::impl_decodable_using_decode!(ScriptBuf);
+
+mapped_decoder! {
+    ScriptBuf => pub struct ScriptDecoder(Then<VarIntDecoder, ByteVecDecoder, fn(u64) -> ByteVecDecoder>) using ScriptBuf::from;
+}
+
+impl Default for ScriptDecoder {
+    fn default() -> Self {
+        use consensus_encoding::Decoder;
+
+        ScriptDecoder(VarIntDecoder::default().then(|len| {
+            ByteVecDecoder::with_reserve_limit(len as usize, MAX_VEC_SIZE)
+        }))
     }
 }
 
-impl Encodable for ScriptBuf {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
+consensus_encoding::gat_like! {
+    impl Encode for ScriptBuf {
+        type Encoder<'a> = <Script as EncodeTc<'a>>::Encoder;
 
-impl Decodable for ScriptBuf {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
+        const MIN_ENCODED_LEN: usize = Script::MIN_ENCODED_LEN;
+        const IS_KNOWN_LEN: bool = Script::IS_KNOWN_LEN;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            (**self).encoder()
+        }
+
+        fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+            (**self).dyn_encoded_len(max_steps)
+        }
     }
 }
 

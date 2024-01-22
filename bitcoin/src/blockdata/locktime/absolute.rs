@@ -6,17 +6,17 @@
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 //!
 
+use consensus_encoding::encoder_newtype;
 use core::cmp::{Ordering, PartialOrd};
 use core::{fmt, mem};
 
 use internals::write_err;
-use io::{BufRead, Write};
+use io::Write;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::absolute;
-use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
@@ -335,19 +335,15 @@ impl FromHexStr for LockTime {
     }
 }
 
-impl Encodable for LockTime {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let v = self.to_consensus_u32();
-        v.consensus_encode(w)
-    }
+crate::impl_decodable_using_decode!(LockTime);
+crate::impl_encodable_using_encode!(LockTime);
+
+consensus_encoding::mapped_decoder! {
+    LockTime => #[derive(Default)] pub struct LockTimeDecoder(<u32 as consensus_encoding::Decode>::Decoder) using LockTime::from_consensus;
 }
 
-impl Decodable for LockTime {
-    #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(LockTime::from_consensus)
-    }
+encoder_newtype! {
+    LockTime => pub struct LockTimeEncoder(consensus_encoding::push_decode::encoders::IntEncoder<u32>) map u32 as |lock_time: &LockTime| lock_time.to_consensus_u32();
 }
 
 #[cfg(feature = "serde")]

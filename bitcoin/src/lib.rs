@@ -87,6 +87,9 @@ extern crate actual_serde as serde;
 #[macro_use]
 mod test_macros;
 mod internal_macros;
+#[macro_use]
+pub mod consensus;
+pub(crate) use consensus::encode::{impl_decodable_using_decode, impl_encodable_using_encode};
 mod parse;
 #[cfg(feature = "serde")]
 mod serde_utils;
@@ -99,7 +102,6 @@ pub mod bip152;
 pub mod bip158;
 pub mod bip32;
 pub mod blockdata;
-pub mod consensus;
 // Private until we either make this a crate or flatten it - still to be decided.
 pub(crate) mod crypto;
 pub mod error;
@@ -171,8 +173,8 @@ pub mod amount {
     //! This module mainly introduces the [Amount] and [SignedAmount] types.
     //! We refer to the documentation on the types for more information.
 
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
+    use crate::consensus::Encodable;
+    use crate::io::Write;
 
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
@@ -182,12 +184,7 @@ pub mod amount {
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
 
-    impl Decodable for Amount {
-        #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
-        }
-    }
+    impl_decodable_using_decode!(Amount);
 
     impl Encodable for Amount {
         #[inline]

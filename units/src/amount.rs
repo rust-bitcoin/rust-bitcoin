@@ -10,6 +10,7 @@ use core::fmt::{self, Write as _};
 use core::str::FromStr;
 use core::{default, ops};
 
+use consensus_encoding::{mapped_decoder, Decode, Encode, EncodeTc, encoder_newtype};
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
 use internals::error::InputString;
@@ -744,6 +745,27 @@ impl Amount {
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
+    }
+}
+
+mapped_decoder! {
+    Amount => #[derive(Default)] pub struct AmountDecoder(<u64 as Decode>::Decoder) using Amount::from_sat;
+}
+
+encoder_newtype! {
+    Amount => pub struct AmountEncoder(<u64 as EncodeTc<'static>>::Encoder);
+}
+
+impl Encode for Amount {
+    const MIN_ENCODED_LEN: usize = 8;
+    const IS_KNOWN_LEN: bool = true;
+
+    fn encoder(&self) -> <Self as EncodeTc<'_>>::Encoder {
+        AmountEncoder(self.to_sat().encoder())
+    }
+
+    fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+        (0, max_steps)
     }
 }
 

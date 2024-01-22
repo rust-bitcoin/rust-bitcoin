@@ -6,6 +6,7 @@
 //! conform to Bitcoin consensus.
 //!
 
+#[macro_use]
 pub mod encode;
 pub mod params;
 #[cfg(feature = "serde")]
