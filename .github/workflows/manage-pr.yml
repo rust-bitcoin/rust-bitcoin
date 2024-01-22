@@ -1,0 +1,26 @@
+name: Manage PR
+on:
+  - pull_request_target
+
+jobs:
+  labeler:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          path: master
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          path: merge
+          ref: "refs/pull/${{ github.event.number }}/merge"
+      - name: Generate label config
+        run: cd master && SCAN_DIR=../merge ./contrib/gen_label_config.sh
+      - name: Update labels
+        uses: actions/labeler@v5
+        with:
+          configuration-path: master/.github/labeler.yml

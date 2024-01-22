@@ -1,0 +1,13 @@
+ci:
+  - changed-files:
+    - any-glob-to-any-file: .github/**
+test:
+  - changed-files:
+    - any-glob-to-any-file: fuzz/**
+    - any-glob-to-any-file: '*/tests/**'
+    - any-glob-to-any-file: 'dep_test'
+    - any-glob-to-any-file: 'contrib/test.sh'
+    - any-glob-to-any-file: '*/contrib/test.sh'
+doc:
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
