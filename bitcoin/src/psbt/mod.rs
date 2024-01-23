@@ -1597,7 +1597,7 @@ mod tests {
             let tx_input = &psbt.unsigned_tx.input[0];
             let psbt_non_witness_utxo = psbt.inputs[0].non_witness_utxo.as_ref().unwrap();
 
-            assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
+            assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.compute_txid());
             assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
                 .script_pubkey
                 .is_p2pkh());
@@ -1664,7 +1664,7 @@ mod tests {
 
             let tx = &psbt.unsigned_tx;
             assert_eq!(
-                tx.txid(),
+                tx.compute_txid(),
                 "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115".parse().unwrap(),
             );
 

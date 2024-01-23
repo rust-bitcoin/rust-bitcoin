@@ -103,7 +103,7 @@ impl MerkleBlock {
     where
         F: Fn(&Txid) -> bool,
     {
-        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
+        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::compute_txid).collect();
         Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
     }
 
