@@ -66,7 +66,7 @@ pub mod hex {
         }
     }
 
-    // TODO measure various sizes and determine the best value
+    // We just guessed at a reasonably sane value.
     const HEX_BUF_SIZE: usize = 512;
 
     /// Hex byte encoder.
