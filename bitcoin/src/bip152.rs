@@ -220,7 +220,7 @@ impl HeaderAndShortIds {
                 short_ids.push(ShortId::with_siphash_keys(
                     &match version {
                         1 => tx.compute_txid().to_raw_hash(),
-                        2 => tx.wtxid().to_raw_hash(),
+                        2 => tx.compute_wtxid().to_raw_hash(),
                         _ => unreachable!(),
                     },
                     siphash_keys,

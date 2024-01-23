@@ -213,7 +213,7 @@ mod test {
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(
-            gen.wtxid().to_string(),
+            gen.compute_wtxid().to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
     }

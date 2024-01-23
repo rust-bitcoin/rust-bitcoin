@@ -311,7 +311,7 @@ impl Block {
                 // Replace the first hash with zeroes.
                 Wtxid::all_zeros().to_raw_hash()
             } else {
-                t.wtxid().to_raw_hash()
+                t.compute_wtxid().to_raw_hash()
             }
         });
         merkle_tree::calculate_root(hashes).map(|h| h.into())

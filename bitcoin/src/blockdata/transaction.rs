@@ -714,7 +714,7 @@ impl Transaction {
     ///
     /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
-    /// this will be equal to [`Transaction::wtxid()`].
+    /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
         let mut enc = Txid::engine();
@@ -727,10 +727,20 @@ impl Transaction {
 
     /// Computes the segwit version of the transaction id.
     ///
+    /// This method is deprecated.  Use `compute_wtxid` instead.
+    #[deprecated(
+        since = "0.31.0",
+        note = "wtxid has been renamed to compute_wtxid to note that it's computationally expensive.  use compute_wtxid() instead."
+    )]
+    pub fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
+
+    /// Computes the segwit version of the transaction id.
+    ///
     /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::txid()`].
-    pub fn wtxid(&self) -> Wtxid {
+    #[doc(alias = "wtxid")]
+    pub fn compute_wtxid(&self) -> Wtxid {
         let mut enc = Wtxid::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
         Wtxid::from_engine(enc)
@@ -1255,11 +1265,11 @@ impl From<&Transaction> for Txid {
 }
 
 impl From<Transaction> for Wtxid {
-    fn from(tx: Transaction) -> Wtxid { tx.wtxid() }
+    fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
 impl From<&Transaction> for Wtxid {
-    fn from(tx: &Transaction) -> Wtxid { tx.wtxid() }
+    fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
 /// Computes the value of an output accounting for the cost of spending it.
@@ -1746,7 +1756,7 @@ mod tests {
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
         assert_eq!(
-            format!("{:x}", realtx.wtxid()),
+            format!("{:x}", realtx.compute_wtxid()),
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
         assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
@@ -1797,7 +1807,7 @@ mod tests {
             "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string()
         );
         assert_eq!(
-            format!("{:x}", realtx.wtxid()),
+            format!("{:x}", realtx.compute_wtxid()),
             "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string()
         );
         const EXPECTED_WEIGHT: Weight = Weight::from_wu(442);
@@ -1917,7 +1927,7 @@ mod tests {
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
 
         assert_eq!(
-            format!("{:x}", tx.wtxid()),
+            format!("{:x}", tx.compute_wtxid()),
             "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4"
         );
         assert_eq!(
@@ -1938,7 +1948,7 @@ mod tests {
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
 
         assert_eq!(
-            format!("{:x}", tx.wtxid()),
+            format!("{:x}", tx.compute_wtxid()),
             "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd"
         );
         assert_eq!(
