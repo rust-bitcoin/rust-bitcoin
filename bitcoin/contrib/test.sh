@@ -4,11 +4,6 @@ set -ex
 
 FEATURES="std rand-std rand serde secp-recovery bitcoinconsensus-std base64 bitcoinconsensus"
 
-if [ "$DO_COV" = true ]
-then
-    export RUSTFLAGS="-C link-dead-code"
-fi
-
 cargo --version
 rustc --version
 

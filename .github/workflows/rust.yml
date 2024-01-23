@@ -21,7 +21,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Running test script
         env:
-          DO_COV: true
           AS_DEPENDENCY: false
           DO_DOCS: true
           DO_FEATURE_MATRIX: true
