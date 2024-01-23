@@ -8,6 +8,7 @@
 use core::fmt;
 
 use internals::write_err;
+use io::Write;
 
 use crate::prelude::*;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
@@ -47,7 +48,6 @@ impl Signature {
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
     pub fn to_vec(self) -> Vec<u8> {
-        // TODO: add support to serialize to a writer to SerializedSig
         let mut ser_sig = self.signature.as_ref().to_vec();
         if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
@@ -55,6 +55,13 @@ impl Signature {
             ser_sig.push(self.sighash_type as u8);
         }
         ser_sig
+    }
+
+    /// Serializes the signature to `writer`.
+    #[inline]
+    pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+        let sig = self.serialize();
+        sig.write_to(writer)
     }
 
     /// Serializes the signature (without heap allocation)
