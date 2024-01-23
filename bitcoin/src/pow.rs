@@ -832,7 +832,6 @@ impl crate::serde::Serialize for U256 {
         }
 
         if serializer.is_human_readable() {
-            // TODO: fast hex encoding.
             serializer.collect_str(&DisplayHex(*self))
         } else {
             let bytes = self.to_be_bytes();
