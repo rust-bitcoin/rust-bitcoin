@@ -180,9 +180,12 @@ impl fmt::Display for AddressInner {
 }
 
 /// Known bech32 human-readable parts.
+///
+/// This is the human-readable part before the separator (`1`) in a bech32 encoded address e.g.,
+/// the "bc" in "bc1p2wsldez5mud2yam29q22wgfh9439spgduvct83k3pm50fcxa5dps59h4z5".
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
-enum KnownHrp {
+pub enum KnownHrp {
     /// The main Bitcoin network.
     Mainnet,
     /// The test networks, testnet and signet.
@@ -387,9 +390,9 @@ impl Address {
     /// Creates a witness pay to public key address from a public key.
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
-    pub fn p2wpkh(pk: &CompressedPublicKey, network: Network) -> Self {
+    pub fn p2wpkh(pk: &CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
-        Address::from_witness_program(program, network)
+        Address::from_witness_program(program, hrp)
     }
 
     /// Creates a pay to script address that embeds a witness pay to public key.
@@ -402,9 +405,9 @@ impl Address {
     }
 
     /// Creates a witness pay to script hash address.
-    pub fn p2wsh(script: &Script, network: Network) -> Address {
+    pub fn p2wsh(script: &Script, hrp: impl Into<KnownHrp>) -> Address {
         let program = WitnessProgram::p2wsh(script);
-        Address::from_witness_program(program, network)
+        Address::from_witness_program(program, hrp)
     }
 
     /// Creates a pay to script address that embeds a witness pay to script hash address.
@@ -421,26 +424,24 @@ impl Address {
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
-        network: Network,
+        hrp: impl Into<KnownHrp>,
     ) -> Address {
         let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
-        Address::from_witness_program(program, network)
+        Address::from_witness_program(program, hrp)
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
+    pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Address {
         let program = WitnessProgram::p2tr_tweaked(output_key);
-        Address::from_witness_program(program, network)
+        Address::from_witness_program(program, hrp)
     }
 
     /// Creates an address from an arbitrary witness program.
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
-    // TODO: This is still arguably wrong, could take a KnownHrp/Hrp instead of Network.
-    pub fn from_witness_program(program: WitnessProgram, network: Network) -> Address {
-        let hrp = KnownHrp::from_network(network);
-        let inner = AddressInner::Segwit { program, hrp };
+    pub fn from_witness_program(program: WitnessProgram, hrp: impl Into<KnownHrp>) -> Address {
+        let inner = AddressInner::Segwit { program, hrp: hrp.into() };
         Address(inner, PhantomData)
     }
 
@@ -874,7 +875,7 @@ mod tests {
         let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<CompressedPublicKey>()
             .unwrap();
-        let addr = Address::p2wpkh(&key, Bitcoin);
+        let addr = Address::p2wpkh(&key, KnownHrp::Mainnet);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr, Bitcoin);
@@ -884,7 +885,7 @@ mod tests {
     fn test_p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
-        let addr = Address::p2wsh(&script, Bitcoin);
+        let addr = Address::p2wsh(&script, KnownHrp::Mainnet);
         assert_eq!(
             &addr.to_string(),
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
@@ -923,7 +924,7 @@ mod tests {
         );
         let program = WitnessProgram::new(WitnessVersion::V13, &program).expect("valid program");
 
-        let addr = Address::from_witness_program(program, Bitcoin);
+        let addr = Address::from_witness_program(program, KnownHrp::Mainnet);
         roundtrips(&addr, Bitcoin);
     }
 
@@ -1090,7 +1091,7 @@ mod tests {
         )
         .unwrap();
         let secp = Secp256k1::verification_only();
-        let address = Address::p2tr(&secp, internal_key, None, Network::Bitcoin);
+        let address = Address::p2tr(&secp, internal_key, None, KnownHrp::Mainnet);
         assert_eq!(
             address.to_string(),
             "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
@@ -1189,7 +1190,7 @@ mod tests {
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
 
         assert_eq!(
             address,
@@ -1215,7 +1216,7 @@ mod tests {
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, KnownHrp::Mainnet);
 
         assert_eq!(
             address,

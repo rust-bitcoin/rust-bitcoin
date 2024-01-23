@@ -113,7 +113,7 @@ pub mod taproot;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use crate::{
-    address::{Address, AddressType},
+    address::{Address, AddressType, KnownHrp},
     amount::{Amount, Denomination, SignedAmount},
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,

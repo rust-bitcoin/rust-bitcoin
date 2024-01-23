@@ -1436,7 +1436,7 @@ mod test {
 
     use super::*;
     use crate::sighash::{TapSighash, TapSighashTag};
-    use crate::{Address, Network};
+    use crate::{Address, KnownHrp};
     extern crate serde_json;
 
     #[cfg(feature = "serde")]
@@ -1828,7 +1828,7 @@ mod test {
 
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
             let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-            let addr = Address::p2tr(secp, internal_key, merkle_root, Network::Bitcoin);
+            let addr = Address::p2tr(secp, internal_key, merkle_root, KnownHrp::Mainnet);
             let spk = addr.script_pubkey();
 
             assert_eq!(expected_output_key, output_key.to_inner());
