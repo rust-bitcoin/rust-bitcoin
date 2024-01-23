@@ -220,12 +220,8 @@ pub struct SortKey(ArrayVec<u8, 65>);
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: fast hex encoding
         self.with_serialized(|bytes| {
-            for ch in bytes {
-                write!(f, "{:02x}", ch)?;
-            }
-            Ok(())
+            fmt::Display::fmt(&bytes.as_hex(), f)
         })
     }
 }
