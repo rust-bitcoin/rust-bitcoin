@@ -59,9 +59,6 @@ extern crate alloc;
 /// Encodes and decodes base64 as bytes or utf8.
 pub extern crate base64;
 
-/// Encodes and decodes the Bech32 forrmat.
-pub extern crate bech32;
-
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
