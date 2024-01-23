@@ -12,8 +12,6 @@ use hex_lit::hex;
 
 //run with: cargo run --example sighash
 
-//TODO add P2TR examples, ideally for both key-path and script-path spending
-
 /// Computes segwit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
 ///
 /// # Arguments
