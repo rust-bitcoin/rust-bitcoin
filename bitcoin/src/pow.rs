@@ -1735,7 +1735,6 @@ mod tests {
 mod verification {
     use super::*;
 
-    // TODO: After we verify div_rem assert x * y / y == x
     #[kani::unwind(5)] // mul_u64 loops over 4 64 bit ints so use one more than 4
     #[kani::proof]
     fn check_mul_u64() {
@@ -1743,5 +1742,14 @@ mod verification {
         let y: u64 = kani::any();
 
         let _ = x.mul_u64(y);
+    }
+
+    #[kani::unwind(5)]   // I can't remember exactly why we need this.
+    #[kani::proof]
+    fn check_div_rem() {
+        let x: U256 = kani::any();
+        let y: U256 = kani::any();
+
+        assert_eq!(x * y / y, x);
     }
 }
