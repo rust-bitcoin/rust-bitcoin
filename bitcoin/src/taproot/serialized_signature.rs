@@ -10,6 +10,7 @@ use core::convert::TryFrom;
 use core::{fmt, ops};
 
 pub use into_iter::IntoIter;
+use io::Write;
 
 use super::{SigFromSliceError, Signature};
 
@@ -166,6 +167,12 @@ impl SerializedSignature {
     /// (this serializes it)
     #[inline]
     pub fn from_signature(sig: &Signature) -> SerializedSignature { sig.serialize() }
+
+    /// Writes this serialized signature to a `writer`.
+    #[inline]
+    pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+        writer.write_all(self)
+    }
 }
 
 /// Separate mod to prevent outside code from accidentally breaking invariants.
