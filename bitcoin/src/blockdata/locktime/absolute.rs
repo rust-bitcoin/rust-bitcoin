@@ -587,17 +587,17 @@ impl std::error::Error for Error {
 
 impl From<ConversionError> for Error {
     #[inline]
-    fn from(e: ConversionError) -> Self { Error::Conversion(e) }
+    fn from(e: ConversionError) -> Self { Self::Conversion(e) }
 }
 
 impl From<OperationError> for Error {
     #[inline]
-    fn from(e: OperationError) -> Self { Error::Operation(e) }
+    fn from(e: OperationError) -> Self { Self::Operation(e) }
 }
 
 impl From<ParseIntError> for Error {
     #[inline]
-    fn from(e: ParseIntError) -> Self { Error::Parse(e) }
+    fn from(e: ParseIntError) -> Self { Self::Parse(e) }
 }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
