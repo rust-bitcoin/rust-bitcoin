@@ -87,7 +87,7 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = crate::parse::int(s).map_err(FromStrError::Unparsable)?;
+        let version: u8 = crate::parse::int(s)?;
         Ok(WitnessVersion::try_from(version)?)
     }
 }
@@ -196,6 +196,10 @@ impl std::error::Error for FromStrError {
             Invalid(ref e) => Some(e),
         }
     }
+}
+
+impl From<ParseIntError> for FromStrError {
+    fn from(e: ParseIntError) -> Self { Self::Unparsable(e) }
 }
 
 impl From<TryFromError> for FromStrError {
