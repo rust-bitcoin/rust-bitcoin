@@ -17,7 +17,6 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "hex/std", "bitcoin-io/std"]
 alloc = ["hex/alloc"]
-serde-std = ["serde/std"]
 # If you want I/O you must enable either "std" or "io".
 io = ["bitcoin-io"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
@@ -32,7 +31,6 @@ hex = { package = "hex-conservative", version = "0.1.1", default-features = fals
 
 bitcoin-io = { version = "0.1", default-features = false, optional = true }
 schemars = { version = "0.8.3", default-features = false, optional = true }
-# Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
