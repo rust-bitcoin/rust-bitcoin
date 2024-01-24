@@ -14,7 +14,7 @@ use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::prelude::*;
-use crate::taproot::TAPROOT_ANNEX_PREFIX;
+use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -245,6 +245,13 @@ impl Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
         witness.push_slice(&pubkey.serialize());
+        witness
+    }
+
+    /// Creates a witness required to do a key path spend of a P2TR output.
+    pub fn p2tr_key_spend(signature: &taproot::Signature) -> Witness {
+        let mut witness = Witness::new();
+        witness.push_slice(&signature.serialize());
         witness
     }
 

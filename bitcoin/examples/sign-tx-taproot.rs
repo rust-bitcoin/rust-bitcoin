@@ -76,7 +76,7 @@ fn main() {
 
     // Update the witness stack.
     let signature = bitcoin::taproot::Signature { signature, sighash_type };
-    sighasher.witness_mut(input_index).unwrap().push(&signature.to_vec());
+    *sighasher.witness_mut(input_index).unwrap() = Witness::p2tr_key_spend(&signature);
 
     // Get the signed transaction.
     let tx = sighasher.into_transaction();
