@@ -321,7 +321,6 @@ impl Serialize for (Vec<TapLeafHash>, KeySource) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(32 * self.0.len() + key_source_len(&self.1));
         self.0.consensus_encode(&mut buf).expect("Vecs don't error allocation");
-        // TODO: Add support for writing into a writer for key-source
         buf.extend(self.1.serialize());
         buf
     }

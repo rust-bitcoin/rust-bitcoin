@@ -29,7 +29,6 @@ extern crate core;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
-// TODO: Make amount module less dependent on an allocator.
 #[cfg(feature = "alloc")]
 pub mod amount;
 

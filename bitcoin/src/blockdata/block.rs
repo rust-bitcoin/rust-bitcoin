@@ -534,7 +534,6 @@ mod tests {
         );
         assert_eq!(real_decode.header.difficulty(network), 1);
         assert_eq!(real_decode.header.difficulty_float(), 1.0);
-        // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.total_size(), some_block.len());
         assert_eq!(real_decode.base_size(), some_block.len());
@@ -577,7 +576,6 @@ mod tests {
         );
         assert_eq!(real_decode.header.difficulty(network), 2456598);
         assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
-        // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.total_size(), segwit_block.len());
         assert_eq!(real_decode.base_size(), 4283);

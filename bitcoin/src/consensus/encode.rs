@@ -1017,7 +1017,6 @@ mod tests {
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
-        // TODO: test vectors of more interesting objects
     }
 
     #[test]
