@@ -189,9 +189,6 @@ pub enum NetworkMessage {
     SendHeaders,
     /// `getaddr`
     GetAddr,
-    // TODO: checkorder,
-    // TODO: submitorder,
-    // TODO: reply,
     /// `ping`
     Ping(u64),
     /// `pong`
