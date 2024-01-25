@@ -2099,7 +2099,7 @@ mod tests {
         let unknown_prog = WitnessProgram::new(WitnessVersion::V4, &[0xaa; 34]).unwrap();
         let txout_unknown_future = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_witness_program(&unknown_prog),
+            script_pubkey: ScriptBuf::new_witness_program(unknown_prog),
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 

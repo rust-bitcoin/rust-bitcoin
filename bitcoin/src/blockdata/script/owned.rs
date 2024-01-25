@@ -129,7 +129,7 @@ impl ScriptBuf {
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
-    pub fn new_witness_program(witness_program: &WitnessProgram) -> Self {
+    pub fn new_witness_program(witness_program: WitnessProgram) -> Self {
         Builder::new()
             .push_opcode(witness_program.version().into())
             .push_slice(witness_program.program())
