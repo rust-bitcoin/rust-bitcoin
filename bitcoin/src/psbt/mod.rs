@@ -1177,7 +1177,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk = Xpub::from_priv(secp, &sk);
+        let pk = Xpub::from_priv(secp, sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 

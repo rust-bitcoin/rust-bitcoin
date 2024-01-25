@@ -685,7 +685,7 @@ impl Xpriv {
 
     /// Returns the HASH160 of the public key belonging to the xpriv
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XKeyIdentifier {
-        Xpub::from_priv(secp, self).identifier()
+        Xpub::from_priv(secp, *self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
@@ -696,7 +696,7 @@ impl Xpriv {
 
 impl Xpub {
     /// Derives a public key from a private key
-    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
+    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: Xpriv) -> Xpub {
         Xpub {
             network: sk.network,
             depth: sk.depth,
@@ -971,7 +971,7 @@ mod tests {
         expected_pk: &str,
     ) {
         let mut sk = Xpriv::new_master(network, seed).unwrap();
-        let mut pk = Xpub::from_priv(secp, &sk);
+        let mut pk = Xpub::from_priv(secp, sk);
 
         // Check derivation convenience method for Xpriv
         assert_eq!(&sk.derive_priv(secp, &path).unwrap().to_string()[..], expected_sk);
@@ -990,12 +990,12 @@ mod tests {
             match num {
                 Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = Xpub::from_priv(secp, &sk);
+                    pk = Xpub::from_priv(secp, sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
                     assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
-                    pk = Xpub::from_priv(secp, &sk);
+                    pk = Xpub::from_priv(secp, sk);
                 }
             }
         }

@@ -43,7 +43,7 @@ fn main() {
     let path = DerivationPath::from_str("m/84h/0h/0h").unwrap();
     let child = root.derive_priv(&secp, &path).unwrap();
     println!("Child at {}: {}", path, child);
-    let xpub = Xpub::from_priv(&secp, &child);
+    let xpub = Xpub::from_priv(&secp, child);
     println!("Public key at {}: {}", path, xpub);
 
     // generate first receiving address at m/0/0
