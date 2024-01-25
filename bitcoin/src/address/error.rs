@@ -21,13 +21,6 @@ pub enum Error {
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
     UnrecognizedScript,
-    /// Address's network differs from required one.
-    NetworkValidation {
-        /// Network that was required.
-        required: Network,
-        /// The address itself
-        address: Address<NetworkUnchecked>,
-    },
     /// Unknown hrp for current bitcoin networks (in bech32 address).
     UnknownHrp(UnknownHrpError),
 }
@@ -41,11 +34,6 @@ impl fmt::Display for Error {
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
-            NetworkValidation { required, ref address } => {
-                write!(f, "address ")?;
-                fmt::Display::fmt(&address.0, f)?;
-                write!(f, " is not valid on {}", required)
-            }
             Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
         }
     }
@@ -60,7 +48,7 @@ impl std::error::Error for Error {
             WitnessVersion(e) => Some(e),
             WitnessProgram(e) => Some(e),
             UnknownHrp(e) => Some(e),
-            ExcessiveScriptSize | UnrecognizedScript | NetworkValidation { .. } => None,
+            ExcessiveScriptSize | UnrecognizedScript  => None,
         }
     }
 }
@@ -72,6 +60,27 @@ impl From<witness_version::TryFromError> for Error {
 impl From<witness_program::Error> for Error {
     fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
+
+/// Address network validation error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct NetworkValidationError {
+    /// Network that was required.
+    pub required: Network,
+    /// The address itself.
+    pub address: Address<NetworkUnchecked>,
+}
+
+impl fmt::Display for NetworkValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "address ")?;
+        fmt::Display::fmt(&self.address.0, f)?;
+        write!(f, " is not valid on {}", self.required)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NetworkValidationError {}
 
 /// Address type is either invalid or not supported in rust-bitcoin.
 #[derive(Debug, Clone, PartialEq, Eq)]
