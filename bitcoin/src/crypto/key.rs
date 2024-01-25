@@ -203,10 +203,10 @@ impl PublicKey {
     pub fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        msg: &secp256k1::Message,
-        sig: &ecdsa::Signature,
+        msg: secp256k1::Message,
+        sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(msg, &sig.signature, &self.inner)
+        secp.verify_ecdsa(&msg, &sig.signature, &self.inner)
     }
 }
 
@@ -336,10 +336,10 @@ impl CompressedPublicKey {
     pub fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        msg: &secp256k1::Message,
-        sig: &ecdsa::Signature,
+        msg: secp256k1::Message,
+        sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
     }
 }
 
