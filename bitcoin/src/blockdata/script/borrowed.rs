@@ -153,7 +153,7 @@ impl Script {
     /// script").
     #[inline]
     pub fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
-        self.wscript_hash().map(|hash| ScriptBuf::new_p2wsh(&hash))
+        self.wscript_hash().map(ScriptBuf::new_p2wsh)
     }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
@@ -383,7 +383,7 @@ impl Script {
 
     /// Computes the P2SH output corresponding to this redeem script.
     pub fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
-        self.script_hash().map(|hash| ScriptBuf::new_p2sh(&hash))
+        self.script_hash().map(ScriptBuf::new_p2sh)
     }
 
     /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
