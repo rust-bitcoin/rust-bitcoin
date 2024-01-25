@@ -1936,7 +1936,7 @@ mod tests {
 
         let sk = SecretKey::new(&mut thread_rng());
         let priv_key = PrivateKey::new(sk, NetworkKind::Test);
-        let pk = PublicKey::from_private_key(&secp, &priv_key);
+        let pk = PublicKey::from_private_key(&secp, priv_key);
 
         (priv_key, pk, secp)
     }

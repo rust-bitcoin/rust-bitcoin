@@ -241,7 +241,7 @@ impl Witness {
     /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
     ///
     /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-    pub fn p2wpkh(signature: &ecdsa::Signature, pubkey: &secp256k1::PublicKey) -> Witness {
+    pub fn p2wpkh(signature: &ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
         witness.push_slice(&pubkey.serialize());

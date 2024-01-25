@@ -390,7 +390,7 @@ impl Address {
     /// Creates a witness pay to public key address from a public key.
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
-    pub fn p2wpkh(pk: &CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
+    pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
         Address::from_witness_program(program, hrp)
     }
@@ -398,7 +398,7 @@ impl Address {
     /// Creates a pay to script address that embeds a witness pay to public key.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwpkh(pk: &CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
+    pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
         let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash();
         Address::p2sh_from_hash(script_hash, network)
@@ -572,7 +572,7 @@ impl Address {
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the segwit redeem hash generated from the
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
-    pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
+    pub fn is_related_to_pubkey(&self, pubkey: PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
@@ -586,7 +586,7 @@ impl Address {
     ///
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
-    pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
+    pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: XOnlyPublicKey) -> bool {
         xonly_pubkey.serialize() == *self.payload_as_bytes()
     }
 
@@ -875,7 +875,7 @@ mod tests {
         let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<CompressedPublicKey>()
             .unwrap();
-        let addr = Address::p2wpkh(&key, KnownHrp::Mainnet);
+        let addr = Address::p2wpkh(key, KnownHrp::Mainnet);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr, Bitcoin);
@@ -900,7 +900,7 @@ mod tests {
         let key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
             .parse::<CompressedPublicKey>()
             .unwrap();
-        let addr = Address::p2shwpkh(&key, NetworkKind::Main);
+        let addr = Address::p2shwpkh(key, NetworkKind::Main);
         assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr, Bitcoin);
@@ -1111,14 +1111,14 @@ mod tests {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
 
-        let result = address.is_related_to_pubkey(&pubkey);
+        let result = address.is_related_to_pubkey(pubkey);
         assert!(result);
 
         let unused_pubkey = PublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey))
     }
 
     #[test]
@@ -1132,14 +1132,14 @@ mod tests {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
 
-        let result = address.is_related_to_pubkey(&pubkey);
+        let result = address.is_related_to_pubkey(pubkey);
         assert!(result);
 
         let unused_pubkey = PublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey))
     }
 
     #[test]
@@ -1153,14 +1153,14 @@ mod tests {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
 
-        let result = address.is_related_to_pubkey(&pubkey);
+        let result = address.is_related_to_pubkey(pubkey);
         assert!(result);
 
         let unused_pubkey = PublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey))
     }
 
     #[test]
@@ -1174,14 +1174,14 @@ mod tests {
         let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
 
-        let result = address.is_related_to_pubkey(&pubkey);
+        let result = address.is_related_to_pubkey(pubkey);
         assert!(result);
 
         let unused_pubkey = PublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+        assert!(!address.is_related_to_pubkey(unused_pubkey))
     }
 
     #[test]
@@ -1200,14 +1200,14 @@ mod tests {
                 .expect("mainnet")
         );
 
-        let result = address.is_related_to_pubkey(&pubkey);
+        let result = address.is_related_to_pubkey(pubkey);
         assert!(result);
 
         let unused_pubkey = PublicKey::from_str(
             "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
         )
         .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey));
+        assert!(!address.is_related_to_pubkey(unused_pubkey));
     }
 
     #[test]
@@ -1226,7 +1226,7 @@ mod tests {
                 .expect("mainnet")
         );
 
-        let result = address.is_related_to_xonly_pubkey(&xonly_pubkey);
+        let result = address.is_related_to_xonly_pubkey(xonly_pubkey);
         assert!(result);
     }
 

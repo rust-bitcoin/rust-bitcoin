@@ -190,7 +190,7 @@ impl PublicKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
-        sk: &PrivateKey,
+        sk: PrivateKey,
     ) -> PublicKey {
         sk.public_key(secp)
     }
@@ -305,7 +305,7 @@ impl CompressedPublicKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
-        sk: &PrivateKey,
+        sk: PrivateKey,
     ) -> Result<Self, UncompressedPubkeyError> {
         sk.public_key(secp).try_into()
     }
@@ -1050,7 +1050,7 @@ mod tests {
 
         let s = Secp256k1::new();
         let sk = PrivateKey::from_str(KEY_WIF).unwrap();
-        let pk = PublicKey::from_private_key(&s, &sk);
+        let pk = PublicKey::from_private_key(&s, sk);
         let pk_u = PublicKey { inner: pk.inner, compressed: false };
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);

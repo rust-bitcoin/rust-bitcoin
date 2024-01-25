@@ -74,7 +74,7 @@ impl ScriptBuf {
     pub fn builder() -> Builder { Builder::new() }
 
     /// Generates P2PK-type of scriptPubkey.
-    pub fn new_p2pk(pubkey: &PublicKey) -> Self {
+    pub fn new_p2pk(pubkey: PublicKey) -> Self {
         Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
     }
 

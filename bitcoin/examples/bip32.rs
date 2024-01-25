@@ -50,6 +50,6 @@ fn main() {
     // manually creating indexes this time
     let zero = ChildNumber::from_normal_idx(0).unwrap();
     let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    let address = Address::p2wpkh(CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {}", address);
 }
