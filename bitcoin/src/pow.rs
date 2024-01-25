@@ -235,6 +235,26 @@ impl Target {
         d.saturating_to_u128()
     }
 
+    /// Computes the popular "difficulty" measure for mining on the mainnet network.
+    ///
+    /// See [`Self::difficulty`] for more information.
+    pub fn mainnet_difficulty(&self) -> u128 { self.difficulty(Network::Bitcoin) }
+
+    /// Computes the popular "difficulty" measure for mining on the testnet network.
+    ///
+    /// See [`Self::difficulty`] for more information.
+    pub fn testnet_difficulty(&self) -> u128 { self.difficulty(Network::Testnet) }
+
+    /// Computes the popular "difficulty" measure for mining on the regtest network.
+    ///
+    /// See [`Self::difficulty`] for more information.
+    pub fn regtest_difficulty(&self) -> u128 { self.difficulty(Network::Regtest) }
+
+    /// Computes the popular "difficulty" measure for mining on the signet network.
+    ///
+    /// See [`Self::difficulty`] for more information.
+    pub fn signet_difficulty(&self) -> u128 { self.difficulty(Network::Signet) }
+
     /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
     ///
     /// See [`difficulty`] for details.
