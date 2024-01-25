@@ -30,8 +30,8 @@ const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
-    pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Address {
-        let (address, port) = match *socket {
+    pub fn new(socket: SocketAddr, services: ServiceFlags) -> Address {
+        let (address, port) = match socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port()),
         };
@@ -372,7 +372,7 @@ mod test {
     #[test]
     fn test_socket_addr() {
         let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111, 222, 123, 4)), 5555);
-        let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let a4 = Address::new(s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);
         let s6 = SocketAddr::new(
             IpAddr::V6(Ipv6Addr::new(
@@ -380,7 +380,7 @@ mod test {
             )),
             9999,
         );
-        let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
+        let a6 = Address::new(s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
     }
 
@@ -390,7 +390,7 @@ mod test {
             IpAddr::V6(Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()),
             1111,
         );
-        let addr = Address::new(&onionaddr, ServiceFlags::NONE);
+        let addr = Address::new(onionaddr, ServiceFlags::NONE);
         assert!(addr.socket_addr().is_err());
     }
 

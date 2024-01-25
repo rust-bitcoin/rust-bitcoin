@@ -81,10 +81,10 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time error").as_secs();
 
     // "The network address of the node receiving this message"
-    let addr_recv = address::Address::new(&address, p2p::ServiceFlags::NONE);
+    let addr_recv = address::Address::new(address, p2p::ServiceFlags::NONE);
 
     // "The network address of the node emitting this message"
-    let addr_from = address::Address::new(&my_address, p2p::ServiceFlags::NONE);
+    let addr_from = address::Address::new(my_address, p2p::ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
     let nonce: u64 = secp256k1::rand::thread_rng().gen();
