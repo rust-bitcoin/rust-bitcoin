@@ -44,7 +44,7 @@ fn main() -> ! {
 
     // Derive address
     let pubkey = pk.public_key(&secp).try_into().unwrap();
-    let address = Address::p2wpkh(&pubkey, Network::Bitcoin);
+    let address = Address::p2wpkh(pubkey, Network::Bitcoin);
     hprintln!("Address: {}", address).unwrap();
 
     assert_eq!(address.to_string(), "bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993".to_string());

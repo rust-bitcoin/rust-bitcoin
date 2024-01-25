@@ -72,7 +72,7 @@ impl WitnessProgram {
     }
 
     /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
-    pub fn p2wpkh(pk: &CompressedPublicKey) -> Self {
+    pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
         let hash = pk.wpubkey_hash();
         WitnessProgram::new_p2wpkh(hash.to_byte_array())
     }
