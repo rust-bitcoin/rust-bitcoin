@@ -241,7 +241,7 @@ impl Witness {
     /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
     ///
     /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-    pub fn p2wpkh(signature: &ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
+    pub fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
         witness.push_slice(&pubkey.serialize());
@@ -349,7 +349,7 @@ impl Witness {
     /// Pushes, as a new element on the witness, an ECDSA signature.
     ///
     /// Pushes the DER encoded signature + sighash_type, requires an allocation.
-    pub fn push_ecdsa_signature(&mut self, signature: &ecdsa::Signature) {
+    pub fn push_ecdsa_signature(&mut self, signature: ecdsa::Signature) {
         self.push_slice(&signature.serialize())
     }
 
@@ -647,7 +647,7 @@ mod test {
         let signature = secp256k1::ecdsa::Signature::from_der(&sig_bytes).unwrap();
         let mut witness = Witness::default();
         let signature = crate::ecdsa::Signature { signature, sighash_type: EcdsaSighashType::All };
-        witness.push_ecdsa_signature(&signature);
+        witness.push_ecdsa_signature(signature);
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];

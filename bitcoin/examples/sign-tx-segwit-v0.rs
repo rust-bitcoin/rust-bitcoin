@@ -71,7 +71,7 @@ fn main() {
     // Update the witness stack.
     let signature = bitcoin::ecdsa::Signature { signature, sighash_type };
     let pk = sk.public_key(&secp);
-    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&signature, pk);
+    *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(signature, pk);
 
     // Get the signed transaction.
     let tx = sighasher.into_transaction();

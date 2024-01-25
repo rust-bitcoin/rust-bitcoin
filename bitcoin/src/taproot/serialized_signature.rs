@@ -113,11 +113,11 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 }
 
 impl From<Signature> for SerializedSignature {
-    fn from(value: Signature) -> Self { Self::from_signature(&value) }
+    fn from(value: Signature) -> Self { Self::from_signature(value) }
 }
 
 impl<'a> From<&'a Signature> for SerializedSignature {
-    fn from(value: &'a Signature) -> Self { Self::from_signature(value) }
+    fn from(value: &'a Signature) -> Self { Self::from_signature(*value) }
 }
 
 impl TryFrom<SerializedSignature> for Signature {
@@ -166,7 +166,7 @@ impl SerializedSignature {
     /// Create a SerializedSignature from a Signature.
     /// (this serializes it)
     #[inline]
-    pub fn from_signature(sig: &Signature) -> SerializedSignature { sig.serialize() }
+    pub fn from_signature(sig: Signature) -> SerializedSignature { sig.serialize() }
 
     /// Writes this serialized signature to a `writer`.
     #[inline]
