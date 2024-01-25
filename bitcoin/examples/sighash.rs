@@ -38,7 +38,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();
     println!("Script pubkey hash: {:x}", wpkh);
-    let spk = ScriptBuf::new_p2wpkh(&wpkh);
+    let spk = ScriptBuf::new_p2wpkh(wpkh);
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache

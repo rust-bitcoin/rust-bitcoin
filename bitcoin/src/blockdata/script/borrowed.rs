@@ -150,7 +150,7 @@ impl Script {
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     #[inline]
-    pub fn to_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_p2wsh(&self.wscript_hash()) }
+    pub fn to_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_p2wsh(self.wscript_hash()) }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
@@ -377,7 +377,7 @@ impl Script {
     }
 
     /// Computes the P2SH output corresponding to this redeem script.
-    pub fn to_p2sh(&self) -> ScriptBuf { ScriptBuf::new_p2sh(&self.script_hash()) }
+    pub fn to_p2sh(&self) -> ScriptBuf { ScriptBuf::new_p2sh(self.script_hash()) }
 
     /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].

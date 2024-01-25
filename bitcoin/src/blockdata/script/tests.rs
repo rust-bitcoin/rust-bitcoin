@@ -206,19 +206,19 @@ fn script_generators() {
     assert!(ScriptBuf::new_p2pk(pubkey).is_p2pk());
 
     let pubkey_hash = PubkeyHash::hash(&pubkey.inner.serialize());
-    assert!(ScriptBuf::new_p2pkh(&pubkey_hash).is_p2pkh());
+    assert!(ScriptBuf::new_p2pkh(pubkey_hash).is_p2pkh());
 
     let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
-    assert!(ScriptBuf::new_p2wpkh(&wpubkey_hash).is_p2wpkh());
+    assert!(ScriptBuf::new_p2wpkh(wpubkey_hash).is_p2wpkh());
 
     let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();
     let script_hash = script.script_hash();
-    let p2sh = ScriptBuf::new_p2sh(&script_hash);
+    let p2sh = ScriptBuf::new_p2sh(script_hash);
     assert!(p2sh.is_p2sh());
     assert_eq!(script.to_p2sh(), p2sh);
 
     let wscript_hash = script.wscript_hash();
-    let p2wsh = ScriptBuf::new_p2wsh(&wscript_hash);
+    let p2wsh = ScriptBuf::new_p2wsh(wscript_hash);
     assert!(p2wsh.is_p2wsh());
     assert_eq!(script.to_p2wsh(), p2wsh);
 

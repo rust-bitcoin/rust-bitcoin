@@ -113,7 +113,7 @@ pub struct BlockFilter {
 
 impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
-    pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
+    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
         let mut header_data = [0u8; 64];
         header_data[0..32].copy_from_slice(&self[..]);
         header_data[32..64].copy_from_slice(&previous_filter_header[..]);
@@ -144,13 +144,13 @@ impl BlockFilter {
     /// Computes this filter's ID in a chain of filters (see [BIP 157]).
     ///
     /// [BIP 157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
-    pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
+    pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
         let filter_hash = FilterHash::hash(self.content.as_slice());
         filter_hash.filter_header(previous_filter_header)
     }
 
     /// Returns true if any query matches against this [`BlockFilter`].
-    pub fn match_any<I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    pub fn match_any<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
@@ -160,7 +160,7 @@ impl BlockFilter {
     }
 
     /// Returns true if all queries match against this [`BlockFilter`].
-    pub fn match_all<I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    pub fn match_all<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
@@ -233,7 +233,7 @@ pub struct BlockFilterReader {
 
 impl BlockFilterReader {
     /// Creates a new [`BlockFilterReader`] from `block_hash`.
-    pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
+    pub fn new(block_hash: BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
         let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
@@ -613,7 +613,7 @@ mod test {
             let block_hash = &block.block_hash();
             assert!(filter
                 .match_all(
-                    block_hash,
+                    *block_hash,
                     &mut txmap.iter().filter_map(|(_, s)| if !s.is_empty() {
                         Some(s.as_bytes())
                     } else {
@@ -626,12 +626,12 @@ mod test {
                 let query = [script];
                 if !script.is_empty() {
                     assert!(filter
-                        .match_any(block_hash, &mut query.iter().map(|s| s.as_bytes()))
+                        .match_any(*block_hash, &mut query.iter().map(|s| s.as_bytes()))
                         .unwrap());
                 }
             }
 
-            assert_eq!(filter_header, filter.filter_header(&previous_filter_header));
+            assert_eq!(filter_header, filter.filter_header(previous_filter_header));
         }
     }
 

@@ -79,7 +79,7 @@ impl ScriptBuf {
     }
 
     /// Generates P2PKH-type of scriptPubkey.
-    pub fn new_p2pkh(pubkey_hash: &PubkeyHash) -> Self {
+    pub fn new_p2pkh(pubkey_hash: PubkeyHash) -> Self {
         Builder::new()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
@@ -90,7 +90,7 @@ impl ScriptBuf {
     }
 
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2sh(script_hash: &ScriptHash) -> Self {
+    pub fn new_p2sh(script_hash: ScriptHash) -> Self {
         Builder::new()
             .push_opcode(OP_HASH160)
             .push_slice(script_hash)
@@ -99,13 +99,13 @@ impl ScriptBuf {
     }
 
     /// Generates P2WPKH-type of scriptPubkey.
-    pub fn new_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
+    pub fn new_p2wpkh(pubkey_hash: WPubkeyHash) -> Self {
         // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2wsh(script_hash: &WScriptHash) -> Self {
+    pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
         // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }

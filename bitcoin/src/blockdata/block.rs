@@ -279,7 +279,7 @@ impl Block {
             if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
                 if let Some(witness_root) = self.witness_root() {
                     return commitment
-                        == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
+                        == Self::compute_witness_commitment(witness_root, witness_vec[0]);
                 }
             }
         }
@@ -295,7 +295,7 @@ impl Block {
 
     /// Computes the witness commitment for the block's transaction list.
     pub fn compute_witness_commitment(
-        witness_root: &WitnessMerkleNode,
+        witness_root: WitnessMerkleNode,
         witness_reserved_value: &[u8],
     ) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();

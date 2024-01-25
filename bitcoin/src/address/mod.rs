@@ -528,8 +528,8 @@ impl Address {
     pub fn script_pubkey(&self) -> ScriptBuf {
         use AddressInner::*;
         match self.0 {
-            P2pkh { ref hash, network: _ } => ScriptBuf::new_p2pkh(hash),
-            P2sh { ref hash, network: _ } => ScriptBuf::new_p2sh(hash),
+            P2pkh { hash, network: _ } => ScriptBuf::new_p2pkh(hash),
+            P2sh { hash, network: _ } => ScriptBuf::new_p2sh(hash),
             Segwit { ref program, hrp: _ } => {
                 let prog = program.program();
                 let version = program.version();
@@ -579,7 +579,7 @@ impl Address {
 
         (*pubkey_hash.as_byte_array() == *payload)
             || (xonly_pubkey.serialize() == *payload)
-            || (*segwit_redeem_hash(&pubkey_hash).as_byte_array() == *payload)
+            || (*segwit_redeem_hash(pubkey_hash).as_byte_array() == *payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.
@@ -769,7 +769,7 @@ impl FromStr for Address<NetworkUnchecked> {
 }
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
-fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
+fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> crate::hashes::hash160::Hash {
     let mut sha_engine = sha256::Hash::engine();
     sha_engine.input(&[0, 20]);
     sha_engine.input(pubkey_hash.as_ref());

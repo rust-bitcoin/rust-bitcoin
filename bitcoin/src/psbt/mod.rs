@@ -2087,7 +2087,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_p2wpkh(WPubkeyHash::hash(&pk.to_bytes())),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
