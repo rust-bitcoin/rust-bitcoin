@@ -29,18 +29,20 @@
 //!                            happen the implementations diverge one day.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+
 // Experimental features we need.
-#![cfg_attr(bench, feature(test))]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
-// Coding conventions
+#![cfg_attr(bench, feature(test))]
+
+// Coding conventions.
 #![warn(missing_docs)]
+
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
-// Exclude clippy lints we don't think are valuable
+
+// Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
-#![allow(clippy::uninhabited_references)] // falsely claims that 100% safe code is UB
-#![allow(clippy::manual_range_contains)] // more readable than clippy's format
-#![allow(clippy::unconditional_recursion)] // broken; see https://github.com/rust-lang/rust-clippy/issues/12133
+#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
