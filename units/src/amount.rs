@@ -6,7 +6,9 @@
 //! We refer to the documentation on the types for more information.
 
 use core::cmp::Ordering;
-use core::fmt::{self, Write as _};
+use core::fmt;
+#[cfg(feature = "alloc")]
+use core::fmt::Write as _;
 use core::str::FromStr;
 use core::{default, ops};
 
@@ -701,6 +703,7 @@ impl Amount {
     pub fn to_sat(self) -> u64 { self.0 }
 
     /// Convert from a value expressing bitcoins to an [Amount].
+    #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
     }
@@ -754,6 +757,7 @@ impl Amount {
     /// Express this [Amount] as a floating-point value in the given denomination.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
@@ -768,6 +772,7 @@ impl Amount {
     /// let amount = Amount::from_sat(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
+    #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
     /// Convert this [Amount] in floating-point notation with a given
@@ -775,6 +780,7 @@ impl Amount {
     /// Can return error if the amount is too big, too precise or negative.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[cfg(feature = "alloc")]
     pub fn from_float_in(value: f64, denom: Denomination) -> Result<Amount, ParseAmountError> {
         if value < 0.0 {
             return Err(OutOfRangeError::negative().into());
@@ -816,6 +822,7 @@ impl Amount {
     /// Get a string number of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
+    #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
@@ -824,6 +831,7 @@ impl Amount {
 
     /// Get a formatted string of this [Amount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
+    #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
@@ -875,7 +883,7 @@ impl default::Default for Amount {
 
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount({:.8} BTC)", self.to_btc())
+        write!(f, "{} SAT", self.to_sat())
     }
 }
 
@@ -1056,6 +1064,7 @@ impl SignedAmount {
     pub fn to_sat(self) -> i64 { self.0 }
 
     /// Convert from a value expressing bitcoins to an [SignedAmount].
+    #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
         SignedAmount::from_float_in(btc, Denomination::Bitcoin)
     }
@@ -1087,6 +1096,7 @@ impl SignedAmount {
     /// Express this [SignedAmount] as a floating-point value in the given denomination.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
@@ -1096,6 +1106,7 @@ impl SignedAmount {
     /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
     /// Convert this [SignedAmount] in floating-point notation with a given
@@ -1103,6 +1114,7 @@ impl SignedAmount {
     /// Can return error if the amount is too big, too precise or negative.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[cfg(feature = "alloc")]
     pub fn from_float_in(
         value: f64,
         denom: Denomination,
@@ -1144,6 +1156,7 @@ impl SignedAmount {
     /// Get a string number of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
+    #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
@@ -1152,6 +1165,7 @@ impl SignedAmount {
 
     /// Get a formatted string of this [SignedAmount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
+    #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
@@ -1244,7 +1258,7 @@ impl default::Default for SignedAmount {
 
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SignedAmount({:.8} BTC)", self.to_btc())
+        write!(f, "SignedAmount({} SAT)", self.to_sat())
     }
 }
 
@@ -1360,7 +1374,7 @@ where
 }
 
 mod private {
-    use crate::{Amount, SignedAmount};
+    use super::{Amount, SignedAmount};
 
     /// Used to seal the `CheckedSum` trait
     pub trait SumSeal<A> {}
@@ -1393,30 +1407,32 @@ pub mod serde {
     use core::fmt;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::amount::{Amount, Denomination, SignedAmount, ParseAmountError};
+    use super::{Amount, SignedAmount, ParseAmountError};
+    #[cfg(feature = "alloc")]
+    use super::Denomination;
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
-    pub trait SerdeAmount: Copy + Sized + private::Sealed {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+    pub trait SerdeAmount: Copy + Sized {
+        fn ser_sat<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error>;
+        fn des_sat<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error>;
+        #[cfg(feature = "alloc")]
+        fn ser_btc<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error>;
+        #[cfg(feature = "alloc")]
+        fn des_btc<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error>;
     }
 
     mod private {
-        /// add this as a trait bound to traits which consumers of this library
-        /// should not be able to implement.
-        pub trait Sealed {}
-        impl Sealed for super::Amount {}
-        impl Sealed for super::SignedAmount {}
+        /// Controls access to the trait methods.
+        pub struct Token;
     }
 
     /// This trait is only for internal Amount type serialization/deserialization
-    pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount + private::Sealed {
-        fn type_prefix() -> &'static str;
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+    pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount {
+        fn type_prefix(_: private::Token) -> &'static str;
+        fn ser_sat_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error>;
+        #[cfg(feature = "alloc")]
+        fn ser_btc_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error>;
     }
 
     struct DisplayFullError(ParseAmountError);
@@ -1444,16 +1460,18 @@ pub mod serde {
     }
 
     impl SerdeAmount for Amount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        fn ser_sat<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             u64::serialize(&self.to_sat(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_sat<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
             Ok(Amount::from_sat(u64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        #[cfg(feature = "alloc")]
+        fn ser_btc<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        #[cfg(feature = "alloc")]
+        fn des_btc<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
             use serde::de::Error;
             Amount::from_btc(f64::deserialize(d)?)
                 .map_err(DisplayFullError)
@@ -1462,26 +1480,29 @@ pub mod serde {
     }
 
     impl SerdeAmountForOpt for Amount {
-        fn type_prefix() -> &'static str { "u" }
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        fn type_prefix(_: private::Token) -> &'static str { "u" }
+        fn ser_sat_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_sat())
         }
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        #[cfg(feature = "alloc")]
+        fn ser_btc_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_btc())
         }
     }
 
     impl SerdeAmount for SignedAmount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        fn ser_sat<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             i64::serialize(&self.to_sat(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_sat<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
             Ok(SignedAmount::from_sat(i64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        #[cfg(feature = "alloc")]
+        fn ser_btc<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        #[cfg(feature = "alloc")]
+        fn des_btc<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
             use serde::de::Error;
             SignedAmount::from_btc(f64::deserialize(d)?)
                 .map_err(DisplayFullError)
@@ -1490,11 +1511,12 @@ pub mod serde {
     }
 
     impl SerdeAmountForOpt for SignedAmount {
-        fn type_prefix() -> &'static str { "i" }
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        fn type_prefix(_: private::Token) -> &'static str { "i" }
+        fn ser_sat_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_sat())
         }
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+        #[cfg(feature = "alloc")]
+        fn ser_btc_opt<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_btc())
         }
     }
@@ -1502,23 +1524,26 @@ pub mod serde {
     pub mod as_sat {
         //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
+        //!
+        use super::private;
 
         use serde::{Deserializer, Serializer};
 
         use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_sat(s)
+            a.ser_sat(s, private::Token)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_sat(d)
+            A::des_sat(d, private::Token)
         }
 
         pub mod opt {
             //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
+            use super::private;
             use core::fmt;
             use core::marker::PhantomData;
 
@@ -1531,7 +1556,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_sat_opt(s),
+                    Some(a) => a.ser_sat_opt(s, private::Token),
                     None => s.serialize_none(),
                 }
             }
@@ -1545,7 +1570,7 @@ pub mod serde {
                     type Value = Option<X>;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        write!(formatter, "An Option<{}64>", X::type_prefix())
+                        write!(formatter, "An Option<{}64>", X::type_prefix(private::Token))
                     }
 
                     fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -1558,7 +1583,7 @@ pub mod serde {
                     where
                         D: Deserializer<'de>,
                     {
-                        Ok(Some(X::des_sat(d)?))
+                        Ok(Some(X::des_sat(d, private::Token)?))
                     }
                 }
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
@@ -1566,26 +1591,30 @@ pub mod serde {
         }
     }
 
+    #[cfg(feature = "alloc")]
     pub mod as_btc {
         //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in BTC.
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
+
+        use super::private;
 
         use serde::{Deserializer, Serializer};
 
         use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_btc(s)
+            a.ser_btc(s, private::Token)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_btc(d)
+            A::des_btc(d, private::Token)
         }
 
         pub mod opt {
             //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
+            use super::private;
             use core::fmt;
             use core::marker::PhantomData;
 
@@ -1598,7 +1627,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_btc_opt(s),
+                    Some(a) => a.ser_btc_opt(s, private::Token),
                     None => s.serialize_none(),
                 }
             }
@@ -1625,7 +1654,7 @@ pub mod serde {
                     where
                         D: Deserializer<'de>,
                     {
-                        Ok(Some(X::des_btc(d)?))
+                        Ok(Some(X::des_btc(d, private::Token)?))
                     }
                 }
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
@@ -1844,6 +1873,7 @@ mod tests {
         assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn floating_point() {
         use super::Denomination as D;
@@ -1920,6 +1950,7 @@ mod tests {
 
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
+        #[cfg(feature = "alloc")]
         assert_eq!(sp(&i64::MIN.to_string(), sat), Ok(SignedAmount::from_sat(i64::MIN)));
         assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
         assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
@@ -1935,10 +1966,13 @@ mod tests {
         assert_eq!(p("1000.000000000000000000000000000", msat), Ok(Amount::from_sat(1)));
 
         // make sure satoshi > i64::MAX is checked.
-        let amount = Amount::from_sat(i64::MAX as u64);
-        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
-        assert!(SignedAmount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_err());
-        assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
+        #[cfg(feature = "alloc")]
+        {
+            let amount = Amount::from_sat(i64::MAX as u64);
+            assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
+            assert!(SignedAmount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_err());
+            assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
+        }
 
         assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
         // exactly 50 chars.
@@ -1954,6 +1988,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn to_string() {
         use super::Denomination as D;
 
@@ -1977,6 +2012,7 @@ mod tests {
     }
 
     // May help identify a problem sooner
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_repeat_char() {
         let mut buf = String::new();
@@ -2240,6 +2276,7 @@ mod tests {
         ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn to_from_string_in() {
@@ -2326,6 +2363,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn to_string_with_denomination_from_str_roundtrip() {
         use ParseDenominationError::*;
@@ -2378,6 +2416,7 @@ mod tests {
     }
 
     #[cfg(feature = "serde")]
+    #[cfg(feature = "alloc")]
     #[test]
     #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn serde_as_btc() {
@@ -2413,6 +2452,7 @@ mod tests {
     }
 
     #[cfg(feature = "serde")]
+    #[cfg(feature = "alloc")]
     #[test]
     #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn serde_as_btc_opt() {
@@ -2454,6 +2494,7 @@ mod tests {
     }
 
     #[cfg(feature = "serde")]
+    #[cfg(feature = "alloc")]
     #[test]
     #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn serde_as_sat_opt() {

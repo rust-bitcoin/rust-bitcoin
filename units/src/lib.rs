@@ -29,10 +29,8 @@ extern crate core;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
-#[cfg(feature = "alloc")]
 pub mod amount;
 
-#[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use self::amount::{Amount, ParseAmountError, SignedAmount};
 
