@@ -135,7 +135,7 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 
     let neg = n < 0;
 
-    let mut abs = if neg { -n } else { n } as usize;
+    let mut abs = n.unsigned_abs();
     while abs > 0xFF {
         out[len] = (abs & 0xFF) as u8;
         len += 1;
