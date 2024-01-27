@@ -10,8 +10,6 @@ pub mod encode;
 pub mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
-#[cfg(feature = "bitcoinconsensus")]
-pub mod validation;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -22,6 +20,7 @@ pub use self::{
 
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
-pub use self::validation::{
+#[deprecated(since = "TBD" , note = "available at the crate root and also from the bitcoin::validation module")]
+pub use crate::validation::{
     verify_script, verify_script_with_flags, verify_transaction, verify_transaction_with_flags,
 };

@@ -36,7 +36,7 @@ use crate::{Amount, SignedAmount, VarInt};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
-pub use crate::consensus::validation::TxVerifyError;
+pub use crate::validation::TxVerifyError;
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.

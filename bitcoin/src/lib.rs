@@ -109,6 +109,8 @@ pub mod psbt;
 pub mod sign_message;
 pub mod string;
 pub mod taproot;
+#[cfg(feature = "bitcoinconsensus")]
+pub mod validation;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -138,6 +140,11 @@ pub use crate::{
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
+};
+#[cfg(feature = "bitcoinconsensus")]
+#[doc(inline)]
+pub use crate::validation::{
+    verify_script, verify_script_with_flags, verify_transaction, verify_transaction_with_flags,
 };
 
 #[rustfmt::skip]
