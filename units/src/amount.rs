@@ -18,7 +18,7 @@ use internals::error::InputString;
 use internals::write_err;
 
 #[cfg(feature = "alloc")]
-use crate::prelude::{String, ToString};
+use alloc::string::{String, ToString};
 
 /// A set of denominations in which amounts can be expressed.
 ///
@@ -1788,6 +1788,10 @@ mod verification {
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
+
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+
     #[cfg(feature = "std")]
     use std::panic;
 
@@ -1797,8 +1801,9 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn from_str_zero() {
-        let denoms = vec!["BTC", "mBTC", "uBTC", "nBTC", "pBTC", "bits", "sats", "msats"];
+        let denoms = ["BTC", "mBTC", "uBTC", "nBTC", "pBTC", "bits", "sats", "msats"];
         for denom in denoms {
             for v in &["0", "000"] {
                 let s = format!("{} {}", v, denom);
@@ -1935,7 +1940,9 @@ mod tests {
         assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
         assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
         assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
+        #[cfg(feature = "alloc")]
         let more_than_max = format!("1{}", Amount::MAX);
+        #[cfg(feature = "alloc")]
         assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
         assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
         assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
@@ -2028,6 +2035,7 @@ mod tests {
         ($denom:ident; $($test_name:ident, $val:literal, $format_string:literal, $expected:literal);* $(;)?) => {
             $(
                 #[test]
+                #[cfg(feature = "alloc")]
                 fn $test_name() {
                     assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom)), $expected);
                     assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom)), $expected);
@@ -2040,6 +2048,7 @@ mod tests {
         ($denom:ident, $denom_suffix:literal; $($test_name:ident, $val:literal, $format_string:literal, $expected:literal);* $(;)?) => {
             $(
                 #[test]
+                #[cfg(feature = "alloc")]
                 fn $test_name() {
                     assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
                     assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
@@ -2273,6 +2282,7 @@ mod tests {
         ok_scase("-5 satoshi", SignedAmount::from_sat(-5));
         ok_case("0.10000000 BTC", Amount::from_sat(100_000_00));
         ok_scase("-100 bits", SignedAmount::from_sat(-10_000));
+        #[cfg(feature = "alloc")]
         ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
     }
 
@@ -2448,7 +2458,7 @@ mod tests {
             serde_json::from_str("{\"amt\": 1000000.000000001, \"samt\": 1}");
         assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise.to_string()));
         let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -1, \"samt\": 1}");
-        assert!(dbg!(t.unwrap_err().to_string()).contains(&OutOfRangeError::negative().to_string()));
+        assert!(t.unwrap_err().to_string().contains(&OutOfRangeError::negative().to_string()));
     }
 
     #[cfg(feature = "serde")]
@@ -2537,14 +2547,14 @@ mod tests {
 
     #[test]
     fn sum_amounts() {
-        assert_eq!(Amount::from_sat(0), vec![].into_iter().sum::<Amount>());
-        assert_eq!(SignedAmount::from_sat(0), vec![].into_iter().sum::<SignedAmount>());
+        assert_eq!(Amount::from_sat(0), [].into_iter().sum::<Amount>());
+        assert_eq!(SignedAmount::from_sat(0), [].into_iter().sum::<SignedAmount>());
 
-        let amounts = vec![Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+        let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
         let sum = amounts.into_iter().sum::<Amount>();
         assert_eq!(Amount::from_sat(1400), sum);
 
-        let amounts = vec![
+        let amounts = [
             SignedAmount::from_sat(-42),
             SignedAmount::from_sat(1337),
             SignedAmount::from_sat(21),
@@ -2555,19 +2565,19 @@ mod tests {
 
     #[test]
     fn checked_sum_amounts() {
-        assert_eq!(Some(Amount::from_sat(0)), vec![].into_iter().checked_sum());
-        assert_eq!(Some(SignedAmount::from_sat(0)), vec![].into_iter().checked_sum());
+        assert_eq!(Some(Amount::from_sat(0)), [].into_iter().checked_sum());
+        assert_eq!(Some(SignedAmount::from_sat(0)), [].into_iter().checked_sum());
 
-        let amounts = vec![Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+        let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(Some(Amount::from_sat(1400)), sum);
 
         let amounts =
-            vec![Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
+            [Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
-        let amounts = vec![
+        let amounts = [
             SignedAmount::from_sat(i64::MIN),
             SignedAmount::from_sat(-1),
             SignedAmount::from_sat(21),
@@ -2575,7 +2585,7 @@ mod tests {
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
-        let amounts = vec![
+        let amounts = [
             SignedAmount::from_sat(i64::MAX),
             SignedAmount::from_sat(1),
             SignedAmount::from_sat(21),
@@ -2583,7 +2593,7 @@ mod tests {
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
-        let amounts = vec![
+        let amounts = [
             SignedAmount::from_sat(42),
             SignedAmount::from_sat(3301),
             SignedAmount::from_sat(21),
@@ -2595,7 +2605,7 @@ mod tests {
     #[test]
     fn denomination_string_acceptable_forms() {
         // Non-exhaustive list of valid forms.
-        let valid = vec![
+        let valid = [
             "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS",
             "satoshis", "SAT", "sat", "SATS", "sats", "bit", "bits", "nBTC", "pBTC",
         ];
