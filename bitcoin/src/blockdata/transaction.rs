@@ -803,7 +803,7 @@ impl Transaction {
     #[inline]
     pub fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
-	let uses_segwit = self.uses_segwit_serialization();
+        let uses_segwit = self.uses_segwit_serialization();
 
         if uses_segwit {
             size += 2; // 1 byte for the marker and 1 for the flag.
@@ -813,13 +813,7 @@ impl Transaction {
         size += self
             .input
             .iter()
-            .map(|input| {
-                if uses_segwit {
-                    input.total_size()
-                } else {
-                    input.base_size()
-                }
-            })
+            .map(|input| if uses_segwit { input.total_size() } else { input.base_size() })
             .sum::<usize>();
 
         size += VarInt::from(self.output.len()).size();
@@ -1778,10 +1772,7 @@ mod tests {
         let tx_bytes = hex!("0000fd000001021921212121212121212121f8b372b0239cc1dff600000000004f4f4f4f4f4f4f4f000000000000000000000000000000333732343133380d000000000000000000000000000000ff000000000009000dff000000000000000800000000000000000d");
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_err());
-        assert!(tx
-            .unwrap_err()
-            .to_string()
-            .contains("witness flag set but no witnesses present"));
+        assert!(tx.unwrap_err().to_string().contains("witness flag set but no witnesses present"));
     }
 
     #[test]

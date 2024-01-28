@@ -223,8 +223,7 @@ impl std::error::Error for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            TooPrecise | InvalidFormat | InputTooLarge
-            | InvalidCharacter(_) => None,
+            TooPrecise | InvalidFormat | InputTooLarge | InvalidCharacter(_) => None,
             OutOfRange(ref error) => Some(error),
         }
     }
@@ -249,21 +248,12 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was large than the maximum allowed value.
-    pub fn is_above_max(&self) -> bool {
-        self.is_greater_than_max
-    }
+    pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
-    pub fn is_below_min(&self) -> bool {
-        !self.is_greater_than_max
-    }
+    pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
 
-    pub(crate) fn too_big(is_signed: bool) -> Self {
-        Self {
-            is_signed,
-            is_greater_than_max: true,
-        }
-    }
+    pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
 
     pub(crate) fn too_small() -> Self {
         Self {
@@ -296,11 +286,8 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self {
-        ParseAmountError::OutOfRange(value)
-    }
+    fn from(value: OutOfRangeError) -> Self { ParseAmountError::OutOfRange(value) }
 }
-
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -473,7 +460,8 @@ enum InnerParseError {
 impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
-            Self::Overflow { is_negative } => OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
+            Self::Overflow { is_negative } =>
+                OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
             Self::TooPrecise => ParseAmountError::TooPrecise,
             Self::InvalidFormat => ParseAmountError::InvalidFormat,
             Self::InputTooLarge => ParseAmountError::InputTooLarge,
@@ -734,8 +722,8 @@ impl Amount {
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
-        let (negative, satoshi) = parse_signed_to_satoshi(s, denom)
-            .map_err(|error| error.convert(false))?;
+        let (negative, satoshi) =
+            parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
         if negative {
             return Err(ParseAmountError::OutOfRange(OutOfRangeError::negative()));
         }
@@ -1067,10 +1055,12 @@ impl SignedAmount {
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
             // (negative, amount)
-            (false, sat) if sat > i64::MAX as u64 => Err(ParseAmountError::OutOfRange(OutOfRangeError::too_big(true))),
+            (false, sat) if sat > i64::MAX as u64 =>
+                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_big(true))),
             (false, sat) => Ok(SignedAmount(sat as i64)),
             (true, sat) if sat == i64::MIN.unsigned_abs() => Ok(SignedAmount(i64::MIN)),
-            (true, sat) if sat > i64::MIN.unsigned_abs() => Err(ParseAmountError::OutOfRange(OutOfRangeError::too_small())),
+            (true, sat) if sat > i64::MIN.unsigned_abs() =>
+                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_small())),
             (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
@@ -1391,9 +1381,10 @@ pub mod serde {
     //! ```
 
     use core::fmt;
+
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-    use crate::amount::{Amount, Denomination, SignedAmount, ParseAmountError};
+    use crate::amount::{Amount, Denomination, ParseAmountError, SignedAmount};
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
@@ -1438,9 +1429,7 @@ pub mod serde {
 
     #[cfg(not(feature = "std"))]
     impl fmt::Display for DisplayFullError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            fmt::Display::fmt(&self.0, f)
-        }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
     }
 
     impl SerdeAmount for Amount {
@@ -1781,7 +1770,10 @@ mod tests {
 
             let s = format!("-0 {}", denom);
             match Amount::from_str(&s) {
-                Err(e) => assert_eq!(e, ParseError::Amount(ParseAmountError::OutOfRange(OutOfRangeError::negative()))),
+                Err(e) => assert_eq!(
+                    e,
+                    ParseError::Amount(ParseAmountError::OutOfRange(OutOfRangeError::negative()))
+                ),
                 Ok(_) => panic!("Unsigned amount from {}", s),
             }
             match SignedAmount::from_str(&s) {
@@ -1864,7 +1856,10 @@ mod tests {
         assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
         assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
-        assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
+        assert_eq!(
+            f(18446744073709551617.0, D::Satoshi),
+            Err(OutOfRangeError::too_big(false).into())
+        );
 
         // Amount can be grater than the max SignedAmount.
         assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
