@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # Verify what is about to be committed. Called by "git commit" with no
 # arguments. The hook should exit with non-zero status after issuing an
