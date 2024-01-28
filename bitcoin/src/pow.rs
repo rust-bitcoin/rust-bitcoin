@@ -227,10 +227,17 @@ impl Target {
     /// integer but `difficulty()` returns only 128 bits this means for targets below approximately
     /// `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty()` will saturate at `u128::MAX`.
     ///
+    /// # Panics
+    ///
+    /// Panics if `self` is zero (divide by zero).
+    ///
     /// [max]: Target::max
     /// [target]: crate::blockdata::block::Header::target
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty(&self, network: Network) -> u128 {
+        // Panic here may be eaiser to debug than during the actual division.
+        assert_ne!(self.0, U256::ZERO, "divide by zero");
+
         let max = match network {
             Network::Bitcoin => Target::MAX_ATTAINABLE_MAINNET,
             Network::Testnet => Target::MAX_ATTAINABLE_TESTNET,
