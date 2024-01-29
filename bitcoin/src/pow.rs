@@ -255,17 +255,28 @@ impl Target {
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
+    #[deprecated(since = "TBD", note = "use min_transition_threshold instead")]
+    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+
+    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    #[deprecated(since = "TBD", note = "use max_transition_threshold instead")]
+    pub fn max_difficulty_transition_threshold(&self) -> Self { self.max_transition_threshold() }
+
+    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
-    pub fn min_difficulty_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+    pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
-    pub fn max_difficulty_transition_threshold(&self) -> Self { Self(self.0 << 2) }
+    pub fn max_transition_threshold(&self) -> Self { Self(self.0 << 2) }
+
 }
 do_impl!(Target);
 
