@@ -20,7 +20,7 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 
-#[cfg(any(feature = "alloc", feature = "std"))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 mod error;
@@ -316,6 +316,9 @@ pub fn sink() -> Sink { Sink }
 mod tests {
     use super::*;
 
+    #[cfg(feature = "alloc")]
+    use alloc::{string::ToString, vec};
+
     #[test]
     fn buf_read_fill_and_consume_slice() {
         let data = [0_u8, 1, 2];
@@ -339,7 +342,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
     fn read_to_limit_greater_than_total_length() {
         let s = "16-byte-string!!".to_string();
         let mut reader = Cursor::new(&s);
@@ -352,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
     fn read_to_limit_less_than_total_length() {
         let s = "16-byte-string!!".to_string();
         let mut reader = Cursor::new(&s);
