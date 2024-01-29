@@ -16,10 +16,8 @@ use units::parse;
 
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
-#[cfg(doc)]
 use crate::consensus::Params;
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -234,16 +232,11 @@ impl Target {
     /// [max]: Target::max
     /// [target]: crate::blockdata::block::Header::target
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn difficulty(&self, network: Network) -> u128 {
+    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
         // Panic here may be eaiser to debug than during the actual division.
         assert_ne!(self.0, U256::ZERO, "divide by zero");
 
-        let max = match network {
-            Network::Bitcoin => Target::MAX_ATTAINABLE_MAINNET,
-            Network::Testnet => Target::MAX_ATTAINABLE_TESTNET,
-            Network::Signet => Target::MAX_ATTAINABLE_SIGNET,
-            Network::Regtest => Target::MAX_ATTAINABLE_REGTEST,
-        };
+        let max = params.as_ref().pow_limit;
         let d = max.0 / self.0;
         d.saturating_to_u128()
     }

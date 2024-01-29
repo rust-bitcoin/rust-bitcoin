@@ -147,3 +147,7 @@ impl From<Network> for &'static Params {
 impl From<&Network> for &'static Params {
     fn from(value: &Network) -> Self { value.params() }
 }
+
+impl AsRef<Params> for Params {
+    fn as_ref(&self) -> &Params { self }
+}
