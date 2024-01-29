@@ -6,6 +6,7 @@
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 //!
 
+use core::cmp;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
@@ -261,13 +262,19 @@ impl Target {
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     #[deprecated(since = "TBD", note = "use max_transition_threshold instead")]
-    pub fn max_difficulty_transition_threshold(&self) -> Self { self.max_transition_threshold() }
+    pub fn max_difficulty_transition_threshold(&self) -> Self {
+        self.max_transition_threshold_unchecked()
+    }
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
+    ///
+    /// # Returns
+    ///
+    /// In line with Bitcoin Core this function may return a target value of zero.
     pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
@@ -275,8 +282,27 @@ impl Target {
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
-    pub fn max_transition_threshold(&self) -> Self { Self(self.0 << 2) }
+    ///
+    /// We also check that the calculated target is not greater than the maximum allowed target,
+    /// this value is network specific - hence the `params` parameter.
+    pub fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
+        let max_attainable = params.as_ref().max_attainable_target;
+        cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
+    }
 
+    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    ///
+    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+    /// adjustment period.
+    ///
+    /// # Returns
+    ///
+    /// This function may return a value greater than the maximum allowed target for this network.
+    ///
+    /// The return value should be checked against [`Params::max_attainable_target`] or use one of
+    /// the `Target::MAX_ATTAINABLE_FOO` constants.
+    pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
 
