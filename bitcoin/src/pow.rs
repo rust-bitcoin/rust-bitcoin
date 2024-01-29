@@ -236,7 +236,7 @@ impl Target {
         // Panic here may be eaiser to debug than during the actual division.
         assert_ne!(self.0, U256::ZERO, "divide by zero");
 
-        let max = params.as_ref().pow_limit;
+        let max = params.as_ref().max_attainable_target;
         let d = max.0 / self.0;
         d.saturating_to_u128()
     }
