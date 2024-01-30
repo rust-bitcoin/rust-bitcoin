@@ -193,6 +193,7 @@ pub mod as_core_arg {
 
     use crate::Network;
 
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Function signature requires a reference.
     pub fn serialize<S>(network: &Network, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
