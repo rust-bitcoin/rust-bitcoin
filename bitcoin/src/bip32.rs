@@ -160,12 +160,12 @@ impl ChildNumber {
     /// Returns `true` if the child number is a [`Normal`] value.
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn is_normal(&self) -> bool { !self.is_hardened() }
+    pub fn is_normal(self) -> bool { !self.is_hardened() }
 
     /// Returns `true` if the child number is a [`Hardened`] value.
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn is_hardened(&self) -> bool {
+    pub fn is_hardened(self) -> bool {
         match self {
             ChildNumber::Hardened { .. } => true,
             ChildNumber::Normal { .. } => false,

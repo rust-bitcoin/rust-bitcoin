@@ -73,6 +73,7 @@
 
 // Coding conventions.
 #![warn(missing_docs)]
+#![warn(clippy::trivially_copy_pass_by_ref)]
 
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]

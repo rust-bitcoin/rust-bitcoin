@@ -157,14 +157,14 @@ impl LockTime {
 
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
-    pub fn is_same_unit(&self, other: LockTime) -> bool {
-        mem::discriminant(self) == mem::discriminant(&other)
+    pub fn is_same_unit(self, other: LockTime) -> bool {
+        mem::discriminant(&self) == mem::discriminant(&other)
     }
 
     /// Returns true if this lock time value is a block height.
     #[inline]
-    pub fn is_block_height(&self) -> bool {
-        match *self {
+    pub fn is_block_height(self) -> bool {
+        match self {
             LockTime::Blocks(_) => true,
             LockTime::Seconds(_) => false,
         }
@@ -172,7 +172,7 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
-    pub fn is_block_time(&self) -> bool { !self.is_block_height() }
+    pub fn is_block_time(self) -> bool { !self.is_block_height() }
 
     /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
@@ -197,10 +197,10 @@ impl LockTime {
     /// ````
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by(&self, height: Height, time: Time) -> bool {
+    pub fn is_satisfied_by(self, height: Height, time: Time) -> bool {
         use LockTime::*;
 
-        match *self {
+        match self {
             Blocks(n) => n <= height,
             Seconds(n) => n <= time,
         }
@@ -227,10 +227,10 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_implied_by(&self, other: LockTime) -> bool {
+    pub fn is_implied_by(self, other: LockTime) -> bool {
         use LockTime::*;
 
-        match (*self, other) {
+        match (self, other) {
             (Blocks(this), Blocks(other)) => this <= other,
             (Seconds(this), Seconds(other)) => this <= other,
             _ => false, // Not the same units.

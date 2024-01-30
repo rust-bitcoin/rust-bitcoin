@@ -9,6 +9,7 @@
 
 // Coding conventions.
 #![warn(missing_docs)]
+#![warn(clippy::trivially_copy_pass_by_ref)]
 
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134

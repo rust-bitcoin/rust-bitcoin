@@ -180,7 +180,7 @@ impl Version {
     ///
     /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
     /// the version bit for the specific soft fork is toggled on.
-    pub fn is_signalling_soft_fork(&self, bit: u8) -> bool {
+    pub fn is_signalling_soft_fork(self, bit: u8) -> bool {
         // Only bits [0, 28] inclusive are used for signalling.
         if bit > 28 {
             return false;

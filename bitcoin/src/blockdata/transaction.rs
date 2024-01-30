@@ -354,7 +354,7 @@ impl Sequence {
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
-    pub fn enables_absolute_lock_time(&self) -> bool { *self != Sequence::MAX }
+    pub fn enables_absolute_lock_time(self) -> bool { self != Sequence::MAX }
 
     /// Returns `true` if the sequence number indicates that the transaction is finalized.
     ///
@@ -376,30 +376,30 @@ impl Sequence {
     ///
     /// [BIP-112]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
     #[inline]
-    pub fn is_final(&self) -> bool { !self.enables_absolute_lock_time() }
+    pub fn is_final(self) -> bool { !self.enables_absolute_lock_time() }
 
     /// Returns true if the transaction opted-in to BIP125 replace-by-fee.
     ///
     /// Replace by fee is signaled by the sequence being less than 0xfffffffe which is checked by
     /// this method. Note, this is the highest "non-final" value (see [`Sequence::is_final`]).
     #[inline]
-    pub fn is_rbf(&self) -> bool { *self < Sequence::MIN_NO_RBF }
+    pub fn is_rbf(self) -> bool { self < Sequence::MIN_NO_RBF }
 
     /// Returns `true` if the sequence has a relative lock-time.
     #[inline]
-    pub fn is_relative_lock_time(&self) -> bool {
+    pub fn is_relative_lock_time(self) -> bool {
         self.0 & Sequence::LOCK_TIME_DISABLE_FLAG_MASK == 0
     }
 
     /// Returns `true` if the sequence number encodes a block based relative lock-time.
     #[inline]
-    pub fn is_height_locked(&self) -> bool {
+    pub fn is_height_locked(self) -> bool {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK == 0)
     }
 
     /// Returns `true` if the sequence number encodes a time interval based relative lock-time.
     #[inline]
-    pub fn is_time_locked(&self) -> bool {
+    pub fn is_time_locked(self) -> bool {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
@@ -1126,7 +1126,7 @@ impl Version {
     pub fn non_standard(version: i32) -> Version { Self(version) }
 
     /// Returns true if this transaction version number is considered standard.
-    pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+    pub fn is_standard(self) -> bool { self == Version::ONE || self == Version::TWO }
 }
 
 impl Encodable for Version {
