@@ -725,7 +725,7 @@ pub enum OutputType {
 
 impl OutputType {
     /// The signing algorithm used to sign this output type.
-    pub fn signing_algorithm(&self) -> SigningAlgorithm {
+    pub fn signing_algorithm(self) -> SigningAlgorithm {
         use OutputType::*;
 
         match self {
