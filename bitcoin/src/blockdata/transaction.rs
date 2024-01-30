@@ -471,7 +471,7 @@ impl Sequence {
     /// Returns the low 16 bits from sequence number.
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
-    fn low_u16(&self) -> u16 { self.0 as u16 }
+    fn low_u16(self) -> u16 { self.0 as u16 }
 }
 
 impl FromHexStr for Sequence {
