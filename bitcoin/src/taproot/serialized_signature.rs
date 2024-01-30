@@ -159,8 +159,8 @@ impl SerializedSignature {
     /// Convert the serialized signature into the Signature struct.
     /// (This deserializes it)
     #[inline]
-    pub fn to_signature(&self) -> Result<Signature, SigFromSliceError> {
-        Signature::from_slice(self)
+    pub fn to_signature(self) -> Result<Signature, SigFromSliceError> {
+        Signature::from_slice(&self)
     }
 
     /// Create a SerializedSignature from a Signature.

@@ -295,7 +295,7 @@ impl CompressedPublicKey {
     ///
     /// Note that this can be used as a sort key to get BIP67-compliant sorting.
     /// That's why this type doesn't have the `to_sort_key` method - it would duplicate this one.
-    pub fn to_bytes(&self) -> [u8; 33] { self.0.serialize() }
+    pub fn to_bytes(self) -> [u8; 33] { self.0.serialize() }
 
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {

@@ -452,7 +452,7 @@ impl Sequence {
 
     /// Creates a [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
-    pub fn to_relative_lock_time(&self) -> Option<relative::LockTime> {
+    pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
         use crate::locktime::relative::{Height, LockTime, Time};
 
         if !self.is_relative_lock_time() {

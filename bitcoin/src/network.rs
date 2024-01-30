@@ -44,7 +44,7 @@ pub enum NetworkKind {
 // ambiguous due to confusion caused by signet/testnet/regtest.
 impl NetworkKind {
     /// Returns true if this is real mainnet bitcoin.
-    pub fn is_mainnet(&self) -> bool { *self == NetworkKind::Main }
+    pub fn is_mainnet(self) -> bool { self == NetworkKind::Main }
 }
 
 impl From<Network> for NetworkKind {
