@@ -1280,6 +1280,19 @@ impl From<&Transaction> for Wtxid {
     fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
+/// Computes the fee to spend an output.
+///
+/// The fee is calculated as: fee_rate * weight.
+///
+/// # Arguments
+///
+/// * `fee_rate` - the fee rate of the transaction being created.
+/// * `weight` - weight of output.
+pub fn calculate_fee(fee_rate: FeeRate, weight: Weight) -> Option<Amount> {
+    let weight = weight.checked_add(TxIn::BASE_WEIGHT)?;
+    fee_rate.checked_mul_by_weight(weight)
+}
+
 /// Computes the value of an output accounting for the cost of spending it.
 ///
 /// The effective value is the value of an output value minus the amount to spend it.  That is, the
@@ -1298,8 +1311,7 @@ pub fn effective_value(
     satisfaction_weight: Weight,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TxIn::BASE_WEIGHT)?;
-    let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
+    let signed_input_fee = calculate_fee(fee_rate, satisfaction_weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
 
@@ -2133,6 +2145,23 @@ mod tests {
         let hex = "0xzb93";
         let result = Sequence::from_hex_str(hex);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn calculate_fee_happy_path() {
+        let fee_rate = FeeRate::from_sat_per_kwu(10);
+        let weight = Weight::from_wu(204);
+
+        // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
+        let fee = calculate_fee(fee_rate, weight).unwrap();
+        let expected_fee = Amount::from_str("4 sats").unwrap();
+        assert_eq!(fee, expected_fee);
+    }
+
+    #[test]
+    fn calculate_fee_does_not_overflow() {
+        let fee = calculate_fee(FeeRate::MAX, Weight::MAX);
+        assert!(fee.is_none());
     }
 
     #[test]
