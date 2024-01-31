@@ -18,7 +18,7 @@ use mutagen::mutate;
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
-use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
+use crate::parse::{impl_parse_str, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 use crate::string::FromHexStr;
 
@@ -134,7 +134,7 @@ impl LockTime {
     /// assert!(LockTime::from_height(1653195600).is_err());
     /// ```
     #[inline]
-    pub fn from_height(n: u32) -> Result<Self, Error> {
+    pub fn from_height(n: u32) -> Result<Self, ConversionError> {
         let height = Height::from_consensus(n)?;
         Ok(LockTime::Blocks(height))
     }
@@ -150,7 +150,7 @@ impl LockTime {
     /// assert!(LockTime::from_time(741521).is_err());
     /// ```
     #[inline]
-    pub fn from_time(n: u32) -> Result<Self, Error> {
+    pub fn from_time(n: u32) -> Result<Self, ConversionError> {
         let time = Time::from_consensus(n)?;
         Ok(LockTime::Seconds(time))
     }
@@ -326,7 +326,7 @@ impl fmt::Display for LockTime {
 }
 
 impl FromHexStr for LockTime {
-    type Error = Error;
+    type Error = ParseIntError;
 
     #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
@@ -434,11 +434,11 @@ impl Height {
     /// assert_eq!(height.to_consensus_u32(), h);
     /// ```
     #[inline]
-    pub fn from_consensus(n: u32) -> Result<Height, Error> {
+    pub fn from_consensus(n: u32) -> Result<Height, ConversionError> {
         if is_block_height(n) {
             Ok(Self(n))
         } else {
-            Err(ConversionError::invalid_height(n).into())
+            Err(ConversionError::invalid_height(n))
         }
     }
 
@@ -456,20 +456,39 @@ impl Height {
     pub fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
-impl_parse_str_from_int_fallible!(Height, u32, from_consensus, Error);
-
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl FromHexStr for Height {
-    type Error = Error;
+    type Error = ParseHeightError;
 
     #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let height = crate::parse::hex_u32(s)?;
-        Self::from_consensus(height)
+        parse_hex(s, Self::from_consensus)
     }
+}
+
+impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
+
+/// Error returned when parsing block height fails.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ParseHeightError(ParseError);
+
+impl fmt::Display for ParseHeightError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.display(f, "block height", 0, LOCK_TIME_THRESHOLD - 1)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseHeightError {
+    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
+}
+
+impl From<ParseError> for ParseHeightError {
+    fn from(value: ParseError) -> Self { Self(value) }
 }
 
 /// A UNIX timestamp, seconds since epoch, guaranteed to always contain a valid time value.
@@ -504,11 +523,11 @@ impl Time {
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
-    pub fn from_consensus(n: u32) -> Result<Time, Error> {
+    pub fn from_consensus(n: u32) -> Result<Time, ConversionError> {
         if is_block_time(n) {
             Ok(Self(n))
         } else {
-            Err(ConversionError::invalid_time(n).into())
+            Err(ConversionError::invalid_time(n))
         }
     }
 
@@ -526,20 +545,63 @@ impl Time {
     pub fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
-impl_parse_str_from_int_fallible!(Time, u32, from_consensus, Error);
-
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl FromHexStr for Time {
-    type Error = Error;
+    type Error = ParseTimeError;
 
     #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let time = crate::parse::hex_u32(s)?;
-        Time::from_consensus(time)
+        parse_hex(s, Self::from_consensus)
     }
+}
+
+impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
+
+/// Error returned when parsing block time fails.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ParseTimeError(ParseError);
+
+impl fmt::Display for ParseTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.display(f, "block height", LOCK_TIME_THRESHOLD, u32::MAX)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseTimeError {
+    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { self.0.source() }
+}
+
+impl From<ParseError> for ParseTimeError {
+    fn from(value: ParseError) -> Self { Self(value) }
+}
+
+fn parser<T, E, S, F>(f: F) -> impl FnOnce(S) -> Result<T, E>
+where
+    E: From<ParseError>,
+    S: AsRef<str> + Into<String>,
+    F: FnOnce(u32) -> Result<T, ConversionError>,
+{
+    move |s| {
+        let n = s.as_ref().parse::<i64>().map_err(ParseError::invalid_int(s))?;
+        let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
+        f(n).map_err(ParseError::from).map_err(Into::into)
+    }
+}
+
+fn parse_hex<T, E, S, F>(s: S, f: F) -> Result<T, E>
+where
+    E: From<ParseError>,
+    S: AsRef<str> + Into<String>,
+    F: FnOnce(u32) -> Result<T, ConversionError>,
+{
+    let n = i64::from_str_radix(s.as_ref(), 16).map_err(ParseError::invalid_int(s))?;
+    let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
+    f(n).map_err(ParseError::from).map_err(Into::into)
 }
 
 /// Returns true if `n` is a block height i.e., less than 500,000,000.
@@ -677,6 +739,70 @@ impl std::error::Error for OperationError {
             InvalidComparison => None,
         }
     }
+}
+
+/// Internal - common representation for height and time.
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum ParseError {
+    InvalidInteger { source: core::num::ParseIntError, input: String },
+    // unit implied by outer type
+    // we use i64 to have nicer messages for negative values
+    Conversion(i64),
+}
+
+impl ParseError {
+    fn invalid_int<S: Into<String>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
+        move |source| Self::InvalidInteger { source, input: s.into() }
+    }
+
+    fn display(&self, f: &mut fmt::Formatter<'_>, subject: &str, lower_bound: u32, upper_bound: u32) -> fmt::Result {
+        use core::num::IntErrorKind;
+
+        use ParseError::*;
+
+        match self {
+            InvalidInteger { source, input } if *source.kind() == IntErrorKind::PosOverflow => {
+                write!(f, "{} {} is above limit {}", subject, input, upper_bound)
+            }
+            InvalidInteger { source, input } if *source.kind() == IntErrorKind::NegOverflow => {
+                write!(f, "{} {} is below limit {}", subject, input, lower_bound)
+            }
+            InvalidInteger { source, input } => {
+                write_err!(f, "failed to parse {} as {}", input, subject; source)
+            }
+            Conversion(value) if *value < i64::from(lower_bound) => {
+                write!(f, "{} {} is below limit {}", subject, value, lower_bound)
+            }
+            Conversion(value) => {
+                write!(f, "{} {} is above limit {}", subject, value, upper_bound)
+            }
+        }
+    }
+
+    // To be consistent with `write_err` we need to **not** return source in case of overflow
+    #[cfg(feature = "std")]
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use core::num::IntErrorKind;
+
+        use ParseError::*;
+
+        match self {
+            InvalidInteger { source, .. } if *source.kind() == IntErrorKind::PosOverflow => None,
+            InvalidInteger { source, .. } if *source.kind() == IntErrorKind::NegOverflow => None,
+            InvalidInteger { source, .. } => Some(source),
+            Conversion(_) => None,
+        }
+    }
+}
+
+impl From<ParseIntError> for ParseError {
+    fn from(value: ParseIntError) -> Self {
+        Self::InvalidInteger { source: value.source, input: value.input }
+    }
+}
+
+impl From<ConversionError> for ParseError {
+    fn from(value: ConversionError) -> Self { Self::Conversion(value.input.into()) }
 }
 
 #[cfg(test)]
