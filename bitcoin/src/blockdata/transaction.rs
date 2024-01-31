@@ -488,6 +488,10 @@ impl Default for Sequence {
     fn default() -> Self { Sequence::MAX }
 }
 
+impl From<u32> for Sequence {
+    fn from(n: u32) -> Self { Self(n) }
+}
+
 impl From<Sequence> for u32 {
     fn from(sequence: Sequence) -> u32 { sequence.0 }
 }
