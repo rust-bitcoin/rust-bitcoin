@@ -163,3 +163,14 @@ jobs:
         env:
           DO_WASM: true
         run: cd hashes && ./contrib/test.sh
+
+  Kani:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Checkout your code.'
+        uses: actions/checkout@v4
+
+      - name: 'Kani build proofs'
+        uses: model-checking/kani-github-action@v1.1
+        with:
+          args: '--only-codegen'
