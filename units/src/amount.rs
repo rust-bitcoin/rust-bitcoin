@@ -1755,7 +1755,10 @@ mod verification {
             if n1 >= 0 {
                 Ok(Amount::from_sat(n1.try_into().unwrap()))
             } else {
-                Err(ParseAmountError::Negative)
+                Err(OutOfRangeError {
+                    is_signed: true,
+                    is_greater_than_max: false
+                })
             },
         );
     }
