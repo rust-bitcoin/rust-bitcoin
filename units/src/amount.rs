@@ -719,11 +719,9 @@ impl Amount {
         match btc.checked_mul(100_000_000) {
             Some(amount) => Amount::from_sat(amount),
             None => {
-                // TODO replace with panic!() when MSRV = 1.57+
+                // When MSRV is 1.57+ we can use `panic!()`.
                 #[allow(unconditional_panic)]
-                // disabling this lint until panic!() can be used.
                 #[allow(clippy::let_unit_value)]
-                // disabling this lint until panic!() can be used.
                 #[allow(clippy::out_of_bounds_indexing)]
                 let _int_overflow_converting_btc_to_sats = [(); 0][1];
                 Amount(0)
