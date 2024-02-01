@@ -716,7 +716,6 @@ impl Amount {
     /// The function panics if the argument multiplied by the number of sats
     /// per bitcoin overflows a u64 type.
     pub const fn from_int_btc(btc: u64) -> Amount {
-        // TODO replace whith unwrap() when available in const context.
         match btc.checked_mul(100_000_000) {
             Some(amount) => Amount::from_sat(amount),
             None => {
