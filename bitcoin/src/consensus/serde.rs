@@ -98,7 +98,6 @@ pub mod hex {
     }
 
     // Newtypes to hide internal details.
-    // TODO: statically prove impossible cases
 
     /// Error returned when a hex string decoder can't be created.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
