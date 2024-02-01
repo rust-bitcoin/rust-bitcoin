@@ -442,7 +442,6 @@ impl U256 {
             [self.1 as u64, (self.1 >> 64) as u64, self.0 as u64, (self.0 >> 64) as u64];
 
         for word in &mut split_le {
-            // TODO: Use `carrying_mul` when stabilized: https://github.com/rust-lang/rust/issues/85532
             // This will not overflow, for proof see https://github.com/rust-bitcoin/rust-bitcoin/pull/1496#issuecomment-1365938572
             let n = carry + u128::from(rhs) * u128::from(*word);
 
