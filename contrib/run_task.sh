@@ -5,12 +5,17 @@ set -ex
 # Make all cargo invocations verbose.
 export CARGO_TERM_VERBOSE=true
 
-cargo --version
-rustc --version
-
 main() {
     crate="$1"
     task="$2"
+
+    check_required_commands
+
+    cargo --version
+    rustc --version
+    /usr/bin/env bash --version
+    locale
+    env
 
     cd "$crate"
 
@@ -65,8 +70,7 @@ main() {
 	    do_schemars
 	    ;;
 	*)
-	    echo "Error: unknown task $task" >&2
-	    exit 1
+	    err "Error: unknown task $task"
 	    ;;
     esac
 }
@@ -220,6 +224,27 @@ do_bench() {
 do_schemars() {
     cd "extended_tests/schemars" > /dev/null
     cargo test
+}
+
+# Check all the commands we use are present in the current environment.
+check_required_commands() {
+    need_cmd cargo
+    need_cmd rustc
+    need_cmd jq
+    need_cmd cut
+    need_cmd grep
+    need_cmd wc
+}
+
+need_cmd() {
+    if ! command -v "$1" > /dev/null 2>&1
+    then err "need '$1' (command not found)"
+    fi
+}
+
+err() {
+    echo "$1" >&2
+    exit 1
 }
 
 #
