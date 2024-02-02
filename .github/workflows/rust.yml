@@ -8,45 +8,69 @@ on:
 name: Continuous integration
 
 jobs:
+  Prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      crates: ${{ steps.get_matrix.outputs.crates }}
+      deps: ${{ steps.get_matrix.outputs.deps }}
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Prepare tests
+        id: get_matrix
+        run: contrib/get_matrix.sh
+
   Stable:
+    needs: Prepare
     name: Test - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [test, docs, feature_matrix, dup_deps]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
       - name: Checkout Toolchain
         # https://github.com/dtolnay/rust-toolchain
         uses: dtolnay/rust-toolchain@stable
+      - name: Set dependencies
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: Running test script
-        env:
-          AS_DEPENDENCY: false
-          DO_DOCS: true
-          DO_FEATURE_MATRIX: true
-          DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
-        run: ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Beta:
+    needs: Prepare
     name: Test - beta toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [test]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
       - name: Checkout Toolchain
         uses: dtolnay/rust-toolchain@beta
+      - name: Set dependencies
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: Running test script
-        env:
-          AS_DEPENDENCY: false
-        run: ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Nightly:
+    needs: Prepare
     name: Test - nightly toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [test, lint, bench, docsrs]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
@@ -54,20 +78,21 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
       - name: Install clippy
         run: rustup component add clippy
+      - name: Set dependencies
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: Running test script
-        env:
-          DO_LINT: true
-          DO_FMT: false
-          DO_BENCH: true
-          AS_DEPENDENCY: false
-          DO_DOCSRS: true
-        run: ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   MSRV:
+    needs: Prepare
     name: Test - 1.56.1 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [test, feature_matrix]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
@@ -75,10 +100,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.56.1"
+      - name: Set dependencies
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: Running test script
-        env:
-          DO_FEATURE_MATRIX: true
-        run: ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Arch32bit:
     name: Test 32-bit version
@@ -137,8 +162,15 @@ jobs:
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
   ASAN:
+    needs: Prepare
     name: Address sanitizer     # hashes crate only.
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [hashes]
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [asan]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
@@ -147,22 +179,43 @@ jobs:
       - name: Install src
         run: rustup component add rust-src
       - name: Running address sanitizer
-        env:
-          DO_ASAN: true
-        run: cd hashes && ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   WASM:
+    needs: Prepare
     name: WebAssembly Build # hashes crate only.
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [hashes]
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [wasm]
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
       - name: Checkout Toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Running WASM build
-        env:
-          DO_WASM: true
-        run: cd hashes && ./contrib/test.sh
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+
+  Schemars:
+    needs: Prepare
+    name: Schemars
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [hashes]
+        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
+        task: [schemars]
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Running schemars test
+        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Kani:
     runs-on: ubuntu-20.04
