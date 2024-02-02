@@ -22,20 +22,21 @@ use hashes::Hash;
 use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
-use crate::bip32::{self, KeySource, Xpriv, Xpub};
-use crate::blockdata::transaction::{self, Transaction, TxOut};
+#[cfg(feature = "base64")]
+pub use self::display_from_str::PsbtParseError;
+#[doc(inline)]
+pub use self::error::Error;
+#[doc(inline)]
+pub use self::map::{Input, Output, PsbtSighashType};
+use crate::bip32::{KeySource, Xpriv, Xpub};
+use crate::blockdata::transaction;
+use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
+use crate::locktime::absolute;
 use crate::prelude::*;
-use crate::sighash::{self, EcdsaSighashType, SighashCache};
-use crate::{Amount, FeeRate};
-
-#[rustfmt::skip]                // Keep public re-exports separate.
-#[doc(inline)]
-pub use self::{
-    map::{Input, Output, PsbtSighashType},
-    error::Error,
-};
+use crate::sighash::{AsMutTransaction, AsTransaction, EcdsaSighashType, SighashCache};
+use crate::{bip32, sighash, Amount, FeeRate};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -347,7 +348,7 @@ impl Psbt {
     ) -> Result<Vec<PublicKey>, SignError>
     where
         C: Signing,
-        T: Borrow<Transaction>,
+        T: AsTransaction,
         K: GetKey,
     {
         let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
@@ -390,7 +391,7 @@ impl Psbt {
     /// Uses the [`EcdsaSighashType`] from this input if one is specified. If no sighash type is
     /// specified uses [`EcdsaSighashType::All`]. This function does not support scripts that
     /// contain `OP_CODESEPARATOR`.
-    pub fn sighash_ecdsa<T: Borrow<Transaction>>(
+    pub fn sighash_ecdsa<T: AsTransaction>(
         &self,
         input_index: usize,
         cache: &mut SighashCache<T>,
@@ -553,6 +554,38 @@ impl Psbt {
             outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
         }
         inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
+    }
+}
+
+impl AsTransaction for Psbt {
+    fn inputs_len(&self) -> usize {
+        self.unsigned_tx.inputs_len()
+    }
+
+    fn input_at(&self, index: usize) -> Result<&TxIn, transaction::InputsIndexError> {
+        self.unsigned_tx.input_at(index)
+    }
+
+    fn outputs_len(&self) -> usize {
+        self.unsigned_tx.outputs_len()
+    }
+
+    fn output_at(&self, index: usize) -> Result<&TxOut, transaction::OutputsIndexError> {
+        self.unsigned_tx.output_at(index)
+    }
+
+    fn version(&self) -> transaction::Version {
+        self.unsigned_tx.version()
+    }
+
+    fn lock_time(&self) -> absolute::LockTime {
+        self.unsigned_tx.lock_time()
+    }
+}
+
+impl AsMutTransaction for Psbt {
+    fn mut_input_at(&mut self, index: usize) -> Result<&mut TxIn, transaction::InputsIndexError> {
+        self.unsigned_tx.mut_input_at(index)
     }
 }
 
@@ -1004,8 +1037,6 @@ mod display_from_str {
         }
     }
 }
-#[cfg(feature = "base64")]
-pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
