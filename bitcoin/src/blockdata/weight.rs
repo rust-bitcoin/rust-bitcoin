@@ -63,11 +63,9 @@ impl Weight {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Weight(weight),
             None => {
-                // TODO replace with panic!() when MSRV = 1.57+
+                // When MSRV is 1.57+ we can use `panic!()`.
                 #[allow(unconditional_panic)]
-                // disabling this lint until panic!() can be used.
                 #[allow(clippy::let_unit_value)]
-                // disabling this lint until panic!() can be used.
                 #[allow(clippy::out_of_bounds_indexing)]
                 let _int_overflow_scaling_weight = [(); 0][1];
                 Weight(0)
