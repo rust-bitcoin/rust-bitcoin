@@ -21,7 +21,7 @@ use units::{impl_parse_str_from_int_infallible, parse};
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
-use crate::blockdata::locktime::relative;
+use crate::blockdata::locktime::relative::{self, IntegerOverflowError};
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
@@ -421,11 +421,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, relative::Error> {
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, IntegerOverflowError> {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(relative::Error::IntegerOverflow(seconds))
+            Err(IntegerOverflowError(seconds))
         }
     }
 
@@ -434,11 +434,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, relative::Error> {
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, IntegerOverflowError> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(relative::Error::IntegerOverflow(seconds))
+            Err(IntegerOverflowError(seconds))
         }
     }
 

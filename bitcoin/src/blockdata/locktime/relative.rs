@@ -123,12 +123,15 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, Error> {
+    pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, IncompatibleTimeError> {
         use LockTime::*;
 
         match *self {
             Blocks(ref height) => Ok(height.value() <= h.value()),
-            Time(ref time) => Err(Error::IncompatibleTime(*self, *time)),
+            Time(ref time) => Err(IncompatibleTimeError {
+                lock: *self,
+                time: *time,
+            })
         }
     }
 
@@ -150,12 +153,15 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, Error> {
+    pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, IncompatibleHeightError> {
         use LockTime::*;
 
         match *self {
             Time(ref time) => Ok(time.value() <= t.value()),
-            Blocks(ref height) => Err(Error::IncompatibleHeight(*self, *height)),
+            Blocks(ref height) => Err(IncompatibleHeightError {
+                lock: *self,
+                height: *height,
+            })
         }
     }
 }
@@ -251,11 +257,11 @@ impl Time {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, Error> {
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, IntegerOverflowError> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Time::from_512_second_intervals(interval))
         } else {
-            Err(Error::IntegerOverflow(seconds))
+            Err(IntegerOverflowError(seconds))
         }
     }
 
@@ -270,46 +276,50 @@ impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-/// Errors related to relative lock times.
+/// Input time in seconds was too large to be encoded to a 16 bit 512 second interval.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Input time in seconds was too large to be encoded to a 16 bit 512 second interval.
-    IntegerOverflow(u32),
-    /// Tried to satisfy a lock-by-blocktime lock using a height value.
-    IncompatibleHeight(LockTime, Height),
-    /// Tried to satisfy a lock-by-blockheight lock using a time value.
-    IncompatibleTime(LockTime, Time),
-}
+pub struct IntegerOverflowError(pub(crate) u32);
 
-impl fmt::Display for Error {
+impl fmt::Display for IntegerOverflowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            IntegerOverflow(val) => write!(
-                f,
-                "{} seconds is too large to be encoded to a 16 bit 512 second interval",
-                val
-            ),
-            IncompatibleHeight(lock, height) =>
-                write!(f, "tried to satisfy lock {} with height: {}", lock, height),
-            IncompatibleTime(lock, time) =>
-                write!(f, "tried to satisfy lock {} with time: {}", lock, time),
-        }
+        write!(f, "{} seconds is too large to be encoded to a 16 bit 512 second interval", self.0)
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+impl std::error::Error for IntegerOverflowError {}
 
-        match *self {
-            IntegerOverflow(_) | IncompatibleHeight(_, _) | IncompatibleTime(_, _) => None,
-        }
+/// Tried to satisfy a lock-by-blocktime lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleHeightError {
+    lock: LockTime,
+    height: Height,
+}
+
+impl fmt::Display for IncompatibleHeightError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tried to satisfy a lock-by-blocktime lock {} with height: {}", self.lock, self.height)
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleHeightError {}
+
+/// Tried to satisfy a lock-by-blockheight lock using a time value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError {
+    lock: LockTime,
+    time: Time,
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tried to satisfy a lock-by-blockheight lock {} with time: {}", self.lock, self.time)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {}
 
 #[cfg(test)]
 mod tests {
