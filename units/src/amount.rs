@@ -864,6 +864,20 @@ impl Amount {
     /// Returns [None] if overflow occurred.
     pub fn checked_rem(self, rhs: u64) -> Option<Amount> { self.0.checked_rem(rhs).map(Amount) }
 
+    /// Unchecked addition.
+    ///
+    /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_add(self, rhs: Amount) -> Amount {
+        Self(self.0 + rhs.0)
+    }
+
+    /// Unchecked subtraction.
+    ///
+    /// Computes `self - rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_sub(self, rhs: Amount) -> Amount {
+        Self(self.0 - rhs.0)
+    }
+
     /// Convert to a signed amount.
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
         if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
@@ -1227,6 +1241,20 @@ impl SignedAmount {
     /// Returns [None] if overflow occurred.
     pub fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
         self.0.checked_rem(rhs).map(SignedAmount)
+    }
+
+    /// Unchecked addition.
+    ///
+    /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount {
+        Self(self.0 + rhs.0)
+    }
+
+    /// Unchecked subtraction.
+    ///
+    /// Computes `self - rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount {
+        Self(self.0 - rhs.0)
     }
 
     /// Subtraction that doesn't allow negative [SignedAmount]s.
@@ -1876,6 +1904,34 @@ mod tests {
 
         assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
         assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_amount_add() {
+        let amt = Amount::MAX.unchecked_add(Amount::ONE_SAT);
+        assert_eq!(amt, Amount::ZERO);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_signed_amount_add() {
+        let signed_amt = SignedAmount::MAX.unchecked_add(SignedAmount::ONE_SAT);
+        assert_eq!(signed_amt, SignedAmount::MIN);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_amount_subtract() {
+        let amt = Amount::ZERO.unchecked_sub(Amount::ONE_SAT);
+        assert_eq!(amt, Amount::MAX);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_signed_amount_subtract() {
+        let signed_amt = SignedAmount::MIN.unchecked_sub(SignedAmount::ONE_SAT);
+        assert_eq!(signed_amt, SignedAmount::MAX);
     }
 
     #[cfg(feature = "alloc")]
