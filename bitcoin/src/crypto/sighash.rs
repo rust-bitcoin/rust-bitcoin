@@ -15,7 +15,7 @@ use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
-use internals::write_err;
+use internals::{write_err, write_err_unchecked_source};
 use io::Write;
 
 use crate::blockdata::witness::Witness;
@@ -1410,7 +1410,7 @@ impl<E: fmt::Display> fmt::Display for SigningDataError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Io(error) => write_err!(f, "failed to write sighash data"; error),
-            Self::Sighash(error) => write_err!(f, "failed to compute sighash data"; error),
+            Self::Sighash(error) => write_err_unchecked_source!(f, "failed to compute sighash data"; error),
         }
     }
 }

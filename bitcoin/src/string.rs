@@ -7,7 +7,7 @@
 
 use core::fmt;
 
-use internals::write_err;
+use internals::write_err_unchecked_source;
 
 use crate::prelude::String;
 
@@ -53,9 +53,9 @@ impl<E: fmt::Display> fmt::Display for FromHexError<E> {
         use FromHexError::*;
 
         match *self {
-            ParseHex(ref e) => write_err!(f, "failed to parse hex string"; e),
+            ParseHex(ref e) => write_err_unchecked_source!(f, "failed to parse hex string"; e),
             MissingPrefix(ref value) =>
-                write_err!(f, "the input value `{}` is missing the `0x` prefix", value; self),
+                write!(f, "the input value `{}` is missing the `0x` prefix", value),
         }
     }
 }
