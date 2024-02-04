@@ -44,17 +44,23 @@ macro_rules! do_impl {
 
         impl fmt::Display for $ty {
             #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result { fmt::Display::fmt(&self.0, f) }
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::Display::fmt(&self.0, f)
+            }
         }
 
         impl fmt::LowerHex for $ty {
             #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::LowerHex::fmt(&self.0, f)
+            }
         }
 
         impl fmt::UpperHex for $ty {
             #[inline]
-            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+            fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
+                fmt::UpperHex::fmt(&self.0, f)
+            }
         }
     };
 }
@@ -1742,7 +1748,7 @@ mod verification {
         let _ = x.mul_u64(y);
     }
 
-    #[kani::unwind(5)]   // I can't remember exactly why we need this.
+    #[kani::unwind(5)] // I can't remember exactly why we need this.
     #[kani::proof]
     fn check_div_rem() {
         let x: U256 = kani::any();

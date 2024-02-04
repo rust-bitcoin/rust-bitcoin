@@ -755,7 +755,13 @@ impl ParseError {
         move |source| Self::InvalidInteger { source, input: s.into() }
     }
 
-    fn display(&self, f: &mut fmt::Formatter<'_>, subject: &str, lower_bound: u32, upper_bound: u32) -> fmt::Result {
+    fn display(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        subject: &str,
+        lower_bound: u32,
+        upper_bound: u32,
+    ) -> fmt::Result {
         use core::num::IntErrorKind;
 
         use ParseError::*;
