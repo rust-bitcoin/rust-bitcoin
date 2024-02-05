@@ -315,7 +315,7 @@ impl Default for TxIn {
 /// [BIP-65]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
 /// [BIP-68]: <https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki>
 /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
@@ -502,6 +502,13 @@ impl fmt::LowerHex for Sequence {
 
 impl fmt::UpperHex for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl fmt::Debug for Sequence {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // 10 because its 8 digits + 2 for the '0x'
+        write!(f, "Sequence({:#010x})", self.0)
+    }
 }
 
 impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
@@ -2407,6 +2414,12 @@ mod tests {
             InputWeightPrediction::ground_p2pkh_compressed(0).weight(),
             InputWeightPrediction::P2PKH_COMPRESSED_MAX.weight()
         );
+    }
+
+    #[test]
+    fn sequence_debug_output() {
+        let seq = Sequence::from_seconds_floor(1000);
+        println!("{:?}", seq)
     }
 }
 
