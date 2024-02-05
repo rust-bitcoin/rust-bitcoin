@@ -75,3 +75,6 @@ required-features = ["std", "rand-std"]
 [[example]]
 name = "taproot-psbt"
 required-features = ["std", "rand-std", "bitcoinconsensus"]
+
+[[example]]
+name = "sighash"
