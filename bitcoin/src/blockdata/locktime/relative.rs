@@ -10,9 +10,8 @@ use core::fmt;
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
+use units::impl_parse_str_from_int_infallible;
 
-use crate::parse::impl_parse_str_from_int_infallible;
-use crate::prelude::*;
 #[cfg(doc)]
 use crate::relative;
 

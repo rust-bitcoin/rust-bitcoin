@@ -17,6 +17,7 @@ use core::{cmp, fmt, str};
 use hashes::{self, sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
+use units::{impl_parse_str_from_int_infallible, parse};
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
@@ -26,7 +27,6 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -168,7 +168,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    crate::parse::int(s).map_err(ParseOutPointError::Vout)
+    parse::int(s).map_err(ParseOutPointError::Vout)
 }
 
 impl core::str::FromStr for OutPoint {
@@ -475,10 +475,10 @@ impl Sequence {
 }
 
 impl FromHexStr for Sequence {
-    type Error = crate::parse::ParseIntError;
+    type Error = parse::ParseIntError;
 
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let sequence = crate::parse::hex_u32(s)?;
+        let sequence = parse::hex_u32(s)?;
         Ok(Self::from_consensus(sequence))
     }
 }
@@ -1619,6 +1619,7 @@ mod tests {
     use core::str::FromStr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
+    use units::parse;
 
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -1691,7 +1692,7 @@ mod tests {
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
             ),
-            Err(ParseOutPointError::Vout(crate::parse::int::<u32, _>("lol").unwrap_err()))
+            Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
         );
 
         assert_eq!(

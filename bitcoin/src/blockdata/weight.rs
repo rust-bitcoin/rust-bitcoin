@@ -5,8 +5,6 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::prelude::*;
-
 /// Represents block weight - the weight of a transaction or block.
 ///
 /// This is an integer newtype representing weigth in `wu`. It provides protection against mixing
@@ -334,4 +332,4 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     }
 }
 
-crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+units::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);

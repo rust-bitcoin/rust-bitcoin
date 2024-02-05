@@ -6,9 +6,10 @@ use core::fmt;
 
 use internals::write_err;
 
+#[deprecated(since = "TBD", note = "use bitcoin::units::ParseIntError instead")]
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::parse::ParseIntError;
+pub use units::parse::ParseIntError;
 
 /// Hex decoding error.
 // Intentionally opaque so as to hide `hex` from the public API - do not make the inner error pub.
