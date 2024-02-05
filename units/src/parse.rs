@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 
+//! Provides a rich error type for parsing integers from strings.
+
+use alloc::string::String;      // The whole module requires "alloc".
 use core::fmt;
 use core::str::FromStr;
 
 use internals::write_err;
-
-use crate::prelude::*;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
 ///
@@ -19,19 +20,31 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ParseIntError {
-    pub(crate) input: String,
-    // for displaying - see Display impl with nice error message below
+    /// The input string that caused the error.
+    input: String,
+    /// The source of this error.
+    source: core::num::ParseIntError,
+
+    /// For displaying - see Display impl with nice error message below
     bits: u8,
-    // We could represent this as a single bit but it wouldn't actually derease the cost of moving
-    // the struct because String contains pointers so there will be padding of bits at least
-    // pointer_size - 1 bytes: min 1B in practice.
+
+    /// We could represent this as a single bit but it wouldn't actually derease the cost of moving
+    /// the struct because String contains pointers so there will be padding of bits at least
+    /// pointer_size - 1 bytes: min 1B in practice.
     is_signed: bool,
-    pub(crate) source: core::num::ParseIntError,
 }
 
 impl ParseIntError {
     /// Returns the input that was attempted to be parsed.
     pub fn input(&self) -> &str { &self.input }
+
+    /// Returns the `num::ParseIntError` encountered while parsing input.
+    pub fn source(&self) -> &core::num::ParseIntError { &self.source }
+
+    /// Returns the input and source error.
+    pub fn into_input_source(self) -> (String, core::num::ParseIntError) {
+        (self.input, self.source)
+    }
 }
 
 impl fmt::Display for ParseIntError {
@@ -57,7 +70,7 @@ impl AsRef<core::num::ParseIntError> for ParseIntError {
 
 /// Not strictly neccessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
-pub(crate) trait Integer:
+pub trait Integer:
     FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized
 {
 }
@@ -76,7 +89,7 @@ impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 ///
 /// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
 /// owned since it avoids allocation in error case.
-pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseIntError> {
+pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
             input: s.into(),
@@ -90,7 +103,8 @@ pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, P
     })
 }
 
-pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
+/// Parses a hex string for a `u32` value.
+pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
     u32::from_str_radix(s.as_ref(), 16).map_err(|error| ParseIntError {
         input: s.into(),
         bits: u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 32 bits for u32"),
@@ -99,13 +113,14 @@ pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIn
     })
 }
 
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
+/// Implements `TryFrom<$from> for $to` using `units::int!()`, mapping the output using infallible
 /// conversion function `fn`.
+#[macro_export]
 macro_rules! impl_tryfrom_str_from_int_infallible {
     ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
         $(
         impl core::convert::TryFrom<$from> for $to {
-            type Error = $crate::error::ParseIntError;
+            type Error = $crate::ParseIntError;
 
             fn try_from(s: $from) -> core::result::Result<Self, Self::Error> {
                 $crate::parse::int::<$inner, $from>(s).map($to::$fn)
@@ -114,18 +129,19 @@ macro_rules! impl_tryfrom_str_from_int_infallible {
         )*
     }
 }
-pub(crate) use impl_tryfrom_str_from_int_infallible;
 
-/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
-/// the output using infallible conversion function `fn`.
+/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `units::int!()`,
+/// mapping the output using infallible conversion function `fn`.
 ///
-/// The `Error` type is `ParseIntError`
+///
+/// The `Error` type is `ParseIntError`.
+#[macro_export]
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
-        $crate::parse::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; String, $to, $inner, $fn; Box<str>, $to, $inner, $fn);
+        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; String, $to, $inner, $fn; Box<str>, $to, $inner, $fn);
 
         impl core::str::FromStr for $to {
-            type Err = $crate::error::ParseIntError;
+            type Err = $crate::ParseIntError;
 
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
                 $crate::parse::int::<$inner, &str>(s).map($to::$fn)
@@ -134,8 +150,9 @@ macro_rules! impl_parse_str_from_int_infallible {
 
     }
 }
-pub(crate) use impl_parse_str_from_int_infallible;
 
+/// Implements `TryFrom<$from> for $to`.
+#[macro_export]
 macro_rules! impl_tryfrom_str {
     ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
         $(
@@ -149,12 +166,12 @@ macro_rules! impl_tryfrom_str {
         )*
     }
 }
-pub(crate) use impl_tryfrom_str;
 
 /// Implements standard parsing traits for `$type` by calling into `$inner_fn`.
+#[macro_export]
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
-        $crate::parse::impl_tryfrom_str!(&str, $to, $err, $inner_fn; String, $to, $err, $inner_fn; Box<str>, $to, $err, $inner_fn);
+        $crate::impl_tryfrom_str!(&str, $to, $err, $inner_fn; String, $to, $err, $inner_fn; Box<str>, $to, $err, $inner_fn);
 
         impl core::str::FromStr for $to {
             type Err = $err;
@@ -165,4 +182,3 @@ macro_rules! impl_parse_str {
         }
     }
 }
-pub(crate) use impl_parse_str;

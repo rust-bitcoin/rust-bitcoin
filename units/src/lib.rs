@@ -34,6 +34,11 @@ extern crate std;
 pub extern crate serde;
 
 pub mod amount;
+#[cfg(feature = "alloc")]
+pub mod parse;
 
 #[doc(inline)]
 pub use self::amount::{Amount, ParseAmountError, SignedAmount};
+#[doc(inline)]
+#[cfg(feature = "alloc")]
+pub use self::parse::ParseIntError;

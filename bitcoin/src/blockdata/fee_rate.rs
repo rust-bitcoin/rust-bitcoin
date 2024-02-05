@@ -154,7 +154,7 @@ impl Div<Weight> for Amount {
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
-crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+units::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
 mod tests {

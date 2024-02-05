@@ -2,6 +2,7 @@
 
 //! Contains error types and other error handling tools.
 
+#[deprecated(since = "TBD", note = "use bitcoin::units::ParseIntError instead")]
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use crate::parse::ParseIntError;
+pub use units::parse::ParseIntError;

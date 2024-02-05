@@ -333,4 +333,4 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     }
 }
 
-crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+units::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);

@@ -13,12 +13,12 @@ use internals::write_err;
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
+use units::{impl_parse_str, impl_parse_str_from_int_infallible, parse};
 
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
-use crate::parse::{impl_parse_str, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 use crate::string::FromHexStr;
 
@@ -330,7 +330,7 @@ impl FromHexStr for LockTime {
 
     #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let packed_lock_time = crate::parse::hex_u32(s)?;
+        let packed_lock_time = parse::hex_u32(s)?;
         Ok(Self::from_consensus(packed_lock_time))
     }
 }
@@ -758,7 +758,8 @@ impl ParseError {
 
 impl From<ParseIntError> for ParseError {
     fn from(value: ParseIntError) -> Self {
-        Self::InvalidInteger { source: value.source, input: value.input }
+        let (input, source) = value.into_input_source();
+        Self::InvalidInteger { source, input }
     }
 }
 
