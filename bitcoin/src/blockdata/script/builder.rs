@@ -18,7 +18,8 @@ pub struct Builder(ScriptBuf, Option<Opcode>);
 
 impl Builder {
     /// Creates a new empty script.
-    pub fn new() -> Self { Builder(ScriptBuf::new(), None) }
+    #[inline]
+    pub const fn new() -> Self { Builder(ScriptBuf::new(), None) }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }

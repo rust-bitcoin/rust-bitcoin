@@ -33,6 +33,7 @@ pub struct ScriptBuf(pub(in crate::blockdata::script) Vec<u8>);
 
 impl ScriptBuf {
     /// Creates a new empty script.
+    #[inline]
     pub const fn new() -> Self { ScriptBuf(Vec::new()) }
 
     /// Creates a new empty script with pre-allocated capacity.

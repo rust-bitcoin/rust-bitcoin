@@ -169,7 +169,8 @@ impl Version {
     /// Creates a [`Version`] from a signed 32 bit integer value.
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
-    pub fn from_consensus(v: i32) -> Self { Version(v) }
+    #[inline]
+    pub const fn from_consensus(v: i32) -> Self { Version(v) }
 
     /// Returns the inner `i32` value.
     ///
