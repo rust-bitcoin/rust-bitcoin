@@ -368,6 +368,9 @@ impl<'a> Iterator for DerivationPathIterator<'a> {
 }
 
 impl DerivationPath {
+    /// Creates a new master derivation path.
+    pub fn new() -> Self { DerivationPath::master() }
+
     /// Returns length of the derivation path
     pub fn len(&self) -> usize { self.0.len() }
 
