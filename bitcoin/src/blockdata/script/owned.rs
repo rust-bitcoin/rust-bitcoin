@@ -151,6 +151,21 @@ impl ScriptBuf {
         Builder::new().push_opcode(version.into()).push_slice(program).into_script()
     }
 
+    /// Creates the script code used for spending a P2WPKH output.
+    ///
+    /// The `scriptCode` is described in [BIP143].
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
+        Builder::new()
+            .push_opcode(OP_DUP)
+            .push_opcode(OP_HASH160)
+            .push_slice(wpkh)
+            .push_opcode(OP_EQUALVERIFY)
+            .push_opcode(OP_CHECKSIG)
+            .into_script()
+    }
+
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
     pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
         Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()

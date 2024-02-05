@@ -19,7 +19,7 @@ use crate::blockdata::script::{
     ScriptHash, WScriptHash,
 };
 use crate::consensus::Encodable;
-use crate::key::{PublicKey, UntweakedPublicKey};
+use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
@@ -385,14 +385,8 @@ impl Script {
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
     pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
         self.p2wpkh().map(|wpkh| {
-            Builder::new()
-                .push_opcode(OP_DUP)
-                .push_opcode(OP_HASH160)
-                // The `self` script is 0x00, 0x14, <pubkey_hash>
-                .push_slice(wpkh)
-                .push_opcode(OP_EQUALVERIFY)
-                .push_opcode(OP_CHECKSIG)
-                .into_script()
+            let wpkh = WPubkeyHash::from_slice(wpkh).expect("checked in p2wpkh()");
+            ScriptBuf::p2wpkh_script_code(wpkh)
         })
     }
 
