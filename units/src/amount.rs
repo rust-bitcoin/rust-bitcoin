@@ -1704,7 +1704,7 @@ mod verification {
             if n1 <= i64::MAX as u64 {
                 Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
             } else {
-                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_big(false)))
+                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_big(true)))
             },
         );
     }
