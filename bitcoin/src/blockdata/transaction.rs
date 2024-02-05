@@ -12,6 +12,7 @@
 //!
 
 use core::default::Default;
+use core::str::FromStr;
 use core::{cmp, fmt, str};
 
 use hashes::{self, sha256d, Hash};
@@ -24,7 +25,7 @@ use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
@@ -1047,6 +1048,63 @@ impl Transaction {
     }
 }
 
+impl FromStr for Transaction {
+    type Err = ParseTransactionError;
+
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        let bytes = <Vec<u8> as hex::FromHex>::from_hex(hex).map_err(error::HexToBytesError)?;
+        Ok(consensus::encode::deserialize(&bytes)?)
+    }
+}
+
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let v = encode::serialize(self);
+        fmt::LowerHex::fmt(&v.as_hex(), f)
+    }
+}
+
+/// Error parsing a [`Transaction`] from a hex string.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum ParseTransactionError {
+    /// Invalid hex string.
+    Hex(error::HexToBytesError),
+    /// Invalid transaction encoding.
+    Encoding(encode::Error)
+}
+
+impl fmt::Display for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ParseTransactionError::*;
+
+        match *self {
+            Hex(ref e) => write_err!(f, "invalid hex string"; e),
+            Encoding(ref e) => write_err!(f, "invalid transaction encoding"; e),
+        }
+     }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseTransactionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseTransactionError::*;
+
+        match *self {
+            Hex(ref e) => Some(e),
+            Encoding(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<error::HexToBytesError> for ParseTransactionError {
+    fn from(e: error::HexToBytesError) -> Self { Self::Hex(e) }
+}
+
+impl From<encode::Error> for ParseTransactionError {
+    fn from(e: encode::Error) -> Self { Self::Encoding(e) }
+}
+
 /// Error attempting to do an out of bounds access on the transaction inputs vector.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InputsIndexError(pub IndexOutOfBoundsError);
@@ -1744,6 +1802,14 @@ mod tests {
         let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
         assert!(!tx.is_coinbase());
+    }
+
+    #[test]
+    fn transaction_from_str_display() {
+        let hex = "ffffff7f0100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000";
+        let tx = hex.parse::<Transaction>().expect("failed to parse transaction");
+        let rinsed = tx.to_string();
+        assert_eq!(&rinsed, hex);
     }
 
     #[test]
