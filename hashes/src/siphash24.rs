@@ -214,7 +214,12 @@ impl Hash {
     }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.
+    #[deprecated(since = "TBD", note = "use Self::to_u64 instead")]
+    #[allow(clippy::trivially_copy_pass_by_ref)]
     pub fn as_u64(&self) -> u64 { u64::from_le_bytes(self.0) }
+
+    /// Returns the (little endian) 64-bit integer representation of the hash value.
+    pub fn to_u64(self) -> u64 { u64::from_le_bytes(self.0) }
 
     /// Creates a hash from its (little endian) 64-bit integer representation.
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }

@@ -299,7 +299,7 @@ fn generate_bip86_key_spend_tx(
 
             let secret_key = master_xpriv.derive_priv(secp, &derivation_path)?.to_priv().inner;
             sign_psbt_taproot(
-                &secret_key,
+                secret_key,
                 input.tap_internal_key.unwrap(),
                 None,
                 input,
@@ -373,7 +373,7 @@ impl BenefactorWallet {
             .push_int(locktime.to_consensus_u32() as i64)
             .push_opcode(OP_CLTV)
             .push_opcode(OP_DROP)
-            .push_x_only_key(&beneficiary_key)
+            .push_x_only_key(beneficiary_key)
             .push_opcode(OP_CHECKSIG)
             .into_script()
     }
@@ -533,7 +533,7 @@ impl BenefactorWallet {
                 let secret_key =
                     self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_priv().inner;
                 sign_psbt_taproot(
-                    &secret_key,
+                    secret_key,
                     spend_info.internal_key(),
                     None,
                     input,
@@ -628,7 +628,7 @@ impl BeneficiaryWallet {
         Ok(Self { master_xpriv, secp: Secp256k1::new() })
     }
 
-    fn master_xpub(&self) -> Xpub { Xpub::from_priv(&self.secp, &self.master_xpriv) }
+    fn master_xpub(&self) -> Xpub { Xpub::from_priv(&self.secp, self.master_xpriv) }
 
     fn spend_inheritance(
         &self,
@@ -665,7 +665,7 @@ impl BeneficiaryWallet {
                     sighash_type,
                 )?;
                 sign_psbt_taproot(
-                    &secret_key,
+                    secret_key,
                     *x_only_pubkey,
                     Some(*lh),
                     &mut psbt.inputs[0],
@@ -725,7 +725,7 @@ impl BeneficiaryWallet {
 
 // Calling this with `leaf_hash` = `None` will sign for key-spend
 fn sign_psbt_taproot(
-    secret_key: &secp256k1::SecretKey,
+    secret_key: secp256k1::SecretKey,
     pubkey: XOnlyPublicKey,
     leaf_hash: Option<TapLeafHash>,
     psbt_input: &mut psbt::Input,

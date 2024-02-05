@@ -44,7 +44,7 @@ pub enum NetworkKind {
 // ambiguous due to confusion caused by signet/testnet/regtest.
 impl NetworkKind {
     /// Returns true if this is real mainnet bitcoin.
-    pub fn is_mainnet(&self) -> bool { *self == NetworkKind::Main }
+    pub fn is_mainnet(self) -> bool { self == NetworkKind::Main }
 }
 
 impl From<Network> for NetworkKind {
@@ -193,6 +193,7 @@ pub mod as_core_arg {
 
     use crate::Network;
 
+    #[allow(clippy::trivially_copy_pass_by_ref)] // Function signature requires a reference.
     pub fn serialize<S>(network: &Network, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

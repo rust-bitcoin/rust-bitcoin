@@ -576,7 +576,7 @@ mod test {
             NetworkMessage::Verack,
             NetworkMessage::Addr(vec![(
                 45,
-                Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
+                Address::new(([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
             )]),
             NetworkMessage::Inv(vec![Inventory::Block(hash([8u8; 32]).into())]),
             NetworkMessage::GetData(vec![Inventory::Transaction(hash([45u8; 32]).into())]),

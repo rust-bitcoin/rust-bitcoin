@@ -180,7 +180,7 @@ impl Version {
     ///
     /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
     /// the version bit for the specific soft fork is toggled on.
-    pub fn is_signalling_soft_fork(&self, bit: u8) -> bool {
+    pub fn is_signalling_soft_fork(self, bit: u8) -> bool {
         // Only bits [0, 28] inclusive are used for signalling.
         if bit > 28 {
             return false;
@@ -279,7 +279,7 @@ impl Block {
             if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
                 if let Some(witness_root) = self.witness_root() {
                     return commitment
-                        == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
+                        == Self::compute_witness_commitment(witness_root, witness_vec[0]);
                 }
             }
         }
@@ -295,7 +295,7 @@ impl Block {
 
     /// Computes the witness commitment for the block's transaction list.
     pub fn compute_witness_commitment(
-        witness_root: &WitnessMerkleNode,
+        witness_root: WitnessMerkleNode,
         witness_reserved_value: &[u8],
     ) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();

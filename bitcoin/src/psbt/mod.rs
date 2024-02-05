@@ -725,7 +725,7 @@ pub enum OutputType {
 
 impl OutputType {
     /// The signing algorithm used to sign this output type.
-    pub fn signing_algorithm(&self) -> SigningAlgorithm {
+    pub fn signing_algorithm(self) -> SigningAlgorithm {
         use OutputType::*;
 
         match self {
@@ -1177,7 +1177,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk = Xpub::from_priv(secp, &sk);
+        let pk = Xpub::from_priv(secp, sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
@@ -1936,7 +1936,7 @@ mod tests {
 
         let sk = SecretKey::new(&mut thread_rng());
         let priv_key = PrivateKey::new(sk, NetworkKind::Test);
-        let pk = PublicKey::from_private_key(&secp, &priv_key);
+        let pk = PublicKey::from_private_key(&secp, priv_key);
 
         (priv_key, pk, secp)
     }
@@ -2087,7 +2087,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_p2wpkh(WPubkeyHash::hash(&pk.to_bytes())),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
@@ -2099,7 +2099,7 @@ mod tests {
         let unknown_prog = WitnessProgram::new(WitnessVersion::V4, &[0xaa; 34]).unwrap();
         let txout_unknown_future = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_witness_program(&unknown_prog),
+            script_pubkey: ScriptBuf::new_witness_program(unknown_prog),
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 

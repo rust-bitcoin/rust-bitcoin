@@ -43,13 +43,13 @@ fn main() {
     let path = DerivationPath::from_str("m/84h/0h/0h").unwrap();
     let child = root.derive_priv(&secp, &path).unwrap();
     println!("Child at {}: {}", path, child);
-    let xpub = Xpub::from_priv(&secp, &child);
+    let xpub = Xpub::from_priv(&secp, child);
     println!("Public key at {}: {}", path, xpub);
 
     // generate first receiving address at m/0/0
     // manually creating indexes this time
     let zero = ChildNumber::from_normal_idx(0).unwrap();
     let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(&CompressedPublicKey(public_key), KnownHrp::Mainnet);
+    let address = Address::p2wpkh(CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {}", address);
 }

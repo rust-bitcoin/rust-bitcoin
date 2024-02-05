@@ -56,7 +56,7 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
+    pub fn is_satisfied_by(self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
         } else {
@@ -96,10 +96,10 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_implied_by(&self, other: LockTime) -> bool {
+    pub fn is_implied_by(self, other: LockTime) -> bool {
         use LockTime::*;
 
-        match (*self, other) {
+        match (self, other) {
             (Blocks(this), Blocks(other)) => this.value() <= other.value(),
             (Time(this), Time(other)) => this.value() <= other.value(),
             _ => false, // Not the same units.
@@ -124,12 +124,12 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, Error> {
+    pub fn is_satisfied_by_height(self, h: Height) -> Result<bool, Error> {
         use LockTime::*;
 
-        match *self {
+        match self {
             Blocks(ref height) => Ok(height.value() <= h.value()),
-            Time(ref time) => Err(Error::IncompatibleTime(*self, *time)),
+            Time(ref time) => Err(Error::IncompatibleTime(self, *time)),
         }
     }
 
@@ -151,12 +151,12 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, Error> {
+    pub fn is_satisfied_by_time(self, t: Time) -> Result<bool, Error> {
         use LockTime::*;
 
-        match *self {
+        match self {
             Time(ref time) => Ok(time.value() <= t.value()),
-            Blocks(ref height) => Err(Error::IncompatibleHeight(*self, *height)),
+            Blocks(ref height) => Err(Error::IncompatibleHeight(self, *height)),
         }
     }
 }

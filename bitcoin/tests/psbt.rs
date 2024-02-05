@@ -35,7 +35,7 @@ fn bip174_psbt_workflow() {
     //
 
     let ext_priv = build_extended_private_key();
-    let ext_pub = Xpub::from_priv(&secp, &ext_priv);
+    let ext_pub = Xpub::from_priv(&secp, ext_priv);
     let parent_fingerprint = ext_pub.fingerprint();
 
     //

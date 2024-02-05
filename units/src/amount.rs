@@ -243,7 +243,7 @@ impl OutOfRangeError {
     /// Returns the minimum and maximum allowed values for the type that was parsed.
     ///
     /// This can be used to give a hint to the user which values are allowed.
-    pub fn valid_range(&self) -> (i64, u64) {
+    pub fn valid_range(self) -> (i64, u64) {
         match self.is_signed {
             true => (i64::MIN, i64::MAX as u64),
             false => (0, u64::MAX),
@@ -251,12 +251,12 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was large than the maximum allowed value.
-    pub fn is_above_max(&self) -> bool {
+    pub fn is_above_max(self) -> bool {
         self.is_greater_than_max
     }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
-    pub fn is_below_min(&self) -> bool {
+    pub fn is_below_min(self) -> bool {
         !self.is_greater_than_max
     }
 

@@ -190,7 +190,7 @@ impl PublicKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
-        sk: &PrivateKey,
+        sk: PrivateKey,
     ) -> PublicKey {
         sk.public_key(secp)
     }
@@ -199,10 +199,10 @@ impl PublicKey {
     pub fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        msg: &secp256k1::Message,
-        sig: &ecdsa::Signature,
+        msg: secp256k1::Message,
+        sig: ecdsa::Signature,
     ) -> Result<(), Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.inner)?)
+        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.inner)?)
     }
 }
 
@@ -295,7 +295,7 @@ impl CompressedPublicKey {
     ///
     /// Note that this can be used as a sort key to get BIP67-compliant sorting.
     /// That's why this type doesn't have the `to_sort_key` method - it would duplicate this one.
-    pub fn to_bytes(&self) -> [u8; 33] { self.0.serialize() }
+    pub fn to_bytes(self) -> [u8; 33] { self.0.serialize() }
 
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
@@ -305,7 +305,7 @@ impl CompressedPublicKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
-        sk: &PrivateKey,
+        sk: PrivateKey,
     ) -> Result<Self, UncompressedPubkeyError> {
         sk.public_key(secp).try_into()
     }
@@ -314,10 +314,10 @@ impl CompressedPublicKey {
     pub fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        msg: &secp256k1::Message,
-        sig: &ecdsa::Signature,
+        msg: secp256k1::Message,
+        sig: ecdsa::Signature,
     ) -> Result<(), Error> {
-        Ok(secp.verify_ecdsa(msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
     }
 }
 
@@ -1050,7 +1050,7 @@ mod tests {
 
         let s = Secp256k1::new();
         let sk = PrivateKey::from_str(KEY_WIF).unwrap();
-        let pk = PublicKey::from_private_key(&s, &sk);
+        let pk = PublicKey::from_private_key(&s, sk);
         let pk_u = PublicKey { inner: pk.inner, compressed: false };
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);

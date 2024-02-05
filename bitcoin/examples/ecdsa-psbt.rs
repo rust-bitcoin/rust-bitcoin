@@ -112,17 +112,17 @@ impl ColdStorage {
     /// The newly created signer along with the data needed to configure a watch-only wallet.
     fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
         let master_xpriv = Xpriv::from_str(xpriv)?;
-        let master_xpub = Xpub::from_priv(secp, &master_xpriv);
+        let master_xpub = Xpub::from_priv(secp, master_xpriv);
 
         // Hardened children require secret data to derive.
 
         let path = "m/84h/0h/0h".into_derivation_path()?;
         let account_0_xpriv = master_xpriv.derive_priv(secp, &path)?;
-        let account_0_xpub = Xpub::from_priv(secp, &account_0_xpriv);
+        let account_0_xpub = Xpub::from_priv(secp, account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
         let input_xpriv = master_xpriv.derive_priv(secp, &path)?;
-        let input_xpub = Xpub::from_priv(secp, &input_xpriv);
+        let input_xpub = Xpub::from_priv(secp, input_xpriv);
 
         let wallet = ColdStorage { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
@@ -203,7 +203,7 @@ impl WatchOnly {
         let pk = self.input_xpub.to_pub();
         let wpkh = pk.wpubkey_hash();
 
-        let redeem_script = ScriptBuf::new_p2wpkh(&wpkh);
+        let redeem_script = ScriptBuf::new_p2wpkh(wpkh);
         input.redeem_script = Some(redeem_script);
 
         let fingerprint = self.master_fingerprint;
@@ -256,7 +256,7 @@ impl WatchOnly {
         let derived = self.account_0_xpub.derive_pub(secp, &path)?;
 
         let pk = derived.to_pub();
-        let addr = Address::p2wpkh(&pk, NETWORK);
+        let addr = Address::p2wpkh(pk, NETWORK);
         let path = path.into_derivation_path()?;
 
         Ok((pk, addr, path))
