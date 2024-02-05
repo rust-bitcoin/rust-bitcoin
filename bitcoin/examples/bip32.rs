@@ -40,7 +40,7 @@ fn main() {
     println!("Root key: {}", root);
 
     // derive child xpub
-    let path = DerivationPath::from_str("m/84h/0h/0h").unwrap();
+    let path = DerivationPath::from_str("84h/0h/0h").unwrap();
     let child = root.derive_priv(&secp, &path).unwrap();
     println!("Child at {}: {}", path, child);
     let xpub = Xpub::from_priv(&secp, &child);
