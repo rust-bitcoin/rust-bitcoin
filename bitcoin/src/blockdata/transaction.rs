@@ -1042,7 +1042,6 @@ impl Transaction {
 
 /// Error attempting to do an out of bounds access on the transaction inputs vector.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct InputsIndexError(pub IndexOutOfBoundsError);
 
 impl fmt::Display for InputsIndexError {
@@ -1062,7 +1061,6 @@ impl From<IndexOutOfBoundsError> for InputsIndexError {
 
 /// Error attempting to do an out of bounds access on the transaction outputs vector.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct OutputsIndexError(pub IndexOutOfBoundsError);
 
 impl fmt::Display for OutputsIndexError {

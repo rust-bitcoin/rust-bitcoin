@@ -504,7 +504,6 @@ impl TapSighashType {
 
 /// Integer is not a consensus valid sighash type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct InvalidSighashTypeError(pub u32);
 
 impl fmt::Display for InvalidSighashTypeError {
@@ -521,7 +520,6 @@ impl std::error::Error for InvalidSighashTypeError {
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct NonStandardSighashTypeError(pub u32);
 
 impl fmt::Display for NonStandardSighashTypeError {
