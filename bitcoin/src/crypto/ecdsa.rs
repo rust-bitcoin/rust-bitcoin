@@ -242,15 +242,15 @@ impl std::error::Error for Error {
 }
 
 impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 impl From<NonStandardSighashTypeError> for Error {
-    fn from(err: NonStandardSighashTypeError) -> Self { Error::SighashType(err) }
+    fn from(e: NonStandardSighashTypeError) -> Self { Self::SighashType(e) }
 }
 
 impl From<hex::HexToBytesError> for Error {
-    fn from(err: hex::HexToBytesError) -> Self { Error::Hex(err) }
+    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
 }
 
 #[cfg(test)]
