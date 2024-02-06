@@ -3,7 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use crate::hex::{FromHex, FromNoPrefixHexError, InvalidCharError};
+use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
@@ -13,11 +13,13 @@ use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
 };
+use crate::error::FromNoPrefixHexInvalidCharError;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
+use crate::error;
 
 /// An owned, growable script.
 ///
@@ -173,8 +175,8 @@ impl ScriptBuf {
     }
 
     /// Creates a [`ScriptBuf`] from a hex string.
-    pub fn from_hex(s: &str) -> Result<Self, FromNoPrefixHexError<InvalidCharError>> {
-        let v = Vec::from_no_prefix_hex(s)?;
+    pub fn from_hex(s: &str) -> Result<Self, FromNoPrefixHexInvalidCharError> {
+        let v = Vec::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexInvalidCharError)?;
         Ok(ScriptBuf::from_bytes(v))
     }
 

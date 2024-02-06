@@ -7,11 +7,12 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use hex::{FromHex, InvalidCharError};
+use hex::FromHex;
 use internals::write_err;
 use io::Write;
 use secp256k1;
 
+use crate::error::{self, FromHexInvalidCharError};
 use crate::prelude::*;
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
@@ -86,7 +87,7 @@ impl FromStr for Signature {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = Vec::from_hex(s)?;
+        let bytes = Vec::from_hex(s).map_err(FromHexInvalidCharError)?;
         let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
         Ok(Signature {
             signature: secp256k1::ecdsa::Signature::from_der(signature)?,
@@ -205,7 +206,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 #[non_exhaustive]
 pub enum Error {
     /// Hex decoding error.
-    Hex(hex::FromHexError<InvalidCharError>),
+    Hex(error::FromHexInvalidCharError),
     /// Non-standard sighash type.
     SighashType(NonStandardSighashTypeError),
     /// Signature was empty.
@@ -249,8 +250,8 @@ impl From<NonStandardSighashTypeError> for Error {
     fn from(e: NonStandardSighashTypeError) -> Self { Self::SighashType(e) }
 }
 
-impl From<hex::FromHexError<InvalidCharError>> for Error {
-    fn from(e: hex::FromHexError<InvalidCharError>) -> Self { Self::Hex(e) }
+impl From<error::FromHexInvalidCharError> for Error {
+    fn from(e: error::FromHexInvalidCharError) -> Self { Self::Hex(e) }
 }
 
 #[cfg(test)]

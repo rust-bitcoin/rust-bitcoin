@@ -10,7 +10,7 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::{hash160, Hash};
-use hex::{FromHex, HexToArrayError, FromHexError, FromNoPrefixHexError};
+use hex::FromHex;
 use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
@@ -21,7 +21,7 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::{base58, io};
+use crate::{base58, error, io};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -236,11 +236,11 @@ impl FromStr for PublicKey {
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
         match s.len() {
             66 => {
-                let bytes = <[u8; 33]>::from_no_prefix_hex(s)?;
+                let bytes = <[u8; 33]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?;
                 Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             },
             130 => {
-                let bytes = <[u8; 65]>::from_no_prefix_hex(s)?;
+                let bytes = <[u8; 65]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?;
                 Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             }
             len => Err(ParsePublicKeyError::InvalidHexLength(len)),
@@ -347,7 +347,8 @@ impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        CompressedPublicKey::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
+        CompressedPublicKey::from_slice(&<[u8; 33]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?)
+            .map_err(Into::into)
     }
 }
 
@@ -959,7 +960,7 @@ impl From<secp256k1::Error> for FromWifError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsePublicKeyError {
     /// Hex decoding error.
-    Hex(FromNoPrefixHexError<HexToArrayError>),
+    Hex(error::FromNoPrefixHexHexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -986,8 +987,8 @@ impl std::error::Error for ParsePublicKeyError {
     }
 }
 
-impl From<FromNoPrefixHexError<HexToArrayError>> for ParsePublicKeyError {
-    fn from(e: FromNoPrefixHexError<HexToArrayError>) -> Self { Self::Hex(e) }
+impl From<error::FromNoPrefixHexHexToArrayError> for ParsePublicKeyError {
+    fn from(e: error::FromNoPrefixHexHexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Error returned when parsing a [`CompressedPublicKey`] from a string.
@@ -996,7 +997,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    Hex(FromHexError<HexToArrayError>),
+    Hex(error::FromNoPrefixHexHexToArrayError),
 }
 
 impl fmt::Display for ParseCompressedPublicKeyError {
@@ -1025,8 +1026,8 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<FromHexError<HexToArrayError>> for ParseCompressedPublicKeyError {
-    fn from(e: FromHexError<HexToArrayError>) -> Self { Self::Hex(e) }
+impl From<error::FromNoPrefixHexHexToArrayError> for ParseCompressedPublicKeyError {
+    fn from(e: error::FromNoPrefixHexHexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Segwit public keys must always be compressed.
@@ -1049,7 +1050,6 @@ impl std::error::Error for UncompressedPublicKeyError {
 mod tests {
     use std::str::FromStr;
 
-    use hex::{FromHex, HexToArrayError};
     use secp256k1::Secp256k1;
 
     use super::*;
@@ -1387,7 +1387,7 @@ mod tests {
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
         match res.unwrap_err() {
-            ParsePublicKeyError::Hex(FromNoPrefixHexError::Invalid(HexToArrayError::InvalidChar(e))) => assert_eq!(e.invalid_char(), 103),
+            ParsePublicKeyError::Hex(error::FromNoPrefixHexHexToArrayError(hex::FromNoPrefixHexError::Invalid(hex::HexToArrayError::InvalidChar(e)))) => assert_eq!(e.invalid_char(), 103),
             e => panic!("unexpected error: {:?}", e),
         }
     }

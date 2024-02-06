@@ -31,7 +31,7 @@ use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
-use crate::{Amount, SignedAmount, VarInt};
+use crate::{error, Amount, SignedAmount, VarInt};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
@@ -120,7 +120,7 @@ impl fmt::Display for OutPoint {
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hex::HexToArrayError),
+    Txid(error::HexToArrayError),
     /// Error in vout part.
     Vout(crate::error::ParseIntError),
     /// Error in general format.
@@ -188,7 +188,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
+            txid: s[..colon].parse().map_err(error::HexToArrayError).map_err(ParseOutPointError::Txid)?,
             vout: parse_vout(&s[colon + 1..])?,
         })
     }
@@ -1673,17 +1673,19 @@ mod tests {
         );
         assert_eq!(
             OutPoint::from_str("i don't care:1"),
-            Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err()))
+            Err(ParseOutPointError::Txid(
+                error::HexToArrayError("i don't care".parse::<Txid>().unwrap_err())))
         );
         assert_eq!(
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"
             ),
             Err(ParseOutPointError::Txid(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
-                    .parse::<Txid>()
-                    .unwrap_err()
-            ))
+                error::HexToArrayError(
+                    "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
+                        .parse::<Txid>()
+                        .unwrap_err()
+                )))
         );
         assert_eq!(
             OutPoint::from_str(
