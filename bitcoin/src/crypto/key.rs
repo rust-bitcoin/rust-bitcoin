@@ -21,7 +21,7 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::{base58, io};
+use crate::{base58, error, io};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -355,7 +355,8 @@ impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        CompressedPublicKey::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
+        CompressedPublicKey::from_slice(&<[u8; 33]>::from_hex(s).map_err(error::HexToArrayError)?)
+            .map_err(Into::into)
     }
 }
 
@@ -1007,7 +1008,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    Hex(hex::HexToArrayError),
+    Hex(error::HexToArrayError),
 }
 
 impl fmt::Display for ParseCompressedPublicKeyError {
@@ -1036,8 +1037,8 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
+impl From<error::HexToArrayError> for ParseCompressedPublicKeyError {
+    fn from(e: error::HexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Segwit public keys must always be compressed.

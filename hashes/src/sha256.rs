@@ -12,7 +12,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{hex, sha256d, FromSliceError, HashEngine as _};
+use crate::{error, hex, sha256d, FromSliceError, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -128,8 +128,10 @@ impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
 }
 
 impl str::FromStr for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
+    type Err = error::HexToArrayError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        hex::FromHex::from_hex(s).map_err(error::HexToArrayError)
+    }
 }
 
 impl Midstate {
