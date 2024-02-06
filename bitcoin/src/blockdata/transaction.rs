@@ -232,6 +232,16 @@ impl TxIn {
     const BASE_WEIGHT: Weight =
         Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
+    /// Creates a new empty [`TxIn`] with the provided [`Sequence`].
+    pub fn new(sequence: Sequence) -> TxIn {
+        TxIn {
+            previous_output: OutPoint::null(),
+            script_sig: ScriptBuf::new(),
+            sequence,
+            witness: Witness::new(),
+        }
+    }
+
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
