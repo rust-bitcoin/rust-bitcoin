@@ -1434,12 +1434,21 @@ mod tests {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
-    use crate::blockdata::transaction;
+    use crate::blockdata::transaction::{self, OutPoint};
     use crate::consensus::deserialize;
     use crate::crypto::sighash::{LegacySighash, TapSighash};
     use crate::taproot::TapLeafHash;
 
     extern crate serde_json;
+
+    fn tx_in() -> TxIn {
+        TxIn {
+            previous_output: OutPoint::null(),
+            script_sig: ScriptBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::new(),
+        }
+    }
 
     #[test]
     fn sighash_single_bug() {
@@ -1449,7 +1458,7 @@ mod tests {
         let tx = Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
+            input: vec![tx_in(), tx_in()],
             output: vec![TxOut::NULL],
         };
         let script = ScriptBuf::new();
@@ -1638,7 +1647,7 @@ mod tests {
         let dumb_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default()],
+            input: vec![tx_in()],
             output: vec![],
         };
         let mut c = SighashCache::new(&dumb_tx);
