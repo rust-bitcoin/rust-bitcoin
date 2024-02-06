@@ -15,6 +15,7 @@ use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
 
+use crate::blockdata::script::ScriptBuf;
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
@@ -69,6 +70,12 @@ impl PublicKey {
         } else {
             Err(UncompressedPubkeyError)
         }
+    }
+
+    /// Returns the script code used to spend a P2WPKH input.
+    pub fn p2wpkh_script_code(&self) -> Result<ScriptBuf, UncompressedPubkeyError> {
+        let key = CompressedPublicKey::try_from(*self)?;
+        Ok(key.p2wpkh_script_code())
     }
 
     /// Write the public key into a writer
@@ -264,6 +271,11 @@ impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
         WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
+    }
+
+    /// Returns the script code used to spend a P2WPKH input.
+    pub fn p2wpkh_script_code(&self) -> ScriptBuf {
+        ScriptBuf::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Write the public key into a writer
