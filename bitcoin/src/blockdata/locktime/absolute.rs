@@ -616,8 +616,6 @@ fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 pub enum Error {
     /// An error occurred while converting a `u32` to a lock time variant.
     Conversion(ConversionError),
-    /// An error occurred while operating on lock times.
-    Operation(OperationError),
     /// An error occurred while parsing a string into an `u32`.
     Parse(ParseIntError),
 }
@@ -628,7 +626,6 @@ impl fmt::Display for Error {
 
         match *self {
             Conversion(ref e) => write_err!(f, "error converting lock time value"; e),
-            Operation(ref e) => write_err!(f, "error during lock time operation"; e),
             Parse(ref e) => write_err!(f, "failed to parse lock time from string"; e),
         }
     }
@@ -641,7 +638,6 @@ impl std::error::Error for Error {
 
         match *self {
             Conversion(ref e) => Some(e),
-            Operation(ref e) => Some(e),
             Parse(ref e) => Some(e),
         }
     }
@@ -650,11 +646,6 @@ impl std::error::Error for Error {
 impl From<ConversionError> for Error {
     #[inline]
     fn from(e: ConversionError) -> Self { Self::Conversion(e) }
-}
-
-impl From<OperationError> for Error {
-    #[inline]
-    fn from(e: OperationError) -> Self { Self::Operation(e) }
 }
 
 impl From<ParseIntError> for Error {
@@ -707,36 +698,6 @@ impl fmt::Display for LockTimeUnit {
         match *self {
             Blocks => write!(f, "expected lock-by-blockheight (must be < {})", LOCK_TIME_THRESHOLD),
             Seconds => write!(f, "expected lock-by-blocktime (must be >= {})", LOCK_TIME_THRESHOLD),
-        }
-    }
-}
-
-/// Errors than occur when operating on lock times.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum OperationError {
-    /// Cannot compare different lock time units (height vs time).
-    InvalidComparison,
-}
-
-impl fmt::Display for OperationError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use OperationError::*;
-
-        match *self {
-            InvalidComparison =>
-                f.write_str("cannot compare different lock units (height vs time)"),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for OperationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use OperationError::*;
-
-        match *self {
-            InvalidComparison => None,
         }
     }
 }
