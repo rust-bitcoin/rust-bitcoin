@@ -26,7 +26,7 @@
 // The xpriv and derivation path from the imported descriptors
 const BENEFACTOR_XPRIV_STR: &str = "tprv8ZgxMBicQKsPd4arFr7sKjSnKFDVMR2JHw9Y8L9nXN4kiok4u28LpHijEudH3mMYoL4pM5UL9Bgdz2M4Cy8EzfErmU9m86ZTw6hCzvFeTg7";
 const BENEFICIARY_XPRIV_STR: &str = "tprv8ZgxMBicQKsPe72C5c3cugP8b7AzEuNjP4NSC17Dkpqk5kaAmsL6FHwPsVxPpURVqbNwdLAbNqi8Cvdq6nycDwYdKHDjDRYcsMzfshimAUq";
-const BIP86_DERIVATION_PATH: &str = "m/86'/1'/0'/0/0";
+const BIP86_DERIVATION_PATH: &str = "86'/1'/0'/0/0";
 
 // Step 3 -
 //          Run `bt generatetoaddress 103 $(bt-benefactor getnewaddress '' bech32m)` to generate 103 new blocks
@@ -390,7 +390,7 @@ impl BenefactorWallet {
         }
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
         // that we use an unhardened path so we can make use of xpubs.
-        let derivation_path = DerivationPath::from_str(&format!("m/101/1/0/0/{}", self.next))?;
+        let derivation_path = DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
         let internal_keypair =
             self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_keypair(&self.secp);
         let beneficiary_key =
@@ -479,7 +479,7 @@ impl BenefactorWallet {
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
             let new_derivation_path =
-                DerivationPath::from_str(&format!("m/101/1/0/0/{}", self.next))?;
+                DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
             let new_internal_keypair = self
                 .master_xpriv
                 .derive_priv(&self.secp, &new_derivation_path)?

@@ -63,8 +63,8 @@ fn bip174_psbt_workflow() {
 
     // Strings from BIP 174 test vector.
     let test_vector = vec![
-        ("cP53pDbR5WtAD8dYAW9hhTjuvvTVaEiQBdrz9XPrgLBeRFiyCbQr", "m/0h/0h/0h"), // from_priv, into_derivation_path?
-        ("cR6SXDoyfQrcp4piaiHE97Rsgta9mNhGTen9XeonVgwsh4iSgw6d", "m/0h/0h/2h"),
+        ("cP53pDbR5WtAD8dYAW9hhTjuvvTVaEiQBdrz9XPrgLBeRFiyCbQr", "0h/0h/0h"), // from_priv, into_derivation_path?
+        ("cR6SXDoyfQrcp4piaiHE97Rsgta9mNhGTen9XeonVgwsh4iSgw6d", "0h/0h/2h"),
     ];
 
     // We pass the keys to the signer after doing verification to make explicit
@@ -78,8 +78,8 @@ fn bip174_psbt_workflow() {
 
     // Strings from BIP 174 test vector.
     let test_vector = vec![
-        ("cT7J9YpCwY3AVRFSjN6ukeEeWY6mhpbJPxRaDaP5QTdygQRxP9Au", "m/0h/0h/1h"),
-        ("cNBc3SWUip9PPm1GjRoLEJT6T41iNzCYtD7qro84FMnM5zEqeJsE", "m/0h/0h/3h"),
+        ("cT7J9YpCwY3AVRFSjN6ukeEeWY6mhpbJPxRaDaP5QTdygQRxP9Au", "0h/0h/1h"),
+        ("cNBc3SWUip9PPm1GjRoLEJT6T41iNzCYtD7qro84FMnM5zEqeJsE", "0h/0h/3h"),
     ];
 
     let keys = parse_and_verify_keys(&ext_priv, &test_vector);
@@ -222,12 +222,12 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     // Public key and its derivation path (these are the child pubkeys for our `Xpriv`,
     // can be verified by deriving the key using this derivation path).
     let pk_path = vec![
-        ("029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f", "m/0h/0h/0h"),
-        ("02dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7", "m/0h/0h/1h"),
-        ("03089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc", "m/0h/0h/2h"),
-        ("023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e73", "m/0h/0h/3h"),
-        ("03a9a4c37f5996d3aa25dbac6b570af0650394492942460b354753ed9eeca58771", "m/0h/0h/4h"),
-        ("027f6399757d2eff55a136ad02c684b1838b6556e5f1b6b34282a94b6b50051096", "m/0h/0h/5h"),
+        ("029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f", "0h/0h/0h"),
+        ("02dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7", "0h/0h/1h"),
+        ("03089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc", "0h/0h/2h"),
+        ("023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e73", "0h/0h/3h"),
+        ("03a9a4c37f5996d3aa25dbac6b570af0650394492942460b354753ed9eeca58771", "0h/0h/4h"),
+        ("027f6399757d2eff55a136ad02c684b1838b6556e5f1b6b34282a94b6b50051096", "0h/0h/5h"),
     ];
 
     let expected_psbt_hex = include_str!("data/update_1_psbt_hex");
