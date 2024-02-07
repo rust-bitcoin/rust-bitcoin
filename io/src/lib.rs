@@ -14,7 +14,7 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 // Coding conventions.
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
@@ -34,12 +34,15 @@ use core::convert::TryInto;
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
 
+/// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;
 
 /// A generic trait describing an input stream. See [`std::io::Read`] for more info.
 pub trait Read {
+    /// Reads bytes from source into `buf`.
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
 
+    /// Reads bytes from source until `buf` is full.
     #[inline]
     fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -53,6 +56,7 @@ pub trait Read {
         Ok(())
     }
 
+    /// Creates an adapter which will read at most `limit` bytes.
     #[inline]
     fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
 
@@ -63,7 +67,7 @@ pub trait Read {
     ///
     /// Similar to `std::io::Read::read_to_end` but with the DOS protection.
     #[doc(alias = "read_to_end")]
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    #[cfg(feature = "alloc")]
     #[inline]
     fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
         self.take(limit).read_to_end(buf)
@@ -83,15 +87,19 @@ pub trait BufRead: Read {
     fn consume(&mut self, amount: usize);
 }
 
+/// Reader adapter which limits the bytes read from an underlying reader.
+///
+/// Created by calling `[Read::take]`.
 pub struct Take<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     remaining: u64,
 }
 
 impl<'a, R: Read + ?Sized> Take<'a, R> {
-    #[cfg(any(feature = "alloc", feature = "std"))]
+    /// Reads all bytes until EOF from the underlying reader into `buf`.
+    #[cfg(feature = "alloc")]
     #[inline]
-    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
+    pub fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         let mut read: usize = 0;
         let mut chunk = [0u8; 64];
         loop {
@@ -160,7 +168,7 @@ impl<R: std::io::BufRead + Read + ?Sized> BufRead for R {
     fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "std"))] // Conflicts with blanket impl when "std" is enabled.
 impl Read for &[u8] {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
@@ -171,7 +179,7 @@ impl Read for &[u8] {
     }
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(feature = "std"))] // Conflicts with blanket impl when "std" is enabled.
 impl BufRead for &[u8] {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> { Ok(self) }
@@ -181,18 +189,24 @@ impl BufRead for &[u8] {
     fn consume(&mut self, amount: usize) { *self = &self[amount..] }
 }
 
+/// Wraps an in memory reader providing the `position` function.
 pub struct Cursor<T> {
     inner: T,
     pos: u64,
 }
 
 impl<T: AsRef<[u8]>> Cursor<T> {
+    /// Creates a `Cursor` by wrapping `inner`.
     #[inline]
     pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
 
+    /// Returns the position read up to thus far.
     #[inline]
     pub fn position(&self) -> u64 { self.pos }
 
+    /// Returns the inner buffer.
+    ///
+    /// This is the whole wrapped buffer, including the bytes already read.
     #[inline]
     pub fn into_inner(self) -> T { self.inner }
 }
@@ -226,10 +240,14 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
 
 /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
 pub trait Write {
+    /// Writes `buf` into this writer, returning how many bytes were written.
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
 
+    /// Flushes this output stream, ensuring that all intermediately buffered contents
+    /// reach their destination.
     fn flush(&mut self) -> Result<()>;
 
+    /// Attempts to write an entire buffer into this writer.
     #[inline]
     fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -282,6 +300,8 @@ impl<'a> Write for &'a mut [u8] {
 }
 
 /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
+///
+/// Created using `io::sink()`.
 pub struct Sink;
 
 #[cfg(not(feature = "std"))]
