@@ -77,7 +77,7 @@ pub enum Error {
     /// Integer overflow in fee calculation
     FeeOverflow,
     /// Parsing error indicating invalid public keys
-    InvalidPublicKey(crate::crypto::key::Error),
+    InvalidPublicKey(crate::crypto::key::FromSliceError),
     /// Parsing error indicating invalid secp256k1 public keys
     InvalidSecp256k1PublicKey(secp256k1::Error),
     /// Parsing error indicating invalid xonly public keys
