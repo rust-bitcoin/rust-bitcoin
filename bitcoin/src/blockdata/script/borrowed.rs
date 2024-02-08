@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::convert::{TryFrom, TryInto};
+use core::convert::TryFrom;
 use core::fmt;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
@@ -328,14 +328,6 @@ impl Script {
             && self.0[1] == OP_PUSHBYTES_20.to_u8()
     }
 
-    pub(crate) fn p2wpkh(&self) -> Option<&[u8; 20]> {
-        if self.is_p2wpkh() {
-            Some(self.0[2..].try_into().expect("is_v0_p2wpkh checks the length"))
-        } else {
-            None
-        }
-    }
-
     /// Checks whether a script pubkey is a P2TR output.
     #[inline]
     pub fn is_p2tr(&self) -> bool {
@@ -384,10 +376,14 @@ impl Script {
     ///
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
     pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        self.p2wpkh().map(|wpkh| {
-            let wpkh = WPubkeyHash::from_slice(wpkh).expect("checked in p2wpkh()");
-            ScriptBuf::p2wpkh_script_code(wpkh)
-        })
+        if self.is_p2wpkh() {
+            // The `self` script is 0x00, 0x14, <pubkey_hash>
+            let bytes = &self.0[2..];
+            let wpkh = WPubkeyHash::from_slice(bytes).expect("length checked in is_p2wpkh()");
+            Some(ScriptBuf::p2wpkh_script_code(wpkh))
+        } else {
+            None
+        }
     }
 
     /// Returns the minimum value an output with this script should have in order to be
