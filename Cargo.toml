@@ -16,3 +16,7 @@ path = "io"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.bitcoinconsensus]
+git = "https://github.com/tcharding/rust-bitcoinconsensus"
+branch = "02-09-vendor-26.0"
