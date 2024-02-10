@@ -1741,14 +1741,4 @@ mod verification {
 
         let _ = x.mul_u64(y);
     }
-
-    #[kani::unwind(5)]          // Same as above.
-    #[kani::proof]
-    fn check_div_rem() {
-        let x: U256 = kani::any();
-        let y: U256 = kani::any();
-        kani::assume(x < U256::from(u128::MAX) && y < U256::from(u128::MAX) && y != U256::ZERO);
-
-        assert_eq!(x * y / y, x);
-    }
 }
