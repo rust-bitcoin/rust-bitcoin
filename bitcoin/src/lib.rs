@@ -107,6 +107,7 @@ pub mod merkle_tree;
 pub mod network;
 pub mod policy;
 pub mod pow;
+#[deprecated(since = "TBD", note = "use https://crates.io/crates/psbt-v2 instead")]
 pub mod psbt;
 pub mod sign_message;
 pub mod string;
