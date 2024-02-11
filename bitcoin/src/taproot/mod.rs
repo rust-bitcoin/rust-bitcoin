@@ -464,7 +464,7 @@ impl TaprootBuilder {
         self.insert(node, depth)
     }
 
-    /// Checks if the builder has finalized building a tree.
+    /// Checks if the builder as able to be finalized i.e., has a single non-`None` branch.
     pub fn is_finalizable(&self) -> bool { self.branch.len() == 1 && self.branch[0].is_some() }
 
     /// Converts the builder into a [`NodeInfo`] if the builder is a full tree with possibly
