@@ -464,19 +464,19 @@ impl TaprootBuilder {
         self.insert(node, depth)
     }
 
-    /// Checks if the builder has finalized building a tree.
+    /// Checks if the builder is complete and able to be finalized.
     pub fn is_finalizable(&self) -> bool { self.branch.len() == 1 && self.branch[0].is_some() }
 
     /// Converts the builder into a [`NodeInfo`] if the builder is a full tree with possibly
     /// hidden nodes
     ///
-    /// # Errors:
+    /// # Errors
     ///
-    /// [`IncompleteBuilderError::NotFinalized`] if the builder is not finalized. The builder
-    /// can be restored by calling [`IncompleteBuilderError::into_builder`]
+    /// Returns [`IncompleteBuilderError`] if the builder is not completed (finalized). The
+    /// builder is return unchanged (use `error.builder`).
     pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilderError> {
-        if self.branch().len() != 1 {
-            return Err(IncompleteBuilderError::NotFinalized(self));
+        if !self.is_finalizable() {
+            return Err(IncompleteBuilderError { builder: self });
         }
         Ok(self
             .branch
@@ -487,11 +487,11 @@ impl TaprootBuilder {
 
     /// Converts the builder into a [`TapTree`] if the builder is a full tree and
     /// does not contain any hidden nodes
-    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilderError> {
+    pub fn try_into_taptree(self) -> Result<TapTree, IntoTapTreeError> {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
-            return Err(IncompleteBuilderError::HiddenParts(TaprootBuilder {
+            return Err(IntoTapTreeError::HiddenParts(TaprootBuilder {
                 branch: vec![Some(node)],
             }));
         }
@@ -523,8 +523,6 @@ impl TaprootBuilder {
             _ => Err(self),
         }
     }
-
-    pub(crate) fn branch(&self) -> &[Option<NodeInfo>] { &self.branch }
 
     /// Inserts a leaf at `depth`.
     fn insert(mut self, mut node: NodeInfo, mut depth: u8) -> Result<Self, TaprootBuilderError> {
@@ -576,50 +574,70 @@ impl Default for TaprootBuilder {
     fn default() -> Self { Self::new() }
 }
 
-/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
-/// having hidden branches or not being finalized.
+/// Error if attempting an operation that requires the `TaprootBuilder` to be finalizable.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum IncompleteBuilderError {
-    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
-    NotFinalized(TaprootBuilder),
-    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
-    HiddenParts(TaprootBuilder),
-}
-
-impl IncompleteBuilderError {
-    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
-    pub fn into_builder(self) -> TaprootBuilder {
-        use IncompleteBuilderError::*;
-
-        match self {
-            NotFinalized(builder) | HiddenParts(builder) => builder,
-        }
-    }
+pub struct IncompleteBuilderError {
+    /// The unmodified incomplete builder.
+    pub builder: TaprootBuilder,
 }
 
 impl core::fmt::Display for IncompleteBuilderError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        use IncompleteBuilderError::*;
-
-        f.write_str(match self {
-            NotFinalized(_) =>
-                "an attempt to construct a tap tree from a builder containing incomplete branches.",
-            HiddenParts(_) =>
-                "an attempt to construct a tap tree from a builder containing hidden parts.",
-        })
+        write!(f, "taproot builder is not complete")
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IncompleteBuilderError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use IncompleteBuilderError::*;
+impl std::error::Error for IncompleteBuilderError {}
 
-        match *self {
-            NotFinalized(_) | HiddenParts(_) => None,
+/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
+/// having hidden branches or incomplete.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum IntoTapTreeError {
+    /// Indicates an attempt to construct a tap tree from an incomplete builder.
+    IncompleteBuilder(IncompleteBuilderError),
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(TaprootBuilder),
+}
+
+impl IntoTapTreeError {
+    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
+    pub fn into_builder(self) -> TaprootBuilder {
+        use IntoTapTreeError::*;
+
+        match self {
+            IncompleteBuilder(IncompleteBuilderError { builder }) | HiddenParts(builder) => builder,
         }
     }
+}
+
+impl core::fmt::Display for IntoTapTreeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use IntoTapTreeError::*;
+
+        match *self {
+            IncompleteBuilder(ref e) => write_err!(f, "into tap tree, incomplete builder"; e),
+            HiddenParts(_) => write!(f, "an attempt to construct a tap tree from a builder containing hidden parts."),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IntoTapTreeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use IntoTapTreeError::*;
+
+        match *self {
+            IncompleteBuilder(ref e) => Some(e),
+            HiddenParts(_) => None,
+        }
+    }
+}
+
+impl From<IncompleteBuilderError> for IntoTapTreeError {
+    fn from(e: IncompleteBuilderError) -> Self { Self::IncompleteBuilder(e) }
 }
 
 /// Error happening when [`TapTree`] is constructed from a [`NodeInfo`]
@@ -696,7 +714,7 @@ impl TapTree {
 }
 
 impl TryFrom<TaprootBuilder> for TapTree {
-    type Error = IncompleteBuilderError;
+    type Error = IntoTapTreeError;
 
     /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///

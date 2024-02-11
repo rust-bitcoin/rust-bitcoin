@@ -93,7 +93,7 @@ pub enum Error {
     /// Parsing error indicating a taproot error
     Taproot(&'static str),
     /// Taproot tree deserilaization error
-    TapTree(crate::taproot::IncompleteBuilderError),
+    TapTree(crate::taproot::IntoTapTreeError),
     /// Error related to an xpub key
     XPubKey(&'static str),
     /// Error related to PSBT version
