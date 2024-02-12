@@ -71,11 +71,11 @@ pub mod hex {
 
     /// Hex byte encoder.
     // We wrap `BufEncoder` to not leak internal representation.
-    pub struct Encoder<C: Case>(BufEncoder<[u8; HEX_BUF_SIZE]>, PhantomData<C>);
+    pub struct Encoder<C: Case>(BufEncoder<{ HEX_BUF_SIZE }>, PhantomData<C>);
 
     impl<C: Case> From<super::Hex<C>> for Encoder<C> {
         fn from(_: super::Hex<C>) -> Self {
-            Encoder(BufEncoder::new([0; HEX_BUF_SIZE]), Default::default())
+            Encoder(BufEncoder::new(), Default::default())
         }
     }
 
@@ -101,11 +101,11 @@ pub mod hex {
 
     /// Error returned when a hex string decoder can't be created.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct DecodeInitError(hex::HexToBytesError);
+    pub struct DecodeInitError(hex::OddLengthStringError);
 
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct DecodeError(hex::HexToBytesError);
+    pub struct DecodeError(hex::InvalidCharError);
 
     /// Hex decoder state.
     pub struct Decoder<'a>(hex::HexToBytesIter<'a>);
@@ -137,29 +137,19 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeInitError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use hex::HexToBytesError;
-
-            match self.0 {
-                HexToBytesError::OddLengthString(len) =>
-                    E::invalid_length(len, &"an even number of ASCII-encoded hex digits"),
-                error => panic!("unexpected error: {:?}", error),
-            }
+            E::invalid_length(self.0.input_string_length(), &"an even number of ASCII-encoded hex digits")
         }
     }
 
     impl super::IntoDeError for DecodeError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use hex::HexToBytesError;
             use serde::de::Unexpected;
 
             const EXPECTED_CHAR: &str = "an ASCII-encoded hex digit";
 
-            match self.0 {
-                HexToBytesError::InvalidChar(c) if c.is_ascii() =>
-                    E::invalid_value(Unexpected::Char(c as _), &EXPECTED_CHAR),
-                HexToBytesError::InvalidChar(c) =>
-                    E::invalid_value(Unexpected::Unsigned(c.into()), &EXPECTED_CHAR),
-                error => panic!("unexpected error: {:?}", error),
+            match self.0.invalid_char() {
+                c if c.is_ascii() => E::invalid_value(Unexpected::Char(c as _), &EXPECTED_CHAR),
+                c => E::invalid_value(Unexpected::Unsigned(c.into()), &EXPECTED_CHAR),
             }
         }
     }

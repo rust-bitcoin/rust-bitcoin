@@ -3,6 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
+use crate::hex::{FromHex, FromNoPrefixHexError, InvalidCharError};
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
@@ -172,10 +173,8 @@ impl ScriptBuf {
     }
 
     /// Creates a [`ScriptBuf`] from a hex string.
-    pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
-        use hex::FromHex;
-
-        let v = Vec::from_hex(s)?;
+    pub fn from_hex(s: &str) -> Result<Self, FromNoPrefixHexError<InvalidCharError>> {
+        let v = Vec::from_no_prefix_hex(s)?;
         Ok(ScriptBuf::from_bytes(v))
     }
 

@@ -97,21 +97,25 @@ macro_rules! impl_bytes_newtype {
         }
 
         impl $crate::hex::FromHex for $t {
-            type Err = $crate::hex::HexToArrayError;
+            type Error = $crate::hex::FromHexError<$crate::hex::HexToArrayError>;
 
-            fn from_byte_iter<I>(iter: I) -> core::result::Result<Self, $crate::hex::HexToArrayError>
+            fn from_byte_iter<I>(iter: I) -> core::result::Result<Self, Self::Error>
             where
-                I: core::iter::Iterator<Item = core::result::Result<u8, $crate::hex::HexToBytesError>>
+                I: core::iter::Iterator<Item = core::result::Result<u8, $crate::hex::InvalidCharError>>
                     + core::iter::ExactSizeIterator
                     + core::iter::DoubleEndedIterator,
             {
-                Ok($t($crate::hex::FromHex::from_byte_iter(iter)?))
+                Ok($t($crate::hex::FromHex::from_byte_iter(iter).map_err($crate::hex::FromHexError::Invalid)?))
             }
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { $crate::hex::FromHex::from_hex(s) }
+            type Err = $crate::hex::FromNoPrefixHexError<$crate::hex::HexToArrayError>;
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+                // TODO: Work out this error.
+                let res = $crate::hex::FromHex::from_no_prefix_hex(s).unwrap();
+                Ok(res)
+            }
         }
 
         #[cfg(feature = "serde")]

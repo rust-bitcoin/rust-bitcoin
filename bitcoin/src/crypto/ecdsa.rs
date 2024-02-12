@@ -7,7 +7,7 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use hex::FromHex;
+use hex::{FromHex, InvalidCharError};
 use internals::write_err;
 use io::Write;
 use secp256k1;
@@ -205,7 +205,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 #[non_exhaustive]
 pub enum Error {
     /// Hex decoding error.
-    Hex(hex::HexToBytesError),
+    Hex(hex::FromHexError<InvalidCharError>),
     /// Non-standard sighash type.
     SighashType(NonStandardSighashTypeError),
     /// Signature was empty.
@@ -249,8 +249,8 @@ impl From<NonStandardSighashTypeError> for Error {
     fn from(err: NonStandardSighashTypeError) -> Self { Error::SighashType(err) }
 }
 
-impl From<hex::HexToBytesError> for Error {
-    fn from(err: hex::HexToBytesError) -> Self { Error::Hex(err) }
+impl From<hex::FromHexError<InvalidCharError>> for Error {
+    fn from(e: hex::FromHexError<InvalidCharError>) -> Self { Self::Hex(e) }
 }
 
 #[cfg(test)]
