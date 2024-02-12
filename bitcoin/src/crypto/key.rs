@@ -1007,7 +1007,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    HexError(hex::HexToArrayError),
+    Hex(hex::HexToArrayError),
 }
 
 impl fmt::Display for ParseCompressedPublicKeyError {
@@ -1015,7 +1015,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
         use ParseCompressedPublicKeyError::*;
         match self {
             Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            HexError(e) => write_err!(f, "invalid hex"; e)
+            Hex(e) => write_err!(f, "invalid hex"; e)
         }
     }
 }
@@ -1027,7 +1027,7 @@ impl std::error::Error for ParseCompressedPublicKeyError {
 
         match self {
             Secp256k1(e) => Some(e),
-            HexError(e) => Some(e),
+            Hex(e) => Some(e),
         }
     }
 }
@@ -1037,7 +1037,7 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
 }
 
 impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex::HexToArrayError) -> Self { Self::HexError(e) }
+    fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Segwit public keys must always be compressed.
