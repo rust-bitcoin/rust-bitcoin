@@ -489,6 +489,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(debug_assertions)]
     #[should_panic] // 'attempt to add with overflow' in consensus_encode()
     fn test_getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {

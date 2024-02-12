@@ -182,6 +182,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(debug_assertions)]
     #[should_panic]
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
