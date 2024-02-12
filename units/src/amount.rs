@@ -1328,6 +1328,12 @@ impl ops::DivAssign<i64> for SignedAmount {
     fn div_assign(&mut self, rhs: i64) { *self = *self / rhs }
 }
 
+impl ops::Neg for SignedAmount {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output { Self(self.0.neg()) }
+}
+
 impl FromStr for SignedAmount {
     type Err = ParseError;
 
