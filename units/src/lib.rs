@@ -36,9 +36,19 @@ pub extern crate serde;
 pub mod amount;
 #[cfg(feature = "alloc")]
 pub mod parse;
+pub mod locktime;
 
 #[doc(inline)]
 pub use self::amount::{Amount, ParseAmountError, SignedAmount};
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::parse::ParseIntError;
+
+#[rustfmt::skip]
+mod prelude {
+    #[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
+    pub use alloc::{string::String, boxed::Box};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::{string::String, boxed::Box};
+}
