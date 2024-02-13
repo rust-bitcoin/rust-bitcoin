@@ -120,6 +120,20 @@ impl Weight {
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
     pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
 
+    /// Unchecked addition.
+    ///
+    /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_add(self, rhs: Self) -> Self {
+        Self(self.0 + rhs.0)
+    }
+
+    /// Unchecked subtraction.
+    ///
+    /// Computes `self - rhs`.  Panics in debug mode, wraps in release mode.
+    pub fn unchecked_sub(self, rhs: Self) -> Self {
+        Self(self.0 - rhs.0)
+    }
+
     /// Scale by witness factor.
     ///
     /// Computes `self * WITNESS_SCALE_FACTOR` returning `None` if an overflow occurred.
@@ -230,6 +244,20 @@ mod tests {
 
         let result = Weight::MIN.checked_sub(Weight(1));
         assert_eq!(None, result);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_weight_add() {
+        let w = Weight::MAX.unchecked_add(Weight::from_wu(1));
+        assert_eq!(w, Weight::ZERO);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn unchecked_weight_sub() {
+        let w = Weight::ZERO.unchecked_sub(Weight::from_wu(1));
+        assert_eq!(w, Weight::MAX);
     }
 
     #[test]
