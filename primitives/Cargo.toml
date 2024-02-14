@@ -14,13 +14,24 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "hex/std", "io/std", "internals/std", "units/std"]
+alloc = ["io/alloc", "hex/alloc", "internals/alloc", "units/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
+internals = { package = "bitcoin-internals", version = "0.2.0", default-features = false}
+io = { package = "bitcoin-io", version = "0.1.0", default-features = false}
+units = { package = "bitcoin-units", version = "0.1.0", default-features = false}
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
+
+serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
+serde_json = "1.0.0"
+serde_test = "1.0.19"
+
+[target.'cfg(mutate)'.dev-dependencies]
+mutagen = { git = "https://github.com/llogiq/mutagen" }

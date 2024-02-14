@@ -18,10 +18,11 @@ use hashes::{self, sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
 use units::{impl_parse_str_from_int_infallible, parse};
+use units::locktime::relative::IntegerOverflowError;
 
 use super::Weight;
-use crate::blockdata::locktime::absolute::{self, Height, Time};
-use crate::blockdata::locktime::relative::{self, IntegerOverflowError};
+use crate::blockdata::locktime::absolute;
+use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
@@ -883,7 +884,7 @@ impl Transaction {
     /// By definition if the lock time is not enabled the transaction's absolute timelock is
     /// considered to be satisfied i.e., there are no timelock constraints restricting this
     /// transaction from being mined immediately.
-    pub fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
+    pub fn is_absolute_timelock_satisfied(&self, height: absolute::Height, time: absolute::Time) -> bool {
         if !self.is_lock_time_enabled() {
             return true;
         }

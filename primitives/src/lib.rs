@@ -15,7 +15,7 @@
 //!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
 
-#![no_std]
+#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -32,3 +32,14 @@ extern crate alloc;
 
 #[cfg(feature = "std")]
 extern crate std;
+
+pub mod locktime;
+
+#[rustfmt::skip]
+mod prelude {
+    #[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
+    pub use alloc::{string::String, boxed::Box};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::{string::String, boxed::Box};
+}

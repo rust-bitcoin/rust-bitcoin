@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 
 use internals::write_err;
 
-#[cfg(feature = "alloc")]
 use crate::prelude::*;
 use crate::parse::ParseIntError;
 

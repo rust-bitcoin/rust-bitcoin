@@ -141,7 +141,7 @@ macro_rules! impl_parse_str_from_int_infallible {
         $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn);
 
         #[cfg(feature = "alloc")]
-        $crate::impl_tryfrom_str_from_int_infallible!($crate::prelude::String, $to, $inner, $fn; $crate::prelude::Box<str>, $to, $inner, $fn);
+        $crate::impl_tryfrom_str_from_int_infallible!(String, $to, $inner, $fn; Box<str>, $to, $inner, $fn);
 
         impl core::str::FromStr for $to {
             type Err = $crate::ParseIntError;
