@@ -9,6 +9,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
+name = "base58check"
+version = "0.1.0"
+dependencies = [
+ "bitcoin_hashes",
+ "hex-conservative",
+]
+
+[[package]]
 name = "base64"
 version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -33,6 +41,7 @@ dependencies = [
 name = "bitcoin"
 version = "0.31.0"
 dependencies = [
+ "base58check",
  "base64",
  "bech32",
  "bincode",

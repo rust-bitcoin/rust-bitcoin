@@ -15,7 +15,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
+std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
 serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde"]
@@ -28,6 +28,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
+base58 = { package = "base58check", version = "0.1.0", default-features = false }
 bech32 = { version = "0.10.0-beta", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }

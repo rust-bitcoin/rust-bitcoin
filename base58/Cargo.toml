@@ -1,0 +1,27 @@
+[package]
+name = "base58check"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+description = "Bitcoin base58 encoding with checksum."
+categories = ["cryptography::cryptocurrencies", "encoding"]
+keywords = ["bitcoin", "base58", "encode", "decode", "checksum"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["hashes/std"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }
