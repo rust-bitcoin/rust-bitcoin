@@ -14,15 +14,6 @@ pub enum Error {
     Decode(InvalidCharacterError),
     /// Checksum was not correct (expected, actual).
     BadChecksum(u32, u32),
-    /// The length (in bytes) of the object was not correct.
-    ///
-    /// Note that if the length is excessively long the provided length may be an estimate (and the
-    /// checksum step may be skipped).
-    InvalidLength(usize),
-    /// Extended Key version byte(s) were not recognized.
-    InvalidExtendedKeyVersion([u8; 4]),
-    /// Address version byte were not recognized.
-    InvalidAddressVersion(u8),
     /// Checked data was less than 4 bytes.
     TooShort(usize),
 }
@@ -37,11 +28,6 @@ impl fmt::Display for Error {
             Decode(ref e) => write_err!(f, "decode"; e),
             BadChecksum(exp, actual) =>
                 write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
-            InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            InvalidExtendedKeyVersion(ref v) =>
-                write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
-            InvalidAddressVersion(ref v) =>
-                write!(f, "address version {} is invalid for this base58 type", v),
             TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
         }
     }
@@ -55,9 +41,6 @@ impl std::error::Error for Error {
         match self {
             Decode(ref e) => Some(e),
             BadChecksum(_, _)
-            | InvalidLength(_)
-            | InvalidExtendedKeyVersion(_)
-            | InvalidAddressVersion(_)
             | TooShort(_) => None,
         }
     }

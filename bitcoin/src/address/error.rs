@@ -137,6 +137,12 @@ pub enum ParseError {
     WitnessProgram(witness_program::Error),
     /// Tried to parse an unknown HRP.
     UnknownHrp(UnknownHrpError),
+    /// Legacy address is too long.
+    LegacyAddressTooLong(LegacyAddressTooLongError),
+    /// Invalid base58 payload data length for legacy address.
+    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+    /// Invalid legacy address prefix in base58 data payload.
+    InvalidLegacyPrefix(InvalidLegacyPrefixError),
 }
 
 internals::impl_from_infallible!(ParseError);
@@ -151,6 +157,9 @@ impl fmt::Display for ParseError {
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             UnknownHrp(ref e) => write_err!(f, "tried to parse an unknown hrp"; e),
+            LegacyAddressTooLong(ref e) => write_err!(f, "legacy address base58 string"; e),
+            InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy address base58 data"; e),
+            InvalidLegacyPrefix(ref e) => write_err!(f, "legacy address base58 prefix"; e),
         }
     }
 }
@@ -166,6 +175,9 @@ impl std::error::Error for ParseError {
             WitnessVersion(ref e) => Some(e),
             WitnessProgram(ref e) => Some(e),
             UnknownHrp(ref e) => Some(e),
+            LegacyAddressTooLong(ref e) => Some(e),
+            InvalidBase58PayloadLength(ref e) => Some(e),
+            InvalidLegacyPrefix(ref e) => Some(e),
         }
     }
 }
@@ -190,6 +202,18 @@ impl From<UnknownHrpError> for ParseError {
     fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
 }
 
+impl From<LegacyAddressTooLongError> for ParseError {
+    fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
+}
+
+impl From<InvalidBase58PayloadLengthError> for ParseError {
+    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
+}
+
+impl From<InvalidLegacyPrefixError> for ParseError {
+    fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
+}
+
 /// Unknown HRP error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -203,3 +227,66 @@ impl fmt::Display for UnknownHrpError {
 impl std::error::Error for UnknownHrpError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
+
+/// Decoded base58 data was an invalid length.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidBase58PayloadLengthError {
+    /// The base58 payload length we got after decoding address string.
+    pub(crate) length: usize,
+}
+
+impl InvalidBase58PayloadLengthError {
+    /// Returns the invalid payload length.
+    pub fn invalid_base58_payload_length(&self) -> usize { self.length }
+}
+
+impl fmt::Display for InvalidBase58PayloadLengthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "decoded base58 data was an invalid length: {} (expected 21)", self.length)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidBase58PayloadLengthError {}
+
+/// Legacy base58 address was too long, max 50 characters.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LegacyAddressTooLongError {
+    /// The length of the legacy address.
+    pub(crate) length: usize,
+}
+
+impl LegacyAddressTooLongError {
+    /// Returns the invalid legacy address length.
+    pub fn invalid_legcay_address_length(&self) -> usize { self.length }
+}
+
+impl fmt::Display for LegacyAddressTooLongError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "legacy address is too long: {} (max 50 characters)", self.length)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for LegacyAddressTooLongError {}
+
+/// Invalid legacy address prefix in decoded base58 data.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidLegacyPrefixError {
+    /// The invalid prefix byte.
+    pub(crate) invalid: u8,
+}
+
+impl InvalidLegacyPrefixError {
+    /// Returns the invalid prefix.
+    pub fn invalid_legacy_address_prefix(&self) -> u8 { self.invalid }
+}
+
+impl fmt::Display for InvalidLegacyPrefixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid legacy address prefix in decoded base58 data {}", self.invalid)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidLegacyPrefixError {}

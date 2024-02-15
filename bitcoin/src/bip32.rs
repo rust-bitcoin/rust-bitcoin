@@ -489,6 +489,8 @@ pub enum Error {
     Hex(hex::HexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidPublicKeyHexLength(usize),
+    /// Base58 decoded data was an invalid length.
+    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError)
 }
 
 internals::impl_from_infallible!(Error);
@@ -512,6 +514,7 @@ impl fmt::Display for Error {
             Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
             InvalidPublicKeyHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
+            InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
         }
     }
 }
@@ -525,6 +528,7 @@ impl std::error::Error for Error {
             Secp256k1(ref e) => Some(e),
             Base58(ref e) => Some(e),
             Hex(ref e) => Some(e),
+            InvalidBase58PayloadLength(ref e) => Some(e),
             CannotDeriveFromHardenedKey
             | InvalidChildNumber(_)
             | InvalidChildNumberFormat
@@ -542,6 +546,10 @@ impl From<secp256k1::Error> for Error {
 
 impl From<base58::Error> for Error {
     fn from(err: base58::Error) -> Self { Error::Base58(err) }
+}
+
+impl From<InvalidBase58PayloadLengthError> for Error {
+    fn from(e: InvalidBase58PayloadLengthError) -> Error { Self::InvalidBase58PayloadLength(e) }
 }
 
 impl Xpriv {
@@ -828,7 +836,7 @@ impl FromStr for Xpriv {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()).into());
+            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
         }
 
         Xpriv::decode(&data)
@@ -848,7 +856,7 @@ impl FromStr for Xpub {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()).into());
+            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
         }
 
         Xpub::decode(&data)
@@ -862,6 +870,27 @@ impl From<Xpub> for XKeyIdentifier {
 impl From<&Xpub> for XKeyIdentifier {
     fn from(key: &Xpub) -> XKeyIdentifier { key.identifier() }
 }
+
+/// Decoded base58 data was an invalid length.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidBase58PayloadLengthError {
+    /// The base58 payload length we got after decoding xpriv/xpub string.
+    pub(crate) length: usize,
+}
+
+impl InvalidBase58PayloadLengthError {
+    /// Returns the invalid payload length.
+    pub fn invalid_base58_payload_length(&self) -> usize { self.length }
+}
+
+impl fmt::Display for InvalidBase58PayloadLengthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "decoded base58 xpriv/xpub data was an invalid length: {} (expected 78)", self.length)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 #[cfg(test)]
 mod tests {

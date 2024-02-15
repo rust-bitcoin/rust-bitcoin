@@ -53,7 +53,10 @@ use crate::taproot::TapNodeHash;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{FromScriptError, NetworkValidationError, ParseError, P2shError, UnknownAddressTypeError, UnknownHrpError},
+    error::{
+        FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError, LegacyAddressTooLongError,
+        NetworkValidationError, ParseError, P2shError, UnknownAddressTypeError, UnknownHrpError
+    },
 };
 
 /// The different types of addresses.
@@ -732,11 +735,11 @@ impl FromStr for Address<NetworkUnchecked> {
         // If segwit decoding fails, assume its a legacy address.
 
         if s.len() > 50 {
-            return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
         let data = base58::decode_check(s)?;
         if data.len() != 21 {
-            return Err(ParseError::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(InvalidBase58PayloadLengthError { length: s.len() }.into());
         }
 
         let (prefix, data) = data.split_first().expect("length checked above");
@@ -759,7 +762,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 let hash = ScriptHash::from_byte_array(data);
                 AddressInner::P2sh { hash, network: NetworkKind::Test }
             }
-            x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
+            invalid => return Err(InvalidLegacyPrefixError { invalid }.into()),
         };
 
         Ok(Address(inner, PhantomData))
