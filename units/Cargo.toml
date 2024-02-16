@@ -14,8 +14,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+std = ["alloc", "hex/std", "internals/std"]
+alloc = ["hex/alloc", "internals/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -23,6 +23,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
+# TODO: Do we want an unconditional dependency on hex?
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 

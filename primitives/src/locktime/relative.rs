@@ -8,13 +8,16 @@
 
 use core::fmt;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
-use crate::parse::impl_parse_str_from_int_infallible;
-use crate::prelude::*;
 #[cfg(doc)]
 use crate::relative;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+pub use units::locktime::relative::{Height, Time, IntegerOverflowError};
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
@@ -27,7 +30,6 @@ use crate::relative;
 /// * [BIP 112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub enum LockTime {
     /// A block height lock time value.
     Blocks(Height),
@@ -124,12 +126,15 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, Error> {
+    pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, IncompatibleTimeError> {
         use LockTime::*;
 
         match *self {
             Blocks(ref height) => Ok(height.value() <= h.value()),
-            Time(ref time) => Err(Error::IncompatibleTime(*self, *time)),
+            Time(ref time) => Err(IncompatibleTimeError {
+                lock: *self,
+                time: *time,
+            })
         }
     }
 
@@ -151,12 +156,15 @@ impl LockTime {
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, Error> {
+    pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, IncompatibleHeightError> {
         use LockTime::*;
 
         match *self {
             Time(ref time) => Ok(time.value() <= t.value()),
-            Blocks(ref height) => Err(Error::IncompatibleHeight(*self, *height)),
+            Blocks(ref height) => Err(IncompatibleHeightError {
+                lock: *self,
+                height: *height,
+            })
         }
     }
 }
@@ -189,128 +197,37 @@ impl fmt::Display for LockTime {
     }
 }
 
-/// A relative lock time lock-by-blockheight value.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct Height(u16);
-
-impl Height {
-    /// Relative block height 0, can be included in any block.
-    pub const ZERO: Self = Height(0);
-
-    /// The minimum relative block height (0), can be included in any block.
-    pub const MIN: Self = Self::ZERO;
-
-    /// The maximum relative block height.
-    pub const MAX: Self = Height(u16::max_value());
-
-    /// Returns the inner `u16` value.
-    #[inline]
-    pub fn value(self) -> u16 { self.0 }
-}
-
-impl From<u16> for Height {
-    #[inline]
-    fn from(value: u16) -> Self { Height(value) }
-}
-
-impl_parse_str_from_int_infallible!(Height, u16, from);
-
-impl fmt::Display for Height {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-/// A relative lock time lock-by-blocktime value.
-///
-/// For BIP 68 relative lock-by-blocktime locks, time is measure in 512 second intervals.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct Time(u16);
-
-impl Time {
-    /// Relative block time 0, can be included in any block.
-    pub const ZERO: Self = Time(0);
-
-    /// The minimum relative block time (0), can be included in any block.
-    pub const MIN: Self = Time::ZERO;
-
-    /// The maximum relative block time (33,554,432 seconds or approx 388 days).
-    pub const MAX: Self = Time(u16::max_value());
-
-    /// Create a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
-    ///
-    /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
-    #[inline]
-    pub fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
-
-    /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with ceiling
-    /// division.
-    ///
-    /// # Errors
-    ///
-    /// Will return an error if the input cannot be encoded in 16 bits.
-    #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, Error> {
-        if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
-            Ok(Time::from_512_second_intervals(interval))
-        } else {
-            Err(Error::IntegerOverflow(seconds))
-        }
-    }
-
-    /// Returns the inner `u16` value.
-    #[inline]
-    pub fn value(self) -> u16 { self.0 }
-}
-
-impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
-
-impl fmt::Display for Time {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-/// Errors related to relative lock times.
+/// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Input time in seconds was too large to be encoded to a 16 bit 512 second interval.
-    IntegerOverflow(u32),
-    /// Tried to satisfy a lock-by-blocktime lock using a height value.
-    IncompatibleHeight(LockTime, Height),
-    /// Tried to satisfy a lock-by-blockheight lock using a time value.
-    IncompatibleTime(LockTime, Time),
+pub struct IncompatibleHeightError {
+    lock: LockTime,
+    height: Height,
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            IntegerOverflow(val) => write!(
-                f,
-                "{} seconds is too large to be encoded to a 16 bit 512 second interval",
-                val
-            ),
-            IncompatibleHeight(lock, height) =>
-                write!(f, "tried to satisfy lock {} with height: {}", lock, height),
-            IncompatibleTime(lock, time) =>
-                write!(f, "tried to satisfy lock {} with time: {}", lock, time),
-        }
+        write!(f, "tried to satisfy a lock-by-blocktime lock {} with height: {}", self.lock, self.height)
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+impl std::error::Error for IncompatibleHeightError {}
 
-        match *self {
-            IntegerOverflow(_) | IncompatibleHeight(_, _) | IncompatibleTime(_, _) => None,
-        }
+/// Tried to satisfy a lock-by-blockheight lock using a time value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError {
+    lock: LockTime,
+    time: Time,
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "tried to satisfy a lock-by-blockheight lock {} with time: {}", self.lock, self.time)
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {}
 
 #[cfg(test)]
 mod tests {

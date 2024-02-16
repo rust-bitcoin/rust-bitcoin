@@ -23,7 +23,7 @@ pub mod message_network;
 use core::str::FromStr;
 use core::{fmt, ops};
 
-use hex::FromHex;
+use hex::{FromHex, HexToArrayError};
 use internals::{debug_from_display, write_err};
 use io::{BufRead, Write};
 
@@ -332,7 +332,7 @@ impl BorrowMut<[u8; 4]> for Magic {
 #[non_exhaustive]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
+    error: hex::FromHexError<HexToArrayError>,
     /// The byte string that failed to parse.
     magic: String,
 }

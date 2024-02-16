@@ -5,8 +5,11 @@
 use core::fmt;
 use core::ops::{Div, Mul};
 
-use super::Weight;
-use crate::Amount;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+use crate::weight::Weight;
+use crate::amount::Amount;
 
 /// Represents fee rate.
 ///
@@ -14,7 +17,6 @@ use crate::Amount;
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct FeeRate(u64);
 
@@ -84,6 +86,7 @@ impl FeeRate {
     /// Computes the absolute fee amount for a given [`Weight`] at this fee rate.
     ///
     /// `None` is returned if an overflow occurred.
+    #[cfg(feature = "alloc")]   // Because Amount requires alloc.
     pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
         let sats = self.0.checked_mul(rhs.to_wu())?.checked_add(999)? / 1000;
         Some(Amount::from_sat(sats))
@@ -105,6 +108,7 @@ impl FeeRate {
     /// let fee = rate.fee_wu(tx.weight()).unwrap();
     /// assert_eq!(fee.to_sat(), tx.vsize() as u64);
     /// ```
+    #[cfg(feature = "alloc")]   // Because Amount requires alloc.
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
     /// Calculates fee by multiplying this fee rate by weight, in virtual bytes, returning `None`
@@ -112,6 +116,7 @@ impl FeeRate {
     ///
     /// This is equivalent to converting `vb` to `weight` using `Weight::from_vb` and then calling
     /// `Self::fee_wu(weight)`.
+    #[cfg(feature = "alloc")]   // Because Amount requires alloc.
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
     }
@@ -133,6 +138,7 @@ impl From<FeeRate> for u64 {
 }
 
 /// Computes ceiling so that fee computation is conservative.
+#[cfg(feature = "alloc")]   // Because Amount requires alloc.
 impl Mul<FeeRate> for Weight {
     type Output = Amount;
 
@@ -141,19 +147,21 @@ impl Mul<FeeRate> for Weight {
     }
 }
 
+#[cfg(feature = "alloc")]   // Because Amount requires alloc.
 impl Mul<Weight> for FeeRate {
     type Output = Amount;
 
     fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
 }
 
+#[cfg(feature = "alloc")]   // Because Amount requires alloc.
 impl Div<Weight> for Amount {
     type Output = FeeRate;
 
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
-units::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
 mod tests {
@@ -211,6 +219,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]   // Because Amount requires alloc.
     fn checked_weight_mul_test() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
@@ -229,28 +238,12 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]   // Because Amount requires alloc.
     fn checked_div_test() {
         let fee_rate = FeeRate(10).checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate(1), fee_rate);
 
         let fee_rate = FeeRate(10).checked_div(0);
         assert!(fee_rate.is_none());
-    }
-
-    #[test]
-    fn fee_convenience_functions_agree() {
-        use hex::test_hex_unwrap as hex;
-
-        use crate::blockdata::transaction::Transaction;
-        use crate::consensus::Decodable;
-
-        const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
-
-        let raw_tx = hex!(SOME_TX);
-        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
-
-        let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
-
-        assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
     }
 }

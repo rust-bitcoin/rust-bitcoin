@@ -84,7 +84,7 @@ macro_rules! hash_trait_impls {
             /// This is mainly intended as an internal method and you shouldn't need it unless
             /// you're doing something special.
             pub fn backward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
-                $crate::hex::display::DisplayArray::<_, [u8; $bits / 8 * 2]>::new(self.0.iter().rev())
+                $crate::hex::DisplayHex::as_hex_backwards(&self.0)
             }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
@@ -105,13 +105,19 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::hex::{FromHex, HexToBytesIter};
+                use $crate::hex::{FromHex, HexToBytesIter, error::InvalidLengthError};
                 use $crate::Hash;
 
+                let iter = HexToBytesIter::new(s).map_err(|e| {
+                        let expected = ($bits / 8) * 2;
+                        let got = e.input_string_length();
+                    InvalidLengthError::new(got, expected)
+                })?;
+
                 let inner: [u8; $bits / 8] = if $reverse {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
+                    FromHex::from_byte_iter(iter.rev())?
                 } else {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
+                    FromHex::from_byte_iter(iter)?
                 };
                 Ok(Self::from_byte_array(inner))
             }

@@ -17,21 +17,22 @@ use core::{cmp, fmt, str};
 use hashes::{self, sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
+use units::{impl_parse_str_from_int_infallible, parse};
+use units::locktime::relative::IntegerOverflowError;
 
 use super::Weight;
-use crate::blockdata::locktime::absolute::{self, Height, Time};
+use crate::blockdata::locktime::absolute;
 use crate::blockdata::locktime::relative;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
-use crate::{Amount, SignedAmount, VarInt};
+use crate::{error, Amount, SignedAmount, VarInt};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
@@ -120,7 +121,7 @@ impl fmt::Display for OutPoint {
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hex::HexToArrayError),
+    Txid(error::HexToArrayError),
     /// Error in vout part.
     Vout(crate::error::ParseIntError),
     /// Error in general format.
@@ -168,7 +169,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    crate::parse::int(s).map_err(ParseOutPointError::Vout)
+    parse::int(s).map_err(ParseOutPointError::Vout)
 }
 
 impl core::str::FromStr for OutPoint {
@@ -188,7 +189,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
+            txid: s[..colon].parse().map_err(error::HexToArrayError).map_err(ParseOutPointError::Txid)?,
             vout: parse_vout(&s[colon + 1..])?,
         })
     }
@@ -421,11 +422,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, relative::Error> {
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, IntegerOverflowError> {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(relative::Error::IntegerOverflow(seconds))
+            Err(IntegerOverflowError(seconds))
         }
     }
 
@@ -434,11 +435,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, relative::Error> {
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, IntegerOverflowError> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(relative::Error::IntegerOverflow(seconds))
+            Err(IntegerOverflowError(seconds))
         }
     }
 
@@ -475,10 +476,10 @@ impl Sequence {
 }
 
 impl FromHexStr for Sequence {
-    type Error = crate::parse::ParseIntError;
+    type Error = parse::ParseIntError;
 
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let sequence = crate::parse::hex_u32(s)?;
+        let sequence = parse::hex_u32(s)?;
         Ok(Self::from_consensus(sequence))
     }
 }
@@ -883,7 +884,7 @@ impl Transaction {
     /// By definition if the lock time is not enabled the transaction's absolute timelock is
     /// considered to be satisfied i.e., there are no timelock constraints restricting this
     /// transaction from being mined immediately.
-    pub fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
+    pub fn is_absolute_timelock_satisfied(&self, height: absolute::Height, time: absolute::Time) -> bool {
         if !self.is_lock_time_enabled() {
             return true;
         }
@@ -1619,6 +1620,7 @@ mod tests {
     use core::str::FromStr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
+    use units::parse;
 
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -1673,23 +1675,25 @@ mod tests {
         );
         assert_eq!(
             OutPoint::from_str("i don't care:1"),
-            Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err()))
+            Err(ParseOutPointError::Txid(
+                error::HexToArrayError("i don't care".parse::<Txid>().unwrap_err())))
         );
         assert_eq!(
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"
             ),
             Err(ParseOutPointError::Txid(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
-                    .parse::<Txid>()
-                    .unwrap_err()
-            ))
+                error::HexToArrayError(
+                    "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
+                        .parse::<Txid>()
+                        .unwrap_err()
+                )))
         );
         assert_eq!(
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
             ),
-            Err(ParseOutPointError::Vout(crate::parse::int::<u32, _>("lol").unwrap_err()))
+            Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
         );
 
         assert_eq!(

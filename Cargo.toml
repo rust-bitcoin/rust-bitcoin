@@ -1,5 +1,5 @@
 [workspace]
-members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units"]
+members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units", "primitives"]
 resolver = "2"
 
 [patch.crates-io.bitcoin]
@@ -16,3 +16,10 @@ path = "io"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.bitcoin-primitives]
+path = "primitives"
+
+[patch.crates-io.hex-conservative]
+git = "https://github.com/tcharding/hex-conservative"
+branch = "02-12-release-0.2.0"

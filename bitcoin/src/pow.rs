@@ -12,6 +12,7 @@ use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
+use units::{parse, ParseIntError};
 
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
@@ -284,10 +285,10 @@ impl From<CompactTarget> for Target {
 }
 
 impl FromHexStr for CompactTarget {
-    type Error = crate::parse::ParseIntError;
+    type Error = ParseIntError;
 
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let compact_target = crate::parse::hex_u32(s)?;
+        let compact_target = parse::hex_u32(s)?;
         Ok(Self::from_consensus(compact_target))
     }
 }

@@ -270,13 +270,19 @@ macro_rules! hash_newtype {
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::hex::{FromHex, HexToBytesIter};
+                use $crate::hex::{FromHex, HexToBytesIter, error::InvalidLengthError};
                 use $crate::Hash;
 
+                let iter = HexToBytesIter::new(s).map_err(|e| {
+                    let expected =  <$hash as $crate::Hash>::LEN * 2;
+                    let got = e.input_string_length();
+                    InvalidLengthError::new(got, expected)
+                })?;
+
                 let inner: <$hash as Hash>::Bytes = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
+                    FromHex::from_byte_iter(iter.rev())?
                 } else {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
+                    FromHex::from_byte_iter(iter)?
                 };
                 Ok($newtype(<$hash>::from_byte_array(inner)))
             }

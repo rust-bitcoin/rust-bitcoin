@@ -27,7 +27,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 
 bitcoin-io = { version = "0.1", default-features = false, optional = true }
 schemars = { version = "0.8.3", default-features = false, optional = true }

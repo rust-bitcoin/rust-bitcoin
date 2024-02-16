@@ -10,7 +10,7 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::{hash160, Hash};
-use hex::{FromHex, HexToArrayError, HexToBytesError};
+use hex::FromHex;
 use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
@@ -21,7 +21,7 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::{base58, io};
+use crate::{base58, error, io};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -236,20 +236,12 @@ impl FromStr for PublicKey {
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
         match s.len() {
             66 => {
-                PublicKey::from_slice(&<[u8; 33]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
+                let bytes = <[u8; 33]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?;
+                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             },
             130 => {
-                PublicKey::from_slice(&<[u8; 65]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
+                let bytes = <[u8; 65]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?;
+                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             }
             len => Err(ParsePublicKeyError::InvalidHexLength(len)),
         }
@@ -355,7 +347,8 @@ impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        CompressedPublicKey::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
+        CompressedPublicKey::from_slice(&<[u8; 33]>::from_no_prefix_hex(s).map_err(error::FromNoPrefixHexHexToArrayError)?)
+            .map_err(Into::into)
     }
 }
 
@@ -921,7 +914,7 @@ impl std::error::Error for FromSliceError {
 }
 
 impl From<secp256k1::Error> for FromSliceError {
-    fn from(e: secp256k1::Error) -> FromSliceError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 /// Error generated from WIF key format.
@@ -956,20 +949,18 @@ impl std::error::Error for FromWifError {
 }
 
 impl From<base58::Error> for FromWifError {
-    fn from(e: base58::Error) -> FromWifError { Self::Base58(e) }
+    fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
 
 impl From<secp256k1::Error> for FromWifError {
-    fn from(e: secp256k1::Error) -> FromWifError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 /// Error returned while constructing public key from string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsePublicKeyError {
-    /// Error originated while parsing string.
-    Encoding(FromSliceError),
     /// Hex decoding error.
-    InvalidChar(u8),
+    Hex(error::FromNoPrefixHexHexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -978,8 +969,7 @@ impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParsePublicKeyError::*;
         match self {
-            Encoding(e) => write_err!(f, "string error"; e),
-            InvalidChar(char) => write!(f, "hex error {}", char),
+            Hex(e) => write_err!(f, "invalid hex string"; e),
             InvalidHexLength(got) => write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
     }
@@ -991,14 +981,14 @@ impl std::error::Error for ParsePublicKeyError {
         use ParsePublicKeyError::*;
 
         match self {
-            Encoding(e) => Some(e),
-            InvalidChar(_) | InvalidHexLength(_) => None,
+            Hex(e) => Some(e),
+            InvalidHexLength(_) => None,
         }
     }
 }
 
-impl From<FromSliceError> for ParsePublicKeyError {
-    fn from(e: FromSliceError) -> Self { Self::Encoding(e) }
+impl From<error::FromNoPrefixHexHexToArrayError> for ParsePublicKeyError {
+    fn from(e: error::FromNoPrefixHexHexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Error returned when parsing a [`CompressedPublicKey`] from a string.
@@ -1007,7 +997,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    HexError(hex::HexToArrayError),
+    Hex(error::FromNoPrefixHexHexToArrayError),
 }
 
 impl fmt::Display for ParseCompressedPublicKeyError {
@@ -1015,7 +1005,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
         use ParseCompressedPublicKeyError::*;
         match self {
             Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            HexError(e) => write_err!(f, "invalid hex"; e)
+            Hex(e) => write_err!(f, "invalid hex"; e)
         }
     }
 }
@@ -1027,17 +1017,17 @@ impl std::error::Error for ParseCompressedPublicKeyError {
 
         match self {
             Secp256k1(e) => Some(e),
-            HexError(e) => Some(e),
+            Hex(e) => Some(e),
         }
     }
 }
 
 impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
-    fn from(e: secp256k1::Error) -> ParseCompressedPublicKeyError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex::HexToArrayError) -> ParseCompressedPublicKeyError { Self::HexError(e) }
+impl From<error::FromNoPrefixHexHexToArrayError> for ParseCompressedPublicKeyError {
+    fn from(e: error::FromNoPrefixHexHexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Segwit public keys must always be compressed.
@@ -1060,7 +1050,6 @@ impl std::error::Error for UncompressedPublicKeyError {
 mod tests {
     use std::str::FromStr;
 
-    use hex::FromHex;
     use secp256k1::Secp256k1;
 
     use super::*;
@@ -1397,7 +1386,10 @@ mod tests {
         assert_eq!(s.len(), 66);
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
+        match res.unwrap_err() {
+            ParsePublicKeyError::Hex(error::FromNoPrefixHexHexToArrayError(hex::FromNoPrefixHexError::Invalid(hex::HexToArrayError::InvalidChar(e)))) => assert_eq!(e.invalid_char(), 103),
+            e => panic!("unexpected error: {:?}", e),
+        }
     }
 
     #[test]

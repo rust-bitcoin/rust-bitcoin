@@ -29,8 +29,8 @@ impl fmt::Debug for SerializedSignature {
 
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut buf = [0u8; MAX_LEN * 2];
-        let mut encoder = hex::buf_encoder::BufEncoder::new(&mut buf);
+        const HEX_LEN: usize = MAX_LEN * 2;
+        let mut encoder = hex::buf_encoder::BufEncoder::<HEX_LEN>::new();
         encoder.put_bytes(self, hex::Case::Lower);
         f.pad_integral(true, "0x", encoder.as_str())
     }

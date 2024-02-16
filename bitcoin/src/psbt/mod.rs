@@ -1012,7 +1012,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use hashes::{hash160, ripemd160, sha256, Hash};
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::{test_hex_unwrap as hex, FromHex, FromHexError, InvalidCharError};
     use secp256k1::{self, Secp256k1};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
@@ -1030,7 +1030,7 @@ mod tests {
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
-        let r: Result<Vec<u8>, hex::HexToBytesError> = Vec::from_hex(s);
+        let r: Result<Vec<u8>, FromHexError<InvalidCharError>> = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
             Ok(v) => Psbt::deserialize(&v),

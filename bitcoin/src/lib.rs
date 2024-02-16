@@ -74,6 +74,9 @@ pub extern crate io;
 #[cfg(feature = "ordered")]
 pub extern crate ordered;
 
+/// Re-export the `units` crate.
+pub extern crate units;
+
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
@@ -86,7 +89,6 @@ extern crate actual_serde as serde;
 #[macro_use]
 mod test_macros;
 mod internal_macros;
-mod parse;
 #[cfg(feature = "serde")]
 mod serde_utils;
 
@@ -141,6 +143,10 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+
+/// Re-exports from the `units` crate.
+#[doc(inline)]
+pub use units::ParseIntError;
 
 #[rustfmt::skip]
 mod prelude {
