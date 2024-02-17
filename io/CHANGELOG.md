@@ -1,4 +1,4 @@
-# 0.1 - Initial Release - 2023-01-18
+# 0.1.1 - Initial Release - 2024-02-18
 
 Create the `io` crate, add basic I/O traits, types, and implementations.
 
@@ -13,3 +13,7 @@ Types:
 - `Take`
 - `Cursor`
 - `Sink`
+
+# 0.1.0 - Placeholder release
+
+Empty crate to reserve the name on crates.io
