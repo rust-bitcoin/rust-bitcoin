@@ -28,6 +28,8 @@
 //!                            achieve the same without this feature but it could
 //!                            happen the implementations diverge one day.
 
+// IDK what to do about this.
+#![allow(macro_expanded_macro_exports_accessed_by_absolute_paths)]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 // Experimental features we need.
@@ -141,6 +143,9 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+
+#[doc(hidden)]
+pub use internals;
 
 #[rustfmt::skip]
 mod prelude {
