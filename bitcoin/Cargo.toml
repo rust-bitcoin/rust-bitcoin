@@ -33,7 +33,7 @@ hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = fa
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }
 hex_lit = "0.1.1"
 internals = { package = "bitcoin-internals", version = "0.2.0" }
-io = { package = "bitcoin-io", version = "0.1", default-features = false, features = ["alloc"] }
+io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes", "alloc"] }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 
