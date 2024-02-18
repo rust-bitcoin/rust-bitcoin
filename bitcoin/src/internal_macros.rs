@@ -99,10 +99,13 @@ macro_rules! impl_bytes_newtype {
         impl $crate::hex::FromHex for $t {
             type Err = $crate::hex::HexToArrayError;
 
-            fn from_byte_iter<I>(iter: I) -> core::result::Result<Self, $crate::hex::HexToArrayError>
+            fn from_byte_iter<I>(
+                iter: I,
+            ) -> core::result::Result<Self, $crate::hex::HexToArrayError>
             where
-                I: core::iter::Iterator<Item = core::result::Result<u8, $crate::hex::HexToBytesError>>
-                    + core::iter::ExactSizeIterator
+                I: core::iter::Iterator<
+                        Item = core::result::Result<u8, $crate::hex::HexToBytesError>,
+                    > + core::iter::ExactSizeIterator
                     + core::iter::DoubleEndedIterator,
             {
                 Ok($t($crate::hex::FromHex::from_byte_iter(iter)?))
@@ -111,12 +114,17 @@ macro_rules! impl_bytes_newtype {
 
         impl core::str::FromStr for $t {
             type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { $crate::hex::FromHex::from_hex(s) }
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+                $crate::hex::FromHex::from_hex(s)
+            }
         }
 
         #[cfg(feature = "serde")]
         impl $crate::serde::Serialize for $t {
-            fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
+            fn serialize<S: $crate::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> core::result::Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
                     s.collect_str(self)
                 } else {
@@ -127,7 +135,9 @@ macro_rules! impl_bytes_newtype {
 
         #[cfg(feature = "serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $t {
-            fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t, D::Error> {
+            fn deserialize<D: $crate::serde::Deserializer<'de>>(
+                d: D,
+            ) -> core::result::Result<$t, D::Error> {
                 if d.is_human_readable() {
                     struct HexVisitor;
 

@@ -435,8 +435,9 @@ impl Psbt {
             Wsh | ShWsh => {
                 let witness_script =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
-                let sighash =
-                    cache.p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty).map_err(SignError::SegwitV0Sighash)?;
+                let sighash = cache
+                    .p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty)
+                    .map_err(SignError::SegwitV0Sighash)?;
                 Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             Tr => {
