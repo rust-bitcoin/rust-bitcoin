@@ -177,6 +177,10 @@ impl From<MissingDigitsError> for ParseError {
     fn from(e: MissingDigitsError) -> Self { Self::Amount(e.into()) }
 }
 
+impl From<InputTooLargeError> for ParseError {
+    fn from(e: InputTooLargeError) -> Self { Self::Amount(e.into()) }
+}
+
 impl From<InvalidCharacterError> for ParseError {
     fn from(e: InvalidCharacterError) -> Self { Self::Amount(e.into()) }
 }
@@ -217,7 +221,7 @@ pub enum ParseAmountError {
     /// A digit was expected but not found.
     MissingDigits(MissingDigitsError),
     /// Input string was too large.
-    InputTooLarge,
+    InputTooLarge(InputTooLargeError),
     /// Invalid character in input.
     InvalidCharacter(InvalidCharacterError),
 }
@@ -227,6 +231,13 @@ impl From<MissingDigitsError> for ParseAmountError {
         Self::MissingDigits(value)
     }
 }
+
+impl From<InputTooLargeError> for ParseAmountError {
+    fn from(value: InputTooLargeError) -> Self {
+        Self::InputTooLarge(value)
+    }
+}
+
 
 impl From<InvalidCharacterError> for ParseAmountError {
     fn from(value: InvalidCharacterError) -> Self {
@@ -242,7 +253,7 @@ impl fmt::Display for ParseAmountError {
             OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
             TooPrecise => f.write_str("amount has a too high precision"),
             MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
-            InputTooLarge => f.write_str("input string was too large"),
+            InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
             InvalidCharacter(ref error) => write_err!(f, "invalid character in the input"; error),
         }
     }
@@ -254,7 +265,8 @@ impl std::error::Error for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            TooPrecise | InputTooLarge => None,
+            TooPrecise => None,
+            InputTooLarge(ref error) => Some(error),
             OutOfRange(ref error) => Some(error),
             MissingDigits(ref error) => Some(error),
             InvalidCharacter(ref error) => Some(error),
@@ -332,6 +344,24 @@ impl From<OutOfRangeError> for ParseAmountError {
         ParseAmountError::OutOfRange(value)
     }
 }
+
+/// Error returned when the input string is too large.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct InputTooLargeError {
+    len: usize,
+}
+
+impl fmt::Display for InputTooLargeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.len - INPUT_STRING_LEN_LIMIT {
+            1 => write!(f, "the input is one character longer than the maximum allowed length ({})", INPUT_STRING_LEN_LIMIT),
+            n => write!(f, "the input is {} characters longer than the maximum allowed length ({})", n, INPUT_STRING_LEN_LIMIT),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InputTooLargeError {}
 
 /// Error returned when digits were expected in the input but there were none.
 ///
@@ -457,6 +487,8 @@ fn is_too_precise(s: &str, precision: usize) -> bool {
     }
 }
 
+const INPUT_STRING_LEN_LIMIT: usize = 50;
+
 /// Parse decimal string in the given denomination into a satoshi value and a
 /// bool indicator for a negative amount.
 fn parse_signed_to_satoshi(
@@ -466,8 +498,8 @@ fn parse_signed_to_satoshi(
     if s.is_empty() {
         return Err(InnerParseError::MissingDigits(MissingDigitsError { kind: MissingDigitsKind::Empty }));
     }
-    if s.len() > 50 {
-        return Err(InnerParseError::InputTooLarge);
+    if s.len() > INPUT_STRING_LEN_LIMIT {
+        return Err(InnerParseError::InputTooLarge(s.len()));
     }
 
     let is_negative = s.starts_with('-');
@@ -547,7 +579,7 @@ enum InnerParseError {
     Overflow { is_negative: bool },
     TooPrecise,
     MissingDigits(MissingDigitsError),
-    InputTooLarge,
+    InputTooLarge(usize),
     InvalidCharacter(InvalidCharacterError),
 }
 
@@ -557,7 +589,7 @@ impl InnerParseError {
             Self::Overflow { is_negative } => OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
             Self::TooPrecise => ParseAmountError::TooPrecise,
             Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
-            Self::InputTooLarge => ParseAmountError::InputTooLarge,
+            Self::InputTooLarge(len) => ParseAmountError::InputTooLarge(InputTooLargeError { len }),
             Self::InvalidCharacter(error) => ParseAmountError::InvalidCharacter(error),
         }
     }
@@ -2177,7 +2209,7 @@ mod tests {
         // more than 50 chars.
         assert_eq!(
             p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin),
-            Err(E::InputTooLarge)
+            Err(E::InputTooLarge(InputTooLargeError { len: 51 }))
         );
     }
 
