@@ -173,6 +173,10 @@ impl From<OutOfRangeError> for ParseError {
     fn from(e: OutOfRangeError) -> Self { Self::Amount(e.into()) }
 }
 
+impl From<TooPreciseError> for ParseError {
+    fn from(e: TooPreciseError) -> Self { Self::Amount(e.into()) }
+}
+
 impl From<MissingDigitsError> for ParseError {
     fn from(e: MissingDigitsError) -> Self { Self::Amount(e.into()) }
 }
@@ -217,13 +221,19 @@ pub enum ParseAmountError {
     /// The amount is too big or too small.
     OutOfRange(OutOfRangeError),
     /// Amount has higher precision than supported by the type.
-    TooPrecise,
+    TooPrecise(TooPreciseError),
     /// A digit was expected but not found.
     MissingDigits(MissingDigitsError),
     /// Input string was too large.
     InputTooLarge(InputTooLargeError),
     /// Invalid character in input.
     InvalidCharacter(InvalidCharacterError),
+}
+
+impl From<TooPreciseError> for ParseAmountError {
+    fn from(value: TooPreciseError) -> Self {
+        Self::TooPrecise(value)
+    }
 }
 
 impl From<MissingDigitsError> for ParseAmountError {
@@ -251,7 +261,7 @@ impl fmt::Display for ParseAmountError {
 
         match *self {
             OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
-            TooPrecise => f.write_str("amount has a too high precision"),
+            TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
             MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
             InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
             InvalidCharacter(ref error) => write_err!(f, "invalid character in the input"; error),
@@ -265,7 +275,7 @@ impl std::error::Error for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            TooPrecise => None,
+            TooPrecise(ref error) => Some(error),
             InputTooLarge(ref error) => Some(error),
             OutOfRange(ref error) => Some(error),
             MissingDigits(ref error) => Some(error),
@@ -344,6 +354,24 @@ impl From<OutOfRangeError> for ParseAmountError {
         ParseAmountError::OutOfRange(value)
     }
 }
+
+/// Error returned when the input string has higher precision than satoshis.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TooPreciseError {
+    position: usize,
+}
+
+impl fmt::Display for TooPreciseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.position {
+            0 => f.write_str("the amount is less than 1 satoshi but it's not zero"),
+            pos => write!(f, "the digits starting from position {} represent a sub-satoshi amount", pos),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TooPreciseError {}
 
 /// Error returned when the input string is too large.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -477,13 +505,22 @@ impl std::error::Error for PossiblyConfusingDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-fn is_too_precise(s: &str, precision: usize) -> bool {
+/// Returns `Some(position)` if the precision is not supported.
+///
+/// The position indicates the first digit that is too precise.
+fn is_too_precise(s: &str, precision: usize) -> Option<usize> {
     match s.find('.') {
-        Some(pos) =>
-            s[(pos + 1)..].chars().any(|d| d != '0')
-                || precision >= pos
-                || s[..pos].chars().rev().take(precision).any(|d| d != '0'),
-        None => precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0'),
+        Some(pos) if precision >= pos => { Some(0) },
+        Some(pos) => {
+            s[..pos].char_indices().rev().take(precision).find(|(_, d)| *d != '0').map(|(i, _)| i)
+                .or_else(|| {
+                    s[(pos + 1)..].char_indices().find(|(_, d)| *d != '0').map(|(i, _)| i + pos + 1)
+                })
+        },
+        None if precision >= s.len() => { Some(0) },
+        None => {
+            s.char_indices().rev().take(precision).find(|(_, d)| *d != '0').map(|(i, _)| i)
+        },
     }
 }
 
@@ -520,10 +557,10 @@ fn parse_signed_to_satoshi(
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
             let last_n = precision_diff.unsigned_abs().into();
-            if is_too_precise(s, last_n) {
+            if let Some(position) = is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
                     Ok(0) => return Ok((is_negative, 0)),
-                    _ => return Err(InnerParseError::TooPrecise),
+                    _ => return Err(InnerParseError::TooPrecise(TooPreciseError { position: position + is_negative as usize })),
                 }
             }
             s = &s[0..s.find('.').unwrap_or(s.len()) - last_n];
@@ -535,7 +572,7 @@ fn parse_signed_to_satoshi(
 
     let mut decimals = None;
     let mut value: u64 = 0; // as satoshis
-    for c in s.chars() {
+    for (i, c) in s.char_indices() {
         match c {
             '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
@@ -550,7 +587,7 @@ fn parse_signed_to_satoshi(
                 decimals = match decimals {
                     None => None,
                     Some(d) if d < max_decimals => Some(d + 1),
-                    _ => return Err(InnerParseError::TooPrecise),
+                    _ => return Err(InnerParseError::TooPrecise(TooPreciseError { position: i + is_negative as usize, })),
                 };
             }
             '.' => match decimals {
@@ -577,7 +614,7 @@ fn parse_signed_to_satoshi(
 
 enum InnerParseError {
     Overflow { is_negative: bool },
-    TooPrecise,
+    TooPrecise(TooPreciseError),
     MissingDigits(MissingDigitsError),
     InputTooLarge(usize),
     InvalidCharacter(InvalidCharacterError),
@@ -587,7 +624,7 @@ impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
             Self::Overflow { is_negative } => OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
-            Self::TooPrecise => ParseAmountError::TooPrecise,
+            Self::TooPrecise(error) => ParseAmountError::TooPrecise(error),
             Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
             Self::InputTooLarge(len) => ParseAmountError::InputTooLarge(InputTooLargeError { len }),
             Self::InvalidCharacter(error) => ParseAmountError::InvalidCharacter(error),
@@ -2114,9 +2151,9 @@ mod tests {
         assert_eq!(sf(-0.00012345, D::Bitcoin), Ok(ssat(-12345)));
 
         assert_eq!(f(-100.0, D::MilliSatoshi), Err(OutOfRangeError::negative().into()));
-        assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
+        assert_eq!(f(11.22, D::Satoshi), Err(TooPreciseError { position: 3 }.into()));
+        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(TooPreciseError { position: 1 }.into()));
+        assert_eq!(f(42.123456781, D::Bitcoin), Err(TooPreciseError { position: 11 }.into()));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
 
@@ -2163,16 +2200,16 @@ mod tests {
         let more_than_max = format!("1{}", Amount::MAX);
         #[cfg(feature = "alloc")]
         assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
-        assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
-        assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1001.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.0000001", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1100.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("10001.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("0.000000042", btc), Err(TooPreciseError { position: 10 }.into()));
+        assert_eq!(p("999.0000000", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1.0000000", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1.1", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1000.1", msat), Err(TooPreciseError { position: 5 }.into()));
+        assert_eq!(p("1001.0000000", msat), Err(TooPreciseError { position: 3 }.into()));
+        assert_eq!(p("1000.0000001", msat), Err(TooPreciseError { position: 11 }.into()));
+        assert_eq!(p("1000.1000000", msat), Err(TooPreciseError { position: 5 }.into()));
+        assert_eq!(p("1100.0000000", msat), Err(TooPreciseError { position: 1 }.into()));
+        assert_eq!(p("10001.0000000", msat), Err(TooPreciseError { position: 4 }.into()));
 
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
@@ -2200,7 +2237,7 @@ mod tests {
             assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
         }
 
-        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
+        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(TooPreciseError { position: 0 }.into()));
         // exactly 50 chars.
         assert_eq!(
             p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin),
@@ -2488,10 +2525,10 @@ mod tests {
 
         case("-1 BTC", Err(OutOfRangeError::negative()));
         case("-0.0 BTC", Err(OutOfRangeError::negative()));
-        case("0.123456789 BTC", Err(E::TooPrecise));
-        scase("-0.1 satoshi", Err(E::TooPrecise));
-        case("0.123456 mBTC", Err(E::TooPrecise));
-        scase("-1.001 bits", Err(E::TooPrecise));
+        case("0.123456789 BTC", Err(TooPreciseError { position: 10 }));
+        scase("-0.1 satoshi", Err(TooPreciseError { position: 3 }));
+        case("0.123456 mBTC", Err(TooPreciseError { position: 7 }));
+        scase("-1.001 bits", Err(TooPreciseError { position: 5 }));
         scase("-200000000000 BTC", Err(OutOfRangeError::too_small()));
         case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
 
@@ -2571,11 +2608,11 @@ mod tests {
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::NanoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 18 }.into())
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::NanoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 19 }.into())
         );
 
         assert_eq!(
@@ -2584,11 +2621,11 @@ mod tests {
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::PicoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 18 }.into())
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::PicoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 19 }.into())
         );
     }
 
@@ -2675,7 +2712,7 @@ mod tests {
         // errors
         let t: Result<T, serde_json::Error> =
             serde_json::from_str("{\"amt\": 1000000.000000001, \"samt\": 1}");
-        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise.to_string()));
+        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise(TooPreciseError { position: 16 }).to_string()));
         let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -1, \"samt\": 1}");
         assert!(t.unwrap_err().to_string().contains(&OutOfRangeError::negative().to_string()));
     }
