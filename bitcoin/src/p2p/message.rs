@@ -408,8 +408,7 @@ impl Decodable for HeaderDeserializationWrapper {
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let len = VarInt::consensus_decode(r)?.0;
-        // should be above usual number of items to avoid
-        // allocation
+        // should be above usual number of items to avoid allocation
         let mut ret = Vec::with_capacity(core::cmp::min(1024 * 16, len as usize));
         for _ in 0..len {
             ret.push(Decodable::consensus_decode(r)?);
