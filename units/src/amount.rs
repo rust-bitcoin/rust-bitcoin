@@ -156,6 +156,9 @@ pub enum ParseError {
 
     /// Invalid denomination.
     Denomination(ParseDenominationError),
+
+    /// The denomination was not identified.
+    MissingDenomination(MissingDenominationError),
 }
 
 impl From<ParseAmountError> for ParseError {
@@ -170,11 +173,22 @@ impl From<OutOfRangeError> for ParseError {
     fn from(e: OutOfRangeError) -> Self { Self::Amount(e.into()) }
 }
 
+impl From<MissingDigitsError> for ParseError {
+    fn from(e: MissingDigitsError) -> Self { Self::Amount(e.into()) }
+}
+
+impl From<InvalidCharacterError> for ParseError {
+    fn from(e: InvalidCharacterError) -> Self { Self::Amount(e.into()) }
+}
+
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParseError::Amount(error) => write_err!(f, "invalid amount"; error),
             ParseError::Denomination(error) => write_err!(f, "invalid denomination"; error),
+            // We consider this to not be a source because it currently doesn't contain useful
+            // information
+            ParseError::MissingDenomination(_) => f.write_str("the input doesn't contain a denomination"),
         }
     }
 }
@@ -185,6 +199,9 @@ impl std::error::Error for ParseError {
         match self {
             ParseError::Amount(error) => Some(error),
             ParseError::Denomination(error) => Some(error),
+            // We consider this to not be a source because it currently doesn't contain useful
+            // information
+            ParseError::MissingDenomination(_) => None,
         }
     }
 }
@@ -197,12 +214,24 @@ pub enum ParseAmountError {
     OutOfRange(OutOfRangeError),
     /// Amount has higher precision than supported by the type.
     TooPrecise,
-    /// Invalid number format.
-    InvalidFormat,
+    /// A digit was expected but not found.
+    MissingDigits(MissingDigitsError),
     /// Input string was too large.
     InputTooLarge,
     /// Invalid character in input.
-    InvalidCharacter(char),
+    InvalidCharacter(InvalidCharacterError),
+}
+
+impl From<MissingDigitsError> for ParseAmountError {
+    fn from(value: MissingDigitsError) -> Self {
+        Self::MissingDigits(value)
+    }
+}
+
+impl From<InvalidCharacterError> for ParseAmountError {
+    fn from(value: InvalidCharacterError) -> Self {
+        Self::InvalidCharacter(value)
+    }
 }
 
 impl fmt::Display for ParseAmountError {
@@ -210,11 +239,11 @@ impl fmt::Display for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            OutOfRange(error) => write_err!(f, "amount out of range"; error),
+            OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
             TooPrecise => f.write_str("amount has a too high precision"),
-            InvalidFormat => f.write_str("invalid number format"),
+            MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
             InputTooLarge => f.write_str("input string was too large"),
-            InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
+            InvalidCharacter(ref error) => write_err!(f, "invalid character in the input"; error),
         }
     }
 }
@@ -225,9 +254,10 @@ impl std::error::Error for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            TooPrecise | InvalidFormat | InputTooLarge
-            | InvalidCharacter(_) => None,
+            TooPrecise | InputTooLarge => None,
             OutOfRange(ref error) => Some(error),
+            MissingDigits(ref error) => Some(error),
+            InvalidCharacter(ref error) => Some(error),
         }
     }
 }
@@ -303,6 +333,50 @@ impl From<OutOfRangeError> for ParseAmountError {
     }
 }
 
+/// Error returned when digits were expected in the input but there were none.
+///
+/// In particular, this is currently returned when the string is empty or only contains the minus sign.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MissingDigitsError {
+    kind: MissingDigitsKind,
+}
+
+impl fmt::Display for MissingDigitsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.kind {
+            MissingDigitsKind::Empty => f.write_str("the input is empty"),
+            MissingDigitsKind::OnlyMinusSign => f.write_str("there are no digits following the minus (-) sign"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MissingDigitsError {}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum MissingDigitsKind {
+    Empty,
+    OnlyMinusSign,
+}
+
+/// Returned when the input contains an invalid character.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidCharacterError {
+    invalid_char: char,
+}
+
+impl fmt::Display for InvalidCharacterError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.invalid_char {
+            '.' => f.write_str("there is more than one decimal separator (dot) in the input"),
+            '-' => f.write_str("there is more than one minus sign (-) in the input"),
+            c => write!(f, "the character '{}' is not a valid digit", c),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidCharacterError {}
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -335,6 +409,11 @@ impl std::error::Error for ParseDenominationError {
         }
     }
 }
+
+/// Error returned when the denomination is empty.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct MissingDenominationError;
 
 /// Parsing error, unknown denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -385,7 +464,7 @@ fn parse_signed_to_satoshi(
     denom: Denomination,
 ) -> Result<(bool, u64), InnerParseError> {
     if s.is_empty() {
-        return Err(InnerParseError::InvalidFormat);
+        return Err(InnerParseError::MissingDigits(MissingDigitsError { kind: MissingDigitsKind::Empty }));
     }
     if s.len() > 50 {
         return Err(InnerParseError::InputTooLarge);
@@ -394,7 +473,7 @@ fn parse_signed_to_satoshi(
     let is_negative = s.starts_with('-');
     if is_negative {
         if s.len() == 1 {
-            return Err(InnerParseError::InvalidFormat);
+            return Err(InnerParseError::MissingDigits(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign }));
         }
         s = &s[1..];
     }
@@ -446,9 +525,9 @@ fn parse_signed_to_satoshi(
                 None if max_decimals <= 0 => break,
                 None => decimals = Some(0),
                 // Double decimal dot.
-                _ => return Err(InnerParseError::InvalidFormat),
+                _ => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: '.' })),
             },
-            c => return Err(InnerParseError::InvalidCharacter(c)),
+            c => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: c })),
         }
     }
 
@@ -467,9 +546,9 @@ fn parse_signed_to_satoshi(
 enum InnerParseError {
     Overflow { is_negative: bool },
     TooPrecise,
-    InvalidFormat,
+    MissingDigits(MissingDigitsError),
     InputTooLarge,
-    InvalidCharacter(char),
+    InvalidCharacter(InvalidCharacterError),
 }
 
 impl InnerParseError {
@@ -477,9 +556,9 @@ impl InnerParseError {
         match self {
             Self::Overflow { is_negative } => OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
             Self::TooPrecise => ParseAmountError::TooPrecise,
-            Self::InvalidFormat => ParseAmountError::InvalidFormat,
+            Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
             Self::InputTooLarge => ParseAmountError::InputTooLarge,
-            Self::InvalidCharacter(c) => ParseAmountError::InvalidCharacter(c),
+            Self::InvalidCharacter(error) => ParseAmountError::InvalidCharacter(error),
         }
     }
 }
@@ -488,7 +567,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     let (i, j) = if let Some(i) = s.find(' ') {
         (i, i + 1)
     } else {
-        let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseAmountError::InvalidFormat)?;
+        let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseError::MissingDenomination(MissingDenominationError))?;
         (i, i)
     };
     Ok((&s[..i], s[j..].parse()?))
@@ -2042,12 +2121,12 @@ mod tests {
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
-        assert_eq!(p("x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("-", btc), Err(E::InvalidFormat));
-        assert_eq!(sp("-", btc), Err(E::InvalidFormat));
-        assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
-        assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
+        assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x' })));
+        assert_eq!(p("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
+        assert_eq!(sp("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
+        assert_eq!(p("-1.0x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x' })));
+        assert_eq!(p("0.0 ", btc), Err(E::from(InvalidCharacterError { invalid_char: ' ' })));
+        assert_eq!(p("0.000.000", btc), Err(E::from(InvalidCharacterError { invalid_char: '.' })));
         #[cfg(feature = "alloc")]
         let more_than_max = format!("1{}", Amount::MAX);
         #[cfg(feature = "alloc")]
@@ -2332,7 +2411,7 @@ mod tests {
 
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x').into()));
+        assert_eq!(Amount::from_str("x BTC"), Err(E::from(E::from(InvalidCharacterError { invalid_char: 'x' })).into()));
         assert_eq!(
             Amount::from_str("xBTC"),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
@@ -2341,7 +2420,7 @@ mod tests {
             Amount::from_str("5 BTC BTC"),
             Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
         );
-        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B').into()));
+        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::from(InvalidCharacterError { invalid_char: 'B' }).into()));
         assert_eq!(
             Amount::from_str("5 5 BTC"),
             Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
