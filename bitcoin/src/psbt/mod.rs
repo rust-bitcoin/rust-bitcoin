@@ -1969,8 +1969,9 @@ mod tests {
                             txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
+                        script_sig: ScriptBuf::new(),
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                        ..Default::default()
+                        witness: Witness::new(),
                     }
                 ],
                 output: vec![
@@ -2000,16 +2001,18 @@ mod tests {
                                     txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
+                                script_sig: ScriptBuf::new(),
                                 sequence: Sequence::MAX,
-                                ..Default::default()
+                                witness: Witness::new(),
                             },
                             TxIn {
                                 previous_output: OutPoint {
                                     txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
+                                script_sig: ScriptBuf::new(),
                                 sequence: Sequence::MAX,
-                                ..Default::default()
+                                witness: Witness::new(),
                             }
                         ],
                         output: vec![
@@ -2069,10 +2072,17 @@ mod tests {
         use crate::witness_version::WitnessVersion;
         use crate::{WPubkeyHash, WitnessProgram};
 
+        let tx_in = TxIn {
+                previous_output: OutPoint::null(),
+                script_sig: ScriptBuf::new(),
+                sequence: Sequence::MAX,
+                witness: Witness::new(),
+        };
+
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
+            input: vec![tx_in.clone(), tx_in],
             output: vec![TxOut::NULL],
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();

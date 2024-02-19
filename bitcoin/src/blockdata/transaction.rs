@@ -232,6 +232,16 @@ impl TxIn {
     const BASE_WEIGHT: Weight =
         Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
+    /// Creates a new empty [`TxIn`] with the provided [`Sequence`].
+    pub fn new(sequence: Sequence) -> TxIn {
+        TxIn {
+            previous_output: OutPoint::null(),
+            script_sig: ScriptBuf::new(),
+            sequence,
+            witness: Witness::new(),
+        }
+    }
+
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
@@ -288,17 +298,6 @@ impl TxIn {
     ///
     /// Total size includes the witness data (for base size see [`Self::base_size`]).
     pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
-}
-
-impl Default for TxIn {
-    fn default() -> TxIn {
-        TxIn {
-            previous_output: OutPoint::default(),
-            script_sig: ScriptBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::default(),
-        }
-    }
 }
 
 /// Bitcoin transaction input sequence number.
@@ -1720,16 +1719,6 @@ mod tests {
     fn txin() {
         let txin: Result<TxIn, _> = deserialize(&hex!("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff"));
         assert!(txin.is_ok());
-    }
-
-    #[test]
-    fn txin_default() {
-        let txin = TxIn::default();
-        assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.script_sig, ScriptBuf::new());
-        assert_eq!(txin.sequence, Sequence::from_consensus(0xFFFFFFFF));
-        assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.witness.len(), 0);
     }
 
     #[test]
