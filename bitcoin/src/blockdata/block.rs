@@ -20,7 +20,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
-use crate::{merkle_tree, Network, VarInt};
+use crate::{merkle_tree, Network};
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
@@ -333,7 +333,7 @@ impl Block {
     fn base_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += encode::varint_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.base_size()).sum::<usize>();
 
         size
@@ -346,7 +346,7 @@ impl Block {
     pub fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += encode::varint_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
 
         size

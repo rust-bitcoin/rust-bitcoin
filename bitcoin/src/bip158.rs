@@ -48,8 +48,7 @@ use io::{BufRead, Write};
 use crate::blockdata::block::{Block, BlockHash};
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
-use crate::consensus::encode::VarInt;
-use crate::consensus::{Decodable, Encodable};
+use crate::consensus::encode::{ReadExt, WriteExt};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
 
@@ -280,9 +279,9 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
+        let n_elements = reader.read_varint().unwrap_or(0);
         // map hashes to [0, n_elements << grp]
-        let nm = n_elements.0 * self.m;
+        let nm = n_elements * self.m;
         let mut mapped =
             query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
@@ -290,14 +289,14 @@ impl GcsFilterReader {
         if mapped.is_empty() {
             return Ok(true);
         }
-        if n_elements.0 == 0 {
+        if n_elements == 0 {
             return Ok(false);
         }
 
         // find first match in two sorted arrays in one read pass
         let mut reader = BitStreamReader::new(reader);
         let mut data = self.filter.golomb_rice_decode(&mut reader)?;
-        let mut remaining = n_elements.0 - 1;
+        let mut remaining = n_elements - 1;
         for p in mapped {
             loop {
                 match data.cmp(&p) {
@@ -323,9 +322,9 @@ impl GcsFilterReader {
         I::Item: Borrow<[u8]>,
         R: BufRead + ?Sized,
     {
-        let n_elements: VarInt = Decodable::consensus_decode(reader).unwrap_or(VarInt(0));
+        let n_elements = reader.read_varint().unwrap_or(0);
         // map hashes to [0, n_elements << grp]
-        let nm = n_elements.0 * self.m;
+        let nm = n_elements * self.m;
         let mut mapped =
             query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
@@ -334,14 +333,14 @@ impl GcsFilterReader {
         if mapped.is_empty() {
             return Ok(true);
         }
-        if n_elements.0 == 0 {
+        if n_elements == 0 {
             return Ok(false);
         }
 
         // figure if all mapped are there in one read pass
         let mut reader = BitStreamReader::new(reader);
         let mut data = self.filter.golomb_rice_decode(&mut reader)?;
-        let mut remaining = n_elements.0 - 1;
+        let mut remaining = n_elements - 1;
         for p in mapped {
             loop {
                 match data.cmp(&p) {
@@ -398,7 +397,7 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         mapped.sort_unstable();
 
         // write number of elements as varint
-        let mut wrote = VarInt::from(mapped.len()).consensus_encode(self.writer)?;
+        let mut wrote = self.writer.emit_varint(mapped.len())?;
 
         // write out deltas of sorted values into a Golonb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);

@@ -31,7 +31,7 @@ use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
-use crate::{Amount, SignedAmount, VarInt};
+use crate::{Amount, SignedAmount};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
@@ -278,7 +278,7 @@ impl TxIn {
     pub fn base_size(&self) -> usize {
         let mut size = OutPoint::SIZE;
 
-        size += VarInt::from(self.script_sig.len()).size();
+        size += encode::varint_size(self.script_sig.len());
         size += self.script_sig.len();
 
         size + Sequence::SIZE
@@ -591,7 +591,7 @@ impl TxOut {
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
 fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
     let len = script_pubkey.len();
-    Amount::SIZE + VarInt::from(len).size() + len
+    Amount::SIZE + encode::varint_size(len) + len
 }
 
 /// Bitcoin transaction.
@@ -794,10 +794,10 @@ impl Transaction {
     pub fn base_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
-        size += VarInt::from(self.input.len()).size();
+        size += encode::varint_size(self.input.len());
         size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
 
-        size += VarInt::from(self.output.len()).size();
+        size += encode::varint_size(self.output.len());
         size += self.output.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
@@ -816,7 +816,7 @@ impl Transaction {
             size += 2; // 1 byte for the marker and 1 for the flag.
         }
 
-        size += VarInt::from(self.input.len()).size();
+        size += encode::varint_size(self.input.len());
         size += self
             .input
             .iter()
@@ -829,7 +829,7 @@ impl Transaction {
             })
             .sum::<usize>();
 
-        size += VarInt::from(self.output.len()).size();
+        size += encode::varint_size(self.output.len());
         size += self.output.iter().map(|output| output.size()).sum::<usize>();
 
         size + absolute::LockTime::SIZE
@@ -1381,7 +1381,7 @@ where
     let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
         (0, 0),
         |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + VarInt(script_len as u64).size();
+            let script_size = script_len + encode::varint_size(script_len);
             (output_count + 1, total_scripts_size + script_size)
         },
     );
@@ -1411,8 +1411,8 @@ const fn predict_weight_internal(
     // version:
         4 +
     // count varints:
-        VarInt(input_count as u64).size() +
-        VarInt(output_count as u64).size() +
+        encode::varint_size_const(input_count as u64) +
+        encode::varint_size_const(output_count as u64) +
         output_size +
     // lock_time
         4;
@@ -1452,7 +1452,7 @@ pub const fn predict_weight_from_slices(
     i = 0;
     while i < output_script_lens.len() {
         let script_len = output_script_lens[i];
-        output_scripts_size += script_len + VarInt(script_len as u64).size();
+        output_scripts_size += script_len + encode::varint_size_const(script_len as u64);
         i += 1;
     }
 
@@ -1571,13 +1571,13 @@ impl InputWeightPrediction {
         T::Item: Borrow<usize>,
     {
         let (count, total_size) =
-            witness_element_lengths.into_iter().fold((0, 0), |(count, total_size), elem_len| {
+            witness_element_lengths.into_iter().fold((0usize, 0), |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + VarInt(elem_len as u64).size();
+                let elem_size = elem_len + encode::varint_size(elem_len);
                 (count + 1, total_size + elem_size)
             });
-        let witness_size = if count > 0 { total_size + VarInt(count as u64).size() } else { 0 };
-        let script_size = input_script_len + VarInt(input_script_len as u64).size();
+        let witness_size = if count > 0 { total_size + encode::varint_size(count) } else { 0 };
+        let script_size = input_script_len + encode::varint_size(input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
     }
@@ -1593,16 +1593,16 @@ impl InputWeightPrediction {
         // for loops not supported in const fn
         while i < witness_element_lengths.len() {
             let elem_len = witness_element_lengths[i];
-            let elem_size = elem_len + VarInt(elem_len as u64).size();
+            let elem_size = elem_len + encode::varint_size_const(elem_len as u64);
             total_size += elem_size;
             i += 1;
         }
         let witness_size = if !witness_element_lengths.is_empty() {
-            total_size + VarInt(witness_element_lengths.len() as u64).size()
+            total_size + encode::varint_size_const(witness_element_lengths.len() as u64)
         } else {
             0
         };
-        let script_size = input_script_len + VarInt(input_script_len as u64).size();
+        let script_size = input_script_len + encode::varint_size_const(input_script_len as u64);
 
         InputWeightPrediction { script_size, witness_size }
     }

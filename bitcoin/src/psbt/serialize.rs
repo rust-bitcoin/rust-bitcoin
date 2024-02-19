@@ -22,7 +22,7 @@ use crate::psbt::{Error, Psbt};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::{io, VarInt};
+use crate::io;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -339,7 +339,7 @@ impl Serialize for TapTree {
         let capacity = self
             .script_leaves()
             .map(|l| {
-                l.script().len() + VarInt::from(l.script().len()).size() // script version
+                l.script().len() + encode::varint_size(l.script().len())
             + 1 // merkle branch
             + 1 // leaf version
             })

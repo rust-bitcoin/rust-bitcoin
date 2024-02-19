@@ -1128,8 +1128,8 @@ impl ControlBlock {
     /// Serializes the control block.
     ///
     /// This would be required when using [`ControlBlock`] as a witness element while spending an
-    /// output via script path. This serialization does not include the [`crate::VarInt`] prefix that would
-    /// be applied when encoding this element as a witness.
+    /// output via script path. This serialization does not include the varint prefix that would be
+    /// applied when encoding this element as a witness.
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.size());
         self.encode(&mut buf).expect("writers don't error");
