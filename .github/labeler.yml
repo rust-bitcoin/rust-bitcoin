@@ -6,8 +6,10 @@ test:
     - any-glob-to-any-file: fuzz/**
     - any-glob-to-any-file: '*/tests/**'
     - any-glob-to-any-file: 'dep_test'
-    - any-glob-to-any-file: 'contrib/test.sh'
-    - any-glob-to-any-file: '*/contrib/test.sh'
+    - any-glob-to-any-file: 'contrib/run_task.sh'
+    - any-glob-to-any-file: 'contrib/test_vars.sh'
+    - any-glob-to-any-file: '*/contrib/extra_tests.sh'
+    - any-glob-to-any-file: '*/contrib/test_vars.sh'
 doc:
   - changed-files:
     - any-glob-to-any-file: '**/*.md'
