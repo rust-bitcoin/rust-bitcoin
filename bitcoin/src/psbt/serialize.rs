@@ -7,7 +7,7 @@
 //!
 
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use secp256k1::{self, XOnlyPublicKey};
+use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
@@ -22,7 +22,7 @@ use crate::psbt::{Error, Psbt};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::{io, VarInt};
+use crate::VarInt;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {

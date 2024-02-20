@@ -11,10 +11,9 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use core::default::Default;
 use core::{cmp, fmt, str};
 
-use hashes::{self, sha256d, Hash};
+use hashes::{sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -27,10 +26,10 @@ use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::parse::impl_parse_str_from_int_infallible;
-use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
+use crate::prelude::*;
 use crate::{Amount, SignedAmount, VarInt};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -1622,8 +1621,6 @@ mod tests {
 
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
-    use crate::blockdata::locktime::absolute;
-    use crate::blockdata::script::ScriptBuf;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::sighash::EcdsaSighashType;
 

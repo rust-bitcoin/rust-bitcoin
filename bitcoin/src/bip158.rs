@@ -565,7 +565,6 @@ mod test {
     use serde_json::Value;
 
     use super::*;
-    use crate::blockdata::block::BlockHash;
     use crate::consensus::encode::deserialize;
     use crate::ScriptBuf;
 

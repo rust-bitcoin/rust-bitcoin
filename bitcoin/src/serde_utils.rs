@@ -25,7 +25,6 @@ pub mod btreemap_byte_values {
     // NOTE: This module can be exactly copied to use with HashMap.
 
     use hex::FromHex;
-    use serde;
 
     use crate::prelude::*;
 
@@ -93,8 +92,6 @@ pub mod btreemap_as_seq {
     #![allow(missing_docs)]
 
     // NOTE: This module can be exactly copied to use with HashMap.
-
-    use serde;
 
     use crate::prelude::*;
 
@@ -165,8 +162,6 @@ pub mod btreemap_as_seq_byte_values {
     #![allow(missing_docs)]
 
     // NOTE: This module can be exactly copied to use with HashMap.
-
-    use serde;
 
     use crate::prelude::*;
 
@@ -249,7 +244,6 @@ pub mod hex_bytes {
     #![allow(missing_docs)]
 
     use hex::FromHex;
-    use serde;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where

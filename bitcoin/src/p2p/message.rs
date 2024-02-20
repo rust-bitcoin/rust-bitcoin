@@ -542,20 +542,20 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::message_network::{Reject, RejectReason, VersionMessage};
-    use super::{CommandString, NetworkMessage, RawNetworkMessage, *};
+    use super::*;
     use crate::bip152::BlockTransactionsRequest;
-    use crate::blockdata::block::{self, Block};
+    use crate::blockdata::block::Block;
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use crate::p2p::address::{AddrV2, AddrV2Message, Address};
+    use crate::p2p::address::AddrV2;
     use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::p2p::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::p2p::message_compact_blocks::{GetBlockTxn, SendCmpct};
     use crate::p2p::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
-    use crate::p2p::{Magic, ServiceFlags};
+    use crate::p2p::ServiceFlags;
 
     fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
 

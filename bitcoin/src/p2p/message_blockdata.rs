@@ -13,8 +13,7 @@ use crate::blockdata::block::BlockHash;
 use crate::blockdata::transaction::{Txid, Wtxid};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
-use crate::prelude::*;
-use crate::{io, p2p};
+use crate::p2p;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -149,7 +148,7 @@ mod tests {
     use hashes::Hash;
     use hex::test_hex_unwrap as hex;
 
-    use super::{GetBlocksMessage, GetHeadersMessage, Vec};
+    use super::{GetBlocksMessage, GetHeadersMessage};
     use crate::consensus::encode::{deserialize, serialize};
 
     #[test]

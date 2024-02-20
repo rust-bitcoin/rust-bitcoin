@@ -6,7 +6,6 @@
 //! serialized signatures and since it's a bit more complicated it has its own module.
 
 use core::borrow::Borrow;
-use core::convert::TryFrom;
 use core::{fmt, ops};
 
 pub use into_iter::IntoIter;

@@ -17,8 +17,8 @@ use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
-use crate::prelude::String;
 use crate::string::FromHexStr;
+use crate::prelude::*;
 use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.

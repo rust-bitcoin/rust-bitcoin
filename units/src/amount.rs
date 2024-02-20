@@ -1838,16 +1838,11 @@ mod verification {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     #[cfg(feature = "alloc")]
     use alloc::format;
 
     #[cfg(feature = "std")]
     use std::panic;
-
-    #[cfg(feature = "serde")]
-    use serde_test;
 
     use super::*;
 
@@ -2321,9 +2316,9 @@ mod tests {
         let sa = SignedAmount::from_sat;
         let ua = Amount::from_sat;
 
-        assert_eq!(Amount::MAX.to_signed(), Err(OutOfRangeError::too_big(true).into()));
+        assert_eq!(Amount::MAX.to_signed(), Err(OutOfRangeError::too_big(true)));
         assert_eq!(ua(i64::MAX as u64).to_signed(), Ok(sa(i64::MAX)));
-        assert_eq!(ua(i64::MAX as u64 + 1).to_signed(), Err(OutOfRangeError::too_big(true).into()));
+        assert_eq!(ua(i64::MAX as u64 + 1).to_signed(), Err(OutOfRangeError::too_big(true)));
 
         assert_eq!(sa(i64::MAX).to_unsigned(), Ok(ua(i64::MAX as u64)));
 

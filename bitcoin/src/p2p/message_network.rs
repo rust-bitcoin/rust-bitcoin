@@ -14,7 +14,7 @@ use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
 use crate::prelude::*;
-use crate::{io, p2p};
+use crate::p2p;
 
 /// Some simple messages
 

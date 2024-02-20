@@ -3,6 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
+use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
@@ -15,8 +16,8 @@ use crate::blockdata::script::{
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
-use crate::prelude::*;
 use crate::taproot::TapNodeHash;
+use crate::prelude::*;
 
 /// An owned, growable script.
 ///
@@ -173,8 +174,6 @@ impl ScriptBuf {
 
     /// Creates a [`ScriptBuf`] from a hex string.
     pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
-        use hex::FromHex;
-
         let v = Vec::from_hex(s)?;
         Ok(ScriptBuf::from_bytes(v))
     }

@@ -15,12 +15,12 @@ use core::iter::FusedIterator;
 use hashes::{sha256t_hash_newtype, Hash, HashEngine};
 use internals::write_err;
 use io::Write;
-use secp256k1::{self, Scalar, Secp256k1};
+use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::prelude::*;
-use crate::{io, Script, ScriptBuf};
+use crate::{Script, ScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
@@ -1436,9 +1436,9 @@ mod test {
     use core::str::FromStr;
 
     use hashes::sha256t::Tag;
-    use hashes::{sha256, Hash, HashEngine};
+    use hashes::sha256;
     use hex::FromHex;
-    use secp256k1::{VerifyOnly, XOnlyPublicKey};
+    use secp256k1::VerifyOnly;
 
     use super::*;
     use crate::sighash::{TapSighash, TapSighashTag};

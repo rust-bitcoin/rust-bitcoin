@@ -3,7 +3,7 @@
 use core::fmt;
 use core::str::FromStr;
 
-use hashes::{self, hash160, ripemd160, sha256, sha256d};
+use hashes::{hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;

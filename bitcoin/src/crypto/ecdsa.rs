@@ -10,7 +10,6 @@ use core::{fmt, iter};
 use hex::FromHex;
 use internals::write_err;
 use io::Write;
-use secp256k1;
 
 use crate::prelude::*;
 use crate::script::PushBytes;
