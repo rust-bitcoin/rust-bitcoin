@@ -36,7 +36,7 @@ use hashes::{sha256d, Hash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use self::error::Error;
+pub use self::error::{Error, InvalidCharacterError};
 
 #[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
@@ -59,19 +59,19 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ];
 
 /// Decodes a base58-encoded string into a byte vector.
-pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
+pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // 11/15 is just over log_256(58)
     let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
         if d58 as usize >= BASE58_DIGITS.len() {
-            return Err(Error::BadByte(d58));
+            return Err(InvalidCharacterError { invalid: d58 });
         }
         let mut carry = match BASE58_DIGITS[d58 as usize] {
             Some(d58) => d58 as u32,
             None => {
-                return Err(Error::BadByte(d58));
+                return Err(InvalidCharacterError { invalid: d58 });
             }
         };
         for d256 in scratch.iter_mut().rev() {
@@ -266,7 +266,10 @@ mod tests {
             Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
         );
         // Non Base58 char.
-        assert_eq!(decode("¢").unwrap_err(), Error::BadByte(194));
+        assert_eq!(
+            decode("¢").unwrap_err(),
+            InvalidCharacterError { invalid: 194 }
+        );
     }
 
     #[test]

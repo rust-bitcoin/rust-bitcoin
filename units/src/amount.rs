@@ -2500,7 +2500,7 @@ mod tests {
 
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 }).into()));
+        assert_eq!(Amount::from_str("x BTC"), Err(InvalidCharacterError { invalid_char: 'x', position: 0 }.into()));
         assert_eq!(
             Amount::from_str("xBTC"),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
