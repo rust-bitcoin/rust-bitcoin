@@ -330,8 +330,8 @@ impl FromHexStr for LockTime {
 
     #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let packed_lock_time = crate::parse::hex_u32(s)?;
-        Ok(Self::from_consensus(packed_lock_time))
+        let lock_time = crate::parse::hex_u32(s)?;
+        Ok(Self::from_consensus(lock_time))
     }
 }
 
@@ -840,20 +840,20 @@ mod tests {
     }
 
     #[test]
-    fn packed_lock_time_from_str_hex_happy_path() {
+    fn lock_time_from_str_hex_happy_path() {
         let actual = LockTime::from_hex_str("0xBA70D").unwrap();
         let expected = LockTime::from_consensus(0xBA70D);
         assert_eq!(actual, expected);
     }
 
     #[test]
-    fn packed_lock_time_from_str_hex_no_prefix_happy_path() {
+    fn lock_time_from_str_hex_no_prefix_happy_path() {
         let lock_time = LockTime::from_hex_str_no_prefix("BA70D").unwrap();
         assert_eq!(lock_time, LockTime::from_consensus(0xBA70D));
     }
 
     #[test]
-    fn packed_lock_time_from_str_hex_invalid_hex_should_ergr() {
+    fn lock_time_from_str_hex_invalid_hex_should_ergr() {
         let hex = "0xzb93";
         let result = LockTime::from_hex_str(hex);
         assert!(result.is_err());
