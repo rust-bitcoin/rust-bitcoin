@@ -25,10 +25,9 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::parse::impl_parse_str_from_int_infallible;
+use crate::parse::{self, impl_parse_str_from_int_infallible, ParseIntError};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
-use crate::string::FromHexStr;
 use crate::prelude::*;
 use crate::{Amount, SignedAmount, VarInt};
 
@@ -402,6 +401,14 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
+    /// Creates a `Sequence` number from a hex string.
+    ///
+    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
+    pub fn from_hex(s: &str) -> Result<Self, ParseIntError> {
+        let lock_time = parse::hex_u32(s)?;
+        Ok(Self::from_consensus(lock_time))
+    }
+
     /// Creates a relative lock-time using block height.
     #[inline]
     pub fn from_height(height: u16) -> Self { Sequence(u32::from(height)) }
@@ -471,15 +478,6 @@ impl Sequence {
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
     fn low_u16(&self) -> u16 { self.0 as u16 }
-}
-
-impl FromHexStr for Sequence {
-    type Error = crate::parse::ParseIntError;
-
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let sequence = crate::parse::hex_u32(s)?;
-        Ok(Self::from_consensus(sequence))
-    }
 }
 
 impl Default for Sequence {
@@ -2120,20 +2118,20 @@ mod tests {
 
     #[test]
     fn sequence_from_str_hex_happy_path() {
-        let sequence = Sequence::from_hex_str("0xFFFFFFFF").unwrap();
+        let sequence = Sequence::from_hex("0xFFFFFFFF").unwrap();
         assert_eq!(sequence, Sequence::MAX);
     }
 
     #[test]
     fn sequence_from_str_hex_no_prefix_happy_path() {
-        let sequence = Sequence::from_hex_str_no_prefix("FFFFFFFF").unwrap();
+        let sequence = Sequence::from_hex("FFFFFFFF").unwrap();
         assert_eq!(sequence, Sequence::MAX);
     }
 
     #[test]
     fn sequence_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Sequence::from_hex_str(hex);
+        let result = Sequence::from_hex(hex);
         assert!(result.is_err());
     }
 

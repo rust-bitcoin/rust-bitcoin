@@ -17,8 +17,7 @@ use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
-use crate::string::FromHexStr;
-use crate::prelude::*;
+use crate::parse::{self, ParseIntError};
 use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.
@@ -272,6 +271,14 @@ do_impl!(Target);
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
+    /// Creates a [`CompactTarget`] from a hex string.
+    ///
+    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
+    pub fn from_hex(s: &str) -> Result<Self, ParseIntError> {
+        let lock_time = parse::hex_u32(s)?;
+        Ok(Self::from_consensus(lock_time))
+    }
+
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
@@ -281,15 +288,6 @@ impl CompactTarget {
 
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
-}
-
-impl FromHexStr for CompactTarget {
-    type Error = crate::parse::ParseIntError;
-
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let compact_target = crate::parse::hex_u32(s)?;
-        Ok(Self::from_consensus(compact_target))
-    }
 }
 
 impl Encodable for CompactTarget {
@@ -1525,14 +1523,14 @@ mod tests {
 
     #[test]
     fn compact_target_from_hex_str_happy_path() {
-        let actual = CompactTarget::from_hex_str("0x01003456").unwrap();
+        let actual = CompactTarget::from_hex("0x01003456").unwrap();
         let expected = CompactTarget(0x01003456);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn compact_target_from_hex_str_no_prefix_happy_path() {
-        let actual = CompactTarget::from_hex_str_no_prefix("01003456").unwrap();
+        let actual = CompactTarget::from_hex("01003456").unwrap();
         let expected = CompactTarget(0x01003456);
         assert_eq!(actual, expected);
     }
@@ -1540,7 +1538,7 @@ mod tests {
     #[test]
     fn compact_target_from_hex_invalid_hex_should_err() {
         let hex = "0xzbf9";
-        let result = CompactTarget::from_hex_str(hex);
+        let result = CompactTarget::from_hex(hex);
         assert!(result.is_err());
     }
 
