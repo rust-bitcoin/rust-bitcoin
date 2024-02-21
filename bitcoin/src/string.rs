@@ -9,7 +9,7 @@ use core::fmt;
 
 use internals::write_err;
 
-use crate::prelude::String;
+use crate::prelude::*;
 
 /// Trait that allows types to be initialized from hex strings
 pub trait FromHexStr: Sized {

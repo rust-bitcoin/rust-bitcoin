@@ -23,7 +23,6 @@
 #![cfg(feature = "serde")]
 
 use std::collections::BTreeMap;
-use std::convert::TryFrom;
 use std::str::FromStr;
 
 use bincode::serialize;

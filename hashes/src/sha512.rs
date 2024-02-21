@@ -3,7 +3,6 @@
 //! SHA512 implementation.
 //!
 
-use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};

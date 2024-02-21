@@ -21,10 +21,10 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::{base58, io};
+use crate::base58;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
@@ -303,6 +303,7 @@ impl CompressedPublicKey {
         let mut bytes = [0; 33];
 
         reader.read_exact(&mut bytes)?;
+        #[allow(unused_variables)] // e when std not enabled
         Self::from_slice(&bytes).map_err(|e| {
             // Need a static string for no-std io
             #[cfg(feature = "std")]
@@ -1058,14 +1059,8 @@ impl std::error::Error for UncompressedPublicKeyError {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
-    use hex::FromHex;
-    use secp256k1::Secp256k1;
-
     use super::*;
     use crate::address::Address;
-    use crate::network::NetworkKind;
 
     #[test]
     fn test_key_derivation() {

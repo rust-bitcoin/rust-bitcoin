@@ -3,16 +3,15 @@
 //! SHA256 implementation.
 //!
 
-#[cfg(target_arch = "x86")]
+#[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
+#[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{hex, sha256d, FromSliceError, HashEngine as _};
+use crate::{sha256d, FromSliceError, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,

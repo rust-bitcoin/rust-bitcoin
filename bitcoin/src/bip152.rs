@@ -5,7 +5,6 @@
 //! Implementation of compact blocks data structure and algorithms.
 //!
 
-use core::convert::{TryFrom, TryInto};
 use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
@@ -17,7 +16,7 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::{block, io, Block, BlockHash, Transaction};
+use crate::{block, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -379,7 +378,7 @@ mod test {
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::{
-        Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+        Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
         Witness,
     };
 

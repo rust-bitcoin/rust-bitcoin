@@ -28,7 +28,6 @@
 
 pub mod error;
 
-use core::convert::{TryFrom, TryInto};
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
@@ -778,13 +777,9 @@ fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash 
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use hex_lit::hex;
-    use secp256k1::XOnlyPublicKey;
 
     use super::*;
-    use crate::crypto::key::PublicKey;
     use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address, network: Network) {

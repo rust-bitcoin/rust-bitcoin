@@ -13,7 +13,6 @@ use io::{BufRead, Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
 use crate::p2p::ServiceFlags;
-use crate::prelude::*;
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]

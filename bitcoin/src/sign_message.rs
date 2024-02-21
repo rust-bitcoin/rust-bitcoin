@@ -24,7 +24,6 @@ mod message_signing {
 
     use hashes::{sha256d, Hash};
     use internals::write_err;
-    use secp256k1;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
@@ -165,7 +164,7 @@ mod message_signing {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
 
         use super::*;
-        use crate::prelude::String;
+        use crate::prelude::*;
 
         impl MessageSignature {
             /// Convert a signature from base64 encoding.

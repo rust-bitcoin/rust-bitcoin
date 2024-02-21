@@ -11,7 +11,6 @@
 //! handle its complexity efficiently. Computing these hashes is as simple as creating
 //! [`SighashCache`] and calling its methods.
 
-use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
@@ -20,8 +19,8 @@ use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
-use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
+use crate::prelude::*;
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -1432,10 +1431,7 @@ mod tests {
 
     use super::*;
     use crate::blockdata::locktime::absolute;
-    use crate::blockdata::transaction;
     use crate::consensus::deserialize;
-    use crate::crypto::sighash::{LegacySighash, TapSighash};
-    use crate::taproot::TapLeafHash;
 
     extern crate serde_json;
 
@@ -1750,6 +1746,8 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
+        use hex::DisplayHex;
+
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where
             D: actual_serde::Deserializer<'de>,
@@ -1765,7 +1763,7 @@ mod tests {
             })
         }
 
-        use secp256k1::{self, SecretKey, XOnlyPublicKey};
+        use secp256k1::{SecretKey, XOnlyPublicKey};
 
         use crate::consensus::serde as con_serde;
         use crate::taproot::{TapNodeHash, TapTweakHash};

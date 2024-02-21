@@ -6,7 +6,6 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
-use core::default::Default;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
@@ -14,15 +13,13 @@ use core::{fmt, slice};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use io::Write;
-use secp256k1::{self, Secp256k1, XOnlyPublicKey};
-#[cfg(feature = "serde")]
-use serde;
+use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::base58;
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::impl_bytes_newtype;
-use crate::network::NetworkKind;
 use crate::prelude::*;
+use crate::network::NetworkKind;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -867,10 +864,7 @@ impl From<&Xpub> for XKeyIdentifier {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use hex::test_hex_unwrap as hex;
-    use secp256k1::{self, Secp256k1};
 
     use super::ChildNumber::{Hardened, Normal};
     use super::*;

@@ -28,7 +28,6 @@
 //!    `bt listunspent`
 //!
 
-use std::boxed::Box;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;

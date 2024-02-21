@@ -7,8 +7,6 @@
 //! single transaction.
 //!
 
-use core::default::Default;
-
 use hashes::{sha256d, Hash};
 use hex_lit::hex;
 use internals::impl_array_newtype;
@@ -189,10 +187,7 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::*;
-    use crate::blockdata::locktime::absolute;
-    use crate::blockdata::transaction;
     use crate::consensus::encode::serialize;
-    use crate::network::Network;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

@@ -7,7 +7,6 @@ use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
 use bitcoin::p2p::{self, address, message, message_network};
-use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 
 fn main() {

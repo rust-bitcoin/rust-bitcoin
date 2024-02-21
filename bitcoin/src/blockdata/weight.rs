@@ -5,8 +5,6 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use crate::prelude::*;
-
 /// Represents block weight - the weight of a transaction or block.
 ///
 /// This is an integer newtype representing weigth in `wu`. It provides protection against mixing

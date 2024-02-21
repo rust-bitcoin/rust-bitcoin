@@ -122,7 +122,7 @@ pub(crate) use impl_tryfrom_str_from_int_infallible;
 /// The `Error` type is `ParseIntError`
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
-        $crate::parse::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; String, $to, $inner, $fn; Box<str>, $to, $inner, $fn);
+        $crate::parse::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; $crate::prelude::String, $to, $inner, $fn; $crate::prelude::Box<str>, $to, $inner, $fn);
 
         impl core::str::FromStr for $to {
             type Err = $crate::error::ParseIntError;

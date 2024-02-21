@@ -1009,23 +1009,18 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
-
-    use hashes::{hash160, ripemd160, sha256, Hash};
+    use hashes::{hash160, ripemd160, sha256};
     use hex::{test_hex_unwrap as hex, FromHex};
-    use secp256k1::{self, Secp256k1};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
 
     use super::*;
-    use crate::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
+    use crate::bip32::ChildNumber;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::script::ScriptBuf;
-    use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
+    use crate::blockdata::transaction::{self, OutPoint, Sequence, TxIn};
     use crate::blockdata::witness::Witness;
     use crate::network::NetworkKind;
-    use crate::psbt::map::{Input, Output};
-    use crate::psbt::raw;
     use crate::psbt::serialize::{Deserialize, Serialize};
 
     #[track_caller]
@@ -1376,18 +1371,11 @@ mod tests {
     }
 
     mod bip_vectors {
-        use std::collections::BTreeMap;
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
         use super::*;
-        use crate::blockdata::locktime::absolute;
-        use crate::blockdata::script::ScriptBuf;
-        use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
-        use crate::blockdata::witness::Witness;
-        use crate::psbt::map::{Input, Map, Output};
-        use crate::psbt::{raw, Psbt};
-        use crate::sighash::EcdsaSighashType;
+        use crate::psbt::map::Map;
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]

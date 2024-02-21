@@ -8,12 +8,9 @@
 
 #![allow(non_camel_case_types)]
 
-use core::convert::From;
 use core::fmt;
 
 use internals::debug_from_display;
-#[cfg(feature = "serde")]
-use serde;
 
 #[cfg(feature = "serde")]
 use crate::prelude::*;

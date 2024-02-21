@@ -11,7 +11,7 @@ use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
-use bitcoin::secp256k1::{self, Secp256k1};
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, Amount, Denomination, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
     Sequence, Transaction, TxIn, TxOut, Witness,

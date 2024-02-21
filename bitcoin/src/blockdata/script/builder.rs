@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::default::Default;
 use core::fmt;
 
 use secp256k1::XOnlyPublicKey;

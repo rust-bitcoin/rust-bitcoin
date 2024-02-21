@@ -1,4 +1,4 @@
-#[cfg(any(feature = "alloc", feature = "std"))]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::boxed::Box;
 use core::fmt::{Debug, Display, Formatter};
 

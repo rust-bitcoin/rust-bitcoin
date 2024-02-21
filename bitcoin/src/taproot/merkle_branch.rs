@@ -2,16 +2,13 @@
 
 //! Contains `TaprootMerkleBranch` and its associated types.
 
-use alloc::boxed::Box;
-use alloc::vec::Vec;
-use core::borrow::{Borrow, BorrowMut};
-
 use hashes::Hash;
 
 use super::{
     TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
     TAPROOT_CONTROL_NODE_SIZE,
 };
+use crate::prelude::*;
 
 /// The merkle proof for inclusion of a tree in a taptree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
