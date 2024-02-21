@@ -245,6 +245,10 @@ impl Target {
     ///
     /// See [`difficulty`] for details.
     ///
+    /// # Returns
+    ///
+    /// Returns [`f64::INFINITY`] if `self` is zero (caused by divide by zero).
+    ///
     /// [`difficulty`]: Target::difficulty
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty_float(&self) -> f64 { TARGET_MAX_F64 / self.0.to_f64() }
