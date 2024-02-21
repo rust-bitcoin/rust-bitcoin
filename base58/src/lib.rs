@@ -34,6 +34,8 @@ pub use std::{string::String, vec::Vec};
 
 use hashes::{sha256d, Hash};
 
+use crate::error::{IncorrectChecksumError, TooShortError};
+
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::error::{Error, InvalidCharacterError};
@@ -93,7 +95,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
     if ret.len() < 4 {
-        return Err(Error::TooShort(ret.len()));
+        return Err(TooShortError { length: ret.len() }.into());
     }
     let check_start = ret.len() - 4;
 
@@ -104,8 +106,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let expected = u32::from_le_bytes(hash_check);
     let actual = u32::from_le_bytes(data_check);
 
-    if expected != actual {
-        return Err(Error::BadChecksum(expected, actual));
+    if actual != expected {
+        return Err(IncorrectChecksumError { incorrect: actual, expected }.into());
     }
 
     ret.truncate(check_start);
@@ -282,6 +284,6 @@ mod tests {
         // Check that empty slice passes roundtrip.
         assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(Error::TooShort(3)));
+        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
     }
 }
