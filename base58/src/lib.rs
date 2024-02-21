@@ -24,6 +24,8 @@ extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+pub mod error;
+
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
 use core::{fmt, iter, slice, str};
@@ -31,6 +33,10 @@ use core::{fmt, iter, slice, str};
 pub use std::{string::String, vec::Vec};
 
 use hashes::{sha256d, Hash};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::error::Error;
 
 #[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
@@ -204,63 +210,6 @@ impl<T: Default + Copy> SmallVec<T> {
     fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter_mut().chain(self.heap.iter_mut())
-    }
-}
-
-/// An error that might occur during base58 decoding.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Invalid character encountered.
-    BadByte(u8),
-    /// Checksum was not correct (expected, actual).
-    BadChecksum(u32, u32),
-    /// The length (in bytes) of the object was not correct.
-    ///
-    /// Note that if the length is excessively long the provided length may be an estimate (and the
-    /// checksum step may be skipped).
-    InvalidLength(usize),
-    /// Extended Key version byte(s) were not recognized.
-    InvalidExtendedKeyVersion([u8; 4]),
-    /// Address version byte were not recognized.
-    InvalidAddressVersion(u8),
-    /// Checked data was less than 4 bytes.
-    TooShort(usize),
-}
-
-internals::impl_from_infallible!(Error);
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            BadByte(b) => write!(f, "invalid base58 character {:#x}", b),
-            BadChecksum(exp, actual) =>
-                write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
-            InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            InvalidExtendedKeyVersion(ref v) =>
-                write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
-            InvalidAddressVersion(ref v) =>
-                write!(f, "address version {} is invalid for this base58 type", v),
-            TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match self {
-            BadByte(_)
-            | BadChecksum(_, _)
-            | InvalidLength(_)
-            | InvalidExtendedKeyVersion(_)
-            | InvalidAddressVersion(_)
-            | TooShort(_) => None,
-        }
     }
 }
 
