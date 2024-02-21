@@ -126,7 +126,7 @@ impl Target {
     /// The maximum **attainable** target value on mainnet.
     ///
     /// Not all target values are attainable because consensus code uses the compact format to
-    /// represent targets (see `CompactTarget`).
+    /// represent targets (see [`CompactTarget`]).
     pub const MAX_ATTAINABLE_MAINNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
 
     /// The proof of work limit on testnet.
