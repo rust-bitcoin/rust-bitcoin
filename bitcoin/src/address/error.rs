@@ -13,14 +13,8 @@ use crate::{base58, Network};
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// A witness version construction error.
-    WitnessVersion(witness_version::TryFromError),
-    /// A witness program error.
-    WitnessProgram(witness_program::Error),
     /// Address size more than 520 bytes is not allowed.
     ExcessiveScriptSize,
-    /// Script is not a p2pkh, p2sh or witness program.
-    UnrecognizedScript,
     /// Address's network differs from required one.
     NetworkValidation {
         /// Network that was required.
@@ -37,10 +31,7 @@ impl fmt::Display for Error {
         use Error::*;
 
         match *self {
-            WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
-            UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
             NetworkValidation { required, ref address } => {
                 write!(f, "address ")?;
                 fmt::Display::fmt(&address.0, f)?;
@@ -57,20 +48,10 @@ impl std::error::Error for Error {
         use Error::*;
 
         match self {
-            WitnessVersion(e) => Some(e),
-            WitnessProgram(e) => Some(e),
             UnknownHrp(e) => Some(e),
-            ExcessiveScriptSize | UnrecognizedScript | NetworkValidation { .. } => None,
+            ExcessiveScriptSize | NetworkValidation { .. } => None,
         }
     }
-}
-
-impl From<witness_version::TryFromError> for Error {
-    fn from(e: witness_version::TryFromError) -> Error { Error::WitnessVersion(e) }
-}
-
-impl From<witness_program::Error> for Error {
-    fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
 
 /// Error while generating address from script.
