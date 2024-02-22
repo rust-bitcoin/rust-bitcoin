@@ -118,11 +118,11 @@ impl Script {
 
     /// Returns 160-bit hash of the script.
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash { ScriptHash::hash(self.as_bytes()) }
+    pub fn script_hash(&self) -> ScriptHash { self.into() }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
     #[inline]
-    pub fn wscript_hash(&self) -> WScriptHash { WScriptHash::hash(self.as_bytes()) }
+    pub fn wscript_hash(&self) -> WScriptHash { self.into() }
 
     /// Computes leaf hash of tapscript.
     #[inline]

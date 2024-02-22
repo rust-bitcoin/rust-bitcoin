@@ -137,21 +137,12 @@ macro_rules! hash_trait_impls {
         }
 
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
-            type Engine = HashEngine;
             type Bytes = [u8; $bits / 8];
 
             const LEN: usize = $bits / 8;
             const DISPLAY_BACKWARD: bool = $reverse;
 
-            fn engine() -> Self::Engine {
-                Self::internal_engine()
-            }
-
-            fn from_engine(e: HashEngine) -> Hash<$($gen),*> {
-                from_engine(e)
-            }
-
-            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
+            fn from_slice(sl: &[u8]) -> Result<Hash<$($gen),*>, FromSliceError> {
                 if sl.len() != $bits / 8 {
                     Err(FromSliceError{expected: Self::LEN, got: sl.len()})
                 } else {
@@ -171,6 +162,18 @@ macro_rules! hash_trait_impls {
 
             fn from_byte_array(bytes: Self::Bytes) -> Self {
                 Self::internal_new(bytes)
+            }
+        }
+
+        impl<$($gen: $gent),*> crate::RawHash for Hash<$($gen),*> {
+            type Engine = HashEngine;
+
+            fn engine() -> Self::Engine {
+                Self::internal_engine()
+            }
+
+            fn from_engine(e: HashEngine) -> Hash<$($gen),*> {
+                from_engine(e)
             }
 
             fn all_zeros() -> Self {

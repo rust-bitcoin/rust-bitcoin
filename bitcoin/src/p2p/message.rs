@@ -8,7 +8,7 @@
 
 use core::{fmt, iter};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, RawHash};
 use io::{BufRead, Write};
 
 use crate::blockdata::{block, transaction};

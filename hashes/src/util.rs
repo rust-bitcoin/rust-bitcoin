@@ -226,19 +226,10 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::Hash for $newtype {
-            type Engine = <$hash as $crate::Hash>::Engine;
             type Bytes = <$hash as $crate::Hash>::Bytes;
 
             const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
-
-            fn engine() -> Self::Engine {
-                <$hash as $crate::Hash>::engine()
-            }
-
-            fn from_engine(e: Self::Engine) -> Self {
-                Self::from(<$hash as $crate::Hash>::from_engine(e))
-            }
 
             #[inline]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
@@ -258,12 +249,6 @@ macro_rules! hash_newtype {
             #[inline]
             fn as_byte_array(&self) -> &Self::Bytes {
                 self.0.as_byte_array()
-            }
-
-            #[inline]
-            fn all_zeros() -> Self {
-                let zeros = <$hash>::all_zeros();
-                $newtype(zeros)
             }
         }
 
@@ -388,7 +373,7 @@ macro_rules! hash_newtype_known_attrs {
 
 #[cfg(test)]
 mod test {
-    use crate::{sha256, Hash};
+    use crate::{sha256, Hash, RawHash};
 
     #[test]
     fn hash_as_ref_array() {
@@ -421,41 +406,41 @@ mod test {
     #[test]
     fn display() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{}", TestHash::all_zeros());
+        let got = format!("{}", TestHash(RawHash::all_zeros()));
         assert_eq!(got, want)
     }
 
     #[test]
     fn display_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#}", TestHash::all_zeros());
+        let got = format!("{:#}", TestHash(RawHash::all_zeros()));
         assert_eq!(got, want)
     }
 
     #[test]
     fn lower_hex() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:x}", TestHash::all_zeros());
+        let got = format!("{:x}", TestHash(RawHash::all_zeros()));
         assert_eq!(got, want)
     }
 
     #[test]
     fn lower_hex_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#x}", TestHash::all_zeros());
+        let got = format!("{:#x}", TestHash(RawHash::all_zeros()));
         assert_eq!(got, want)
     }
 
     #[test]
     fn inner_hash_as_ref_array() {
-        let hash = TestHash::all_zeros();
+        let hash = TestHash(RawHash::all_zeros());
         let r = AsRef::<[u8; 32]>::as_ref(&hash);
         assert_eq!(r, hash.as_byte_array());
     }
 
     #[test]
     fn inner_hash_as_ref_slice() {
-        let hash = TestHash::all_zeros();
+        let hash = TestHash(RawHash::all_zeros());
         let r = AsRef::<[u8]>::as_ref(&hash);
         assert_eq!(r, hash.as_byte_array());
     }

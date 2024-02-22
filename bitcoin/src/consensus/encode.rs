@@ -23,8 +23,9 @@ use io::{Cursor, BufRead, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
-use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
+use crate::blockdata::block::{self, BlockHash};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},
@@ -708,7 +709,7 @@ impl Decodable for Box<[u8]> {
 
 /// Does a double-SHA256 on `data` and returns the first 4 bytes.
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = <sha256d::Hash as Hash>::hash(data);
+    let checksum = hashes::hash::<sha256d::Hash>(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 

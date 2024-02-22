@@ -13,6 +13,7 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{sha256t_hash_newtype, Hash, HashEngine};
+use hashes::sha256t::Tag;
 use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
@@ -63,7 +64,7 @@ impl TapTweakHash {
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
     ) -> TapTweakHash {
-        let mut eng = TapTweakHash::engine();
+        let mut eng = TapTweakTag::engine();
         // always hash the key
         eng.input(&internal_key.serialize());
         if let Some(h) = merkle_root {
@@ -71,7 +72,7 @@ impl TapTweakHash {
         } else {
             // nothing to hash
         }
-        TapTweakHash::from_engine(eng)
+        TapTweakHash(eng.finalize())
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
@@ -84,10 +85,10 @@ impl TapTweakHash {
 impl TapLeafHash {
     /// Computes the leaf hash from components.
     pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
-        let mut eng = TapLeafHash::engine();
+        let mut eng = TapLeafTag::engine();
         ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
         script.consensus_encode(&mut eng).expect("engines don't error");
-        TapLeafHash::from_engine(eng)
+        TapLeafHash(eng.finalize())
     }
 }
 
@@ -108,7 +109,7 @@ impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it and returns
     /// whether the left node was the one hashed first.
     fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
-        let mut eng = TapNodeHash::engine();
+        let mut eng = TapBranchTag::engine();
         if a < b {
             eng.input(a.as_ref());
             eng.input(b.as_ref());
@@ -116,7 +117,7 @@ impl TapNodeHash {
             eng.input(b.as_ref());
             eng.input(a.as_ref());
         };
-        (TapNodeHash::from_engine(eng), a < b)
+        (TapNodeHash(eng.finalize()), a < b)
     }
 
     /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
@@ -1435,13 +1436,12 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
-    use hashes::sha256t::Tag;
-    use hashes::sha256;
+    use hashes::{sha256, RawHash};
     use hex::FromHex;
     use secp256k1::VerifyOnly;
 
     use super::*;
-    use crate::sighash::{TapSighash, TapSighashTag};
+    use crate::sighash::TapSighashTag;
     use crate::{Address, KnownHrp};
     extern crate serde_json;
 
@@ -1472,12 +1472,11 @@ mod test {
         fn empty_hash(tag_name: &str) -> [u8; 32] {
             let mut e = tag_engine(tag_name);
             e.input(&[]);
-            TapNodeHash::from_engine(e).to_byte_array()
+            TapNodeHash(e.finalize()).to_byte_array()
         }
-        assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).to_byte_array());
-        assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).to_byte_array());
-        assert_eq!(empty_hash("TapTweak"), TapTweakHash::hash(&[]).to_byte_array());
-        assert_eq!(empty_hash("TapSighash"), TapSighash::hash(&[]).to_byte_array());
+        assert_eq!(empty_hash("TapLeaf"), TapLeafHash(hashes::hash(&[])).to_byte_array());
+        assert_eq!(empty_hash("TapBranch"), TapNodeHash(hashes::hash(&[])).to_byte_array());
+        assert_eq!(empty_hash("TapTweak"), TapTweakHash(hashes::hash(&[])).to_byte_array());
     }
 
     #[test]
@@ -1488,20 +1487,16 @@ mod test {
         //   CHashWriter writer = HasherTapLeaf;
         //   writer.GetSHA256().GetHex()
         assert_eq!(
-            TapLeafHash::from_engine(TapLeafTag::engine()).to_string(),
+            TapLeafHash(TapLeafTag::engine().finalize()).to_string(),
             "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
-            TapNodeHash::from_engine(TapBranchTag::engine()).to_string(),
+            TapNodeHash(TapBranchTag::engine().finalize()).to_string(),
             "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
-            TapTweakHash::from_engine(TapTweakTag::engine()).to_string(),
+            TapTweakHash(TapTweakTag::engine().finalize()).to_string(),
             "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
-        );
-        assert_eq!(
-            TapSighash::from_engine(TapSighashTag::engine()).to_string(),
-            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
         // 0-byte
@@ -1510,23 +1505,20 @@ mod test {
         //   writer.GetSHA256().GetHex()
         // Note that Core writes the 0 length prefix when an empty vector is written.
         assert_eq!(
-            TapLeafHash::hash(&[0]).to_string(),
+            TapLeafHash(hashes::hash(&[0])).to_string(),
             "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
         );
         assert_eq!(
-            TapNodeHash::hash(&[0]).to_string(),
+            TapNodeHash(hashes::hash(&[0])).to_string(),
             "92534b1960c7e6245af7d5fda2588db04aa6d646abc2b588dab2b69e5645eb1d"
         );
         assert_eq!(
-            TapTweakHash::hash(&[0]).to_string(),
+            TapTweakHash(hashes::hash(&[0])).to_string(),
             "cd8737b5e6047fc3f16f03e8b9959e3440e1bdf6dd02f7bb899c352ad490ea1e"
-        );
-        assert_eq!(
-            TapSighash::hash(&[0]).to_string(),
-            "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
         );
     }
 
+    #[track_caller]
     fn _verify_tap_commitments(
         secp: &Secp256k1<VerifyOnly>,
         out_spk_hex: &str,

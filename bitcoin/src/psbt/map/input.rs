@@ -502,7 +502,7 @@ fn psbt_insert_hash_pair<H>(
     hash_type: error::PsbtHash,
 ) -> Result<(), Error>
 where
-    H: hashes::Hash + Deserialize,
+    H: hashes::RawHash + Deserialize,
 {
     if raw_key.key.is_empty() {
         return Err(psbt::Error::InvalidKey(raw_key));
@@ -511,7 +511,7 @@ where
     match map.entry(key_val) {
         btree_map::Entry::Vacant(empty_key) => {
             let val: Vec<u8> = Deserialize::deserialize(&raw_value)?;
-            if <H as hashes::Hash>::hash(&val) != key_val {
+            if hashes::hash::<H>(&val) != key_val {
                 return Err(psbt::Error::InvalidPreimageHashPair {
                     preimage: val.into_boxed_slice(),
                     hash: Box::from(key_val.borrow()),

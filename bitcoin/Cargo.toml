@@ -29,7 +29,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 bech32 = { version = "0.10.0-beta", default-features = false, features = ["alloc"] }
-hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false, features = ["alloc", "io"] }
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }
 hex_lit = "0.1.1"
 internals = { package = "bitcoin-internals", version = "0.2.0" }

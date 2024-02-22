@@ -7,7 +7,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, mem, ptr, str};
 
-use crate::{FromSliceError, Hash as _, HashEngine as _};
+use crate::{FromSliceError, RawHash as _, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     64,
@@ -247,6 +247,7 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Hash as _;
 
     #[test]
     fn test_siphash_2_4() {

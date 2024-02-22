@@ -33,7 +33,7 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::hrp::Hrp;
-use hashes::{sha256, Hash, HashEngine};
+use hashes::{sha256, Hash, HashEngine, RawHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
