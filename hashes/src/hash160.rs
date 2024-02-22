@@ -10,7 +10,6 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::str;
 
 use crate::{ripemd160, sha256, FromSliceError};
 
