@@ -51,6 +51,7 @@ use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
+use self::error::P2shError;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
@@ -373,9 +374,9 @@ impl Address {
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
     /// these days.
     #[inline]
-    pub fn p2sh(script: &Script, network: impl Into<NetworkKind>) -> Result<Address, Error> {
+    pub fn p2sh(script: &Script, network: impl Into<NetworkKind>) -> Result<Address, P2shError> {
         if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
-            return Err(Error::ExcessiveScriptSize);
+            return Err(P2shError::ExcessiveScriptSize);
         }
         let hash = script.script_hash();
         Ok(Address::p2sh_from_hash(hash, network))
@@ -861,7 +862,7 @@ mod tests {
     #[test]
     fn test_p2sh_parse_for_large_script() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
-        assert_eq!(Address::p2sh(&script, NetworkKind::Test), Err(Error::ExcessiveScriptSize));
+        assert_eq!(Address::p2sh(&script, NetworkKind::Test), Err(P2shError::ExcessiveScriptSize));
     }
 
     #[test]

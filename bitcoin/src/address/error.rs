@@ -13,8 +13,6 @@ use crate::{base58, Network};
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// Address size more than 520 bytes is not allowed.
-    ExcessiveScriptSize,
     /// Address's network differs from required one.
     NetworkValidation {
         /// Network that was required.
@@ -31,7 +29,6 @@ impl fmt::Display for Error {
         use Error::*;
 
         match *self {
-            ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             NetworkValidation { required, ref address } => {
                 write!(f, "address ")?;
                 fmt::Display::fmt(&address.0, f)?;
@@ -47,15 +44,16 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use Error::*;
 
-        match self {
-            UnknownHrp(e) => Some(e),
-            ExcessiveScriptSize | NetworkValidation { .. } => None,
+        match *self {
+            UnknownHrp(ref e) => Some(e),
+            NetworkValidation { .. } => None,
         }
     }
 }
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum FromScriptError {
     /// Script is not a p2pkh, p2sh or witness program.
     UnrecognizedScript,
@@ -82,20 +80,49 @@ impl std::error::Error for FromScriptError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use FromScriptError::*;
 
-        match self {
-            WitnessVersion(e) => Some(e),
-            WitnessProgram(e) => Some(e),
+        match *self {
             UnrecognizedScript => None,
+            WitnessVersion(ref e) => Some(e),
+            WitnessProgram(ref e) => Some(e),
         }
     }
 }
 
 impl From<witness_program::Error> for FromScriptError {
-    fn from(e : witness_program::Error) -> Self { FromScriptError::WitnessProgram(e)}
+    fn from(e : witness_program::Error) -> Self { Self::WitnessProgram(e) }
 }
 
 impl From<witness_version::TryFromError> for FromScriptError {
-    fn from(e: witness_version::TryFromError) -> Self { FromScriptError::WitnessVersion(e) }
+    fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
+}
+
+/// Error while generating address from a p2sh script.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum P2shError {
+    /// Address size more than 520 bytes is not allowed.
+    ExcessiveScriptSize,
+}
+
+impl fmt::Display for P2shError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use P2shError::*;
+
+        match *self {
+            ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for P2shError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use P2shError::*;
+
+        match self {
+            ExcessiveScriptSize => None,
+        }
+    }
 }
 
 /// Address type is either invalid or not supported in rust-bitcoin.
