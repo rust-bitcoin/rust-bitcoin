@@ -39,13 +39,6 @@ macro_rules! hex_fmt_impl(
                 $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
             }
         }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                write!(f, "{:#}", self)
-            }
-        }
     );
 );
 
@@ -317,7 +310,7 @@ macro_rules! hash_newtype {
 macro_rules! hash_newtype_struct {
     ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path);) => {
         $(#[$other_attrs])*
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
     };
     ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path); { hash_newtype($($ignore:tt)*) } $($type_attrs:tt)*) => {
