@@ -9,7 +9,7 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::{cmp, str};
+use core::cmp;
 
 use crate::{sha256d, FromSliceError, HashEngine as _};
 
@@ -126,7 +126,8 @@ impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
-impl str::FromStr for Midstate {
+#[cfg(feature = "hex")]
+impl core::str::FromStr for Midstate {
     type Err = hex::HexToArrayError;
     fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
 }
@@ -175,6 +176,7 @@ impl Midstate {
     }
 }
 
+#[cfg(feature = "hex")]
 impl hex::FromHex for Midstate {
     type Error = hex::HexToArrayError;
 
@@ -819,7 +821,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         #[derive(Clone)]
         struct Test {
@@ -882,7 +884,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn fmt_roundtrips() {
         let hash = sha256::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
@@ -998,6 +1000,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn midstate_fmt_roundtrip() {
         let midstate = Midstate::hash_tag(b"ArbitraryTag");
         let hex = format!("{}", midstate);

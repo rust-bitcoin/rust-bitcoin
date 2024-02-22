@@ -55,7 +55,7 @@ impl crate::HashEngine for HashEngine {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         use crate::{sha512_256, Hash, HashEngine};
 

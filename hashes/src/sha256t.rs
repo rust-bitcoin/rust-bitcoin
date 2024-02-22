@@ -165,8 +165,6 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use crate::Hash;
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
@@ -201,7 +199,7 @@ mod tests {
     }
 
     /// A hash tagged with `$name`.
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     pub type TestHash = sha256t::Hash<TestHashTag>;
 
     sha256t_hash_newtype! {
@@ -214,8 +212,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test_sha256t() {
+        use crate::Hash;
+
         assert_eq!(
             TestHash::hash(&[0]).to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
@@ -224,5 +224,17 @@ mod tests {
             NewTypeHash::hash(&[0]).to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
         );
+    }
+
+    // This test verifies that the `sha256t_hash_newtype` macro implements `FromStr`.
+    #[test]
+    #[cfg(feature = "hex-std")]
+    fn parse_hex() {
+        use crate::Hash;
+
+        let hex = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+        let want = TestHash::hash(&[0]);
+        let got = hex.parse::<TestHash>().expect("failed to parse hex");
+        assert_eq!(got, want)
     }
 }

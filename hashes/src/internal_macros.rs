@@ -4,6 +4,7 @@
 
 macro_rules! arr_newtype_fmt_impl {
     ($ty:ident, $bytes:expr $(, $gen:ident: $gent:ident)*) => {
+        #[cfg(feature = "hex")]
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
@@ -18,6 +19,7 @@ macro_rules! arr_newtype_fmt_impl {
             }
         }
 
+        #[cfg(feature = "hex")]
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
@@ -32,6 +34,7 @@ macro_rules! arr_newtype_fmt_impl {
             }
         }
 
+        #[cfg(feature = "hex")]
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
@@ -42,7 +45,25 @@ macro_rules! arr_newtype_fmt_impl {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                write!(f, "{:#}", self)
+                #[allow(unused)]
+                use crate::Hash as _;
+
+                #[cfg(feature = "hex")]
+                return write!(f, "Hash({:x})", &self);
+
+                #[cfg(not(feature = "hex"))] {
+                    write!(f, "Hash(")?;
+                    if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
+                        for b in self.0.iter().rev() {
+                            write!(f, "{:02x}", b)?;
+                        }
+                    } else {
+                        for b in self.0.iter() {
+                            write!(f, "{:02x}", b)?;
+                        }
+                    }
+                    return write!(f, ")");
+                }
             }
         }
     }
@@ -86,6 +107,7 @@ macro_rules! hash_trait_impls {
             }
         }
 
+        #[cfg(feature = "hex")]
         impl<$($gen: $gent),*> core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
@@ -96,6 +118,14 @@ macro_rules! hash_trait_impls {
                     bytes.reverse();
                 }
                 Ok(Self::from_byte_array(bytes))
+            }
+        }
+
+        #[cfg(not(feature = "hex"))]
+        impl<$($gen: $gent),*> core::str::FromStr for Hash<$($gen),*> {
+            type Err = $crate::HexUnsupportedError;
+            fn from_str(_: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
+                Err($crate::HexUnsupportedError {})
             }
         }
 

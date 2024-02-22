@@ -96,6 +96,7 @@ extern crate serde_test;
 extern crate test;
 
 /// Re-export the `hex-conservative` crate.
+#[cfg(feature = "hex")]
 pub extern crate hex;
 
 #[doc(hidden)]
@@ -128,7 +129,7 @@ pub mod sha512;
 pub mod sha512_256;
 pub mod siphash24;
 
-use core::{borrow, fmt, hash, ops};
+use core::{borrow, fmt, hash};
 
 pub use hmac::{Hmac, HmacEngine};
 
@@ -161,9 +162,8 @@ pub trait Hash:
     + Ord
     + hash::Hash
     + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
     + borrow::Borrow<[u8]>
+    + AsRef<[u8]>
 {
     /// A hashing engine which bytes can be serialized into. It is expected
     /// to implement the `io::Write` trait, and to never return errors under
@@ -171,14 +171,7 @@ pub trait Hash:
     type Engine: HashEngine;
 
     /// The byte array that represents the hash internally.
-    type Bytes:
-        hex::FromHex
-        + Copy
-        + ops::Index<ops::RangeFull, Output = [u8]>
-        + ops::Index<ops::RangeFrom<usize>, Output = [u8]>
-        + ops::Index<ops::RangeTo<usize>, Output = [u8]>
-        + ops::Index<ops::Range<usize>, Output = [u8]>
-        + ops::Index<usize, Output = u8>;
+    type Bytes: Copy;
 
     /// Constructs a new engine.
     fn engine() -> Self::Engine { Self::Engine::default() }
@@ -234,6 +227,23 @@ pub trait Hash:
     fn all_zeros() -> Self;
 }
 
+/// Attempted to parse a hash (hex string) without the hex feature enabled.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg(not(feature = "hex"))]
+pub struct HexUnsupportedError {}
+
+#[cfg(not(feature = "hex"))]
+impl fmt::Display for HexUnsupportedError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "attempted to parse a hash (hex string) without the hex feature enabled")
+
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "hex")))]
+impl std::error::Error for HexUnsupportedError {}
+
 /// Attempted to create a hash from an invalid length slice.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -254,8 +264,9 @@ impl std::error::Error for FromSliceError {
 }
 
 #[cfg(test)]
+#[cfg(all(feature = "alloc", feature = "hex"))]
 mod tests {
-    use crate::{sha256d, Hash};
+    use crate::{sha256d, Hash as _};
 
     hash_newtype! {
         /// A test newtype

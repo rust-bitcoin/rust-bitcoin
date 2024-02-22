@@ -2,6 +2,14 @@
 
 #[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[cfg(not(feature = "hex"))]
+macro_rules! hex_fmt_impl(
+    ($reverse:expr, $len:expr, $ty:ident) => {};
+);
+
+#[macro_export]
+/// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[cfg(feature = "hex")]
 macro_rules! hex_fmt_impl(
     ($reverse:expr, $len:expr, $ty:ident) => (
         $crate::hex_fmt_impl!($reverse, $len, $ty, );
@@ -264,6 +272,7 @@ macro_rules! hash_newtype {
             }
         }
 
+        #[cfg(feature = "hex")]
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
@@ -274,6 +283,14 @@ macro_rules! hash_newtype {
                     bytes.reverse();
                 };
                 Ok($newtype(<$hash>::from_byte_array(bytes)))
+            }
+        }
+
+        #[cfg(not(feature = "hex"))]
+        impl $crate::_export::_core::str::FromStr for $newtype {
+            type Err = $crate::HexUnsupportedError;
+            fn from_str(_: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
+                Err($crate::HexUnsupportedError {})
             }
         }
 
@@ -414,6 +431,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn display() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{}", TestHash::all_zeros());
@@ -421,6 +439,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn display_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#}", TestHash::all_zeros());
@@ -428,6 +447,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn lower_hex() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:x}", TestHash::all_zeros());
@@ -435,6 +455,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn lower_hex_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());

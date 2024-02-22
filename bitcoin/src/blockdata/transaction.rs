@@ -187,7 +187,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
+            txid: s[..colon].parse().map_err(|e: hashes::FromStrError| ParseOutPointError::Txid(e.error()))?,
             vout: parse_vout(&s[colon + 1..])?,
         })
     }
@@ -1670,7 +1670,7 @@ mod tests {
         );
         assert_eq!(
             OutPoint::from_str("i don't care:1"),
-            Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err()))
+            Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().map_err(|e: hashes::FromStrError| e.to_hex_error()).unwrap_err()))
         );
         assert_eq!(
             OutPoint::from_str(
@@ -1679,6 +1679,7 @@ mod tests {
             Err(ParseOutPointError::Txid(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
                     .parse::<Txid>()
+                    .map_err(|e: hashes::FromStrError| e.to_hex_error())
                     .unwrap_err()
             ))
         );

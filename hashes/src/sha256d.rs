@@ -29,10 +29,11 @@ fn from_engine(e: sha256::HashEngine) -> Hash {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     use crate::{sha256d, Hash as _};
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         use crate::{sha256, HashEngine};
 
@@ -83,6 +84,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn fmt_roundtrips() {
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
