@@ -54,7 +54,7 @@ use crate::taproot::TapNodeHash;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{Error, ParseError, UnknownAddressTypeError, UnknownHrpError},
+    error::{Error, ParseError, UnknownAddressTypeError, UnknownHrpError, FromScriptError},
 };
 
 /// The different types of addresses.
@@ -503,7 +503,7 @@ impl Address {
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &Script, network: Network) -> Result<Address, Error> {
+    pub fn from_script(script: &Script, network: Network) -> Result<Address, FromScriptError> {
         if script.is_p2pkh() {
             let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
             let hash = PubkeyHash::from_byte_array(bytes);
@@ -519,7 +519,7 @@ impl Address {
             let program = WitnessProgram::new(version, &script.as_bytes()[2..])?;
             Ok(Address::from_witness_program(program, network))
         } else {
-            Err(Error::UnrecognizedScript)
+            Err(FromScriptError::UnrecognizedScript)
         }
     }
 
@@ -1236,13 +1236,13 @@ mod tests {
         .unwrap();
         let invalid_segwitv0_script =
             ScriptBuf::from_hex("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
-        let expected = Err(Error::UnrecognizedScript);
+        let expected = Err(FromScriptError::UnrecognizedScript);
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
             Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
-            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
+            Err(FromScriptError::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
 

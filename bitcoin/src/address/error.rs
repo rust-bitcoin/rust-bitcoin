@@ -73,6 +73,50 @@ impl From<witness_program::Error> for Error {
     fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
 
+/// Error while generating address from script.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FromScriptError {
+    /// Script is not a p2pkh, p2sh or witness program.
+    UnrecognizedScript,
+    /// A witness program error.
+    WitnessProgram(witness_program::Error),
+    /// A witness version construction error.
+    WitnessVersion(witness_version::TryFromError),
+}
+
+impl fmt::Display for FromScriptError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use FromScriptError::*;
+
+        match *self {
+            WitnessVersion(ref e) => write_err!(f, "witness version construction error"; e),
+            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for FromScriptError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use FromScriptError::*;
+
+        match self {
+            WitnessVersion(e) => Some(e),
+            WitnessProgram(e) => Some(e),
+            UnrecognizedScript => None,
+        }
+    }
+}
+
+impl From<witness_program::Error> for FromScriptError {
+    fn from(e : witness_program::Error) -> Self { FromScriptError::WitnessProgram(e)}
+}
+
+impl From<witness_version::TryFromError> for FromScriptError {
+    fn from(e: witness_version::TryFromError) -> Self { FromScriptError::WitnessVersion(e) }
+}
+
 /// Address type is either invalid or not supported in rust-bitcoin.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
