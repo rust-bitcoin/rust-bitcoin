@@ -169,9 +169,9 @@ impl fmt::Display for AddressInner {
                 let program = program.program().as_ref();
 
                 if fmt.alternate() {
-                    bech32::segwit::encode_upper_to_fmt_unchecked(fmt, &hrp, version, program)
+                    bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
                 } else {
-                    bech32::segwit::encode_lower_to_fmt_unchecked(fmt, &hrp, version, program)
+                    bech32::segwit::encode_lower_to_fmt_unchecked(fmt, hrp, version, program)
                 }
             }
         }

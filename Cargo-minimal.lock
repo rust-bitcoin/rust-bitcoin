@@ -16,9 +16,9 @@ checksum = "414dcefbc63d77c526a76b3afcf6fbb9b5e2791c19c3aa2297733208750c6e53"
 
 [[package]]
 name = "bech32"
-version = "0.10.0-beta"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98f7eed2b2781a6f0b5c903471d48e15f56fb4e1165df8a9a2337fd1a59d45ea"
+checksum = "0f9cd5c4ae44c0514f7831a2b5519ffd02f9759c2b8d2b6c7d00135e390d3ea1"
 
 [[package]]
 name = "bincode"
