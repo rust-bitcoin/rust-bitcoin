@@ -50,7 +50,6 @@ pub(crate) use impl_consensus_encoding;
 /// - core::fmt::UpperHex
 /// - core::fmt::Display
 /// - core::str::FromStr
-/// - hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:literal) => {
         impl $t {
@@ -67,6 +66,11 @@ macro_rules! impl_bytes_newtype {
                 check_copy::<$t>();
 
                 self.0
+            }
+
+            /// Creates `Self` from a hex string.
+            pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
+                Ok($t($crate::hex::FromHex::from_hex(s)?))
             }
         }
 
@@ -96,22 +100,9 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl $crate::hex::FromHex for $t {
-            type Err = $crate::hex::HexToArrayError;
-
-            fn from_byte_iter<I>(iter: I) -> core::result::Result<Self, $crate::hex::HexToArrayError>
-            where
-                I: core::iter::Iterator<Item = core::result::Result<u8, $crate::hex::HexToBytesError>>
-                    + core::iter::ExactSizeIterator
-                    + core::iter::DoubleEndedIterator,
-            {
-                Ok($t($crate::hex::FromHex::from_byte_iter(iter)?))
-            }
-        }
-
         impl core::str::FromStr for $t {
             type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { $crate::hex::FromHex::from_hex(s) }
+            fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 
         #[cfg(feature = "serde")]
@@ -145,17 +136,17 @@ macro_rules! impl_bytes_newtype {
                             use $crate::serde::de::Unexpected;
 
                             if let Ok(hex) = core::str::from_utf8(v) {
-                                $crate::hex::FromHex::from_hex(hex).map_err(E::custom)
+                                core::str::FromStr::from_str(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value(Unexpected::Bytes(v), &self));
                             }
                         }
 
-                        fn visit_str<E>(self, v: &str) -> core::result::Result<Self::Value, E>
+                        fn visit_str<E>(self, hex: &str) -> core::result::Result<Self::Value, E>
                         where
                             E: $crate::serde::de::Error,
                         {
-                            $crate::hex::FromHex::from_hex(v).map_err(E::custom)
+                            core::str::FromStr::from_str(hex).map_err(E::custom)
                         }
                     }
 
