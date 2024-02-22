@@ -163,11 +163,6 @@ pub trait Hash:
     + fmt::Debug
     + fmt::Display
     + fmt::LowerHex
-    + ops::Index<ops::RangeFull, Output = [u8]>
-    + ops::Index<ops::RangeFrom<usize>, Output = [u8]>
-    + ops::Index<ops::RangeTo<usize>, Output = [u8]>
-    + ops::Index<ops::Range<usize>, Output = [u8]>
-    + ops::Index<usize, Output = u8>
     + borrow::Borrow<[u8]>
 {
     /// A hashing engine which bytes can be serialized into. It is expected
@@ -176,7 +171,14 @@ pub trait Hash:
     type Engine: HashEngine;
 
     /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy;
+    type Bytes:
+        hex::FromHex
+        + Copy
+        + ops::Index<ops::RangeFull, Output = [u8]>
+        + ops::Index<ops::RangeFrom<usize>, Output = [u8]>
+        + ops::Index<ops::RangeTo<usize>, Output = [u8]>
+        + ops::Index<ops::Range<usize>, Output = [u8]>
+        + ops::Index<usize, Output = u8>;
 
     /// Constructs a new engine.
     fn engine() -> Self::Engine { Self::Engine::default() }
