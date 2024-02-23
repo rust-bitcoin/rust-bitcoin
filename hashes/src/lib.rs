@@ -13,7 +13,7 @@
 //!
 //! ```rust
 //! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
+//! use bitcoin_hashes::RawHash;
 //!
 //! let bytes = [0u8; 5];
 //! let hash_of_bytes = sha256::Hash::hash(&bytes);
@@ -25,7 +25,7 @@
 //!
 //! ```rust
 //! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
+//! use bitcoin_hashes::RawHash;
 //!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
@@ -45,7 +45,7 @@
 //!
 //! ```rust
 //! use bitcoin_hashes::sha256;
-//! use bitcoin_hashes::Hash;
+//! use bitcoin_hashes::RawHash;
 //! use std::io::Write;
 //!
 //! #[cfg(std)]
@@ -133,6 +133,9 @@ use core::{borrow, fmt, hash, ops};
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
+///
+/// Note that the same engine can create multiple hash types. For instance `sha256` and `sha256d`
+/// use the same engine type, they only differ in their finalization.
 pub trait HashEngine: Clone + Default {
     /// Byte array representing the internal state of the hash engine.
     type MidState;
@@ -149,6 +152,15 @@ pub trait HashEngine: Clone + Default {
 
     /// Return the number of bytes already n_bytes_hashed(inputted).
     fn n_bytes_hashed(&self) -> usize;
+
+    /// Creates the given hash from this engine.
+    ///
+    /// This may be more convenient than calling [`H::from_engine`](RawHash::from_engine) because
+    /// you can avoid writing the type thanks to inference.
+    #[inline]
+    fn finalize<H: RawHash<Engine=Self>>(self) -> H where Self: Sized {
+        H::from_engine(self)
+    }
 }
 
 /// Trait which applies to hashes of all types.
@@ -170,45 +182,14 @@ pub trait Hash:
     + ops::Index<usize, Output = u8>
     + borrow::Borrow<[u8]>
 {
-    /// A hashing engine which bytes can be serialized into. It is expected
-    /// to implement the `io::Write` trait, and to never return errors under
-    /// any conditions.
-    type Engine: HashEngine;
-
     /// The byte array that represents the hash internally.
     type Bytes: hex::FromHex + Copy;
-
-    /// Constructs a new engine.
-    fn engine() -> Self::Engine { Self::Engine::default() }
-
-    /// Produces a hash from the current state of a given engine.
-    fn from_engine(e: Self::Engine) -> Self;
 
     /// Length of the hash, in bytes.
     const LEN: usize;
 
     /// Copies a byte slice into a hash object.
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
-
-    /// Hashes some bytes.
-    fn hash(data: &[u8]) -> Self {
-        let mut engine = Self::engine();
-        engine.input(data);
-        Self::from_engine(engine)
-    }
-
-    /// Hashes all the byte slices retrieved from the iterator together.
-    fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-    where
-        B: AsRef<[u8]>,
-        I: IntoIterator<Item = B>,
-    {
-        let mut engine = Self::engine();
-        for slice in byte_slices {
-            engine.input(slice.as_ref());
-        }
-        Self::from_engine(engine)
-    }
 
     /// Flag indicating whether user-visible serializations of this hash
     /// should be backward. For some reason Satoshi decided this should be
@@ -223,10 +204,34 @@ pub trait Hash:
 
     /// Constructs a hash from the underlying byte array.
     fn from_byte_array(bytes: Self::Bytes) -> Self;
+}
+
+/// Trait which applies to general-purpose hashes that may hash arbitrary data.
+pub trait RawHash: Hash {
+    /// A hashing engine which bytes can be serialized into.
+    ///
+    /// It is expected to implement the `io::Write` trait, and to never return errors under any
+    /// conditions.
+    type Engine: HashEngine;
+
+    /// Constructs a new hash engine.
+    fn engine() -> Self::Engine {
+        Self::Engine::default()
+    }
+
+    /// Produces a hash from the current state of a given `engine`.
+    fn from_engine(engine: Self::Engine) -> Self;
+
+    /// Hashes the supplied `bytes`.
+    fn hash(bytes: &[u8]) -> Self {
+        let mut engine = Self::engine();
+        engine.input(bytes);
+        Self::from_engine(engine)
+    }
 
     /// Returns an all zero hash.
     ///
-    /// An all zeros hash is a made up construct because there is not a known input that can create
+    /// An all zeros hash is a made up construct because there is no known input that can create
     /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
     /// previous blockhash and the coinbase transaction's outpoint txid.
     fn all_zeros() -> Self;
@@ -251,9 +256,18 @@ impl std::error::Error for FromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
+/// Hashes `bytes` to create `H`.
+///
+/// This is a convenient shorthand for cases when inference can be used to avoid typing the full
+/// hash type name.
+#[inline]
+pub fn hash<H: RawHash>(bytes: &[u8]) -> H {
+    <H as RawHash>::hash(bytes)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{sha256d, Hash};
+    use crate::{sha256d, RawHash};
 
     hash_newtype! {
         /// A test newtype
@@ -265,7 +279,7 @@ mod tests {
 
     #[test]
     fn convert_newtypes() {
-        let h1 = TestNewtype::hash(&[]);
+        let h1 = TestNewtype(crate::hash(&[]));
         let h2: TestNewtype2 = h1.to_raw_hash().into();
         assert_eq!(&h1[..], &h2[..]);
 

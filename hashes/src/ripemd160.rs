@@ -413,7 +413,7 @@ mod tests {
     fn test() {
         use std::convert::TryFrom;
 
-        use crate::{ripemd160, Hash, HashEngine};
+        use crate::{ripemd160, Hash, HashEngine, RawHash};
 
         #[derive(Clone)]
         struct Test {

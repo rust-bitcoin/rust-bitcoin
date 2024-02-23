@@ -12,9 +12,8 @@
 //! # Examples
 //!
 //! ```rust
-//! use bitcoin::hash_types::Txid;
 //! use bitcoin::hex::FromHex;
-//! use bitcoin::{Block, MerkleBlock};
+//! use bitcoin::{Block, MerkleBlock, Txid};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
 //! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
@@ -40,15 +39,22 @@
 
 use core::fmt;
 
-use hashes::Hash;
+use hashes::{sha256d, Hash, HashEngine, RawHash};
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
-use crate::blockdata::block::{self, Block, TxMerkleNode};
+use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
+
+hashes::hash_newtype! {
+    /// A hash of the Merkle tree branch or root for transactions.
+    pub struct TxMerkleNode(sha256d::Hash);
+}
+impl_hashencode!(TxMerkleNode);
 
 /// Data structure that represents a block header paired to a partial merkle tree.
 ///
@@ -71,9 +77,8 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
     /// use bitcoin::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
+    /// use bitcoin::{Block, MerkleBlock, Txid};
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
@@ -221,7 +226,7 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::Txid;
     /// use bitcoin::hex::FromHex;
     /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
     ///
@@ -426,10 +431,10 @@ impl PartialMerkleTree {
 
     /// Helper method to produce SHA256D(left + right)
     fn parent_hash(left: TxMerkleNode, right: TxMerkleNode) -> TxMerkleNode {
-        let mut encoder = TxMerkleNode::engine();
+        let mut encoder = sha256d::Hash::engine();
         left.consensus_encode(&mut encoder).expect("engines don't error");
         right.consensus_encode(&mut encoder).expect("engines don't error");
-        TxMerkleNode::from_engine(encoder)
+        TxMerkleNode(encoder.finalize())
     }
 }
 
@@ -632,7 +637,7 @@ mod tests {
 
             // Check that it has the same merkle root as the original, and a valid one
             assert_eq!(merkle_root_1, merkle_root_2);
-            assert_ne!(merkle_root_2, TxMerkleNode::all_zeros());
+            assert_ne!(merkle_root_2.to_byte_array(), [0; 32]);
 
             // check that it contains the matched transactions (in the same order!)
             assert_eq!(match_txid1, match_txid2);

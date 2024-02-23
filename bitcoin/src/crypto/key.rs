@@ -9,7 +9,7 @@ use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::{hash160, Hash};
+use hashes::{hash160, Hash, RawHash};
 use hex::{FromHex, HexToArrayError, HexToBytesError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;
@@ -59,7 +59,7 @@ impl PublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key
-    pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
+    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(self.with_serialized(hashes::hash)) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPublicKeyError> {
@@ -278,11 +278,13 @@ pub struct CompressedPublicKey(pub secp256k1::PublicKey);
 
 impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key
-    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash::hash(&self.to_bytes()) }
+    pub fn pubkey_hash(&self) -> PubkeyHash {
+        PubkeyHash(hash160::Hash::hash(&self.to_bytes()))
+    }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
-        WPubkeyHash::from_byte_array(hash160::Hash::hash(&self.to_bytes()).to_byte_array())
+        WPubkeyHash(hash160::Hash::hash(&self.to_bytes()))
     }
 
     /// Returns the script code used to spend a P2WPKH input.

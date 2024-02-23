@@ -8,7 +8,7 @@
 
 use core::{fmt, iter, slice, str};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, RawHash};
 
 use crate::prelude::*;
 

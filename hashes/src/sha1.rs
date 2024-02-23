@@ -130,7 +130,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha1, Hash, HashEngine};
+        use crate::{sha1, Hash, HashEngine, RawHash};
 
         #[derive(Clone)]
         struct Test {

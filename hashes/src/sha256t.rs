@@ -70,6 +70,7 @@ crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
 
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
     use crate::Hash as _;
+    use crate::RawHash;
 
     Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
 }
@@ -165,8 +166,6 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use crate::Hash;
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
@@ -216,12 +215,13 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_sha256t() {
+        let test_hash: TestHash = crate::hash(&[0]);
         assert_eq!(
-            TestHash::hash(&[0]).to_string(),
+            test_hash.to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
         );
         assert_eq!(
-            NewTypeHash::hash(&[0]).to_string(),
+            NewTypeHash(crate::hash(&[0])).to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
         );
     }

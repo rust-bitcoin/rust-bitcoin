@@ -101,7 +101,7 @@ impl From<&ScriptBuf> for ScriptHash {
 }
 
 impl From<&Script> for ScriptHash {
-    fn from(script: &Script) -> ScriptHash { script.script_hash() }
+    fn from(script: &Script) -> ScriptHash { ScriptHash(hashes::hash(script.as_bytes())) }
 }
 
 impl From<ScriptBuf> for WScriptHash {
@@ -113,7 +113,7 @@ impl From<&ScriptBuf> for WScriptHash {
 }
 
 impl From<&Script> for WScriptHash {
-    fn from(script: &Script) -> WScriptHash { script.wscript_hash() }
+    fn from(script: &Script) -> WScriptHash { WScriptHash(hashes::hash(script.as_bytes())) }
 }
 
 /// Encodes an integer in script(minimal CScriptNum) format.

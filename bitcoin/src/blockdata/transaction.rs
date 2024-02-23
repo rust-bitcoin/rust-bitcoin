@@ -13,7 +13,7 @@
 
 use core::{cmp, fmt, str};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, HashEngine, RawHash};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -57,6 +57,20 @@ const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
 const SEGWIT_FLAG: u8 = 0x01;
 
+impl Txid {
+    /// Returns zeroed hash (used in coinbase transaction).
+    ///
+    /// An all zeros hash is a made up construct because there is no known input that can create it.
+    pub fn all_zeros() -> Self { Self(RawHash::all_zeros()) }
+}
+
+impl Wtxid {
+    /// Returns zeroed hash (used in first hash of witness commitment).
+    ///
+    /// An all zeros hash is a made up construct because there is no known input that can create it.
+    pub fn all_zeros() -> Self { Self(RawHash::all_zeros()) }
+}
+
 /// A reference to a transaction output.
 ///
 /// ### Bitcoin Core References
@@ -84,7 +98,7 @@ impl OutPoint {
     ///
     /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
+    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
     ///
@@ -733,12 +747,12 @@ impl Transaction {
     /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
-        let mut enc = Txid::engine();
+        let mut enc = sha256d::Hash::engine();
         self.version.consensus_encode(&mut enc).expect("engines don't error");
         self.input.consensus_encode(&mut enc).expect("engines don't error");
         self.output.consensus_encode(&mut enc).expect("engines don't error");
         self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid::from_engine(enc)
+        Txid(enc.finalize())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -757,9 +771,9 @@ impl Transaction {
     /// this will be equal to [`Transaction::txid()`].
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
-        let mut enc = Wtxid::engine();
+        let mut enc = sha256d::Hash::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid::from_engine(enc)
+        Wtxid(enc.finalize())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.

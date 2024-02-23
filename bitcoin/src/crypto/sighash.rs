@@ -13,7 +13,8 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash, HashEngine, RawHash};
+use hashes::sha256t::Tag;
 use internals::write_err;
 use io::Write;
 
@@ -304,17 +305,11 @@ impl<'s> ScriptPath<'s> {
     }
     /// Creates a new `ScriptPath` structure using default leaf version value.
     pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
+
+    #[inline]
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
-        let mut enc = TapLeafHash::engine();
-
-        self.leaf_version
-            .to_consensus()
-            .consensus_encode(&mut enc)
-            .expect("writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
-
-        TapLeafHash::from_engine(enc)
+        TapLeafHash::from_script(self.script, self.leaf_version)
     }
 }
 
@@ -694,7 +689,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = TapSighashTag::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -703,7 +698,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             leaf_hash_code_separator,
             sighash_type,
         ).map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Computes the BIP341 sighash for a key spend.
@@ -713,7 +708,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         prevouts: &Prevouts<T>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = TapSighashTag::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -722,7 +717,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             None,
             sighash_type,
         ).map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Computes the BIP341 sighash for a script spend.
@@ -736,7 +731,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         leaf_hash: S,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = TapSighashTag::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -745,7 +740,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             Some((leaf_hash.into(), 0xFFFFFFFF)),
             sighash_type,
         ).map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        Ok(TapSighash(enc.finalize()))
     }
 
     /// Encodes the BIP143 signing data for any flag type into a given object implementing the
@@ -795,9 +790,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             self.segwit_cache().outputs.consensus_encode(writer)?;
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
         {
-            let mut single_enc = LegacySighash::engine();
+            let mut single_enc = sha256d::Hash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
-            let hash = LegacySighash::from_engine(single_enc);
+            let hash = LegacySighash(single_enc.finalize());
             writer.write_all(&hash[..])?;
         } else {
             writer.write_all(&zero_hash[..])?;
@@ -821,7 +816,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
         let script_code = script_pubkey.p2wpkh_script_code().ok_or(P2wpkhError::NotP2wpkhScript)?;
 
-        let mut enc = SegwitV0Sighash::engine();
+        let mut enc = sha256d::Hash::engine();
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -829,7 +824,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         ).map_err(SigningDataError::unwrap_sighash)?;
-        Ok(SegwitV0Sighash::from_engine(enc))
+        Ok(SegwitV0Sighash(enc.finalize()))
     }
 
     /// Computes the BIP143 sighash to spend a p2wsh transaction for any flag type.
@@ -840,7 +835,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
-        let mut enc = SegwitV0Sighash::engine();
+        let mut enc = sha256d::Hash::engine();
         self.segwit_v0_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -848,7 +843,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         ).map_err(SigningDataError::unwrap_sighash)?;
-        Ok(SegwitV0Sighash::from_engine(enc))
+        Ok(SegwitV0Sighash(enc.finalize()))
     }
 
     /// Encodes the legacy signing data from which a signature hash for a given input index with a
@@ -1003,13 +998,13 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_pubkey: &Script,
         sighash_type: u32,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
-        let mut engine = LegacySighash::engine();
+        let mut engine = sha256d::Hash::engine();
         match self
             .legacy_encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_type)
             .is_sighash_single_bug()
         {
             Ok(true) => Ok(LegacySighash::from_byte_array(UINT256_ONE)),
-            Ok(false) => Ok(LegacySighash::from_engine(engine)),
+            Ok(false) => Ok(LegacySighash(sha256d::Hash::from_engine(engine))),
             Err(e) => Err(e.unwrap_sighash()),
         }
     }
@@ -1326,10 +1321,10 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::hashes::{Hash, hex::FromHex, RawHash};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # let mut writer = LegacySighash::engine();
+    /// # let mut writer = hashes::sha256::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -1426,7 +1421,6 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::HashEngine;
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
@@ -1501,9 +1495,9 @@ mod tests {
     fn test_tap_sighash_hash() {
         let bytes = hex!("00011b96877db45ffa23b307e9f0ac87b80ef9a80b4c5f0db3fbe734422453e83cc5576f3d542c5d4898fb2b696c15d43332534a7c1d1255fda38993545882df92c3e353ff6d36fbfadc4d168452afd8467f02fe53d71714fcea5dfe2ea759bd00185c4cb02bc76d42620393ca358a1a713f4997f9fc222911890afb3fe56c6a19b202df7bffdcfad08003821294279043746631b00e2dc5e52a111e213bbfe6ef09a19428d418dab0d50000000000");
         let expected = hex!("04e808aad07a40b3767a1442fead79af6ef7e7c9316d82dec409bb31e77699b0");
-        let mut enc = TapSighash::engine();
+        let mut enc = TapSighashTag::engine();
         enc.input(&bytes);
-        let hash = TapSighash::from_engine(enc);
+        let hash = TapSighash(enc.finalize());
         assert_eq!(expected, hash.to_byte_array());
     }
 
@@ -2143,5 +2137,18 @@ mod tests {
         bip143_p2wsh_nested_in_p2sh_sighash_all_plus_anyonecanpay, AllPlusAnyoneCanPay, "2a67f03e63a6a422125878b40b82da593be8d4efaafe88ee528af6e5a9955c6e";
         bip143_p2wsh_nested_in_p2sh_sighash_none_plus_anyonecanpay, NonePlusAnyoneCanPay, "781ba15f3779d5542ce8ecb5c18716733a5ee42a6f51488ec96154934e2c890a";
         bip143_p2wsh_nested_in_p2sh_sighash_single_plus_anyonecanpay, SinglePlusAnyoneCanPay, "511e8e52ed574121fc1b654970395502128263f62662e076dc6baf05c2e6a99b";
+    }
+
+    #[test]
+    fn tap_sighash_hash() {
+        assert_eq!(
+            TapSighash(TapSighashTag::engine().finalize()).to_string(),
+            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
+        );
+
+        assert_eq!(
+            TapSighash(hashes::hash(&[0])).to_string(),
+            "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
+        );
     }
 }

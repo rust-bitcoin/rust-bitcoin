@@ -13,7 +13,7 @@ use core::{borrow, fmt, ops, str};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{FromSliceError, Hash, HashEngine};
+use crate::{FromSliceError, Hash, HashEngine, RawHash};
 
 /// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,7 +37,7 @@ impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
 }
 
 /// Pair of underlying hash midstates which represent the current state of an `HmacEngine`.
-pub struct HmacMidState<T: Hash> {
+pub struct HmacMidState<T: RawHash> {
     /// Midstate of the inner hash engine
     pub inner: <T::Engine as HashEngine>::MidState,
     /// Midstate of the outer hash engine
@@ -46,16 +46,16 @@ pub struct HmacMidState<T: Hash> {
 
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Clone)]
-pub struct HmacEngine<T: Hash> {
+pub struct HmacEngine<T: RawHash> {
     iengine: T::Engine,
     oengine: T::Engine,
 }
 
-impl<T: Hash> Default for HmacEngine<T> {
+impl<T: RawHash> Default for HmacEngine<T> {
     fn default() -> Self { HmacEngine::new(&[]) }
 }
 
-impl<T: Hash> HmacEngine<T> {
+impl<T: RawHash> HmacEngine<T> {
     /// Constructs a new keyed HMAC from `key`.
     ///
     /// We only support underlying hashes whose block sizes are ≤ 128 bytes.
@@ -68,10 +68,10 @@ impl<T: Hash> HmacEngine<T> {
 
         let mut ipad = [0x36u8; 128];
         let mut opad = [0x5cu8; 128];
-        let mut ret = HmacEngine { iengine: <T as Hash>::engine(), oengine: <T as Hash>::engine() };
+        let mut ret = HmacEngine { iengine: <T as RawHash>::engine(), oengine: <T as RawHash>::engine() };
 
         if key.len() > T::Engine::BLOCK_SIZE {
-            let hash = <T as Hash>::hash(key);
+            let hash = <T as RawHash>::hash(key);
             for (b_i, b_h) in ipad.iter_mut().zip(&hash[..]) {
                 *b_i ^= *b_h;
             }
@@ -98,7 +98,7 @@ impl<T: Hash> HmacEngine<T> {
     }
 }
 
-impl<T: Hash> HashEngine for HmacEngine<T> {
+impl<T: RawHash> HashEngine for HmacEngine<T> {
     type MidState = HmacMidState<T>;
 
     fn midstate(&self) -> Self::MidState {
@@ -154,15 +154,7 @@ impl<T: Hash> borrow::Borrow<[u8]> for Hmac<T> {
 }
 
 impl<T: Hash> Hash for Hmac<T> {
-    type Engine = HmacEngine<T>;
     type Bytes = T::Bytes;
-
-    fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
-        let ihash = T::from_engine(e.iengine);
-        e.oengine.input(&ihash[..]);
-        let ohash = T::from_engine(e.oengine);
-        Hmac(ohash)
-    }
 
     const LEN: usize = T::LEN;
 
@@ -173,6 +165,17 @@ impl<T: Hash> Hash for Hmac<T> {
     fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
 
     fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
+}
+
+impl<T: RawHash> RawHash for Hmac<T> {
+    type Engine = HmacEngine<T>;
+
+    fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
+        let ihash = T::from_engine(e.iengine);
+        e.oengine.input(&ihash[..]);
+        let ohash = T::from_engine(e.oengine);
+        Hmac(ohash)
+    }
 
     fn all_zeros() -> Self {
         let zeros = T::all_zeros();
@@ -200,7 +203,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha256, Hash, HashEngine, Hmac, HmacEngine};
+        use crate::{sha256, Hash, HashEngine, Hmac, HmacEngine, RawHash};
 
         #[derive(Clone)]
         struct Test {
