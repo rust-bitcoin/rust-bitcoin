@@ -93,7 +93,6 @@ mod serde_utils;
 #[macro_use]
 pub mod p2p;
 pub mod address;
-pub mod base58;
 pub mod bip152;
 pub mod bip158;
 pub mod bip32;
@@ -195,4 +194,9 @@ pub mod amount {
             self.to_sat().consensus_encode(w)
         }
     }
+}
+
+pub mod base58 {
+    //! Bitcoin base58 encoding and decoding.
+    pub use base58::{decode, decode_check, encode, encode_check, encode_check_to_fmt, Error};
 }

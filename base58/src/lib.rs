@@ -1,18 +1,36 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Base58 encoder and decoder.
+//! Bitcoin base58 encoding and decoding.
 //!
-//! This module provides functions for encoding and decoding base58 slices and
-//! strings respectively.
-//!
+//! This crate can be used in a no-std environment but requires an allocator.
 
-use core::{fmt, iter, slice, str};
+#![no_std]
+// Experimental features we need.
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(bench, feature(test))]
+// Coding conventions.
+#![warn(missing_docs)]
+// Instead of littering the codebase for non-fuzzing code just globally allow.
+#![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
+// Exclude lints we don't think are valuable.
+#![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
+#![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 
-use hashes::{sha256d, Hash};
+#[macro_use]
+extern crate alloc;
 
-use crate::prelude::*;
+#[cfg(feature = "std")]
+extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+use core::{fmt, iter, slice, str};
+#[cfg(not(feature = "std"))]
+pub use alloc::{string::String, vec::Vec};
+#[cfg(feature = "std")]
+pub use std::{string::String, vec::Vec};
+
+use hashes::{sha256d, Hash};
 
 #[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
