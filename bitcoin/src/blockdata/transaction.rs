@@ -78,7 +78,7 @@ impl OutPoint {
 
     /// Creates a new [`OutPoint`].
     #[inline]
-    pub fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
+    pub const fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
 
     /// Creates a "null" `OutPoint`.
     ///

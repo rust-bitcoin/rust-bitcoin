@@ -194,7 +194,8 @@ mod primitive {
 
     impl PushBytesBuf {
         /// Creates a new empty `PushBytesBuf`.
-        pub fn new() -> Self { PushBytesBuf(Vec::new()) }
+        #[inline]
+        pub const fn new() -> Self { PushBytesBuf(Vec::new()) }
 
         /// Creates a new empty `PushBytesBuf` with reserved capacity.
         pub fn with_capacity(capacity: usize) -> Self { PushBytesBuf(Vec::with_capacity(capacity)) }
