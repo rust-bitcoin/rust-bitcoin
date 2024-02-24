@@ -421,6 +421,7 @@ enum MissingDigitsKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidCharacterError {
     invalid_char: char,
+    position: usize,
 }
 
 impl fmt::Display for InvalidCharacterError {
@@ -428,7 +429,7 @@ impl fmt::Display for InvalidCharacterError {
         match self.invalid_char {
             '.' => f.write_str("there is more than one decimal separator (dot) in the input"),
             '-' => f.write_str("there is more than one minus sign (-) in the input"),
-            c => write!(f, "the character '{}' is not a valid digit", c),
+            c => write!(f, "the character '{}' at position {} is not a valid digit", c, self.position),
         }
     }
 }
@@ -594,9 +595,9 @@ fn parse_signed_to_satoshi(
                 None if max_decimals <= 0 => break,
                 None => decimals = Some(0),
                 // Double decimal dot.
-                _ => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: '.' })),
+                _ => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: '.', position: i + is_negative as usize })),
             },
-            c => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: c })),
+            c => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: c, position: i + is_negative as usize })),
         }
     }
 
@@ -2190,12 +2191,12 @@ mod tests {
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
-        assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x' })));
+        assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })));
         assert_eq!(p("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
         assert_eq!(sp("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
-        assert_eq!(p("-1.0x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x' })));
-        assert_eq!(p("0.0 ", btc), Err(E::from(InvalidCharacterError { invalid_char: ' ' })));
-        assert_eq!(p("0.000.000", btc), Err(E::from(InvalidCharacterError { invalid_char: '.' })));
+        assert_eq!(p("-1.0x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 4 })));
+        assert_eq!(p("0.0 ", btc), Err(E::from(InvalidCharacterError { invalid_char: ' ', position: 3 })));
+        assert_eq!(p("0.000.000", btc), Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 })));
         #[cfg(feature = "alloc")]
         let more_than_max = format!("1{}", Amount::MAX);
         #[cfg(feature = "alloc")]
@@ -2480,7 +2481,7 @@ mod tests {
 
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::from(E::from(InvalidCharacterError { invalid_char: 'x' })).into()));
+        assert_eq!(Amount::from_str("x BTC"), Err(E::from(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })).into()));
         assert_eq!(
             Amount::from_str("xBTC"),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
@@ -2489,7 +2490,7 @@ mod tests {
             Amount::from_str("5 BTC BTC"),
             Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
         );
-        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::from(InvalidCharacterError { invalid_char: 'B' }).into()));
+        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::from(InvalidCharacterError { invalid_char: 'B', position: 1 }).into()));
         assert_eq!(
             Amount::from_str("5 5 BTC"),
             Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
