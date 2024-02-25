@@ -21,7 +21,6 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::base58;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};

@@ -61,6 +61,9 @@ extern crate alloc;
 /// Encodes and decodes base64 as bytes or utf8.
 pub extern crate base64;
 
+/// Bitcoin base58 encoding and decoding.
+pub extern crate base58;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
@@ -194,9 +197,4 @@ pub mod amount {
             self.to_sat().consensus_encode(w)
         }
     }
-}
-
-pub mod base58 {
-    //! Bitcoin base58 encoding and decoding.
-    pub use base58::{decode, decode_check, encode, encode_check, encode_check_to_fmt, Error};
 }

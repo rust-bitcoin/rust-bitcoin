@@ -15,7 +15,6 @@ use internals::{impl_array_newtype, write_err};
 use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
-use crate::base58;
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::prelude::*;
