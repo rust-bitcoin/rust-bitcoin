@@ -46,34 +46,6 @@ impl std::error::Error for NetworkError {
     }
 }
 
-/// Address error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Unknown hrp for current bitcoin networks (in bech32 address).
-    UnknownHrp(UnknownHrpError),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
-        match *self {
-            Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            UnknownHrp(ref e) => Some(e),
-        }
-    }
-}
-
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
