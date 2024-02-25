@@ -9,10 +9,9 @@ use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
 use crate::{base58, Network};
 
-/// Address error.
+/// Network error inside address.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
+pub enum NetworkError {
     /// Address's network differs from required one.
     NetworkValidation {
         /// Network that was required.
@@ -20,13 +19,11 @@ pub enum Error {
         /// The address itself
         address: Address<NetworkUnchecked>,
     },
-    /// Unknown hrp for current bitcoin networks (in bech32 address).
-    UnknownHrp(UnknownHrpError),
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for NetworkError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use NetworkError::*;
 
         match *self {
             NetworkValidation { required, ref address } => {
@@ -34,6 +31,33 @@ impl fmt::Display for Error {
                 fmt::Display::fmt(&address.0, f)?;
                 write!(f, " is not valid on {}", required)
             }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NetworkError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use NetworkError::*;
+
+        match self {
+            NetworkValidation { .. } => None,
+        }
+    }
+}
+
+/// Address error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum Error {
+    /// Unknown hrp for current bitcoin networks (in bech32 address).
+    UnknownHrp(UnknownHrpError),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        match *self {
             Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
         }
     }
@@ -46,7 +70,6 @@ impl std::error::Error for Error {
 
         match *self {
             UnknownHrp(ref e) => Some(e),
-            NetworkValidation { .. } => None,
         }
     }
 }

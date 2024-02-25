@@ -51,7 +51,7 @@ use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
-use self::error::P2shError;
+use self::error::{NetworkError, P2shError};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
@@ -667,11 +667,11 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, Error> {
+    pub fn require_network(self, required: Network) -> Result<Address, NetworkError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(Error::NetworkValidation { required, address: self })
+            Err(NetworkError::NetworkValidation { required, address: self })
         }
     }
 
