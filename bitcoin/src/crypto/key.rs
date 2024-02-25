@@ -15,13 +15,13 @@ use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
 
+use crate::base58;
 use crate::blockdata::script::ScriptBuf;
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
-use crate::base58;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -225,9 +225,7 @@ pub struct SortKey(ArrayVec<u8, 65>);
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.with_serialized(|bytes| {
-            fmt::Display::fmt(&bytes.as_hex(), f)
-        })
+        self.with_serialized(|bytes| fmt::Display::fmt(&bytes.as_hex(), f))
     }
 }
 
@@ -235,22 +233,20 @@ impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
         match s.len() {
-            66 => {
-                PublicKey::from_slice(&<[u8; 33]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
-            },
-            130 => {
-                PublicKey::from_slice(&<[u8; 65]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
-            }
+            66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s).map_err(|op| match op {
+                HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) =>
+                    ParsePublicKeyError::InvalidChar(char),
+                HexToArrayError::Conversion(HexToBytesError::OddLengthString(_))
+                | HexToArrayError::InvalidLength(_, _) => unreachable!("invalid length"),
+            })?)
+            .map_err(From::from),
+            130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s).map_err(|op| match op {
+                HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) =>
+                    ParsePublicKeyError::InvalidChar(char),
+                HexToArrayError::Conversion(HexToBytesError::OddLengthString(_))
+                | HexToArrayError::InvalidLength(_, _) => unreachable!("invalid length"),
+            })?)
+            .map_err(From::from),
             len => Err(ParsePublicKeyError::InvalidHexLength(len)),
         }
     }
@@ -442,7 +438,10 @@ impl PrivateKey {
     pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
 
     /// Deserialize a private key from a slice
-    pub fn from_slice(data: &[u8], network: impl Into<NetworkKind>) -> Result<PrivateKey, secp256k1::Error> {
+    pub fn from_slice(
+        data: &[u8],
+        network: impl Into<NetworkKind>,
+    ) -> Result<PrivateKey, secp256k1::Error> {
         Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
     }
 
@@ -951,7 +950,7 @@ impl std::error::Error for FromWifError {
         use FromWifError::*;
         match self {
             Base58(e) => Some(e),
-            Secp256k1(e)=> Some(e),
+            Secp256k1(e) => Some(e),
         }
     }
 }
@@ -981,7 +980,8 @@ impl fmt::Display for ParsePublicKeyError {
         match self {
             Encoding(e) => write_err!(f, "string error"; e),
             InvalidChar(char) => write!(f, "hex error {}", char),
-            InvalidHexLength(got) => write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
+            InvalidHexLength(got) =>
+                write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
     }
 }
@@ -1016,7 +1016,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
         use ParseCompressedPublicKeyError::*;
         match self {
             Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            HexError(e) => write_err!(f, "invalid hex"; e)
+            HexError(e) => write_err!(f, "invalid hex"; e),
         }
     }
 }

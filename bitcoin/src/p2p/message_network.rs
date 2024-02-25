@@ -11,10 +11,10 @@ use io::{BufRead, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
+use crate::p2p;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
 use crate::prelude::*;
-use crate::p2p;
 
 /// Some simple messages
 

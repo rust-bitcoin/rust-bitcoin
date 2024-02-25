@@ -36,6 +36,7 @@ use bech32::primitives::hrp::Hrp;
 use hashes::{sha256, Hash, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
+use self::error::P2shError;
 use crate::base58;
 use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
@@ -50,8 +51,6 @@ use crate::crypto::key::{
 use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
-
-use self::error::P2shError;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
