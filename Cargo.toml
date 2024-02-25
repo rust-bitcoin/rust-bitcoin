@@ -2,7 +2,7 @@
 members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units", "base58"]
 resolver = "2"
 
-[patch.crates-io.base58check]
+[patch.crates-io.base58ck]
 path = "base58"
 
 [patch.crates-io.bitcoin]
