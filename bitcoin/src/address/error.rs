@@ -10,41 +10,25 @@ use crate::prelude::*;
 use crate::{base58, Network};
 
 /// Network error inside address.
+/// Address's network differs from required one.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NetworkError {
-    /// Address's network differs from required one.
-    NetworkValidation {
-        /// Network that was required.
-        required: Network,
-        /// The address itself
-        address: Address<NetworkUnchecked>,
-    },
+pub struct NetworkValidationError {
+    /// Network that was required.
+    pub required: Network,
+    /// The address itself
+    pub address: Address<NetworkUnchecked>,
 }
 
-impl fmt::Display for NetworkError {
+impl fmt::Display for NetworkValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use NetworkError::*;
-
-        match *self {
-            NetworkValidation { required, ref address } => {
-                write!(f, "address ")?;
-                fmt::Display::fmt(&address.0, f)?;
-                write!(f, " is not valid on {}", required)
-            }
-        }
+        write!(f, "address ")?;
+        fmt::Display::fmt(&self.address.0, f)?;
+        write!(f, " is not valid on {}", self.required)
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for NetworkError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use NetworkError::*;
-
-        match self {
-            NetworkValidation { .. } => None,
-        }
-    }
-}
+impl std::error::Error for NetworkValidationError {}
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
