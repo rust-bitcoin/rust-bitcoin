@@ -17,7 +17,7 @@ use mutagen::mutate;
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::ParseIntError;
+use crate::error::{ParseIntError, PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
 use crate::parse::{self, impl_parse_str, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 
@@ -101,10 +101,25 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Creates a `LockTime` from a hex string.
-    ///
-    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
-    pub fn from_hex(s: &str) -> Result<Self, ParseIntError> {
+    /// Creates a `LockTime` from an prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+
+        let lock_time = parse::hex_u32(stripped)?;
+        Ok(Self::from_consensus(lock_time))
+    }
+
+    /// Creates a `LockTime` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
         let lock_time = parse::hex_u32(s)?;
         Ok(Self::from_consensus(lock_time))
     }
@@ -809,6 +824,37 @@ mod tests {
     }
 
     #[test]
+    fn lock_time_from_hex_lower() {
+        let lock = LockTime::from_hex("0x6289c350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_hex_upper() {
+        let lock = LockTime::from_hex("0X6289C350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_unprefixed_hex_lower() {
+        let lock = LockTime::from_unprefixed_hex("6289c350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_unprefixed_hex_upper() {
+        let lock = LockTime::from_unprefixed_hex("6289C350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = LockTime::from_hex(hex);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn time_from_str_hex_happy_path() {
         let actual = Time::from_hex("0x6289C350").unwrap();
         let expected = Time::from_consensus(0x6289C350).unwrap();
@@ -825,26 +871,6 @@ mod tests {
     fn time_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
         let result = Time::from_hex(hex);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn lock_time_from_str_hex_happy_path() {
-        let actual = LockTime::from_hex("0xBA70D").unwrap();
-        let expected = LockTime::from_consensus(0xBA70D);
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn lock_time_from_str_hex_no_prefix_happy_path() {
-        let lock_time = LockTime::from_hex("BA70D").unwrap();
-        assert_eq!(lock_time, LockTime::from_consensus(0xBA70D));
-    }
-
-    #[test]
-    fn lock_time_from_str_hex_invalid_hex_should_ergr() {
-        let hex = "0xzb93";
-        let result = LockTime::from_hex(hex);
         assert!(result.is_err());
     }
 

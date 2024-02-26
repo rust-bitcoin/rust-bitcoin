@@ -24,8 +24,9 @@ use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::parse::{self, impl_parse_str_from_int_infallible, ParseIntError};
+use crate::parse::{self, impl_parse_str_from_int_infallible};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::prelude::*;
@@ -401,10 +402,25 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
-    /// Creates a `Sequence` number from a hex string.
-    ///
-    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
-    pub fn from_hex(s: &str) -> Result<Self, ParseIntError> {
+    /// Creates a `Sequence` from an prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+
+        let sequence = parse::hex_u32(stripped)?;
+        Ok(Self::from_consensus(sequence))
+    }
+
+    /// Creates a `Sequence` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
         let lock_time = parse::hex_u32(s)?;
         Ok(Self::from_consensus(lock_time))
     }
@@ -2117,14 +2133,26 @@ mod tests {
     }
 
     #[test]
-    fn sequence_from_str_hex_happy_path() {
-        let sequence = Sequence::from_hex("0xFFFFFFFF").unwrap();
+    fn sequence_from_hex_lower() {
+        let sequence = Sequence::from_hex("0xffffffff").unwrap();
         assert_eq!(sequence, Sequence::MAX);
     }
 
     #[test]
-    fn sequence_from_str_hex_no_prefix_happy_path() {
-        let sequence = Sequence::from_hex("FFFFFFFF").unwrap();
+    fn sequence_from_hex_upper() {
+        let sequence = Sequence::from_hex("0XFFFFFFFF").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_unprefixed_hex_lower() {
+        let sequence = Sequence::from_unprefixed_hex("ffffffff").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_unprefixed_hex_upper() {
+        let sequence = Sequence::from_unprefixed_hex("FFFFFFFF").unwrap();
         assert_eq!(sequence, Sequence::MAX);
     }
 

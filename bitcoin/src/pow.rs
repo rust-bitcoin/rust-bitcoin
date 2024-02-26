@@ -17,8 +17,8 @@ use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
-use crate::parse::{self, ParseIntError};
-use crate::Network;
+use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
+use crate::{parse, Network};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -271,10 +271,25 @@ do_impl!(Target);
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
-    /// Creates a [`CompactTarget`] from a hex string.
-    ///
-    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
-    pub fn from_hex(s: &str) -> Result<Self, ParseIntError> {
+    /// Creates a `CompactTarget` from an prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+
+        let target = parse::hex_u32(stripped)?;
+        Ok(Self::from_consensus(target))
+    }
+
+    /// Creates a `CompactTarget` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
         let lock_time = parse::hex_u32(s)?;
         Ok(Self::from_consensus(lock_time))
     }
@@ -1522,17 +1537,27 @@ mod tests {
     }
 
     #[test]
-    fn compact_target_from_hex_str_happy_path() {
-        let actual = CompactTarget::from_hex("0x01003456").unwrap();
-        let expected = CompactTarget(0x01003456);
-        assert_eq!(actual, expected);
+    fn compact_target_from_hex_lower() {
+        let target = CompactTarget::from_hex("0x010034ab").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
     }
 
     #[test]
-    fn compact_target_from_hex_str_no_prefix_happy_path() {
-        let actual = CompactTarget::from_hex("01003456").unwrap();
-        let expected = CompactTarget(0x01003456);
-        assert_eq!(actual, expected);
+    fn compact_target_from_hex_upper() {
+        let target = CompactTarget::from_hex("0X010034AB").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_lower() {
+        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_upper() {
+        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
     }
 
     #[test]
