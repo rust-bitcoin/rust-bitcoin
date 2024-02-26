@@ -7,7 +7,7 @@ use internals::write_err;
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
-use crate::{base58, Network};
+use crate::Network;
 
 /// Address error.
 #[derive(Debug, Clone, PartialEq, Eq)]
