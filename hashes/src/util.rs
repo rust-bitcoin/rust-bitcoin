@@ -3,17 +3,19 @@
 #[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
 macro_rules! hex_fmt_impl(
-    ($reverse:expr, $ty:ident) => (
-        $crate::hex_fmt_impl!($reverse, $ty, );
+    ($reverse:expr, $len:expr, $ty:ident) => (
+        $crate::hex_fmt_impl!($reverse, $len, $ty, );
     );
-    ($reverse:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
+    ($reverse:expr, $len:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                use $crate::Hash as _;
+
                 if $reverse {
-                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.backward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Lower)
                 } else {
-                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.forward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), $crate::hex::Case::Lower)
                 }
             }
         }
@@ -21,10 +23,12 @@ macro_rules! hex_fmt_impl(
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                use $crate::Hash as _;
+
                 if $reverse {
-                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.backward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Upper)
                 } else {
-                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.forward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), $crate::hex::Case::Upper)
                 }
             }
         }
@@ -188,7 +192,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, $newtype);
+        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
         $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
