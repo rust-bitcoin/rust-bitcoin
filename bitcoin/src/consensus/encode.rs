@@ -18,6 +18,7 @@
 use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
+use hex::error::{InvalidCharError, OddLengthStringError};
 use internals::write_err;
 use io::{Cursor, BufRead, Read, Write};
 
@@ -25,6 +26,7 @@ use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::consensus::{DecodeError, IterReader};
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},
@@ -101,6 +103,44 @@ impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self { Error::Io(error) }
 }
 
+/// Hex deserialization error.
+#[derive(Debug)]
+pub enum FromHexError {
+    /// Purported hex string had odd length.
+    OddLengthString(OddLengthStringError),
+    /// Decoding error.
+    Decode(DecodeError<InvalidCharError>)
+}
+
+impl fmt::Display for FromHexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use FromHexError::*;
+
+        match *self {
+            OddLengthString(ref e) =>
+                write_err!(f, "odd length, failed to create bytes from hex"; e),
+            Decode(ref e) => write_err!(f, "decoding error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for FromHexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use FromHexError::*;
+
+        match *self {
+            OddLengthString(ref e) => Some(e),
+            Decode(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<OddLengthStringError> for FromHexError {
+    #[inline]
+    fn from(e: OddLengthStringError) -> Self { Self::OddLengthString(e) }
+}
+
 /// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Vec::new();
@@ -125,6 +165,14 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
     } else {
         Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
     }
+}
+
+/// Deserialize any decodable type from a hex string, will error if said deserialization
+/// doesn't consume the entire vector.
+pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
+    let iter = hex::HexSliceToBytesIter::new(hex)?;
+    let reader = IterReader::new(iter);
+    Ok(reader.decode().map_err(FromHexError::Decode)?)
 }
 
 /// Deserializes an object from a vector, but will not report an error if said deserialization
@@ -1231,5 +1279,20 @@ mod tests {
                 data
             );
         }
+    }
+
+    #[test]
+    fn deserialize_tx_hex() {
+        let hex = include_str!("../../tests/data/previous_tx_0_hex"); // An arbitrary transaction.
+        assert!(deserialize_hex::<Transaction>(hex).is_ok())
+    }
+
+    #[test]
+    fn deserialize_tx_hex_too_many_bytes() {
+        use crate::consensus::DecodeError;
+
+        let mut hex = include_str!("../../tests/data/previous_tx_0_hex").to_string(); // An arbitrary transaction.
+        hex.push_str("abcdef");
+        assert!(matches!(deserialize_hex::<Transaction>(&hex).unwrap_err(), FromHexError::Decode(DecodeError::TooManyBytes)));
     }
 }
