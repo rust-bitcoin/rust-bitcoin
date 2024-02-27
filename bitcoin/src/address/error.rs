@@ -9,6 +9,26 @@ use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
 use crate::{base58, Network};
 
+/// Address's network differs from required one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkValidationError {
+    /// Network that was required.
+    pub(crate) required: Network,
+    /// The address itself.
+    pub(crate) address: Address<NetworkUnchecked>,
+}
+
+impl fmt::Display for NetworkValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "address ")?;
+        fmt::Display::fmt(&self.address.0, f)?;
+        write!(f, " is not valid on {}", self.required)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for NetworkValidationError {}
+
 /// Address error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
