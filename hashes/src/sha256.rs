@@ -817,7 +817,8 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256, Hash, HashEngine};
+    use crate::{sha256, Hash as _, HashEngine};
+    use super::*;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -964,14 +965,14 @@ mod tests {
 
     #[test]
     fn const_hash() {
-        assert_eq!(super::Hash::hash(&[]), super::Hash::const_hash(&[]));
+        assert_eq!(Hash::hash(&[]), Hash::const_hash(&[]));
 
         let mut bytes = Vec::new();
         for i in 0..256 {
             bytes.push(i as u8);
             assert_eq!(
-                super::Hash::hash(&bytes),
-                super::Hash::const_hash(&bytes),
+                Hash::hash(&bytes),
+                Hash::const_hash(&bytes),
                 "hashes don't match for length {}",
                 i + 1
             );
@@ -980,8 +981,6 @@ mod tests {
 
     #[test]
     fn const_midstate() {
-        use super::Midstate;
-
         assert_eq!(
             Midstate::hash_tag(b"TapLeaf"),
             Midstate([
