@@ -29,48 +29,6 @@ impl fmt::Display for NetworkValidationError {
 #[cfg(feature = "std")]
 impl std::error::Error for NetworkValidationError {}
 
-/// Address error.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Address's network differs from required one.
-    NetworkValidation {
-        /// Network that was required.
-        required: Network,
-        /// The address itself
-        address: Address<NetworkUnchecked>,
-    },
-    /// Unknown hrp for current bitcoin networks (in bech32 address).
-    UnknownHrp(UnknownHrpError),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            NetworkValidation { required, ref address } => {
-                write!(f, "address ")?;
-                fmt::Display::fmt(&address.0, f)?;
-                write!(f, " is not valid on {}", required)
-            }
-            Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            UnknownHrp(ref e) => Some(e),
-            NetworkValidation { .. } => None,
-        }
-    }
-}
-
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
