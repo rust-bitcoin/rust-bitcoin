@@ -176,15 +176,13 @@ impl Midstate {
 }
 
 impl hex::FromHex for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_byte_iter<I>(iter: I) -> Result<Self, Self::Err>
-    where
-        I: Iterator<Item = Result<u8, hex::HexToBytesError>>
-            + ExactSizeIterator
-            + DoubleEndedIterator,
-    {
+    type Error = hex::HexToArrayError;
+
+    fn from_hex(s: &str) -> Result<Self, Self::Error> {
         // DISPLAY_BACKWARD is true
-        Ok(Midstate::from_byte_array(hex::FromHex::from_byte_iter(iter.rev())?))
+        let mut bytes = <[u8; 32]>::from_hex(s)?;
+        bytes.reverse();
+        Ok(Midstate(bytes))
     }
 }
 

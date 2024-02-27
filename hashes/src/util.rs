@@ -270,15 +270,13 @@ macro_rules! hash_newtype {
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::hex::{FromHex, HexToBytesIter};
-                use $crate::Hash;
+                use $crate::{Hash, hex::FromHex};
 
-                let inner: <$hash as Hash>::Bytes = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
-                } else {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
+                let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
+                if <Self as $crate::Hash>::DISPLAY_BACKWARD {
+                    bytes.reverse();
                 };
-                Ok($newtype(<$hash>::from_byte_array(inner)))
+                Ok($newtype(<$hash>::from_byte_array(bytes)))
             }
         }
 

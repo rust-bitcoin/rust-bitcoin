@@ -25,4 +25,4 @@ hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = fa
 internals = { package = "bitcoin-internals", version = "0.2.0" }
 
 [dev-dependencies]
-hex = { package = "hex-conservative", version = "0.1.1", default-features = false, features = ["alloc"] }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
