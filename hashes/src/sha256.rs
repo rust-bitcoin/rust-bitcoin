@@ -884,6 +884,15 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
+    fn fmt_roundtrips() {
+        let hash = sha256::Hash::hash(b"some arbitrary bytes");
+        let hex = format!("{}", hash);
+        let rinsed = hex.parse::<sha256::Hash>().expect("failed to parse hex");
+        assert_eq!(rinsed, hash)
+    }
+
+    #[test]
     #[rustfmt::skip]
     fn midstate() {
         // Test vector obtained by doing an asset issuance on Elements
@@ -988,6 +997,14 @@ mod tests {
                 243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
             ])
         )
+    }
+
+    #[test]
+    fn midstate_fmt_roundtrip() {
+        let midstate = Midstate::hash_tag(b"ArbitraryTag");
+        let hex = format!("{}", midstate);
+        let rinsed = hex.parse::<Midstate>().expect("failed to parse hex");
+        assert_eq!(rinsed, midstate)
     }
 
     #[cfg(feature = "serde")]
