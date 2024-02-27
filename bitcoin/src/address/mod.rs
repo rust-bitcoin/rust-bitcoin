@@ -54,7 +54,7 @@ use self::error::P2shError;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{Error, ParseError, UnknownAddressTypeError, UnknownHrpError, FromScriptError},
+    error::{NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError, FromScriptError, },
 };
 
 /// The different types of addresses.
@@ -666,11 +666,11 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, Error> {
+    pub fn require_network(self, required: Network) -> Result<Address, NetworkValidationError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(Error::NetworkValidation { required, address: self })
+            Err(NetworkValidationError { required, address: self })
         }
     }
 

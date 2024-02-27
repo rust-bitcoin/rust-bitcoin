@@ -9,47 +9,25 @@ use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
 use crate::Network;
 
-/// Address error.
+/// Address's network differs from required one.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Address's network differs from required one.
-    NetworkValidation {
-        /// Network that was required.
-        required: Network,
-        /// The address itself
-        address: Address<NetworkUnchecked>,
-    },
-    /// Unknown hrp for current bitcoin networks (in bech32 address).
-    UnknownHrp(UnknownHrpError),
+pub struct NetworkValidationError {
+    /// Network that was required.
+    pub(crate) required: Network,
+    /// The address itself.
+    pub(crate) address: Address<NetworkUnchecked>,
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for NetworkValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            NetworkValidation { required, ref address } => {
-                write!(f, "address ")?;
-                fmt::Display::fmt(&address.0, f)?;
-                write!(f, " is not valid on {}", required)
-            }
-            Error::UnknownHrp(ref e) => write_err!(f, "unknown hrp"; e),
-        }
+        write!(f, "address ")?;
+        fmt::Display::fmt(&self.address.0, f)?;
+        write!(f, " is not valid on {}", self.required)
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match *self {
-            UnknownHrp(ref e) => Some(e),
-            NetworkValidation { .. } => None,
-        }
-    }
-}
+impl std::error::Error for NetworkValidationError {}
 
 /// Error while generating address from script.
 #[derive(Debug, Clone, PartialEq, Eq)]
