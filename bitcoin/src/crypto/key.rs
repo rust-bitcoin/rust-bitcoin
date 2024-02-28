@@ -921,7 +921,7 @@ impl std::error::Error for FromSliceError {
 }
 
 impl From<secp256k1::Error> for FromSliceError {
-    fn from(e: secp256k1::Error) -> FromSliceError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 /// Error generated from WIF key format.
@@ -956,11 +956,11 @@ impl std::error::Error for FromWifError {
 }
 
 impl From<base58::Error> for FromWifError {
-    fn from(e: base58::Error) -> FromWifError { Self::Base58(e) }
+    fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
 
 impl From<secp256k1::Error> for FromWifError {
-    fn from(e: secp256k1::Error) -> FromWifError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 /// Error returned while constructing public key from string.
@@ -1007,7 +1007,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    HexError(hex::HexToArrayError),
+    Hex(hex::HexToArrayError),
 }
 
 impl fmt::Display for ParseCompressedPublicKeyError {
@@ -1015,7 +1015,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
         use ParseCompressedPublicKeyError::*;
         match self {
             Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            HexError(e) => write_err!(f, "invalid hex"; e)
+            Hex(e) => write_err!(f, "invalid hex"; e)
         }
     }
 }
@@ -1027,17 +1027,17 @@ impl std::error::Error for ParseCompressedPublicKeyError {
 
         match self {
             Secp256k1(e) => Some(e),
-            HexError(e) => Some(e),
+            Hex(e) => Some(e),
         }
     }
 }
 
 impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
-    fn from(e: secp256k1::Error) -> ParseCompressedPublicKeyError { Self::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
 impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex::HexToArrayError) -> ParseCompressedPublicKeyError { Self::HexError(e) }
+    fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// Segwit public keys must always be compressed.
