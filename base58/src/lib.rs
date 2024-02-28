@@ -264,8 +264,6 @@ impl std::error::Error for Error {
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
 
     #[test]
@@ -292,8 +290,8 @@ mod tests {
         QUdxpGakhqkZFL7RU4yT";
         assert_eq!(&res, exp);
 
-        // Addresses
-        let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
+        // Address hex: "00f8917303bfa8ef24f292e8fa1419b20460ba064d"
+        let addr = vec![0, 248, 145, 115, 3, 191, 168, 239, 36, 242, 146, 232, 250, 20, 25, 178, 4, 96, 186, 6, 77];
         assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
     }
 
@@ -309,10 +307,11 @@ mod tests {
         assert_eq!(decode("1211").ok(), Some(vec![0u8, 13, 36]));
         assert_eq!(decode("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
-        // Addresses
+        // Address hex: "00f8917303bfa8ef24f292e8fa1419b20460ba064d"
+        let addr = vec![0, 248, 145, 115, 3, 191, 168, 239, 36, 242, 146, 232, 250, 20, 25, 178, 4, 96, 186, 6, 77];
         assert_eq!(
             decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-            Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
+            Some(addr)
         );
         // Non Base58 char.
         assert_eq!(decode("¢").unwrap_err(), Error::BadByte(194));

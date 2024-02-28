@@ -13,7 +13,6 @@ name = "base58check"
 version = "0.1.0"
 dependencies = [
  "bitcoin_hashes",
- "hex-conservative",
 ]
 
 [[package]]
