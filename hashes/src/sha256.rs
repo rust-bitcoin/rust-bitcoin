@@ -11,7 +11,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{error, hex, sha256d, FromSliceError, HashEngine as _};
+use crate::{error, sha256d, FromSliceError, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
