@@ -309,6 +309,7 @@ More specifically an error should
 - derive `Debug, Clone, PartialEq, Eq` (and `Copy` iff not `non_exhaustive`).
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
 - have `Error` suffix
+- not have `Error` suffix on enum variants
 - implement `std::error::Error` if they are public (feature gated on "std").
 
 ```rust
