@@ -95,6 +95,10 @@ mod safety_boundary {
     }
 }
 
+impl<T: Copy, const CAP: usize> Default for ArrayVec<T, CAP> {
+    fn default() -> Self { Self::new() }
+}
+
 /// Clones the value *faster* than using `Copy`.
 ///
 /// Because we avoid copying the uninitialized part of the array this copies the value faster than
