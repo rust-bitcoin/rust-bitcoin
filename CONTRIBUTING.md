@@ -323,6 +323,8 @@ pub enum Error {
 }
 ```
 
+All errors that live in an `error` module (eg, `foo/error.rs`) and appear in a public function in
+`foo` module should be available from `foo` i.e., should be re-exported from `foo/mod.rs`.
 
 #### Rustdocs
 
