@@ -54,7 +54,7 @@ use self::error::P2shError;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError, FromScriptError, },
+    error::{FromScriptError, NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError},
 };
 
 /// The different types of addresses.
