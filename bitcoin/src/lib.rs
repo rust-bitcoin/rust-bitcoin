@@ -2,6 +2,8 @@
 
 //! # Rust Bitcoin Library
 //!
+//! DO NOT MERGE, just a fake change to test CI.
+//!
 //! This is a library that supports the Bitcoin network protocol and associated
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
