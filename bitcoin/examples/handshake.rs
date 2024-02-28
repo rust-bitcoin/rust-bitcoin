@@ -11,11 +11,18 @@ use bitcoin::p2p::{self, address, message, message_network};
 use bitcoin::secp256k1::rand::Rng;
 
 /**
- * To run as a server:
- * cargo run --example handshake --features="std rand-std" S 127.0.0.1:8333
+ * If you have a bitcoind instance running already (e.g, on localhost:83333) connect with:
  *
- * To run as a client:
- * cargo run --example handshake --features="std rand-std" C 127.0.0.1:8333
+ *   cargo run --example handshake --features="std rand-std" C 127.0.0.1:8333
+ * 
+ * If you don't have a bitcoind instance running then this program can act as the server as well,
+ * start one process as the server:
+ *
+ *   cargo run --example handshake --features="std rand-std" S 127.0.0.1:55555
+ *
+ * And start one as the client:
+ *
+ *   cargo run --example handshake --features="std rand-std" C 127.0.0.1:55555
  **/
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the initial
