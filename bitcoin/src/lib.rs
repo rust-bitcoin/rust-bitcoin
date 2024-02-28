@@ -68,7 +68,7 @@ pub extern crate base58;
 pub extern crate hashes;
 
 /// Re-export the `hex-conservative` crate.
-pub extern crate hex;
+extern crate hex;
 
 /// Re-export the `bitcoin-io` crate.
 pub extern crate io;

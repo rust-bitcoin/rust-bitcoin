@@ -115,6 +115,7 @@ mod util;
 #[macro_use]
 pub mod serde_macros;
 pub mod cmp;
+pub mod error;
 pub mod hash160;
 pub mod hmac;
 #[cfg(feature = "bitcoin-io")]
@@ -272,5 +273,13 @@ mod tests {
         let h = sha256d::Hash::hash(&[]);
         let h2: TestNewtype = h.to_string().parse().unwrap();
         assert_eq!(h2.to_raw_hash(), h);
+    }
+
+    #[test]
+    fn newtype_fmt_roundtrip() {
+        let orig = TestNewtype::hash(&[]);
+        let hex = format!("{}", orig);
+        let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
+        assert_eq!(rinsed, orig)
     }
 }

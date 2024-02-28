@@ -71,22 +71,6 @@ pub(crate) use arr_newtype_fmt_impl;
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> Hash<$($gen),*> {
-            /// Displays hex forwards, regardless of how this type would display it naturally.
-            ///
-            /// This is mainly intended as an internal method and you shouldn't need it unless
-            /// you're doing something special.
-            pub fn forward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
-                $crate::hex::DisplayHex::as_hex(&self.0)
-            }
-
-            /// Displays hex backwards, regardless of how this type would display it naturally.
-            ///
-            /// This is mainly intended as an internal method and you shouldn't need it unless
-            /// you're doing something special.
-            pub fn backward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
-                $crate::hex::display::DisplayArray::<_, [u8; $bits / 8 * 2]>::new(self.0.iter().rev())
-            }
-
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
             pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
@@ -105,15 +89,13 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::hex::{FromHex, HexToBytesIter};
-                use $crate::Hash;
+                use $crate::{Hash, hex::{FromHex}};
 
-                let inner: [u8; $bits / 8] = if $reverse {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
-                } else {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
-                };
-                Ok(Self::from_byte_array(inner))
+                let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
+                if $reverse {
+                    bytes.reverse();
+                }
+                Ok(Self::from_byte_array(bytes))
             }
         }
 

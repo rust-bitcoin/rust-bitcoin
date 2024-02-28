@@ -506,18 +506,19 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        InvalidChar(b) => match core::char::from_u32(b.into()) {
+                        InvalidChar(ref e) => match core::char::from_u32(e.invalid_char(
+                        ).into()) {
                             Some(c) => de::Error::invalid_value(
                                 Unexpected::Char(c),
                                 &"a valid hex character",
                             ),
                             None => de::Error::invalid_value(
-                                Unexpected::Unsigned(b.into()),
+                                Unexpected::Unsigned(e.invalid_char().into()),
                                 &"a valid hex character",
                             ),
                         },
-                        OddLengthString(len) =>
-                            de::Error::invalid_length(len, &"an even length string"),
+                        OddLengthString(ref e) =>
+                            de::Error::invalid_length(e.length(), &"an even length string"),
                     })?;
                     ret.push(vec);
                 }

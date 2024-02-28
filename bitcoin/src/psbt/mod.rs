@@ -1025,7 +1025,7 @@ mod tests {
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
-        let r: Result<Vec<u8>, hex::HexToBytesError> = Vec::from_hex(s);
+        let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
             Ok(v) => Psbt::deserialize(&v),
