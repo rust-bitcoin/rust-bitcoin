@@ -116,6 +116,10 @@ macro_rules! define_errorkind {
             ),*
         }
 
+        impl From<core::convert::Infallible> for ErrorKind {
+            fn from(never: core::convert::Infallible) -> Self { match never {} }
+        }
+
         impl ErrorKind {
             fn description(&self) -> &'static str {
                 match self {

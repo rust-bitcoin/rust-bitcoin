@@ -43,6 +43,8 @@ mod message_signing {
         UnsupportedAddressType(AddressType),
     }
 
+    internals::impl_from_infallible!(MessageSignatureError);
+
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             use MessageSignatureError::*;

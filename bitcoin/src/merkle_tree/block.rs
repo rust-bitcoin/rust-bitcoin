@@ -498,6 +498,8 @@ pub enum MerkleBlockError {
     IdenticalHashesFound,
 }
 
+internals::impl_from_infallible!(MerkleBlockError);
+
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use MerkleBlockError::*;

@@ -97,6 +97,8 @@ pub enum SigFromSliceError {
     InvalidSignatureSize(usize),
 }
 
+internals::impl_from_infallible!(SigFromSliceError);
+
 impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use SigFromSliceError::*;

@@ -161,6 +161,8 @@ pub enum ParseError {
     MissingDenomination(MissingDenominationError),
 }
 
+internals::impl_from_infallible!(ParseError);
+
 impl From<ParseAmountError> for ParseError {
     fn from(e: ParseAmountError) -> Self { Self::Amount(e) }
 }
@@ -254,6 +256,8 @@ impl From<InvalidCharacterError> for ParseAmountError {
         Self::InvalidCharacter(value)
     }
 }
+
+internals::impl_from_infallible!(ParseAmountError);
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -447,6 +451,8 @@ pub enum ParseDenominationError {
     PossiblyConfusing(PossiblyConfusingDenominationError),
 }
 
+internals::impl_from_infallible!(ParseDenominationError);
+
 impl fmt::Display for ParseDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseDenominationError::*;
@@ -620,6 +626,8 @@ enum InnerParseError {
     InputTooLarge(usize),
     InvalidCharacter(InvalidCharacterError),
 }
+
+internals::impl_from_infallible!(InnerParseError);
 
 impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {

@@ -368,6 +368,8 @@ enum DecodeError<E> {
     Other(E),
 }
 
+internals::impl_from_infallible!(DecodeError<E>);
+
 // not a trait impl because we panic on some variants
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
     match error {

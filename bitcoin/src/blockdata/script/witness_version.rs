@@ -175,6 +175,8 @@ pub enum FromStrError {
     Invalid(TryFromError),
 }
 
+internals::impl_from_infallible!(FromStrError);
+
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromStrError::*;
@@ -215,6 +217,8 @@ pub enum TryFromInstructionError {
     /// Cannot create a witness version from non-zero data push.
     DataPush,
 }
+
+internals::impl_from_infallible!(TryFromInstructionError);
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

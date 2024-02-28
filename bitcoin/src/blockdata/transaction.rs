@@ -130,6 +130,8 @@ pub enum ParseOutPointError {
     VoutNotCanonical,
 }
 
+internals::impl_from_infallible!(ParseOutPointError);
+
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseOutPointError::*;

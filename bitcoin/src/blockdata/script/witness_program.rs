@@ -135,6 +135,8 @@ pub enum Error {
     InvalidSegwitV0Length(usize),
 }
 
+internals::impl_from_infallible!(Error);
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Error::*;
