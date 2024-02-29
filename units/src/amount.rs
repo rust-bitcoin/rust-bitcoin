@@ -156,6 +156,9 @@ pub enum ParseError {
 
     /// Invalid denomination.
     Denomination(ParseDenominationError),
+
+    /// The denomination was not identified.
+    MissingDenomination(MissingDenominationError),
 }
 
 impl From<ParseAmountError> for ParseError {
@@ -170,11 +173,30 @@ impl From<OutOfRangeError> for ParseError {
     fn from(e: OutOfRangeError) -> Self { Self::Amount(e.into()) }
 }
 
+impl From<TooPreciseError> for ParseError {
+    fn from(e: TooPreciseError) -> Self { Self::Amount(e.into()) }
+}
+
+impl From<MissingDigitsError> for ParseError {
+    fn from(e: MissingDigitsError) -> Self { Self::Amount(e.into()) }
+}
+
+impl From<InputTooLargeError> for ParseError {
+    fn from(e: InputTooLargeError) -> Self { Self::Amount(e.into()) }
+}
+
+impl From<InvalidCharacterError> for ParseError {
+    fn from(e: InvalidCharacterError) -> Self { Self::Amount(e.into()) }
+}
+
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParseError::Amount(error) => write_err!(f, "invalid amount"; error),
             ParseError::Denomination(error) => write_err!(f, "invalid denomination"; error),
+            // We consider this to not be a source because it currently doesn't contain useful
+            // information
+            ParseError::MissingDenomination(_) => f.write_str("the input doesn't contain a denomination"),
         }
     }
 }
@@ -185,6 +207,9 @@ impl std::error::Error for ParseError {
         match self {
             ParseError::Amount(error) => Some(error),
             ParseError::Denomination(error) => Some(error),
+            // We consider this to not be a source because it currently doesn't contain useful
+            // information
+            ParseError::MissingDenomination(_) => None,
         }
     }
 }
@@ -196,13 +221,38 @@ pub enum ParseAmountError {
     /// The amount is too big or too small.
     OutOfRange(OutOfRangeError),
     /// Amount has higher precision than supported by the type.
-    TooPrecise,
-    /// Invalid number format.
-    InvalidFormat,
+    TooPrecise(TooPreciseError),
+    /// A digit was expected but not found.
+    MissingDigits(MissingDigitsError),
     /// Input string was too large.
-    InputTooLarge,
+    InputTooLarge(InputTooLargeError),
     /// Invalid character in input.
-    InvalidCharacter(char),
+    InvalidCharacter(InvalidCharacterError),
+}
+
+impl From<TooPreciseError> for ParseAmountError {
+    fn from(value: TooPreciseError) -> Self {
+        Self::TooPrecise(value)
+    }
+}
+
+impl From<MissingDigitsError> for ParseAmountError {
+    fn from(value: MissingDigitsError) -> Self {
+        Self::MissingDigits(value)
+    }
+}
+
+impl From<InputTooLargeError> for ParseAmountError {
+    fn from(value: InputTooLargeError) -> Self {
+        Self::InputTooLarge(value)
+    }
+}
+
+
+impl From<InvalidCharacterError> for ParseAmountError {
+    fn from(value: InvalidCharacterError) -> Self {
+        Self::InvalidCharacter(value)
+    }
 }
 
 impl fmt::Display for ParseAmountError {
@@ -210,11 +260,11 @@ impl fmt::Display for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            OutOfRange(error) => write_err!(f, "amount out of range"; error),
-            TooPrecise => f.write_str("amount has a too high precision"),
-            InvalidFormat => f.write_str("invalid number format"),
-            InputTooLarge => f.write_str("input string was too large"),
-            InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
+            OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
+            TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
+            MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
+            InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
+            InvalidCharacter(ref error) => write_err!(f, "invalid character in the input"; error),
         }
     }
 }
@@ -225,9 +275,11 @@ impl std::error::Error for ParseAmountError {
         use ParseAmountError::*;
 
         match *self {
-            TooPrecise | InvalidFormat | InputTooLarge
-            | InvalidCharacter(_) => None,
+            TooPrecise(ref error) => Some(error),
+            InputTooLarge(ref error) => Some(error),
             OutOfRange(ref error) => Some(error),
+            MissingDigits(ref error) => Some(error),
+            InvalidCharacter(ref error) => Some(error),
         }
     }
 }
@@ -303,6 +355,87 @@ impl From<OutOfRangeError> for ParseAmountError {
     }
 }
 
+/// Error returned when the input string has higher precision than satoshis.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TooPreciseError {
+    position: usize,
+}
+
+impl fmt::Display for TooPreciseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.position {
+            0 => f.write_str("the amount is less than 1 satoshi but it's not zero"),
+            pos => write!(f, "the digits starting from position {} represent a sub-satoshi amount", pos),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TooPreciseError {}
+
+/// Error returned when the input string is too large.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct InputTooLargeError {
+    len: usize,
+}
+
+impl fmt::Display for InputTooLargeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.len - INPUT_STRING_LEN_LIMIT {
+            1 => write!(f, "the input is one character longer than the maximum allowed length ({})", INPUT_STRING_LEN_LIMIT),
+            n => write!(f, "the input is {} characters longer than the maximum allowed length ({})", n, INPUT_STRING_LEN_LIMIT),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InputTooLargeError {}
+
+/// Error returned when digits were expected in the input but there were none.
+///
+/// In particular, this is currently returned when the string is empty or only contains the minus sign.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MissingDigitsError {
+    kind: MissingDigitsKind,
+}
+
+impl fmt::Display for MissingDigitsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.kind {
+            MissingDigitsKind::Empty => f.write_str("the input is empty"),
+            MissingDigitsKind::OnlyMinusSign => f.write_str("there are no digits following the minus (-) sign"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MissingDigitsError {}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum MissingDigitsKind {
+    Empty,
+    OnlyMinusSign,
+}
+
+/// Returned when the input contains an invalid character.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidCharacterError {
+    invalid_char: char,
+    position: usize,
+}
+
+impl fmt::Display for InvalidCharacterError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.invalid_char {
+            '.' => f.write_str("there is more than one decimal separator (dot) in the input"),
+            '-' => f.write_str("there is more than one minus sign (-) in the input"),
+            c => write!(f, "the character '{}' at position {} is not a valid digit", c, self.position),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidCharacterError {}
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -336,6 +469,11 @@ impl std::error::Error for ParseDenominationError {
     }
 }
 
+/// Error returned when the denomination is empty.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct MissingDenominationError;
+
 /// Parsing error, unknown denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -368,15 +506,26 @@ impl std::error::Error for PossiblyConfusingDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-fn is_too_precise(s: &str, precision: usize) -> bool {
+/// Returns `Some(position)` if the precision is not supported.
+///
+/// The position indicates the first digit that is too precise.
+fn is_too_precise(s: &str, precision: usize) -> Option<usize> {
     match s.find('.') {
-        Some(pos) =>
-            s[(pos + 1)..].chars().any(|d| d != '0')
-                || precision >= pos
-                || s[..pos].chars().rev().take(precision).any(|d| d != '0'),
-        None => precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0'),
+        Some(pos) if precision >= pos => { Some(0) },
+        Some(pos) => {
+            s[..pos].char_indices().rev().take(precision).find(|(_, d)| *d != '0').map(|(i, _)| i)
+                .or_else(|| {
+                    s[(pos + 1)..].char_indices().find(|(_, d)| *d != '0').map(|(i, _)| i + pos + 1)
+                })
+        },
+        None if precision >= s.len() => { Some(0) },
+        None => {
+            s.char_indices().rev().take(precision).find(|(_, d)| *d != '0').map(|(i, _)| i)
+        },
     }
 }
+
+const INPUT_STRING_LEN_LIMIT: usize = 50;
 
 /// Parse decimal string in the given denomination into a satoshi value and a
 /// bool indicator for a negative amount.
@@ -385,16 +534,16 @@ fn parse_signed_to_satoshi(
     denom: Denomination,
 ) -> Result<(bool, u64), InnerParseError> {
     if s.is_empty() {
-        return Err(InnerParseError::InvalidFormat);
+        return Err(InnerParseError::MissingDigits(MissingDigitsError { kind: MissingDigitsKind::Empty }));
     }
-    if s.len() > 50 {
-        return Err(InnerParseError::InputTooLarge);
+    if s.len() > INPUT_STRING_LEN_LIMIT {
+        return Err(InnerParseError::InputTooLarge(s.len()));
     }
 
     let is_negative = s.starts_with('-');
     if is_negative {
         if s.len() == 1 {
-            return Err(InnerParseError::InvalidFormat);
+            return Err(InnerParseError::MissingDigits(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign }));
         }
         s = &s[1..];
     }
@@ -409,10 +558,10 @@ fn parse_signed_to_satoshi(
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
             let last_n = precision_diff.unsigned_abs().into();
-            if is_too_precise(s, last_n) {
+            if let Some(position) = is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
                     Ok(0) => return Ok((is_negative, 0)),
-                    _ => return Err(InnerParseError::TooPrecise),
+                    _ => return Err(InnerParseError::TooPrecise(TooPreciseError { position: position + is_negative as usize })),
                 }
             }
             s = &s[0..s.find('.').unwrap_or(s.len()) - last_n];
@@ -424,7 +573,7 @@ fn parse_signed_to_satoshi(
 
     let mut decimals = None;
     let mut value: u64 = 0; // as satoshis
-    for c in s.chars() {
+    for (i, c) in s.char_indices() {
         match c {
             '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
@@ -439,16 +588,16 @@ fn parse_signed_to_satoshi(
                 decimals = match decimals {
                     None => None,
                     Some(d) if d < max_decimals => Some(d + 1),
-                    _ => return Err(InnerParseError::TooPrecise),
+                    _ => return Err(InnerParseError::TooPrecise(TooPreciseError { position: i + is_negative as usize, })),
                 };
             }
             '.' => match decimals {
                 None if max_decimals <= 0 => break,
                 None => decimals = Some(0),
                 // Double decimal dot.
-                _ => return Err(InnerParseError::InvalidFormat),
+                _ => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: '.', position: i + is_negative as usize })),
             },
-            c => return Err(InnerParseError::InvalidCharacter(c)),
+            c => return Err(InnerParseError::InvalidCharacter(InvalidCharacterError { invalid_char: c, position: i + is_negative as usize })),
         }
     }
 
@@ -466,20 +615,20 @@ fn parse_signed_to_satoshi(
 
 enum InnerParseError {
     Overflow { is_negative: bool },
-    TooPrecise,
-    InvalidFormat,
-    InputTooLarge,
-    InvalidCharacter(char),
+    TooPrecise(TooPreciseError),
+    MissingDigits(MissingDigitsError),
+    InputTooLarge(usize),
+    InvalidCharacter(InvalidCharacterError),
 }
 
 impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
             Self::Overflow { is_negative } => OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
-            Self::TooPrecise => ParseAmountError::TooPrecise,
-            Self::InvalidFormat => ParseAmountError::InvalidFormat,
-            Self::InputTooLarge => ParseAmountError::InputTooLarge,
-            Self::InvalidCharacter(c) => ParseAmountError::InvalidCharacter(c),
+            Self::TooPrecise(error) => ParseAmountError::TooPrecise(error),
+            Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
+            Self::InputTooLarge(len) => ParseAmountError::InputTooLarge(InputTooLargeError { len }),
+            Self::InvalidCharacter(error) => ParseAmountError::InvalidCharacter(error),
         }
     }
 }
@@ -488,7 +637,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     let (i, j) = if let Some(i) = s.find(' ') {
         (i, i + 1)
     } else {
-        let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseAmountError::InvalidFormat)?;
+        let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseError::MissingDenomination(MissingDenominationError))?;
         (i, i)
     };
     Ok((&s[..i], s[j..].parse()?))
@@ -2003,9 +2152,9 @@ mod tests {
         assert_eq!(sf(-0.00012345, D::Bitcoin), Ok(ssat(-12345)));
 
         assert_eq!(f(-100.0, D::MilliSatoshi), Err(OutOfRangeError::negative().into()));
-        assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
+        assert_eq!(f(11.22, D::Satoshi), Err(TooPreciseError { position: 3 }.into()));
+        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(TooPreciseError { position: 1 }.into()));
+        assert_eq!(f(42.123456781, D::Bitcoin), Err(TooPreciseError { position: 11 }.into()));
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
 
@@ -2042,26 +2191,26 @@ mod tests {
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
-        assert_eq!(p("x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("-", btc), Err(E::InvalidFormat));
-        assert_eq!(sp("-", btc), Err(E::InvalidFormat));
-        assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
-        assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
+        assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })));
+        assert_eq!(p("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
+        assert_eq!(sp("-", btc), Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign })));
+        assert_eq!(p("-1.0x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 4 })));
+        assert_eq!(p("0.0 ", btc), Err(E::from(InvalidCharacterError { invalid_char: ' ', position: 3 })));
+        assert_eq!(p("0.000.000", btc), Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 })));
         #[cfg(feature = "alloc")]
         let more_than_max = format!("1{}", Amount::MAX);
         #[cfg(feature = "alloc")]
         assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
-        assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
-        assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1001.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.0000001", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1100.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("10001.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("0.000000042", btc), Err(TooPreciseError { position: 10 }.into()));
+        assert_eq!(p("999.0000000", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1.0000000", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1.1", msat), Err(TooPreciseError { position: 0 }.into()));
+        assert_eq!(p("1000.1", msat), Err(TooPreciseError { position: 5 }.into()));
+        assert_eq!(p("1001.0000000", msat), Err(TooPreciseError { position: 3 }.into()));
+        assert_eq!(p("1000.0000001", msat), Err(TooPreciseError { position: 11 }.into()));
+        assert_eq!(p("1000.1000000", msat), Err(TooPreciseError { position: 5 }.into()));
+        assert_eq!(p("1100.0000000", msat), Err(TooPreciseError { position: 1 }.into()));
+        assert_eq!(p("10001.0000000", msat), Err(TooPreciseError { position: 4 }.into()));
 
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
@@ -2089,7 +2238,7 @@ mod tests {
             assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
         }
 
-        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
+        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(TooPreciseError { position: 0 }.into()));
         // exactly 50 chars.
         assert_eq!(
             p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin),
@@ -2098,7 +2247,7 @@ mod tests {
         // more than 50 chars.
         assert_eq!(
             p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin),
-            Err(E::InputTooLarge)
+            Err(E::InputTooLarge(InputTooLargeError { len: 51 }))
         );
     }
 
@@ -2332,7 +2481,7 @@ mod tests {
 
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x').into()));
+        assert_eq!(Amount::from_str("x BTC"), Err(E::from(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })).into()));
         assert_eq!(
             Amount::from_str("xBTC"),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
@@ -2341,7 +2490,7 @@ mod tests {
             Amount::from_str("5 BTC BTC"),
             Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
         );
-        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B').into()));
+        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::from(InvalidCharacterError { invalid_char: 'B', position: 1 }).into()));
         assert_eq!(
             Amount::from_str("5 5 BTC"),
             Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
@@ -2377,10 +2526,10 @@ mod tests {
 
         case("-1 BTC", Err(OutOfRangeError::negative()));
         case("-0.0 BTC", Err(OutOfRangeError::negative()));
-        case("0.123456789 BTC", Err(E::TooPrecise));
-        scase("-0.1 satoshi", Err(E::TooPrecise));
-        case("0.123456 mBTC", Err(E::TooPrecise));
-        scase("-1.001 bits", Err(E::TooPrecise));
+        case("0.123456789 BTC", Err(TooPreciseError { position: 10 }));
+        scase("-0.1 satoshi", Err(TooPreciseError { position: 3 }));
+        case("0.123456 mBTC", Err(TooPreciseError { position: 7 }));
+        scase("-1.001 bits", Err(TooPreciseError { position: 5 }));
         scase("-200000000000 BTC", Err(OutOfRangeError::too_small()));
         case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
 
@@ -2460,11 +2609,11 @@ mod tests {
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::NanoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 18 }.into())
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::NanoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 19 }.into())
         );
 
         assert_eq!(
@@ -2473,11 +2622,11 @@ mod tests {
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::PicoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 18 }.into())
         );
         assert_eq!(
             sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::PicoBitcoin),
-            Err(ParseAmountError::TooPrecise)
+            Err(TooPreciseError { position: 19 }.into())
         );
     }
 
@@ -2564,7 +2713,7 @@ mod tests {
         // errors
         let t: Result<T, serde_json::Error> =
             serde_json::from_str("{\"amt\": 1000000.000000001, \"samt\": 1}");
-        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise.to_string()));
+        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise(TooPreciseError { position: 16 }).to_string()));
         let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -1, \"samt\": 1}");
         assert!(t.unwrap_err().to_string().contains(&OutOfRangeError::negative().to_string()));
     }
