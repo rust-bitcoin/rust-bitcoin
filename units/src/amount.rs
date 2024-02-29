@@ -988,33 +988,37 @@ impl Amount {
     // Some arithmetic that doesn't fit in `core::ops` traits.
 
     /// Checked addition.
+    ///
     /// Returns [None] if overflow occurred.
     pub fn checked_add(self, rhs: Amount) -> Option<Amount> {
         self.0.checked_add(rhs.0).map(Amount)
     }
 
     /// Checked subtraction.
+    ///
     /// Returns [None] if overflow occurred.
     pub fn checked_sub(self, rhs: Amount) -> Option<Amount> {
         self.0.checked_sub(rhs.0).map(Amount)
     }
 
     /// Checked multiplication.
+    ///
     /// Returns [None] if overflow occurred.
     pub fn checked_mul(self, rhs: u64) -> Option<Amount> { self.0.checked_mul(rhs).map(Amount) }
 
     /// Checked integer division.
+    ///
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made.
     /// Returns [None] if overflow occurred.
     pub fn checked_div(self, rhs: u64) -> Option<Amount> { self.0.checked_div(rhs).map(Amount) }
 
     /// Checked remainder.
+    ///
     /// Returns [None] if overflow occurred.
     pub fn checked_rem(self, rhs: u64) -> Option<Amount> { self.0.checked_rem(rhs).map(Amount) }
 
     /// Unchecked addition.
-    ///
     ///
     /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
     pub fn unchecked_add(self, rhs: Amount) -> Amount {
