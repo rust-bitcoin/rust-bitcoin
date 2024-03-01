@@ -14,9 +14,13 @@ jobs:
       crates: ${{ steps.get_matrix.outputs.crates }}
       deps: ${{ steps.get_matrix.outputs.deps }}
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
+      pr_changed_source: ${{ steps.classify_pr.outputs.pr_changed_source }}
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
+      - name: Determine what files the PR changes.
+        id: classify_pr
+        run: contrib/classify-pr.sh ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
       - name: Read nightly version
         id: read_toolchain
         run: echo "nightly_version=$(cat .github/nightly-version)" >> $GITHUB_OUTPUT
