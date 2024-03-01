@@ -234,10 +234,17 @@ pub trait Hash:
 
 /// Attempted to create a hash from an invalid length slice.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct FromSliceError {
     expected: usize,
     got: usize,
+}
+
+impl FromSliceError {
+    /// Returns the expected slice length.
+    pub fn expected_length(&self) -> usize { self.expected }
+
+    /// Returns the invalid slice length.
+    pub fn invalid_length(&self) -> usize { self.got }
 }
 
 impl fmt::Display for FromSliceError {
@@ -247,9 +254,7 @@ impl fmt::Display for FromSliceError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for FromSliceError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl std::error::Error for FromSliceError {}
 
 #[cfg(test)]
 mod tests {
