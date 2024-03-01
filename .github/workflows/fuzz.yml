@@ -9,8 +9,20 @@ on:
   pull_request:
 
 jobs:
+  Prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_changed_source: ${{ steps.classify_pr.outputs.pr_changed_source }}
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v4
+      - name: Determine what files the PR changes.
+        id: classify_pr
+        run: contrib/classify-pr.sh ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
+
   fuzz:
-    if: ${{ !github.event.act }}
+    needs: Prepare
+    if: ${{ !github.event.act }} && needs.Prepare.outputs.pr_changed_source == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -64,7 +76,8 @@ jobs:
           path: executed_${{ matrix.fuzz_target }}
 
   verify-execution:
-    if: ${{ !github.event.act }}
+    needs: Prepare
+    if: ${{ !github.event.act }} && needs.Prepare.outputs.pr_changed_source == 'true'
     needs: fuzz
     runs-on: ubuntu-latest
     steps:
