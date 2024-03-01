@@ -30,6 +30,7 @@ jobs:
 
   Stable:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - stable toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -51,6 +52,7 @@ jobs:
 
   Beta:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - beta toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -71,6 +73,7 @@ jobs:
 
   Nightly:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - nightly toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -95,6 +98,7 @@ jobs:
 
   MSRV:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - 1.56.1 toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -116,6 +120,8 @@ jobs:
         run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Arch32bit:
+    needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test 32-bit version
     runs-on: ubuntu-latest
     steps:
@@ -133,8 +139,9 @@ jobs:
         run: cargo test --target i686-unknown-linux-gnu
 
   Cross:
+    needs: Prepare
+    if: ${{ !github.event.act }} && needs.Prepare.outputs.pr_changed_source == 'true'
     name: Cross test
-    if: ${{ !github.event.act }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Crate
@@ -150,6 +157,7 @@ jobs:
 
   Embedded:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-C link-arg=-Tlink.x"
@@ -175,6 +183,7 @@ jobs:
 
   ASAN:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Address sanitizer     # hashes crate only.
     runs-on: ubuntu-latest
     strategy:
@@ -197,6 +206,7 @@ jobs:
 
   WASM:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: WebAssembly Build # hashes crate only.
     runs-on: ubuntu-latest
     strategy:
@@ -215,6 +225,7 @@ jobs:
 
   Schemars:
     needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Schemars
     runs-on: ubuntu-latest
     strategy:
@@ -232,6 +243,8 @@ jobs:
         run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Kani:
+    needs: Prepare
+    if: needs.Prepare.outputs.pr_changed_source == 'true'
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout your code.'
