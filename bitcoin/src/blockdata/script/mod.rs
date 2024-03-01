@@ -50,6 +50,7 @@
 mod borrowed;
 mod builder;
 mod instruction;
+mod literal;
 mod owned;
 mod push_bytes;
 #[cfg(test)]
@@ -80,6 +81,7 @@ pub use self::{
     borrowed::*,
     builder::*,
     instruction::*,
+    literal::*,
     owned::*,
     push_bytes::*,
 };
