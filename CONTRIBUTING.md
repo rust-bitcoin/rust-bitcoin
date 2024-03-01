@@ -124,19 +124,6 @@ NB: reviewers may run more complex test/CI scripts, thus, satisfying all the
 requirements above is just a preliminary, but not necessary sufficient step for
 getting the PR accepted as a valid candidate PR for the `master` branch.
 
-PR authors may also find it useful to run the following script locally in order
-to check that each of the commits within the PR satisfies the requirements
-above, before submitting the PR to review:
-```shell script
-RUSTUP_TOOLCHAIN=1.41.1 ./contrib/test.sh
-```
-Please replace the value in `RUSTUP_TOOLCHAIN=1.41.1` with the current MSRV from
-[README.md].
-
-NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
-is necessary to support current MSRV, incompatible with `stable` and newer cargo
-versions.
-
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull

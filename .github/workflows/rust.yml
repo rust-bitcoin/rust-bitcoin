@@ -13,9 +13,13 @@ jobs:
     outputs:
       crates: ${{ steps.get_matrix.outputs.crates }}
       deps: ${{ steps.get_matrix.outputs.deps }}
+      nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
+      - name: Read nightly version
+        id: read_toolchain
+        run: echo "nightly_version=$(cat .github/nightly-version)" >> $GITHUB_OUTPUT
       - name: Prepare tests
         id: get_matrix
         run: contrib/get_matrix.sh
@@ -75,7 +79,9 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v4
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: Install clippy
         run: rustup component add clippy
       - name: Set dependencies
@@ -139,6 +145,7 @@ jobs:
         run: cross test --target s390x-unknown-linux-gnu
 
   Embedded:
+    needs: Prepare
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-C link-arg=-Tlink.x"
@@ -149,8 +156,9 @@ jobs:
       - name: Set up QEMU
         run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@v1
         with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
           targets: thumbv7m-none-eabi
       - name: Install src
         run: rustup component add rust-src
@@ -175,7 +183,9 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v4
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: Install src
         run: rustup component add rust-src
       - name: Running address sanitizer

@@ -148,8 +148,10 @@ loop_features() {
 
 # Lint the workspace then the individual crate examples.
 do_lint() {
+    need_nightly
+
     # Use the current (recent/minimal) lock file.
-    local cargo="cargo +nightly --locked"
+    local cargo="cargo --locked"
 
     $cargo clippy --workspace -- -D warnings
 
@@ -181,7 +183,8 @@ do_dup_deps() {
 # Build the docs with a nightly toolchain, in unison with the function
 # below this checks that we feature guarded docs imports correctly.
 build_docs_with_nightly_toolchain() {
-    local cargo="cargo +nightly --locked"
+    need_nightly
+    local cargo="cargo --locked"
 
     RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" $cargo doc --all-features
 }
@@ -239,6 +242,13 @@ check_required_commands() {
 need_cmd() {
     if ! command -v "$1" > /dev/null 2>&1
     then err "need '$1' (command not found)"
+    fi
+}
+
+need_nightly() {
+    cargo_ver=$(cargo --version)
+    if echo "$cargo_ver" | grep -q -v nightly; then
+        err "Need a nightly compiler; have $(cargo --version)"
     fi
 }
 
