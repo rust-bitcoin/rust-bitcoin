@@ -723,22 +723,6 @@ impl<T: Into<u128>> From<T> for U256 {
     fn from(x: T) -> Self { U256(0, x.into()) }
 }
 
-/// Error from `TryFrom<signed type>` implementations, occurs when input is negative.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub struct TryFromError(i128);
-
-impl fmt::Display for TryFromError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "attempt to create unsigned integer type from negative number: {}", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for TryFromError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
-
 impl Add for U256 {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
