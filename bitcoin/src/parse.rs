@@ -19,19 +19,22 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ParseIntError {
-    pub(crate) input: String,
+    input: String,
     // for displaying - see Display impl with nice error message below
     bits: u8,
     // We could represent this as a single bit but it wouldn't actually derease the cost of moving
     // the struct because String contains pointers so there will be padding of bits at least
     // pointer_size - 1 bytes: min 1B in practice.
     is_signed: bool,
-    pub(crate) source: core::num::ParseIntError,
+    source: core::num::ParseIntError,
 }
 
 impl ParseIntError {
     /// Returns the input that was attempted to be parsed.
     pub fn input(&self) -> &str { &self.input }
+
+    /// Returns the input that was attempted to be parsed and the source error.
+    pub fn into_parts(self) -> (String, core::num::ParseIntError) { (self.input, self.source) }
 }
 
 impl fmt::Display for ParseIntError {

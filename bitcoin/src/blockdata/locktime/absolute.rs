@@ -796,8 +796,9 @@ impl ParseError {
 }
 
 impl From<ParseIntError> for ParseError {
-    fn from(value: ParseIntError) -> Self {
-        Self::InvalidInteger { source: value.source, input: value.input }
+    fn from(error: ParseIntError) -> Self {
+        let (input, source) = error.into_parts();
+        Self::InvalidInteger { source, input }
     }
 }
 
