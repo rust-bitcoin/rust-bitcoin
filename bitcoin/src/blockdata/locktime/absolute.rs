@@ -10,6 +10,7 @@ use core::cmp::{Ordering, PartialOrd};
 use core::{fmt, mem};
 
 use internals::write_err;
+use internals::error::InputString;
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -587,11 +588,11 @@ impl From<ParseError> for ParseTimeError {
 fn parser<T, E, S, F>(f: F) -> impl FnOnce(S) -> Result<T, E>
 where
     E: From<ParseError>,
-    S: AsRef<str> + Into<String>,
+    S: AsRef<str>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
     move |s| {
-        let n = s.as_ref().parse::<i64>().map_err(ParseError::invalid_int(s))?;
+        let n = s.as_ref().parse::<i64>().map_err(ParseError::invalid_int(s.as_ref()))?;
         let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
         f(n).map_err(ParseError::from).map_err(Into::into)
     }
@@ -600,10 +601,10 @@ where
 fn parse_hex<T, E, S, F>(s: S, f: F) -> Result<T, E>
 where
     E: From<ParseError>,
-    S: AsRef<str> + Into<String>,
+    S: AsRef<str>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
-    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16).map_err(ParseError::invalid_int(s))?;
+    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16).map_err(ParseError::invalid_int(s.as_ref()))?;
     let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
     f(n).map_err(ParseError::from).map_err(Into::into)
 }
@@ -748,14 +749,14 @@ impl std::error::Error for OperationError {
 /// Internal - common representation for height and time.
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum ParseError {
-    InvalidInteger { source: core::num::ParseIntError, input: String },
+    InvalidInteger { source: core::num::ParseIntError, input: InputString },
     // unit implied by outer type
     // we use i64 to have nicer messages for negative values
     Conversion(i64),
 }
 
 impl ParseError {
-    fn invalid_int<S: Into<String>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
+    fn invalid_int<S: Into<InputString>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
         move |source| Self::InvalidInteger { source, input: s.into() }
     }
 
@@ -766,13 +767,13 @@ impl ParseError {
 
         match self {
             InvalidInteger { source, input } if *source.kind() == IntErrorKind::PosOverflow => {
-                write!(f, "{} {} is above limit {}", subject, input, upper_bound)
+                write!(f, "{} {:?} is above limit {}", subject, input, upper_bound)
             }
             InvalidInteger { source, input } if *source.kind() == IntErrorKind::NegOverflow => {
-                write!(f, "{} {} is below limit {}", subject, input, lower_bound)
+                write!(f, "{} {:?} is below limit {}", subject, input, lower_bound)
             }
             InvalidInteger { source, input } => {
-                write_err!(f, "failed to parse {} as {}", input, subject; source)
+                write_err!(f, "{}", input.display_cannot_parse(subject); source)
             }
             Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
@@ -801,7 +802,7 @@ impl ParseError {
 
 impl From<ParseIntError> for ParseError {
     fn from(value: ParseIntError) -> Self {
-        Self::InvalidInteger { source: value.source, input: value.input }
+        Self::InvalidInteger { source: value.source, input: value.input.into() }
     }
 }
 
