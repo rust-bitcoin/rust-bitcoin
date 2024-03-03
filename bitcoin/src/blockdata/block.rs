@@ -47,7 +47,7 @@ impl From<Wtxid> for WitnessMerkleNode {
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but
-/// including a root of a [merkle tree] commiting to all transactions in the block.
+/// including a root of a [merkle tree] committing to all transactions in the block.
 ///
 /// [merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
