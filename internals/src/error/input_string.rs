@@ -74,6 +74,14 @@ impl InputString {
     {
         storage::unknown_variant(&self.0, what, f)
     }
+
+    /// Displays the raw input string or nothing if we don't have it ("alloc" not enabled).
+    ///
+    /// This function defeats the whole point of the `InputString`, if you use this type you
+    /// need to add your own context when displaying.
+    pub fn display_raw(&self) -> Raw<'_> {
+        Raw { input: self }
+    }
 }
 
 macro_rules! impl_from {
@@ -108,6 +116,20 @@ impl<'a, T: fmt::Display + ?Sized> fmt::Display for CannotParse<'a, T> {
     }
 }
 
+/// Displays the raw input string or nothing if we don't have it ("alloc" not enabled).
+///
+/// This is created by the `display_raw` method and should be only be used if you want to handle
+/// adding context to the input string yourself.
+pub struct Raw<'a> {
+    input: &'a InputString,
+}
+
+impl<'a> fmt::Display for Raw<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        storage::display_raw(&self.input.0, f)
+    }
+}
+
 #[cfg(not(feature = "alloc"))]
 mod storage {
     use core::fmt;
@@ -138,6 +160,8 @@ mod storage {
     {
         write!(f, "unknown {}", what)
     }
+
+    pub(super) fn display_raw(_: &Storage, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "") }
 }
 
 #[cfg(feature = "alloc")]
@@ -161,6 +185,8 @@ mod storage {
     {
         write!(f, "'{}' is not a known {}", inp, what)
     }
+
+    pub(super) fn display_raw(input: &Storage, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", input) }
 
     impl_from!(alloc::string::String, alloc::boxed::Box<str>, alloc::borrow::Cow<'_, str>);
 }
