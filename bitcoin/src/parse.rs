@@ -4,8 +4,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use internals::write_err;
-
-use crate::prelude::*;
+use internals::error::InputString;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
 ///
@@ -19,7 +18,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ParseIntError {
-    input: String,
+    input: InputString,
     // for displaying - see Display impl with nice error message below
     bits: u8,
     // We could represent this as a single bit but it wouldn't actually derease the cost of moving
@@ -30,18 +29,15 @@ pub struct ParseIntError {
 }
 
 impl ParseIntError {
-    /// Returns the input that was attempted to be parsed.
-    pub fn input(&self) -> &str { &self.input }
-
     /// Returns the input that was attempted to be parsed and the source error.
-    pub fn into_parts(self) -> (String, core::num::ParseIntError) { (self.input, self.source) }
+    pub fn into_parts(self) -> (InputString, core::num::ParseIntError) { (self.input, self.source) }
 }
 
 impl fmt::Display for ParseIntError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let signed = if self.is_signed { "signed" } else { "unsigned" };
         let n = if self.bits == 8 { "n" } else { "" };
-        write_err!(f, "failed to parse '{}' as a{} {}-bit {} integer", self.input, n, self.bits, signed; self.source)
+        write_err!(f, "failed to parse '{}' as a{} {}-bit {} integer", self.input.display_raw(), n, self.bits, signed; self.source)
     }
 }
 
@@ -79,10 +75,10 @@ impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 ///
 /// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
 /// owned since it avoids allocation in error case.
-pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseIntError> {
+pub(crate) fn int<T: Integer, S: AsRef<str>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
-            input: s.into(),
+            input: InputString::from(s.as_ref()),
             bits: u8::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
             // We detect if the type is signed by checking if -1 can be represented by it
             // this way we don't have to implement special traits and optimizer will get rid of the
@@ -93,9 +89,9 @@ pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, P
     })
 }
 
-pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
+pub(crate) fn hex_u32<S: AsRef<str>>(s: S) -> Result<u32, ParseIntError> {
     u32::from_str_radix(s.as_ref(), 16).map_err(|error| ParseIntError {
-        input: s.into(),
+        input: InputString::from(s.as_ref()),
         bits: u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 32 bits for u32"),
         is_signed: u32::try_from(-1i8).is_ok(),
         source: error,
