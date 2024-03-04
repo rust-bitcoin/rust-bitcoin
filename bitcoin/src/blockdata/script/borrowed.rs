@@ -59,7 +59,7 @@ use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 /// ## Memory safety
 ///
 /// The type is `#[repr(transparent)]` for internal purposes only!
-/// No consumer crate may rely on the represenation of the struct!
+/// No consumer crate may rely on the representation of the struct!
 ///
 /// ## References
 ///
@@ -441,7 +441,7 @@ impl Script {
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
     /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
     /// verify variant count for N sigops where N is the number of pubkeys used in the
-    /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceeded by an
+    /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceded by an
     /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
     ///
     /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)

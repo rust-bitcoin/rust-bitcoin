@@ -251,7 +251,7 @@ impl serde::Serialize for ChildNumber {
 /// Trait that allows possibly failable conversion from a type into a
 /// derivation path
 pub trait IntoDerivationPath {
-    /// Convers a given type into a [`DerivationPath`] with possible error
+    /// Converts a given type into a [`DerivationPath`] with possible error
     fn into_derivation_path(self) -> Result<DerivationPath, Error>;
 }
 

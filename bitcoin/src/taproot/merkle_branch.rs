@@ -43,7 +43,7 @@ impl TaprootMerkleBranch {
     ///
     /// # Errors
     ///
-    /// The function returns an error if the the number of bytes is not an integer multiple of 32 or
+    /// The function returns an error if the number of bytes is not an integer multiple of 32 or
     /// if the number of hashes exceeds 128.
     pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {

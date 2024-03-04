@@ -55,7 +55,7 @@ impl AsRef<core::num::ParseIntError> for ParseIntError {
     fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
 }
 
-/// Not strictly neccessary but serves as a lint - avoids weird behavior if someone accidentally
+/// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
 pub(crate) trait Integer:
     FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized
