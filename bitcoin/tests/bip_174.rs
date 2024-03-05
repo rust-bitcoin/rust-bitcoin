@@ -1,8 +1,10 @@
 //! Tests PSBT integration vectors from BIP 174
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#test-vectors>
 
+#![cfg(feature = "std")]
+
+use core::str::FromStr;
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::blockdata::opcodes::OP_0;

@@ -14,6 +14,8 @@ pub use crate::{
 mod tests {
     use super::*;
     use crate::hashes::Hash;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
     use crate::{
         LegacySighash, PubkeyHash, ScriptHash, SegwitV0Sighash, TapSighash, WPubkeyHash,
         WScriptHash, XKeyIdentifier,

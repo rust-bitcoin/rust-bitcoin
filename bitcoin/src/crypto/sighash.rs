@@ -1447,14 +1447,14 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use hashes::HashEngine;
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     extern crate serde_json;
 
@@ -1769,6 +1769,8 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
+        use core::str::FromStr;
+
         use hex::DisplayHex;
 
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
@@ -1961,6 +1963,8 @@ mod tests {
 
     #[test]
     fn sighashtype_fromstr_display() {
+        use core::str::FromStr;
+
         let sighashtypes = vec![
             ("SIGHASH_DEFAULT", TapSighashType::Default),
             ("SIGHASH_ALL", TapSighashType::All),

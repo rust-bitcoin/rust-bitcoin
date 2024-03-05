@@ -1568,7 +1568,7 @@ mod tests {
 
     mod bip_vectors {
         #[cfg(feature = "base64")]
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         use super::*;
         use crate::psbt::map::Map;

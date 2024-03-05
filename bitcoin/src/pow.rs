@@ -1117,6 +1117,8 @@ impl kani::Arbitrary for U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     impl<T: Into<u128>> From<T> for Target {
         fn from(x: T) -> Self { Self(U256::from(x)) }
@@ -1894,7 +1896,7 @@ mod tests {
 
     #[test]
     fn target_is_met_by_for_target_equals_hash() {
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         use hashes::Hash;
 

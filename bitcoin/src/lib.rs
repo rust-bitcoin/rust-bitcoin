@@ -29,7 +29,7 @@
 //!                            happen the implementations diverge one day.
 //! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
 
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
@@ -54,6 +54,9 @@ extern crate test;
 
 #[macro_use]
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "base64")]
 /// Encodes and decodes base64 as bytes or utf8.
@@ -141,22 +144,23 @@ pub use crate::{
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 
+/// The `rust-bitcoin` crate requires an allocator.
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
-    #[cfg(all(not(feature = "std"), not(test)))]
+    #[cfg(not(feature = "std"))]
     pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
 
-    #[cfg(all(not(feature = "std"), not(test), any(not(rust_v_1_60), target_has_atomic = "ptr")))]
+    #[cfg(all(not(feature = "std"), any(not(rust_v_1_60), target_has_atomic = "ptr")))]
     pub use alloc::sync;
 
-    #[cfg(any(feature = "std", test))]
+    #[cfg(feature = "std")]
     pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc, sync};
 
-    #[cfg(all(not(feature = "std"), not(test)))]
+    #[cfg(not(feature = "std"))]
     pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
-    #[cfg(any(feature = "std", test))]
+    #[cfg(feature = "std")]
     pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
 
     pub use crate::io::sink;
