@@ -13,6 +13,8 @@ use core::{convert, fmt, str};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+#[cfg(feature = "schemars")]
+use crate::alloc::string::String;
 use crate::{FromSliceError, Hash, HashEngine};
 
 /// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
@@ -24,7 +26,7 @@ pub struct Hmac<T: Hash>(T);
 impl<T: Hash + schemars::JsonSchema> schemars::JsonSchema for Hmac<T> {
     fn is_referenceable() -> bool { <T as schemars::JsonSchema>::is_referenceable() }
 
-    fn schema_name() -> std::string::String { <T as schemars::JsonSchema>::schema_name() }
+    fn schema_name() -> String { <T as schemars::JsonSchema>::schema_name() }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         <T as schemars::JsonSchema>::json_schema(gen)
@@ -172,6 +174,10 @@ impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
@@ -298,8 +304,8 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn hmac_sha512_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

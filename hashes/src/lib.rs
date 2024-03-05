@@ -62,7 +62,7 @@
 //! # fn main() {}
 //! ```
 
-#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
@@ -75,10 +75,11 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(any(test, feature = "std"))]
-extern crate core;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.
@@ -101,7 +102,7 @@ pub mod _export {
 }
 
 #[cfg(feature = "schemars")]
-extern crate schemars;
+extern crate actual_schemars as schemars;
 
 mod internal_macros;
 #[macro_use]
@@ -246,8 +247,11 @@ impl fmt::Display for FromSliceError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {}
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
     use crate::{sha256d, Hash};
 
     hash_newtype! {

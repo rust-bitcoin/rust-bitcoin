@@ -179,6 +179,9 @@ pub(crate) use hash_trait_impls;
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
+        #[cfg(feature = "schemars")]
+        use crate::alloc::{borrow::ToOwned, boxed::Box, string::String};
+
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[repr(transparent)]
