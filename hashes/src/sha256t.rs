@@ -2,10 +2,10 @@
 
 //! SHA256t implementation (tagged SHA256).
 
-use core::cmp;
 use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, str};
 
 use crate::{sha256, FromSliceError, HashEngine as _};
 
@@ -327,6 +327,10 @@ macro_rules! sha256t_tag_constructor {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [

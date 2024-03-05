@@ -129,6 +129,10 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {

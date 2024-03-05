@@ -164,6 +164,10 @@ impl<'de, T: GeneralHash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+
     #[test]
     fn test() {
         use crate::{sha256, GeneralHash as _, Hash as _, HashEngine, Hmac, HmacEngine};
