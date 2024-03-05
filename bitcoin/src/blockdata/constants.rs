@@ -216,6 +216,8 @@ mod test {
     use crate::consensus::encode::serialize;
     use crate::network::params;
     use crate::Txid;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

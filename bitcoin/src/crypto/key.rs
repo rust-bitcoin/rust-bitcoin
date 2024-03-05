@@ -1142,6 +1142,8 @@ impl std::error::Error for InvalidAddressVersionError {}
 mod tests {
     use super::*;
     use crate::address::Address;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn test_key_derivation() {

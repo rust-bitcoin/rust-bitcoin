@@ -383,6 +383,8 @@ impl std::error::Error for UnknownMagicError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn service_flags_test() {

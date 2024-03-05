@@ -11,6 +11,7 @@ use crate::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p;
+use crate::prelude::Vec;
 use crate::transaction::{Txid, Wtxid};
 
 /// An inventory item.
@@ -147,6 +148,8 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn getblocks_message_test() {

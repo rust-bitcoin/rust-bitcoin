@@ -558,6 +558,8 @@ mod test {
     use crate::p2p::ServiceFlags;
     use crate::script::ScriptBuf;
     use crate::transaction::Transaction;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     fn hash(slice: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_slice(&slice).unwrap() }
 

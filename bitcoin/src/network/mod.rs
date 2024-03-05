@@ -313,6 +313,8 @@ mod tests {
     use super::Network;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn serialize_test() {

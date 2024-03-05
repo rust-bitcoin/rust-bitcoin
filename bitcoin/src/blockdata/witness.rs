@@ -631,7 +631,7 @@ mod test {
             content: append_u32_vec(vec![], &[0]),
             indices_start: 2,
         };
-        println!("{:?}", witness);
+        let _ = format!("{:?}", witness);
     }
 
     #[test]

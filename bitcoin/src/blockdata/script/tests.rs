@@ -9,6 +9,8 @@ use crate::address::script_pubkey::{
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::FeeRate;
+#[allow(unused_imports)] // Less maintenance to just import this in tests.
+use crate::prelude::*;
 
 #[test]
 #[rustfmt::skip]

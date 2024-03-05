@@ -1,5 +1,6 @@
-#![cfg(not(feature = "rand-std"))]
+#![cfg(all(not(feature = "rand-std"), feature = "std"))]
 
+use core::str::FromStr;
 use std::collections::BTreeMap;
 
 use bitcoin::bip32::{DerivationPath, Fingerprint};

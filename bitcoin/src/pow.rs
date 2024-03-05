@@ -1074,6 +1074,8 @@ impl kani::Arbitrary for U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     impl From<u64> for Target {
         fn from(x: u64) -> Self { Self(U256::from(x)) }
