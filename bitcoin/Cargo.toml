@@ -49,6 +49,8 @@ bitcoinconsensus = { version = "0.20.2-0.5.0", default-features = false, optiona
 core2 = { version = "0.3.2", default-features = false, features = ["alloc"], optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+sha2 = "0.10.8"
+k256 = "0.13.3"
 
 [dev-dependencies]
 serde_json = "1.0.0"
