@@ -446,6 +446,8 @@ impl HashEngine {
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
+            use std::is_x86_feature_detected;
+
             if is_x86_feature_detected!("sse4.1")
                 && is_x86_feature_detected!("sha")
                 && is_x86_feature_detected!("sse2")
