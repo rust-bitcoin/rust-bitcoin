@@ -91,12 +91,6 @@ to split it into multiple small, focused PRs.
 Commits should cover both the issue fixed and the solution's rationale.
 Please keep these [guidelines](https://chris.beams.io/posts/git-commit/) in mind.
 
-To facilitate communication with other contributors, the project is making use
-of GitHub's "assignee" field. First check that no one is assigned and then
-comment suggesting that you're working on it. If someone is already assigned,
-don't hesitate to ask if the assigned party or previous commenters are still
-working on it if it has been awhile.
-
 
 ## Preparing PRs
 
