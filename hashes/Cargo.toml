@@ -15,7 +15,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hex/std", "bitcoin-io/std"]
+std = ["alloc", "consensus-encoding/std", "hex/std", "bitcoin-io/std"]
 alloc = ["hex/alloc"]
 # If you want I/O you must enable either "std" or "io".
 io = ["bitcoin-io"]
@@ -30,6 +30,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 
 bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
+consensus-encoding = { package = "bitcoin-consensus-encoding", version = "0.1.0", default-features = false, features = [], optional = true }
 schemars = { version = "0.8.3", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 

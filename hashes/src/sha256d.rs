@@ -7,7 +7,10 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::str;
 
-use crate::{sha256, FromSliceError};
+#[cfg(feature = "alloc")]       // consensus_encoding crate requires an allocator.
+use consensus_encoding::{Encodable, Decodable, io::{self, BufRead, Write}};
+
+use crate::{sha256, FromSliceError, Hash as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -26,6 +29,18 @@ fn from_engine(e: sha256::HashEngine) -> Hash {
     let mut ret = [0; 32];
     ret.copy_from_slice(&sha2d[..]);
     Hash(ret)
+}
+
+impl Encodable for Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for Hash {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as crate::Hash>::Bytes>::consensus_decode(r)?))
+    }
 }
 
 #[cfg(test)]
