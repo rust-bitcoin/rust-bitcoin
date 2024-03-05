@@ -28,7 +28,7 @@
 //!                            achieve the same without this feature but it could
 //!                            happen the implementations diverge one day.
 
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
 
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -56,6 +56,9 @@ extern crate test;
 
 #[macro_use]
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "base64")]
 /// Encodes and decodes base64 as bytes or utf8.
