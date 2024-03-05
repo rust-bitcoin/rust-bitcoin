@@ -78,7 +78,7 @@ To contribute a patch, the workflow is a as follows:
 2. Create topic branch
 3. Commit patches
 
-Please keep commits should atomic and diffs easy to read. For this reason
+Please keep commits atomic and diffs easy to read. For this reason
 do not mix any formatting fixes or code moves with actual code changes.
 Further, each commit, individually, should compile and pass tests, in order to
 ensure git bisect and other automated tools function properly.
