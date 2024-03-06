@@ -419,6 +419,9 @@ impl Height {
     /// The maximum absolute block height.
     pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
 
+    /// Creates a new instance having its default value.
+    pub const fn new() -> Height { Height(0) }
+
     /// Constructs a new block height.
     ///
     /// # Errors
@@ -458,6 +461,9 @@ impl Height {
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+impl Default for Height {
+    fn default() -> Self { Height::new() }
 }
 
 impl FromHexStr for Height {
@@ -508,6 +514,9 @@ impl Time {
     /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Time(u32::max_value());
 
+    /// Creates a new instance having its default value.
+    pub const fn new() -> Time { Time(0) }
+
     /// Constructs a new block time.
     ///
     /// # Errors
@@ -547,6 +556,10 @@ impl Time {
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl Default for Time {
+    fn default() -> Self { Time::new() }
 }
 
 impl FromHexStr for Time {
