@@ -78,7 +78,7 @@ To contribute a patch, the workflow is a as follows:
 2. Create topic branch
 3. Commit patches
 
-Please keep commits should atomic and diffs easy to read. For this reason
+Please keep commits atomic and diffs easy to read. For this reason
 do not mix any formatting fixes or code moves with actual code changes.
 Further, each commit, individually, should compile and pass tests, in order to
 ensure git bisect and other automated tools function properly.
@@ -90,12 +90,6 @@ to split it into multiple small, focused PRs.
 
 Commits should cover both the issue fixed and the solution's rationale.
 Please keep these [guidelines](https://chris.beams.io/posts/git-commit/) in mind.
-
-To facilitate communication with other contributors, the project is making use
-of GitHub's "assignee" field. First check that no one is assigned and then
-comment suggesting that you're working on it. If someone is already assigned,
-don't hesitate to ask if the assigned party or previous commenters are still
-working on it if it has been awhile.
 
 
 ## Preparing PRs
