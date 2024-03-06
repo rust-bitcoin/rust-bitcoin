@@ -226,7 +226,7 @@ impl Decodable for AddrV2 {
                 }
                 let addr: [u16; 8] = read_be_address(r)?;
                 // check the first byte for the CJDNS marker
-                if addr[0] != u16::from_be_bytes([0xFC, 0x00]) {
+                if addr[0] >> 8 != 0xFC{
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
                 AddrV2::Cjdns(Ipv6Addr::new(
@@ -425,8 +425,8 @@ mod test {
             hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
         );
 
-        let ip = AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap());
-        assert_eq!(serialize(&ip), hex!("0610fc000001000200030004000500060007"));
+        let ip = AddrV2::Cjdns(Ipv6Addr::from_str("fc01:1:2:3:4:5:6:7").unwrap());
+        assert_eq!(serialize(&ip), hex!("0610fc010001000200030004000500060007"));
 
         let ip = AddrV2::Unknown(170, hex!("01020304"));
         assert_eq!(serialize(&ip), hex!("aa0401020304"));
