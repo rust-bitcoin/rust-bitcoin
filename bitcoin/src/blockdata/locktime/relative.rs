@@ -211,6 +211,20 @@ impl LockTime {
         }
     }
 
+    /// Returns true if satisfaction of the sequence number implies satisfaction of this lock time.
+    ///
+    /// When deciding whether an instance of `<n> CHECKSEQUENCEVERIFY` will pass, this
+    /// method can be used by parsing `n` as a [`LockTime`] and calling this method
+    /// with the sequence number of the input which spends the script.
+    #[inline]
+    pub fn is_implied_by_sequence(&self, other: Sequence) -> bool {
+        if let Ok(other) = LockTime::from_sequence(other) {
+            self.is_implied_by(other)
+        } else {
+            false
+        }
+    }
+
     /// Returns true if this [`relative::LockTime`] is satisfied by [`Height`].
     ///
     /// # Errors
