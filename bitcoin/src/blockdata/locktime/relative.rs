@@ -21,7 +21,7 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
-/// Used for sequence numbers (`nSequence` in Bitcoin Core and [`crate::Transaction::TxIn::sequence`]
+/// Used for sequence numbers (`nSequence` in Bitcoin Core and [`crate::TxIn::sequence`]
 /// in this library) and also for the argument to opcode 'OP_CHECKSEQUENCEVERIFY`.
 ///
 /// ### Note on ordering
@@ -140,6 +140,23 @@ impl LockTime {
             Err(e) => Err(e),
         }
     }
+
+    /// Returns true if both lock times use the same unit i.e., both height based or both time based.
+    #[inline]
+    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+        matches!(
+            (self, other),
+            (LockTime::Blocks(_), LockTime::Blocks(_)) | (LockTime::Time(_), LockTime::Time(_))
+        )
+    }
+
+    /// Returns true if this lock time value is in units of block height.
+    #[inline]
+    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+
+    /// Returns true if this lock time value is in units of time.
+    #[inline]
+    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
     ///

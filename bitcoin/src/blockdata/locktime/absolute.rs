@@ -176,7 +176,7 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block height.
     #[inline]
-    pub fn is_block_height(&self) -> bool {
+    pub const fn is_block_height(&self) -> bool {
         match *self {
             LockTime::Blocks(_) => true,
             LockTime::Seconds(_) => false,
@@ -185,7 +185,7 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
-    pub fn is_block_time(&self) -> bool { !self.is_block_height() }
+    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
 
     /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
