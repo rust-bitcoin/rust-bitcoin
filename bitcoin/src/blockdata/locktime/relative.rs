@@ -13,6 +13,7 @@ use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::relative;
+use crate::Sequence;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -85,6 +86,19 @@ impl LockTime {
             LockTime::Time(ref t) => t.to_consensus_u32(),
         }
     }
+
+    /// Constructs a `LockTime` from the sequence number of a Bitcoin input.
+    ///
+    /// This method will **not** round-trip with [`Self::to_sequence`]. See the
+    /// docs for [`Self::from_consensus`] for more information.
+    #[inline]
+    pub fn from_sequence(n: Sequence) -> Result<Self, DisabledLockTimeError> {
+        Self::from_consensus(n.to_consensus_u32())
+    }
+
+    /// Encodes the locktime as a sequence number.
+    #[inline]
+    pub fn to_sequence(&self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
 
     /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
@@ -426,11 +440,17 @@ mod tests {
         assert_eq!(LockTime::from_consensus(65536), LockTime::from_consensus(0));
 
         for val in [0u32, 1, 1000, 65535] {
+            let seq = Sequence::from_consensus(val);
             let lt = LockTime::from_consensus(val).unwrap();
             assert_eq!(lt.to_consensus_u32(), val);
+            assert_eq!(lt.to_sequence(), seq);
+            assert_eq!(LockTime::from_sequence(seq).unwrap().to_sequence(), seq);
 
+            let seq = Sequence::from_consensus(val + (1 << 22));
             let lt = LockTime::from_consensus(val + (1 << 22)).unwrap();
             assert_eq!(lt.to_consensus_u32(), val + (1 << 22));
+            assert_eq!(lt.to_sequence(), seq);
+            assert_eq!(LockTime::from_sequence(seq).unwrap().to_sequence(), seq);
         }
     }
 }
