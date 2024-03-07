@@ -6,7 +6,7 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::{cmp, fmt};
+use core::{cmp, convert, fmt};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -305,6 +305,17 @@ impl fmt::Display for LockTime {
             }
         }
     }
+}
+
+impl convert::TryFrom<Sequence> for LockTime {
+    type Error = DisabledLockTimeError;
+    fn try_from(seq: Sequence) -> Result<LockTime, DisabledLockTimeError> {
+        LockTime::from_sequence(seq)
+    }
+}
+
+impl From<LockTime> for Sequence {
+    fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
 }
 
 /// Error returned when a sequence number is parsed as a lock time, but its
