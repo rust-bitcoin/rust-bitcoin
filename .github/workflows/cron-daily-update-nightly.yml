@@ -31,6 +31,7 @@ jobs:
         if: env.changes_made == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update Nightly Rustc Bot <bot@example.com>
           committer: Update Nightly Rustc Bot <bot@example.com>
           title: Automated daily update to rustc (to nightly-${{ env.nightly_date }})
