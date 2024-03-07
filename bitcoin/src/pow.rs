@@ -17,9 +17,8 @@ use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
-use crate::string::FromHexStr;
-use crate::prelude::*;
-use crate::Network;
+use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
+use crate::{parse, Network};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -272,6 +271,29 @@ do_impl!(Target);
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
+    /// Creates a `CompactTarget` from an prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+
+        let target = parse::hex_u32(stripped)?;
+        Ok(Self::from_consensus(target))
+    }
+
+    /// Creates a `CompactTarget` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
+        let lock_time = parse::hex_u32(s)?;
+        Ok(Self::from_consensus(lock_time))
+    }
+
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
@@ -281,15 +303,6 @@ impl CompactTarget {
 
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
-}
-
-impl FromHexStr for CompactTarget {
-    type Error = crate::parse::ParseIntError;
-
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let compact_target = crate::parse::hex_u32(s)?;
-        Ok(Self::from_consensus(compact_target))
-    }
 }
 
 impl Encodable for CompactTarget {
@@ -1524,23 +1537,33 @@ mod tests {
     }
 
     #[test]
-    fn compact_target_from_hex_str_happy_path() {
-        let actual = CompactTarget::from_hex_str("0x01003456").unwrap();
-        let expected = CompactTarget(0x01003456);
-        assert_eq!(actual, expected);
+    fn compact_target_from_hex_lower() {
+        let target = CompactTarget::from_hex("0x010034ab").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
     }
 
     #[test]
-    fn compact_target_from_hex_str_no_prefix_happy_path() {
-        let actual = CompactTarget::from_hex_str_no_prefix("01003456").unwrap();
-        let expected = CompactTarget(0x01003456);
-        assert_eq!(actual, expected);
+    fn compact_target_from_hex_upper() {
+        let target = CompactTarget::from_hex("0X010034AB").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_lower() {
+        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
+    }
+
+    #[test]
+    fn compact_target_from_unprefixed_hex_upper() {
+        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
+        assert_eq!(target, CompactTarget(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_hex_invalid_hex_should_err() {
         let hex = "0xzbf9";
-        let result = CompactTarget::from_hex_str(hex);
+        let result = CompactTarget::from_hex(hex);
         assert!(result.is_err());
     }
 

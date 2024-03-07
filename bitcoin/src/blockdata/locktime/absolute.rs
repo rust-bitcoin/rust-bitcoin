@@ -17,10 +17,9 @@ use mutagen::mutate;
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::ParseIntError;
-use crate::parse::{impl_parse_str, impl_parse_str_from_int_infallible};
+use crate::error::{ParseIntError, PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
+use crate::parse::{self, impl_parse_str, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
-use crate::string::FromHexStr;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -101,6 +100,29 @@ impl LockTime {
 
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
+
+    /// Creates a `LockTime` from an prefixed hex string.
+    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+
+        let lock_time = parse::hex_u32(stripped)?;
+        Ok(Self::from_consensus(lock_time))
+    }
+
+    /// Creates a `LockTime` from an unprefixed hex string.
+    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
+        let lock_time = parse::hex_u32(s)?;
+        Ok(Self::from_consensus(lock_time))
+    }
 
     /// Constructs a `LockTime` from an nLockTime value or the argument to OP_CHEKCLOCKTIMEVERIFY.
     ///
@@ -325,16 +347,6 @@ impl fmt::Display for LockTime {
     }
 }
 
-impl FromHexStr for LockTime {
-    type Error = ParseIntError;
-
-    #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let packed_lock_time = crate::parse::hex_u32(s)?;
-        Ok(Self::from_consensus(packed_lock_time))
-    }
-}
-
 impl Encodable for LockTime {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -419,6 +431,11 @@ impl Height {
     /// The maximum absolute block height.
     pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
 
+    /// Creates a `Height` from a hex string.
+    ///
+    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
+    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_consensus) }
+
     /// Constructs a new block height.
     ///
     /// # Errors
@@ -460,15 +477,6 @@ impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl FromHexStr for Height {
-    type Error = ParseHeightError;
-
-    #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        parse_hex(s, Self::from_consensus)
-    }
-}
-
 impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
 
 /// Error returned when parsing block height fails.
@@ -507,6 +515,11 @@ impl Time {
 
     /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Time(u32::max_value());
+
+    /// Creates a `Time` from a hex string.
+    ///
+    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
+    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }
 
     /// Constructs a new block time.
     ///
@@ -547,15 +560,6 @@ impl Time {
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl FromHexStr for Time {
-    type Error = ParseTimeError;
-
-    #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        parse_hex(s, Self::from_consensus)
-    }
 }
 
 impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
@@ -599,7 +603,7 @@ where
     S: AsRef<str> + Into<String>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
-    let n = i64::from_str_radix(s.as_ref(), 16).map_err(ParseError::invalid_int(s))?;
+    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16).map_err(ParseError::invalid_int(s))?;
     let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
     f(n).map_err(ParseError::from).map_err(Into::into)
 }
@@ -820,62 +824,73 @@ mod tests {
     }
 
     #[test]
+    fn lock_time_from_hex_lower() {
+        let lock = LockTime::from_hex("0x6289c350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_hex_upper() {
+        let lock = LockTime::from_hex("0X6289C350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_unprefixed_hex_lower() {
+        let lock = LockTime::from_unprefixed_hex("6289c350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_unprefixed_hex_upper() {
+        let lock = LockTime::from_unprefixed_hex("6289C350").unwrap();
+        assert_eq!(lock, LockTime::from_consensus(0x6289C350));
+    }
+
+    #[test]
+    fn lock_time_from_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = LockTime::from_hex(hex);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn time_from_str_hex_happy_path() {
-        let actual = Time::from_hex_str("0x6289C350").unwrap();
+        let actual = Time::from_hex("0x6289C350").unwrap();
         let expected = Time::from_consensus(0x6289C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
-        let time = Time::from_hex_str_no_prefix("6289C350").unwrap();
+        let time = Time::from_hex("6289C350").unwrap();
         assert_eq!(time, Time(0x6289C350));
     }
 
     #[test]
     fn time_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Time::from_hex_str(hex);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn packed_lock_time_from_str_hex_happy_path() {
-        let actual = LockTime::from_hex_str("0xBA70D").unwrap();
-        let expected = LockTime::from_consensus(0xBA70D);
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn packed_lock_time_from_str_hex_no_prefix_happy_path() {
-        let lock_time = LockTime::from_hex_str_no_prefix("BA70D").unwrap();
-        assert_eq!(lock_time, LockTime::from_consensus(0xBA70D));
-    }
-
-    #[test]
-    fn packed_lock_time_from_str_hex_invalid_hex_should_ergr() {
-        let hex = "0xzb93";
-        let result = LockTime::from_hex_str(hex);
+        let result = Time::from_hex(hex);
         assert!(result.is_err());
     }
 
     #[test]
     fn height_from_str_hex_happy_path() {
-        let actual = Height::from_hex_str("0xBA70D").unwrap();
+        let actual = Height::from_hex("0xBA70D").unwrap();
         let expected = Height(0xBA70D);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn height_from_str_hex_no_prefix_happy_path() {
-        let height = Height::from_hex_str_no_prefix("BA70D").unwrap();
+        let height = Height::from_hex("BA70D").unwrap();
         assert_eq!(height, Height(0xBA70D));
     }
 
     #[test]
     fn height_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Height::from_hex_str(hex);
+        let result = Height::from_hex(hex);
         assert!(result.is_err());
     }
 

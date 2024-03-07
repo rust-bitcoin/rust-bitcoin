@@ -111,7 +111,6 @@ pub mod policy;
 pub mod pow;
 pub mod psbt;
 pub mod sign_message;
-pub mod string;
 pub mod taproot;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
