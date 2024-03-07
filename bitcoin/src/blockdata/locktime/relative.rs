@@ -6,7 +6,7 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::fmt;
+use core::{cmp, fmt};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -20,8 +20,13 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
-/// The `relative::LockTime` type does not have any constructors, this is by design, please use
-/// `Sequence::to_relative_lock_time` to create a relative lock time.
+/// Used for sequence numbers (`nSequence` in Bitcoin Core and [`crate::Transaction::TxIn::sequence`]
+/// in this library) and also for the argument to opcode 'OP_CHECKSEQUENCEVERIFY`.
+///
+/// ### Note on ordering
+///
+/// Because locktimes may be height- or time-based, and these metrics are incommensurate, there
+/// is no total ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
 ///
 /// ### Relevant BIPs
 ///
@@ -171,6 +176,19 @@ impl From<Height> for LockTime {
 impl From<Time> for LockTime {
     #[inline]
     fn from(t: Time) -> Self { LockTime::Time(t) }
+}
+
+impl PartialOrd for LockTime {
+    #[inline]
+    fn partial_cmp(&self, other: &LockTime) -> Option<cmp::Ordering> {
+        use LockTime::*;
+
+        match (*self, *other) {
+            (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
+            (Time(ref a), Time(ref b)) => a.partial_cmp(b),
+            (_, _) => None,
+        }
+    }
 }
 
 impl fmt::Display for LockTime {
