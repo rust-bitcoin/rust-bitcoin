@@ -31,8 +31,11 @@ jobs:
         if: env.changes_made == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update Nightly Rustc Bot <bot@example.com>
+          committer: Update Nightly Rustc Bot <bot@example.com>
           title: Automated daily update to rustc (to nightly-${{ env.nightly_date }})
           body: |
            Automated update to Github CI workflow `rust.yml` by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
           commit-message: Automated update to Github CI to rustc nightly-${{ env.nightly_date }}
+          branch: create-pull-request/daily-nightly-update
