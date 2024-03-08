@@ -41,6 +41,8 @@ pub enum FromScriptError {
     WitnessVersion(witness_version::TryFromError),
 }
 
+internals::impl_from_infallible!(FromScriptError);
+
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromScriptError::*;
@@ -81,6 +83,8 @@ pub enum P2shError {
     /// Address size more than 520 bytes is not allowed.
     ExcessiveScriptSize,
 }
+
+internals::impl_from_infallible!(P2shError);
 
 impl fmt::Display for P2shError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -134,6 +138,8 @@ pub enum ParseError {
     /// Tried to parse an unknown HRP.
     UnknownHrp(UnknownHrpError),
 }
+
+internals::impl_from_infallible!(ParseError);
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -675,6 +675,8 @@ pub enum GetKeyError {
     NotSupported,
 }
 
+internals::impl_from_infallible!(GetKeyError);
+
 impl fmt::Display for GetKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use GetKeyError::*;
@@ -784,6 +786,8 @@ pub enum SignError {
     Unsupported,
 }
 
+internals::impl_from_infallible!(SignError);
+
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use SignError::*;
@@ -865,6 +869,8 @@ pub enum ExtractTxError {
     },
 }
 
+internals::impl_from_infallible!(ExtractTxError);
+
 impl fmt::Display for ExtractTxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ExtractTxError::*;
@@ -914,6 +920,8 @@ pub enum IndexOutOfBoundsError {
         length: usize,
     },
 }
+
+internals::impl_from_infallible!(IndexOutOfBoundsError);
 
 impl fmt::Display for IndexOutOfBoundsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -965,6 +973,8 @@ mod display_from_str {
         /// Error in PSBT Base64 encoding.
         Base64Encoding(::base64::DecodeError),
     }
+
+    internals::impl_from_infallible!(PsbtParseError);
 
     impl Display for PsbtParseError {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

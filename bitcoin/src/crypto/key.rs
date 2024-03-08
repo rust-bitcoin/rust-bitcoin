@@ -896,6 +896,8 @@ pub enum FromSliceError {
     InvalidLength(usize),
 }
 
+internals::impl_from_infallible!(FromSliceError);
+
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromSliceError::*;
@@ -933,6 +935,8 @@ pub enum FromWifError {
     /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
 }
+
+internals::impl_from_infallible!(FromWifError);
 
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -974,6 +978,8 @@ pub enum ParsePublicKeyError {
     InvalidHexLength(usize),
 }
 
+internals::impl_from_infallible!(ParsePublicKeyError);
+
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParsePublicKeyError::*;
@@ -1009,6 +1015,8 @@ pub enum ParseCompressedPublicKeyError {
     /// hex to array conversion error.
     Hex(hex::HexToArrayError),
 }
+
+internals::impl_from_infallible!(ParseCompressedPublicKeyError);
 
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

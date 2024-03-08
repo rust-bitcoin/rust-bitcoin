@@ -587,6 +587,8 @@ pub enum IncompleteBuilderError {
     HiddenParts(TaprootBuilder),
 }
 
+internals::impl_from_infallible!(IncompleteBuilderError);
+
 impl IncompleteBuilderError {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
@@ -630,6 +632,8 @@ pub enum HiddenNodesError {
     /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
     HiddenParts(NodeInfo),
 }
+
+internals::impl_from_infallible!(HiddenNodesError);
 
 impl HiddenNodesError {
     /// Converts error into the original incomplete [`NodeInfo`] instance.
@@ -1324,6 +1328,8 @@ pub enum TaprootBuilderError {
     EmptyTree,
 }
 
+internals::impl_from_infallible!(TaprootBuilderError);
+
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use TaprootBuilderError::*;
@@ -1383,6 +1389,8 @@ pub enum TaprootError {
     /// Empty tap tree.
     EmptyTree,
 }
+
+internals::impl_from_infallible!(TaprootError);
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

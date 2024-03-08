@@ -209,6 +209,8 @@ pub enum TxVerifyError {
     UnknownSpentOutput(OutPoint),
 }
 
+internals::impl_from_infallible!(TxVerifyError);
+
 impl fmt::Display for TxVerifyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use TxVerifyError::*;

@@ -420,6 +420,8 @@ pub enum Bip34Error {
     NegativeHeight,
 }
 
+internals::impl_from_infallible!(Bip34Error);
+
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Bip34Error::*;
@@ -455,6 +457,8 @@ pub enum ValidationError {
     /// The `target` field of a block header did not match the expected difficulty.
     BadTarget,
 }
+
+internals::impl_from_infallible!(ValidationError);
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
