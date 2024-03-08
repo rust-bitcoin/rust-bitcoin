@@ -11,7 +11,10 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{sha256d, FromSliceError, HashEngine as _};
+#[cfg(feature = "alloc")]       // consensus_encoding crate requires an allocator.
+use consensus_encoding::{Encodable, Decodable, io::{self, BufRead, Write}};
+
+use crate::{sha256d, FromSliceError, Hash as _, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -109,6 +112,18 @@ impl Hash {
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).0) }
+}
+
+impl Encodable for Hash {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_byte_array().consensus_encode(w)
+    }
+}
+
+impl Decodable for Hash {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Self::from_byte_array(<<Self as crate::Hash>::Bytes>::consensus_decode(r)?))
+    }
 }
 
 /// Output of the SHA256 hash function.

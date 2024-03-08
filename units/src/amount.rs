@@ -20,6 +20,9 @@ use internals::write_err;
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 
+#[cfg(feature = "alloc")]       // consensus_encoding crate requires an allocator.
+use consensus_encoding::{Encodable, Decodable, io::{self, BufRead, Write}};
+
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Examples
@@ -1986,6 +1989,22 @@ mod verification {
                 None
             },
         );
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Decodable for Amount {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, consensus_encoding::Error> {
+        Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Encodable for Amount {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_sat().consensus_encode(w)
     }
 }
 
