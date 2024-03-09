@@ -354,15 +354,15 @@ fn script_hashes() {
 #[test]
 fn provably_unspendable_test() {
     // p2pk
-    assert!(!ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_provably_unspendable());
-    assert!(!ScriptBuf::from_hex("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_provably_unspendable());
+    assert!(!ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
+    assert!(!ScriptBuf::from_hex("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
     // p2pkhash
     assert!(!ScriptBuf::from_hex("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac")
         .unwrap()
-        .is_provably_unspendable());
+        .is_op_return());
     assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
         .unwrap()
-        .is_provably_unspendable());
+        .is_op_return());
 }
 
 #[test]
