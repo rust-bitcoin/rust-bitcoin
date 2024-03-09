@@ -882,7 +882,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
     fn fmt_roundtrips() {
         let hash = sha256::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
