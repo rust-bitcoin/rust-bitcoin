@@ -91,6 +91,10 @@ impl ServiceFlags {
     /// See BIP159 for details on how this is implemented.
     pub const NETWORK_LIMITED: ServiceFlags = ServiceFlags(1 << 10);
 
+    /// P2P_V2 indicates that the node supports the P2P v2 encrypted transport protocol.
+    /// See BIP324 for details on how this is implemented.
+    pub const P2P_V2: ServiceFlags = ServiceFlags(1 << 11);
+
     // NOTE: When adding new flags, remember to update the Display impl accordingly.
 
     /// Add [ServiceFlags] together.
@@ -150,6 +154,7 @@ impl fmt::Display for ServiceFlags {
         write_flag!(WITNESS);
         write_flag!(COMPACT_FILTERS);
         write_flag!(NETWORK_LIMITED);
+        write_flag!(P2P_V2);
         // If there are unknown flags left, we append them in hex.
         if flags != ServiceFlags::NONE {
             if !first {
