@@ -107,7 +107,10 @@ macro_rules! impl_bytes_newtype {
 
         #[cfg(feature = "serde")]
         impl $crate::serde::Serialize for $t {
-            fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
+            fn serialize<S: $crate::serde::Serializer>(
+                &self,
+                s: S,
+            ) -> core::result::Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
                     s.collect_str(self)
                 } else {
@@ -118,7 +121,9 @@ macro_rules! impl_bytes_newtype {
 
         #[cfg(feature = "serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $t {
-            fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t, D::Error> {
+            fn deserialize<D: $crate::serde::Deserializer<'de>>(
+                d: D,
+            ) -> core::result::Result<$t, D::Error> {
                 if d.is_human_readable() {
                     struct HexVisitor;
 

@@ -13,8 +13,8 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::prelude::*;
+use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -235,11 +235,7 @@ impl Witness {
     /// Creates a new empty [`Witness`].
     #[inline]
     pub const fn new() -> Self {
-        Witness {
-            content: Vec::new(),
-            witness_elements: 0,
-            indices_start: 0,
-        }
+        Witness { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
     /// Creates a witness required to spend a P2WPKH output.
@@ -556,7 +552,7 @@ impl Default for Witness {
 
 #[cfg(test)]
 mod test {
-    use hex::{test_hex_unwrap as hex};
+    use hex::test_hex_unwrap as hex;
 
     use super::*;
     use crate::consensus::{deserialize, serialize};

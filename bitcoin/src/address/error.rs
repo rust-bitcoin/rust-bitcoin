@@ -69,7 +69,7 @@ impl std::error::Error for FromScriptError {
 }
 
 impl From<witness_program::Error> for FromScriptError {
-    fn from(e : witness_program::Error) -> Self { Self::WitnessProgram(e) }
+    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
 }
 
 impl From<witness_version::TryFromError> for FromScriptError {

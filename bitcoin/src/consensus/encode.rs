@@ -19,7 +19,7 @@ use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
 use internals::write_err;
-use io::{Cursor, BufRead, Read, Write};
+use io::{BufRead, Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
@@ -358,13 +358,18 @@ macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(
+                r: &mut R,
+            ) -> core::result::Result<Self, Error> {
                 ReadExt::$meth_dec(r)
             }
         }
         impl Encodable for $ty {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> core::result::Result<usize, io::Error> {
                 w.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
@@ -540,7 +545,9 @@ macro_rules! impl_array {
 
         impl Decodable for [u8; $size] {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, Error> {
+            fn consensus_decode<R: BufRead + ?Sized>(
+                r: &mut R,
+            ) -> core::result::Result<Self, Error> {
                 let mut ret = [0; $size];
                 r.read_slice(&mut ret)?;
                 Ok(ret)
@@ -584,7 +591,10 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, io::Error> {
+            fn consensus_encode<W: Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> core::result::Result<usize, io::Error> {
                 let mut len = 0;
                 len += VarInt(self.len() as u64).consensus_encode(w)?;
                 for c in self.iter() {

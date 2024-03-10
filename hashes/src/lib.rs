@@ -66,17 +66,13 @@
 //! ```
 
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
-
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
-
 // Coding conventions.
 #![warn(missing_docs)]
-
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
-
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.

@@ -24,9 +24,9 @@ extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-use core::{fmt, iter, slice, str};
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
+use core::{fmt, iter, slice, str};
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 

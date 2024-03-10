@@ -481,11 +481,11 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> BufRead for IterReader<E,
                 Some(Ok(byte)) => {
                     self.buf = Some(byte);
                     Ok(core::slice::from_ref(self.buf.as_ref().expect("we've just filled it")))
-                },
+                }
                 Some(Err(error)) => {
                     self.error = Some(error);
                     Err(io::ErrorKind::Other.into())
-                },
+                }
                 None => Ok(&[]),
             }
         }

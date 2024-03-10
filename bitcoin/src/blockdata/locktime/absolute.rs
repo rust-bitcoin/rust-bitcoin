@@ -17,7 +17,9 @@ use mutagen::mutate;
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::{ParseIntError, PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
+use crate::error::{
+    ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError,
+};
 use crate::parse::{self, impl_parse_str, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 
@@ -434,7 +436,9 @@ impl Height {
     /// Creates a `Height` from a hex string.
     ///
     /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
-    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_consensus) }
+    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
+        parse_hex(s, Self::from_consensus)
+    }
 
     /// Constructs a new block height.
     ///
@@ -603,7 +607,8 @@ where
     S: AsRef<str> + Into<String>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
-    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16).map_err(ParseError::invalid_int(s))?;
+    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16)
+        .map_err(ParseError::invalid_int(s))?;
     let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
     f(n).map_err(ParseError::from).map_err(Into::into)
 }
@@ -765,7 +770,13 @@ impl ParseError {
         move |source| Self::InvalidInteger { source, input: s.into() }
     }
 
-    fn display(&self, f: &mut fmt::Formatter<'_>, subject: &str, lower_bound: u32, upper_bound: u32) -> fmt::Result {
+    fn display(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        subject: &str,
+        lower_bound: u32,
+        upper_bound: u32,
+    ) -> fmt::Result {
         use core::num::IntErrorKind;
 
         use ParseError::*;
