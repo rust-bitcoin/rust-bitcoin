@@ -5,7 +5,7 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::{cmp, str};
+use core::cmp;
 
 use crate::{FromSliceError, HashEngine as _};
 
@@ -409,7 +409,7 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         use std::convert::TryFrom;
 

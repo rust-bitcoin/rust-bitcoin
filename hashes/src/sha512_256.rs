@@ -9,7 +9,6 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::str;
 
 use crate::{sha512, FromSliceError};
 
@@ -56,7 +55,7 @@ impl crate::HashEngine for HashEngine {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         use crate::{sha512_256, Hash, HashEngine};
 

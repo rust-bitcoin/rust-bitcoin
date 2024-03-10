@@ -65,6 +65,7 @@ impl_write!(
 );
 
 #[cfg(test)]
+#[cfg(feature = "hex")]
 mod tests {
     use bitcoin_io::Write;
 

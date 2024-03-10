@@ -10,7 +10,6 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::str;
 
 use crate::{ripemd160, sha256, FromSliceError};
 
@@ -36,7 +35,7 @@ fn from_engine(e: HashEngine) -> Hash {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         use crate::{hash160, Hash, HashEngine};
 

@@ -2,18 +2,28 @@
 
 #[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[cfg(not(feature = "hex"))]
 macro_rules! hex_fmt_impl(
-    ($reverse:expr, $ty:ident) => (
-        $crate::hex_fmt_impl!($reverse, $ty, );
+    ($reverse:expr, $len:expr, $ty:ident) => {};
+);
+
+#[macro_export]
+/// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[cfg(feature = "hex")]
+macro_rules! hex_fmt_impl(
+    ($reverse:expr, $len:expr, $ty:ident) => (
+        $crate::hex_fmt_impl!($reverse, $len, $ty, );
     );
-    ($reverse:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
+    ($reverse:expr, $len:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                use $crate::Hash as _;
+
                 if $reverse {
-                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.backward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Lower)
                 } else {
-                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.forward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), $crate::hex::Case::Lower)
                 }
             }
         }
@@ -21,10 +31,12 @@ macro_rules! hex_fmt_impl(
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                use $crate::Hash as _;
+
                 if $reverse {
-                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.backward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Upper)
                 } else {
-                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.forward_hex(), f)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), $crate::hex::Case::Upper)
                 }
             }
         }
@@ -33,13 +45,6 @@ macro_rules! hex_fmt_impl(
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                write!(f, "{:#}", self)
             }
         }
     );
@@ -188,7 +193,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, $newtype);
+        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
         $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
@@ -267,18 +272,25 @@ macro_rules! hash_newtype {
             }
         }
 
+        #[cfg(feature = "hex")]
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::hex::{FromHex, HexToBytesIter};
-                use $crate::Hash;
+                use $crate::{Hash, hex::FromHex};
 
-                let inner: <$hash as Hash>::Bytes = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
-                } else {
-                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
+                let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
+                if <Self as $crate::Hash>::DISPLAY_BACKWARD {
+                    bytes.reverse();
                 };
-                Ok($newtype(<$hash>::from_byte_array(inner)))
+                Ok($newtype(<$hash>::from_byte_array(bytes)))
+            }
+        }
+
+        #[cfg(not(feature = "hex"))]
+        impl $crate::_export::_core::str::FromStr for $newtype {
+            type Err = $crate::HexUnsupportedError;
+            fn from_str(_: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
+                Err($crate::HexUnsupportedError {})
             }
         }
 
@@ -315,7 +327,7 @@ macro_rules! hash_newtype {
 macro_rules! hash_newtype_struct {
     ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path);) => {
         $(#[$other_attrs])*
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
         $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
     };
     ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path); { hash_newtype($($ignore:tt)*) } $($type_attrs:tt)*) => {
@@ -419,6 +431,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn display() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{}", TestHash::all_zeros());
@@ -426,6 +439,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn display_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#}", TestHash::all_zeros());
@@ -433,6 +447,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn lower_hex() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:x}", TestHash::all_zeros());
@@ -440,6 +455,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn lower_hex_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());

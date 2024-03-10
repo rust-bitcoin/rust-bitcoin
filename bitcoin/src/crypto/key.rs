@@ -10,7 +10,7 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::{hash160, Hash};
-use hex::{FromHex, HexToArrayError, HexToBytesError};
+use hex::{FromHex, HexToArrayError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
@@ -233,22 +233,22 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
+        use HexToArrayError::*;
+
         match s.len() {
             66 => {
-                PublicKey::from_slice(&<[u8; 33]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
+                let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
+                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
+                    InvalidLength(_) => unreachable!("length checked already")
+                })?;
+                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             },
             130 => {
-                PublicKey::from_slice(&<[u8; 65]>::from_hex(s).map_err(|op| {
-                    match op {
-                        HexToArrayError::Conversion(HexToBytesError::InvalidChar(char)) => ParsePublicKeyError::InvalidChar(char),
-                        HexToArrayError::Conversion(HexToBytesError::OddLengthString(_)) | HexToArrayError::InvalidLength(_,_) => unreachable!("invalid length"),
-                    }
-                })?).map_err(From::from)
+                let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
+                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
+                    InvalidLength(_) => unreachable!("length checked already")
+                })?;
+                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
             }
             len => Err(ParsePublicKeyError::InvalidHexLength(len)),
         }
