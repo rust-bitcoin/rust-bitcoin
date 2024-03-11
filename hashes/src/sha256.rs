@@ -176,15 +176,13 @@ impl Midstate {
 }
 
 impl hex::FromHex for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_byte_iter<I>(iter: I) -> Result<Self, Self::Err>
-    where
-        I: Iterator<Item = Result<u8, hex::HexToBytesError>>
-            + ExactSizeIterator
-            + DoubleEndedIterator,
-    {
+    type Error = hex::HexToArrayError;
+
+    fn from_hex(s: &str) -> Result<Self, Self::Error> {
         // DISPLAY_BACKWARD is true
-        Ok(Midstate::from_byte_array(hex::FromHex::from_byte_iter(iter.rev())?))
+        let mut bytes = <[u8; 32]>::from_hex(s)?;
+        bytes.reverse();
+        Ok(Midstate(bytes))
     }
 }
 
@@ -817,7 +815,8 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256, Hash, HashEngine};
+    use crate::{sha256, Hash as _, HashEngine};
+    use super::*;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -880,6 +879,14 @@ mod tests {
             assert_eq!(hash, manual_hash);
             assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
         }
+    }
+
+    #[test]
+    fn fmt_roundtrips() {
+        let hash = sha256::Hash::hash(b"some arbitrary bytes");
+        let hex = format!("{}", hash);
+        let rinsed = hex.parse::<sha256::Hash>().expect("failed to parse hex");
+        assert_eq!(rinsed, hash)
     }
 
     #[test]
@@ -964,14 +971,14 @@ mod tests {
 
     #[test]
     fn const_hash() {
-        assert_eq!(super::Hash::hash(&[]), super::Hash::const_hash(&[]));
+        assert_eq!(Hash::hash(&[]), Hash::const_hash(&[]));
 
         let mut bytes = Vec::new();
         for i in 0..256 {
             bytes.push(i as u8);
             assert_eq!(
-                super::Hash::hash(&bytes),
-                super::Hash::const_hash(&bytes),
+                Hash::hash(&bytes),
+                Hash::const_hash(&bytes),
                 "hashes don't match for length {}",
                 i + 1
             );
@@ -980,8 +987,6 @@ mod tests {
 
     #[test]
     fn const_midstate() {
-        use super::Midstate;
-
         assert_eq!(
             Midstate::hash_tag(b"TapLeaf"),
             Midstate([
@@ -989,6 +994,14 @@ mod tests {
                 243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
             ])
         )
+    }
+
+    #[test]
+    fn midstate_fmt_roundtrip() {
+        let midstate = Midstate::hash_tag(b"ArbitraryTag");
+        let hex = format!("{}", midstate);
+        let rinsed = hex.parse::<Midstate>().expect("failed to parse hex");
+        assert_eq!(rinsed, midstate)
     }
 
     #[cfg(feature = "serde")]

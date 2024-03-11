@@ -1960,6 +1960,10 @@ mod tests {
             format!("{:x}", tx.compute_txid()),
             "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec"
         );
+        assert_eq!(
+            format!("{:.10x}", tx.compute_txid()),
+            "9652aa62b0"
+        );
         assert_eq!(tx.weight(), Weight::from_wu(2718));
 
         // non-segwit tx from my mempool

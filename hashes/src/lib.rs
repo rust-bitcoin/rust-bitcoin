@@ -273,4 +273,12 @@ mod tests {
         let h2: TestNewtype = h.to_string().parse().unwrap();
         assert_eq!(h2.to_raw_hash(), h);
     }
+
+    #[test]
+    fn newtype_fmt_roundtrip() {
+        let orig = TestNewtype::hash(&[]);
+        let hex = format!("{}", orig);
+        let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
+        assert_eq!(rinsed, orig)
+    }
 }
