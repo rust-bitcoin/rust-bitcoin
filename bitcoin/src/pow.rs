@@ -12,13 +12,14 @@ use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
+use units::parse;
 
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
 use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
-use crate::{parse, Network};
+use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {

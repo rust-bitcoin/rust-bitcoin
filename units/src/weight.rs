@@ -5,13 +5,18 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+/// The factor that non-witness serialization data is multiplied by during weight calculation.
+pub const WITNESS_SCALE_FACTOR: usize = 4;
+
 /// Represents block weight - the weight of a transaction or block.
 ///
 /// This is an integer newtype representing weigth in `wu`. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct Weight(u64);
 
@@ -30,7 +35,7 @@ impl Weight {
     pub const MAX: Weight = Weight(u64::MAX);
 
     /// The factor that non-witness serialization data is multiplied by during weight calculation.
-    pub const WITNESS_SCALE_FACTOR: u64 = crate::blockdata::constants::WITNESS_SCALE_FACTOR as u64;
+    pub const WITNESS_SCALE_FACTOR: u64 = WITNESS_SCALE_FACTOR as u64;
 
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
     pub const MAX_BLOCK: Weight = Weight(4_000_000);
@@ -332,4 +337,4 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     }
 }
 
-crate::parse::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
