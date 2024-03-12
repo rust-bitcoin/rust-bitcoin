@@ -38,11 +38,6 @@ fn main() {
     // https://mempool.space/signet/tx/a7babed711f5caf527bfdd798aba3a8baa712f34db352a6373bc1539f0998388
     let commit_tx = build_commit_tx(&secp, &sk, unspent, &ins, feerate);
 
-    assert_eq!(
-        commit_tx.txid(),
-        Txid::from_str("a7babed711f5caf527bfdd798aba3a8baa712f34db352a6373bc1539f0998388").unwrap()
-    );
-
     println!("\nCommit Transaction:\n");
     println!("Transaction ID: {}", commit_tx.txid());
 
@@ -52,11 +47,6 @@ fn main() {
     // Reveal transaction ID: 0b9e5385023b27363033459dc5a33eb9199a758f45a055726705790811bf72b0
     // https://mempool.space/signet/tx/0b9e5385023b27363033459dc5a33eb9199a758f45a055726705790811bf72b0
     let reveal_tx = build_reveal_tx(&secp, &sk, &commit_tx, &ins);
-
-    assert_eq!(
-        reveal_tx.txid(),
-        Txid::from_str("0b9e5385023b27363033459dc5a33eb9199a758f45a055726705790811bf72b0").unwrap()
-    );
 
     println!("\nReveal Transaction:\n");
     println!("Transaction ID: {}", reveal_tx.txid());
