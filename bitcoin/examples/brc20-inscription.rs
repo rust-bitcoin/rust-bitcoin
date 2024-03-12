@@ -12,8 +12,8 @@ use bitcoin::secp256k1::{Message, Secp256k1, SecretKey, Signing, Verification};
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::taproot::{LeafVersion, Signature, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, transaction, Amount, OutPoint, PublicKey, Sequence, Transaction, TxIn, TxOut, Txid,
-    Witness, XOnlyPublicKey,
+    absolute, transaction, Amount, OutPoint, PublicKey, Sequence, TapNodeHash, Transaction, TxIn,
+    TxOut, Txid, Witness, XOnlyPublicKey,
 };
 
 fn main() {
@@ -40,7 +40,7 @@ fn main() {
 
     assert_eq!(
         commit_tx.txid(),
-        Txid::from_str(a7babed711f5caf527bfdd798aba3a8baa712f34db352a6373bc1539f0998388).unwrap()
+        Txid::from_str("a7babed711f5caf527bfdd798aba3a8baa712f34db352a6373bc1539f0998388").unwrap()
     );
 
     println!("\nCommit Transaction:\n");
@@ -256,9 +256,9 @@ pub fn taproot_script_path_sign<C: Signing + Verification>(
 pub struct Brc20Ticker(String);
 
 impl Brc20Ticker {
-    pub fn new(string: String) -> Result<Self> {
+    pub fn new(string: String) -> Result<Self, Box<dyn std::error::Error>> {
         if string.len() != 4 {
-            anyhow::bail!("Invalid brc20 ticker");
+            return Err("Invalid brc20 ticker".into());
         }
 
         Ok(Brc20Ticker(string))
@@ -294,7 +294,7 @@ impl Brc20 {
         ticker: String,
         op: String,
         value: String,
-    ) -> Result<OrdinalsInscription> {
+    ) -> Result<OrdinalsInscription, Box<dyn std::error::Error>> {
         let data = Self::new(op, ticker, value);
 
         OrdinalsInscription::new(
@@ -308,7 +308,7 @@ impl Brc20 {
         recipient: PublicKey,
         ticker: String,
         value: String,
-    ) -> Result<OrdinalsInscription> {
+    ) -> Result<OrdinalsInscription, Box<dyn std::error::Error>> {
         Self::inscription(recipient, ticker, "transfer".to_owned(), value)
     }
 
@@ -316,7 +316,7 @@ impl Brc20 {
         recipient: PublicKey,
         ticker: String,
         value: String,
-    ) -> Result<OrdinalsInscription> {
+    ) -> Result<OrdinalsInscription, Box<dyn std::error::Error>> {
         Self::inscription(recipient, ticker, "mint".to_owned(), value)
     }
 }
