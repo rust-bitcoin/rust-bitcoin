@@ -206,6 +206,11 @@ impl AsRef<[TapNodeHash]> for TaprootMerkleBranch {
     fn as_ref(&self) -> &[TapNodeHash] { &self.0 }
 }
 
+impl AsRef<TaprootMerkleBranch> for TaprootMerkleBranch {
+    #[inline]
+    fn as_ref(&self) -> &TaprootMerkleBranch { self }
+}
+
 impl AsMut<[TapNodeHash]> for TaprootMerkleBranch {
     #[inline]
     fn as_mut(&mut self) -> &mut [TapNodeHash] { &mut self.0 }

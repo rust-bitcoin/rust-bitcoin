@@ -35,7 +35,9 @@ use bitcoin::hex::FromHex;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
+use bitcoin::taproot::{
+    self, ControlBlock, LeafVersion, TapTree, TaprootBuilder, TaprootMerkleBranch,
+};
 use bitcoin::{
     ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
     ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
@@ -185,7 +187,9 @@ fn serde_regression_ecdsa_sig() {
 #[test]
 fn serde_regression_control_block() {
     let s = include_str!("data/serde/control_block_hex");
-    let block = ControlBlock::decode(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
+    let block =
+        ControlBlock::<TaprootMerkleBranch>::decode(&Vec::<u8>::from_hex(s.trim()).unwrap())
+            .unwrap();
     let got = serialize(&block).unwrap();
 
     let want = include_bytes!("data/serde/control_block_bincode") as &[_];
