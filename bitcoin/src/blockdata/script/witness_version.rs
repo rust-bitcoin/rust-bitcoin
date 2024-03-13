@@ -249,10 +249,14 @@ impl From<TryFromError> for TryFromInstructionError {
 
 /// Error attempting to create a [`WitnessVersion`] from an integer.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct TryFromError {
     /// The invalid non-witness version integer.
-    pub invalid: u8,
+    invalid: u8,
+}
+
+impl TryFromError {
+    /// Returns the invalid non-witness version integer.
+    pub fn invalid_version(&self) -> u8 { self.invalid }
 }
 
 impl fmt::Display for TryFromError {
@@ -262,6 +266,4 @@ impl fmt::Display for TryFromError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for TryFromError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
-}
+impl std::error::Error for TryFromError {}
