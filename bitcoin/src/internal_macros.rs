@@ -68,6 +68,10 @@ macro_rules! impl_bytes_newtype {
                 self.0
             }
 
+            /// Creates `Self` by wrapping `bytes`.
+            #[inline]
+            pub fn from_bytes(bytes: [u8; $len]) -> Self { Self(bytes) }
+
             /// Creates `Self` from a hex string.
             pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
                 Ok($t($crate::hex::FromHex::from_hex(s)?))
