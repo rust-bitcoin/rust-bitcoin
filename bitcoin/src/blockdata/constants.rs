@@ -8,7 +8,6 @@
 //!
 
 use hashes::{sha256d, Hash};
-use hex_lit::hex;
 use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};
@@ -50,6 +49,8 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
 
+const GENESIS_SCRIPT_BYTES: [u8; 65] = [4, 103, 138, 253, 176, 254, 85, 72, 39, 25, 103, 241, 166, 113, 48, 183, 16, 92, 214, 168, 40, 224, 57, 9, 166, 121, 98, 224, 234, 31, 97, 222, 182, 73, 246, 188, 63, 76, 239, 56, 196, 243, 85, 4, 229, 30, 193, 18, 222, 92, 56, 77, 247, 186, 11, 141, 87, 138, 76, 112, 43, 107, 241, 29, 95];
+
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
@@ -74,9 +75,8 @@ fn bitcoin_genesis_tx() -> Transaction {
     });
 
     // Outputs
-    let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
     let out_script =
-        script::Builder::new().push_slice(script_bytes).push_opcode(OP_CHECKSIG).into_script();
+        script::Builder::new().push_slice(GENESIS_SCRIPT_BYTES).push_opcode(OP_CHECKSIG).into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
@@ -320,5 +320,13 @@ mod test {
         let got = ChainHash::using_genesis_block(Network::Bitcoin).to_string();
         let want = "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000";
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn script_bytes_hardcoded() {
+        use hex_lit::hex;
+
+        let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
+        assert_eq!(script_bytes, GENESIS_SCRIPT_BYTES);
     }
 }
