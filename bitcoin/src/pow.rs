@@ -6,8 +6,9 @@
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 //!
 
-use core::cmp;
+use core::cmp::{self, Ordering, PartialOrd};
 use core::fmt::{self, LowerHex, UpperHex};
+use core::hash::Hasher;
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
 use io::{BufRead, Write};
@@ -337,7 +338,7 @@ do_impl!(Target);
 ///
 /// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in bitcoin, which
 /// is exactly this format.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Debug, Default, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct CompactTarget(u32);
@@ -399,6 +400,35 @@ impl LowerHex for CompactTarget {
 impl UpperHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { UpperHex::fmt(&self.0, f) }
+}
+
+impl PartialOrd for CompactTarget {
+    #[inline]
+    fn partial_cmp(&self, other: &CompactTarget) -> Option<Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for CompactTarget {
+    #[inline]
+    fn cmp(&self, other: &CompactTarget) -> Ordering {
+        let this = Target::from_compact(*self);
+        let that = Target::from_compact(*other);
+        this.cmp(&that)
+    }
+}
+
+impl PartialEq for CompactTarget {
+    fn eq(&self, other: &Self) -> bool {
+        let this = Target::from_compact(*self);
+        let that = Target::from_compact(*other);
+        this.eq(&that)
+    }
+}
+
+impl core::hash::Hash for CompactTarget {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let this = Target::from_compact(*self);
+        this.hash(state)
+    }
 }
 
 /// Big-endian 256 bit integer type.
