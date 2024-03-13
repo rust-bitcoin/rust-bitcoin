@@ -7,7 +7,7 @@
 //!
 
 use core::fmt::{self, LowerHex, UpperHex};
-use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
+use core::ops::{Add,AddAssign, Div, DivAssign, Mul, MulAssign, Not, Rem, Shl, Shr, Sub, SubAssign};
 
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
@@ -681,7 +681,7 @@ impl U256 {
         loop {
             let digit = (cur % TEN).low_u128() as u8; // Cast after rem 10 is lossless.
             buf[i] = digit + b'0';
-            cur = cur / TEN;
+            cur /= TEN;
             if cur.is_zero() {
                 break;
             }
@@ -761,12 +761,28 @@ impl Add for U256 {
     }
 }
 
+impl AddAssign for U256 {
+    fn add_assign(&mut self, rhs: Self) {
+        let (res, overflow) = self.overflowing_add(rhs);
+        *self = res;
+        debug_assert!(!overflow, "Addition of U256 values overflowed");
+    }
+}
+
 impl Sub for U256 {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_sub(rhs);
         debug_assert!(!overflow, "Subtraction of U256 values overflowed");
         res
+    }
+}
+
+impl SubAssign for U256 {
+    fn sub_assign(&mut self, rhs: Self) {
+        let (res, overflow) = self.overflowing_sub(rhs);
+        *self = res;
+        debug_assert!(!overflow, "Subtraction of U256 values overflowed");
     }
 }
 
@@ -779,9 +795,21 @@ impl Mul for U256 {
     }
 }
 
+impl MulAssign for U256 {
+    fn mul_assign(&mut self, rhs: Self) {
+        let (res, overflow) = self.overflowing_mul(rhs);
+        *self = res;
+        debug_assert!(!overflow, "Multiplication of U256 values overflowed");
+    }
+}
+
 impl Div for U256 {
     type Output = Self;
     fn div(self, rhs: Self) -> Self { self.div_rem(rhs).0 }
+}
+
+impl DivAssign for U256 {
+    fn div_assign(&mut self, rhs: Self) { *self = self.div_rem(rhs).0 }
 }
 
 impl Rem for U256 {
@@ -1409,6 +1437,19 @@ mod tests {
                 0xF5CF_7F36_18C2_C886_F4E1_66AA_D40D_0A41,
             )
         );
+    }
+
+    #[test]
+    fn u256_assign_ops() {
+        let mut x = U256(0,1);
+        x.add_assign(U256(0,5));
+        assert_eq!(x, U256(0,6));
+        x.sub_assign(U256(0,2));
+        assert_eq!(x, U256(0,4));
+        x.mul_assign(U256(0,4));
+        assert_eq!(x, U256(0,16));
+        x.div_assign(U256(0,16));
+        assert_eq!(x, U256(0,1));
     }
 
     #[test]
