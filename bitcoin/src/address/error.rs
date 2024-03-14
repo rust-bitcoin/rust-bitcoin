@@ -9,6 +9,60 @@ use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
 use crate::Network;
 
+/// An error useful when combining string parsing with network validation.
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin::{address, Address, Network};
+///
+/// fn foo() -> Result<Address, address::Error> {
+///     let s = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e";
+///     let address = s.parse::<Address<_>>()?
+///         .require_network(Network::Bitcoin)?;
+///
+///     Ok(address)
+/// }
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Error {
+    /// Error parsing an address string.
+    Parse(ParseError),
+    /// Error validating the network of the parsed address.
+    NetworkValidation(NetworkValidationError),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
+        match *self {
+            Parse(ref e) => write_err!(f, "cannot parse address"; e),
+            NetworkValidation(ref e ) => write_err!(f, "invalid network"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use Error::*;
+
+        match *self {
+            Parse(ref e) => Some(e),
+            NetworkValidation(ref e ) => Some(e),
+        }
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(e: ParseError) -> Self { Self::Parse(e) }
+}
+
+impl From<NetworkValidationError> for Error {
+    fn from(e: NetworkValidationError) -> Self { Self::NetworkValidation(e) }
+}
+
 /// Address's network differs from required one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NetworkValidationError {
