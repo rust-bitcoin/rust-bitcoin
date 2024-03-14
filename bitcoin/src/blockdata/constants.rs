@@ -17,6 +17,7 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
+use crate::consensus::Params;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::pow::CompactTarget;
@@ -84,11 +85,11 @@ fn bitcoin_genesis_tx() -> Transaction {
 }
 
 /// Constructs and returns the genesis block.
-pub fn genesis_block(network: Network) -> Block {
+pub fn genesis_block(params: impl AsRef<Params>) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].compute_txid().into();
     let merkle_root = hash.into();
-    match network {
+    match params.as_ref().network {
         Network::Bitcoin => Block {
             header: block::Header {
                 version: block::Version::ONE,
@@ -169,7 +170,17 @@ impl ChainHash {
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
-    pub const fn using_genesis_block(network: Network) -> Self {
+    pub fn using_genesis_block(params: impl AsRef<Params>) -> Self {
+        let network = params.as_ref().network;
+        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
+        hashes[network as usize]
+    }
+
+    /// Returns the hash of the `network` genesis block for use as a chain hash.
+    ///
+    /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
+    /// for specification.
+    pub const fn using_genesis_block_const(network: Network) -> Self {
         let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
         hashes[network as usize]
     }
@@ -215,7 +226,7 @@ mod test {
 
     #[test]
     fn bitcoin_genesis_full_block() {
-        let gen = genesis_block(Network::Bitcoin);
+        let gen = genesis_block(&Params::MAINNET);
 
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
@@ -235,7 +246,7 @@ mod test {
 
     #[test]
     fn testnet_genesis_full_block() {
-        let gen = genesis_block(Network::Testnet);
+        let gen = genesis_block(&Params::TESTNET);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(
@@ -253,7 +264,7 @@ mod test {
 
     #[test]
     fn signet_genesis_full_block() {
-        let gen = genesis_block(Network::Signet);
+        let gen = genesis_block(&Params::SIGNET);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(
@@ -271,23 +282,23 @@ mod test {
 
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
-    fn chain_hash_and_genesis_block(network: Network) {
+    fn chain_hash_and_genesis_block(params: &Params) {
         use hashes::sha256;
 
         // The genesis block hash is a double-sha256 and it is displayed backwards.
-        let genesis_hash = genesis_block(network).block_hash();
+        let genesis_hash = genesis_block(params).block_hash();
         // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
         let hash = sha256::Hash::from_slice(genesis_hash.as_byte_array()).unwrap();
         let want = format!("{:02x}", hash);
 
-        let chain_hash = ChainHash::using_genesis_block(network);
+        let chain_hash = ChainHash::using_genesis_block(params);
         let got = format!("{:02x}", chain_hash);
 
         // Compare strings because the spec specifically states how the chain hash must encode to hex.
         assert_eq!(got, want);
 
         #[allow(unreachable_patterns)] // This is specifically trying to catch later added variants.
-        match network {
+        match params.network {
             Network::Bitcoin => {},
             Network::Testnet => {},
             Network::Signet => {},
@@ -297,27 +308,27 @@ mod test {
     }
 
     macro_rules! chain_hash_genesis_block {
-        ($($test_name:ident, $network:expr);* $(;)*) => {
+        ($($test_name:ident, $params:expr);* $(;)*) => {
             $(
                 #[test]
                 fn $test_name() {
-                    chain_hash_and_genesis_block($network);
+                    chain_hash_and_genesis_block($params);
                 }
             )*
         }
     }
 
     chain_hash_genesis_block! {
-        mainnet_chain_hash_genesis_block, Network::Bitcoin;
-        testnet_chain_hash_genesis_block, Network::Testnet;
-        signet_chain_hash_genesis_block, Network::Signet;
-        regtest_chain_hash_genesis_block, Network::Regtest;
+        mainnet_chain_hash_genesis_block, &Params::MAINNET;
+        testnet_chain_hash_genesis_block, &Params::TESTNET;
+        signet_chain_hash_genesis_block, &Params::SIGNET;
+        regtest_chain_hash_genesis_block, &Params::REGTEST;
     }
 
     // Test vector taken from: https://github.com/lightning/bolts/blob/master/00-introduction.md
     #[test]
     fn mainnet_chain_hash_test_vector() {
-        let got = ChainHash::using_genesis_block(Network::Bitcoin).to_string();
+        let got = ChainHash::using_genesis_block_const(Network::Bitcoin).to_string();
         let want = "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000";
         assert_eq!(got, want);
     }
