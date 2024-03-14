@@ -241,14 +241,14 @@ impl FromStr for PublicKey {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
                     InvalidLength(_) => unreachable!("length checked already")
                 })?;
-                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
+                Ok(PublicKey::from_slice(&bytes)?)
             },
             130 => {
                 let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
                     InvalidLength(_) => unreachable!("length checked already")
                 })?;
-                Ok(PublicKey::from_slice(&bytes).expect("length checked already"))
+                Ok(PublicKey::from_slice(&bytes)?)
             }
             len => Err(ParsePublicKeyError::InvalidHexLength(len)),
         }
