@@ -154,7 +154,7 @@ impl Network {
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
     /// ```
-    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block(self) }
+    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
 
     /// Creates a `Network` from the chain hash (genesis block hash).
     ///

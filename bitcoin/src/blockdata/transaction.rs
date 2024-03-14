@@ -91,10 +91,11 @@ impl OutPoint {
     /// # Examples
     ///
     /// ```rust
+    /// use bitcoin::consensus::params;
     /// use bitcoin::constants::genesis_block;
     /// use bitcoin::Network;
     ///
-    /// let block = genesis_block(Network::Bitcoin);
+    /// let block = genesis_block(&params::MAINNET);
     /// let tx = &block.txdata[0];
     ///
     /// // Coinbase transactions don't have any previous output.
