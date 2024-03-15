@@ -133,7 +133,7 @@ impl ColdStorage {
     fn master_fingerprint(&self) -> Fingerprint { self.master_xpub.fingerprint() }
 
     /// Signs `psbt` with this signer.
-    fn sign_psbt<C: Signing>(&self, secp: &Secp256k1<C>, mut psbt: Psbt) -> Result<Psbt> {
+    fn sign_psbt<C: Signing + Verification>(&self, secp: &Secp256k1<C>, mut psbt: Psbt) -> Result<Psbt> {
         match psbt.sign(&self.master_xpriv, secp) {
             Ok(keys) => assert_eq!(keys.len(), 1),
             Err((_, e)) => {
