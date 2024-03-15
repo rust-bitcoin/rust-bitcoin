@@ -1394,6 +1394,34 @@ mod tests {
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidHexLength(8));
+    }
+
+    #[test]
+    fn public_key_from_str_invalid_str() {
+        // Ensuring test cases fail when PublicKey::from_str is used on invalid keys
+        let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b142";
+        assert_eq!(s.len(), 130);
+        let res = PublicKey::from_str(s);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(secp256k1::Error::InvalidPublicKey)));
+
+        let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
+        assert_eq!(s.len(), 66);
+        let res = PublicKey::from_str(s);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(secp256k1::Error::InvalidPublicKey)));
+
+        let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
+        assert_eq!(s.len(), 130);
+        let res = PublicKey::from_str(s);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::InvalidKeyPrefix(6)));
+
+        let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b13g";
+        assert_eq!(s.len(), 130);
+        let res = PublicKey::from_str(s);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1ag";
         assert_eq!(s.len(), 66);
