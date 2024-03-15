@@ -9,7 +9,7 @@ use core::fmt;
 use core::ops::Index;
 
 use io::{BufRead, Write};
-
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
@@ -360,6 +360,24 @@ impl Witness {
         self.push_slice(&signature.serialize())
     }
 
+    /// Pushes an integer to the witness in a format understood by script opcodes.
+    pub fn push_int(&mut self, value: i64) {
+        let bytes = if value == -1 || (1..=16).contains(&value) {
+            let opcode = Opcode::from((value - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
+            vec![opcode.to_u8()]
+        } else if value == 0 {
+            vec![opcodes::OP_0.to_u8()]
+        } else {
+            let mut bytes = value.to_le_bytes().to_vec();
+            while let Some(&0) = bytes.last() {
+                bytes.pop();
+            }
+            bytes
+        };
+
+        self.push_slice(&bytes);
+    }
+
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
         let start = index + varint.size();
@@ -664,6 +682,42 @@ mod test {
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];
         assert_eq!(witness.to_vec(), expected_witness);
+    }
+
+    #[test]
+    fn test_push_int_special_opcodes() {
+        let mut witness = Witness::new();
+        for i in -1..=16 {
+            if i == 0 {
+                continue;
+            }
+            witness.clear();
+            witness.push_int(i);
+            let expected_opcode = Opcode::from((i - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
+            assert_eq!(witness.last().unwrap(), &[expected_opcode.to_u8()]);
+        }
+
+        witness.clear();
+        witness.push_int(0);
+        assert_eq!(witness.last().unwrap(), &[opcodes::OP_0.to_u8()]);
+    }
+
+    #[test]
+    fn test_push_int_other_integers() {
+        let mut witness = Witness::new();
+        let test_values = vec![17, 255, 256, 1024, -2, -255, -256, i64::MAX, i64::MIN];
+        for &value in &test_values {
+            witness.clear();
+            witness.push_int(value);
+            let mut expected_bytes = value.to_le_bytes().to_vec();
+            while let Some(&0) = expected_bytes.last() {
+                expected_bytes.pop();
+            }
+            if value < 0 && expected_bytes.is_empty() {
+                expected_bytes.push(0);
+            }
+            assert_eq!(witness.last().unwrap(), expected_bytes.as_slice());
+        }
     }
 
     #[test]
