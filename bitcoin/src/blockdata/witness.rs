@@ -9,7 +9,7 @@ use core::fmt;
 use core::ops::Index;
 
 use io::{BufRead, Write};
-
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
@@ -360,6 +360,42 @@ impl Witness {
         self.push_slice(&signature.serialize())
     }
 
+    /// Pushes an integer to the witness in a format understood by script opcodes.
+    pub fn push_int(&mut self, value: i64) {
+        match value {
+            -1 | 1..=16 => {
+                let opcode = Opcode::from((value - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
+                self.push_slice(&[opcode.to_u8()]);
+            },
+            0 => self.push_slice(&[opcodes::OP_0.to_u8()]),
+            _ => self.push_slice(&Self::serialize_script_int(value)),
+        }
+    }
+
+    /// Serializes an integer for script in little-endian signed-magnitude format.
+    fn serialize_script_int(value: i64) -> Vec<u8> {
+        let mut abs_value = value.unsigned_abs();
+        let mut bytes = Vec::new();
+        while abs_value > 0 {
+            bytes.push((abs_value & 0xff) as u8);
+            abs_value >>= 8;
+        }
+
+        // Adjust for sign bit if necessary.
+        if bytes.last().unwrap() & 0x80 != 0 {
+            bytes.push(if value < 0 { 0x80 } else { 0x00 });
+        } else if value < 0 {
+            *bytes.last_mut().unwrap() |= 0x80;
+        }
+
+        // Prepend the length of the byte array to conform with script push data conventions.
+        let length_byte = bytes.len() as u8;
+        let mut combined_bytes = vec![length_byte];
+        combined_bytes.extend(bytes);
+
+        combined_bytes
+    }
+
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
         let start = index + varint.size();
@@ -664,6 +700,25 @@ mod test {
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];
         assert_eq!(witness.to_vec(), expected_witness);
+    }
+
+    #[test]
+    fn test_push_int() {
+        let mut witness = Witness::new();
+
+        witness.push_int(1); assert_eq!(witness.last().unwrap(), &[0x51]); // OP_PUSHNUM_1
+        witness.push_int(0); assert_eq!(witness.last().unwrap(), &[0x00]);
+        witness.push_int(16); assert_eq!(witness.last().unwrap(), &[0x60]); // OP_PUSHNUM_16
+        witness.push_int(-1); assert_eq!(witness.last().unwrap(), &[0x4f]); // OP_PUSHNUM_NEG1
+
+        // serialized varint in little-endian signed-magnitude format preceded by length byte
+        witness.push_int(10000); assert_eq!(witness.last().unwrap(), &[0x02, 0x10, 0x27]);
+        witness.push_int(255); assert_eq!(witness.last().unwrap(), &[0x02, 0xff, 0x00]);
+        witness.push_int(36507); assert_eq!(witness.last().unwrap(), &[0x03, 0x9b, 0x8e, 0x00]);
+
+        witness.push_int(-2); assert_eq!(witness.last().unwrap(), &[0x01, 0x82]);
+        witness.push_int(-3456748); assert_eq!(witness.last().unwrap(), &[0x03, 0xec, 0xbe, 0xb4]);
+        witness.push_int(-10000000); assert_eq!(witness.last().unwrap(), &[0x04, 0x80, 0x96, 0x98, 0x80]);
     }
 
     #[test]
