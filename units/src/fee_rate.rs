@@ -5,8 +5,11 @@
 use core::fmt;
 use core::ops::{Div, Mul};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::amount::Amount;
-use crate::blockdata::weight::Weight;
+use crate::weight::Weight;
 
 /// Represents fee rate.
 ///
@@ -14,7 +17,6 @@ use crate::blockdata::weight::Weight;
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct FeeRate(u64);
 
@@ -93,18 +95,6 @@ impl FeeRate {
     /// if overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin::{absolute, transaction, FeeRate, Transaction};
-    /// # // Dummy transaction.
-    /// # let tx = Transaction { version: transaction::Version::ONE, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
-    ///
-    /// let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/vbyte is valid");
-    /// let fee = rate.fee_wu(tx.weight()).unwrap();
-    /// assert_eq!(fee.to_sat(), tx.vsize() as u64);
-    /// ```
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
     /// Calculates fee by multiplying this fee rate by weight, in virtual bytes, returning `None`
@@ -153,12 +143,10 @@ impl Div<Weight> for Amount {
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
-crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
 mod tests {
-    use std::u64;
-
     use super::*;
 
     #[test]
@@ -235,22 +223,5 @@ mod tests {
 
         let fee_rate = FeeRate(10).checked_div(0);
         assert!(fee_rate.is_none());
-    }
-
-    #[test]
-    fn fee_convenience_functions_agree() {
-        use hex::test_hex_unwrap as hex;
-
-        use crate::blockdata::transaction::Transaction;
-        use crate::consensus::Decodable;
-
-        const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
-
-        let raw_tx = hex!(SOME_TX);
-        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
-
-        let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
-
-        assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
     }
 }

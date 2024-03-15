@@ -16,6 +16,7 @@ use core::{cmp, fmt, str};
 use hashes::{sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
+use units::parse;
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
@@ -26,7 +27,6 @@ use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::parse::{self, impl_parse_str_from_int_infallible};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::prelude::*;
@@ -169,7 +169,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    crate::parse::int(s).map_err(ParseOutPointError::Vout)
+    parse::int(s).map_err(ParseOutPointError::Vout)
 }
 
 impl core::str::FromStr for OutPoint {
@@ -449,7 +449,7 @@ impl Sequence {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(TimeOverflowError { seconds })
+            Err(TimeOverflowError::new(seconds))
         }
     }
 
@@ -462,7 +462,7 @@ impl Sequence {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(TimeOverflowError { seconds })
+            Err(TimeOverflowError::new(seconds))
         }
     }
 
@@ -526,7 +526,7 @@ impl fmt::Debug for Sequence {
     }
 }
 
-impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 /// Bitcoin transaction output.
 ///
@@ -1702,7 +1702,7 @@ mod tests {
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
             ),
-            Err(ParseOutPointError::Vout(crate::parse::int::<u32, _>("lol").unwrap_err()))
+            Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
         );
 
         assert_eq!(

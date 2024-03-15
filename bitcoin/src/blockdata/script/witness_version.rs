@@ -12,11 +12,11 @@ use core::str::FromStr;
 
 use bech32::Fe32;
 use internals::write_err;
+use units::{parse, ParseIntError};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::Instruction;
-use crate::error::ParseIntError;
 
 /// Version of the segregated witness program.
 ///
@@ -87,7 +87,7 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = crate::parse::int(s)?;
+        let version: u8 = parse::int(s)?;
         Ok(WitnessVersion::try_from(version)?)
     }
 }
