@@ -1312,13 +1312,13 @@ impl From<&Transaction> for Wtxid {
 /// # Arguments
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
-/// * `satisfaction_weight` - satisfied spending conditions weight.
+/// * `input_weight_prediction` - the predicted input weight.
 pub fn effective_value(
     fee_rate: FeeRate,
-    satisfaction_weight: Weight,
+    input_weight_prediction: InputWeightPrediction,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TxIn::BASE_WEIGHT)?;
+    let weight = input_weight_prediction.weight().checked_add(TxIn::BASE_WEIGHT)?;
     let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
@@ -2173,30 +2173,25 @@ mod tests {
     fn effective_value_happy_path() {
         let value = Amount::from_str("1 cBTC").unwrap();
         let fee_rate = FeeRate::from_sat_per_kwu(10);
-        let satisfaction_weight = Weight::from_wu(204);
-        let effective_value = effective_value(fee_rate, satisfaction_weight, value).unwrap();
+        let effective_value =
+            effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value).unwrap();
 
-        // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
-        let expected_fee = SignedAmount::from_str("4 sats").unwrap();
+        let expected_fee = SignedAmount::from_str("3 sats").unwrap();
         let expected_effective_value = value.to_signed().unwrap() - expected_fee;
         assert_eq!(effective_value, expected_effective_value);
     }
 
     #[test]
     fn effective_value_fee_rate_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::MAX, Weight::ZERO, Amount::ZERO);
-        assert!(eff_value.is_none());
-    }
-
-    #[test]
-    fn effective_value_weight_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::ZERO, Weight::MAX, Amount::ZERO);
+        let eff_value =
+            effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
         assert!(eff_value.is_none());
     }
 
     #[test]
     fn effective_value_value_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::ZERO, Weight::ZERO, Amount::MAX);
+        let eff_value =
+            effective_value(FeeRate::ZERO, InputWeightPrediction::P2WPKH_MAX, Amount::MAX);
         assert!(eff_value.is_none());
     }
 
