@@ -10,7 +10,7 @@ As a general rule, an issue is a security vulnerability if it could lead to:
 * Loss of funds
 * Loss of privacy
 * Censorship (including e.g. by attaching an incorrectly low fee to a transaction)
-* Any "ordinary" security problem, such as remote code execution or invalid memory acccess
+* Any "ordinary" security problem, such as remote code execution or invalid memory access
 
 In general, use your best judgement in determining whether an issue is a security issue. If not,
 go ahead and post it to the public issue tracker.
