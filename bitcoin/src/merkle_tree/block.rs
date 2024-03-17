@@ -46,7 +46,7 @@ use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::weight::Weight;
-use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
 use crate::hash_types::{TxMerkleNode, Txid};
 use crate::io;
 use crate::prelude::*;
@@ -460,6 +460,12 @@ impl Decodable for PartialMerkleTree {
         let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode(r)?;
 
         let nb_bytes_for_bits = encode::VarInt::consensus_decode(r)?.0 as usize;
+        if nb_bytes_for_bits > MAX_VEC_SIZE {
+            return Err(encode::Error::OversizedVectorAllocation {
+                requested: nb_bytes_for_bits,
+                max: MAX_VEC_SIZE,
+            });
+        }
         let mut bits = vec![false; nb_bytes_for_bits * 8];
         for chunk in bits.chunks_mut(8) {
             let byte = u8::consensus_decode(r)?;
@@ -820,5 +826,19 @@ mod tests {
         tree_width_19, 7, 1, 4;
         tree_width_20, 7, 2, 2;
         tree_width_21, 7, 3, 1;
+    }
+
+    #[test]
+    fn regression_2606() {
+        // Attempt
+        let bytes = hex!(
+            "000006000000000000000004ee00000004c7f1ccb1000000ffff000000010000\
+             0000ffffffffff1f000000000400000000000002000000000500000000000000\
+             000000000300000000000003000000000200000000ff00000000c7f1ccb10407\
+             00000000000000ccb100c76538b100000004bfa9c251681b1b00040000000025\
+             00000004bfaac251681b1b25\
+         ");
+        let deser = crate::consensus::deserialize::<MerkleBlock>(&bytes);
+        assert!(deser.is_err());
     }
 }
