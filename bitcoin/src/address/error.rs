@@ -117,6 +117,8 @@ pub enum ParseError {
     WitnessProgram(witness_program::Error),
     /// Tried to parse an unknown HRP.
     UnknownHrp(UnknownHrpError),
+    /// Address's network differs from required one.
+    NetworkValidation(NetworkValidationError),
 }
 
 internals::impl_from_infallible!(ParseError);
@@ -131,6 +133,7 @@ impl fmt::Display for ParseError {
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             UnknownHrp(ref e) => write_err!(f, "tried to parse an unknown hrp"; e),
+            NetworkValidation(ref e) => write_err!(f, "validation error"; e),
         }
     }
 }
@@ -146,6 +149,7 @@ impl std::error::Error for ParseError {
             WitnessVersion(ref e) => Some(e),
             WitnessProgram(ref e) => Some(e),
             UnknownHrp(ref e) => Some(e),
+            NetworkValidation(ref e) => Some(e),
         }
     }
 }
@@ -168,6 +172,10 @@ impl From<witness_program::Error> for ParseError {
 
 impl From<UnknownHrpError> for ParseError {
     fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
+}
+
+impl From<NetworkValidationError> for ParseError {
+    fn from(e: NetworkValidationError) -> Self { Self::NetworkValidation(e) }
 }
 
 /// Unknown HRP error.
