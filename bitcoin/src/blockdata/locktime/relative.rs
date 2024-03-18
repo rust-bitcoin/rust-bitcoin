@@ -50,6 +50,42 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
+    /// Constructs a `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
+    ///
+    /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
+    /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
+    /// you want to preserve the full value, you should use the [`Sequence`] type instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin::relative::LockTime;
+    ///
+    /// // `from_consensus` roundtrips with `to_consensus_u32` for small values.
+    /// let n_lock_time: u32 = 7000;
+    /// let lock_time = LockTime::from_consensus(n_lock_time).unwrap();
+    /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
+    /// ```
+    pub fn from_consensus(n: u32) -> Result<Self, DisabledLockTimeError> {
+        let sequence = crate::Sequence::from_consensus(n);
+        sequence.to_relative_lock_time().ok_or(DisabledLockTimeError(n))
+    }
+
+    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// argument to `OP_CHECKSEQUENCEVERIFY`.
+    ///
+    /// # Warning
+    ///
+    /// Locktimes are not ordered by the natural ordering on `u32`. If you want to
+    /// compare locktimes, use [`Self::is_implied_by`] or similar methods.
+    #[inline]
+    pub fn to_consensus_u32(&self) -> u32 {
+        match self {
+            LockTime::Blocks(ref h) => h.to_consensus_u32(),
+            LockTime::Time(ref t) => t.to_consensus_u32(),
+        }
+    }
+
     /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
     pub const fn from_height(n: u16) -> Self { LockTime::Blocks(Height::from_height(n)) }
@@ -257,6 +293,28 @@ impl fmt::Display for LockTime {
     }
 }
 
+/// Error returned when a sequence number is parsed as a lock time, but its
+/// "disable" flag is set.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct DisabledLockTimeError(u32);
+
+impl DisabledLockTimeError {
+    /// Accessor for the `u32` whose "disable" flag was set, preventing
+    /// it from being parsed as a relative locktime.
+    pub fn disabled_locktime_value(&self) -> u32 {
+        self.0
+    }
+}
+
+impl fmt::Display for DisabledLockTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "lock time 0x{:08x} has disable flag set", self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DisabledLockTimeError {}
+
 /// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -358,5 +416,21 @@ mod tests {
 
         let lock = LockTime::from(time);
         assert!(!lock.is_implied_by(LockTime::from(height)));
+    }
+
+    #[test]
+    fn consensus_round_trip() {
+        assert!(LockTime::from_consensus(1 << 31).is_err());
+        assert!(LockTime::from_consensus(1 << 30).is_ok());
+        // Relative locktimes do not care about bits 17 through 21.
+        assert_eq!(LockTime::from_consensus(65536), LockTime::from_consensus(0));
+
+        for val in [0u32, 1, 1000, 65535] {
+            let lt = LockTime::from_consensus(val).unwrap();
+            assert_eq!(lt.to_consensus_u32(), val);
+
+            let lt = LockTime::from_consensus(val + (1 << 22)).unwrap();
+            assert_eq!(lt.to_consensus_u32(), val + (1 << 22));
+        }
     }
 }
