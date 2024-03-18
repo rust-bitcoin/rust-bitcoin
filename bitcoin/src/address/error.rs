@@ -123,6 +123,8 @@ pub enum ParseError {
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
     /// Invalid legacy address prefix in base58 data payload.
     InvalidLegacyPrefix(InvalidLegacyPrefixError),
+    /// Address's network differs from required one.
+    NetworkValidation(NetworkValidationError),
 }
 
 internals::impl_from_infallible!(ParseError);
@@ -140,6 +142,7 @@ impl fmt::Display for ParseError {
             LegacyAddressTooLong(ref e) => write_err!(f, "legacy address base58 string"; e),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy address base58 data"; e),
             InvalidLegacyPrefix(ref e) => write_err!(f, "legacy address base58 prefix"; e),
+            NetworkValidation(ref e) => write_err!(f, "validation error"; e),
         }
     }
 }
@@ -158,6 +161,7 @@ impl std::error::Error for ParseError {
             LegacyAddressTooLong(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
             InvalidLegacyPrefix(ref e) => Some(e),
+            NetworkValidation(ref e) => Some(e),
         }
     }
 }
@@ -192,6 +196,10 @@ impl From<InvalidBase58PayloadLengthError> for ParseError {
 
 impl From<InvalidLegacyPrefixError> for ParseError {
     fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
+}
+
+impl From<NetworkValidationError> for ParseError {
+    fn from(e: NetworkValidationError) -> Self { Self::NetworkValidation(e) }
 }
 
 /// Unknown HRP error.
