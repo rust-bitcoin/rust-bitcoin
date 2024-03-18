@@ -43,6 +43,48 @@ pub enum LockTime {
 }
 
 impl LockTime {
+    /// A relative locktime of 0 is always valid, and is assumed valid for inputs that
+    /// are not yet confirmed.
+    pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
+
+    /// The number of bytes that the locktime contributes to the size of a transaction.
+    pub const SIZE: usize = 4; // Serialized length of a u32.
+
+    /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
+    #[inline]
+    pub const fn from_height(n: u16) -> Self { LockTime::Blocks(Height::from_height(n)) }
+
+    /// Constructs a `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
+    ///
+    /// This function is a little awkward to use, and users may wish to instead use
+    /// [`Self::from_seconds_floor`] or [`Self::from_seconds_ceil`].
+    #[inline]
+    pub const fn from_512_second_intervals(intervals: u16) -> Self {
+        LockTime::Time(Time::from_512_second_intervals(intervals))
+    }
+
+    /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// with truncating division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        Time::from_seconds_floor(seconds).map(LockTime::Time)
+    }
+
+    /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// with ceiling division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
+        Time::from_seconds_ceil(seconds).map(LockTime::Time)
+    }
+
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
     ///
     /// # Examples

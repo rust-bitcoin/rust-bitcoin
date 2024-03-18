@@ -22,6 +22,10 @@ impl Height {
     /// The maximum relative block height.
     pub const MAX: Self = Height(u16::max_value());
 
+    /// Create a [`Height`] using a count of blocks.
+    #[inline]
+    pub const fn from_height(blocks: u16) -> Self { Height(blocks) }
+
     /// Returns the inner `u16` value.
     #[inline]
     pub fn value(self) -> u16 { self.0 }
@@ -59,7 +63,22 @@ impl Time {
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
-    pub fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
+    pub const fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
+
+    /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with
+    /// truncating division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        if let Ok(interval) = u16::try_from(seconds / 512) {
+            Ok(Time::from_512_second_intervals(interval))
+        } else {
+            Err(TimeOverflowError { seconds })
+        }
+    }
 
     /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with ceiling
     /// division.
