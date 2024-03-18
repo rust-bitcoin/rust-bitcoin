@@ -70,8 +70,11 @@ impl LockTime {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
-        Time::from_seconds_floor(seconds).map(LockTime::Time)
+    pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        match Time::from_seconds_floor(seconds) {
+            Ok(time) => Ok(LockTime::Time(time)),
+            Err(e) => Err(e),
+        }
     }
 
     /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
@@ -81,8 +84,11 @@ impl LockTime {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        Time::from_seconds_ceil(seconds).map(LockTime::Time)
+    pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
+        match Time::from_seconds_ceil(seconds) {
+            Ok(time) => Ok(LockTime::Time(time)),
+            Err(e) => Err(e),
+        }
     }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.

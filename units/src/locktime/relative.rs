@@ -72,9 +72,11 @@ impl Time {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if let Ok(interval) = u16::try_from(seconds / 512) {
-            Ok(Time::from_512_second_intervals(interval))
+    #[rustfmt::skip] // moves comments to unrelated code
+    pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        let interval = seconds / 512;
+        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -87,9 +89,11 @@ impl Time {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
-            Ok(Time::from_512_second_intervals(interval))
+    #[rustfmt::skip] // moves comments to unrelated code
+    pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
+        let interval = (seconds + 511) / 512;
+        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
         } else {
             Err(TimeOverflowError { seconds })
         }
