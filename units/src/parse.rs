@@ -108,8 +108,8 @@ pub(crate) fn strip_hex_prefix(s: &str) -> &str {
 pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
     u32::from_str_radix(strip_hex_prefix(s.as_ref()), 16).map_err(|error| ParseIntError {
         input: s.into(),
-        bits: u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 32 bits for u32"),
-        is_signed: u32::try_from(-1i8).is_ok(),
+        bits: 32,
+        is_signed: false,
         source: error,
     })
 }
