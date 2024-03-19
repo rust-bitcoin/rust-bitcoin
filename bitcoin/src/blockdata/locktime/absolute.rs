@@ -7,7 +7,7 @@
 //!
 
 use core::cmp::Ordering;
-use core::{fmt, mem};
+use core::fmt;
 
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
@@ -170,18 +170,17 @@ impl LockTime {
 
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
-    pub fn is_same_unit(&self, other: LockTime) -> bool {
-        mem::discriminant(self) == mem::discriminant(&other)
+    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+        matches!(
+            (self, other),
+            (LockTime::Blocks(_), LockTime::Blocks(_))
+                | (LockTime::Seconds(_), LockTime::Seconds(_))
+        )
     }
 
     /// Returns true if this lock time value is a block height.
     #[inline]
-    pub const fn is_block_height(&self) -> bool {
-        match *self {
-            LockTime::Blocks(_) => true,
-            LockTime::Seconds(_) => false,
-        }
-    }
+    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
