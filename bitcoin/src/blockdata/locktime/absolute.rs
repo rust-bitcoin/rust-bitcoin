@@ -14,10 +14,10 @@ use io::{BufRead, Write};
 use mutagen::mutate;
 use units::parse;
 
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
 #[cfg(doc)]
 use crate::absolute;
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

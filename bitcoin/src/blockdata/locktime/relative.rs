@@ -131,7 +131,7 @@ impl LockTime {
 
         match *self {
             Blocks(ref h) => Ok(h.value() <= height.value()),
-            Time(time) => Err(IncompatibleHeightError { height, time })
+            Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
 
@@ -158,7 +158,7 @@ impl LockTime {
 
         match *self {
             Time(ref t) => Ok(t.value() <= time.value()),
-            Blocks(height) => Err(IncompatibleTimeError { time, height })
+            Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
     }
 }
@@ -203,7 +203,11 @@ pub struct IncompatibleHeightError {
 
 impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-blocktime lock {} with height: {}", self.time, self.height)
+        write!(
+            f,
+            "tried to satisfy a lock-by-blocktime lock {} with height: {}",
+            self.time, self.height
+        )
     }
 }
 
@@ -222,7 +226,11 @@ pub struct IncompatibleTimeError {
 
 impl fmt::Display for IncompatibleTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-blockheight lock {} with time: {}", self.height, self.time)
+        write!(
+            f,
+            "tried to satisfy a lock-by-blockheight lock {} with time: {}",
+            self.height, self.time
+        )
     }
 }
 
