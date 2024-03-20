@@ -305,7 +305,10 @@ impl TaprootSpendInfo {
     ///
     /// - If there are multiple control blocks possible, returns the shortest one.
     /// - If the script is not contained in the [`TaprootSpendInfo`], returns `None`.
-    pub fn control_block(&self, script_ver: &(ScriptBuf, LeafVersion)) -> Option<ControlBlock> {
+    pub fn control_block(
+        &self,
+        script_ver: &(ScriptBuf, LeafVersion),
+    ) -> Option<ControlBlock<TaprootMerkleBranch>> {
         let merkle_branch_set = self.script_map.get(script_ver)?;
         // Choose the smallest one amongst the multiple script maps
         let smallest = merkle_branch_set
@@ -1067,7 +1070,7 @@ impl<'leaf> ScriptLeaf<'leaf> {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct ControlBlock {
+pub struct ControlBlock<B: AsRef<TaprootMerkleBranch>> {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
@@ -1075,10 +1078,10 @@ pub struct ControlBlock {
     /// The internal key.
     pub internal_key: UntweakedPublicKey,
     /// The merkle proof of a script associated with this leaf.
-    pub merkle_branch: TaprootMerkleBranch,
+    pub merkle_branch: B,
 }
 
-impl ControlBlock {
+impl<B: AsRef<TaprootMerkleBranch>> ControlBlock<B> {
     /// Decodes bytes representing a `ControlBlock`.
     ///
     /// This is an extra witness element that provides the proof that taproot script pubkey is
@@ -1091,7 +1094,7 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
-    pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+    pub fn decode(sl: &[u8]) -> Result<ControlBlock<TaprootMerkleBranch>, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
         {
@@ -1112,7 +1115,7 @@ impl ControlBlock {
     /// Returns the size of control block. Faster and more efficient than calling
     /// `Self::serialize().len()`. Can be handy for fee estimation.
     pub fn size(&self) -> usize {
-        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.len()
+        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.as_ref().len()
     }
 
     /// Serializes to a writer.
@@ -1125,7 +1128,7 @@ impl ControlBlock {
             i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
         writer.write_all(&[first_byte])?;
         writer.write_all(&self.internal_key.serialize())?;
-        self.merkle_branch.encode(writer)?;
+        self.merkle_branch.as_ref().encode(writer)?;
         Ok(self.size())
     }
 
@@ -1154,7 +1157,7 @@ impl ControlBlock {
         // Initially the curr_hash is the leaf hash
         let mut curr_hash = TapNodeHash::from_script(script, self.leaf_version);
         // Verify the proof
-        for elem in &self.merkle_branch {
+        for elem in self.merkle_branch.as_ref() {
             // Recalculate the curr hash as parent hash
             curr_hash = TapNodeHash::from_node_hashes(curr_hash, *elem);
         }
@@ -1443,8 +1446,8 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
-    use hashes::sha256t::Tag;
     use hashes::sha256;
+    use hashes::sha256t::Tag;
     use hex::FromHex;
     use secp256k1::VerifyOnly;
 
@@ -1544,8 +1547,10 @@ mod test {
         let out_pk = XOnlyPublicKey::from_str(&out_spk_hex[4..]).unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = ScriptBuf::from_hex(script_hex).unwrap();
-        let control_block =
-            ControlBlock::decode(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
+        let control_block = ControlBlock::<TaprootMerkleBranch>::decode(
+            &Vec::<u8>::from_hex(control_block_hex).unwrap(),
+        )
+        .unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
         assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
     }
@@ -1817,7 +1822,7 @@ mod test {
                 let spend_info = builder.finalize(secp, internal_key).unwrap();
                 for (i, script_ver) in leaves.iter().enumerate() {
                     let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
-                    let expected_ctrl_blk = ControlBlock::decode(
+                    let expected_ctrl_blk = ControlBlock::<TaprootMerkleBranch>::decode(
                         &Vec::<u8>::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap(),
                     )
                     .unwrap();

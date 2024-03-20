@@ -21,6 +21,7 @@ use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
+    TaprootMerkleBranch,
 };
 use crate::VarInt;
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -284,11 +285,11 @@ impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
     }
 }
 
-impl Serialize for ControlBlock {
+impl Serialize for ControlBlock<TaprootMerkleBranch> {
     fn serialize(&self) -> Vec<u8> { ControlBlock::serialize(self) }
 }
 
-impl Deserialize for ControlBlock {
+impl Deserialize for ControlBlock<TaprootMerkleBranch> {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         Self::decode(bytes).map_err(|_| Error::InvalidControlBlock)
     }
