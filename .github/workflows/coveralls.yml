@@ -5,20 +5,7 @@ on:
 name: Code coverage with llvm-cov
 
 jobs:
-  Prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      pr_changed_source: ${{ steps.classify_pr.outputs.pr_changed_source }}
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v4
-      - name: Determine what files the PR changes.
-        id: classify_pr
-        run: contrib/classify-pr.sh ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
-
   Coveralls:
-    needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Code coverage - stable toolchain
     runs-on: ubuntu-latest
     strategy:

@@ -16,10 +16,6 @@ git fetch origin "$pr_tip":pr_tip
 
 pr_base=$(git merge-base master_tip pr_tip)
 
-echo "Using  master $master_tip"
-echo "Using  PR tip $pr_tip"
-echo "Using PR base $pr_base"
-
 # If something modifies any non-markdown file, it's considered a source code change.
 if git diff --name-only "$pr_base" "$pr_tip" | grep -qv "^.md$"; then
     echo "pr_changed_source=true" >> "$GITHUB_OUTPUT"
