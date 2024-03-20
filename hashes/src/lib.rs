@@ -65,7 +65,7 @@
 //! # fn main() {}
 //! ```
 
-#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
+#![no_std]
 
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -81,10 +81,11 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(any(test, feature = "std"))]
-extern crate core;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.

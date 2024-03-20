@@ -13,6 +13,7 @@ use crate::blockdata::block::BlockHash;
 use crate::blockdata::transaction::{Txid, Wtxid};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
+use crate::prelude::*;
 use crate::p2p;
 
 /// An inventory item.
