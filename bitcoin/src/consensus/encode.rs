@@ -154,6 +154,13 @@ pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
     serialize(data).to_lower_hex_string()
 }
 
+/// Encodes an object into a `fmt` writer.
+pub fn serialize_to_fmt<T: Encodable + ?Sized>(f: &mut fmt::Formatter, data: &T) -> fmt::Result {
+    // Remove allocation after https://github.com/rust-bitcoin/hex-conservative/issues/84 is done.
+    let s = serialize_hex(data);
+    f.write_str(&s)
+}
+
 /// Deserializes an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {

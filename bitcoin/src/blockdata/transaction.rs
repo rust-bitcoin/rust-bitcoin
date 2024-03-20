@@ -11,6 +11,7 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
+use core::str::FromStr;
 use core::{cmp, fmt, str};
 
 use hashes::{sha256d, Hash};
@@ -701,6 +702,13 @@ impl Transaction {
     /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
 
+    /// Serializes this transaction as a lowercase hex string.
+    ///
+    /// Serializes the whole transaction to hex, not to be confused with [`Self::txid`].
+    ///
+    /// Use `fmt::UpperHex` if you need uppercase (eg, for QR codes).
+    pub fn to_hex(&self) -> String { self.to_string() }
+
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
     /// This method is deprecated.  Use `compute_ntxid` instead.
@@ -1060,6 +1068,78 @@ impl Transaction {
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
+}
+
+impl FromStr for Transaction {
+    type Err = ParseTransactionError;
+
+    fn from_str(hex: &str) -> Result<Self, Self::Err> {
+        let bytes = <Vec<u8> as hex::FromHex>::from_hex(hex)?;
+        Ok(encode::deserialize(&bytes)?)
+    }
+}
+
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::LowerHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use crate::consensus::serde::{hex::Lower, DisplayWrapper, Hex};
+
+        let wrapper: DisplayWrapper<'_, Transaction, Hex<Lower>>  = DisplayWrapper::new(self);
+        fmt::Display::fmt(&wrapper, f)
+    }
+}
+
+impl fmt::UpperHex for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let hex = self.to_hex();
+        f.write_str(&hex.to_uppercase())
+    }
+}
+
+/// Error parsing a [`Transaction`] from a hex string.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum ParseTransactionError {
+    /// Invalid hex string.
+    Hex(hex::HexToBytesError),
+    /// Invalid transaction encoding.
+    Encoding(encode::Error)
+}
+
+impl fmt::Display for ParseTransactionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ParseTransactionError::*;
+
+        match *self {
+            Hex(ref e) => write_err!(f, "invalid hex string"; e),
+            Encoding(ref e) => write_err!(f, "invalid transaction encoding"; e),
+        }
+     }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseTransactionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseTransactionError::*;
+
+        match *self {
+            Hex(ref e) => Some(e),
+            Encoding(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<hex::HexToBytesError> for ParseTransactionError {
+    #[inline]
+    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+}
+
+impl From<encode::Error> for ParseTransactionError {
+    #[inline]
+    fn from(e: encode::Error) -> Self { Self::Encoding(e) }
 }
 
 /// Error attempting to do an out of bounds access on the transaction inputs vector.
