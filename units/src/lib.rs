@@ -39,6 +39,8 @@ mod test_macros;
 
 pub mod amount;
 #[cfg(feature = "alloc")]
+pub mod block;
+#[cfg(feature = "alloc")]
 pub mod locktime;
 #[cfg(feature = "alloc")]
 pub mod fee_rate;
@@ -50,6 +52,7 @@ pub mod weight;
 #[doc(inline)]
 pub use self::{
     amount::{Amount, ParseAmountError, SignedAmount},
+    block::{BlockHeight, BlockInterval},
 };
 #[cfg(feature = "alloc")]
 pub use self::parse::ParseIntError;
