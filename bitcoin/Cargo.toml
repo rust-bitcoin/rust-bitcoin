@@ -38,6 +38,7 @@ bitcoin-internals = { path = "../internals", package = "bitcoin-private", versio
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.12.0", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 hex_lit = "0.1.1"
 
 base64 = { version = "0.13.0", optional = true }
