@@ -398,24 +398,61 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
-        let len = self.len();
-        self.last()
-            .map(|last_elem| {
-                // From BIP341:
-                // If there are at least two witness elements, and the first byte of
-                // the last element is 0x50, this last element is called annex a
-                // and is removed from the witness stack.
-                if len >= 2 && last_elem.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                    // account for the extra item removed from the end
-                    3
-                } else {
-                    // otherwise script is 2nd from last
-                    2
-                }
-            })
-            .filter(|&script_pos_from_last| len >= script_pos_from_last)
-            .and_then(|script_pos_from_last| self.nth(len - script_pos_from_last))
-            .map(Script::from_bytes)
+        self.last().and_then(|last| {
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
+                self.nth(self.len() - 3).map(Script::from_bytes)
+            } else if self.len() >= 2 {
+                self.nth(self.len() - 2).map(Script::from_bytes)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Get the taproot control block following BIP341 rules.
+    ///
+    /// This does not guarantee that this represents a P2TR [`Witness`]. It
+    /// merely gets the last or second to last element depending on the first
+    /// byte of the last element being equal to 0x50. See
+    /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
+    /// check whether this is actually a Taproot witness.
+    pub fn taproot_control_block(&self) -> Option<&[u8]> {
+        self.last().and_then(|last| {
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
+                self.nth(self.len() - 2)
+            } else if self.len() >= 2 {
+                Some(last)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Get the taproot annex following BIP341 rules.
+    ///
+    /// This does not guarantee that this represents a P2TR [`Witness`]. See
+    /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
+    /// check whether this is actually a Taproot witness.
+    pub fn taproot_annex(&self) -> Option<&[u8]> {
+        self.last().and_then(|last| {
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+            if self.len() >= 2 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
+                Some(last)
+            } else {
+                None
+            }
+        })
     }
 }
 
@@ -707,20 +744,72 @@ mod test {
         let witness_serialized: Vec<u8> = serialize(&witness_vec);
         let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
 
-        let witness = Witness {
-            content: append_u32_vec(witness_serialized[1..].to_vec(), &[0, 5]),
-            witness_elements: 2,
-            indices_start: 7,
-        };
-        let witness_annex = Witness {
-            content: append_u32_vec(witness_serialized_annex[1..].to_vec(), &[0, 5, 7]),
-            witness_elements: 3,
-            indices_start: 9,
-        };
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
         assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
+    }
+
+    #[test]
+    fn test_get_control_block() {
+        let tapscript = hex!("deadbeef");
+        let control_block = hex!("02");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![tapscript.clone(), control_block.clone()];
+        let witness_vec_annex = vec![tapscript.clone(), control_block.clone(), annex];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, the tapscript should be returned.
+        assert_eq!(witness.taproot_control_block(), Some(&control_block[..]));
+        assert_eq!(witness_annex.taproot_control_block(), Some(&control_block[..]));
+    }
+
+    #[test]
+    fn test_get_annex() {
+        let tapscript = hex!("deadbeef");
+        let control_block = hex!("02");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![tapscript.clone(), control_block.clone()];
+        let witness_vec_annex = vec![tapscript.clone(), control_block.clone(), annex.clone()];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, the tapscript should be returned.
+        assert_eq!(witness.taproot_annex(), None);
+        assert_eq!(witness_annex.taproot_annex(), Some(&annex[..]));
+
+        // Now for keyspend
+        let signature = hex!("deadbeef");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![signature.clone()];
+        let witness_vec_annex = vec![signature.clone(), annex.clone()];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, the tapscript should be returned.
+        assert_eq!(witness.taproot_annex(), None);
+        assert_eq!(witness_annex.taproot_annex(), Some(&annex[..]));
     }
 
     #[test]

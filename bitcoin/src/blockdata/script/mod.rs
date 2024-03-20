@@ -63,6 +63,7 @@ use alloc::sync::Arc;
 use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
+use core::str::FromStr;
 
 use hashes::{hash160, sha256};
 use io::{BufRead, Write};
@@ -83,6 +84,9 @@ pub use self::{
     owned::*,
     push_bytes::*,
 };
+
+/// The default maximum size of scriptints.
+const DEFAULT_MAX_SCRIPTINT_SIZE: usize = 4;
 
 hashes::hash_newtype! {
     /// A hash of Bitcoin Script bytecode.
@@ -155,6 +159,46 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     len
 }
 
+/// Returns minimally encoded scriptint as a byte vector.
+pub fn scriptint_vec(n: i64) -> Vec<u8> {
+    let mut buf = [0u8; 8];
+    let len = write_scriptint(&mut buf, n);
+    buf[0..len].to_vec()
+}
+
+/// Ways parsing script integers might fail.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScriptIntError {
+    /// Something did a non-minimal push; for more information see
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
+    NonMinimalPush,
+    /// Tried to read an array off the stack as a number when it was more than 4 bytes.
+    NumericOverflow,
+}
+
+impl fmt::Display for ScriptIntError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ScriptIntError::*;
+
+        match *self {
+            NonMinimalPush => f.write_str("non-minimal datapush"),
+            NumericOverflow =>
+                f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptIntError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ScriptIntError::*;
+
+        match *self {
+            NonMinimalPush | NumericOverflow => None,
+        }
+    }
+}
+
 /// Decodes an integer in script(minimal CScriptNum) format.
 ///
 /// Notice that this fails on overflow: the result is the same as in
@@ -172,31 +216,8 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// This is basically a ranged type implementation.
 ///
 /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
-pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
-    let last = match v.last() {
-        Some(last) => last,
-        None => return Ok(0),
-    };
-    if v.len() > 4 {
-        return Err(Error::NumericOverflow);
-    }
-    // Comment and code copied from Bitcoin Core:
-    // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
-    // If the most-significant-byte - excluding the sign bit - is zero
-    // then we're not minimal. Note how this test also rejects the
-    // negative-zero encoding, 0x80.
-    if (*last & 0x7f) == 0 {
-        // One exception: if there's more than one byte and the most
-        // significant bit of the second-most-significant-byte is set
-        // it would conflict with the sign bit. An example of this case
-        // is +-255, which encode to 0xff00 and 0xff80 respectively.
-        // (big-endian).
-        if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
-            return Err(Error::NonMinimalPush);
-        }
-    }
-
-    Ok(scriptint_parse(v))
+pub fn read_scriptint(v: &[u8]) -> Result<i64, ScriptIntError> {
+    read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, true)
 }
 
 /// Decodes an integer in script format without non-minimal error.
@@ -204,12 +225,47 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// The overflow error for slices over 4 bytes long is still there.
 /// See [`read_scriptint`] for a description of some subtleties of
 /// this function.
-pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
+pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, ScriptIntError> {
+    read_scriptint_size(v, DEFAULT_MAX_SCRIPTINT_SIZE, false)
+}
+
+/// Decodes an interger in script format with flexible size limit.
+///
+/// Note that in the majority of cases, you will want to use either
+/// [read_scriptint] or [read_scriptint_non_minimal] instead.
+///
+/// Panics if max_size exceeds 8.
+pub fn read_scriptint_size(v: &[u8], max_size: usize, minimal: bool) -> Result<i64, ScriptIntError> {
+    assert!(max_size <= 8);
+
+    if v.len() > max_size {
+        return Err(ScriptIntError::NumericOverflow);
+    }
+
     if v.is_empty() {
         return Ok(0);
     }
-    if v.len() > 4 {
-        return Err(Error::NumericOverflow);
+
+    if minimal {
+        let last = match v.last() {
+            Some(last) => last,
+            None => return Ok(0),
+        };
+        // Comment and code copied from Bitcoin Core:
+        // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
+        // If the most-significant-byte - excluding the sign bit - is zero
+        // then we're not minimal. Note how this test also rejects the
+        // negative-zero encoding, 0x80.
+        if (*last & 0x7f) == 0 {
+            // One exception: if there's more than one byte and the most
+            // significant bit of the second-most-significant-byte is set
+            // it would conflict with the sign bit. An example of this case
+            // is +-255, which encode to 0xff00 and 0xff80 respectively.
+            // (big-endian).
+            if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
+                return Err(ScriptIntError::NonMinimalPush);
+            }
+        }
     }
 
     Ok(scriptint_parse(v))
@@ -680,6 +736,148 @@ pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Re
     Ok(())
 }
 
+/// The different kinds of [AsmParseError] that can occur.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum AsmParseErrorKind {
+    /// ASM ended unexpectedly.
+    UnexpectedEOF,
+    /// We were not able to interpret the instruction.
+    UnknownInstruction,
+    /// Invalid hexadecimal bytes.
+    InvalidHex,
+    /// Byte push exceeding the maximum size.
+    PushExceedsMaxSize,
+    /// ASM contains a byte push with non-minimal size prefix.
+    ///
+    /// This is not necessarily invalid, but we can't construct such pushes.
+    NonMinimalBytePush,
+}
+
+/// Error from parsing Script ASM.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseAsmError {
+    /// The position of the instruction that caused the error.
+    ///
+    /// The value is (line, word) with word incremented after
+    /// every chunk of whitespace.
+    pub position: (usize, usize),
+
+    /// The kind of error that occurred.
+    pub kind: AsmParseErrorKind,
+}
+
+/// Try to parse raw hex bytes and push them into the buffer.
+fn try_parse_raw_hex(hex: &str, buf: &mut Vec<u8>) -> bool {
+    buf.clear();
+    let iter = match hex::HexToBytesIter::new(hex) {
+        Ok(i) => i,
+        Err(_) => return false,
+    };
+    for item in iter {
+        let item = match item {
+            Ok(i) => i,
+            Err(_) => return false,
+        };
+        buf.push(item);
+    }
+    true
+}
+
+/// Create an iterator over instruction words and their position in the file.
+fn iter_words(asm: &str) -> impl Iterator<Item = ((usize, usize), &str)> {
+    asm.lines().enumerate().flat_map(|(line_idx, line)| {
+        let content = line.splitn(2, "#").next().unwrap().splitn(2, "//").next().unwrap();
+        content.split_whitespace().enumerate().map(move |(word_idx, word)| {
+            ((line_idx, word_idx), word)
+        })
+    })
+}
+
+/// Parse a Script in ASM format.
+pub(super) fn parse_asm(asm: &str) -> Result<ScriptBuf, ParseAsmError> {
+    fn err(position: (usize, usize), kind: AsmParseErrorKind) -> ParseAsmError {
+        ParseAsmError { position, kind }
+    }
+
+    let mut buf = Vec::with_capacity(65);
+    let mut builder = Builder::new();
+    let mut words = iter_words(asm);
+    while let Some((pos, mut word)) = words.next() {
+        // We have this special case in our formatter.
+        if word == "OP_0" {
+            builder = builder.push_opcode(OP_PUSHBYTES_0);
+            continue;
+        }
+
+        if let Ok(op) = Opcode::from_str(word) {
+            // check for push opcodes
+            if op.code <= OP_PUSHDATA4.code {
+                let (next, push) = words.next().ok_or(err(pos, AsmParseErrorKind::UnexpectedEOF))?;
+                if !try_parse_raw_hex(push, &mut buf) {
+                    return Err(err(next, AsmParseErrorKind::InvalidHex));
+                }
+
+                // NB our API doesn't actually allow us to make byte pushes with
+                // non-minimal length prefix, so we can only check and error if
+                // the user wants a non-minimal push
+                let expected_push_op = match buf.len() {
+                    n if n < opcodes::all::OP_PUSHDATA1.code as usize => {
+                        Opcode::from(n as u8)
+                    }
+                    n if n < 0x100 => {
+                        opcodes::all::OP_PUSHDATA1
+                    }
+                    n if n < 0x10000 => {
+                        opcodes::all::OP_PUSHDATA2
+                    }
+                    n if n < 0x100000000 => {
+                        opcodes::all::OP_PUSHDATA4
+                    }
+                    _ => return Err(err(next, AsmParseErrorKind::PushExceedsMaxSize)),
+                };
+                if op != expected_push_op {
+                    return Err(err(pos, AsmParseErrorKind::NonMinimalBytePush));
+                }
+
+                let push = <&PushBytes>::try_from(&buf[..])
+                    .map_err(|_| err(next, AsmParseErrorKind::PushExceedsMaxSize))?;
+                builder = builder.push_slice(push);
+            } else {
+                builder = builder.push_opcode(op);
+            }
+            continue;
+        }
+
+        // Not an opcode, try to interpret as number or push.
+
+        if word.starts_with('<') && word.ends_with('>') {
+            word = &word[1..word.len()-1];
+        }
+
+        // Try a number.
+        if let Ok(i) = i64::from_str(&word) {
+            builder = builder.push_int(i);
+            continue;
+        }
+
+        // Finally, try hex in various forms.
+        if word.starts_with("0x") {
+            word = &word[2..];
+        }
+
+        if try_parse_raw_hex(word, &mut buf) {
+            let push = <&PushBytes>::try_from(&buf[..])
+                .map_err(|_| err(pos, AsmParseErrorKind::PushExceedsMaxSize))?;
+            builder = builder.push_slice(push);
+        } else {
+            return Err(err(pos, AsmParseErrorKind::UnknownInstruction));
+        }
+    }
+
+    Ok(builder.into_script())
+}
+
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
@@ -728,6 +926,15 @@ impl std::error::Error for Error {
             | NumericOverflow
             | UnknownSpentOutput(_)
             | Serialization => None,
+        }
+    }
+}
+
+impl From<ScriptIntError> for Error {
+    fn from(e: ScriptIntError) -> Error {
+        match e {
+            ScriptIntError::NonMinimalPush => Error::NonMinimalPush,
+            ScriptIntError::NumericOverflow => Error::NumericOverflow,
         }
     }
 }
