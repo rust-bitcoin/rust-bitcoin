@@ -61,6 +61,16 @@ impl<'a> Instruction<'a> {
             Instruction::PushBytes(bytes) => ScriptBuf::reserved_len_for_slice(bytes.len()),
         }
     }
+
+    /// This function parses an integer from a script instruction.
+    ///
+    /// It returns the integer if the instruction is a data push, otherwise it returns None.
+    pub fn read_int(bytes: &[u8]) -> Option<i64> {
+        match PushBytes::read_scriptint(bytes) {
+            Ok(decoded_value) => Some(decoded_value),
+            Err(_) => None,
+        }
+    }
 }
 
 /// Iterator over a script returning parsed opcodes.
