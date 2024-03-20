@@ -1,5 +1,5 @@
 [package]
-name = "base58check"
+name = "base58ck"
 version = "0.1.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
