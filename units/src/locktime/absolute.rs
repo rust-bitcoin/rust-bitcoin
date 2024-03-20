@@ -4,9 +4,6 @@
 
 use core::fmt;
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 use internals::write_err;
 
 #[cfg(feature = "alloc")]
@@ -28,7 +25,6 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 
 /// An absolute block height, guaranteed to always contain a valid height value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Height(u32);
 
 impl Height {
@@ -100,13 +96,33 @@ impl From<ParseError> for ParseHeightError {
     fn from(value: ParseError) -> Self { Self(value) }
 }
 
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Height {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let u = u32::deserialize(deserializer)?;
+        Ok(Height::from_consensus(u).map_err(serde::de::Error::custom)?)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Height {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_consensus_u32().serialize(serializer)
+    }
+}
+
 /// A UNIX timestamp, seconds since epoch, guaranteed to always contain a valid time value.
 ///
 /// Note that there is no manipulation of the inner value during construction or when using
 /// `to_consensus_u32()`. Said another way, `Time(x)` means 'x seconds since epoch' _not_ '(x -
 /// threshold) seconds since epoch'.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Time(u32);
 
 impl Time {
@@ -154,6 +170,27 @@ impl fmt::Display for Time {
 }
 
 crate::impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Time {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let u = u32::deserialize(deserializer)?;
+        Ok(Time::from_consensus(u).map_err(serde::de::Error::custom)?)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Time {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_consensus_u32().serialize(serializer)
+    }
+}
 
 /// Error returned when parsing block time fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -364,4 +401,18 @@ mod tests {
         assert!(result.is_err());
     }
 
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_decode_height() {
+        serde_round_trip!(Height::ZERO);
+        serde_round_trip!(Height::MIN);
+        serde_round_trip!(Height::MAX);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_decode_time() {
+        serde_round_trip!(Time::MIN);
+        serde_round_trip!(Time::MAX);
+    }
 }
