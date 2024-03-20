@@ -14,13 +14,9 @@ jobs:
       crates: ${{ steps.get_matrix.outputs.crates }}
       deps: ${{ steps.get_matrix.outputs.deps }}
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
-      pr_changed_source: ${{ steps.classify_pr.outputs.pr_changed_source }}
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v4
-      - name: Determine what files the PR changes.
-        id: classify_pr
-        run: contrib/classify-pr.sh ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
       - name: Read nightly version
         id: read_toolchain
         run: echo "nightly_version=$(cat .github/nightly-version)" >> $GITHUB_OUTPUT
@@ -30,7 +26,6 @@ jobs:
 
   Stable:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - stable toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -52,7 +47,6 @@ jobs:
 
   Beta:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - beta toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -73,7 +67,6 @@ jobs:
 
   Nightly:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - nightly toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -98,7 +91,6 @@ jobs:
 
   MSRV:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test - 1.56.1 toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -120,8 +112,6 @@ jobs:
         run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Arch32bit:
-    needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Test 32-bit version
     runs-on: ubuntu-latest
     steps:
@@ -139,9 +129,8 @@ jobs:
         run: cargo test --target i686-unknown-linux-gnu
 
   Cross:
-    needs: Prepare
-    if: ${{ !github.event.act }} && needs.Prepare.outputs.pr_changed_source == 'true'
     name: Cross test
+    if: ${{ !github.event.act }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Crate
@@ -157,7 +146,6 @@ jobs:
 
   Embedded:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-C link-arg=-Tlink.x"
@@ -183,7 +171,6 @@ jobs:
 
   ASAN:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Address sanitizer     # hashes crate only.
     runs-on: ubuntu-latest
     strategy:
@@ -206,7 +193,6 @@ jobs:
 
   WASM:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: WebAssembly Build # hashes crate only.
     runs-on: ubuntu-latest
     strategy:
@@ -225,7 +211,6 @@ jobs:
 
   Schemars:
     needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     name: Schemars
     runs-on: ubuntu-latest
     strategy:
@@ -243,8 +228,6 @@ jobs:
         run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
 
   Kani:
-    needs: Prepare
-    if: needs.Prepare.outputs.pr_changed_source == 'true'
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout your code.'
