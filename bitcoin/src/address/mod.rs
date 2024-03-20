@@ -50,11 +50,10 @@ use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
-use self::error::P2shError;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::{NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError, FromScriptError, },
+    error::{FromScriptError, NetworkValidationError, ParseError, P2shError, UnknownAddressTypeError, UnknownHrpError},
 };
 
 /// The different types of addresses.
