@@ -165,9 +165,35 @@ impl Script {
     }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
+    ///
+    /// # Returns
+    ///
+    /// The witness version if this script is found to conform to the SegWit rules:
+    ///
+    /// > A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
+    /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
+    /// > special meaning. The value of the first push is called the "version byte". The following
+    /// > byte vector pushed is called the "witness program".
     #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
-        self.0.first().and_then(|opcode| WitnessVersion::try_from(Opcode::from(*opcode)).ok())
+        let script_len = self.0.len();
+        if !(4..=42).contains(&script_len) {
+            return None;
+        }
+
+        let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+        let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
+
+        if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8()
+        {
+            return None;
+        }
+        // Check that the rest of the script has the correct size
+        if script_len - 2 != push_opbyte as usize {
+            return None;
+        }
+
+        WitnessVersion::try_from(ver_opcode).ok()
     }
 
     /// Checks whether a script pubkey is a P2SH output.
@@ -293,23 +319,7 @@ impl Script {
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
     #[inline]
-    pub fn is_witness_program(&self) -> bool {
-        // A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
-        // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
-        // special meaning. The value of the first push is called the "version byte". The following
-        // byte vector pushed is called the "witness program".
-        let script_len = self.0.len();
-        if !(4..=42).contains(&script_len) {
-            return false;
-        }
-        let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-        let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
-        WitnessVersion::try_from(ver_opcode).is_ok()
-            && push_opbyte >= OP_PUSHBYTES_2.to_u8()
-            && push_opbyte <= OP_PUSHBYTES_40.to_u8()
-            // Check that the rest of the script has the correct size
-            && script_len - 2 == push_opbyte as usize
-    }
+    pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
     /// Checks whether a script pubkey is a P2WSH output.
     #[inline]
