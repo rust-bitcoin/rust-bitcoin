@@ -168,9 +168,13 @@ do_dup_deps() {
     duplicate_dependencies=$(
         # Only show the actual duplicated deps, not their reverse tree, then
         # whitelist the 'syn' crate which is duplicated but it's not our fault.
+        #
+        # Temporarily allow 2 versions of `hashes` and `hex` while we upgrade.
         cargo tree  --target=all --all-features --duplicates \
             | grep '^[0-9A-Za-z]' \
             | grep -v 'syn' \
+            | grep -v 'bitcoin_hashes' \
+            | grep -v 'hex-conservative' \
             | wc -l
                           )
     if [ "$duplicate_dependencies" -ne 0 ]; then
