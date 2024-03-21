@@ -540,6 +540,7 @@ mod test {
     use hashes::sha256d::Hash;
     use hashes::Hash as HashTrait;
     use hex::test_hex_unwrap as hex;
+    use units::BlockHeight;
 
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use super::*;
@@ -611,7 +612,7 @@ mod test {
             NetworkMessage::FilterClear,
             NetworkMessage::GetCFilters(GetCFilters {
                 filter_type: 2,
-                start_height: 52,
+                start_height: BlockHeight::from(52),
                 stop_hash: hash([42u8; 32]).into(),
             }),
             NetworkMessage::CFilter(CFilter {
@@ -621,7 +622,7 @@ mod test {
             }),
             NetworkMessage::GetCFHeaders(GetCFHeaders {
                 filter_type: 4,
-                start_height: 102,
+                start_height: BlockHeight::from(102),
                 stop_hash: hash([47u8; 32]).into(),
             }),
             NetworkMessage::CFHeaders(CFHeaders {
