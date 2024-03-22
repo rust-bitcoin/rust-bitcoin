@@ -118,6 +118,12 @@ NB: reviewers may run more complex test/CI scripts, thus, satisfying all the
 requirements above is just a preliminary, but not necessary sufficient step for
 getting the PR accepted as a valid candidate PR for the `master` branch.
 
+High quality commits help us review and merge you contributions. We attempt to
+adhere to the ideas presented in the following two blog posts:
+
+- [How to Write a Git Commit Message](https://cbea.ms/git-commit/)
+- [Write Better Commits, Build Better Projects](https://github.blog/2022-06-30-write-better-commits-build-better-projects/)
+
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
