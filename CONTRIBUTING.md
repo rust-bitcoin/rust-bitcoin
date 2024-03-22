@@ -159,7 +159,7 @@ least two weeks with no comments, questions, or NACKs.
 We reserve the right to merge PRs with a single ACK [0], at any time, if they match
 any of the following conditions:
 
-1. PR only touches CI i.e, only changes any of the `test.sh` scripts and/or
+1. PR only touches CI i.e, only changes any of the test scripts and/or
    stuff in `.github/workflows`.
 2. Non-content changing documentation fixes i.e., grammar/typos, spelling, full
    stops, capital letters. Any change with more substance must still get two
