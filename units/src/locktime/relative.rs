@@ -22,9 +22,18 @@ impl Height {
     /// The maximum relative block height.
     pub const MAX: Self = Height(u16::max_value());
 
+    /// Create a [`Height`] using a count of blocks.
+    #[inline]
+    pub const fn from_height(blocks: u16) -> Self { Height(blocks) }
+
     /// Returns the inner `u16` value.
     #[inline]
     pub fn value(self) -> u16 { self.0 }
+
+    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// argument to `OP_CHECKSEQUENCEVERIFY`.
+    #[inline]
+    pub fn to_consensus_u32(&self) -> u32 { self.0.into() }
 }
 
 impl From<u16> for Height {
@@ -59,7 +68,24 @@ impl Time {
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
-    pub fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
+    pub const fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
+
+    /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with
+    /// truncating division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    #[rustfmt::skip] // moves comments to unrelated code
+    pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        let interval = seconds / 512;
+        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
+        } else {
+            Err(TimeOverflowError { seconds })
+        }
+    }
 
     /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with ceiling
     /// division.
@@ -68,9 +94,11 @@ impl Time {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
-            Ok(Time::from_512_second_intervals(interval))
+    #[rustfmt::skip] // moves comments to unrelated code
+    pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
+        let interval = (seconds + 511) / 512;
+        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -79,6 +107,11 @@ impl Time {
     /// Returns the inner `u16` value.
     #[inline]
     pub fn value(self) -> u16 { self.0 }
+
+    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// argument to `OP_CHECKSEQUENCEVERIFY`.
+    #[inline]
+    pub fn to_consensus_u32(&self) -> u32 { (1u32 << 22) | u32::from(self.0) }
 }
 
 crate::impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
@@ -92,7 +125,7 @@ impl fmt::Display for Time {
 pub struct TimeOverflowError {
     /// Time value in seconds that overflowed.
     // Private because we maintain an invariant that the `seconds` value does actually overflow.
-    pub(crate) seconds: u32
+    pub(crate) seconds: u32,
 }
 
 impl TimeOverflowError {
@@ -109,7 +142,11 @@ impl TimeOverflowError {
 
 impl fmt::Display for TimeOverflowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} seconds is too large to be encoded to a 16 bit 512 second interval", self.seconds)
+        write!(
+            f,
+            "{} seconds is too large to be encoded to a 16 bit 512 second interval",
+            self.seconds
+        )
     }
 }
 

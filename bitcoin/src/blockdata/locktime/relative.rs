@@ -6,13 +6,14 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::fmt;
+use core::{cmp, convert, fmt};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
 #[cfg(doc)]
 use crate::relative;
+use crate::Sequence;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -20,8 +21,13 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
-/// The `relative::LockTime` type does not have any constructors, this is by design, please use
-/// `Sequence::to_relative_lock_time` to create a relative lock time.
+/// Used for sequence numbers (`nSequence` in Bitcoin Core and [`crate::TxIn::sequence`]
+/// in this library) and also for the argument to opcode 'OP_CHECKSEQUENCEVERIFY`.
+///
+/// ### Note on ordering
+///
+/// Because locktimes may be height- or time-based, and these metrics are incommensurate, there
+/// is no total ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
 ///
 /// ### Relevant BIPs
 ///
@@ -38,6 +44,120 @@ pub enum LockTime {
 }
 
 impl LockTime {
+    /// A relative locktime of 0 is always valid, and is assumed valid for inputs that
+    /// are not yet confirmed.
+    pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
+
+    /// The number of bytes that the locktime contributes to the size of a transaction.
+    pub const SIZE: usize = 4; // Serialized length of a u32.
+
+    /// Constructs a `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
+    ///
+    /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
+    /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
+    /// you want to preserve the full value, you should use the [`Sequence`] type instead.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin::relative::LockTime;
+    ///
+    /// // `from_consensus` roundtrips with `to_consensus_u32` for small values.
+    /// let n_lock_time: u32 = 7000;
+    /// let lock_time = LockTime::from_consensus(n_lock_time).unwrap();
+    /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
+    /// ```
+    pub fn from_consensus(n: u32) -> Result<Self, DisabledLockTimeError> {
+        let sequence = crate::Sequence::from_consensus(n);
+        sequence.to_relative_lock_time().ok_or(DisabledLockTimeError(n))
+    }
+
+    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// argument to `OP_CHECKSEQUENCEVERIFY`.
+    ///
+    /// # Warning
+    ///
+    /// Locktimes are not ordered by the natural ordering on `u32`. If you want to
+    /// compare locktimes, use [`Self::is_implied_by`] or similar methods.
+    #[inline]
+    pub fn to_consensus_u32(&self) -> u32 {
+        match self {
+            LockTime::Blocks(ref h) => h.to_consensus_u32(),
+            LockTime::Time(ref t) => t.to_consensus_u32(),
+        }
+    }
+
+    /// Constructs a `LockTime` from the sequence number of a Bitcoin input.
+    ///
+    /// This method will **not** round-trip with [`Self::to_sequence`]. See the
+    /// docs for [`Self::from_consensus`] for more information.
+    #[inline]
+    pub fn from_sequence(n: Sequence) -> Result<Self, DisabledLockTimeError> {
+        Self::from_consensus(n.to_consensus_u32())
+    }
+
+    /// Encodes the locktime as a sequence number.
+    #[inline]
+    pub fn to_sequence(&self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
+
+    /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
+    #[inline]
+    pub const fn from_height(n: u16) -> Self { LockTime::Blocks(Height::from_height(n)) }
+
+    /// Constructs a `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
+    ///
+    /// This function is a little awkward to use, and users may wish to instead use
+    /// [`Self::from_seconds_floor`] or [`Self::from_seconds_ceil`].
+    #[inline]
+    pub const fn from_512_second_intervals(intervals: u16) -> Self {
+        LockTime::Time(Time::from_512_second_intervals(intervals))
+    }
+
+    /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// with truncating division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
+        match Time::from_seconds_floor(seconds) {
+            Ok(time) => Ok(LockTime::Time(time)),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// with ceiling division.
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the input cannot be encoded in 16 bits.
+    #[inline]
+    pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
+        match Time::from_seconds_ceil(seconds) {
+            Ok(time) => Ok(LockTime::Time(time)),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Returns true if both lock times use the same unit i.e., both height based or both time based.
+    #[inline]
+    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+        matches!(
+            (self, other),
+            (LockTime::Blocks(_), LockTime::Blocks(_)) | (LockTime::Time(_), LockTime::Time(_))
+        )
+    }
+
+    /// Returns true if this lock time value is in units of block height.
+    #[inline]
+    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+
+    /// Returns true if this lock time value is in units of time.
+    #[inline]
+    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
+
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
     ///
     /// # Examples
@@ -108,6 +228,20 @@ impl LockTime {
         }
     }
 
+    /// Returns true if satisfaction of the sequence number implies satisfaction of this lock time.
+    ///
+    /// When deciding whether an instance of `<n> CHECKSEQUENCEVERIFY` will pass, this
+    /// method can be used by parsing `n` as a [`LockTime`] and calling this method
+    /// with the sequence number of the input which spends the script.
+    #[inline]
+    pub fn is_implied_by_sequence(&self, other: Sequence) -> bool {
+        if let Ok(other) = LockTime::from_sequence(other) {
+            self.is_implied_by(other)
+        } else {
+            false
+        }
+    }
+
     /// Returns true if this [`relative::LockTime`] is satisfied by [`Height`].
     ///
     /// # Errors
@@ -131,7 +265,7 @@ impl LockTime {
 
         match *self {
             Blocks(ref h) => Ok(h.value() <= height.value()),
-            Time(time) => Err(IncompatibleHeightError { height, time })
+            Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
 
@@ -158,7 +292,7 @@ impl LockTime {
 
         match *self {
             Time(ref t) => Ok(t.value() <= time.value()),
-            Blocks(height) => Err(IncompatibleTimeError { time, height })
+            Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
     }
 }
@@ -171,6 +305,19 @@ impl From<Height> for LockTime {
 impl From<Time> for LockTime {
     #[inline]
     fn from(t: Time) -> Self { LockTime::Time(t) }
+}
+
+impl PartialOrd for LockTime {
+    #[inline]
+    fn partial_cmp(&self, other: &LockTime) -> Option<cmp::Ordering> {
+        use LockTime::*;
+
+        match (*self, *other) {
+            (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
+            (Time(ref a), Time(ref b)) => a.partial_cmp(b),
+            (_, _) => None,
+        }
+    }
 }
 
 impl fmt::Display for LockTime {
@@ -191,6 +338,39 @@ impl fmt::Display for LockTime {
     }
 }
 
+impl convert::TryFrom<Sequence> for LockTime {
+    type Error = DisabledLockTimeError;
+    fn try_from(seq: Sequence) -> Result<LockTime, DisabledLockTimeError> {
+        LockTime::from_sequence(seq)
+    }
+}
+
+impl From<LockTime> for Sequence {
+    fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
+}
+
+/// Error returned when a sequence number is parsed as a lock time, but its
+/// "disable" flag is set.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct DisabledLockTimeError(u32);
+
+impl DisabledLockTimeError {
+    /// Accessor for the `u32` whose "disable" flag was set, preventing
+    /// it from being parsed as a relative locktime.
+    pub fn disabled_locktime_value(&self) -> u32 {
+        self.0
+    }
+}
+
+impl fmt::Display for DisabledLockTimeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "lock time 0x{:08x} has disable flag set", self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DisabledLockTimeError {}
+
 /// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -203,7 +383,11 @@ pub struct IncompatibleHeightError {
 
 impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-blocktime lock {} with height: {}", self.time, self.height)
+        write!(
+            f,
+            "tried to satisfy a lock-by-blocktime lock {} with height: {}",
+            self.time, self.height
+        )
     }
 }
 
@@ -222,7 +406,11 @@ pub struct IncompatibleTimeError {
 
 impl fmt::Display for IncompatibleTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "tried to satisfy a lock-by-blockheight lock {} with time: {}", self.height, self.time)
+        write!(
+            f,
+            "tried to satisfy a lock-by-blockheight lock {} with time: {}",
+            self.height, self.time
+        )
     }
 }
 
@@ -284,5 +472,27 @@ mod tests {
 
         let lock = LockTime::from(time);
         assert!(!lock.is_implied_by(LockTime::from(height)));
+    }
+
+    #[test]
+    fn consensus_round_trip() {
+        assert!(LockTime::from_consensus(1 << 31).is_err());
+        assert!(LockTime::from_consensus(1 << 30).is_ok());
+        // Relative locktimes do not care about bits 17 through 21.
+        assert_eq!(LockTime::from_consensus(65536), LockTime::from_consensus(0));
+
+        for val in [0u32, 1, 1000, 65535] {
+            let seq = Sequence::from_consensus(val);
+            let lt = LockTime::from_consensus(val).unwrap();
+            assert_eq!(lt.to_consensus_u32(), val);
+            assert_eq!(lt.to_sequence(), seq);
+            assert_eq!(LockTime::from_sequence(seq).unwrap().to_sequence(), seq);
+
+            let seq = Sequence::from_consensus(val + (1 << 22));
+            let lt = LockTime::from_consensus(val + (1 << 22)).unwrap();
+            assert_eq!(lt.to_consensus_u32(), val + (1 << 22));
+            assert_eq!(lt.to_sequence(), seq);
+            assert_eq!(LockTime::from_sequence(seq).unwrap().to_sequence(), seq);
+        }
     }
 }
