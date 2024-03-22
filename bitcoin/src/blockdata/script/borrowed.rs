@@ -386,6 +386,12 @@ impl Script {
     }
 
     /// Returns the minimum value an output with this script should have in order to be
+    /// broadcastable on today’s Bitcoin network.
+    #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
+    pub fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
+
+
+    /// Returns the minimum value an output with this script should have in order to be
     /// broadcastable on today's Bitcoin network.
     ///
     /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
