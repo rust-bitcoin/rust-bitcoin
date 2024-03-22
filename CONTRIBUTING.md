@@ -144,21 +144,18 @@ Current list of the project maintainers:
 - [Riccardo Casatta](https://github.com/RCasatta)
 - [Tobin Harding](https://github.com/tcharding)
 
-#### Refactor carve-out
+#### One ACK carve-out
 
 The repository is going through heavy refactoring and "trivial" API redesign
 (eg, rename `Foo::empty` to `Foo::new`) as we push towards API stabilization. As
 such reviewers are either bored or overloaded with notifications, hence we have
 created a carve out to the 2-ACK rule.
 
-A PR may be considered for merge if it has a single ACK and has sat open for at
-least two weeks with no comments, questions, or NACKs.
-
-#### One ACK carve-out
-
 We reserve the right to merge PRs with a single ACK [0], at any time, if they match
 any of the following conditions:
 
+0. PR has a single ACK and has sat open for at least two weeks with no comments,
+   questions, or NACKs.
 1. PR only touches CI i.e, only changes any of the test scripts and/or
    stuff in `.github/workflows`.
 2. Non-content changing documentation fixes i.e., grammar/typos, spelling, full
@@ -166,8 +163,8 @@ any of the following conditions:
    ACKs.
 3. Code moves that do not change the API e.g., moving error types to a private
    submodule and re-exporting them from the original module. Must not include
-   any code changes except to import paths. This rule is more restrictive than
-   the refactor carve-out. It requires absolutely no change to the public API.
+   any code changes except to import paths. Requires absolutely no change to the
+   public API.
 
 [0] - Obviously author and ACK'er must not be the same person.
 
