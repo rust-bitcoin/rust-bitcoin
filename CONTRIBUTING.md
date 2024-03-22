@@ -165,8 +165,17 @@ any of the following conditions:
    submodule and re-exporting them from the original module. Must not include
    any code changes except to import paths. Requires absolutely no change to the
    public API.
+4. PR has previously had two ACKs, had minimal changes, and gets a single ACK
+   from Andrew. This call is subjective, gives extra privileges, but also
+   requires extra responsibility/accountability (including running a bunch
+   of local CI checks before merging) [1].
+
+
 
 [0] - Obviously author and ACK'er must not be the same person.
+[1] - The aim is to reduce the burden of re-ACK'ing trivial changes and also
+      alleviate the problem of devs spread around the world in different timezones.
+
 
 ## Coding conventions
 
