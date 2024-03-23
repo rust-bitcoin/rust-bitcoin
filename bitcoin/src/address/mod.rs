@@ -672,7 +672,7 @@ impl Address<NetworkUnchecked> {
     /// `ParseError`. This is not how we normally implement errors in this library but
     /// `require_network` is not a typical function, it is conceptually part of string parsing.
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
+    pub fn require_network(self, required: Network) -> Result<Address, NetworkValidationError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
@@ -810,6 +810,16 @@ mod tests {
                 serde_json::from_str(&ser).expect("failed to deserialize address");
             assert_eq!(back.assume_checked(), *addr, "serde round-trip failed for {}", addr)
         }
+    }
+
+    #[test]
+    fn kixunil_test() {
+        fn user_fn() -> Result<Address, ParseError> {
+            let s = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq";
+            let address = s.parse::<Address<_>>()? .require_network(Network::Bitcoin)?;
+            Ok(address)
+        }
+        user_fn().unwrap();
     }
 
     #[test]
