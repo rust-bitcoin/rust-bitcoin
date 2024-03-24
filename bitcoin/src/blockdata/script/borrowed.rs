@@ -359,7 +359,7 @@ impl Script {
     /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
     /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
     #[deprecated(
-        since = "TBD",
+        since = "0.32.0",
         note = "The method is not very useful, you might want `is_op_return`"
     )]
     #[inline]
