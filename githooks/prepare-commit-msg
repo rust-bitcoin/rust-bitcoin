@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# A hook that adds a commit template.
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+# Remove the default message.
+/usr/bin/env perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "$COMMIT_MSG_FILE"
+
+# Print our custom commit template.
+/usr/bin/env perl -le 'open FH, "./commit-template.txt"; while(<FH>){print "foo"}; print "\n"'
