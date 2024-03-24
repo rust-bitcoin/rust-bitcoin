@@ -24,13 +24,21 @@ extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-use core::{fmt, iter, slice, str};
+pub mod error;
+
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
+use core::{fmt, iter, slice, str};
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
 use hashes::{sha256d, Hash};
+
+use crate::error::{IncorrectChecksumError, TooShortError};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::error::{Error, InvalidCharacterError};
 
 #[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
@@ -53,19 +61,19 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ];
 
 /// Decodes a base58-encoded string into a byte vector.
-pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
+pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // 11/15 is just over log_256(58)
     let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
         if d58 as usize >= BASE58_DIGITS.len() {
-            return Err(Error::BadByte(d58));
+            return Err(InvalidCharacterError { invalid: d58 });
         }
         let mut carry = match BASE58_DIGITS[d58 as usize] {
             Some(d58) => d58 as u32,
             None => {
-                return Err(Error::BadByte(d58));
+                return Err(InvalidCharacterError { invalid: d58 });
             }
         };
         for d256 in scratch.iter_mut().rev() {
@@ -87,7 +95,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
     if ret.len() < 4 {
-        return Err(Error::TooShort(ret.len()));
+        return Err(TooShortError { length: ret.len() }.into());
     }
     let check_start = ret.len() - 4;
 
@@ -98,8 +106,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let expected = u32::from_le_bytes(hash_check);
     let actual = u32::from_le_bytes(data_check);
 
-    if expected != actual {
-        return Err(Error::BadChecksum(expected, actual));
+    if actual != expected {
+        return Err(IncorrectChecksumError { incorrect: actual, expected }.into());
     }
 
     ret.truncate(check_start);
@@ -207,63 +215,6 @@ impl<T: Default + Copy> SmallVec<T> {
     }
 }
 
-/// An error that might occur during base58 decoding.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum Error {
-    /// Invalid character encountered.
-    BadByte(u8),
-    /// Checksum was not correct (expected, actual).
-    BadChecksum(u32, u32),
-    /// The length (in bytes) of the object was not correct.
-    ///
-    /// Note that if the length is excessively long the provided length may be an estimate (and the
-    /// checksum step may be skipped).
-    InvalidLength(usize),
-    /// Extended Key version byte(s) were not recognized.
-    InvalidExtendedKeyVersion([u8; 4]),
-    /// Address version byte were not recognized.
-    InvalidAddressVersion(u8),
-    /// Checked data was less than 4 bytes.
-    TooShort(usize),
-}
-
-internals::impl_from_infallible!(Error);
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            BadByte(b) => write!(f, "invalid base58 character {:#x}", b),
-            BadChecksum(exp, actual) =>
-                write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
-            InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            InvalidExtendedKeyVersion(ref v) =>
-                write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
-            InvalidAddressVersion(ref v) =>
-                write!(f, "address version {} is invalid for this base58 type", v),
-            TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match self {
-            BadByte(_)
-            | BadChecksum(_, _)
-            | InvalidLength(_)
-            | InvalidExtendedKeyVersion(_)
-            | InvalidAddressVersion(_)
-            | TooShort(_) => None,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use hex::test_hex_unwrap as hex;
@@ -317,7 +268,10 @@ mod tests {
             Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
         );
         // Non Base58 char.
-        assert_eq!(decode("¢").unwrap_err(), Error::BadByte(194));
+        assert_eq!(
+            decode("¢").unwrap_err(),
+            InvalidCharacterError { invalid: 194 }
+        );
     }
 
     #[test]
@@ -330,6 +284,6 @@ mod tests {
         // Check that empty slice passes roundtrip.
         assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(Error::TooShort(3)));
+        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
     }
 }

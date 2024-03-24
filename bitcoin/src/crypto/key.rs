@@ -476,16 +476,16 @@ impl PrivateKey {
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => {
-                return Err(FromWifError::Base58(base58::Error::InvalidLength(data.len())));
+            length => {
+                return Err(InvalidBase58PayloadLengthError { length }.into());
             }
         };
 
         let network = match data[0] {
             128 => NetworkKind::Main,
             239 => NetworkKind::Test,
-            x => {
-                return Err(FromWifError::Base58(base58::Error::InvalidAddressVersion(x)));
+            invalid => {
+                return Err(InvalidAddressVersionError { invalid }.into());
             }
         };
 
@@ -930,8 +930,12 @@ impl From<secp256k1::Error> for FromSliceError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum FromWifError {
-    /// A base58 error.
+    /// A base58 decoding error.
     Base58(base58::Error),
+    /// Base58 decoded data was an invalid length.
+    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+    /// Base58 decoded data contained an invalid address version byte.
+    InvalidAddressVersion(InvalidAddressVersionError),
     /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
 }
@@ -941,8 +945,11 @@ internals::impl_from_infallible!(FromWifError);
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromWifError::*;
+
         match *self {
             Base58(ref e) => write_err!(f, "invalid base58"; e),
+            InvalidBase58PayloadLength(ref e) => write_err!(f, "decoded base58 data was an invalid length"; e),
+            InvalidAddressVersion(ref e) => write_err!(f, "decoded base58 data contained an invalid address version btye"; e),
             Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
         }
     }
@@ -952,9 +959,12 @@ impl fmt::Display for FromWifError {
 impl std::error::Error for FromWifError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use FromWifError::*;
-        match self {
-            Base58(e) => Some(e),
-            Secp256k1(e)=> Some(e),
+
+        match *self {
+            Base58(ref e) => Some(e),
+            InvalidBase58PayloadLength(ref e) => Some(e),
+            InvalidAddressVersion(ref e) => Some(e),
+            Secp256k1(ref e)=> Some(e),
         }
     }
 }
@@ -965,6 +975,14 @@ impl From<base58::Error> for FromWifError {
 
 impl From<secp256k1::Error> for FromWifError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+}
+
+impl From<InvalidBase58PayloadLengthError> for FromWifError {
+    fn from(e: InvalidBase58PayloadLengthError) -> FromWifError { Self::InvalidBase58PayloadLength(e) }
+}
+
+impl From<InvalidAddressVersionError> for FromWifError {
+    fn from(e: InvalidAddressVersionError) -> FromWifError { Self::InvalidAddressVersion(e) }
 }
 
 /// Error returned while constructing public key from string.
@@ -1063,6 +1081,48 @@ impl fmt::Display for UncompressedPublicKeyError {
 impl std::error::Error for UncompressedPublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
+
+/// Decoded base58 data was an invalid length.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidBase58PayloadLengthError {
+    /// The base58 payload length we got after decoding WIF string.
+    pub(crate) length: usize,
+}
+
+impl InvalidBase58PayloadLengthError {
+    /// Returns the invalid payload length.
+    pub fn invalid_base58_payload_length(&self) -> usize { self.length }
+}
+
+impl fmt::Display for InvalidBase58PayloadLengthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "decoded base58 data was an invalid length: {} (expected 33 or 34)", self.length)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidBase58PayloadLengthError {}
+
+/// Invalid address version in decoded base58 data.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidAddressVersionError {
+    /// The invalid version.
+    pub(crate) invalid: u8,
+}
+
+impl InvalidAddressVersionError {
+    /// Returns the invalid version.
+    pub fn invalid_address_version(&self) -> u8 { self.invalid }
+}
+
+impl fmt::Display for InvalidAddressVersionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid address version in decoded base58 data {}", self.invalid)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidAddressVersionError {}
 
 #[cfg(test)]
 mod tests {

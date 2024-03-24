@@ -14,7 +14,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["hashes/std"]
+std = ["hashes/std", "internals/std"]
 
 [package.metadata.docs.rs]
 all-features = true
