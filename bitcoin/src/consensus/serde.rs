@@ -17,9 +17,9 @@ use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
 
-use crate::consensus::{DecodeError, IterReader};
 use super::encode::Error as ConsensusError;
 use super::{Decodable, Encodable};
+use crate::consensus::{DecodeError, IterReader};
 
 /// Hex-encoding strategy
 pub struct Hex<Case = hex::Lower>(PhantomData<Case>)
@@ -75,9 +75,7 @@ pub mod hex {
     pub struct Encoder<C: Case>(BufEncoder<{ HEX_BUF_SIZE }>, PhantomData<C>);
 
     impl<C: Case> From<super::Hex<C>> for Encoder<C> {
-        fn from(_: super::Hex<C>) -> Self {
-            Encoder(BufEncoder::new(), Default::default())
-        }
+        fn from(_: super::Hex<C>) -> Self { Encoder(BufEncoder::new(), Default::default()) }
     }
 
     impl<C: Case> super::EncodeBytes for Encoder<C> {

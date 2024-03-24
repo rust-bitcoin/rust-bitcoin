@@ -6,14 +6,11 @@
 
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
-
 // Coding conventions.
 #![warn(missing_docs)]
-
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-
 #![no_std]
 
 // Disable 16-bit support at least for now as we can't guarantee it yet.
@@ -39,18 +36,16 @@ mod test_macros;
 
 pub mod amount;
 #[cfg(feature = "alloc")]
-pub mod locktime;
-#[cfg(feature = "alloc")]
 pub mod fee_rate;
+#[cfg(feature = "alloc")]
+pub mod locktime;
 #[cfg(feature = "alloc")]
 pub mod parse;
 #[cfg(feature = "alloc")]
 pub mod weight;
 
 #[doc(inline)]
-pub use self::{
-    amount::{Amount, ParseAmountError, SignedAmount},
-};
+pub use self::amount::{Amount, ParseAmountError, SignedAmount};
 #[cfg(feature = "alloc")]
 pub use self::parse::ParseIntError;
 

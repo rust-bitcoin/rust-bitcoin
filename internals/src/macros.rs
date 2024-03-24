@@ -99,7 +99,10 @@ macro_rules! impl_array_newtype {
 macro_rules! debug_from_display {
     ($thing:ident) => {
         impl core::fmt::Debug for $thing {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
+            fn fmt(
+                &self,
+                f: &mut core::fmt::Formatter,
+            ) -> core::result::Result<(), core::fmt::Error> {
                 core::fmt::Display::fmt(self, f)
             }
         }

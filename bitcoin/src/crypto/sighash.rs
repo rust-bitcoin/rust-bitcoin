@@ -19,8 +19,8 @@ use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
-use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::prelude::*;
+use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -607,8 +607,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
         if !anyone_can_pay {
             self.common_cache().prevouts.consensus_encode(writer)?;
-            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?).amounts.consensus_encode(writer)?;
-            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?).script_pubkeys.consensus_encode(writer)?;
+            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
+                .amounts
+                .consensus_encode(writer)?;
+            self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
+                .script_pubkeys
+                .consensus_encode(writer)?;
             self.common_cache().sequences.consensus_encode(writer)?;
         }
 
@@ -668,7 +672,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 .ok_or(TaprootError::SingleMissingOutput(SingleMissingOutputError {
                     input_index,
                     outputs_length: self.tx.borrow().output.len(),
-                })).map_err(SigningDataError::Sighash)?
+                }))
+                .map_err(SigningDataError::Sighash)?
                 .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
             hash.consensus_encode(writer)?;
@@ -704,7 +709,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             annex,
             leaf_hash_code_separator,
             sighash_type,
-        ).map_err(SigningDataError::unwrap_sighash)?;
+        )
+        .map_err(SigningDataError::unwrap_sighash)?;
         Ok(TapSighash::from_engine(enc))
     }
 
@@ -723,7 +729,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             None,
             None,
             sighash_type,
-        ).map_err(SigningDataError::unwrap_sighash)?;
+        )
+        .map_err(SigningDataError::unwrap_sighash)?;
         Ok(TapSighash::from_engine(enc))
     }
 
@@ -746,7 +753,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             None,
             Some((leaf_hash.into(), 0xFFFFFFFF)),
             sighash_type,
-        ).map_err(SigningDataError::unwrap_sighash)?;
+        )
+        .map_err(SigningDataError::unwrap_sighash)?;
         Ok(TapSighash::from_engine(enc))
     }
 
@@ -830,7 +838,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             &script_code,
             value,
             sighash_type,
-        ).map_err(SigningDataError::unwrap_sighash)?;
+        )
+        .map_err(SigningDataError::unwrap_sighash)?;
         Ok(SegwitV0Sighash::from_engine(enc))
     }
 
@@ -849,7 +858,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             witness_script,
             value,
             sighash_type,
-        ).map_err(SigningDataError::unwrap_sighash)?;
+        )
+        .map_err(SigningDataError::unwrap_sighash)?;
         Ok(SegwitV0Sighash::from_engine(enc))
     }
 
@@ -1215,9 +1225,7 @@ pub enum P2wpkhError {
 internals::impl_from_infallible!(P2wpkhError);
 
 impl From<transaction::InputsIndexError> for P2wpkhError {
-    fn from(value: transaction::InputsIndexError) -> Self {
-        P2wpkhError::Sighash(value)
-    }
+    fn from(value: transaction::InputsIndexError) -> Self { P2wpkhError::Sighash(value) }
 }
 
 impl fmt::Display for P2wpkhError {
@@ -1400,17 +1408,13 @@ impl<E> SigningDataError<E> {
         }
     }
 
-    fn sighash<E2: Into<E>>(error: E2) -> Self {
-        Self::Sighash(error.into())
-    }
+    fn sighash<E2: Into<E>>(error: E2) -> Self { Self::Sighash(error.into()) }
 }
 
 // We cannot simultaneously impl `From<E>`. it was determined that this alternative requires less
 // manual `map_err` calls.
 impl<E> From<io::Error> for SigningDataError<E> {
-    fn from(value: io::Error) -> Self {
-        Self::Io(value)
-    }
+    fn from(value: io::Error) -> Self { Self::Io(value) }
 }
 
 impl<E: fmt::Display> fmt::Display for SigningDataError<E> {

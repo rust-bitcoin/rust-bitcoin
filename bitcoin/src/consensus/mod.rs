@@ -15,8 +15,8 @@ pub mod validation;
 
 use core::fmt;
 
-use io::{Read, BufRead};
 use internals::write_err;
+use io::{BufRead, Read};
 
 use crate::consensus;
 
@@ -40,7 +40,9 @@ struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
 }
 
 impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
-    pub(crate) fn new(iterator: I) -> Self { IterReader { iterator: iterator.fuse(), buf: None, error: None } }
+    pub(crate) fn new(iterator: I) -> Self {
+        IterReader { iterator: iterator.fuse(), buf: None, error: None }
+    }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
         let result = T::consensus_decode(&mut self);
@@ -94,11 +96,11 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> BufRead for IterReader<E,
                 Some(Ok(byte)) => {
                     self.buf = Some(byte);
                     Ok(core::slice::from_ref(self.buf.as_ref().expect("we've just filled it")))
-                },
+                }
                 Some(Err(error)) => {
                     self.error = Some(error);
                     Err(io::ErrorKind::Other.into())
-                },
+                }
                 None => Ok(&[]),
             }
         }
@@ -130,7 +132,8 @@ impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
         use DecodeError::*;
 
         match *self {
-            TooManyBytes => write!(f, "attempted to decode object from an iterator that yielded too many bytes"),
+            TooManyBytes =>
+                write!(f, "attempted to decode object from an iterator that yielded too many bytes"),
             Consensus(ref e) => write_err!(f, "invalid consensus encoding"; e),
             Other(ref other) => write!(f, "other decoding error: {:?}", other),
         }
