@@ -1599,26 +1599,26 @@ mod private {
     impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
 }
 
+/// This module adds serde serialization and deserialization support for Amounts.
+/// Since there is not a default way to serialize and deserialize Amounts, multiple
+/// ways are supported and it's up to the user to decide which serialiation to use.
+/// The provided modules can be used as follows:
+///
+/// ```rust,ignore
+/// use serde::{Serialize, Deserialize};
+/// use bitcoin_units::Amount;
+///
+/// #[derive(Serialize, Deserialize)]
+/// pub struct HasAmount {
+///     #[serde(with = "bitcoin_units::amount::serde::as_btc")]
+///     pub amount: Amount,
+/// }
+/// ```
 #[cfg(feature = "serde")]
 pub mod serde {
+
     // methods are implementation of a standardized serde-specific signature
     #![allow(missing_docs)]
-
-    //! This module adds serde serialization and deserialization support for Amounts.
-    //! Since there is not a default way to serialize and deserialize Amounts, multiple
-    //! ways are supported and it's up to the user to decide which serialiation to use.
-    //! The provided modules can be used as follows:
-    //!
-    //! ```rust,ignore
-    //! use serde::{Serialize, Deserialize};
-    //! use bitcoin_units::Amount;
-    //!
-    //! #[derive(Serialize, Deserialize)]
-    //! pub struct HasAmount {
-    //!     #[serde(with = "bitcoin_units::amount::serde::as_btc")]
-    //!     pub amount: Amount,
-    //! }
-    //! ```
 
     use core::fmt;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -1737,10 +1737,9 @@ pub mod serde {
         }
     }
 
+    /// Serialize and deserialize [`Amount`] as real numbers denominated in satoshi.
+    /// Use with `#[serde(with = "amount::serde::as_sat")]`.
     pub mod as_sat {
-        //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
-        //! Use with `#[serde(with = "amount::serde::as_sat")]`.
-        //!
         use super::private;
 
         use serde::{Deserializer, Serializer};
@@ -1755,10 +1754,9 @@ pub mod serde {
             A::des_sat(d, private::Token)
         }
 
+        /// Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
+        /// Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
         pub mod opt {
-            //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
-            //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
-
             use super::private;
             use core::fmt;
             use core::marker::PhantomData;
@@ -1807,11 +1805,10 @@ pub mod serde {
         }
     }
 
+    /// Serialize and deserialize [`Amount`] as JSON numbers denominated in BTC.
+    /// Use with `#[serde(with = "amount::serde::as_btc")]`.
     #[cfg(feature = "alloc")]
     pub mod as_btc {
-        //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in BTC.
-        //! Use with `#[serde(with = "amount::serde::as_btc")]`.
-
         use super::private;
 
         use serde::{Deserializer, Serializer};
@@ -1826,10 +1823,9 @@ pub mod serde {
             A::des_btc(d, private::Token)
         }
 
+        /// Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
+        /// Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
         pub mod opt {
-            //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
-            //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
-
             use super::private;
             use core::fmt;
             use core::marker::PhantomData;
