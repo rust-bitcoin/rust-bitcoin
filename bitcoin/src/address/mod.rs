@@ -667,12 +667,50 @@ impl Address<NetworkUnchecked> {
     ///
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
+    ///
+    /// # Errors
+    ///
+    /// This function only ever returns the [`ParseError::NetworkValidation`] variant of
+    /// `ParseError`. This is not how we normally implement errors in this library but
+    /// `require_network` is not a typical function, it is conceptually part of string parsing.
+    ///
+    ///  # Examples
+    ///
+    /// ```
+    /// use bitcoin::address::{NetworkChecked, NetworkUnchecked, ParseError};
+    /// use bitcoin::{Address, Network};
+    ///
+    /// const ADDR: &str = "bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs";
+    ///
+    /// fn parse_and_validate_address(network: Network) -> Result<Address, ParseError> {
+    ///     let address = ADDR.parse::<Address<_>>()?
+    ///                       .require_network(network)?;
+    ///     Ok(address)
+    /// }
+    ///
+    /// fn parse_and_validate_address_combinator(network: Network) -> Result<Address, ParseError> {
+    ///     let address = ADDR.parse::<Address<_>>()
+    ///                       .and_then(|a| a.require_network(network))?;
+    ///     Ok(address)
+    /// }
+    ///
+    /// fn parse_and_validate_address_show_types(network: Network) -> Result<Address, ParseError> {
+    ///     let address: Address<NetworkChecked> = ADDR.parse::<Address<NetworkUnchecked>>()?
+    ///                                                .require_network(network)?;
+    ///     Ok(address)
+    /// }
+    ///
+    /// let network = Network::Bitcoin;  // Don't hard code network in applications.
+    /// let _ = parse_and_validate_address(network).unwrap();
+    /// let _ = parse_and_validate_address_combinator(network).unwrap();
+    /// let _ = parse_and_validate_address_show_types(network).unwrap();
+    /// ```
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, NetworkValidationError> {
+    pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(NetworkValidationError { required, address: self })
+            Err(NetworkValidationError { required, address: self }.into())
         }
     }
 
