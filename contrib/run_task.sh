@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-set -ex
+set -euox pipefail
 
 # Make all cargo invocations verbose.
 export CARGO_TERM_VERBOSE=true
@@ -165,6 +165,10 @@ do_lint() {
 # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
 # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
 do_dup_deps() {
+    # We can't use pipefail because these grep statements fail by design when there is no duplicate,
+    # the shell therefore won't pick up mistakes in your pipe - you are on your own.
+    set +o pipefail
+
     duplicate_dependencies=$(
         # Only show the actual duplicated deps, not their reverse tree, then
         # whitelist the 'syn' crate which is duplicated but it's not our fault.
@@ -182,6 +186,8 @@ do_dup_deps() {
         cargo tree  --target=all --all-features --duplicates
         exit 1
     fi
+
+    set -o pipefail
 }
 
 # Build the docs with a nightly toolchain, in unison with the function

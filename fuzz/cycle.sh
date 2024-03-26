@@ -5,7 +5,8 @@
 #
 # For hfuzz options see https://github.com/google/honggfuzz/blob/master/docs/USAGE.md
 
-set -e
+set -euo pipefail
+
 REPO_DIR=$(git rev-parse --show-toplevel)
 # shellcheck source=./fuzz-util.sh
 source "$REPO_DIR/fuzz/fuzz-util.sh"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 # Generates the label configuration using crates in the repository.
 # The label configuration is appended to the labeler config file.
