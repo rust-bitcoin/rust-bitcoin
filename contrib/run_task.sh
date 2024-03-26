@@ -1,13 +1,52 @@
-#!/bin/env bash
+#!/usr/bin/env bash
+#
+# We are attempting to run max 20 parallel jobs using GitHub actions (usage limit for free tier).
+#
+# ref: https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration
+#
+# The minimal/recent manifests are handled by CI (rust.yaml).
+#
+# Jobs (shell functions) that get run twice, once for each manifest:
+#
+# 1+2  stable
+# 3+4  nightly
+# 5+6  msrv
+#
+# Jobs (shell functions) that get run once:
+#
+# 7   lint
+# 8   docs
+# 9   docsrs
+# 10  bench
+# 11  asan
+# 12  wasm
+# 13  schemars
+#
+# Jobs run directly by rust.yml workflow:
+#
+# 0 Prepare
+#
+# 14  Arch32bit
+# 15  Cross
+# 16  Embedded
+# 17  Kani
+#
+# Jobs run directly from other workflows:
+#
+# 18  Coveralls - run by coveralls.yml
+# 19  release - run by release.yml
+# 20  labeler - run by manage-pr.yml
 
 set -euox pipefail
+
+REPO_DIR=$(git rev-parse --show-toplevel)
+CRATES=("bitcoin" "hashes" "internals" "io" "units" "base58")
 
 # Make all cargo invocations verbose.
 export CARGO_TERM_VERBOSE=true
 
 main() {
-    crate="$1"
-    task="$2"
+    local task="$1"
 
     check_required_commands
 
@@ -17,34 +56,27 @@ main() {
     locale
     env
 
-    cd "$crate"
-
-    # Building the fuzz crate is more-or-less just a sanity check.
-    if [ "$crate" == "fuzz" ]
-    then
-        cargo --locked build
-        exit 0
-    fi
-
-    # Every crate must define EXAMPLES.
-    . contrib/test_vars.sh || exit 1
-
     case $task in
-	test)
-	    do_test
-	    ;;
+        # 2 jobs each for these (one for each lock file).
+	stable)
+            # Test, run examples, do feature matrix.
+            # crate/contrib/test_vars.sh is sourced in this function.
+            build_and_test
+            ;;
 
-	feature_matrix)
-	    do_feature_matrix
-	    ;;
+	nightly)
+            build_and_test
+            ;;
 
-	lint)
-	    do_lint
-	    ;;
+	msrv)
+            build_and_test
+            ;;
 
-	dup_deps)
-	    do_dup_deps
-	    ;;
+        # 1 job each for these.
+        lint)
+            do_lint
+            do_dup_deps
+            ;;
 
 	docs)
             build_docs_with_stable_toolchain
@@ -54,25 +86,49 @@ main() {
             build_docs_with_nightly_toolchain
 	    ;;
 
-	wasm)
-	    do_wasm
-	    ;;
-
-	asan)
-	    do_asan
-	    ;;
-
 	bench)
 	    do_bench
 	    ;;
 
+	wasm)
+            # hashes crate only.
+	    do_wasm
+	    ;;
+
+	asan)
+            # hashes crate only - hashes/contrib/test_vars.sh is sourced in this function.
+	    do_asan
+	    ;;
+
 	schemars)
+            # hashes crate only.
 	    do_schemars
 	    ;;
-	*)
-	    err "Error: unknown task $task"
-	    ;;
+
+        *)
+            err "Error: unknown task $task"
+            ;;
     esac
+}
+
+# Build and test for each crate, done with each toolchain.
+build_and_test() {
+    # Building the fuzz crate is more-or-less just a sanity check.
+    pushd "$REPO_DIR/fuzz" > /dev/null
+    cargo --locked build
+    popd > /dev/null
+
+    for crate in "${CRATES[@]}"; do
+        pushd "$REPO_DIR/$crate" > /dev/null
+
+        # Set crate specific variables.
+        . contrib/test_vars.sh || exit 1
+
+        do_test
+        do_feature_matrix
+
+        popd > /dev/null
+    done
 }
 
 do_test() {
@@ -83,15 +139,15 @@ do_test() {
     $cargo build
     $cargo test
 
-    for example in $EXAMPLES; do
-	name="$(echo "$example" | cut -d ':' -f 1)"
-	features="$(echo "$example" | cut -d ':' -f 2)"
-	$cargo run --example "$name" --features="$features"
+    for example in $EXAMPLES; do # EXAMPLES is set in contrib/test_vars.sh
+        name="$(echo "$example" | cut -d ':' -f 1)"
+        features="$(echo "$example" | cut -d ':' -f 2)"
+        $cargo run --example "$name" --features="$features"
     done
 
     if [ -e ./contrib/extra_tests.sh ];
     then
-	./contrib/extra_tests.sh
+        ./contrib/extra_tests.sh
     fi
 }
 
@@ -103,7 +159,8 @@ do_feature_matrix() {
     $cargo build --no-default-features
     $cargo test --no-default-features
 
-    # All crates have a "std" feature.
+    # All crates have a "std" feature and FEATURES_WITH_STD is set in
+    # contrib/test_vars.sh
     loop_features "std" "$FEATURES_WITH_STD"
 
     # All but `bitcoin` crate have an "alloc" feature, this tests it
@@ -146,20 +203,15 @@ loop_features() {
     fi
 }
 
-# Lint the workspace then the individual crate examples.
+# Lint the workspace.
 do_lint() {
     need_nightly
-
-    # Use the current (recent/minimal) lock file.
     local cargo="cargo --locked"
 
-    $cargo clippy --workspace -- -D warnings
-
-    for example in $EXAMPLES; do
-	name=$(echo "$example" | cut -d ':' -f 1)
-	features=$(echo "$example" | cut -d ':' -f 2)
-	$cargo clippy --example "$name" --features="$features" -- -D warnings
-    done
+    # Lint various feature combinations to try and catch mistakes in feature gating.
+    $cargo clippy --workspace --all-targets --keep-going -- -D warnings
+    $cargo clippy --workspace --all-targets --all-features --keep-going -- -D warnings
+    $cargo clippy --workspace --all-targets --no-default-features --keep-going -- -D warnings
 }
 
 # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
@@ -173,7 +225,7 @@ do_dup_deps() {
         # Only show the actual duplicated deps, not their reverse tree, then
         # whitelist the 'syn' crate which is duplicated but it's not our fault.
         #
-        # Temporarily allow 2 versions of `hashes` and `hex` while we upgrade.
+        # Temporarily allow 2 versions of `hashes`, `internals`, and `hex` while we upgrade.
         cargo tree  --target=all --all-features --duplicates \
             | grep '^[0-9A-Za-z]' \
             | grep -v 'syn' \
@@ -193,7 +245,6 @@ do_dup_deps() {
 build_docs_with_nightly_toolchain() {
     need_nightly
     local cargo="cargo --locked"
-
     RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" $cargo doc --all-features
 }
 
@@ -201,20 +252,45 @@ build_docs_with_nightly_toolchain() {
 # above this checks that we feature guarded docs imports correctly.
 build_docs_with_stable_toolchain() {
     local cargo="cargo +stable --locked"
-
     RUSTDOCFLAGS="-D warnings" $cargo doc --all-features
 }
 
+# Bench only works with a non-stable toolchain (nightly, beta).
+do_bench() {
+    for crate in bitcoin hashes; do
+        pushd "$REPO_DIR/$crate" > /dev/null
+        RUSTFLAGS='--cfg=bench' cargo bench
+        popd > /dev/null
+    done
+}
+
+# This is only relevant for hashes.
+do_schemars() {
+    pushd "$REPO_DIR/hashes/extended_tests/schemars" > /dev/null
+    cargo test
+    popd > /dev/null
+}
+
+# Note we do not use the recent lock file or `--locked` when running the wasm tests.
 do_wasm() {
+    pushd "$REPO_DIR/hashes" > /dev/null
+
     clang --version &&
 	CARGO_TARGET_DIR=wasm cargo install --force wasm-pack &&
 	printf '\n[target.wasm32-unknown-unknown.dev-dependencies]\nwasm-bindgen-test = "0.3"\n' >> Cargo.toml &&
 	printf '\n[lib]\ncrate-type = ["cdylib", "rlib"]\n' >> Cargo.toml &&
 	CC=clang-9 wasm-pack build &&
 	CC=clang-9 wasm-pack test --node;
+
+    popd > /dev/null
 }
 
 do_asan() {
+    pushd "$REPO_DIR/hashes" > /dev/null
+
+    # Set ASAN_FEATURES
+    . contrib/test_vars.sh || exit 1
+
     cargo clean
     CC='clang -fsanitize=address -fno-omit-frame-pointer'                                        \
       RUSTFLAGS='-Zsanitizer=address -Clinker=clang -Cforce-frame-pointers=yes'                    \
@@ -226,17 +302,8 @@ do_asan() {
     # CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                         \
     #   RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'   \
     #   cargo test --lib --no-default-features --features="$ASAN_FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
-}
 
-# Bench only works with a non-stable toolchain (nightly, beta).
-do_bench() {
-    RUSTFLAGS='--cfg=bench' cargo bench
-}
-
-# This is only relevant for hashes.
-do_schemars() {
-    cd "extended_tests/schemars" > /dev/null
-    cargo test
+    popd > /dev/null
 }
 
 # Check all the commands we use are present in the current environment.
