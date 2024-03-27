@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -euox pipefail
 
 REPO_DIR=$(git rev-parse --show-toplevel)
 
