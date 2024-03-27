@@ -6,6 +6,8 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
+#[cfg(feature = "ordered")]
+use core::cmp::Ordering;
 use core::{cmp, convert, fmt};
 
 #[cfg(all(test, mutate))]
@@ -26,8 +28,9 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 ///
 /// ### Note on ordering
 ///
-/// Because locktimes may be height- or time-based, and these metrics are incommensurate, there
-/// is no total ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
+/// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
+/// ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`]. We also
+/// implement [`ordered::ArbitraryOrd`] if the "ordered" feature is enabled.
 ///
 /// ### Relevant BIPs
 ///
@@ -334,6 +337,20 @@ impl fmt::Display for LockTime {
                 Blocks(ref h) => fmt::Display::fmt(h, f),
                 Time(ref t) => fmt::Display::fmt(t, f),
             }
+        }
+    }
+}
+
+#[cfg(feature = "ordered")]
+impl ordered::ArbitraryOrd for LockTime {
+    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
+        use LockTime::*;
+
+        match (self, other) {
+            (Blocks(_), Time(_)) => Ordering::Less,
+            (Time(_), Blocks(_)) => Ordering::Greater,
+            (Blocks(this), Blocks(that)) => this.cmp(that),
+            (Time(this), Time(that)) => this.cmp(that),
         }
     }
 }
