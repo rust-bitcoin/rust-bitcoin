@@ -1,4 +1,3 @@
-use bitcoin::hashes::Hash;
 use bitcoin::{
     consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
 };
@@ -45,7 +44,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
         .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
-    let msg = secp256k1::Message::from_digest(sighash.to_byte_array());
+    let msg = secp256k1::Message::from(sighash);
     println!("Message is {:x}", msg);
     let secp = secp256k1::Secp256k1::verification_only();
     pk.verify(&secp, &msg, &sig).unwrap()

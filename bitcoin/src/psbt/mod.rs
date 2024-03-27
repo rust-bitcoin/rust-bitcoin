@@ -18,7 +18,6 @@ use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
-use hashes::Hash;
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
@@ -523,7 +522,7 @@ impl Psbt {
                 let sighash = cache
                     .legacy_signature_hash(input_index, spk, hash_ty.to_u32())
                     .expect("input checked above");
-                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
+                Ok((Message::from(sighash), hash_ty))
             }
             Sh => {
                 let script_code =
@@ -531,17 +530,17 @@ impl Psbt {
                 let sighash = cache
                     .legacy_signature_hash(input_index, script_code, hash_ty.to_u32())
                     .expect("input checked above");
-                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
+                Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
                 let sighash = cache.p2wpkh_signature_hash(input_index, spk, utxo.value, hash_ty)?;
-                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
+                Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
                 let redeem_script = input.redeem_script.as_ref().expect("checked above");
                 let sighash =
                     cache.p2wpkh_signature_hash(input_index, redeem_script, utxo.value, hash_ty)?;
-                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
+                Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {
                 let witness_script =
@@ -549,7 +548,7 @@ impl Psbt {
                 let sighash = cache
                     .p2wsh_signature_hash(input_index, witness_script, utxo.value, hash_ty)
                     .map_err(SignError::SegwitV0Sighash)?;
-                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
+                Ok((Message::from(sighash), hash_ty))
             }
             Tr => {
                 // This PSBT signing API is WIP, taproot to come shortly.
@@ -1199,7 +1198,7 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
-    use hashes::{hash160, ripemd160, sha256};
+    use hashes::{hash160, ripemd160, sha256, Hash};
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
