@@ -7,14 +7,10 @@ set -euo pipefail
 
 config=.github/labeler.yml
 
-if [ -n "$SCAN_DIR" ];
-then
-	scan_dir="$SCAN_DIR"
-else
-	scan_dir=.
-fi
+# Define a default value for SCAN_DIR if not set
+: "${SCAN_DIR:=.}"
 
-if [ "$1" '!=' "--force" ] && ! git diff --exit-code "$config";
+if [ "${1:-default}" '!=' "--force" ] && ! git diff --exit-code "$config";
 then
 	echo "Error: $config is not committed."
 	echo "Refusing to overwrite it to prevent disaster."
@@ -24,7 +20,7 @@ fi
 
 excluded_crates="fuzz|dep_test"
 
-CRATES="`cd "$scan_dir" && cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'$PWD'/")) | join(" ")'`"
+CRATES="`cd "$SCAN_DIR" && cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'$PWD'/")) | join(" ")'`"
 
 for crate in $CRATES;
 do
