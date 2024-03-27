@@ -114,6 +114,18 @@ pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError>
     })
 }
 
+/// Parses a u128 from a hex string.
+///
+/// Input string may or may not contain a `0x` prefix.
+pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
+    u128::from_str_radix(s, 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: 128,
+        is_signed: false,
+        source: error,
+    })
+}
+
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
 /// conversion function `fn`.
 #[macro_export]
