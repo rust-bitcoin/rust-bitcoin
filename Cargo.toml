@@ -19,3 +19,6 @@ path = "io"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.secp256k1]
+path = "../../rust-secp256k1/release"
