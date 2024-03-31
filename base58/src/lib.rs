@@ -268,10 +268,7 @@ mod tests {
             Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
         );
         // Non Base58 char.
-        assert_eq!(
-            decode("¢").unwrap_err(),
-            InvalidCharacterError { invalid: 194 }
-        );
+        assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError { invalid: 194 });
     }
 
     #[test]

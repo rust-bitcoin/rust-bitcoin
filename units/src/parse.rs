@@ -2,9 +2,9 @@
 
 //! Parsing utilities.
 
+use alloc::string::String;
 use core::fmt;
 use core::str::FromStr;
-use alloc::string::String;
 
 use internals::write_err;
 
@@ -58,10 +58,7 @@ impl AsRef<core::num::ParseIntError> for ParseIntError {
 
 /// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
-pub trait Integer:
-    FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized
-{
-}
+pub trait Integer: FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized {}
 
 macro_rules! impl_integer {
     ($($type:ty),* $(,)?) => {

@@ -224,9 +224,7 @@ pub struct SortKey(ArrayVec<u8, 65>);
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.with_serialized(|bytes| {
-            fmt::Display::fmt(&bytes.as_hex(), f)
-        })
+        self.with_serialized(|bytes| fmt::Display::fmt(&bytes.as_hex(), f))
     }
 }
 
@@ -239,14 +237,14 @@ impl FromStr for PublicKey {
             66 => {
                 let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
-                    InvalidLength(_) => unreachable!("length checked already")
+                    InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
-            },
+            }
             130 => {
                 let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
-                    InvalidLength(_) => unreachable!("length checked already")
+                    InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
             }
@@ -441,7 +439,10 @@ impl PrivateKey {
     pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
 
     /// Deserialize a private key from a slice
-    pub fn from_slice(data: &[u8], network: impl Into<NetworkKind>) -> Result<PrivateKey, secp256k1::Error> {
+    pub fn from_slice(
+        data: &[u8],
+        network: impl Into<NetworkKind>,
+    ) -> Result<PrivateKey, secp256k1::Error> {
         Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
     }
 
@@ -948,8 +949,10 @@ impl fmt::Display for FromWifError {
 
         match *self {
             Base58(ref e) => write_err!(f, "invalid base58"; e),
-            InvalidBase58PayloadLength(ref e) => write_err!(f, "decoded base58 data was an invalid length"; e),
-            InvalidAddressVersion(ref e) => write_err!(f, "decoded base58 data contained an invalid address version btye"; e),
+            InvalidBase58PayloadLength(ref e) =>
+                write_err!(f, "decoded base58 data was an invalid length"; e),
+            InvalidAddressVersion(ref e) =>
+                write_err!(f, "decoded base58 data contained an invalid address version btye"; e),
             Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
         }
     }
@@ -964,7 +967,7 @@ impl std::error::Error for FromWifError {
             Base58(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
             InvalidAddressVersion(ref e) => Some(e),
-            Secp256k1(ref e)=> Some(e),
+            Secp256k1(ref e) => Some(e),
         }
     }
 }
@@ -978,7 +981,9 @@ impl From<secp256k1::Error> for FromWifError {
 }
 
 impl From<InvalidBase58PayloadLengthError> for FromWifError {
-    fn from(e: InvalidBase58PayloadLengthError) -> FromWifError { Self::InvalidBase58PayloadLength(e) }
+    fn from(e: InvalidBase58PayloadLengthError) -> FromWifError {
+        Self::InvalidBase58PayloadLength(e)
+    }
 }
 
 impl From<InvalidAddressVersionError> for FromWifError {
@@ -1004,7 +1009,8 @@ impl fmt::Display for ParsePublicKeyError {
         match self {
             Encoding(e) => write_err!(f, "string error"; e),
             InvalidChar(char) => write!(f, "hex error {}", char),
-            InvalidHexLength(got) => write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
+            InvalidHexLength(got) =>
+                write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
     }
 }
@@ -1041,7 +1047,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
         use ParseCompressedPublicKeyError::*;
         match self {
             Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            Hex(e) => write_err!(f, "invalid hex"; e)
+            Hex(e) => write_err!(f, "invalid hex"; e),
         }
     }
 }
@@ -1463,19 +1469,32 @@ mod tests {
         assert_eq!(s.len(), 130);
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(secp256k1::Error::InvalidPublicKey)));
+        assert_eq!(
+            res.unwrap_err(),
+            ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(
+                secp256k1::Error::InvalidPublicKey
+            ))
+        );
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
         assert_eq!(s.len(), 66);
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(secp256k1::Error::InvalidPublicKey)));
+        assert_eq!(
+            res.unwrap_err(),
+            ParsePublicKeyError::Encoding(FromSliceError::Secp256k1(
+                secp256k1::Error::InvalidPublicKey
+            ))
+        );
 
         let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::Encoding(FromSliceError::InvalidKeyPrefix(6)));
+        assert_eq!(
+            res.unwrap_err(),
+            ParsePublicKeyError::Encoding(FromSliceError::InvalidKeyPrefix(6))
+        );
 
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b13g";
         assert_eq!(s.len(), 130);

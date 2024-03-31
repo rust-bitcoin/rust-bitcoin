@@ -226,7 +226,7 @@ impl Decodable for AddrV2 {
                 }
                 let addr: [u16; 8] = read_be_address(r)?;
                 // check the first byte for the CJDNS marker
-                if addr[0] >> 8 != 0xFC{
+                if addr[0] >> 8 != 0xFC {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
                 AddrV2::Cjdns(Ipv6Addr::new(

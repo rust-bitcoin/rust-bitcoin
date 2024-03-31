@@ -379,10 +379,7 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::{
-        Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
-        Witness,
-    };
+    use crate::{Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Witness};
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {

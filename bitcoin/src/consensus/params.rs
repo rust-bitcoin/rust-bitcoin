@@ -136,7 +136,6 @@ impl From<Network> for Params {
     fn from(value: Network) -> Self { Self::new(value) }
 }
 
-
 impl From<&Network> for Params {
     fn from(value: &Network) -> Self { Self::new(*value) }
 }
