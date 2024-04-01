@@ -182,3 +182,22 @@ macro_rules! impl_parse_str {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_u32_from_hex_prefixed() {
+        let want = 171;
+        let got = hex_u32("0xab").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u32_from_hex_no_prefix() {
+        let want = 171;
+        let got = hex_u32("ab").expect("failed to parse non-prefixed hex");
+        assert_eq!(got, want);
+    }
+}
