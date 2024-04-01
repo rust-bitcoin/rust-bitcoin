@@ -16,8 +16,8 @@ use crate::blockdata::script::{
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
-use crate::taproot::TapNodeHash;
 use crate::prelude::*;
+use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.
 ///

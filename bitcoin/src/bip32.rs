@@ -17,8 +17,8 @@ use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::impl_bytes_newtype;
-use crate::prelude::*;
 use crate::network::NetworkKind;
+use crate::prelude::*;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -490,7 +490,7 @@ pub enum Error {
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
-    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError)
+    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
 }
 
 internals::impl_from_infallible!(Error);
@@ -885,7 +885,11 @@ impl InvalidBase58PayloadLengthError {
 
 impl fmt::Display for InvalidBase58PayloadLengthError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "decoded base58 xpriv/xpub data was an invalid length: {} (expected 78)", self.length)
+        write!(
+            f,
+            "decoded base58 xpriv/xpub data was an invalid length: {} (expected 78)",
+            self.length
+        )
     }
 }
 

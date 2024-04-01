@@ -540,9 +540,10 @@ impl std::error::Error for MerkleBlockError {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex};
+    use hex::test_hex_unwrap as hex;
     #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
+
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
 
@@ -832,7 +833,8 @@ mod tests {
              000000000300000000000003000000000200000000ff00000000c7f1ccb10407\
              00000000000000ccb100c76538b100000004bfa9c251681b1b00040000000025\
              00000004bfaac251681b1b25\
-         ");
+         "
+        );
         let deser = crate::consensus::deserialize::<MerkleBlock>(&bytes);
         assert!(deser.is_err());
     }

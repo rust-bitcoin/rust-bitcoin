@@ -357,9 +357,7 @@ pub struct DisabledLockTimeError(u32);
 impl DisabledLockTimeError {
     /// Accessor for the `u32` whose "disable" flag was set, preventing
     /// it from being parsed as a relative locktime.
-    pub fn disabled_locktime_value(&self) -> u32 {
-        self.0
-    }
+    pub fn disabled_locktime_value(&self) -> u32 { self.0 }
 }
 
 impl fmt::Display for DisabledLockTimeError {
