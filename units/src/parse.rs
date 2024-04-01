@@ -92,7 +92,8 @@ pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseInt
 ///
 /// Input string may or may not contain a `0x` prefix.
 pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
-    u32::from_str_radix(strip_hex_prefix(s.as_ref()), 16).map_err(|error| ParseIntError {
+    let stripped = strip_hex_prefix(s.as_ref());
+    u32::from_str_radix(stripped, 16).map_err(|error| ParseIntError {
         input: s.into(),
         bits: 32,
         is_signed: false,
