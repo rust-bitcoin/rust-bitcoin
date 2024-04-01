@@ -88,17 +88,6 @@ pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseInt
     })
 }
 
-/// Strips the hex prefix off `s` if one is present.
-pub(crate) fn strip_hex_prefix(s: &str) -> &str {
-    if let Some(stripped) = s.strip_prefix("0x") {
-        stripped
-    } else if let Some(stripped) = s.strip_prefix("0X") {
-        stripped
-    } else {
-        s
-    }
-}
-
 /// Parses a u32 from a hex string.
 ///
 /// Input string may or may not contain a `0x` prefix.
@@ -109,6 +98,17 @@ pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError>
         is_signed: false,
         source: error,
     })
+}
+
+/// Strips the hex prefix off `s` if one is present.
+pub(crate) fn strip_hex_prefix(s: &str) -> &str {
+    if let Some(stripped) = s.strip_prefix("0x") {
+        stripped
+    } else if let Some(stripped) = s.strip_prefix("0X") {
+        stripped
+    } else {
+        s
+    }
 }
 
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
