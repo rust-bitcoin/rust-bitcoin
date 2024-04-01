@@ -88,7 +88,7 @@ pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseInt
     })
 }
 
-/// Parses a u32 from a hex string.
+/// Parses a `u32` from a hex string.
 ///
 /// Input string may or may not contain a `0x` prefix.
 pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
