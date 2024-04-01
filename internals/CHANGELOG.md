@@ -1,3 +1,8 @@
+# 0.3.0 - 2024-03-24
+
+- Bump MSRV to Rust version 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
+- Implement custom `ArrayVec` that is `Copy` [#2287](https://github.com/rust-bitcoin/rust-bitcoin/pull/2287)
+
 # 0.2.0 - 2023-06-20
 
 - [Rename crate](https://github.com/rust-bitcoin/rust-bitcoin/pull/1885) to `bitcoin-internals`

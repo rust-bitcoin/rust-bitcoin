@@ -178,6 +178,7 @@ do_dup_deps() {
             | grep '^[0-9A-Za-z]' \
             | grep -v 'syn' \
             | grep -v 'bitcoin_hashes' \
+            | grep -v 'bitcoin-internals' \
             | grep -v 'hex-conservative' \
             | wc -l
                           )
