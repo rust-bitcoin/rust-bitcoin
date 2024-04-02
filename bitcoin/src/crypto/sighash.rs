@@ -32,10 +32,12 @@ pub(crate) const UINT256_ONE: [u8; 32] = [
     0, 0, 0, 0, 0, 0, 0, 0
 ];
 
-macro_rules! impl_thirty_two_byte_hash {
+macro_rules! impl_message_from_hash {
     ($ty:ident) => {
-        impl secp256k1::ThirtyTwoByteHash for $ty {
-            fn into_32(self) -> [u8; 32] { self.to_byte_array() }
+        impl From<$ty> for secp256k1::Message {
+            fn from(hash: $ty) -> secp256k1::Message {
+                secp256k1::Message::from_digest(hash.to_byte_array())
+            }
         }
     };
 }
@@ -50,8 +52,8 @@ hash_newtype! {
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
 
-impl_thirty_two_byte_hash!(LegacySighash);
-impl_thirty_two_byte_hash!(SegwitV0Sighash);
+impl_message_from_hash!(LegacySighash);
+impl_message_from_hash!(SegwitV0Sighash);
 
 sha256t_hash_newtype! {
     pub struct TapSighashTag = hash_str("TapSighash");
@@ -63,7 +65,7 @@ sha256t_hash_newtype! {
     pub struct TapSighash(_);
 }
 
-impl_thirty_two_byte_hash!(TapSighash);
+impl_message_from_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -1935,7 +1937,7 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let msg = secp256k1::Message::from_digest(sighash.to_byte_array());
+            let msg = secp256k1::Message::from(sighash);
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);

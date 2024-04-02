@@ -177,9 +177,6 @@ do_dup_deps() {
         cargo tree  --target=all --all-features --duplicates \
             | grep '^[0-9A-Za-z]' \
             | grep -v 'syn' \
-            | grep -v 'bitcoin_hashes' \
-            | grep -v 'bitcoin-internals' \
-            | grep -v 'hex-conservative' \
             | wc -l
                           )
     if [ "$duplicate_dependencies" -ne 0 ]; then
