@@ -1,3 +1,7 @@
+# 0.31.2 - 2024-04-01
+
+- Fix parsing bug in `merkle_block::deserialize` [#2614](https://github.com/rust-bitcoin/rust-bitcoin/pull/2614)
+
 # 0.31.1 - 2024-01-09
 
 - Fix bug in `FeeRate::checked_mul_by_weight` [#2128](https://github.com/rust-bitcoin/rust-bitcoin/pull/2182)
