@@ -27,6 +27,7 @@
 //!                            `std::error::Error`. At this time there's a hack to
 //!                            achieve the same without this feature but it could
 //!                            happen the implementations diverge one day.
+//! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
