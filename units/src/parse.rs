@@ -88,6 +88,32 @@ pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseInt
     })
 }
 
+/// Parses a `u32` from a hex string.
+///
+/// Input string may or may not contain a `0x` prefix.
+pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
+    let stripped = strip_hex_prefix(s.as_ref());
+    u32::from_str_radix(stripped, 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: 32,
+        is_signed: false,
+        source: error,
+    })
+}
+
+/// Parses a `u128` from a hex string.
+///
+/// Input string may or may not contain a `0x` prefix.
+pub fn hex_u128<S: AsRef<str> + Into<String>>(s: S) -> Result<u128, ParseIntError> {
+    let stripped = strip_hex_prefix(s.as_ref());
+    u128::from_str_radix(stripped, 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: 128,
+        is_signed: false,
+        source: error,
+    })
+}
+
 /// Strips the hex prefix off `s` if one is present.
 pub(crate) fn strip_hex_prefix(s: &str) -> &str {
     if let Some(stripped) = s.strip_prefix("0x") {
@@ -97,18 +123,6 @@ pub(crate) fn strip_hex_prefix(s: &str) -> &str {
     } else {
         s
     }
-}
-
-/// Parses a u32 from a hex string.
-///
-/// Input string may or may not contain a `0x` prefix.
-pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
-    u32::from_str_radix(strip_hex_prefix(s.as_ref()), 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 32,
-        is_signed: false,
-        source: error,
-    })
 }
 
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
@@ -180,5 +194,38 @@ macro_rules! impl_parse_str {
                 $inner_fn(s)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_u32_from_hex_prefixed() {
+        let want = 171;
+        let got = hex_u32("0xab").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u32_from_hex_no_prefix() {
+        let want = 171;
+        let got = hex_u32("ab").expect("failed to parse non-prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u128_from_hex_prefixed() {
+        let want = 3735928559;
+        let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u128_from_hex_no_prefix() {
+        let want = 3735928559;
+        let got = hex_u128("deadbeef").expect("failed to parse non-prefixed hex");
+        assert_eq!(got, want);
     }
 }

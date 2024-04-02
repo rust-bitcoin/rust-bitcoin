@@ -18,12 +18,22 @@ use units::parse;
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
+use crate::error::{ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
     ($ty:ident) => {
         impl $ty {
+            /// Creates `Self` from a prefixed hex string.
+            pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+                Ok($ty(U256::from_hex(s)?))
+            }
+
+            /// Creates `Self` from an unprefixed hex string.
+            pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+                Ok($ty(U256::from_unprefixed_hex(s)?))
+            }
+
             /// Creates `Self` from a big-endian byte array.
             #[inline]
             pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
@@ -389,6 +399,43 @@ impl U256 {
     const ZERO: U256 = U256(0, 0);
 
     const ONE: U256 = U256(0, 1);
+
+    /// Creates a `U256` from an prefixed hex string.
+    fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
+            stripped
+        } else if let Some(stripped) = s.strip_prefix("0X") {
+            stripped
+        } else {
+            return Err(MissingPrefixError::new(s).into());
+        };
+        Ok(U256::from_hex_internal(stripped)?)
+    }
+
+    /// Creates a `CompactTarget` from an unprefixed hex string.
+    fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        if s.starts_with("0x") || s.starts_with("0X") {
+            return Err(ContainsPrefixError::new(s).into());
+        }
+        Ok(U256::from_hex_internal(s)?)
+    }
+
+    fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
+        let (high, low) = if s.len() < 32 {
+            let low = parse::hex_u128(s)?;
+            (0, low)
+        } else {
+            let high_len = s.len() - 32;
+            let high_s = &s[..high_len];
+            let low_s = &s[high_len..];
+
+            let high = parse::hex_u128(high_s)?;
+            let low = parse::hex_u128(low_s)?;
+            (high, low)
+        };
+
+        Ok(U256(high, low))
+    }
 
     /// Creates [`U256`] from a big-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
@@ -1505,6 +1552,28 @@ mod tests {
             add << 64,
             U256(0xDEAD_BEEF_DEAD_BEEF, 0xDEAD_BEEF_DEAD_BEEF_0000_0000_0000_0000)
         );
+    }
+
+    #[test]
+    fn u256_to_from_hex_roundtrips() {
+        let val = U256(
+            0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
+            0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
+        );
+        let hex = format!("0x{:x}", val);
+        let got = U256::from_hex(&hex).expect("failed to parse hex");
+        assert_eq!(got, val);
+    }
+
+    #[test]
+    fn u256_to_from_unprefixed_hex_roundtrips() {
+        let val = U256(
+            0xDEAD_BEEA_A69B_455C_D41B_B662_A69B_4550,
+            0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF,
+        );
+        let hex = format!("{:x}", val);
+        let got = U256::from_unprefixed_hex(&hex).expect("failed to parse hex");
+        assert_eq!(got, val);
     }
 
     #[cfg(feature = "serde")]
