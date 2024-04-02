@@ -7,6 +7,8 @@
 //!
 
 use crate::network::Network;
+#[cfg(doc)]
+use crate::pow::CompactTarget;
 use crate::pow::Target;
 
 /// Parameters that influence chain consensus.
@@ -30,6 +32,12 @@ pub struct Params {
     /// Number of blocks with the same set of rules.
     pub miner_confirmation_window: u32,
     /// Proof of work limit value. It contains the lowest possible difficulty.
+    #[deprecated(since = "TBD", note = "field renamed to max_attainable_target")]
+    pub pow_limit: Target,
+    /// The maximum **attainable** target value for these params.
+    ///
+    /// Not all target values are attainable because consensus code uses the compact format to
+    /// represent targets (see [`CompactTarget`]).
     ///
     /// Note that this value differs from Bitcoin Core's powLimit field in that this value is
     /// attainable, but Bitcoin Core's is not. Specifically, because targets in Bitcoin are always
@@ -37,7 +45,7 @@ pub struct Params {
     /// Still, this should not affect consensus as the only place where the non-compact form of
     /// this is used in Bitcoin Core's consensus algorithm is in comparison and there are no
     /// compact-expressible values between Bitcoin Core's and the limit expressed here.
-    pub pow_limit: Target,
+    pub max_attainable_target: Target,
     /// Expected amount of time to mine one block.
     pub pow_target_spacing: u64,
     /// Difficulty recalculation interval.
@@ -62,6 +70,7 @@ impl Params {
         rule_change_activation_threshold: 1916, // 95%
         miner_confirmation_window: 2016,
         pow_limit: Target::MAX_ATTAINABLE_MAINNET,
+        max_attainable_target: Target::MAX_ATTAINABLE_MAINNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
         pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
         allow_min_difficulty_blocks: false,
@@ -78,6 +87,7 @@ impl Params {
         rule_change_activation_threshold: 1512, // 75%
         miner_confirmation_window: 2016,
         pow_limit: Target::MAX_ATTAINABLE_TESTNET,
+        max_attainable_target: Target::MAX_ATTAINABLE_TESTNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
         pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
         allow_min_difficulty_blocks: true,
@@ -94,6 +104,7 @@ impl Params {
         rule_change_activation_threshold: 1916, // 95%
         miner_confirmation_window: 2016,
         pow_limit: Target::MAX_ATTAINABLE_SIGNET,
+        max_attainable_target: Target::MAX_ATTAINABLE_SIGNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
         pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
         allow_min_difficulty_blocks: false,
@@ -110,6 +121,7 @@ impl Params {
         rule_change_activation_threshold: 108, // 75%
         miner_confirmation_window: 144,
         pow_limit: Target::MAX_ATTAINABLE_REGTEST,
+        max_attainable_target: Target::MAX_ATTAINABLE_REGTEST,
         pow_target_spacing: 10 * 60,            // 10 minutes.
         pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
         allow_min_difficulty_blocks: true,
@@ -146,4 +158,8 @@ impl From<Network> for &'static Params {
 
 impl From<&Network> for &'static Params {
     fn from(value: &Network) -> Self { value.params() }
+}
+
+impl AsRef<Params> for Params {
+    fn as_ref(&self) -> &Params { self }
 }

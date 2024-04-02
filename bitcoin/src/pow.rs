@@ -6,6 +6,7 @@
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 //!
 
+use core::cmp;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
@@ -16,10 +17,8 @@ use units::parse;
 
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
-#[cfg(doc)]
 use crate::consensus::Params;
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::Network;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -126,7 +125,7 @@ impl Target {
     /// The maximum **attainable** target value on mainnet.
     ///
     /// Not all target values are attainable because consensus code uses the compact format to
-    /// represent targets (see `CompactTarget`).
+    /// represent targets (see [`CompactTarget`]).
     pub const MAX_ATTAINABLE_MAINNET: Self = Target(U256(0xFFFF_u128 << (208 - 128), 0));
 
     /// The proof of work limit on testnet.
@@ -227,16 +226,18 @@ impl Target {
     /// integer but `difficulty()` returns only 128 bits this means for targets below approximately
     /// `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty()` will saturate at `u128::MAX`.
     ///
+    /// # Panics
+    ///
+    /// Panics if `self` is zero (divide by zero).
+    ///
     /// [max]: Target::max
     /// [target]: crate::blockdata::block::Header::target
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn difficulty(&self, network: Network) -> u128 {
-        let max = match network {
-            Network::Bitcoin => Target::MAX_ATTAINABLE_MAINNET,
-            Network::Testnet => Target::MAX_ATTAINABLE_TESTNET,
-            Network::Signet => Target::MAX_ATTAINABLE_SIGNET,
-            Network::Regtest => Target::MAX_ATTAINABLE_REGTEST,
-        };
+    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+        // Panic here may be eaiser to debug than during the actual division.
+        assert_ne!(self.0, U256::ZERO, "divide by zero");
+
+        let max = params.as_ref().max_attainable_target;
         let d = max.0 / self.0;
         d.saturating_to_u128()
     }
@@ -245,23 +246,63 @@ impl Target {
     ///
     /// See [`difficulty`] for details.
     ///
+    /// # Returns
+    ///
+    /// Returns [`f64::INFINITY`] if `self` is zero (caused by divide by zero).
+    ///
     /// [`difficulty`]: Target::difficulty
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty_float(&self) -> f64 { TARGET_MAX_F64 / self.0.to_f64() }
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
+    #[deprecated(since = "TBD", note = "use min_transition_threshold instead")]
+    pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
+
+    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    #[deprecated(since = "TBD", note = "use max_transition_threshold instead")]
+    pub fn max_difficulty_transition_threshold(&self) -> Self {
+        self.max_transition_threshold_unchecked()
+    }
+
+    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
-    pub fn min_difficulty_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+    ///
+    /// # Returns
+    ///
+    /// In line with Bitcoin Core this function may return a target value of zero.
+    pub fn min_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
     ///
     /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
     /// adjustment period.
-    pub fn max_difficulty_transition_threshold(&self) -> Self { Self(self.0 << 2) }
+    ///
+    /// We also check that the calculated target is not greater than the maximum allowed target,
+    /// this value is network specific - hence the `params` parameter.
+    pub fn max_transition_threshold(&self, params: impl AsRef<Params>) -> Self {
+        let max_attainable = params.as_ref().max_attainable_target;
+        cmp::min(self.max_transition_threshold_unchecked(), max_attainable)
+    }
+
+    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    ///
+    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+    /// adjustment period.
+    ///
+    /// # Returns
+    ///
+    /// This function may return a value greater than the maximum allowed target for this network.
+    ///
+    /// The return value should be checked against [`Params::max_attainable_target`] or use one of
+    /// the `Target::MAX_ATTAINABLE_FOO` constants.
+    pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
 
