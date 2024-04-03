@@ -56,6 +56,21 @@ pub struct Params {
     pub no_pow_retargeting: bool,
 }
 
+/// The mainnet parameters.
+///
+/// Use this for a static reference e.g., `&params::MAINNET`.
+///
+/// For more on static vs const see The Rust Reference [using-statics-or-consts] section.
+///
+/// [using-statics-or-consts]: <https://doc.rust-lang.org/reference/items/static-items.html#using-statics-or-consts>
+pub static MAINNET: Params = Params::MAINNET;
+/// The testnet parameters.
+pub static TESTNET: Params = Params::TESTNET;
+/// The signet parameters.
+pub static SIGNET: Params = Params::SIGNET;
+/// The regtest parameters.
+pub static REGTEST: Params = Params::REGTEST;
+
 impl Params {
     /// The mainnet parameters (alias for `Params::MAINNET`).
     pub const BITCOIN: Params = Params::MAINNET;
@@ -162,4 +177,15 @@ impl From<&Network> for &'static Params {
 
 impl AsRef<Params> for Params {
     fn as_ref(&self) -> &Params { self }
+}
+
+impl AsRef<Params> for Network {
+    fn as_ref(&self) -> &Params {
+        match *self {
+            Network::Bitcoin => &MAINNET,
+            Network::Testnet => &TESTNET,
+            Network::Signet => &SIGNET,
+            Network::Regtest => &REGTEST,
+        }
+    }
 }
