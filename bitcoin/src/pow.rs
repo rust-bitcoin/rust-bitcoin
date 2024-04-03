@@ -24,29 +24,41 @@ use crate::error::{ContainsPrefixError, MissingPrefixError, ParseIntError, Prefi
 macro_rules! do_impl {
     ($ty:ident) => {
         impl $ty {
-            /// Creates `Self` from a prefixed hex string.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a prefixed hex string."]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
 
-            /// Creates `Self` from an unprefixed hex string.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from an unprefixed hex string."]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
 
-            /// Creates `Self` from a big-endian byte array.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a big-endian byte array."]
             #[inline]
             pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
 
-            /// Creates `Self` from a little-endian byte array.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a little-endian byte array."]
             #[inline]
             pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
 
-            /// Converts `self` to a big-endian byte array.
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a big-endian byte array."]
             #[inline]
             pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
 
-            /// Converts `self` to a little-endian byte array.
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a little-endian byte array."]
             #[inline]
             pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
         }
