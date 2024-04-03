@@ -25,7 +25,7 @@ use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::blockdata::transaction::{self, Transaction, TxOut};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
-use crate::key::TapTweak;
+use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
@@ -283,14 +283,12 @@ impl Psbt {
 
     /// Attempts to create _all_ the required signatures for this PSBT using `k`.
     ///
-    /// If you just want to sign an input with one specific key consider using `sighash_ecdsa`. This
-    /// function does not support scripts that contain `OP_CODESEPARATOR`.
+    /// If you just want to sign an input with one specific key consider using `sighash_ecdsa` or
+    /// `sighash_taproot`. This function does not support scripts that contain `OP_CODESEPARATOR`.
     ///
     /// # Returns
     ///
-    /// Either Ok(SigningKeys) or Err((SigningKeys, SigningErrors)), where
-    /// - SigningKeys: A map of input index -> pubkey associated with secret key used to sign.
-    /// - SigningKeys: A map of input index -> the error encountered while attempting to sign.
+    /// A map of input index -> keys used to sign, for Taproot specifics please see [`SigningKeys`].
     ///
     /// If an error is returned some signatures may already have been added to the PSBT. Since
     /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
@@ -298,7 +296,7 @@ impl Psbt {
         &mut self,
         k: &K,
         secp: &Secp256k1<C>,
-    ) -> Result<SigningKeys, (SigningKeys, SigningErrors)>
+    ) -> Result<SigningKeysMap, (SigningKeysMap, SigningErrors)>
     where
         C: Signing + Verification,
         K: GetKey,
@@ -314,7 +312,7 @@ impl Psbt {
                 Ok(SigningAlgorithm::Ecdsa) =>
                     match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
                         Ok(v) => {
-                            used.insert(i, v);
+                            used.insert(i, SigningKeys::Ecdsa(v));
                         }
                         Err(e) => {
                             errors.insert(i, e);
@@ -323,7 +321,7 @@ impl Psbt {
                 Ok(SigningAlgorithm::Schnorr) => {
                     match self.bip32_sign_schnorr(k, i, &mut cache, secp) {
                         Ok(v) => {
-                            used.insert(i, v);
+                            used.insert(i, SigningKeys::Schnorr(v));
                         }
                         Err(e) => {
                             errors.insert(i, e);
@@ -401,7 +399,8 @@ impl Psbt {
     ///
     /// # Returns
     ///
-    /// - Ok: A list of the public keys used in signing.
+    /// - Ok: A list of the xonly public keys used in signing. When signing a key path spend we
+    ///   return the internal key.
     /// - Err: Error encountered trying to calculate the sighash AND we had the signing key.
     fn bip32_sign_schnorr<C, K, T>(
         &mut self,
@@ -409,7 +408,7 @@ impl Psbt {
         input_index: usize,
         cache: &mut SighashCache<T>,
         secp: &Secp256k1<C>,
-    ) -> Result<Vec<PublicKey>, SignError>
+    ) -> Result<Vec<XOnlyPublicKey>, SignError>
     where
         C: Signing + Verification,
         T: Borrow<Transaction>,
@@ -453,7 +452,7 @@ impl Psbt {
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
 
-                    used.push(sk.public_key(secp));
+                    used.push(internal_key);
                 }
             }
 
@@ -481,7 +480,7 @@ impl Psbt {
                         input.tap_script_sigs.insert((xonly, lh), signature);
                     }
 
-                    used.push(sk.public_key(secp));
+                    used.push(sk.public_key(secp).into());
                 }
             }
         }
@@ -774,8 +773,20 @@ impl GetKey for Xpriv {
     }
 }
 
-/// Map of input index -> pubkey associated with secret key used to create signature for that input.
-pub type SigningKeys = BTreeMap<usize, Vec<PublicKey>>;
+/// Map of input index -> signing key for that input (see [`SigningKeys`]).
+pub type SigningKeysMap = BTreeMap<usize, SigningKeys>;
+
+/// A list of keys used to sign an input.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum SigningKeys {
+    /// Keys used to sign an ECDSA input.
+    Ecdsa(Vec<PublicKey>),
+    /// Keys used to sign a Taproot input.
+    ///
+    /// - Key path spend: This is the internal key.
+    /// - Script path spend: This is the pubkey associated with the secret key that signed.
+    Schnorr(Vec<XOnlyPublicKey>),
+}
 
 /// Map of input index -> the error encountered while attempting to sign that input.
 pub type SigningErrors = BTreeMap<usize, SignError>;
@@ -2279,6 +2290,6 @@ mod tests {
         let (signing_keys, _) = psbt.sign(&key_map, &secp).unwrap_err();
 
         assert_eq!(signing_keys.len(), 1);
-        assert_eq!(signing_keys[&0], vec![pk]);
+        assert_eq!(signing_keys[&0], SigningKeys::Ecdsa(vec![pk]));
     }
 }
