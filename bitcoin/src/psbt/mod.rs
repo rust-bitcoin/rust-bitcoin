@@ -402,8 +402,7 @@ impl Psbt {
     /// # Returns
     ///
     /// - Ok: A list of the public keys used in signing.
-    /// - Err: Error encountered trying to calculate the sighash AND we had the signing key. Also panics
-    /// if input_index is out of bounds.
+    /// - Err: Error encountered trying to calculate the sighash AND we had the signing key.
     fn bip32_sign_schnorr<C, K, T>(
         &mut self,
         k: &K,
@@ -416,7 +415,7 @@ impl Psbt {
         T: Borrow<Transaction>,
         K: GetKey,
     {
-        let mut input = self.inputs[input_index].clone();
+        let mut input = self.checked_input(input_index)?.clone();
 
         let mut used = vec![]; // List of pubkeys used to sign the input.
 
@@ -487,7 +486,7 @@ impl Psbt {
             }
         }
 
-        self.inputs[input_index] = input;
+        self.inputs[input_index] = input; // input_index is checked above.
 
         Ok(used)
     }
