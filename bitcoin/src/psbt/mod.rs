@@ -283,9 +283,6 @@ impl Psbt {
 
     /// Attempts to create _all_ the required signatures for this PSBT using `k`.
     ///
-    /// **NOTE**: Taproot inputs are, as yet, not supported by this function. We currently only
-    /// attempt to sign ECDSA inputs.
-    ///
     /// If you just want to sign an input with one specific key consider using `sighash_ecdsa`. This
     /// function does not support scripts that contain `OP_CODESEPARATOR`.
     ///
