@@ -24,29 +24,41 @@ use crate::error::{ContainsPrefixError, MissingPrefixError, ParseIntError, Prefi
 macro_rules! do_impl {
     ($ty:ident) => {
         impl $ty {
-            /// Creates `Self` from a prefixed hex string.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a prefixed hex string."]
             pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
                 Ok($ty(U256::from_hex(s)?))
             }
 
-            /// Creates `Self` from an unprefixed hex string.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from an unprefixed hex string."]
             pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
                 Ok($ty(U256::from_unprefixed_hex(s)?))
             }
 
-            /// Creates `Self` from a big-endian byte array.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a big-endian byte array."]
             #[inline]
             pub fn from_be_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_be_bytes(bytes)) }
 
-            /// Creates `Self` from a little-endian byte array.
+            #[doc = "Creates `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` from a little-endian byte array."]
             #[inline]
             pub fn from_le_bytes(bytes: [u8; 32]) -> $ty { $ty(U256::from_le_bytes(bytes)) }
 
-            /// Converts `self` to a big-endian byte array.
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a big-endian byte array."]
             #[inline]
             pub fn to_be_bytes(self) -> [u8; 32] { self.0.to_be_bytes() }
 
-            /// Converts `self` to a little-endian byte array.
+            #[doc = "Converts `"]
+            #[doc = stringify!($ty)]
+            #[doc = "` to a little-endian byte array."]
             #[inline]
             pub fn to_le_bytes(self) -> [u8; 32] { self.0.to_le_bytes() }
         }
@@ -400,7 +412,7 @@ impl U256 {
 
     const ONE: U256 = U256(0, 1);
 
-    /// Creates a `U256` from an prefixed hex string.
+    /// Creates a `U256` from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let stripped = if let Some(stripped) = s.strip_prefix("0x") {
             stripped
@@ -412,7 +424,7 @@ impl U256 {
         Ok(U256::from_hex_internal(stripped)?)
     }
 
-    /// Creates a `CompactTarget` from an unprefixed hex string.
+    /// Creates a `U256` from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         if s.starts_with("0x") || s.starts_with("0X") {
             return Err(ContainsPrefixError::new(s).into());
@@ -420,6 +432,7 @@ impl U256 {
         Ok(U256::from_hex_internal(s)?)
     }
 
+    // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
         let (high, low) = if s.len() < 32 {
             let low = parse::hex_u128(s)?;
@@ -437,7 +450,7 @@ impl U256 {
         Ok(U256(high, low))
     }
 
-    /// Creates [`U256`] from a big-endian array of `u8`s.
+    /// Creates `U256` from a big-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn from_be_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
@@ -446,7 +459,7 @@ impl U256 {
         U256(big, little)
     }
 
-    /// Creates a [`U256`] from a little-endian array of `u8`s.
+    /// Creates a `U256` from a little-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn from_le_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
@@ -455,7 +468,7 @@ impl U256 {
         U256(big, little)
     }
 
-    /// Converts `Self` to a big-endian array of `u8`s.
+    /// Converts `U256` to a big-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn to_be_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
@@ -464,7 +477,7 @@ impl U256 {
         out
     }
 
-    /// Converts `Self` to a little-endian array of `u8`s.
+    /// Converts `U256` to a little-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn to_le_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
@@ -515,7 +528,7 @@ impl U256 {
     /// Returns the low 128 bits.
     fn low_u128(&self) -> u128 { self.1 }
 
-    /// Returns `self` as a `u128` saturating to `u128::MAX` if `self` is too big.
+    /// Returns this `U256` as a `u128` saturating to `u128::MAX` if `self` is too big.
     // Matagen gives false positive because >= and > both return u128::MAX
     fn saturating_to_u128(&self) -> u128 {
         if *self > U256::from(u128::MAX) {
