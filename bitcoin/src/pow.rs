@@ -420,6 +420,7 @@ impl U256 {
         Ok(U256::from_hex_internal(s)?)
     }
 
+    // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
         let (high, low) = if s.len() < 32 {
             let low = parse::hex_u128(s)?;
