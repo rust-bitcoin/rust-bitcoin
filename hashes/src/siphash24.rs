@@ -5,7 +5,7 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::{cmp, mem, ptr, str};
+use core::{cmp, mem, ptr};
 
 use crate::{FromSliceError, Hash as _, HashEngine as _};
 
