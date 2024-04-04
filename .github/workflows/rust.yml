@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Read nightly version
         id: read_toolchain
-        run: echo "nightly_version=$(cat .github/nightly-version)" >> $GITHUB_OUTPUT
+        run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
       - name: Prepare tests
         id: get_matrix
         run: contrib/get_matrix.sh

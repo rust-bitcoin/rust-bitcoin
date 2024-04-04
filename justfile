@@ -11,11 +11,11 @@ check:
 
 # Lint everything.
 lint:
-  cargo +$(cat .github/nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings
+  cargo +$(cat ./nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings
 
 # Check the formatting
 format:
-  cargo +$(cat .github/nightly-version) fmt --all --check
+  cargo +$(cat ./nightly-version) fmt --all --check
 
 # Quick and dirty CI useful for pre-push checks.
 sane: lint

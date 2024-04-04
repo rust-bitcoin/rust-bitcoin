@@ -46,4 +46,4 @@ fi
 git diff-index --check --cached $against -- || exit 1
 
 # Check that code lints cleanly.
-cargo +nightly clippy --all-features -- -D warnings || exit 1
+cargo +$(cat ./nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings || exit 1
