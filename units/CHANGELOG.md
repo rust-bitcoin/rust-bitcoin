@@ -1,3 +1,8 @@
+# 0.1.1 - 2024-04-04
+
+* Enable "alloc" feature for `internals` dependency - enables caching
+  of parsed input strings in a couple of `amount` error types.
+
 # 0.1.0 - Initial Release - 2024-04-03
 
 Initial release of the `bitcoin-units` crate. These unit types are
