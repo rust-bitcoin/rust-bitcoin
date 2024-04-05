@@ -10,7 +10,6 @@
   - `sig` becomes `signature`
   - `hash_ty` becomes `sighash_type`
 - Rename `txid` to `compute_txid` [#2366](https://github.com/rust-bitcoin/rust-bitcoin/pull/2366)
-- In hardcoded BIP-32 derivation paths: Remove `m/` prefix requirement [#2451](https://github.com/rust-bitcoin/rust-bitcoin/pull/2451)
 
 ## Crate smashing
 
@@ -81,6 +80,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 
 ## Other API breaking changes
 
+- BIP-32: Remove `m/` prefix requirement (derivation paths) [#2451](https://github.com/rust-bitcoin/rust-bitcoin/pull/2451)
 - Require `io::BufRead` instead of `io::Read` in consensus decode trait [#2240](https://github.com/rust-bitcoin/rust-bitcoin/pull/2240)
 - Make `Payload` and `AddressEncoding` private [#1979](https://github.com/rust-bitcoin/rust-bitcoin/pull/1979)
 - Remove `bech32` from the public API [#2381](https://github.com/rust-bitcoin/rust-bitcoin/pull/2381)
