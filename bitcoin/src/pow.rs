@@ -18,7 +18,9 @@ use units::parse;
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::error::{ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError};
+use crate::error::{
+    ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError,
+};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {

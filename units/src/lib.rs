@@ -45,17 +45,14 @@ pub mod parse;
 #[cfg(feature = "alloc")]
 pub mod weight;
 
+pub use self::amount::ParseAmountError;
 #[doc(inline)]
 pub use self::amount::{Amount, SignedAmount};
-pub use self::amount::ParseAmountError;
 #[cfg(feature = "alloc")]
 pub use self::parse::ParseIntError;
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::{
-    fee_rate::FeeRate,
-    weight::Weight,
-};
+pub use self::{fee_rate::FeeRate, weight::Weight};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

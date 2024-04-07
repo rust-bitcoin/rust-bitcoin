@@ -229,9 +229,7 @@ impl Magic {
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
 
     /// Returns the magic bytes for the network defined by `params`.
-    pub fn from_params(params: impl AsRef<Params>) -> Self {
-        params.as_ref().network.into()
-    }
+    pub fn from_params(params: impl AsRef<Params>) -> Self { params.as_ref().network.into() }
 }
 
 impl FromStr for Magic {
