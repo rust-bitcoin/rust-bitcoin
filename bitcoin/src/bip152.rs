@@ -492,7 +492,7 @@ mod test {
     fn test_getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
             block_hash: Hash::all_zeros(),
-            indexes: vec![core::u64::MAX],
+            indexes: vec![u64::MAX],
         });
     }
 }
