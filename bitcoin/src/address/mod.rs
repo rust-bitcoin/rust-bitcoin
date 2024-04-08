@@ -506,7 +506,10 @@ impl Address {
     pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &Script, params: impl AsRef<Params>) -> Result<Address, FromScriptError> {
+    pub fn from_script(
+        script: &Script,
+        params: impl AsRef<Params>,
+    ) -> Result<Address, FromScriptError> {
         let network = params.as_ref().network;
         if script.is_p2pkh() {
             let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");

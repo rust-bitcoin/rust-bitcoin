@@ -198,8 +198,8 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::*;
-    use crate::consensus::params;
     use crate::consensus::encode::serialize;
+    use crate::consensus::params;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
