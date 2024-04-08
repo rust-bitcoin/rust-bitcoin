@@ -17,7 +17,7 @@ jobs:
           # version of the compiler dtolnay/rust-toolchain gives us.
           NIGHTLY_DATE=$(rustc +nightly --verbose --version | sed -ne 's/^commit-date: //p')
           # Update the nightly version in the reference file.
-          echo "nightly-${NIGHTLY_DATE}" > .github/nightly-version
+          echo "nightly-${NIGHTLY_DATE}" > nightly-version
           echo "nightly_date=${NIGHTLY_DATE}" >> $GITHUB_ENV
           # Some days there is no new nightly. In this case don't make an empty PR.
           if ! git diff --exit-code > /dev/null; then
