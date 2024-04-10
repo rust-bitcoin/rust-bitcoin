@@ -26,7 +26,7 @@
 // The xpriv and derivation path from the imported descriptors
 const BENEFACTOR_XPRIV_STR: &str = "tprv8ZgxMBicQKsPd4arFr7sKjSnKFDVMR2JHw9Y8L9nXN4kiok4u28LpHijEudH3mMYoL4pM5UL9Bgdz2M4Cy8EzfErmU9m86ZTw6hCzvFeTg7";
 const BENEFICIARY_XPRIV_STR: &str = "tprv8ZgxMBicQKsPe72C5c3cugP8b7AzEuNjP4NSC17Dkpqk5kaAmsL6FHwPsVxPpURVqbNwdLAbNqi8Cvdq6nycDwYdKHDjDRYcsMzfshimAUq";
-const BIP86_DERIVATION_PATH: &str = "86'/1'/0'/0/0";
+const BIP86_DERIVATION_PATH: &str = "m/86'/1'/0'/0/0";
 
 // Step 3 -
 //          Run `bt generatetoaddress 103 $(bt-benefactor getnewaddress '' bech32m)` to generate 103 new blocks
