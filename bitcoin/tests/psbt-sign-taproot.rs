@@ -31,12 +31,13 @@ fn psbt_sign_taproot() {
             _secp: &Secp256k1<C>,
         ) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
-                KeyRequest::Bip32((mfp, _)) =>
+                KeyRequest::Bip32((mfp, _)) => {
                     if mfp == self.mfp {
                         Ok(Some(self.sk))
                     } else {
                         Err(SignError::KeyNotFound)
-                    },
+                    }
+                }
                 _ => Err(SignError::KeyNotFound),
             }
         }
@@ -45,9 +46,9 @@ fn psbt_sign_taproot() {
     let secp = &Secp256k1::new();
 
     let sk_path = [
-        ("dff1c8c2c016a572914b4c5adb8791d62b4768ae9d0a61be8ab94cf5038d7d90", "86'/1'/0'/0/0"),
-        ("1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9", "86'/1'/0'/0/1"),
-        ("1fb777f1a6fb9b76724551f8bc8ad91b77f33b8c456d65d746035391d724922a", "86'/1'/0'/0/2"),
+        ("dff1c8c2c016a572914b4c5adb8791d62b4768ae9d0a61be8ab94cf5038d7d90", "m/86'/1'/0'/0/0"),
+        ("1ede31b0e7e47c2afc65ffd158b1b1b9d3b752bba8fd117dc8b9e944a390e8d9", "m/86'/1'/0'/0/1"),
+        ("1fb777f1a6fb9b76724551f8bc8ad91b77f33b8c456d65d746035391d724922a", "m/86'/1'/0'/0/2"),
     ];
     let mfp = "73c5da0a";
 
@@ -225,7 +226,7 @@ fn create_psbt_for_taproot_key_path_spend(
     let mut psbt = Psbt::from_unsigned_tx(transaction).unwrap();
 
     let mfp = "73c5da0a";
-    let internal_key_path = "86'/1'/0'/0/2";
+    let internal_key_path = "m/86'/1'/0'/0/2";
 
     let mut origins = BTreeMap::new();
     origins.insert(
