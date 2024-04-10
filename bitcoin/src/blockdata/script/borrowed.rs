@@ -359,7 +359,7 @@ impl Script {
     /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
     #[deprecated(
         since = "0.32.0",
-        note = "The method is not very useful, you might want `is_op_return`"
+        note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
     )]
     #[inline]
     pub fn is_provably_unspendable(&self) -> bool {
