@@ -182,6 +182,19 @@ any of the following conditions:
 [1] - The aim is to reduce the burden of re-ACK'ing trivial changes and also
       alleviate the problem of devs spread around the world in different timezones.
 
+#### Backporting
+
+We maintain release branches (e.g. `0.32.x` for the `v0.32` releases).
+
+In order to backport changes to these branches the process we use is as follows:
+
+- PR change into `master`.
+- Mark the PR with the appropriate labels if backporting is needed (e.g. `port-0.32.x`).
+- Once PR merges create another PR that targets the appropriate branch.
+- If, and only if, the backport PR is identical to the original PR (i.e. created using
+  `git cherry-pick`) then the PR may be one-ACK merged.
+
+Any other changes to the release branches should follow the normal 2-ACK merge policy.
 
 ## Coding conventions
 
