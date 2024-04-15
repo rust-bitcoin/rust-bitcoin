@@ -32,7 +32,7 @@ pub struct Params {
     /// Number of blocks with the same set of rules.
     pub miner_confirmation_window: u32,
     /// Proof of work limit value. It contains the lowest possible difficulty.
-    #[deprecated(since = "TBD", note = "field renamed to max_attainable_target")]
+    #[deprecated(since = "0.32.0", note = "field renamed to max_attainable_target")]
     pub pow_limit: Target,
     /// The maximum **attainable** target value for these params.
     ///
