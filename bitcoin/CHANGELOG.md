@@ -1,4 +1,4 @@
-# 0.32.0 - TODO: Add date when we do final release
+# 0.32.0 - 2024-04-23
 
 - Bump MSRV to Rust 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
 - Remove "no-std" feature [#2233](https://github.com/rust-bitcoin/rust-bitcoin/pull/2233)
@@ -10,7 +10,6 @@
   - `sig` becomes `signature`
   - `hash_ty` becomes `sighash_type`
 - Rename `txid` to `compute_txid` [#2366](https://github.com/rust-bitcoin/rust-bitcoin/pull/2366)
-- In hardcoded BIP-32 derivation paths: Remove `m/` prefix requirement [#2451](https://github.com/rust-bitcoin/rust-bitcoin/pull/2451)
 
 ## Crate smashing
 
@@ -28,6 +27,7 @@ smaller crates AKA crate smashing.
 - Fix `InputWeightPrediction::P2WPKH_MAX` constant DER sig length [#2213](https://github.com/rust-bitcoin/rust-bitcoin/pull/2213)
 - Fix CJDNS marker byte check [#2546](https://github.com/rust-bitcoin/rust-bitcoin/pull/2546)
 - Add resource limit check during deserialization of merkle block [#2607](https://github.com/rust-bitcoin/rust-bitcoin/pull/2607)
+- Allow `m/` prefix in BIP-32 in derivation path strings but do not enforce it [#2684](https://github.com/rust-bitcoin/rust-bitcoin/pull/2684)
 
 ## Changes to and involving the `Network` type
 
