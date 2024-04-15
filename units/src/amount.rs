@@ -1885,7 +1885,6 @@ pub mod serde {
 #[cfg(kani)]
 mod verification {
     use std::cmp;
-    use std::convert::TryInto;
 
     use super::*;
 
