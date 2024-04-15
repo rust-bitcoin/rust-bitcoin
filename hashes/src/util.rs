@@ -214,8 +214,7 @@ macro_rules! hash_newtype {
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
             fn from(inner: $hash) -> $newtype {
-                // Due to rust 1.22 we have to use this instead of simple `Self(inner)`
-                Self { 0: inner }
+                Self(inner)
             }
         }
 
