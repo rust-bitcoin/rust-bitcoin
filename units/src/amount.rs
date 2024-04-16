@@ -281,8 +281,10 @@ impl std::error::Error for ParseAmountError {
 /// Returned when a parsed amount is too big or too small.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct OutOfRangeError {
+    /// This boolean represents the return type i.e., is a `SignedAmount` vs unsigned `Amount`.
     is_signed: bool,
-    is_greater_than_max: bool,
+    /// This boolean represents whether the actual value is negative.
+    is_negative: bool,
 }
 
 impl OutOfRangeError {
@@ -297,36 +299,36 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was large than the maximum allowed value.
-    pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
+    pub fn is_above_max(&self) -> bool { !self.is_negative }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
-    pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
+    pub fn is_below_min(&self) -> bool { self.is_negative }
 
-    pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
+    pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_negative: false } }
 
+    /// Only used for `SignedAmount`.
     pub(crate) fn too_small() -> Self {
         Self {
-            // implied - negative() is used for the other
-            is_signed: true,
-            is_greater_than_max: false,
+            is_signed: true,    // This means `SignedAmount`.
+            is_negative: true,  // This means value is negative.
         }
     }
 
+    /// Only used or `Amount`.
     pub(crate) fn negative() -> Self {
         Self {
-            // implied - too_small() is used for the other
-            is_signed: false,
-            is_greater_than_max: false,
+            is_signed: false,   // This means `Amount`.
+            is_negative: true,  // This means value is negative.
         }
     }
 }
 
 impl fmt::Display for OutOfRangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.is_greater_than_max {
-            write!(f, "the amount is greater than {}", self.valid_range().1)
-        } else {
+        if self.is_negative {
             write!(f, "the amount is less than {}", self.valid_range().0)
+        } else {
+            write!(f, "the amount is greater than {}", self.valid_range().1)
         }
     }
 }
@@ -648,7 +650,7 @@ impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {
         match self {
             Self::Overflow { is_negative } =>
-                OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
+                OutOfRangeError { is_signed, is_negative }.into(),
             Self::TooPrecise(error) => ParseAmountError::TooPrecise(error),
             Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
             Self::InputTooLarge(len) => ParseAmountError::InputTooLarge(InputTooLargeError { len }),
@@ -1974,7 +1976,7 @@ mod verification {
             if n1 >= 0 {
                 Ok(Amount::from_sat(n1.try_into().unwrap()))
             } else {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+                Err(OutOfRangeError::negative())
             },
         );
     }
@@ -2059,7 +2061,7 @@ mod tests {
 
         let ua_max = Amount::MAX;
         let result = SignedAmount::try_from(ua_max);
-        assert_eq!(result, Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }));
+        assert_eq!(result, Err(OutOfRangeError { is_signed: true, is_negative: false }));
     }
 
     #[test]
@@ -2070,7 +2072,7 @@ mod tests {
 
         let sa_negative = SignedAmount(-123);
         let result = Amount::try_from(sa_negative);
-        assert_eq!(result, Err(OutOfRangeError { is_signed: false, is_greater_than_max: false }));
+        assert_eq!(result, Err(OutOfRangeError { is_signed: false, is_negative: true }));
     }
 
     #[test]
@@ -2953,5 +2955,17 @@ mod tests {
         assert_eq!(format!("{:.10}", Amount::from_sat(100_000_000)), "1.0000000000 BTC");
         assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.00000010 BTC");
         assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn to_unsigned_negative_signed_amount() {
+        let n = SignedAmount::from_sat(-1);
+        let e = n.to_unsigned().unwrap_err();
+
+        // Sanity check that no one changes the `negative` function.
+        assert_eq!(e, OutOfRangeError::negative());
+
+        assert_eq!(e, OutOfRangeError { is_signed: false, is_negative: true });
     }
 }
