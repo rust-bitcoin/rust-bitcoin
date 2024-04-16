@@ -1885,7 +1885,6 @@ pub mod serde {
 #[cfg(kani)]
 mod verification {
     use std::cmp;
-    use std::convert::TryInto;
 
     use super::*;
 
@@ -1903,7 +1902,7 @@ mod verification {
     // CI it fails, so we need to set it higher.
     #[kani::unwind(4)]
     #[kani::proof]
-    fn u_amount_add_homomorphic() {
+    fn u_amount_homomorphic() {
         let n1 = kani::any::<u64>();
         let n2 = kani::any::<u64>();
         kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
@@ -1933,7 +1932,7 @@ mod verification {
 
     #[kani::unwind(4)]
     #[kani::proof]
-    fn u_amount_add_homomorphic_checked() {
+    fn u_amount_homomorphic_checked() {
         let n1 = kani::any::<u64>();
         let n2 = kani::any::<u64>();
         assert_eq!(
@@ -1948,7 +1947,7 @@ mod verification {
 
     #[kani::unwind(4)]
     #[kani::proof]
-    fn s_amount_add_homomorphic() {
+    fn s_amount_homomorphic() {
         let n1 = kani::any::<i64>();
         let n2 = kani::any::<i64>();
         kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
@@ -1981,7 +1980,7 @@ mod verification {
 
     #[kani::unwind(4)]
     #[kani::proof]
-    fn s_amount_add_homomorphic_checked() {
+    fn s_amount_homomorphic_checked() {
         let n1 = kani::any::<i64>();
         let n2 = kani::any::<i64>();
         assert_eq!(

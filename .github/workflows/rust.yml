@@ -236,4 +236,5 @@ jobs:
       - name: 'Kani build proofs'
         uses: model-checking/kani-github-action@v1.1
         with:
+          kani-version: '0.48.0'
           args: '--only-codegen'
