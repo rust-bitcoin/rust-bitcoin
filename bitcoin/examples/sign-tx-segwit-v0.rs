@@ -61,7 +61,7 @@ fn main() {
     let sighash_type = EcdsaSighashType::All;
     let mut sighasher = SighashCache::new(&mut unsigned_tx);
     let sighash = sighasher
-        .p2wpkh_signature_hash(input_index, &dummy_utxo.script_pubkey, SPEND_AMOUNT, sighash_type)
+        .p2wpkh_signature_hash(input_index, &dummy_utxo.script_pubkey, DUMMY_UTXO_AMOUNT, sighash_type)
         .expect("failed to create sighash");
 
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
