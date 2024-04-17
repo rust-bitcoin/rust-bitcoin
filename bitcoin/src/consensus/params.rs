@@ -5,6 +5,65 @@
 //! This module provides a predefined set of parameters for different Bitcoin
 //! chains (such as mainnet, testnet).
 //!
+//! # Custom Signets Example
+//!
+//! In various places in this crate we take `AsRef<Params>` as a parameter, in order to create a
+//! custom type that can be used is such places you might want to do the following:
+//!
+//! ```
+//! use bitcoin::consensus::Params;
+//! use bitcoin::{p2p, Script, ScriptBuf, Network, Target};
+//!
+//! const POW_TARGET_SPACING: u64 = 120; // Two minutes.
+//! const MAGIC: [u8; 4] = [1, 2, 3, 4];
+//!
+//! pub struct CustomParams {
+//!     params: Params,
+//!     magic: [u8; 4],
+//!     challenge_script: ScriptBuf,
+//! }
+//!
+//! impl CustomParams {
+//!     /// Creates a new custom params.
+//!     pub fn new() -> Self {
+//!         let mut params = Params::new(Network::Signet);
+//!         params.pow_target_spacing = POW_TARGET_SPACING;
+//!
+//!         // This would be something real (see BIP-325).
+//!         let challenge_script = ScriptBuf::new();
+//!
+//!         Self {
+//!             params,
+//!             magic: MAGIC,
+//!             challenge_script,
+//!         }
+//!     }
+//!
+//!     /// Returns the custom magic bytes.
+//!     pub fn magic(&self) -> p2p::Magic { p2p::Magic::from_bytes(self.magic) }
+//!
+//!     /// Returns the custom signet challenge script.
+//!     pub fn challenge_script(&self) -> &Script { &self.challenge_script }
+//! }
+//!
+//! impl AsRef<Params> for CustomParams {
+//!     fn as_ref(&self) -> &Params { &self.params }
+//! }
+//!
+//! impl Default for CustomParams {
+//!     fn default() -> Self { Self::new() }
+//! }
+//!
+//! # { // Just check the code above is usable.
+//! #    let target = Target::MAX_ATTAINABLE_SIGNET;
+//! #
+//! #    let signet = Params::SIGNET;
+//! #    let _ = target.difficulty(signet);
+//! #
+//! #    let custom = CustomParams::new();
+//! #    let _ = target.difficulty(custom);
+//! # }
+//! ```
 
 use crate::network::Network;
 #[cfg(doc)]
