@@ -1973,7 +1973,7 @@ mod verification {
             if n1 >= 0 {
                 Ok(Amount::from_sat(n1.try_into().unwrap()))
             } else {
-                Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+                Err(OutOfRangeError { is_signed: false, is_greater_than_max: false })
             },
         );
     }
