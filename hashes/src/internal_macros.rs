@@ -104,9 +104,7 @@ macro_rules! hash_trait_impls {
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
-            fn as_ref(&self) -> &[u8; $bits / 8] {
-                &self.0
-            }
+            fn as_ref(&self) -> &[u8; $bits / 8] { &self.0 }
         }
 
         impl<I: SliceIndex<[u8]> $(, $gen: $gent)*> Index<I> for Hash<$($gen),*> {
@@ -125,13 +123,9 @@ macro_rules! hash_trait_impls {
             const LEN: usize = $bits / 8;
             const DISPLAY_BACKWARD: bool = $reverse;
 
-            fn engine() -> Self::Engine {
-                Self::internal_engine()
-            }
+            fn engine() -> Self::Engine { Self::internal_engine() }
 
-            fn from_engine(e: HashEngine) -> Hash<$($gen),*> {
-                from_engine(e)
-            }
+            fn from_engine(e: HashEngine) -> Hash<$($gen),*> { from_engine(e) }
 
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
                 if sl.len() != $bits / 8 {
@@ -143,21 +137,13 @@ macro_rules! hash_trait_impls {
                 }
             }
 
-            fn to_byte_array(self) -> Self::Bytes {
-                self.0
-            }
+            fn to_byte_array(self) -> Self::Bytes { self.0 }
 
-            fn as_byte_array(&self) -> &Self::Bytes {
-                &self.0
-            }
+            fn as_byte_array(&self) -> &Self::Bytes { &self.0 }
 
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                Self::internal_new(bytes)
-            }
+            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::internal_new(bytes) }
 
-            fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
-            }
+            fn all_zeros() -> Self { Hash::internal_new([0x00; $bits / 8]) }
         }
     }
 }
