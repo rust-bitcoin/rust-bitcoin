@@ -6,11 +6,10 @@
 //!
 //! ```
 //! # use bitcoin::{merkle_tree, Txid};
-//! # use bitcoin::hashes::Hash;
 //! # let tx1 = Txid::all_zeros();  // Dummy hash values.
 //! # let tx2 = Txid::all_zeros();
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
-//! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
+//! let root = merkle_tree::calculate_root(tx_hashes.iter().map(|txid| txid.to_raw_hash()));
 //! ```
 
 mod block;

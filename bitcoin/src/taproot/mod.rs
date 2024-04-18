@@ -12,7 +12,7 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{sha256t_hash_newtype, Hash, HashEngine};
+use hashes::{sha256t_hash_newtype, HashEngine};
 use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
@@ -1443,8 +1443,8 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
-    use hashes::sha256;
     use hashes::sha256t::Tag;
+    use hashes::{sha256, Hash};
     use hex::FromHex;
     use secp256k1::VerifyOnly;
 

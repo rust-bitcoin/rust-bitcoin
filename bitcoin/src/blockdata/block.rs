@@ -10,7 +10,7 @@
 
 use core::fmt;
 
-use hashes::{sha256d, Hash, HashEngine};
+use hashes::{sha256d, HashEngine};
 use io::{BufRead, Write};
 
 use super::Weight;

@@ -13,7 +13,7 @@
 
 use core::{cmp, fmt, str};
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
 use units::parse;

@@ -11,9 +11,9 @@ macro_rules! hex_fmt_impl(
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 if $reverse {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self).iter().rev(), $crate::hex::Case::Lower)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Lower)
                 } else {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self), $crate::hex::Case::Lower)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array(), $crate::hex::Case::Lower)
                 }
             }
         }
@@ -22,9 +22,9 @@ macro_rules! hex_fmt_impl(
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 if $reverse {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self).iter().rev(), $crate::hex::Case::Upper)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), $crate::hex::Case::Upper)
                 } else {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self), $crate::hex::Case::Upper)
+                    $crate::hex::fmt_hex_exact!(f, $len, self.as_byte_array(), $crate::hex::Case::Upper)
                 }
             }
         }
@@ -100,7 +100,7 @@ macro_rules! engine_input_impl(
 /// The syntax is similar to the usual tuple struct syntax:
 ///
 /// ```
-/// # use bitcoin_hashes::{hash_newtype, sha256};
+/// # use bitcoin_hashes::{hash_newtype, sha256, Hash};
 /// hash_newtype! {
 ///     /// Hash of `Foo`.
 ///     pub struct MyNewtype(pub sha256::Hash);
@@ -114,7 +114,7 @@ macro_rules! engine_input_impl(
 /// override it like this:
 ///
 /// ```
-/// # use bitcoin_hashes::{hash_newtype, sha256};
+/// # use bitcoin_hashes::{hash_newtype, sha256, Hash};
 /// hash_newtype! {
 ///     #[hash_newtype(backward)]
 ///     struct MyNewtype(sha256::Hash);
@@ -132,7 +132,7 @@ macro_rules! engine_input_impl(
 /// You can also define multiple newtypes within one macro call:
 ///
 /// ```
-/// # use bitcoin_hashes::{hash_newtype, sha256, hash160};
+/// # use bitcoin_hashes::{hash_newtype, sha256, hash160, Hash};
 ///
 /// hash_newtype! {
 ///     /// My custom type 1
@@ -188,27 +188,93 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
-        $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
+        $crate::hex_fmt_impl!($newtype::display_backward(), <$hash as $crate::Hash>::LEN, $newtype);
+        $crate::serde_impl!($newtype, <$hash as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
+        #[allow(unused)] // The user of macro may not need all these functions.
         impl $newtype {
-            /// Creates this wrapper type from the inner hash type.
-            #[allow(unused)] // the user of macro may not need this
-            pub fn from_raw_hash(inner: $hash) -> $newtype {
-                $newtype(inner)
+            /// Returns `true` if the user-visible serializations of this hash should be backward.
+            ///
+            /// For some reason Satoshi decided this should be true for `Sha256dHash`.
+            #[inline]
+            pub const fn display_backward() -> bool {
+                $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*)
             }
+
+            /// The length of the digest (in bytes) for this hash type.
+            #[inline]
+            pub const fn digest_length() -> usize { <$hash as $crate::Hash>::LEN }
+
+            /// Creates this wrapper type from the inner hash type.
+            #[inline]
+            pub const fn from_raw_hash(inner: $hash) -> $newtype {  $newtype(inner) }
 
             /// Returns the inner hash (sha256, sh256d etc.).
-            #[allow(unused)] // the user of macro may not need this
-            pub fn to_raw_hash(self) -> $hash {
-                self.0
-            }
+            #[inline]
+            pub fn to_raw_hash(self) -> $hash { self.0 }
 
             /// Returns a reference to the inner hash (sha256, sh256d etc.).
-            #[allow(unused)] // the user of macro may not need this
+            #[inline]
             pub fn as_raw_hash(&self) -> &$hash {
                 &self.0
+            }
+
+            /// Copies a byte slice into a hash object.
+            #[inline]
+            pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
+                Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
+            }
+
+            /// Constructs a hash from the underlying byte array.
+            #[inline]
+            pub fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
+            }
+
+            /// Returns the underlying byte array.
+            #[inline]
+            pub fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
+                use $crate::Hash as _;
+                self.0.to_byte_array()
+            }
+
+            /// Returns a reference to the underlying byte array.
+            #[inline]
+            pub fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
+                use $crate::Hash as _;
+                self.0.as_byte_array()
+            }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can
+            /// create it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis
+            /// block's previous blockhash and the coinbase transaction's outpoint txid.
+            #[inline]
+            pub fn all_zeros() -> Self {
+                use $crate::Hash as _;
+                let zeros = <$hash>::all_zeros();
+                $newtype(zeros)
+            }
+
+            // $newtype is not a general purpose hash type so hashing functionality is private.
+
+            pub(crate) fn engine() -> <$hash as $crate::Hash>::Engine {
+                <$hash as $crate::Hash>::engine()
+            }
+
+            pub(crate) fn from_engine(e: <$hash as $crate::Hash>::Engine) -> Self {
+                Self::from(<$hash as $crate::Hash>::from_engine(e))
+            }
+
+            #[inline]
+            pub(crate) fn hash(data: &[u8]) -> Self {
+                use $crate::HashEngine as _;
+
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
             }
         }
 
@@ -224,55 +290,13 @@ macro_rules! hash_newtype {
             }
         }
 
-        impl $crate::Hash for $newtype {
-            type Engine = <$hash as $crate::Hash>::Engine;
-            type Bytes = <$hash as $crate::Hash>::Bytes;
-
-            const LEN: usize = <$hash as $crate::Hash>::LEN;
-            const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
-
-            fn engine() -> Self::Engine {
-                <$hash as $crate::Hash>::engine()
-            }
-
-            fn from_engine(e: Self::Engine) -> Self {
-                Self::from(<$hash as $crate::Hash>::from_engine(e))
-            }
-
-            #[inline]
-            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
-                Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
-            }
-
-            #[inline]
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
-            }
-
-            #[inline]
-            fn to_byte_array(self) -> Self::Bytes {
-                self.0.to_byte_array()
-            }
-
-            #[inline]
-            fn as_byte_array(&self) -> &Self::Bytes {
-                self.0.as_byte_array()
-            }
-
-            #[inline]
-            fn all_zeros() -> Self {
-                let zeros = <$hash>::all_zeros();
-                $newtype(zeros)
-            }
-        }
-
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
                 use $crate::{Hash, hex::FromHex};
 
-                let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
-                if <Self as $crate::Hash>::DISPLAY_BACKWARD {
+                let mut bytes = <[u8; <$hash as $crate::Hash>::LEN]>::from_hex(s)?;
+                if Self::display_backward() {
                     bytes.reverse();
                 };
                 Ok($newtype(<$hash>::from_byte_array(bytes)))

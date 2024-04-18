@@ -893,7 +893,8 @@ impl Encodable for TapLeafHash {
 
 impl Decodable for TapLeafHash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+        let digest = <[u8; Self::digest_length()]>::consensus_decode(r)?;
+        Ok(Self::from_byte_array(digest))
     }
 }
 
