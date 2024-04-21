@@ -130,7 +130,7 @@ pub static SIGNET: Params = Params::SIGNET;
 /// The regtest parameters.
 pub static REGTEST: Params = Params::REGTEST;
 
-#[allow(deprecated)]            // For `pow_limit`.
+#[allow(deprecated)] // For `pow_limit`.
 impl Params {
     /// The mainnet parameters (alias for `Params::MAINNET`).
     pub const BITCOIN: Params = Params::MAINNET;
