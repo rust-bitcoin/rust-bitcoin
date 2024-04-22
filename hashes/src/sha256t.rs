@@ -225,4 +225,22 @@ mod tests {
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
         );
     }
+
+    sha256t_hash_newtype! {
+        /// Test detailed explanation.
+        struct FooTag = hash_str("foo");
+
+        /// A test hash.
+        #[hash_newtype(backward)]
+        struct FooHash(_);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn tagged_hash() {
+        assert_eq!(
+            FooHash::hash(&[0]).to_string(),
+            "cee837ec9192cfdb0e5762e9dd1881e9b4147fce76aea79f3b34cbc765935da6",
+        );
+    }
 }
