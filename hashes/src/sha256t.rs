@@ -3,77 +3,6 @@
 //! SHA256t implementation (tagged SHA256).
 //!
 
-use core::marker::PhantomData;
-use core::ops::Index;
-use core::slice::SliceIndex;
-use core::{cmp, str};
-
-use crate::{sha256, FromSliceError};
-
-type HashEngine = sha256::HashEngine;
-
-/// Trait representing a tag that can be used as a context for SHA256t hashes.
-pub trait Tag {
-    /// Returns a hash engine that is pre-tagged and is ready to be used for the data.
-    fn engine() -> sha256::HashEngine;
-}
-
-/// Output of the SHA256t hash function.
-#[repr(transparent)]
-pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
-
-#[cfg(feature = "schemars")]
-impl<T: Tag> schemars::JsonSchema for Hash<T> {
-    fn schema_name() -> String { "Hash".to_owned() }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-        schema.string = Some(Box::new(schemars::schema::StringValidation {
-            max_length: Some(32 * 2),
-            min_length: Some(32 * 2),
-            pattern: Some("[0-9a-fA-F]+".to_owned()),
-        }));
-        schema.into()
-    }
-}
-
-impl<T: Tag> Hash<T> {
-    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
-
-    fn internal_engine() -> HashEngine { T::engine() }
-}
-
-impl<T: Tag> Copy for Hash<T> {}
-impl<T: Tag> Clone for Hash<T> {
-    fn clone(&self) -> Self { *self }
-}
-impl<T: Tag> PartialEq for Hash<T> {
-    fn eq(&self, other: &Hash<T>) -> bool { self.0 == other.0 }
-}
-impl<T: Tag> Eq for Hash<T> {}
-impl<T: Tag> Default for Hash<T> {
-    fn default() -> Self { Hash([0; 32], PhantomData) }
-}
-impl<T: Tag> PartialOrd for Hash<T> {
-    fn partial_cmp(&self, other: &Hash<T>) -> Option<cmp::Ordering> {
-        Some(cmp::Ord::cmp(self, other))
-    }
-}
-impl<T: Tag> Ord for Hash<T> {
-    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering { cmp::Ord::cmp(&self.0, &other.0) }
-}
-impl<T: Tag> core::hash::Hash for Hash<T> {
-    fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
-}
-
-crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
-
-fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
-    use crate::Hash as _;
-
-    Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
-}
-
 /// Macro used to define a newtype tagged hash.
 ///
 /// This macro creates two types:
@@ -84,16 +13,14 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 /// The syntax is:
 ///
 /// ```
-/// # use bitcoin_hashes::sha256t_hash_newtype;
+/// # use bitcoin_hashes::{sha256t_hash_newtype, HashEngine};
 /// sha256t_hash_newtype! {
-///     /// Optional documentation details here.
-///     /// Summary is always generated.
-///     pub struct FooTag = hash_str("foo");
-///
 ///     /// A foo hash.
 ///     // Direction works just like in case of hash_newtype! macro.
 ///     #[hash_newtype(forward)]
 ///     pub struct FooHash(_);
+///
+///     pub struct FooHashEngine(_) = hash_str("foo");
 /// }
 /// ```
 ///
@@ -114,26 +41,167 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
     ($(
-        $(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);
         $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);
+        $(#[$($engine_attr:tt)*])* $engine_vis:vis struct $engine_name:ident(_) = $constructor:tt($($tag_value:tt)+);
     )+) => {
         $(
-        $crate::sha256t_hash_newtype_tag!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
+            $($crate::hash_newtype_known_attrs!(#[ $($hash_attr)* ]);)*
 
-        impl $crate::sha256t::Tag for $tag {
-            #[inline]
-            fn engine() -> $crate::sha256::HashEngine {
-                const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
-                #[allow(unused)]
-                const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
+            #[cfg(feature = "bitcoin-io")]
+            use $crate::HashEngine as _;
+
+            $crate::hash_newtype_struct! {
+                $hash_vis struct $hash_name($crate::sha256::Hash);
+
+                $({ $($hash_attr)* })*
             }
-        }
 
-        $crate::hash_newtype! {
-            $(#[$($hash_attr)*])*
-            $hash_vis struct $hash_name($(#[$($field_attr)*])* $crate::sha256t::Hash<$tag>);
-        }
+            $crate::hex_fmt_impl!(<$hash_name as $crate::Hash>::DISPLAY_BACKWARD, 32, $hash_name);
+            $crate::serde_impl!($hash_name, 32);
+            $crate::borrow_slice_impl!($hash_name);
+
+            impl $hash_name {
+                /// Creates this wrapper type from the inner hash type.
+                #[allow(unused)] // the user of macro may not need this
+                pub fn from_raw_hash(inner: $crate::sha256::Hash) -> $hash_name {
+                    $hash_name(inner)
+                }
+
+                /// Returns the inner hash (sha256, sh256d etc.).
+                #[allow(unused)] // the user of macro may not need this
+                pub fn to_raw_hash(self) -> $crate::sha256::Hash {
+                    self.0
+                }
+
+                /// Returns a reference to the inner hash (sha256, sh256d etc.).
+                #[allow(unused)] // the user of macro may not need this
+                pub fn as_raw_hash(&self) -> &$crate::sha256::Hash {
+                    &self.0
+                }
+            }
+
+            impl $crate::_export::_core::convert::From<$crate::sha256::Hash> for $hash_name {
+                fn from(inner: $crate::sha256::Hash) -> $hash_name {
+                    // Due to rust 1.22 we have to use this instead of simple `Self(inner)`
+                    Self { 0: inner }
+                }
+            }
+
+            impl $crate::_export::_core::convert::From<$hash_name> for $crate::sha256::Hash {
+                fn from(hashtype: $hash_name) -> $crate::sha256::Hash {
+                    hashtype.0
+                }
+            }
+
+            impl $crate::Hash for $hash_name {
+                type Engine = $engine_name;
+                type Bytes = <$crate::sha256::Hash as $crate::Hash>::Bytes;
+
+                const LEN: usize = 32;
+                const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($crate::sha256::Hash, $(#[$($hash_attr)*])*);
+
+                fn engine() -> Self::Engine { Self::Engine::default() }
+
+                fn from_engine(e: Self::Engine) -> Self {
+                    Self::from($crate::sha256::Hash::from_engine(e.0))
+                }
+
+                #[inline]
+                fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$hash_name, $crate::FromSliceError> {
+                    Ok($hash_name($crate::sha256::Hash::from_slice(sl)?))
+                }
+
+                #[inline]
+                fn from_byte_array(bytes: Self::Bytes) -> Self {
+                    $hash_name($crate::sha256::Hash::from_byte_array(bytes))
+                }
+
+                #[inline]
+                fn to_byte_array(self) -> Self::Bytes {
+                    self.0.to_byte_array()
+                }
+
+                #[inline]
+                fn as_byte_array(&self) -> &Self::Bytes {
+                    self.0.as_byte_array()
+                }
+
+                #[inline]
+                fn all_zeros() -> Self {
+                    let zeros = <$crate::sha256::Hash>::all_zeros();
+                    $hash_name(zeros)
+                }
+            }
+
+            impl $crate::_export::_core::str::FromStr for $hash_name {
+                type Err = $crate::hex::HexToArrayError;
+                fn from_str(s: &str) -> $crate::_export::_core::result::Result<$hash_name, Self::Err> {
+                    use $crate::{Hash, hex::FromHex};
+
+                    let mut bytes = <[u8; 32]>::from_hex(s)?;
+                    if <Self as $crate::Hash>::DISPLAY_BACKWARD {
+                        bytes.reverse();
+                    };
+                    Ok($hash_name($crate::sha256::Hash::from_byte_array(bytes)))
+                }
+            }
+
+            impl $crate::_export::_core::convert::AsRef<[u8; 32]> for $hash_name {
+                fn as_ref(&self) -> &[u8; 32] {
+                    AsRef::<[u8; 32]>::as_ref(&self.0)
+                }
+            }
+
+            impl<I: $crate::_export::_core::slice::SliceIndex<[u8]>> $crate::_export::_core::ops::Index<I> for $hash_name {
+                type Output = I::Output;
+
+                #[inline]
+                fn index(&self, index: I) -> &Self::Output {
+                    &self.0[index]
+                }
+            }
+
+            /// Engine to compute a tagged SHA256 hash.
+            #[derive(Clone)]
+            $engine_vis struct $engine_name($crate::sha256::HashEngine);
+
+            impl Default for $engine_name {
+                fn default() -> Self {
+                    const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
+                    #[allow(unused)]
+                    const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
+
+                    let inner = $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1);
+                    $engine_name(inner)
+                }
+            }
+
+            impl $crate::HashEngine for $engine_name {
+                type MidState = $crate::sha256::Midstate;
+
+                #[inline]
+                fn midstate(&self) -> $crate::sha256::Midstate { self.0.midstate() }
+
+                const BLOCK_SIZE: usize = $crate::sha256::BLOCK_SIZE;
+
+                #[inline]
+                fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
+
+                #[inline]
+                fn input(&mut self, data: &[u8]) { self.0.input(data) }
+            }
+
+            #[cfg(feature = "bitcoin-io")]
+            bitcoin_io::impl_write!(
+                $engine_name,
+                |us: &mut $engine_name, buf| {
+                    us.input(buf);
+                    Ok(buf.len())
+                },
+                |_us| { Ok(()) }
+            );
+
+
         )+
     }
 }
@@ -170,59 +238,23 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 mod tests {
     #[cfg(feature = "alloc")]
     use crate::Hash;
-    use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [
         156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
-    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
-    pub struct TestHashTag;
-
-    impl sha256t::Tag for TestHashTag {
-        fn engine() -> sha256::HashEngine {
-            // The TapRoot TapLeaf midstate.
-            let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-            sha256::HashEngine::from_midstate(midstate, 64)
-        }
-    }
-
-    #[cfg(feature = "schemars")]
-    impl schemars::JsonSchema for TestHashTag {
-        fn schema_name() -> String { "Hash".to_owned() }
-
-        fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-            let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(64 * 2),
-                min_length: Some(64 * 2),
-                pattern: Some("[0-9a-fA-F]+".to_owned()),
-            }));
-            schema.into()
-        }
-    }
-
-    /// A hash tagged with `$name`.
-    #[cfg(feature = "alloc")]
-    pub type TestHash = sha256t::Hash<TestHashTag>;
-
     sha256t_hash_newtype! {
-        /// Test detailed explanation.
-        struct NewTypeTag = raw(TEST_MIDSTATE, 64);
-
         /// A test hash.
         #[hash_newtype(backward)]
         struct NewTypeHash(_);
+
+        struct NewTypeHashEngine(_) = raw(TEST_MIDSTATE, 64);
     }
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test_sha256t() {
-        assert_eq!(
-            TestHash::hash(&[0]).to_string(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
         assert_eq!(
             NewTypeHash::hash(&[0]).to_string(),
             "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
@@ -230,12 +262,11 @@ mod tests {
     }
 
     sha256t_hash_newtype! {
-        /// Test detailed explanation.
-        struct FooTag = hash_str("foo");
-
         /// A test hash.
         #[hash_newtype(backward)]
         struct FooHash(_);
+
+        struct FooHashEngine(_) = hash_str("foo");
     }
 
     #[test]
