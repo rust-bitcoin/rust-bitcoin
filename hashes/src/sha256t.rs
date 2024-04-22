@@ -113,7 +113,10 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
-    ($($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);)+) => {
+    ($(
+        $(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);
+        $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);
+    )+) => {
         $(
         $crate::sha256t_hash_newtype_tag!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
 
