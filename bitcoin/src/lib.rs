@@ -132,13 +132,13 @@ pub use crate::{
     consensus::params,
     crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
-    crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
+    crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashEngine},
     merkle_tree::MerkleBlock,
     network::{Network, NetworkKind},
     pow::{CompactTarget, Target, Work},
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
-    taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
+    taproot::{TapNodeHashEngine, TapLeafHash, TapLeafHashEngine, TapNodeHash, TapTweakHash, TapTweakHashEngine},
 };
 
 #[rustfmt::skip]

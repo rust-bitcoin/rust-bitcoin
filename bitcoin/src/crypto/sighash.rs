@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash, HashEngine};
 use internals::write_err;
 use io::Write;
 
@@ -56,14 +56,22 @@ impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
 sha256t_hash_newtype! {
-    pub struct TapSighashTag = hash_str("TapSighash");
-
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
     /// This hash type is used for computing taproot signature hash."
     #[hash_newtype(forward)]
     pub struct TapSighash(_);
+
+    pub struct TapSighashEngine(_) = hash_str("TapSighash");
 }
+io::impl_write!(
+    TapSighashEngine,
+    |us: &mut TapSighashEngine, buf| {
+        us.input(buf);
+        Ok(buf.len())
+    },
+    |_us| { Ok(()) }
+);
 
 impl_message_from_hash!(TapSighash);
 

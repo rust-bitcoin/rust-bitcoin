@@ -93,6 +93,22 @@ macro_rules! sha256t_hash_newtype {
                 }
             }
 
+            // FIXME: Feature gating is wrong, "schemars" needs "alloc" (because of string stuff).
+            #[cfg(feature = "schemars")]
+            impl $crate::schemars::JsonSchema for $hash_name {
+                fn schema_name() -> String { $crate::_export::_core::stringify!($hash_name).to_string() }
+
+                fn json_schema(gen: &mut $crate::schemars::gen::SchemaGenerator) -> $crate::schemars::schema::Schema {
+                    let mut schema: $crate::schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+                    schema.string = Some(Box::new($crate::schemars::schema::StringValidation {
+                        max_length: Some(32 * 2),
+                        min_length: Some(32 * 2),
+                        pattern: Some("[0-9a-fA-F]+".to_owned()),
+                    }));
+                    schema.into()
+                }
+            }
+
             impl $crate::Hash for $hash_name {
                 type Engine = $engine_name;
                 type Bytes = <$crate::sha256::Hash as $crate::Hash>::Bytes;
@@ -200,8 +216,6 @@ macro_rules! sha256t_hash_newtype {
                 },
                 |_us| { Ok(()) }
             );
-
-
         )+
     }
 }

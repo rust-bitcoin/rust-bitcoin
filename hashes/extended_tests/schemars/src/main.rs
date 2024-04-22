@@ -117,27 +117,12 @@ mod tests {
             147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
         ];
 
-        #[derive(
-            Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash, schemars::JsonSchema,
-        )]
-        pub struct TestHashTag;
-
-        impl sha256t::Tag for TestHashTag {
-            fn engine() -> sha256::HashEngine {
-                // The TapRoot TapLeaf midstate.
-                let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-                sha256::HashEngine::from_midstate(midstate, 64)
-            }
-        }
-
-        /// A hash tagged with `$name`.
-        pub type TestHash = sha256t::Hash<TestHashTag>;
-
         sha256t_hash_newtype! {
-            struct NewTypeTag = raw(TEST_MIDSTATE, 64);
-
+            /// A test hash.
             #[hash_newtype(backward)]
-            struct NewTypeHash(_);
+            struct TestHash(_);
+
+            struct TestHashEngine(_) = raw(TEST_MIDSTATE, 64);
         }
         static HASH_BYTES: [u8; 32] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7, 0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6,
