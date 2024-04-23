@@ -439,10 +439,6 @@ impl bitcoin::taproot::merkle_branch::IntoIter
 impl bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl bitcoin::taproot::serialized_signature::IntoIter
 impl bitcoin::taproot::serialized_signature::SerializedSignature
-impl bitcoin_hashes::Hash for bitcoin::TapSighash
-impl bitcoin_hashes::Hash for bitcoin::taproot::TapLeafHash
-impl bitcoin_hashes::Hash for bitcoin::taproot::TapNodeHash
-impl bitcoin_hashes::Hash for bitcoin::taproot::TapTweakHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::LegacySighash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::PubkeyHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::SegwitV0Sighash
@@ -462,10 +458,6 @@ impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockda
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapLeafHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapNodeHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapTweakHash
-impl bitcoin_hashes::sha256t::Tag for bitcoin::TapSighashTag
-impl bitcoin_hashes::sha256t::Tag for bitcoin::taproot::TapBranchTag
-impl bitcoin_hashes::sha256t::Tag for bitcoin::taproot::TapLeafTag
-impl bitcoin_hashes::sha256t::Tag for bitcoin::taproot::TapTweakTag
 impl core::borrow::Borrow<[bitcoin::taproot::TapNodeHash]> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::borrow::Borrow<[u8; 32]> for bitcoin::bip32::ChainCode
 impl core::borrow::Borrow<[u8; 32]> for bitcoin::blockdata::constants::ChainHash
@@ -524,7 +516,6 @@ impl core::clone::Clone for bitcoin::PubkeyHash
 impl core::clone::Clone for bitcoin::PublicKey
 impl core::clone::Clone for bitcoin::SegwitV0Sighash
 impl core::clone::Clone for bitcoin::TapSighash
-impl core::clone::Clone for bitcoin::TapSighashTag
 impl core::clone::Clone for bitcoin::TapSighashType
 impl core::clone::Clone for bitcoin::WPubkeyHash
 impl core::clone::Clone for bitcoin::address::AddressType
@@ -701,14 +692,11 @@ impl core::clone::Clone for bitcoin::taproot::LeafVersion
 impl core::clone::Clone for bitcoin::taproot::NodeInfo
 impl core::clone::Clone for bitcoin::taproot::SigFromSliceError
 impl core::clone::Clone for bitcoin::taproot::Signature
-impl core::clone::Clone for bitcoin::taproot::TapBranchTag
 impl core::clone::Clone for bitcoin::taproot::TapLeaf
 impl core::clone::Clone for bitcoin::taproot::TapLeafHash
-impl core::clone::Clone for bitcoin::taproot::TapLeafTag
 impl core::clone::Clone for bitcoin::taproot::TapNodeHash
 impl core::clone::Clone for bitcoin::taproot::TapTree
 impl core::clone::Clone for bitcoin::taproot::TapTweakHash
-impl core::clone::Clone for bitcoin::taproot::TapTweakTag
 impl core::clone::Clone for bitcoin::taproot::TaprootBuilder
 impl core::clone::Clone for bitcoin::taproot::TaprootBuilderError
 impl core::clone::Clone for bitcoin::taproot::TaprootError
@@ -727,7 +715,6 @@ impl core::cmp::Eq for bitcoin::PubkeyHash
 impl core::cmp::Eq for bitcoin::PublicKey
 impl core::cmp::Eq for bitcoin::SegwitV0Sighash
 impl core::cmp::Eq for bitcoin::TapSighash
-impl core::cmp::Eq for bitcoin::TapSighashTag
 impl core::cmp::Eq for bitcoin::TapSighashType
 impl core::cmp::Eq for bitcoin::WPubkeyHash
 impl core::cmp::Eq for bitcoin::address::AddressType
@@ -905,14 +892,11 @@ impl core::cmp::Eq for bitcoin::taproot::LeafVersion
 impl core::cmp::Eq for bitcoin::taproot::NodeInfo
 impl core::cmp::Eq for bitcoin::taproot::SigFromSliceError
 impl core::cmp::Eq for bitcoin::taproot::Signature
-impl core::cmp::Eq for bitcoin::taproot::TapBranchTag
 impl core::cmp::Eq for bitcoin::taproot::TapLeaf
 impl core::cmp::Eq for bitcoin::taproot::TapLeafHash
-impl core::cmp::Eq for bitcoin::taproot::TapLeafTag
 impl core::cmp::Eq for bitcoin::taproot::TapNodeHash
 impl core::cmp::Eq for bitcoin::taproot::TapTree
 impl core::cmp::Eq for bitcoin::taproot::TapTweakHash
-impl core::cmp::Eq for bitcoin::taproot::TapTweakTag
 impl core::cmp::Eq for bitcoin::taproot::TaprootBuilder
 impl core::cmp::Eq for bitcoin::taproot::TaprootBuilderError
 impl core::cmp::Eq for bitcoin::taproot::TaprootError
@@ -926,7 +910,6 @@ impl core::cmp::Ord for bitcoin::PubkeyHash
 impl core::cmp::Ord for bitcoin::PublicKey
 impl core::cmp::Ord for bitcoin::SegwitV0Sighash
 impl core::cmp::Ord for bitcoin::TapSighash
-impl core::cmp::Ord for bitcoin::TapSighashTag
 impl core::cmp::Ord for bitcoin::TapSighashType
 impl core::cmp::Ord for bitcoin::WPubkeyHash
 impl core::cmp::Ord for bitcoin::address::AddressType
@@ -998,13 +981,10 @@ impl core::cmp::Ord for bitcoin::taproot::LeafNode
 impl core::cmp::Ord for bitcoin::taproot::LeafVersion
 impl core::cmp::Ord for bitcoin::taproot::NodeInfo
 impl core::cmp::Ord for bitcoin::taproot::Signature
-impl core::cmp::Ord for bitcoin::taproot::TapBranchTag
 impl core::cmp::Ord for bitcoin::taproot::TapLeaf
 impl core::cmp::Ord for bitcoin::taproot::TapLeafHash
-impl core::cmp::Ord for bitcoin::taproot::TapLeafTag
 impl core::cmp::Ord for bitcoin::taproot::TapNodeHash
 impl core::cmp::Ord for bitcoin::taproot::TapTweakHash
-impl core::cmp::Ord for bitcoin::taproot::TapTweakTag
 impl core::cmp::Ord for bitcoin::taproot::TaprootBuilder
 impl core::cmp::Ord for bitcoin::taproot::TaprootSpendInfo
 impl core::cmp::Ord for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
@@ -1019,7 +999,6 @@ impl core::cmp::PartialEq for bitcoin::PubkeyHash
 impl core::cmp::PartialEq for bitcoin::PublicKey
 impl core::cmp::PartialEq for bitcoin::SegwitV0Sighash
 impl core::cmp::PartialEq for bitcoin::TapSighash
-impl core::cmp::PartialEq for bitcoin::TapSighashTag
 impl core::cmp::PartialEq for bitcoin::TapSighashType
 impl core::cmp::PartialEq for bitcoin::WPubkeyHash
 impl core::cmp::PartialEq for bitcoin::address::AddressType
@@ -1197,14 +1176,11 @@ impl core::cmp::PartialEq for bitcoin::taproot::LeafVersion
 impl core::cmp::PartialEq for bitcoin::taproot::NodeInfo
 impl core::cmp::PartialEq for bitcoin::taproot::SigFromSliceError
 impl core::cmp::PartialEq for bitcoin::taproot::Signature
-impl core::cmp::PartialEq for bitcoin::taproot::TapBranchTag
 impl core::cmp::PartialEq for bitcoin::taproot::TapLeaf
 impl core::cmp::PartialEq for bitcoin::taproot::TapLeafHash
-impl core::cmp::PartialEq for bitcoin::taproot::TapLeafTag
 impl core::cmp::PartialEq for bitcoin::taproot::TapNodeHash
 impl core::cmp::PartialEq for bitcoin::taproot::TapTree
 impl core::cmp::PartialEq for bitcoin::taproot::TapTweakHash
-impl core::cmp::PartialEq for bitcoin::taproot::TapTweakTag
 impl core::cmp::PartialEq for bitcoin::taproot::TaprootBuilder
 impl core::cmp::PartialEq for bitcoin::taproot::TaprootBuilderError
 impl core::cmp::PartialEq for bitcoin::taproot::TaprootError
@@ -1222,7 +1198,6 @@ impl core::cmp::PartialOrd for bitcoin::PubkeyHash
 impl core::cmp::PartialOrd for bitcoin::PublicKey
 impl core::cmp::PartialOrd for bitcoin::SegwitV0Sighash
 impl core::cmp::PartialOrd for bitcoin::TapSighash
-impl core::cmp::PartialOrd for bitcoin::TapSighashTag
 impl core::cmp::PartialOrd for bitcoin::TapSighashType
 impl core::cmp::PartialOrd for bitcoin::WPubkeyHash
 impl core::cmp::PartialOrd for bitcoin::address::AddressType
@@ -1296,13 +1271,10 @@ impl core::cmp::PartialOrd for bitcoin::taproot::LeafNode
 impl core::cmp::PartialOrd for bitcoin::taproot::LeafVersion
 impl core::cmp::PartialOrd for bitcoin::taproot::NodeInfo
 impl core::cmp::PartialOrd for bitcoin::taproot::Signature
-impl core::cmp::PartialOrd for bitcoin::taproot::TapBranchTag
 impl core::cmp::PartialOrd for bitcoin::taproot::TapLeaf
 impl core::cmp::PartialOrd for bitcoin::taproot::TapLeafHash
-impl core::cmp::PartialOrd for bitcoin::taproot::TapLeafTag
 impl core::cmp::PartialOrd for bitcoin::taproot::TapNodeHash
 impl core::cmp::PartialOrd for bitcoin::taproot::TapTweakHash
-impl core::cmp::PartialOrd for bitcoin::taproot::TapTweakTag
 impl core::cmp::PartialOrd for bitcoin::taproot::TaprootBuilder
 impl core::cmp::PartialOrd for bitcoin::taproot::TaprootSpendInfo
 impl core::cmp::PartialOrd for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
@@ -1791,7 +1763,7 @@ impl core::convert::From<bitcoin::PublicKey> for bitcoin::PubkeyHash
 impl core::convert::From<bitcoin::PublicKey> for secp256k1::key::XOnlyPublicKey
 impl core::convert::From<bitcoin::SegwitV0Sighash> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::SegwitV0Sighash> for secp256k1::Message
-impl core::convert::From<bitcoin::TapSighash> for bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
+impl core::convert::From<bitcoin::TapSighash> for bitcoin_hashes::sha256::Hash
 impl core::convert::From<bitcoin::TapSighash> for secp256k1::Message
 impl core::convert::From<bitcoin::TapSighashType> for bitcoin::psbt::PsbtSighashType
 impl core::convert::From<bitcoin::WPubkeyHash> for bitcoin::blockdata::script::PushBytesBuf
@@ -1874,10 +1846,10 @@ impl core::convert::From<bitcoin::sighash::TaprootError> for bitcoin::psbt::Sign
 impl core::convert::From<bitcoin::taproot::LeafNode> for bitcoin::taproot::TapNodeHash
 impl core::convert::From<bitcoin::taproot::Signature> for bitcoin::taproot::serialized_signature::SerializedSignature
 impl core::convert::From<bitcoin::taproot::TapLeafHash> for bitcoin::taproot::TapNodeHash
-impl core::convert::From<bitcoin::taproot::TapLeafHash> for bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
-impl core::convert::From<bitcoin::taproot::TapNodeHash> for bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
+impl core::convert::From<bitcoin::taproot::TapLeafHash> for bitcoin_hashes::sha256::Hash
+impl core::convert::From<bitcoin::taproot::TapNodeHash> for bitcoin_hashes::sha256::Hash
 impl core::convert::From<bitcoin::taproot::TapTree> for bitcoin::taproot::NodeInfo
-impl core::convert::From<bitcoin::taproot::TapTweakHash> for bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
+impl core::convert::From<bitcoin::taproot::TapTweakHash> for bitcoin_hashes::sha256::Hash
 impl core::convert::From<bitcoin::taproot::TaprootSpendInfo> for bitcoin::taproot::TapTweakHash
 impl core::convert::From<bitcoin::taproot::merkle_branch::TaprootMerkleBranch> for alloc::vec::Vec<bitcoin::taproot::TapNodeHash>
 impl core::convert::From<bitcoin_hashes::FromSliceError> for bitcoin::psbt::Error
@@ -1885,7 +1857,11 @@ impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin::PubkeyHash
 impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin::WPubkeyHash
 impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin::bip32::XKeyIdentifier
 impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin::blockdata::script::ScriptHash
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin::TapSighash
 impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin::blockdata::script::WScriptHash
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin::taproot::TapLeafHash
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin::taproot::TapNodeHash
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin::taproot::TapTweakHash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::LegacySighash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::SegwitV0Sighash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::bip158::FilterHash
@@ -1896,10 +1872,6 @@ impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::transaction::Txid
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::transaction::Wtxid
-impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>> for bitcoin::TapSighash
-impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>> for bitcoin::taproot::TapNodeHash
-impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>> for bitcoin::taproot::TapLeafHash
-impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>> for bitcoin::taproot::TapTweakHash
 impl core::convert::From<bitcoin_io::error::Error> for bitcoin::bip158::Error
 impl core::convert::From<bitcoin_io::error::Error> for bitcoin::consensus::encode::Error
 impl core::convert::From<bitcoin_io::error::Error> for bitcoin::psbt::Error
@@ -1989,7 +1961,6 @@ impl core::convert::TryFrom<bitcoin::taproot::TaprootBuilder> for bitcoin::tapro
 impl core::convert::TryFrom<bitcoin::taproot::TaprootBuilder> for bitcoin::taproot::TapTree
 impl core::convert::TryFrom<bitcoin::taproot::serialized_signature::SerializedSignature> for bitcoin::taproot::Signature
 impl core::convert::TryFrom<u8> for bitcoin::blockdata::script::witness_version::WitnessVersion
-impl core::default::Default for bitcoin::TapSighashTag
 impl core::default::Default for bitcoin::bip152::ShortId
 impl core::default::Default for bitcoin::bip32::DerivationPath
 impl core::default::Default for bitcoin::bip32::Fingerprint
@@ -2005,9 +1976,6 @@ impl core::default::Default for bitcoin::p2p::ServiceFlags
 impl core::default::Default for bitcoin::pow::CompactTarget
 impl core::default::Default for bitcoin::psbt::Input
 impl core::default::Default for bitcoin::psbt::Output
-impl core::default::Default for bitcoin::taproot::TapBranchTag
-impl core::default::Default for bitcoin::taproot::TapLeafTag
-impl core::default::Default for bitcoin::taproot::TapTweakTag
 impl core::default::Default for bitcoin::taproot::TaprootBuilder
 impl core::default::Default for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::error::Error for bitcoin::address::error::FromScriptError
@@ -2500,7 +2468,6 @@ impl core::hash::Hash for bitcoin::PubkeyHash
 impl core::hash::Hash for bitcoin::PublicKey
 impl core::hash::Hash for bitcoin::SegwitV0Sighash
 impl core::hash::Hash for bitcoin::TapSighash
-impl core::hash::Hash for bitcoin::TapSighashTag
 impl core::hash::Hash for bitcoin::TapSighashType
 impl core::hash::Hash for bitcoin::WPubkeyHash
 impl core::hash::Hash for bitcoin::address::AddressType
@@ -2580,14 +2547,11 @@ impl core::hash::Hash for bitcoin::taproot::LeafNode
 impl core::hash::Hash for bitcoin::taproot::LeafVersion
 impl core::hash::Hash for bitcoin::taproot::NodeInfo
 impl core::hash::Hash for bitcoin::taproot::Signature
-impl core::hash::Hash for bitcoin::taproot::TapBranchTag
 impl core::hash::Hash for bitcoin::taproot::TapLeaf
 impl core::hash::Hash for bitcoin::taproot::TapLeafHash
-impl core::hash::Hash for bitcoin::taproot::TapLeafTag
 impl core::hash::Hash for bitcoin::taproot::TapNodeHash
 impl core::hash::Hash for bitcoin::taproot::TapTree
 impl core::hash::Hash for bitcoin::taproot::TapTweakHash
-impl core::hash::Hash for bitcoin::taproot::TapTweakTag
 impl core::hash::Hash for bitcoin::taproot::TaprootBuilder
 impl core::hash::Hash for bitcoin::taproot::TaprootSpendInfo
 impl core::hash::Hash for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
@@ -2617,7 +2581,6 @@ impl core::marker::Copy for bitcoin::PubkeyHash
 impl core::marker::Copy for bitcoin::PublicKey
 impl core::marker::Copy for bitcoin::SegwitV0Sighash
 impl core::marker::Copy for bitcoin::TapSighash
-impl core::marker::Copy for bitcoin::TapSighashTag
 impl core::marker::Copy for bitcoin::TapSighashType
 impl core::marker::Copy for bitcoin::WPubkeyHash
 impl core::marker::Copy for bitcoin::address::AddressType
@@ -2677,12 +2640,9 @@ impl core::marker::Copy for bitcoin::sign_message::MessageSignature
 impl core::marker::Copy for bitcoin::taproot::FutureLeafVersion
 impl core::marker::Copy for bitcoin::taproot::LeafVersion
 impl core::marker::Copy for bitcoin::taproot::Signature
-impl core::marker::Copy for bitcoin::taproot::TapBranchTag
 impl core::marker::Copy for bitcoin::taproot::TapLeafHash
-impl core::marker::Copy for bitcoin::taproot::TapLeafTag
 impl core::marker::Copy for bitcoin::taproot::TapNodeHash
 impl core::marker::Copy for bitcoin::taproot::TapTweakHash
-impl core::marker::Copy for bitcoin::taproot::TapTweakTag
 impl core::marker::Copy for bitcoin::taproot::serialized_signature::SerializedSignature
 impl core::marker::Freeze for bitcoin::CompressedPublicKey
 impl core::marker::Freeze for bitcoin::DisplayHash
@@ -2694,7 +2654,6 @@ impl core::marker::Freeze for bitcoin::PubkeyHash
 impl core::marker::Freeze for bitcoin::PublicKey
 impl core::marker::Freeze for bitcoin::SegwitV0Sighash
 impl core::marker::Freeze for bitcoin::TapSighash
-impl core::marker::Freeze for bitcoin::TapSighashTag
 impl core::marker::Freeze for bitcoin::TapSighashType
 impl core::marker::Freeze for bitcoin::WPubkeyHash
 impl core::marker::Freeze for bitcoin::address::AddressType
@@ -2883,14 +2842,11 @@ impl core::marker::Freeze for bitcoin::taproot::LeafVersion
 impl core::marker::Freeze for bitcoin::taproot::NodeInfo
 impl core::marker::Freeze for bitcoin::taproot::SigFromSliceError
 impl core::marker::Freeze for bitcoin::taproot::Signature
-impl core::marker::Freeze for bitcoin::taproot::TapBranchTag
 impl core::marker::Freeze for bitcoin::taproot::TapLeaf
 impl core::marker::Freeze for bitcoin::taproot::TapLeafHash
-impl core::marker::Freeze for bitcoin::taproot::TapLeafTag
 impl core::marker::Freeze for bitcoin::taproot::TapNodeHash
 impl core::marker::Freeze for bitcoin::taproot::TapTree
 impl core::marker::Freeze for bitcoin::taproot::TapTweakHash
-impl core::marker::Freeze for bitcoin::taproot::TapTweakTag
 impl core::marker::Freeze for bitcoin::taproot::TaprootBuilder
 impl core::marker::Freeze for bitcoin::taproot::TaprootBuilderError
 impl core::marker::Freeze for bitcoin::taproot::TaprootError
@@ -2909,7 +2865,6 @@ impl core::marker::Send for bitcoin::PubkeyHash
 impl core::marker::Send for bitcoin::PublicKey
 impl core::marker::Send for bitcoin::SegwitV0Sighash
 impl core::marker::Send for bitcoin::TapSighash
-impl core::marker::Send for bitcoin::TapSighashTag
 impl core::marker::Send for bitcoin::TapSighashType
 impl core::marker::Send for bitcoin::WPubkeyHash
 impl core::marker::Send for bitcoin::address::AddressType
@@ -3098,14 +3053,11 @@ impl core::marker::Send for bitcoin::taproot::LeafVersion
 impl core::marker::Send for bitcoin::taproot::NodeInfo
 impl core::marker::Send for bitcoin::taproot::SigFromSliceError
 impl core::marker::Send for bitcoin::taproot::Signature
-impl core::marker::Send for bitcoin::taproot::TapBranchTag
 impl core::marker::Send for bitcoin::taproot::TapLeaf
 impl core::marker::Send for bitcoin::taproot::TapLeafHash
-impl core::marker::Send for bitcoin::taproot::TapLeafTag
 impl core::marker::Send for bitcoin::taproot::TapNodeHash
 impl core::marker::Send for bitcoin::taproot::TapTree
 impl core::marker::Send for bitcoin::taproot::TapTweakHash
-impl core::marker::Send for bitcoin::taproot::TapTweakTag
 impl core::marker::Send for bitcoin::taproot::TaprootBuilder
 impl core::marker::Send for bitcoin::taproot::TaprootBuilderError
 impl core::marker::Send for bitcoin::taproot::TaprootError
@@ -3124,7 +3076,6 @@ impl core::marker::StructuralPartialEq for bitcoin::PubkeyHash
 impl core::marker::StructuralPartialEq for bitcoin::PublicKey
 impl core::marker::StructuralPartialEq for bitcoin::SegwitV0Sighash
 impl core::marker::StructuralPartialEq for bitcoin::TapSighash
-impl core::marker::StructuralPartialEq for bitcoin::TapSighashTag
 impl core::marker::StructuralPartialEq for bitcoin::TapSighashType
 impl core::marker::StructuralPartialEq for bitcoin::WPubkeyHash
 impl core::marker::StructuralPartialEq for bitcoin::address::AddressType
@@ -3300,14 +3251,11 @@ impl core::marker::StructuralPartialEq for bitcoin::taproot::LeafNode
 impl core::marker::StructuralPartialEq for bitcoin::taproot::LeafVersion
 impl core::marker::StructuralPartialEq for bitcoin::taproot::SigFromSliceError
 impl core::marker::StructuralPartialEq for bitcoin::taproot::Signature
-impl core::marker::StructuralPartialEq for bitcoin::taproot::TapBranchTag
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapLeaf
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapLeafHash
-impl core::marker::StructuralPartialEq for bitcoin::taproot::TapLeafTag
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapNodeHash
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapTree
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TapTweakHash
-impl core::marker::StructuralPartialEq for bitcoin::taproot::TapTweakTag
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TaprootBuilder
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TaprootBuilderError
 impl core::marker::StructuralPartialEq for bitcoin::taproot::TaprootError
@@ -3323,7 +3271,6 @@ impl core::marker::Sync for bitcoin::PubkeyHash
 impl core::marker::Sync for bitcoin::PublicKey
 impl core::marker::Sync for bitcoin::SegwitV0Sighash
 impl core::marker::Sync for bitcoin::TapSighash
-impl core::marker::Sync for bitcoin::TapSighashTag
 impl core::marker::Sync for bitcoin::TapSighashType
 impl core::marker::Sync for bitcoin::WPubkeyHash
 impl core::marker::Sync for bitcoin::address::AddressType
@@ -3512,14 +3459,11 @@ impl core::marker::Sync for bitcoin::taproot::LeafVersion
 impl core::marker::Sync for bitcoin::taproot::NodeInfo
 impl core::marker::Sync for bitcoin::taproot::SigFromSliceError
 impl core::marker::Sync for bitcoin::taproot::Signature
-impl core::marker::Sync for bitcoin::taproot::TapBranchTag
 impl core::marker::Sync for bitcoin::taproot::TapLeaf
 impl core::marker::Sync for bitcoin::taproot::TapLeafHash
-impl core::marker::Sync for bitcoin::taproot::TapLeafTag
 impl core::marker::Sync for bitcoin::taproot::TapNodeHash
 impl core::marker::Sync for bitcoin::taproot::TapTree
 impl core::marker::Sync for bitcoin::taproot::TapTweakHash
-impl core::marker::Sync for bitcoin::taproot::TapTweakTag
 impl core::marker::Sync for bitcoin::taproot::TaprootBuilder
 impl core::marker::Sync for bitcoin::taproot::TaprootBuilderError
 impl core::marker::Sync for bitcoin::taproot::TaprootError
@@ -3538,7 +3482,6 @@ impl core::marker::Unpin for bitcoin::PubkeyHash
 impl core::marker::Unpin for bitcoin::PublicKey
 impl core::marker::Unpin for bitcoin::SegwitV0Sighash
 impl core::marker::Unpin for bitcoin::TapSighash
-impl core::marker::Unpin for bitcoin::TapSighashTag
 impl core::marker::Unpin for bitcoin::TapSighashType
 impl core::marker::Unpin for bitcoin::WPubkeyHash
 impl core::marker::Unpin for bitcoin::address::AddressType
@@ -3727,14 +3670,11 @@ impl core::marker::Unpin for bitcoin::taproot::LeafVersion
 impl core::marker::Unpin for bitcoin::taproot::NodeInfo
 impl core::marker::Unpin for bitcoin::taproot::SigFromSliceError
 impl core::marker::Unpin for bitcoin::taproot::Signature
-impl core::marker::Unpin for bitcoin::taproot::TapBranchTag
 impl core::marker::Unpin for bitcoin::taproot::TapLeaf
 impl core::marker::Unpin for bitcoin::taproot::TapLeafHash
-impl core::marker::Unpin for bitcoin::taproot::TapLeafTag
 impl core::marker::Unpin for bitcoin::taproot::TapNodeHash
 impl core::marker::Unpin for bitcoin::taproot::TapTree
 impl core::marker::Unpin for bitcoin::taproot::TapTweakHash
-impl core::marker::Unpin for bitcoin::taproot::TapTweakTag
 impl core::marker::Unpin for bitcoin::taproot::TaprootBuilder
 impl core::marker::Unpin for bitcoin::taproot::TaprootBuilderError
 impl core::marker::Unpin for bitcoin::taproot::TaprootError
@@ -3785,7 +3725,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::PubkeyHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::PublicKey
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::SegwitV0Sighash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighashTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighashType
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::WPubkeyHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::AddressType
@@ -3969,14 +3908,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::LeafVersion
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::NodeInfo
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::SigFromSliceError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::Signature
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapBranchTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapLeaf
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapLeafHash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapLeafTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapNodeHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapTree
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapTweakHash
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TapTweakTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TaprootBuilder
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TaprootBuilderError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::TaprootError
@@ -3995,7 +3931,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::PubkeyHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::PublicKey
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::SegwitV0Sighash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighashTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighashType
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::WPubkeyHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::AddressType
@@ -4179,14 +4114,11 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::LeafVersion
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::NodeInfo
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::SigFromSliceError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::Signature
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapBranchTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapLeaf
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapLeafHash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapLeafTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapNodeHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapTree
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapTweakHash
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TapTweakTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TaprootBuilder
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TaprootBuilderError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::TaprootError
@@ -5715,8 +5647,6 @@ pub bitcoin::witness_version::WitnessVersion::V9 = 9
 pub const bitcoin::LegacySighash::N: usize
 pub const bitcoin::PubkeyHash::N: usize
 pub const bitcoin::SegwitV0Sighash::N: usize
-pub const bitcoin::TapSighash::DISPLAY_BACKWARD: bool
-pub const bitcoin::TapSighash::LEN: usize
 pub const bitcoin::TapSighash::N: usize
 pub const bitcoin::WPubkeyHash::N: usize
 pub const bitcoin::address::NetworkChecked::IS_CHECKED: bool
@@ -6344,14 +6274,8 @@ pub const bitcoin::taproot::TAPROOT_CONTROL_MAX_SIZE: _
 pub const bitcoin::taproot::TAPROOT_CONTROL_NODE_SIZE: usize = 32usize
 pub const bitcoin::taproot::TAPROOT_LEAF_MASK: u8 = 254u8
 pub const bitcoin::taproot::TAPROOT_LEAF_TAPSCRIPT: u8 = 192u8
-pub const bitcoin::taproot::TapLeafHash::DISPLAY_BACKWARD: bool
-pub const bitcoin::taproot::TapLeafHash::LEN: usize
 pub const bitcoin::taproot::TapLeafHash::N: usize
-pub const bitcoin::taproot::TapNodeHash::DISPLAY_BACKWARD: bool
-pub const bitcoin::taproot::TapNodeHash::LEN: usize
 pub const bitcoin::taproot::TapNodeHash::N: usize
-pub const bitcoin::taproot::TapTweakHash::DISPLAY_BACKWARD: bool
-pub const bitcoin::taproot::TapTweakHash::LEN: usize
 pub const bitcoin::taproot::TapTweakHash::N: usize
 pub const bitcoin::witness_program::MAX_SIZE: usize = 40usize
 pub const bitcoin::witness_program::MIN_SIZE: usize = 2usize
@@ -7011,37 +6935,27 @@ pub fn bitcoin::SegwitV0Sighash::serialize<S: serde::ser::Serializer>(&self, s: 
 pub fn bitcoin::SegwitV0Sighash::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub fn bitcoin::SegwitV0Sighash::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::TapSighash::all_zeros() -> Self
-pub fn bitcoin::TapSighash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::TapSighash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
+pub fn bitcoin::TapSighash::as_byte_array(&self) -> &[u8; 32]
+pub fn bitcoin::TapSighash::as_raw_hash(&self) -> &bitcoin_hashes::sha256::Hash
 pub fn bitcoin::TapSighash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin::TapSighash::as_ref(&self) -> &[u8]
 pub fn bitcoin::TapSighash::borrow(&self) -> &[u8]
 pub fn bitcoin::TapSighash::clone(&self) -> bitcoin::TapSighash
 pub fn bitcoin::TapSighash::cmp(&self, other: &bitcoin::TapSighash) -> core::cmp::Ordering
 pub fn bitcoin::TapSighash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::TapSighash, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::TapSighash::engine() -> Self::Engine
 pub fn bitcoin::TapSighash::eq(&self, other: &bitcoin::TapSighash) -> bool
 pub fn bitcoin::TapSighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::TapSighash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>) -> bitcoin::TapSighash
-pub fn bitcoin::TapSighash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::TapSighash::from_engine(e: Self::Engine) -> Self
-pub fn bitcoin::TapSighash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>) -> bitcoin::TapSighash
-pub fn bitcoin::TapSighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::TapSighash, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::TapSighash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::TapSighash
+pub fn bitcoin::TapSighash::from_byte_array(bytes: [u8; 32]) -> Self
+pub fn bitcoin::TapSighash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> Self
 pub fn bitcoin::TapSighash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::TapSighash::from_str(s: &str) -> core::result::Result<bitcoin::TapSighash, Self::Err>
 pub fn bitcoin::TapSighash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::TapSighash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::TapSighash::partial_cmp(&self, other: &bitcoin::TapSighash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::TapSighash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::TapSighash::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::TapSighash::to_raw_hash(self) -> bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
-pub fn bitcoin::TapSighashTag::clone(&self) -> bitcoin::TapSighashTag
-pub fn bitcoin::TapSighashTag::cmp(&self, other: &bitcoin::TapSighashTag) -> core::cmp::Ordering
-pub fn bitcoin::TapSighashTag::default() -> bitcoin::TapSighashTag
-pub fn bitcoin::TapSighashTag::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin::TapSighashTag::eq(&self, other: &bitcoin::TapSighashTag) -> bool
-pub fn bitcoin::TapSighashTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::TapSighashTag::partial_cmp(&self, other: &bitcoin::TapSighashTag) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::TapSighash::to_byte_array(self) -> [u8; 32]
+pub fn bitcoin::TapSighash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin::TapSighashType::clone(&self) -> bitcoin::TapSighashType
 pub fn bitcoin::TapSighashType::cmp(&self, other: &bitcoin::TapSighashType) -> core::cmp::Ordering
 pub fn bitcoin::TapSighashType::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::TapSighashType, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
@@ -9453,13 +9367,6 @@ pub fn bitcoin::taproot::Signature::serialize_to_writer<W: bitcoin_io::Write + c
 pub fn bitcoin::taproot::Signature::to_vec(self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::taproot::Signature::try_from(value: &'a bitcoin::taproot::serialized_signature::SerializedSignature) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::taproot::Signature::try_from(value: bitcoin::taproot::serialized_signature::SerializedSignature) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin::taproot::TapBranchTag::clone(&self) -> bitcoin::taproot::TapBranchTag
-pub fn bitcoin::taproot::TapBranchTag::cmp(&self, other: &bitcoin::taproot::TapBranchTag) -> core::cmp::Ordering
-pub fn bitcoin::taproot::TapBranchTag::default() -> bitcoin::taproot::TapBranchTag
-pub fn bitcoin::taproot::TapBranchTag::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin::taproot::TapBranchTag::eq(&self, other: &bitcoin::taproot::TapBranchTag) -> bool
-pub fn bitcoin::taproot::TapBranchTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::taproot::TapBranchTag::partial_cmp(&self, other: &bitcoin::taproot::TapBranchTag) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapLeaf::as_hidden(&self) -> core::option::Option<&bitcoin::taproot::TapNodeHash>
 pub fn bitcoin::taproot::TapLeaf::as_script(&self) -> core::option::Option<(&bitcoin::blockdata::script::Script, bitcoin::taproot::LeafVersion)>
 pub fn bitcoin::taproot::TapLeaf::clone(&self) -> bitcoin::taproot::TapLeaf
@@ -9471,8 +9378,8 @@ pub fn bitcoin::taproot::TapLeaf::hash<__H: core::hash::Hasher>(&self, state: &m
 pub fn bitcoin::taproot::TapLeaf::partial_cmp(&self, other: &bitcoin::taproot::TapLeaf) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapLeaf::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin::taproot::TapLeafHash::all_zeros() -> Self
-pub fn bitcoin::taproot::TapLeafHash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::taproot::TapLeafHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
+pub fn bitcoin::taproot::TapLeafHash::as_byte_array(&self) -> &[u8; 32]
+pub fn bitcoin::taproot::TapLeafHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapLeafHash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin::taproot::TapLeafHash::as_ref(&self) -> &[u8]
 pub fn bitcoin::taproot::TapLeafHash::borrow(&self) -> &[u8]
@@ -9481,34 +9388,24 @@ pub fn bitcoin::taproot::TapLeafHash::cmp(&self, other: &bitcoin::taproot::TapLe
 pub fn bitcoin::taproot::TapLeafHash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::taproot::TapLeafHash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::taproot::TapLeafHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapLeafHash, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::taproot::TapLeafHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapLeafHash::eq(&self, other: &bitcoin::taproot::TapLeafHash) -> bool
 pub fn bitcoin::taproot::TapLeafHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::taproot::TapLeafHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>) -> bitcoin::taproot::TapLeafHash
+pub fn bitcoin::taproot::TapLeafHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from(script_path: bitcoin::sighash::ScriptPath<'s>) -> bitcoin::taproot::TapLeafHash
-pub fn bitcoin::taproot::TapLeafHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapLeafHash::from_engine(e: Self::Engine) -> Self
-pub fn bitcoin::taproot::TapLeafHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>) -> bitcoin::taproot::TapLeafHash
+pub fn bitcoin::taproot::TapLeafHash::from_byte_array(bytes: [u8; 32]) -> Self
+pub fn bitcoin::taproot::TapLeafHash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> Self
 pub fn bitcoin::taproot::TapLeafHash::from_script(script: &bitcoin::blockdata::script::Script, ver: bitcoin::taproot::LeafVersion) -> bitcoin::taproot::TapLeafHash
-pub fn bitcoin::taproot::TapLeafHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapLeafHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapLeafHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapLeafHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapLeafHash, Self::Err>
 pub fn bitcoin::taproot::TapLeafHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::TapLeafHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::taproot::TapLeafHash::partial_cmp(&self, other: &bitcoin::taproot::TapLeafHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapLeafHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::taproot::TapLeafHash::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::taproot::TapLeafHash::to_raw_hash(self) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
-pub fn bitcoin::taproot::TapLeafTag::clone(&self) -> bitcoin::taproot::TapLeafTag
-pub fn bitcoin::taproot::TapLeafTag::cmp(&self, other: &bitcoin::taproot::TapLeafTag) -> core::cmp::Ordering
-pub fn bitcoin::taproot::TapLeafTag::default() -> bitcoin::taproot::TapLeafTag
-pub fn bitcoin::taproot::TapLeafTag::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin::taproot::TapLeafTag::eq(&self, other: &bitcoin::taproot::TapLeafTag) -> bool
-pub fn bitcoin::taproot::TapLeafTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::taproot::TapLeafTag::partial_cmp(&self, other: &bitcoin::taproot::TapLeafTag) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::taproot::TapLeafHash::to_byte_array(self) -> [u8; 32]
+pub fn bitcoin::taproot::TapLeafHash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapNodeHash::all_zeros() -> Self
-pub fn bitcoin::taproot::TapNodeHash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::taproot::TapNodeHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
+pub fn bitcoin::taproot::TapNodeHash::as_byte_array(&self) -> &[u8; 32]
+pub fn bitcoin::taproot::TapNodeHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapNodeHash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin::taproot::TapNodeHash::as_ref(&self) -> &[u8]
 pub fn bitcoin::taproot::TapNodeHash::assume_hidden(hash: [u8; 32]) -> bitcoin::taproot::TapNodeHash
@@ -9516,27 +9413,24 @@ pub fn bitcoin::taproot::TapNodeHash::borrow(&self) -> &[u8]
 pub fn bitcoin::taproot::TapNodeHash::clone(&self) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::cmp(&self, other: &bitcoin::taproot::TapNodeHash) -> core::cmp::Ordering
 pub fn bitcoin::taproot::TapNodeHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapNodeHash, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::taproot::TapNodeHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapNodeHash::eq(&self, other: &bitcoin::taproot::TapNodeHash) -> bool
 pub fn bitcoin::taproot::TapNodeHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::taproot::TapNodeHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>) -> bitcoin::taproot::TapNodeHash
+pub fn bitcoin::taproot::TapNodeHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: &bitcoin::taproot::LeafNode) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::LeafNode) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::TapLeafHash) -> bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapNodeHash::from_engine(e: Self::Engine) -> Self
+pub fn bitcoin::taproot::TapNodeHash::from_byte_array(bytes: [u8; 32]) -> Self
 pub fn bitcoin::taproot::TapNodeHash::from_node_hashes(a: bitcoin::taproot::TapNodeHash, b: bitcoin::taproot::TapNodeHash) -> bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>) -> bitcoin::taproot::TapNodeHash
+pub fn bitcoin::taproot::TapNodeHash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> Self
 pub fn bitcoin::taproot::TapNodeHash::from_script(script: &bitcoin::blockdata::script::Script, ver: bitcoin::taproot::LeafVersion) -> bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapNodeHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapNodeHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapNodeHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapNodeHash, Self::Err>
 pub fn bitcoin::taproot::TapNodeHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::TapNodeHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::taproot::TapNodeHash::partial_cmp(&self, other: &bitcoin::taproot::TapNodeHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapNodeHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::taproot::TapNodeHash::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::taproot::TapNodeHash::to_raw_hash(self) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
+pub fn bitcoin::taproot::TapNodeHash::to_byte_array(self) -> [u8; 32]
+pub fn bitcoin::taproot::TapNodeHash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapTree::clone(&self) -> bitcoin::taproot::TapTree
 pub fn bitcoin::taproot::TapTree::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
 pub fn bitcoin::taproot::TapTree::eq(&self, other: &bitcoin::taproot::TapTree) -> bool
@@ -9550,41 +9444,31 @@ pub fn bitcoin::taproot::TapTree::serialize<__S>(&self, __serializer: __S) -> co
 pub fn bitcoin::taproot::TapTree::try_from(builder: bitcoin::taproot::TaprootBuilder) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::taproot::TapTree::try_from(node_info: bitcoin::taproot::NodeInfo) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::taproot::TapTweakHash::all_zeros() -> Self
-pub fn bitcoin::taproot::TapTweakHash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::taproot::TapTweakHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
+pub fn bitcoin::taproot::TapTweakHash::as_byte_array(&self) -> &[u8; 32]
+pub fn bitcoin::taproot::TapTweakHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapTweakHash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin::taproot::TapTweakHash::as_ref(&self) -> &[u8]
 pub fn bitcoin::taproot::TapTweakHash::borrow(&self) -> &[u8]
 pub fn bitcoin::taproot::TapTweakHash::clone(&self) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::cmp(&self, other: &bitcoin::taproot::TapTweakHash) -> core::cmp::Ordering
 pub fn bitcoin::taproot::TapTweakHash::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::taproot::TapTweakHash, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::taproot::TapTweakHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapTweakHash::eq(&self, other: &bitcoin::taproot::TapTweakHash) -> bool
 pub fn bitcoin::taproot::TapTweakHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::taproot::TapTweakHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>) -> bitcoin::taproot::TapTweakHash
+pub fn bitcoin::taproot::TapTweakHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: &bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapTweakHash::from_engine(e: Self::Engine) -> Self
+pub fn bitcoin::taproot::TapTweakHash::from_byte_array(bytes: [u8; 32]) -> Self
 pub fn bitcoin::taproot::TapTweakHash::from_key_and_tweak(internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>) -> bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapTweakHash, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::taproot::TapTweakHash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> Self
 pub fn bitcoin::taproot::TapTweakHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapTweakHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapTweakHash, Self::Err>
 pub fn bitcoin::taproot::TapTweakHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::TapTweakHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::taproot::TapTweakHash::partial_cmp(&self, other: &bitcoin::taproot::TapTweakHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapTweakHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::taproot::TapTweakHash::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::taproot::TapTweakHash::to_raw_hash(self) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
+pub fn bitcoin::taproot::TapTweakHash::to_byte_array(self) -> [u8; 32]
+pub fn bitcoin::taproot::TapTweakHash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin::taproot::TapTweakHash::to_scalar(self) -> secp256k1::scalar::Scalar
-pub fn bitcoin::taproot::TapTweakTag::clone(&self) -> bitcoin::taproot::TapTweakTag
-pub fn bitcoin::taproot::TapTweakTag::cmp(&self, other: &bitcoin::taproot::TapTweakTag) -> core::cmp::Ordering
-pub fn bitcoin::taproot::TapTweakTag::default() -> bitcoin::taproot::TapTweakTag
-pub fn bitcoin::taproot::TapTweakTag::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin::taproot::TapTweakTag::eq(&self, other: &bitcoin::taproot::TapTweakTag) -> bool
-pub fn bitcoin::taproot::TapTweakTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::taproot::TapTweakTag::partial_cmp(&self, other: &bitcoin::taproot::TapTweakTag) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TaprootBuilder::add_hidden_node(self, depth: u8, hash: bitcoin::taproot::TapNodeHash) -> core::result::Result<Self, bitcoin::taproot::TaprootBuilderError>
 pub fn bitcoin::taproot::TaprootBuilder::add_leaf(self, depth: u8, script: bitcoin::blockdata::script::ScriptBuf) -> core::result::Result<Self, bitcoin::taproot::TaprootBuilderError>
 pub fn bitcoin::taproot::TaprootBuilder::add_leaf_with_ver(self, depth: u8, script: bitcoin::blockdata::script::ScriptBuf, ver: bitcoin::taproot::LeafVersion) -> core::result::Result<Self, bitcoin::taproot::TaprootBuilderError>
@@ -9830,7 +9714,11 @@ pub fn bitcoin_hashes::hash160::Hash::from(hashtype: bitcoin::bip32::XKeyIdentif
 pub fn bitcoin_hashes::hash160::Hash::from(hashtype: bitcoin::blockdata::script::ScriptHash) -> Self
 pub fn bitcoin_hashes::sha256::Hash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin_hashes::sha256::Hash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin::TapSighash) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin::blockdata::script::WScriptHash) -> Self
+pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin::taproot::TapLeafHash) -> bitcoin_hashes::sha256::Hash
+pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin::taproot::TapNodeHash) -> bitcoin_hashes::sha256::Hash
+pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin::taproot::TapTweakHash) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256d::Hash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin_hashes::sha256d::Hash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::LegacySighash) -> Self
@@ -9843,10 +9731,6 @@ pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::WitnessMerkleNode) -> Self
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::transaction::Txid) -> Self
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::transaction::Wtxid) -> Self
-pub fn bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>::from(hashtype: bitcoin::TapSighash) -> bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
-pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>::from(hashtype: bitcoin::taproot::TapNodeHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
-pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>::from(hashtype: bitcoin::taproot::TapLeafHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
-pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>::from(hashtype: bitcoin::taproot::TapTweakHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
 pub fn bitcoin_units::amount::Amount::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin_units::amount::Amount::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bool::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bool, bitcoin::consensus::encode::Error>
@@ -9987,14 +9871,10 @@ pub struct bitcoin::ScriptBuf(_)
 pub struct bitcoin::ScriptHash(_)
 pub struct bitcoin::SegwitV0Sighash(_)
 pub struct bitcoin::Sequence(pub u32)
-pub struct bitcoin::TapBranchTag
 pub struct bitcoin::TapLeafHash(_)
-pub struct bitcoin::TapLeafTag
 pub struct bitcoin::TapNodeHash(_)
 pub struct bitcoin::TapSighash(_)
-pub struct bitcoin::TapSighashTag
 pub struct bitcoin::TapTweakHash(_)
-pub struct bitcoin::TapTweakTag
 pub struct bitcoin::Target(_)
 pub struct bitcoin::Transaction
 pub struct bitcoin::TxIn
@@ -10170,7 +10050,6 @@ pub struct bitcoin::sighash::ScriptPath<'s>
 pub struct bitcoin::sighash::SegwitV0Sighash(_)
 pub struct bitcoin::sighash::SighashCache<T: core::borrow::Borrow<bitcoin::blockdata::transaction::Transaction>>
 pub struct bitcoin::sighash::TapSighash(_)
-pub struct bitcoin::sighash::TapSighashTag
 pub struct bitcoin::sign_message::MessageSignature
 pub struct bitcoin::taproot::ControlBlock
 pub struct bitcoin::taproot::FutureLeafVersion(_)
@@ -10180,13 +10059,10 @@ pub struct bitcoin::taproot::NodeInfo
 pub struct bitcoin::taproot::ScriptLeaf<'leaf>
 pub struct bitcoin::taproot::ScriptLeaves<'tree>
 pub struct bitcoin::taproot::Signature
-pub struct bitcoin::taproot::TapBranchTag
 pub struct bitcoin::taproot::TapLeafHash(_)
-pub struct bitcoin::taproot::TapLeafTag
 pub struct bitcoin::taproot::TapNodeHash(_)
 pub struct bitcoin::taproot::TapTree(_)
 pub struct bitcoin::taproot::TapTweakHash(_)
-pub struct bitcoin::taproot::TapTweakTag
 pub struct bitcoin::taproot::TaprootBuilder
 pub struct bitcoin::taproot::TaprootMerkleBranch(_)
 pub struct bitcoin::taproot::TaprootSpendInfo
@@ -10256,8 +10132,6 @@ pub type bitcoin::PubkeyHash::Output = <I as core::slice::index::SliceIndex<[u8]
 pub type bitcoin::PublicKey::Err = bitcoin::key::ParsePublicKeyError
 pub type bitcoin::SegwitV0Sighash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::SegwitV0Sighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
-pub type bitcoin::TapSighash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::TapSighash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::TapSighash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::TapSighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::TapSighashType::Err = bitcoin::sighash::SighashTypeParseError
@@ -10372,18 +10246,12 @@ pub type bitcoin::taproot::LeafNodes<'a>::Item = &'a bitcoin::taproot::LeafNode
 pub type bitcoin::taproot::NodeInfo::Error = bitcoin::taproot::IncompleteBuilderError
 pub type bitcoin::taproot::ScriptLeaves<'tree>::Item = bitcoin::taproot::ScriptLeaf<'tree>
 pub type bitcoin::taproot::Signature::Error = bitcoin::taproot::SigFromSliceError
-pub type bitcoin::taproot::TapLeafHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapLeafHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::taproot::TapLeafHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapLeafHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
-pub type bitcoin::taproot::TapNodeHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapNodeHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::taproot::TapNodeHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapNodeHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::TapTree::Error = bitcoin::taproot::HiddenNodesError
 pub type bitcoin::taproot::TapTree::Error = bitcoin::taproot::IncompleteBuilderError
-pub type bitcoin::taproot::TapTweakHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapTweakHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::taproot::TapTweakHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapTweakHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::merkle_branch::IntoIter::Item = bitcoin::taproot::TapNodeHash
