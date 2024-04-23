@@ -917,10 +917,8 @@ pub fn bitcoin_hashes::siphash24::HashEngine::write(&mut self, buf: &[u8]) -> st
 pub fn bitcoin_hashes::siphash24::State::clone(&self) -> bitcoin_hashes::siphash24::State
 pub fn bitcoin_hashes::siphash24::State::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub macro bitcoin_hashes::borrow_slice_impl!
-pub macro bitcoin_hashes::hash_newtype!
 pub macro bitcoin_hashes::hex_fmt_impl!
 pub macro bitcoin_hashes::serde_impl!
-pub macro bitcoin_hashes::sha256t_hash_newtype!
 pub mod bitcoin_hashes
 pub mod bitcoin_hashes::cmp
 pub mod bitcoin_hashes::hash160
