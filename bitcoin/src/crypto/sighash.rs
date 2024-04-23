@@ -575,6 +575,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Encodes the BIP341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
+    ///
+    /// In order to sign, the data written by this function must be hashed using a tagged hash. This
+    /// can be achieved by using the [`TapSighash::engine()`] function, writing to the engine, then
+    /// finalizing the hash with [`TapSighash::from_engine()`].
     pub fn taproot_encode_signing_data_to<W: Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
         writer: &mut W,
@@ -766,6 +770,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// `script_code` is dependent on the type of the spend transaction. For p2wpkh use
     /// [`Script::p2wpkh_script_code`], for p2wsh just pass in the witness script. (Also see
     /// [`Self::p2wpkh_signature_hash`] and [`SighashCache::p2wsh_signature_hash`].)
+    ///
+    /// In order to sign, the data written by this function must be hashed using a double SHA256
+    /// hash. This can be achieved either by using the [`hashes::sha256d::Hash`] type or one of the
+    /// custom sighash types in this module ([`SegwitV0Sighash`] and [`LegacySighash`]).
     pub fn segwit_v0_encode_signing_data_to<W: Write + ?Sized>(
         &mut self,
         writer: &mut W,
