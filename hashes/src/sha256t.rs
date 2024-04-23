@@ -176,7 +176,10 @@ mod tests {
 
     // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
     #[cfg(feature = "alloc")]
-    const HASH_ZERO: &str = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+    const HASH_ZERO_BACKWARD: &str = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+    // And the same thing, forward.
+    #[cfg(feature = "alloc")]
+    const HASH_ZERO_FORWARD: &str = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
 
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
@@ -196,22 +199,38 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn manually_created_sha256t_hash_type() {
-        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO);
+        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_BACKWARD);
     }
 
     // We also provide a macro to create the tag and the hash type.
     sha256t_hash_newtype! {
         /// Test detailed explanation.
-        struct NewTypeTag = raw(TEST_MIDSTATE, 64);
+        struct NewTypeTagBackward = raw(TEST_MIDSTATE, 64);
 
         /// A test hash.
         #[hash_newtype(backward)]
-        struct NewTypeHash(_);
+        struct NewTypeHashBackward(_);
     }
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn macro_created_sha256t_hash_type() {
-        assert_eq!(NewTypeHash::hash(&[0]).to_string(), HASH_ZERO);
+    fn macro_created_sha256t_hash_type_backward() {
+        assert_eq!(NewTypeHashBackward::hash(&[0]).to_string(), HASH_ZERO_BACKWARD);
+    }
+
+    // We also provide a macro to create the tag and the hash type.
+    sha256t_hash_newtype! {
+        /// Test detailed explanation.
+        struct NewTypeTagForward = raw(TEST_MIDSTATE, 64);
+
+        /// A test hash.
+        #[hash_newtype(forward)]
+        struct NewTypeHashForward(_);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn macro_created_sha256t_hash_type_prints_forward() {
+        assert_eq!(NewTypeHashForward::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 }
