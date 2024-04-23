@@ -185,21 +185,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "schemars")]
-    impl schemars::JsonSchema for TestHashTag {
-        fn schema_name() -> String { "Hash".to_owned() }
-
-        fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-            let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(64 * 2),
-                min_length: Some(64 * 2),
-                pattern: Some("[0-9a-fA-F]+".to_owned()),
-            }));
-            schema.into()
-        }
-    }
-
     /// A hash tagged with `$name`.
     #[cfg(feature = "alloc")]
     pub type TestHash = sha256t::Hash<TestHashTag>;
