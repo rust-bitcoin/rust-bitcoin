@@ -61,7 +61,6 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
     /// This hash type is used for computing taproot signature hash."
-    #[hash_newtype(forward)]
     pub struct TapSighash(_);
 }
 

@@ -66,7 +66,7 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
 }
 
-crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
+crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
     use crate::Hash as _;
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn manually_created_sha256t_hash_type() {
-        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_BACKWARD);
+        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 
     // We also provide a macro to create the tag and the hash type.
