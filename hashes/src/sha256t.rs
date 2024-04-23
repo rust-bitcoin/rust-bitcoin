@@ -174,6 +174,10 @@ mod tests {
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
+    // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
+    #[cfg(feature = "alloc")]
+    const HASH_ZERO: &str = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
 
@@ -185,10 +189,17 @@ mod tests {
         }
     }
 
-    /// A hash tagged with `$name`.
+    // We support manually implementing `Tag` and creating a tagged hash from it.
     #[cfg(feature = "alloc")]
     pub type TestHash = sha256t::Hash<TestHashTag>;
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn manually_created_sha256t_hash_type() {
+        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO);
+    }
+
+    // We also provide a macro to create the tag and the hash type.
     sha256t_hash_newtype! {
         /// Test detailed explanation.
         struct NewTypeTag = raw(TEST_MIDSTATE, 64);
@@ -200,14 +211,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn test_sha256t() {
-        assert_eq!(
-            TestHash::hash(&[0]).to_string(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
-        assert_eq!(
-            NewTypeHash::hash(&[0]).to_string(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
+    fn macro_created_sha256t_hash_type() {
+        assert_eq!(NewTypeHash::hash(&[0]).to_string(), HASH_ZERO);
     }
 }
