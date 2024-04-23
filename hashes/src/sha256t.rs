@@ -91,8 +91,8 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 ///     pub struct FooTag = hash_str("foo");
 ///
 ///     /// A foo hash.
-///     // Direction works just like in case of hash_newtype! macro.
-///     #[hash_newtype(forward)]
+///     // Direction works just like the hash_newtype! macro.
+///     #[hash_newtype(backward)]
 ///     pub struct FooHash(_);
 /// }
 /// ```
