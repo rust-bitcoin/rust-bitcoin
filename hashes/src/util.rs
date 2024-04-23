@@ -177,6 +177,7 @@ macro_rules! engine_input_impl(
 // struct, I opted to use `{}` as a separator. Yes, a separator is required because an attribute
 // may be composed of multiple token trees - that's the point of "double repetition".
 #[macro_export]
+#[deprecated(since = "TBD", note = "this macro is no longer supported, will be removed soon")]
 macro_rules! hash_newtype {
     ($($(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:tt])* $field_vis:vis $hash:path);)+) => {
         $(

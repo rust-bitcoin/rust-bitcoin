@@ -112,6 +112,7 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 ///
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
+#[deprecated(since = "TBD", note = "this macro is no longer supported, will be removed soon")]
 macro_rules! sha256t_hash_newtype {
     ($($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);)+) => {
         $(
