@@ -13,13 +13,16 @@
 
 use core::{fmt, str};
 
-use hashes::{sha256, sha256d, sha256t_hash_newtype, Hash, HashEngine};
+use hashes::{sha256, sha256d, Hash, HashEngine};
 use internals::write_err;
 use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
-use crate::internal_macros::{impl_hashtype_hex_fmt, impl_hashtype_wrapper};
+use crate::internal_macros::{
+    impl_hashtype_hex_fmt, impl_hashtype_wrapper, impl_tagged_hashtype,
+    impl_tagged_hashtype_hex_fmt,
+};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{
@@ -62,15 +65,14 @@ impl_hashtype_hex_fmt!(DisplayHash::Forwards, 32, SegwitV0Sighash, sha256d::Hash
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
-sha256t_hash_newtype! {
-    pub struct TapSighashTag = hash_str("TapSighash");
+/// Taproot-tagged hash with tag "TapSighash".
+///
+/// This hash type is used for computing the taproot signature hash."
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TapSighash(sha256::Hash);
 
-    /// Taproot-tagged hash with tag \"TapSighash\".
-    ///
-    /// This hash type is used for computing taproot signature hash."
-    #[hash_newtype(forward)]
-    pub struct TapSighash(_);
-}
+impl_tagged_hashtype!(TapSighash, hash_str("TapSighash"));
+impl_tagged_hashtype_hex_fmt!(TapSighash);
 
 impl_message_from_hash!(TapSighash);
 

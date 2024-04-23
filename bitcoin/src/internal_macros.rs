@@ -378,4 +378,171 @@ macro_rules! impl_hashtype_encode {
         }
     };
 }
+
 pub(crate) use impl_hashtype_encode;
+
+/// Implements a tagged SHA256 hashing for `$hashtype`.
+///
+/// Requires `hashes::{sha256, Hash, HashEngine}` to be in scope.
+///
+/// Usage: `impl_tagged_hashtype!(TapSighash, hash_str("TapSighash"));`
+#[rustfmt::skip]
+macro_rules! impl_tagged_hashtype {
+    ($hashtype:ident, $constructor:tt($($tag_value:tt)+)) => {
+        #[allow(unused)] // Not all functions are used by all hash types.
+        impl $hashtype {
+            /// Creates this wrapper type from the inner hash type.
+            pub fn from_raw_hash(inner: sha256::Hash) -> Self { Self(inner) }
+
+            /// Returns the inner hash (sha256, sh256d etc.).
+            pub fn to_raw_hash(self) -> sha256::Hash { self.0 }
+
+            /// Returns a reference to the inner hash (sha256, sh256d etc.).
+            pub fn as_raw_hash(&self) -> &sha256::Hash { &self.0 }
+
+            /// Constructs a hash from the underlying byte array.
+            pub fn from_byte_array(bytes: [u8; 32]) -> Self {
+                Self(sha256::Hash::from_byte_array(bytes))
+            }
+
+            /// Returns the underlying byte array.
+            pub fn to_byte_array(self) -> [u8; 32] { self.0.to_byte_array() }
+
+            /// Returns a reference to the underlying byte array.
+            pub fn as_byte_array(&self) -> &[u8; 32] { self.0.as_byte_array() }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can create
+            /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+            /// previous blockhash and the coinbase transaction's outpoint txid.
+            pub fn all_zeros() -> Self { Self(sha256::Hash::all_zeros()) }
+
+            /// Constructs a new engine pre-tagged and ready to accept data.
+            pub(crate) fn engine() -> sha256::HashEngine {
+                const MIDSTATE: (sha256::Midstate, usize) = $crate::internal_macros::tagged_midstate!($constructor, $($tag_value)+);
+                #[allow(unused)]
+                const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
+
+                sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
+            }
+
+            /// Produces a hash from the current state of a given engine.
+            pub(crate) fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256::Hash::from_engine(e)) }
+
+            /// Copies a byte slice into a hash object.
+            pub(crate) fn from_slice(sl: &[u8]) -> Result<Self, hashes::FromSliceError> {
+                Ok(Self(sha256::Hash::from_slice(sl)?))
+            }
+
+            /// Hashes some bytes.
+            pub(crate) fn hash(data: &[u8]) -> Self {
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
+            }
+        }
+
+        hashes::serde_impl!($hashtype, 32);
+        hashes::borrow_slice_impl!($hashtype);
+
+        impl core::fmt::Debug for $hashtype {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "{}", self)
+            }
+        }
+
+        impl core::convert::AsRef<[u8; 32]> for $hashtype {
+            #[inline]
+            fn as_ref(&self) -> &[u8; 32] { AsRef::<[u8; 32]>::as_ref(&self.0) }
+        }
+
+        impl<I: core::slice::SliceIndex<[u8]>> core::ops::Index<I> for $hashtype {
+            type Output = I::Output;
+            #[inline]
+            fn index(&self, index: I) -> &Self::Output { &self.0[index] }
+        }
+
+        impl core::convert::From<sha256::Hash> for $hashtype {
+            #[inline]
+            fn from(inner: sha256::Hash) -> $hashtype { Self(inner) }
+        }
+
+        impl core::convert::From<$hashtype> for sha256::Hash {
+            #[inline]
+            fn from(hashtype: $hashtype) -> sha256::Hash { hashtype.0 }
+        }
+    }
+}
+pub(crate) use impl_tagged_hashtype;
+
+/// Adds hexadecimal formatting implementations to `$hashtype`.
+macro_rules! impl_tagged_hashtype_hex_fmt {
+    ($hashtype:ident) => {
+        $crate::internal_macros::impl_hashtype_hex_fmt!(
+            $crate::DisplayHash::Forwards,
+            32,
+            $hashtype,
+            sha256::Hash
+        );
+    };
+}
+pub(crate) use impl_tagged_hashtype_hex_fmt;
+
+/// Implements `consensus::{Decodable, Encodable}` for `$hashtype`.
+///
+/// Requires the traits to be in scope.
+#[rustfmt::skip]
+macro_rules! impl_tagged_hashtype_encode {
+    ($hashtype:ident) => {
+        $crate::internal_macros::impl_hashtype_encode!($hashtype, sha256::Hash);
+    }
+}
+pub(crate) use impl_tagged_hashtype_encode;
+
+/// Creates a const midstate used to instantiate a SHA256 pre-tagged engine.
+///
+/// Requires `hashes::sha256` to be in scope.
+macro_rules! tagged_midstate {
+    (hash_str, $value:expr) => {
+        (sha256::Midstate::hash_tag($value.as_bytes()), 64)
+    };
+    (hash_bytes, $value:expr) => {
+        (sha256::Midstate::hash_tag($value), 64)
+    };
+    (raw, $bytes:expr, $len:expr) => {
+        (sha256::Midstate::from_byte_array($bytes), $len)
+    };
+}
+pub(crate) use tagged_midstate;
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use hashes::Hash;
+    use hashes::{sha256, Hash, HashEngine};
+
+    use super::*;
+
+    const TEST_MIDSTATE: [u8; 32] = [
+        156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
+        108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+    ];
+
+    /// A test tagged hash.
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct TestHash(sha256::Hash);
+
+    impl_tagged_hashtype!(TestHash, raw(TEST_MIDSTATE, 64));
+    impl_tagged_hashtype_hex_fmt!(TestHash);
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn test_sha256t() {
+        assert_eq!(
+            TestHash::hash(&[0]).to_string(),
+            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
+        );
+    }
+}
