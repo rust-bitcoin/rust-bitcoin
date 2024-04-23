@@ -1,4 +1,3 @@
-#[non_exhaustive] pub enum bitcoin_io::ErrorKind
 impl bitcoin_io::BufRead for &[u8]
 impl bitcoin_io::Error
 impl bitcoin_io::Read for &[u8]
@@ -7,11 +6,15 @@ impl core::clone::Clone for bitcoin_io::ErrorKind
 impl core::cmp::Eq for bitcoin_io::ErrorKind
 impl core::cmp::PartialEq for bitcoin_io::ErrorKind
 impl core::convert::From<bitcoin_io::ErrorKind> for bitcoin_io::Error
+impl core::convert::From<core::convert::Infallible> for bitcoin_io::ErrorKind
 impl core::fmt::Debug for bitcoin_io::Error
 impl core::fmt::Debug for bitcoin_io::ErrorKind
 impl core::fmt::Display for bitcoin_io::Error
 impl core::hash::Hash for bitcoin_io::ErrorKind
 impl core::marker::Copy for bitcoin_io::ErrorKind
+impl core::marker::Freeze for bitcoin_io::Error
+impl core::marker::Freeze for bitcoin_io::ErrorKind
+impl core::marker::Freeze for bitcoin_io::Sink
 impl core::marker::Send for bitcoin_io::Error
 impl core::marker::Send for bitcoin_io::ErrorKind
 impl core::marker::Send for bitcoin_io::Sink
@@ -30,15 +33,17 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::ErrorKind
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::Sink
 impl<'a, R: bitcoin_io::BufRead + core::marker::Sized> bitcoin_io::BufRead for bitcoin_io::Take<'a, R>
 impl<'a, R: bitcoin_io::Read + core::marker::Sized> bitcoin_io::Read for bitcoin_io::Take<'a, R>
-impl<'a, R: core::marker::Sized> core::marker::Send for bitcoin_io::Take<'a, R> where R: core::marker::Send
-impl<'a, R: core::marker::Sized> core::marker::Sync for bitcoin_io::Take<'a, R> where R: core::marker::Sync
-impl<'a, R: core::marker::Sized> core::marker::Unpin for bitcoin_io::Take<'a, R>
-impl<'a, R: core::marker::Sized> core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Take<'a, R> where R: core::panic::unwind_safe::RefUnwindSafe
 impl<'a, R> !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Take<'a, R>
+impl<'a, R> core::marker::Freeze for bitcoin_io::Take<'a, R> where R: core::marker::Sized
+impl<'a, R> core::marker::Send for bitcoin_io::Take<'a, R> where R: core::marker::Send + core::marker::Sized
+impl<'a, R> core::marker::Sync for bitcoin_io::Take<'a, R> where R: core::marker::Sync + core::marker::Sized
+impl<'a, R> core::marker::Unpin for bitcoin_io::Take<'a, R> where R: core::marker::Sized
+impl<'a, R> core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Take<'a, R> where R: core::panic::unwind_safe::RefUnwindSafe + core::marker::Sized
 impl<'a> bitcoin_io::Write for &'a mut [u8]
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::BufRead for bitcoin_io::Cursor<T>
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Cursor<T>
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Read for bitcoin_io::Cursor<T>
+impl<T> core::marker::Freeze for bitcoin_io::Cursor<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for bitcoin_io::Cursor<T> where T: core::marker::Send
 impl<T> core::marker::Sync for bitcoin_io::Cursor<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for bitcoin_io::Cursor<T> where T: core::marker::Unpin
@@ -62,6 +67,7 @@ pub bitcoin_io::ErrorKind::TimedOut
 pub bitcoin_io::ErrorKind::UnexpectedEof
 pub bitcoin_io::ErrorKind::WouldBlock
 pub bitcoin_io::ErrorKind::WriteZero
+pub enum bitcoin_io::ErrorKind
 pub fn &'a mut [u8]::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn &'a mut [u8]::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
 pub fn &[u8]::consume(&mut self, amount: usize)
@@ -82,6 +88,7 @@ pub fn bitcoin_io::Error::kind(&self) -> bitcoin_io::ErrorKind
 pub fn bitcoin_io::ErrorKind::clone(&self) -> bitcoin_io::ErrorKind
 pub fn bitcoin_io::ErrorKind::eq(&self, other: &bitcoin_io::ErrorKind) -> bool
 pub fn bitcoin_io::ErrorKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_io::ErrorKind::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_io::ErrorKind::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_io::Read::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
 pub fn bitcoin_io::Read::read_exact(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<()>
