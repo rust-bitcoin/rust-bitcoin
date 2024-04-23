@@ -41,7 +41,7 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
-use hashes::{sha256d, siphash24, Hash};
+use hashes::{sha256d, siphash24, Hash, HashEngine};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -50,22 +50,29 @@ use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
-use crate::internal_macros::impl_hashencode;
+use crate::internal_macros::{impl_hashtype_encode, impl_hashtype_hex_fmt, impl_hashtype_wrapper};
 use crate::prelude::*;
+use crate::DisplayHash;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
 const M: u64 = 784931;
 
-hashes::hash_newtype! {
-    /// Filter hash, as defined in BIP-157
-    pub struct FilterHash(sha256d::Hash);
-    /// Filter header, as defined in BIP-157
-    pub struct FilterHeader(sha256d::Hash);
-}
+/// Filter hash, as defined in BIP-157.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct FilterHash(sha256d::Hash);
 
-impl_hashencode!(FilterHash);
-impl_hashencode!(FilterHeader);
+impl_hashtype_wrapper!(FilterHash, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, FilterHash, sha256d::Hash);
+impl_hashtype_encode!(FilterHash, sha256d::Hash);
+
+/// Filter header, as defined in BIP-157.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct FilterHeader(sha256d::Hash);
+
+impl_hashtype_wrapper!(FilterHeader, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, FilterHeader, sha256d::Hash);
+impl_hashtype_encode!(FilterHeader, sha256d::Hash);
 
 /// Errors for blockfilter.
 #[derive(Debug)]
@@ -117,8 +124,8 @@ impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let mut header_data = [0u8; 64];
-        header_data[0..32].copy_from_slice(&self[..]);
-        header_data[32..64].copy_from_slice(&previous_filter_header[..]);
+        header_data[0..32].copy_from_slice(self.as_byte_array());
+        header_data[32..64].copy_from_slice(previous_filter_header.as_byte_array());
         FilterHeader::hash(&header_data)
     }
 }

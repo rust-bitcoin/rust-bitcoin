@@ -64,15 +64,17 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
-use hashes::{hash160, sha256};
+use hashes::{hash160, sha256, Hash, HashEngine};
 use io::{BufRead, Write};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::impl_asref_push_bytes;
+use crate::internal_macros::{
+    impl_hashtype_asref_push_bytes, impl_hashtype_hex_fmt, impl_hashtype_wrapper,
+};
 use crate::prelude::*;
-use crate::OutPoint;
+use crate::{DisplayHash, OutPoint};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -84,13 +86,21 @@ pub use self::{
     push_bytes::*,
 };
 
-hashes::hash_newtype! {
-    /// A hash of Bitcoin Script bytecode.
-    pub struct ScriptHash(hash160::Hash);
-    /// SegWit version of a Bitcoin Script bytecode hash.
-    pub struct WScriptHash(sha256::Hash);
-}
-impl_asref_push_bytes!(ScriptHash, WScriptHash);
+/// A hash of Bitcoin Script bytecode.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScriptHash(hash160::Hash);
+
+impl_hashtype_wrapper!(ScriptHash, hash160::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 20, ScriptHash, hash160::Hash);
+impl_hashtype_asref_push_bytes!(ScriptHash);
+
+/// SegWit version of a Bitcoin Script bytecode hash.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WScriptHash(sha256::Hash);
+
+impl_hashtype_wrapper!(WScriptHash, sha256::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 32, WScriptHash, sha256::Hash);
+impl_hashtype_asref_push_bytes!(WScriptHash);
 
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }

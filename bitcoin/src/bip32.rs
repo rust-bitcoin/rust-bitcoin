@@ -10,15 +10,16 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
-use crate::internal_macros::impl_bytes_newtype;
+use crate::internal_macros::{impl_bytes_newtype, impl_hashtype_hex_fmt, impl_hashtype_wrapper};
 use crate::network::NetworkKind;
 use crate::prelude::*;
+use crate::DisplayHash;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -55,10 +56,12 @@ pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
 
-hash_newtype! {
-    /// Extended key identifier as defined in BIP-32.
-    pub struct XKeyIdentifier(hash160::Hash);
-}
+/// Extended key identifier as defined in BIP-32.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct XKeyIdentifier(hash160::Hash);
+
+impl_hashtype_wrapper!(XKeyIdentifier, hash160::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 20, XKeyIdentifier, hash160::Hash);
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -688,7 +691,7 @@ impl Xpriv {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        self.identifier(secp)[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier(secp).as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
     }
 }
 
@@ -821,7 +824,7 @@ impl Xpub {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint(&self) -> Fingerprint {
-        self.identifier()[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier().as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
     }
 }
 

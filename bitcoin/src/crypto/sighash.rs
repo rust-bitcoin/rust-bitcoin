@@ -13,15 +13,18 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{sha256, sha256d, sha256t_hash_newtype, Hash, HashEngine};
 use internals::write_err;
 use io::Write;
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::internal_macros::{impl_hashtype_hex_fmt, impl_hashtype_wrapper};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
-use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{
+    transaction, Amount, DisplayHash, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
+};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -42,15 +45,19 @@ macro_rules! impl_message_from_hash {
     };
 }
 
-hash_newtype! {
-    /// Hash of a transaction according to the legacy signature algorithm.
-    #[hash_newtype(forward)]
-    pub struct LegacySighash(sha256d::Hash);
+/// Hash of a transaction according to the legacy signature algorithm.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct LegacySighash(sha256d::Hash);
 
-    /// Hash of a transaction according to the segwit version 0 signature algorithm.
-    #[hash_newtype(forward)]
-    pub struct SegwitV0Sighash(sha256d::Hash);
-}
+impl_hashtype_wrapper!(LegacySighash, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 32, LegacySighash, sha256d::Hash);
+
+/// Hash of a transaction according to the segwit version 0 signature algorithm.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SegwitV0Sighash(sha256d::Hash);
+
+impl_hashtype_wrapper!(SegwitV0Sighash, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 32, SegwitV0Sighash, sha256d::Hash);
 
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
@@ -810,7 +817,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut single_enc = LegacySighash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
             let hash = LegacySighash::from_engine(single_enc);
-            writer.write_all(&hash[..])?;
+            writer.write_all(hash.as_byte_array())?;
         } else {
             writer.write_all(&zero_hash[..])?;
         }
@@ -1339,15 +1346,13 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// This method is provided for easy and correct handling of the result because
     /// SIGHASH_SINGLE bug is a special case that must not be ignored nor cause panicking.
-    /// Since the data is usually written directly into a hasher which never fails,
-    /// the recommended pattern to handle this is:
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
     /// # use bitcoin::hashes::{Hash, hex::FromHex};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # let mut writer = LegacySighash::engine();
+    /// # let mut signing_data = vec![];
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -1355,7 +1360,7 @@ impl<E> EncodeSigningDataResult<E> {
     /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
     /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
-    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
+    /// if cache.legacy_encode_signing_data_to(&mut signing_data, input_index, &script_pubkey, sighash_u32)
     ///         .is_sighash_single_bug()
     ///         .expect("writer can't fail") {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug

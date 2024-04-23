@@ -141,6 +141,17 @@ pub use crate::{
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 
+/// Indicates whether user-visible serializations of a hash type should be backward or forward.
+///
+/// For some reason Satoshi decided this should be true for `Sha256dHash`, so here we are.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum DisplayHash {
+    /// Display hash backwards.
+    Backwards,
+    /// Display hash forwards.
+    Forwards,
+}
+
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {

@@ -7,7 +7,6 @@
 //! single transaction.
 //!
 
-use hashes::{sha256d, Hash};
 use hex_lit::hex;
 use internals::impl_array_newtype;
 
@@ -21,7 +20,7 @@ use crate::consensus::Params;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::pow::CompactTarget;
-use crate::Amount;
+use crate::{Amount, BlockHash, TxMerkleNode};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -87,13 +86,13 @@ fn bitcoin_genesis_tx() -> Transaction {
 /// Constructs and returns the genesis block.
 pub fn genesis_block(params: impl AsRef<Params>) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
-    let hash: sha256d::Hash = txdata[0].compute_txid().into();
-    let merkle_root = hash.into();
+    let hash = txdata[0].compute_txid().to_raw_hash();
+    let merkle_root = TxMerkleNode::from_raw_hash(hash);
     match params.as_ref().network {
         Network::Bitcoin => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: Hash::all_zeros(),
+                prev_blockhash: BlockHash::all_zeros(),
                 merkle_root,
                 time: 1231006505,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
@@ -104,7 +103,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Testnet => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: Hash::all_zeros(),
+                prev_blockhash: BlockHash::all_zeros(),
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
@@ -115,7 +114,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Signet => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: Hash::all_zeros(),
+                prev_blockhash: BlockHash::all_zeros(),
                 merkle_root,
                 time: 1598918400,
                 bits: CompactTarget::from_consensus(0x1e0377ae),
@@ -126,7 +125,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Regtest => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: Hash::all_zeros(),
+                prev_blockhash: BlockHash::all_zeros(),
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x207fffff),
@@ -200,6 +199,7 @@ mod test {
     use super::*;
     use crate::consensus::encode::serialize;
     use crate::consensus::params;
+    use crate::{BlockHash, Txid};
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
@@ -207,7 +207,7 @@ mod test {
 
         assert_eq!(gen.version, transaction::Version::ONE);
         assert_eq!(gen.input.len(), 1);
-        assert_eq!(gen.input[0].previous_output.txid, Hash::all_zeros());
+        assert_eq!(gen.input[0].previous_output.txid, Txid::all_zeros());
         assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
         assert_eq!(serialize(&gen.input[0].script_sig),
                    hex!("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73"));
@@ -242,7 +242,7 @@ mod test {
         let gen = genesis_block(&params::MAINNET);
 
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
@@ -261,7 +261,7 @@ mod test {
     fn testnet_genesis_full_block() {
         let gen = genesis_block(&params::TESTNET);
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
@@ -279,7 +279,7 @@ mod test {
     fn signet_genesis_full_block() {
         let gen = genesis_block(&params::SIGNET);
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
@@ -296,7 +296,7 @@ mod test {
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {
-        use hashes::sha256;
+        use hashes::{sha256, Hash};
 
         // The genesis block hash is a double-sha256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();

@@ -13,7 +13,7 @@
 
 use core::{cmp, fmt, str};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, HashEngine};
 use internals::write_err;
 use io::{BufRead, Write};
 use units::parse;
@@ -26,31 +26,39 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{
+    impl_consensus_encoding, impl_hashtype_encode, impl_hashtype_hex_fmt, impl_hashtype_wrapper,
+};
 use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
-use crate::{Amount, SignedAmount, VarInt};
+use crate::{Amount, DisplayHash, SignedAmount, VarInt};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
 pub use crate::consensus::validation::TxVerifyError;
 
-hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations. See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
+/// A bitcoin transaction hash/transaction ID.
+///
+/// For compatibility with the existing Bitcoin infrastructure and historical and current
+/// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
+/// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
+/// trait operations. See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Txid(sha256d::Hash);
 
-    /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
-}
-impl_hashencode!(Txid);
-impl_hashencode!(Wtxid);
+impl_hashtype_wrapper!(Txid, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, Txid, sha256d::Hash);
+impl_hashtype_encode!(Txid, sha256d::Hash);
+
+/// A bitcoin witness transaction ID.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Wtxid(sha256d::Hash);
+
+impl_hashtype_wrapper!(Wtxid, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, Wtxid, sha256d::Hash);
+impl_hashtype_encode!(Wtxid, sha256d::Hash);
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
@@ -84,7 +92,7 @@ impl OutPoint {
     ///
     /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
+    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
     ///
@@ -731,7 +739,7 @@ impl Transaction {
                 .collect(),
             output: self.output.clone(),
         };
-        cloned_tx.compute_txid().into()
+        cloned_tx.compute_txid().to_raw_hash()
     }
 
     /// Computes the [`Txid`].

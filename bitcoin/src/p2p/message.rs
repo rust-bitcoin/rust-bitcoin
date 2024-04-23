@@ -544,6 +544,7 @@ mod test {
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use super::*;
     use crate::bip152::BlockTransactionsRequest;
+    use crate::bip158::{FilterHash, FilterHeader};
     use crate::blockdata::block::Block;
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::Transaction;
@@ -556,6 +557,7 @@ mod test {
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
     use crate::p2p::ServiceFlags;
+    use crate::{BlockHash, Txid};
 
     fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
 
@@ -578,16 +580,21 @@ mod test {
                 45,
                 Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
             )]),
-            NetworkMessage::Inv(vec![Inventory::Block(hash([8u8; 32]).into())]),
-            NetworkMessage::GetData(vec![Inventory::Transaction(hash([45u8; 32]).into())]),
+            NetworkMessage::Inv(vec![Inventory::Block(BlockHash::from_byte_array([8u8; 32]))]),
+            NetworkMessage::GetData(vec![Inventory::Transaction(Txid::from_byte_array(
+                [45u8; 32],
+            ))]),
             NetworkMessage::NotFound(vec![Inventory::Error]),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
-                vec![hash([1u8; 32]).into(), hash([4u8; 32]).into()],
-                hash([5u8; 32]).into(),
+                vec![BlockHash::from_byte_array([1u8; 32]), BlockHash::from_byte_array([4u8; 32])],
+                BlockHash::from_byte_array([5u8; 32]),
             )),
             NetworkMessage::GetHeaders(GetHeadersMessage::new(
-                vec![hash([10u8; 32]).into(), hash([40u8; 32]).into()],
-                hash([50u8; 32]).into(),
+                vec![
+                    BlockHash::from_byte_array([10u8; 32]),
+                    BlockHash::from_byte_array([40u8; 32]),
+                ],
+                BlockHash::from_byte_array([50u8; 32]),
             )),
             NetworkMessage::MemPool,
             NetworkMessage::Tx(tx),
@@ -612,32 +619,38 @@ mod test {
             NetworkMessage::GetCFilters(GetCFilters {
                 filter_type: 2,
                 start_height: 52,
-                stop_hash: hash([42u8; 32]).into(),
+                stop_hash: BlockHash::from_byte_array([42u8; 32]),
             }),
             NetworkMessage::CFilter(CFilter {
                 filter_type: 7,
-                block_hash: hash([25u8; 32]).into(),
+                block_hash: BlockHash::from_byte_array([25u8; 32]),
                 filter: vec![1, 2, 3],
             }),
             NetworkMessage::GetCFHeaders(GetCFHeaders {
                 filter_type: 4,
                 start_height: 102,
-                stop_hash: hash([47u8; 32]).into(),
+                stop_hash: BlockHash::from_byte_array([47u8; 32]),
             }),
             NetworkMessage::CFHeaders(CFHeaders {
                 filter_type: 13,
-                stop_hash: hash([53u8; 32]).into(),
-                previous_filter_header: hash([12u8; 32]).into(),
-                filter_hashes: vec![hash([4u8; 32]).into(), hash([12u8; 32]).into()],
+                stop_hash: BlockHash::from_byte_array([53u8; 32]),
+                previous_filter_header: FilterHeader::from_byte_array([12u8; 32]),
+                filter_hashes: vec![
+                    FilterHash::from_byte_array([4u8; 32]),
+                    FilterHash::from_byte_array([12u8; 32]),
+                ],
             }),
             NetworkMessage::GetCFCheckpt(GetCFCheckpt {
                 filter_type: 17,
-                stop_hash: hash([25u8; 32]).into(),
+                stop_hash: BlockHash::from_byte_array([25u8; 32]),
             }),
             NetworkMessage::CFCheckpt(CFCheckpt {
                 filter_type: 27,
-                stop_hash: hash([77u8; 32]).into(),
-                filter_headers: vec![hash([3u8; 32]).into(), hash([99u8; 32]).into()],
+                stop_hash: BlockHash::from_byte_array([77u8; 32]),
+                filter_headers: vec![
+                    FilterHeader::from_byte_array([3u8; 32]),
+                    FilterHeader::from_byte_array([99u8; 32]),
+                ],
             }),
             NetworkMessage::Alert(vec![45, 66, 3, 2, 6, 8, 9, 12, 3, 130]),
             NetworkMessage::Reject(Reject {
@@ -658,7 +671,7 @@ mod test {
             NetworkMessage::CmpctBlock(cmptblock),
             NetworkMessage::GetBlockTxn(GetBlockTxn {
                 txs_request: BlockTransactionsRequest {
-                    block_hash: hash([11u8; 32]).into(),
+                    block_hash: BlockHash::from_byte_array([11u8; 32]),
                     indexes: vec![0, 1, 2, 3, 10, 3002],
                 },
             }),

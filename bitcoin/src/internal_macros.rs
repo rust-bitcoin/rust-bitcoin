@@ -188,9 +188,183 @@ macro_rules! impl_bytes_newtype {
 }
 pub(crate) use impl_bytes_newtype;
 
-#[rustfmt::skip]
-macro_rules! impl_hashencode {
+/// Implements:
+/// - `AsRef<PushBytes> for $hashtype`
+/// - `From<$hashtype> for PushBytesBuf`
+macro_rules! impl_hashtype_asref_push_bytes {
     ($hashtype:ident) => {
+        impl AsRef<$crate::blockdata::script::PushBytes> for $hashtype {
+            fn as_ref(&self) -> &$crate::blockdata::script::PushBytes {
+                self.as_byte_array().into()
+            }
+        }
+
+        impl From<$hashtype> for $crate::blockdata::script::PushBytesBuf {
+            fn from(hash: $hashtype) -> Self { hash.as_byte_array().into() }
+        }
+    };
+}
+pub(crate) use impl_hashtype_asref_push_bytes;
+
+/// Implements a new type that wraps a hash type, providing private functions for hashing.
+///
+/// Requires `hashes::{Hash, HashEngine}` to be in scope.
+#[rustfmt::skip]
+macro_rules! impl_hashtype_wrapper {
+    ($hashtype:ident, $hash:path) => {
+        #[allow(unused)] // Not all functions are used by every new hash type.
+        impl $hashtype {
+            /// Creates this wrapper type from the inner hash type.
+            #[inline]
+            pub fn from_raw_hash(inner: $hash) -> Self { Self(inner) }
+
+            /// Returns the inner hash (sha256, sh256d etc.).
+            #[inline]
+            pub fn to_raw_hash(self) -> $hash { self.0 }
+
+            /// Returns a reference to the inner hash (sha256, sh256d etc.).
+            #[inline]
+            pub fn as_raw_hash(&self) -> &$hash { &self.0 }
+
+            /// Constructs a hash from the underlying byte array.
+            #[inline]
+            pub fn from_byte_array(bytes: <$hash as hashes::Hash>::Bytes) -> Self {
+                Self(<$hash as hashes::Hash>::from_byte_array(bytes))
+            }
+
+            /// Returns the underlying byte array.
+            #[inline]
+            pub fn to_byte_array(self) -> <$hash as hashes::Hash>::Bytes { self.0.to_byte_array() }
+
+            /// Returns a reference to the underlying byte array.
+            #[inline]
+            pub fn as_byte_array(&self) -> &<$hash as hashes::Hash>::Bytes { self.0.as_byte_array() }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can
+            /// create it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis
+            /// block's previous blockhash and the coinbase transaction's outpoint txid.
+            #[inline]
+            pub fn all_zeros() -> Self { Self(<$hash as hashes::Hash>::all_zeros()) }
+
+            /// Constructs a new engine.
+            pub(crate) fn engine() -> <$hash as hashes::Hash>::Engine { <$hash as hashes::Hash>::Engine::default() }
+
+            /// Produces a hash from the current state of a given engine.
+            pub(crate) fn from_engine(e: <$hash as hashes::Hash>::Engine) -> Self { Self(<$hash as hashes::Hash>::from_engine(e)) }
+
+            /// Copies a byte slice into a hash object.
+            pub(crate) fn from_slice(sl: &[u8]) -> Result<Self, hashes::FromSliceError> {
+                Ok(Self(<$hash as hashes::Hash>::from_slice(sl)?))
+            }
+
+            /// Hashes some bytes.
+            pub(crate) fn hash(data: &[u8]) -> Self {
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
+            }
+        }
+
+        hashes::serde_impl!($hashtype, <$hash as hashes::Hash>::LEN);
+        hashes::borrow_slice_impl!($hashtype);
+
+        impl core::fmt::Debug for $hashtype {
+            #[inline]
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "{}", self)
+            }
+        }
+
+        impl core::convert::AsRef<[u8; <$hash as hashes::Hash>::LEN]> for $hashtype {
+            #[inline]
+            fn as_ref(&self) -> &[u8; <$hash as hashes::Hash>::LEN] {
+                AsRef::<[u8; <$hash as hashes::Hash>::LEN]>::as_ref(&self.0)
+            }
+        }
+
+        impl<I: core::slice::SliceIndex<[u8]>> core::ops::Index<I> for $hashtype {
+            type Output = I::Output;
+            #[inline]
+            fn index(&self, index: I) -> &Self::Output { &self.0[index] }
+        }
+
+        impl core::convert::From<$hash> for $hashtype {
+            #[inline]
+            fn from(inner: $hash) -> Self { Self(inner) }
+        }
+
+        impl core::convert::From<$hashtype> for $hash {
+            #[inline]
+            fn from(hashtype: $hashtype) -> Self { hashtype.0 }
+        }
+    }
+}
+pub(crate) use impl_hashtype_wrapper;
+
+/// Adds hexadecimal formatting implementations to `$hashtype`.
+#[rustfmt::skip]
+macro_rules! impl_hashtype_hex_fmt {
+    ($display_hash:path, $len:expr, $hashtype:ident, $inner:path) => {
+        impl core::str::FromStr for $hashtype {
+            type Err = hex::HexToArrayError;
+
+            fn from_str(s: &str) -> core::result::Result<$hashtype, Self::Err> {
+                use hex::FromHex;
+
+                let mut bytes = <[u8; $len]>::from_hex(s)?;
+                if matches!($display_hash, $crate::DisplayHash::Backwards) {
+                    bytes.reverse();
+                };
+
+                Ok($hashtype(<$inner as hashes::Hash>::from_byte_array(bytes)))
+            }
+        }
+
+        impl core::fmt::LowerHex for $hashtype {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                let case = hex::Case::Lower;
+                match $display_hash {
+                    $crate::DisplayHash::Backwards => {
+                        hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), case)
+                    }
+                    $crate::DisplayHash::Forwards => {
+                        hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), case)
+                    }
+                }
+            }
+        }
+
+        impl core::fmt::UpperHex for $hashtype {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                let case = hex::Case::Upper;
+                match $display_hash {
+                    $crate::DisplayHash::Backwards => {
+                        hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter().rev(), case)
+                    }
+                    $crate::DisplayHash::Forwards => {
+                        hex::fmt_hex_exact!(f, $len, self.as_byte_array().iter(), case)
+                    }
+                }
+            }
+        }
+
+        impl core::fmt::Display for $hashtype {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::LowerHex::fmt(&self, f)
+            }
+        }
+    };
+}
+pub(crate) use impl_hashtype_hex_fmt;
+
+/// Implements `consenus::{Decodable, Encodable}` for `$hashtype`.
+///
+/// Requires the traits to be in scope.
+#[rustfmt::skip]
+macro_rules! impl_hashtype_encode {
+    ($hashtype:ident, $inner:ty) => {
         impl $crate::consensus::Encodable for $hashtype {
             fn consensus_encode<W: $crate::io::Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, $crate::io::Error> {
                 self.0.consensus_encode(w)
@@ -199,32 +373,9 @@ macro_rules! impl_hashencode {
 
         impl $crate::consensus::Decodable for $hashtype {
             fn consensus_decode<R: $crate::io::BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, $crate::consensus::encode::Error> {
-                use $crate::hashes::Hash;
-                Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
+                Ok(Self(<$inner>::consensus_decode(r)?))
             }
         }
     };
 }
-pub(crate) use impl_hashencode;
-
-#[rustfmt::skip]
-macro_rules! impl_asref_push_bytes {
-    ($($hashtype:ident),*) => {
-        $(
-            impl AsRef<$crate::blockdata::script::PushBytes> for $hashtype {
-                fn as_ref(&self) -> &$crate::blockdata::script::PushBytes {
-                    use $crate::hashes::Hash;
-                    self.as_byte_array().into()
-                }
-            }
-
-            impl From<$hashtype> for $crate::blockdata::script::PushBytesBuf {
-                fn from(hash: $hashtype) -> Self {
-                    use $crate::hashes::Hash;
-                    hash.as_byte_array().into()
-                }
-            }
-        )*
-    };
-}
-pub(crate) use impl_asref_push_bytes;
+pub(crate) use impl_hashtype_encode;

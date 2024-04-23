@@ -154,7 +154,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Main => PUBKEY_ADDRESS_PREFIX_MAIN,
                     NetworkKind::Test => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             P2sh { hash, network } => {
@@ -163,7 +163,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Main => SCRIPT_ADDRESS_PREFIX_MAIN,
                     NetworkKind::Test => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             Segwit { program, hrp } => {
@@ -602,9 +602,9 @@ impl Address {
         use AddressInner::*;
         match self.0 {
             P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
-                &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
+                &script.as_bytes()[3..23] == hash.as_byte_array(),
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
-                &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
+                &script.as_bytes()[2..22] == hash.as_byte_array(),
             Segwit { ref program, hrp: _ } if script.is_witness_program() =>
                 &script.as_bytes()[2..] == program.program().as_bytes(),
             P2pkh { .. } | P2sh { .. } | Segwit { .. } => false,
@@ -622,8 +622,8 @@ impl Address {
     fn payload_as_bytes(&self) -> &[u8] {
         use AddressInner::*;
         match self.0 {
-            P2sh { ref hash, network: _ } => hash.as_ref(),
-            P2pkh { ref hash, network: _ } => hash.as_ref(),
+            P2sh { ref hash, network: _ } => hash.as_byte_array(),
+            P2pkh { ref hash, network: _ } => hash.as_byte_array(),
             Segwit { ref program, hrp: _ } => program.program().as_bytes(),
         }
     }
@@ -816,7 +816,7 @@ impl FromStr for Address<NetworkUnchecked> {
 fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
     let mut sha_engine = sha256::Hash::engine();
     sha_engine.input(&[0, 20]);
-    sha_engine.input(pubkey_hash.as_ref());
+    sha_engine.input(pubkey_hash.as_byte_array());
     crate::hashes::hash160::Hash::from_engine(sha_engine)
 }
 

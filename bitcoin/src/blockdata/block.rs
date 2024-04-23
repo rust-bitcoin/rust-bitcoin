@@ -17,24 +17,44 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{Transaction, Txid, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{
+    impl_consensus_encoding, impl_hashtype_encode, impl_hashtype_hex_fmt, impl_hashtype_wrapper,
+};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
-use crate::{merkle_tree, VarInt};
+use crate::{merkle_tree, DisplayHash, VarInt};
 
-hashes::hash_newtype! {
-    /// A bitcoin block hash.
-    pub struct BlockHash(sha256d::Hash);
-    /// A hash of the Merkle tree branch or root for transactions.
-    pub struct TxMerkleNode(sha256d::Hash);
-    /// A hash corresponding to the Merkle tree root for witness data.
-    pub struct WitnessMerkleNode(sha256d::Hash);
-    /// A hash corresponding to the witness structure commitment in the coinbase transaction.
-    pub struct WitnessCommitment(sha256d::Hash);
-}
-impl_hashencode!(BlockHash);
-impl_hashencode!(TxMerkleNode);
-impl_hashencode!(WitnessMerkleNode);
+/// A bitcoin block hash.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BlockHash(sha256d::Hash);
+
+impl_hashtype_wrapper!(BlockHash, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, BlockHash, sha256d::Hash);
+impl_hashtype_encode!(BlockHash, sha256d::Hash);
+
+/// A hash of the Merkle tree branch or root for transactions.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TxMerkleNode(sha256d::Hash);
+
+impl_hashtype_wrapper!(TxMerkleNode, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, TxMerkleNode, sha256d::Hash);
+impl_hashtype_encode!(TxMerkleNode, sha256d::Hash);
+
+/// A hash corresponding to the Merkle tree root for witness data.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WitnessMerkleNode(sha256d::Hash);
+
+impl_hashtype_wrapper!(WitnessMerkleNode, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, WitnessMerkleNode, sha256d::Hash);
+impl_hashtype_encode!(WitnessMerkleNode, sha256d::Hash);
+
+/// A hash corresponding to the witness structure commitment in the coinbase transaction.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WitnessCommitment(sha256d::Hash);
+
+impl_hashtype_wrapper!(WitnessCommitment, sha256d::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Backwards, 32, WitnessCommitment, sha256d::Hash);
+impl_hashtype_encode!(WitnessCommitment, sha256d::Hash);
 
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
@@ -293,7 +313,7 @@ impl Block {
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
-        merkle_tree::calculate_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes).map(TxMerkleNode::from_raw_hash)
     }
 
     /// Computes the witness commitment for the block's transaction list.
@@ -317,7 +337,7 @@ impl Block {
                 t.compute_wtxid().to_raw_hash()
             }
         });
-        merkle_tree::calculate_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes).map(WitnessMerkleNode::from_raw_hash)
     }
 
     /// Returns the weight of the block.

@@ -9,7 +9,7 @@ use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::{hash160, Hash};
+use hashes::{hash160, Hash, HashEngine};
 use hex::{FromHex, HexToArrayError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;
@@ -17,10 +17,13 @@ use io::{Read, Write};
 
 use crate::blockdata::script::ScriptBuf;
 use crate::crypto::ecdsa;
-use crate::internal_macros::impl_asref_push_bytes;
+use crate::internal_macros::{
+    impl_hashtype_asref_push_bytes, impl_hashtype_hex_fmt, impl_hashtype_wrapper,
+};
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
+use crate::DisplayHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
@@ -253,13 +256,21 @@ impl FromStr for PublicKey {
     }
 }
 
-hashes::hash_newtype! {
-    /// A hash of a public key.
-    pub struct PubkeyHash(hash160::Hash);
-    /// SegWit version of a public key hash.
-    pub struct WPubkeyHash(hash160::Hash);
-}
-impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+/// A hash of a public key.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PubkeyHash(hash160::Hash);
+
+impl_hashtype_wrapper!(PubkeyHash, hash160::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 20, PubkeyHash, hash160::Hash);
+impl_hashtype_asref_push_bytes!(PubkeyHash);
+
+/// SegWit version of a public key hash.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct WPubkeyHash(hash160::Hash);
+
+impl_hashtype_wrapper!(WPubkeyHash, hash160::Hash);
+impl_hashtype_hex_fmt!(DisplayHash::Forwards, 20, WPubkeyHash, hash160::Hash);
+impl_hashtype_asref_push_bytes!(WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }
