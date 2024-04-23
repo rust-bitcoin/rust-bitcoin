@@ -291,4 +291,37 @@ mod tests {
             "cee837ec9192cfdb0e5762e9dd1881e9b4147fce76aea79f3b34cbc765935da6",
         );
     }
+
+    #[test]
+    #[cfg(feature = "schemars")]
+    fn newtype_implements_schemars() {
+        const TEST_MIDSTATE: [u8; 32] = [
+            156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243,
+            147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+        ];
+
+        sha256t_hash_newtype! {
+            /// A test hash.
+            #[hash_newtype(backward)]
+            struct TestHash(_);
+
+            struct TestHashEngine(_) = raw(TEST_MIDSTATE, 64);
+        }
+
+        static HASH_BYTES: [u8; 32] = [
+            0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7, 0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6,
+            0x3d, 0x97, 0xaa, 0x63, 0x15, 0x64, 0xd5, 0xd7, 0x89, 0xc2, 0xb7, 0x65, 0x44, 0x8c,
+            0x86, 0x35, 0xfb, 0x6c,
+        ];
+
+        let hash = TestHash::from_slice(&HASH_BYTES).expect("right number of bytes");
+        let js = serde_json::from_str(&serde_json::to_string(&hash).unwrap()).unwrap();
+        let s = schemars::schema_for!(TestHash);
+        let schema = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
+        assert!(jsonschema_valid::Config::from_schema(&schema, None)
+            .unwrap()
+            .validate(&js)
+            .is_ok());
+
+    }
 }
