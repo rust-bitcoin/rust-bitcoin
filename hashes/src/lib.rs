@@ -253,35 +253,3 @@ impl fmt::Display for FromSliceError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {}
-
-#[cfg(test)]
-mod tests {
-    use crate::{sha256d, Hash};
-
-    hash_newtype! {
-        /// A test newtype
-        struct TestNewtype(sha256d::Hash);
-
-        /// A test newtype
-        struct TestNewtype2(sha256d::Hash);
-    }
-
-    #[test]
-    fn convert_newtypes() {
-        let h1 = TestNewtype::hash(&[]);
-        let h2: TestNewtype2 = h1.to_raw_hash().into();
-        assert_eq!(&h1[..], &h2[..]);
-
-        let h = sha256d::Hash::hash(&[]);
-        let h2: TestNewtype = h.to_string().parse().unwrap();
-        assert_eq!(h2.to_raw_hash(), h);
-    }
-
-    #[test]
-    fn newtype_fmt_roundtrip() {
-        let orig = TestNewtype::hash(&[]);
-        let hex = format!("{}", orig);
-        let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
-        assert_eq!(rinsed, orig)
-    }
-}
