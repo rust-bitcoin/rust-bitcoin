@@ -84,7 +84,7 @@ impl OutPoint {
     ///
     /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
+    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
     ///

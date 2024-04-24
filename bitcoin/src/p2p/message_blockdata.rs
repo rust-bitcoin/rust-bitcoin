@@ -150,6 +150,7 @@ mod tests {
 
     use super::{GetBlocksMessage, GetHeadersMessage};
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::BlockHash;
 
     #[test]
     fn getblocks_message_test() {
@@ -162,7 +163,7 @@ mod tests {
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
         assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
-        assert_eq!(real_decode.stop_hash, Hash::all_zeros());
+        assert_eq!(real_decode.stop_hash, BlockHash::all_zeros());
 
         assert_eq!(serialize(&real_decode), from_sat);
     }
@@ -178,7 +179,7 @@ mod tests {
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
         assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
-        assert_eq!(real_decode.stop_hash, Hash::all_zeros());
+        assert_eq!(real_decode.stop_hash, BlockHash::all_zeros());
 
         assert_eq!(serialize(&real_decode), from_sat);
     }
