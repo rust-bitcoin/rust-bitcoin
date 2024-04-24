@@ -149,12 +149,10 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
-    use hashes::sha256d;
     use hex::test_hex_unwrap as hex;
 
-    use super::{Reject, RejectReason, VersionMessage};
+    use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::p2p::ServiceFlags;
 
     #[test]
     fn version_message_test() {

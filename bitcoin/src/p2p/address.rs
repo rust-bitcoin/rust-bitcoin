@@ -304,13 +304,12 @@ impl ToSocketAddrs for AddrV2Message {
 #[cfg(test)]
 mod test {
     use core::str::FromStr;
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+    use std::net::IpAddr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
 
-    use super::{AddrV2, AddrV2Message, Address};
+    use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::p2p::ServiceFlags;
 
     #[test]
     fn serialize_address_test() {

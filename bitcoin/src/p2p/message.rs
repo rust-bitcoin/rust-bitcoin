@@ -537,11 +537,8 @@ impl Decodable for RawNetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use hashes::sha256d::Hash;
-    use hashes::Hash as HashTrait;
     use hex::test_hex_unwrap as hex;
 
-    use super::message_network::{Reject, RejectReason, VersionMessage};
     use super::*;
     use crate::bip152::BlockTransactionsRequest;
     use crate::blockdata::block::Block;
@@ -555,9 +552,10 @@ mod test {
     use crate::p2p::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
+    use crate::p2p::message_network::{Reject, RejectReason, VersionMessage};
     use crate::p2p::ServiceFlags;
 
-    fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
+    fn hash(slice: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_slice(&slice).unwrap() }
 
     #[test]
     fn full_round_ser_der_raw_network_message_test() {
