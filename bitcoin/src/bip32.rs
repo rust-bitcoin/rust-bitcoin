@@ -10,7 +10,7 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, Hash as _, HashEngine as _, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
 use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};

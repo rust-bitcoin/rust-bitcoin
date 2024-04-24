@@ -2,7 +2,7 @@
 
 //! Contains `TaprootMerkleBranch` and its associated types.
 
-use hashes::Hash;
+use hashes::Hash as _;
 
 use super::{
     TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,

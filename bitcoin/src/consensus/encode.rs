@@ -17,7 +17,7 @@
 
 use core::{fmt, mem};
 
-use hashes::{sha256, sha256d, Hash};
+use hashes::{sha256, sha256d, Hash as _};
 use hex::error::{InvalidCharError, OddLengthStringError};
 use internals::write_err;
 use io::{BufRead, Cursor, Read, Write};
@@ -768,7 +768,7 @@ impl Decodable for Box<[u8]> {
 
 /// Does a double-SHA256 on `data` and returns the first 4 bytes.
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = <sha256d::Hash as Hash>::hash(data);
+    let checksum = <sha256d::Hash as hashes::Hash>::hash(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 
@@ -869,7 +869,7 @@ impl Encodable for sha256d::Hash {
 
 impl Decodable for sha256d::Hash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as hashes::Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 
@@ -881,7 +881,7 @@ impl Encodable for sha256::Hash {
 
 impl Decodable for sha256::Hash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as hashes::Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 
@@ -893,7 +893,7 @@ impl Encodable for TapLeafHash {
 
 impl Decodable for TapLeafHash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as hashes::Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 

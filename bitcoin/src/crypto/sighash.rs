@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash as _};
 use internals::write_err;
 use io::Write;
 
@@ -1450,7 +1450,7 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::HashEngine;
+    use hashes::HashEngine as _;
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;

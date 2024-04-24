@@ -4,7 +4,7 @@
 
 use std::str::FromStr;
 
-use bitcoin::hashes::Hash;
+use bitcoin::hashes::Hash as _;
 use bitcoin::key::{Keypair, TapTweak, TweakedKeypair, UntweakedPublicKey};
 use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing, Verification};

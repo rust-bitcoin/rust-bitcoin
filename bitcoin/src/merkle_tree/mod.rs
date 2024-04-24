@@ -6,7 +6,7 @@
 //!
 //! ```
 //! # use bitcoin::{merkle_tree, Txid};
-//! # use bitcoin::hashes::Hash;
+//! # use bitcoin::hashes::Hash as _;
 //! # let tx1 = Txid::all_zeros();  // Dummy hash values.
 //! # let tx2 = Txid::all_zeros();
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
@@ -18,7 +18,6 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-use hashes::Hash;
 use io::Write;
 
 use crate::consensus::encode::Encodable;
@@ -40,8 +39,8 @@ pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: hashes::Hash + Encodable,
+    <T as hashes::Hash>::Engine: Write,
 {
     match hashes.len() {
         0 => None,
@@ -58,8 +57,8 @@ where
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: hashes::Hash + Encodable,
+    <T as hashes::Hash>::Engine: Write,
     I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
@@ -90,8 +89,8 @@ where
 // `hashes` must contain at least one hash.
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: hashes::Hash + Encodable,
+    <T as hashes::Hash>::Engine: Write,
 {
     if hashes.len() == 1 {
         return hashes[0];
@@ -112,7 +111,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use hashes::sha256d;
+    use hashes::{sha256d, Hash as _};
 
     use super::*;
     use crate::blockdata::block::Block;

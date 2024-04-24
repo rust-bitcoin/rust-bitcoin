@@ -40,7 +40,7 @@
 
 use core::fmt;
 
-use hashes::Hash;
+use hashes::Hash as _;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
