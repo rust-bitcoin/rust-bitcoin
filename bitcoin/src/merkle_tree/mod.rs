@@ -127,7 +127,7 @@ mod tests {
 
         let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
 
-        let mut hashes_array: [sha256d::Hash; 15] = [Hash::all_zeros(); 15];
+        let mut hashes_array = [sha256d::Hash::all_zeros(); 15];
         for (i, hash) in hashes_iter.clone().enumerate() {
             hashes_array[i] = hash;
         }
