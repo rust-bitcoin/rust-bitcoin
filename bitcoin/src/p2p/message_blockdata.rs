@@ -144,12 +144,10 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use hashes::Hash;
     use hex::test_hex_unwrap as hex;
 
-    use super::{GetBlocksMessage, GetHeadersMessage};
+    use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::BlockHash;
 
     #[test]
     fn getblocks_message_test() {
