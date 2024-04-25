@@ -24,3 +24,4 @@ jobs:
         uses: actions/labeler@v5
         with:
           configuration-path: master/.github/labeler.yml
+          sync-labels: true
