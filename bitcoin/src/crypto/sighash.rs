@@ -13,9 +13,9 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256t_hash_newtype, sha256, sha256d, Hash};
+use hashes::{hash_newtype, impl_tagged_engine_write, sha256t_hash_newtype, sha256, sha256d, Hash, HashEngine};
 use internals::write_err;
-use io::Write;
+use io::{impl_write, Write};
 
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
@@ -59,9 +59,10 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag "TapSighash".
     ///
     /// This hash type is used for computing the taproot signature hash."
-    #[hash_newtype(forward)]
     pub struct TapSighash(sha256::Hash) = hash_str("TapSighash");
+    pub struct TapSighashEngine(_);
 }
+impl_tagged_engine_write!(TapSighashEngine);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]

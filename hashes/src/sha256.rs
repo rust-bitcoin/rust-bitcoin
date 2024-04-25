@@ -50,7 +50,8 @@ fn from_engine(e: HashEngine) -> Hash {
     Hash(hash)
 }
 
-const BLOCK_SIZE: usize = 64;
+/// Length of the SHA256 hash's internal block size, in bytes.
+pub const BLOCK_SIZE: usize = 64;
 
 /// Engine to compute SHA256 hash function.
 #[derive(Clone)]

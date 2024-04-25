@@ -12,9 +12,9 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{sha256t_hash_newtype, sha256, Hash, HashEngine};
+use hashes::{impl_tagged_engine_write, sha256t_hash_newtype, sha256, Hash, HashEngine};
 use internals::write_err;
-use io::Write;
+use io::{impl_write, Write};
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
@@ -33,21 +33,24 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag \"TapLeaf\".
     ///
     /// This is used for computing tapscript script spend hash.
-    #[hash_newtype(forward)]
     pub struct TapLeafHash(sha256::Hash) = hash_str("TapLeaf");
+    pub struct TapLeafHashEngine(_);
 
     /// Tagged hash used in taproot trees.
     ///
     /// See BIP-340 for tagging rules.
-    #[hash_newtype(forward)]
     pub struct TapNodeHash(sha256::Hash) = hash_str("TapBranch");
+    pub struct TapNodeHashEngine(_);
 
     /// Taproot-tagged hash with tag \"TapTweak\".
     ///
     /// This hash type is used while computing the tweaked public key.
-    #[hash_newtype(forward)]
     pub struct TapTweakHash(sha256::Hash) = hash_str("TapTweak");
+    pub struct TapTweakHashEngine(_);
 }
+impl_tagged_engine_write!(TapLeafHashEngine);
+impl_tagged_engine_write!(TapNodeHashEngine);
+impl_tagged_engine_write!(TapTweakHashEngine);
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
@@ -1472,7 +1475,7 @@ mod test {
         fn empty_hash(tag_name: &str) -> [u8; 32] {
             let mut e = tag_engine(tag_name);
             e.input(&[]);
-            TapNodeHash::from_engine(e).to_byte_array()
+            sha256::Hash::from_engine(e).to_byte_array()
         }
         assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).to_byte_array());
         assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).to_byte_array());

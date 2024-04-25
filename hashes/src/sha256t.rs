@@ -8,7 +8,10 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
-    ($($(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident(sha256::Hash) = $constructor:tt($($tag_value:tt)+);)+) => {
+    ($(
+        $(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident(sha256::Hash) = $constructor:tt($($tag_value:tt)+);
+        $(#[$($engine_attrs:meta)*])* $engine_vis:vis struct $engine:ident(_);
+    )+) => {
         $(
         $($crate::hash_newtype_known_attrs!(#[ $($type_attrs)* ]);)*
 
@@ -16,6 +19,28 @@ macro_rules! sha256t_hash_newtype {
             $type_vis struct $newtype($crate::sha256::Hash);
 
             $({ $($type_attrs)* })*
+        }
+
+        /// Engine to compute tagged SHA2 hash function.
+        #[derive(Clone)]
+        $engine_vis struct $engine($crate::sha256::HashEngine);
+
+        impl Default for $engine {
+            fn default() -> Self {
+                const MIDSTATE: (sha256::Midstate, usize) = $crate::tagged_midstate!($constructor, $($tag_value)+);
+                #[allow(unused)]
+                const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
+
+                Self($crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1))
+            }
+        }
+
+        impl $crate::HashEngine for $engine {
+            type MidState = $crate::sha256::Midstate;
+            fn midstate(&self) -> Self::MidState { self.0.midstate() }
+            const BLOCK_SIZE: usize = $crate::sha256::BLOCK_SIZE;
+            fn input(&mut self, data: &[u8]) { self.0.input(data) }
+            fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
         }
 
         $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, 32, $newtype);
@@ -35,22 +60,16 @@ macro_rules! sha256t_hash_newtype {
         }
 
         impl $crate::Hash for $newtype {
-            type Engine = $crate::sha256::HashEngine;
+            type Engine = $engine;
             type Bytes = [u8; 32];
 
             const LEN: usize = 32;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($crate::sha256::Hash, $(#[$($type_attrs)*])*);
 
-            fn engine() -> $crate::sha256::HashEngine {
-                const MIDSTATE: (sha256::Midstate, usize) = $crate::tagged_midstate!($constructor, $($tag_value)+);
-                #[allow(unused)]
-                const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
+            fn engine() -> Self::Engine { Default::default() }
 
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
-            }
-
-            fn from_engine(e: $crate::sha256::HashEngine) -> Self {
-                Self($crate::sha256::Hash::from_engine(e))
+            fn from_engine(e: $engine) -> Self {
+                Self($crate::sha256::Hash::from_engine(e.0))
             }
 
             fn from_slice(sl: &[u8]) -> Result<Self, $crate::FromSliceError> {
@@ -127,6 +146,23 @@ macro_rules! tagged_midstate {
     };
 }
 
+/// Implements `io::Write` for `$engine`.
+///
+/// Requires `bitcoin_io::impl_write!` to be in scope.
+#[macro_export]
+macro_rules! impl_tagged_engine_write {
+    ($engine:ident) => {
+        impl_write!(
+            $engine,
+            |us: &mut $engine, buf| {
+                us.input(buf);
+                Ok(buf.len())
+            },
+            |_us| { Ok(()) }
+        );
+    }
+}
+
 /// Implements `schemars::JsonSchema` for `$newtype`.
 #[cfg(feature = "schemars")]
 #[macro_export]
@@ -161,14 +197,27 @@ mod tests {
 
     sha256t_hash_newtype! {
         /// A test tagged hash.
+        pub struct TestHash(sha256::Hash) = raw(TEST_MIDSTATE, 64);
+        pub struct TestHashEngine(_);
+
+        /// A test tagged hash.
         #[hash_newtype(backward)]
         pub struct TestHashBackward(sha256::Hash) = raw(TEST_MIDSTATE, 64);
-    }
+        pub struct TestHashBackwardEngine(_);
 
-    sha256t_hash_newtype! {
         /// A test tagged hash.
         #[hash_newtype(forward)]
         pub struct TestHashForward(sha256::Hash) = raw(TEST_MIDSTATE, 64);
+        pub struct TestHashForwardEngine(_);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn sha256t_newtype_display_default() {
+        assert_eq!(
+            TestHash::hash(&[0]).to_string(),
+            "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
+        );
     }
 
     #[test]
