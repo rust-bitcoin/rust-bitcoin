@@ -154,7 +154,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Main => PUBKEY_ADDRESS_PREFIX_MAIN,
                     NetworkKind::Test => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             P2sh { hash, network } => {
@@ -163,7 +163,7 @@ impl fmt::Display for AddressInner {
                     NetworkKind::Main => SCRIPT_ADDRESS_PREFIX_MAIN,
                     NetworkKind::Test => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_byte_array());
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             Segwit { program, hrp } => {
