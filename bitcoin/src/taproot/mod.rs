@@ -12,7 +12,7 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{sha256t_hash_newtype, Hash, HashEngine};
+use hashes::{sha256t_hash_newtype, sha256, Hash, HashEngine};
 use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
@@ -29,31 +29,24 @@ pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
 
-// Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_hash_newtype! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
-
     /// Taproot-tagged hash with tag \"TapLeaf\".
     ///
     /// This is used for computing tapscript script spend hash.
     #[hash_newtype(forward)]
-    pub struct TapLeafHash(_);
-
-    pub struct TapBranchTag = hash_str("TapBranch");
+    pub struct TapLeafHash(sha256::Hash) = hash_str("TapLeaf");
 
     /// Tagged hash used in taproot trees.
     ///
     /// See BIP-340 for tagging rules.
     #[hash_newtype(forward)]
-    pub struct TapNodeHash(_);
-
-    pub struct TapTweakTag = hash_str("TapTweak");
+    pub struct TapNodeHash(sha256::Hash) = hash_str("TapBranch");
 
     /// Taproot-tagged hash with tag \"TapTweak\".
     ///
     /// This hash type is used while computing the tweaked public key.
     #[hash_newtype(forward)]
-    pub struct TapTweakHash(_);
+    pub struct TapTweakHash(sha256::Hash) = hash_str("TapTweak");
 }
 
 impl TapTweakHash {
@@ -1443,13 +1436,12 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
-    use hashes::sha256;
-    use hashes::sha256t::Tag;
+    use hashes::{sha256, Hash as _};
     use hex::FromHex;
     use secp256k1::VerifyOnly;
 
     use super::*;
-    use crate::sighash::{TapSighash, TapSighashTag};
+    use crate::sighash::TapSighash;
     use crate::{Address, KnownHrp};
     extern crate serde_json;
 
@@ -1471,10 +1463,10 @@ mod test {
     #[test]
     fn test_midstates() {
         // test that engine creation roundtrips
-        assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
-        assert_eq!(tag_engine("TapBranch").midstate(), TapBranchTag::engine().midstate());
-        assert_eq!(tag_engine("TapTweak").midstate(), TapTweakTag::engine().midstate());
-        assert_eq!(tag_engine("TapSighash").midstate(), TapSighashTag::engine().midstate());
+        assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafHash::engine().midstate());
+        assert_eq!(tag_engine("TapBranch").midstate(), TapNodeHash::engine().midstate());
+        assert_eq!(tag_engine("TapTweak").midstate(), TapTweakHash::engine().midstate());
+        assert_eq!(tag_engine("TapSighash").midstate(), TapSighash::engine().midstate());
 
         // check that hash creation is the same as building into the same engine
         fn empty_hash(tag_name: &str) -> [u8; 32] {
@@ -1496,19 +1488,19 @@ mod test {
         //   CHashWriter writer = HasherTapLeaf;
         //   writer.GetSHA256().GetHex()
         assert_eq!(
-            TapLeafHash::from_engine(TapLeafTag::engine()).to_string(),
+            TapLeafHash::from_engine(TapLeafHash::engine()).to_string(),
             "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
-            TapNodeHash::from_engine(TapBranchTag::engine()).to_string(),
+            TapNodeHash::from_engine(TapNodeHash::engine()).to_string(),
             "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
-            TapTweakHash::from_engine(TapTweakTag::engine()).to_string(),
+            TapTweakHash::from_engine(TapTweakHash::engine()).to_string(),
             "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
-            TapSighash::from_engine(TapSighashTag::engine()).to_string(),
+            TapSighash::from_engine(TapSighash::engine()).to_string(),
             "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 

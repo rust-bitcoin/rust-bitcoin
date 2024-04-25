@@ -18,6 +18,7 @@ use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
+use hashes::Hash as _;
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
@@ -606,7 +607,7 @@ impl Psbt {
                 } else {
                     cache.taproot_key_spend_signature_hash(input_index, &prev_outs, hash_ty)?
                 };
-                Ok((Message::from(sighash), hash_ty))
+                Ok((Message::from_digest(sighash.to_byte_array()), hash_ty))
             }
             _ => Err(SignError::Unsupported),
         }

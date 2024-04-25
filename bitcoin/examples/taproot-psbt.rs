@@ -78,6 +78,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
+use bitcoin::hashes::Hash;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
@@ -738,7 +739,7 @@ fn sign_psbt_taproot(
         Some(_) => keypair, // no tweak for script spend
     };
 
-    let msg = secp256k1::Message::from(hash);
+    let msg = secp256k1::Message::from_digest(hash.to_byte_array());
     let signature = secp.sign_schnorr(&msg, &keypair);
 
     let final_signature = taproot::Signature { signature, sighash_type };

@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256t_hash_newtype, sha256, sha256d, Hash};
 use internals::write_err;
 use io::Write;
 
@@ -56,16 +56,12 @@ impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
 sha256t_hash_newtype! {
-    pub struct TapSighashTag = hash_str("TapSighash");
-
-    /// Taproot-tagged hash with tag \"TapSighash\".
+    /// Taproot-tagged hash with tag "TapSighash".
     ///
-    /// This hash type is used for computing taproot signature hash."
+    /// This hash type is used for computing the taproot signature hash."
     #[hash_newtype(forward)]
-    pub struct TapSighash(_);
+    pub struct TapSighash(sha256::Hash) = hash_str("TapSighash");
 }
-
-impl_message_from_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -1945,7 +1941,7 @@ mod tests {
                 .taproot_signature_hash(tx_ind, &Prevouts::All(&utxos), None, None, hash_ty)
                 .unwrap();
 
-            let msg = secp256k1::Message::from(sighash);
+            let msg = secp256k1::Message::from_digest(sighash.to_byte_array());
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);
