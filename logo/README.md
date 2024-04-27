@@ -23,7 +23,7 @@ Rust Logo is licensed under CC-BY, which allows reuse and modifications for any 
 
 ## Acknowledgements
 
-Acknowledgement for the runners up in this PR: https://github.com/rust-bitcoin/rust-bitcoin/pull/891#issuecomment-1074476858
+Acknowledgement for the runners up in this PR: <https://github.com/rust-bitcoin/rust-bitcoin/pull/891#issuecomment-1074476858>
 
 In particular, the Rust Bitcoin Wizard gear was an incredibly inspired piece of art. Also, the meshed gears design was beloved by some but not all.
 

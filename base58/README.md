@@ -1,5 +1,4 @@
-Bitcoin base58 encoding
-=======================
+# Bitcoin base58 encoding
 
 This crate provides encoding and decoding of base58 strings as defined by the Bitcoin ecosystem
 including the checksum.
@@ -21,11 +20,9 @@ obviously named ones differ from this crate because:
 This crate uses [bitcoin_hashes](https://crates.io/crates/bitcoin_hashes) when hashing to calculate
 the checksum.
 
-
 ## Minimum Supported Rust Version (MSRV)
 
 This library should always compile with any combination of features on **Rust 1.56.1**.
-
 
 ## Licensing
 

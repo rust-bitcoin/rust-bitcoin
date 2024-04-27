@@ -1,5 +1,4 @@
-Rust Bitcoin Internals
-======================
+# Rust Bitcoin Internals
 
 This crate is only meant to be used internally by crates in the
 [rust-bitcoin](https://github.com/rust-bitcoin) ecosystem.
