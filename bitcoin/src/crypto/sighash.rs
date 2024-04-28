@@ -818,9 +818,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut single_enc = LegacySighash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
             let hash = LegacySighash::from_engine(single_enc);
-            writer.write_all(&hash[..])?;
+            writer.write_all(hash.as_byte_array())?;
         } else {
-            writer.write_all(&zero_hash[..])?;
+            writer.write_all(zero_hash.as_byte_array())?;
         }
 
         self.tx.borrow().lock_time.consensus_encode(writer)?;
