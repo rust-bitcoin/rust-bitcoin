@@ -6,5 +6,5 @@ FEATURES_WITH_STD="serde"
 # Test all these features without "std" enabled.
 FEATURES_WITHOUT_STD="alloc serde"
 
-# Run and lint these examples.
+# Run these examples.
 EXAMPLES=""

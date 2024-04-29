@@ -1027,10 +1027,9 @@ mod tests {
 
     #[cfg(target_arch = "wasm32")]
     mod wasm_tests {
-        extern crate wasm_bindgen_test;
-        use self::wasm_bindgen_test::*;
         use super::*;
-        #[wasm_bindgen_test]
+        #[test]
+        #[wasm_bindgen_test::wasm_bindgen_test]
         fn sha256_tests() {
             test();
             midstate();

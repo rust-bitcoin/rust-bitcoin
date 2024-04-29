@@ -11,8 +11,6 @@ jobs:
   Prepare:
     runs-on: ubuntu-latest
     outputs:
-      crates: ${{ steps.get_matrix.outputs.crates }}
-      deps: ${{ steps.get_matrix.outputs.deps }}
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
     steps:
       - name: Checkout Crate
@@ -20,220 +18,261 @@ jobs:
       - name: Read nightly version
         id: read_toolchain
         run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
-      - name: Prepare tests
-        id: get_matrix
-        run: contrib/get_matrix.sh
 
-  Stable:
-    needs: Prepare
+  Stable:                       # 2 jobs, one per manifest.
     name: Test - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [test, docs, feature_matrix, dup_deps]
+        dep: [minimal, recent]
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
-        # https://github.com/dtolnay/rust-toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: Set dependencies
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: Running test script
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+      - name: "Run test script"
+        run: ./contrib/run_task.sh stable
 
-  Beta:
-    needs: Prepare
-    name: Test - beta toolchain
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [test]
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v4
-      - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@beta
-      - name: Set dependencies
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: Running test script
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
-
-  Nightly:
-    needs: Prepare
+  Nightly:                      # 2 jobs, one per manifest.
     name: Test - nightly toolchain
+    needs: Prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [test, lint, bench, docsrs]
+        dep: [minimal, recent]
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: Install clippy
-        run: rustup component add clippy
-      - name: Set dependencies
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: Running test script
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+      - name: "Run test script"
+        run: ./contrib/run_task.sh nightly
 
-  MSRV:
-    needs: Prepare
+  MSRV:                         # 2 jobs, one per manifest.
     name: Test - 1.56.1 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crate: ${{ fromJson(needs.Prepare.outputs.crates) }}
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [test, feature_matrix]
+        dep: [minimal, recent]
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.56.1"
-      - name: Set dependencies
+      - name: "Copy lock file"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: Running test script
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+      - name: "Run test script"
+        run: ./contrib/run_task.sh msrv
+
+  Lint:
+    name: Lint - nightly toolchain
+    needs: Prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: Install clippy
+        run: rustup component add clippy
+      - name: "Set dependencies"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh lint
+
+  Docs:
+    name: Docs - stable toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Copy lock file"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh docs
+
+  Docsrs:
+    name: Docs - nightly toolchain
+    needs: Prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: "Set dependencies"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh docsrs
+
+  Bench:
+    name: Bench - nightly toolchain
+    needs: Prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: "Copy lock file"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh bench
 
   Arch32bit:
     name: Test 32-bit version
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: Add architecture i386
+      - name: "Add architecture i386"
         run: sudo dpkg --add-architecture i386
-      - name: Install i686 gcc
+      - name: "Install i686 gcc"
         run: sudo apt-get update -y && sudo apt-get install -y gcc-multilib
-      - name: Install target
+      - name: "Install target"
         run: rustup target add i686-unknown-linux-gnu
-      - name: Run test on i686
+      - name: "Run test on i686"
         run: cargo test --target i686-unknown-linux-gnu
 
   Cross:
-    name: Cross test
+    name: Cross test - stable toolchain
     if: ${{ !github.event.act }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: Install target
+      - name: "Install target"
         run: rustup target add s390x-unknown-linux-gnu
-      - name: install cross
+      - name: "Install cross"
         run: cargo install cross --locked
-      - name: run cross test
+      - name: "Run cross test"
         run: cross test --target s390x-unknown-linux-gnu
 
   Embedded:
+    name: Embedded - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-C link-arg=-Tlink.x"
       CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
     steps:
-      - name: Checkout
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Set up QEMU
+      - name: "Set up QEMU"
         run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
           targets: thumbv7m-none-eabi
-      - name: Install src
+      - name: "Install rust-src"
         run: rustup component add rust-src
-      - name: Run bitcoin/embedded
+      - name: "Run bitcoin/embedded"
         run: cd bitcoin/embedded && cargo run --target thumbv7m-none-eabi
-      - name: Run hashes/embedded no alloc
+      - name: "Run hashes/embedded no alloc"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi
-      - name: Run hashes/embedded with alloc
+      - name: "Run hashes/embedded with alloc"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
-  ASAN:
+  ASAN: # hashes crate only.
+    name: ASAN - nightly toolchain
     needs: Prepare
-    name: Address sanitizer     # hashes crate only.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crate: [hashes]
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [asan]
+        dep: [recent]
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: Install src
         run: rustup component add rust-src
-      - name: Running address sanitizer
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+      - name: "Copy lock file"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh asan
 
-  WASM:
-    needs: Prepare
-    name: WebAssembly Build # hashes crate only.
+  WASM: # hashes crate only.
+    name: WASM - stable toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Note we do not use the recent lock file for wasm testing.
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Run test script"
+        run: ./contrib/run_task.sh wasm
+
+  Schemars: # hashes crate only.
+    name: Schemars - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crate: [hashes]
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [wasm]
+        dep: [recent]
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Checkout Toolchain
+      - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: Running WASM build
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
-
-  Schemars:
-    needs: Prepare
-    name: Schemars
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        crate: [hashes]
-        dep: ${{ fromJson(needs.Prepare.outputs.deps) }}
-        task: [schemars]
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v4
-      - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Running schemars test
-        run: ./contrib/run_task.sh ${{ matrix.crate }} ${{ matrix.task }}
+      - name: "Copy lock file"
+        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/run_task.sh schemars
 
   Kani:
+    name: Kani codegen - stable toolchain
     runs-on: ubuntu-20.04
     steps:
-      - name: 'Checkout your code.'
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-
-      - name: 'Kani build proofs'
+      - name: "Build Kani proofs"
         uses: model-checking/kani-github-action@v1.1
         with:
-          args: '--only-codegen'
+          args: "--only-codegen"
