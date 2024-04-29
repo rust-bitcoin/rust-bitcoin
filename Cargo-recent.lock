@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.32.0-rc1"
+version = "0.33.0-unreleased"
 dependencies = [
  "base58ck",
  "base64",
