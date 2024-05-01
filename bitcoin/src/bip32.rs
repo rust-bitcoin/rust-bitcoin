@@ -30,12 +30,12 @@ const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
 const VERSION_BYTES_TESTNETS_PRIVATE: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
 
 /// The old name for xpub, extended public key.
-#[deprecated(since = "0.31.0", note = "use xpub instead")]
-pub type ExtendendPubKey = Xpub;
+#[deprecated(since = "0.31.0", note = "use Xpub instead")]
+pub type ExtendedPubKey = Xpub;
 
 /// The old name for xpriv, extended public key.
-#[deprecated(since = "0.31.0", note = "use xpriv instead")]
-pub type ExtendendPrivKey = Xpriv;
+#[deprecated(since = "0.31.0", note = "use Xpriv instead")]
+pub type ExtendedPrivKey = Xpriv;
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
