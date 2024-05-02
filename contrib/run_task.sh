@@ -90,11 +90,6 @@ main() {
 	    do_bench
 	    ;;
 
-	wasm)
-            # hashes crate only.
-	    do_wasm
-	    ;;
-
 	asan)
             # hashes crate only - hashes/contrib/test_vars.sh is sourced in this function.
 	    do_asan
@@ -257,20 +252,6 @@ do_bench() {
         RUSTFLAGS='--cfg=bench' cargo bench
         popd > /dev/null
     done
-}
-
-# Note we do not use the recent lock file or `--locked` when running the wasm tests.
-do_wasm() {
-    pushd "$REPO_DIR/hashes" > /dev/null
-
-    clang --version &&
-	CARGO_TARGET_DIR=wasm cargo install --force wasm-pack &&
-	printf '\n[target.wasm32-unknown-unknown.dev-dependencies]\nwasm-bindgen-test = "0.3"\n' >> Cargo.toml &&
-	printf '\n[lib]\ncrate-type = ["cdylib", "rlib"]\n' >> Cargo.toml &&
-	CC=clang-9 wasm-pack build &&
-	CC=clang-9 wasm-pack test --node;
-
-    popd > /dev/null
 }
 
 do_asan() {
