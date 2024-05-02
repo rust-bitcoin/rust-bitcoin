@@ -30,12 +30,18 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh stable
+        run: ./maintainer-tools/ci/run_task.sh stable
 
   Nightly:                      # 2 jobs, one per manifest.
     name: Test - nightly toolchain
@@ -48,6 +54,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -55,7 +67,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh nightly
+        run: ./maintainer-tools/ci/run_task.sh nightly
 
   MSRV:                         # 2 jobs, one per manifest.
     name: Test - 1.56.1 toolchain
@@ -67,6 +79,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -74,7 +92,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh msrv
+        run: ./maintainer-tools/ci/run_task.sh msrv
 
   Lint:
     name: Lint - nightly toolchain
@@ -87,6 +105,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -96,7 +120,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh lint
+        run: ./maintainer-tools/ci/run_task.sh lint
 
   Docs:
     name: Docs - stable toolchain
@@ -108,12 +132,18 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh docs
+        run: ./maintainer-tools/ci/run_task.sh docs
 
   Docsrs:
     name: Docs - nightly toolchain
@@ -126,6 +156,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -133,7 +169,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh docsrs
+        run: ./maintainer-tools/ci/run_task.sh docsrs
 
   Bench:
     name: Bench - nightly toolchain
@@ -146,6 +182,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -153,7 +195,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh bench
+        run: ./maintainer-tools/ci/run_task.sh bench
 
   Arch32bit:
     name: Test 32-bit version
