@@ -90,11 +90,6 @@ main() {
 	    do_bench
 	    ;;
 
-	asan)
-            # hashes crate only - hashes/contrib/test_vars.sh is sourced in this function.
-	    do_asan
-	    ;;
-
         *)
             err "Error: unknown task $task"
             ;;
@@ -252,27 +247,6 @@ do_bench() {
         RUSTFLAGS='--cfg=bench' cargo bench
         popd > /dev/null
     done
-}
-
-do_asan() {
-    pushd "$REPO_DIR/hashes" > /dev/null
-
-    # Set ASAN_FEATURES
-    . contrib/test_vars.sh || exit 1
-
-    cargo clean
-    CC='clang -fsanitize=address -fno-omit-frame-pointer'                                        \
-      RUSTFLAGS='-Zsanitizer=address -Clinker=clang -Cforce-frame-pointers=yes'                    \
-      ASAN_OPTIONS='detect_leaks=1 detect_invalid_pointer_pairs=1 detect_stack_use_after_return=1' \
-      cargo test --lib --no-default-features --features="$ASAN_FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
-    # There is currently a bug in the MemorySanitizer (MSAN) - disable the job for now.
-    #
-    # cargo clean
-    # CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                         \
-    #   RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'   \
-    #   cargo test --lib --no-default-features --features="$ASAN_FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
-
-    popd > /dev/null
 }
 
 # Check all the commands we use are present in the current environment.

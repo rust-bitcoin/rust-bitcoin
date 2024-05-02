@@ -232,8 +232,8 @@ jobs:
         run: rustup component add rust-src
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./contrib/run_task.sh asan
+      - name: "Run sanitizer script"
+        run: cd ./hashes && ./contrib/sanitizer.sh
 
   WASM: # hashes crate only.
     name: WASM - stable toolchain
