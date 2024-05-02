@@ -254,15 +254,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        dep: [recent]
+      # Note we do not use the recent lock file for schemars testing.
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: "Copy lock file"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
         run: ./contrib/run_task.sh schemars
 
