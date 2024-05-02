@@ -1,41 +1,4 @@
 #!/usr/bin/env bash
-#
-# We are attempting to run max 20 parallel jobs using GitHub actions (usage limit for free tier).
-#
-# ref: https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration
-#
-# The minimal/recent manifests are handled by CI (rust.yaml).
-#
-# Jobs (shell functions) that get run twice, once for each manifest:
-#
-# 1+2  stable
-# 3+4  nightly
-# 5+6  msrv
-#
-# Jobs (shell functions) that get run once:
-#
-# 7   lint
-# 8   docs
-# 9   docsrs
-# 10  bench
-# 11  asan
-# 12  wasm
-# 13  schemars
-#
-# Jobs run directly by rust.yml workflow:
-#
-# 0 Prepare
-#
-# 14  Arch32bit
-# 15  Cross
-# 16  Embedded
-# 17  Kani
-#
-# Jobs run directly from other workflows:
-#
-# 18  Coveralls - run by coveralls.yml
-# 19  release - run by release.yml
-# 20  labeler - run by manage-pr.yml
 
 set -euox pipefail
 
