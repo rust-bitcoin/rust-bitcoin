@@ -260,8 +260,8 @@ jobs:
         uses: actions/checkout@v4
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: "Run test script"
-        run: ./contrib/run_task.sh schemars
+      - name: "Run schemars test"
+        run: cd hashes/extended_tests/schemars && cargo test
 
   Kani:
     name: Kani codegen - stable toolchain

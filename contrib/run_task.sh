@@ -100,11 +100,6 @@ main() {
 	    do_asan
 	    ;;
 
-	schemars)
-            # hashes crate only.
-	    do_schemars
-	    ;;
-
         *)
             err "Error: unknown task $task"
             ;;
@@ -262,13 +257,6 @@ do_bench() {
         RUSTFLAGS='--cfg=bench' cargo bench
         popd > /dev/null
     done
-}
-
-# This is only relevant for hashes.
-do_schemars() {
-    pushd "$REPO_DIR/hashes/extended_tests/schemars" > /dev/null
-    cargo test
-    popd > /dev/null
 }
 
 # Note we do not use the recent lock file or `--locked` when running the wasm tests.
