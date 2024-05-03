@@ -1,4 +1,5 @@
-on:
+---   # rust-bitcoin CI: If you edit this file please update README.md
+on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - master
