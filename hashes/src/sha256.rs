@@ -1065,8 +1065,8 @@ mod tests {
         assert_eq!(got, want);
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha256_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

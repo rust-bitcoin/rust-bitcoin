@@ -199,8 +199,8 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha1_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

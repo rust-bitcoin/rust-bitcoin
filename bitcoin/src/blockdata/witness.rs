@@ -862,8 +862,8 @@ mod test {
         assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn test_serde_bincode() {
         use bincode;
 
@@ -879,8 +879,8 @@ mod test {
         assert_eq!(new_witness_format, back);
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn test_serde_human() {
         use serde_json;
 

@@ -416,8 +416,8 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn serde_as_core_arg() {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
