@@ -1222,8 +1222,8 @@ mod tests {
         assert!(upk.wpubkey_hash().is_err());
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn test_key_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
