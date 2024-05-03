@@ -15,6 +15,7 @@ use io::{BufRead, Write};
 use mutagen::mutate;
 use units::parse;
 
+use crate::block::Header;
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
@@ -364,6 +365,82 @@ impl CompactTarget {
         }
         let lock_time = parse::hex_u32(s)?;
         Ok(Self::from_consensus(lock_time))
+    }
+
+    /// Computes the [`CompactTarget`] from a difficulty adjustment.
+    ///
+    /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+    ///
+    /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
+    /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
+    /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
+    /// a factor of 4, or adjust beyond the maximum threshold for the network.
+    ///
+    /// # Note
+    ///
+    /// Under the consensus rules, the difference in the number of blocks between the headers does
+    /// not equate to the `difficulty_adjustment_interval` of [`Params`]. This is due to an off-by-one
+    /// error, and, the expected number of blocks in between headers is `difficulty_adjustment_interval - 1`
+    /// when calculating the difficulty adjustment.
+    ///
+    /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
+    /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
+    ///
+    /// # Returns
+    ///
+    /// The expected [`CompactTarget`] recalculation.
+    pub fn from_next_work_required(
+        last: CompactTarget,
+        timespan: u64,
+        params: impl AsRef<Params>,
+    ) -> CompactTarget {
+        let params = params.as_ref();
+        if params.no_pow_retargeting {
+            return last;
+        }
+        // Comments relate to the `pow.cpp` file from Core.
+        // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+        let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
+        let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
+        let actual_timespan = timespan.clamp(min_timespan, max_timespan);
+        let prev_target: Target = last.into();
+        let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
+        let retarget = prev_target.0; // bnNew
+        let retarget = retarget.mul(actual_timespan.into());
+        let retarget = retarget.div(params.pow_target_timespan.into());
+        let retarget = Target(retarget);
+        if retarget.ge(&maximum_retarget) {
+            return maximum_retarget.to_compact_lossy();
+        }
+        retarget.to_compact_lossy()
+    }
+
+    /// Computes the [`CompactTarget`] from a difficulty adjustment,
+    /// assuming these are the relevant block headers.
+    ///
+    /// Given two headers, representing the start and end of a difficulty adjustment epoch,
+    /// compute the [`CompactTarget`] based on the net time between them and the current
+    /// [`CompactTarget`].
+    ///
+    /// # Note
+    ///
+    /// See [`CompactTarget::from_next_work_required`]
+    ///
+    /// For example, to successfully compute the first difficulty adjustment on the Bitcoin network,
+    /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
+    /// `last_epoch_boundary`.
+    ///
+    /// # Returns
+    ///
+    /// The expected [`CompactTarget`] recalculation.
+    pub fn from_header_difficulty_adjustment(
+        last_epoch_boundary: Header,
+        current: Header,
+        params: impl AsRef<Params>,
+    ) -> CompactTarget {
+        let timespan = current.time - last_epoch_boundary.time;
+        let bits = current.bits;
+        CompactTarget::from_next_work_required(bits, timespan.into(), params)
     }
 
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
@@ -1687,6 +1764,113 @@ mod tests {
     fn compact_target_lower_hex_and_upper_hex() {
         assert_eq!(format!("{:08x}", CompactTarget(0x01D0F456)), "01d0f456");
         assert_eq!(format!("{:08X}", CompactTarget(0x01d0f456)), "01D0F456");
+    }
+
+    #[test]
+    fn compact_target_from_upwards_difficulty_adjustment() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
+        let start_time: u64 = 1598918400; // Genesis block unix time
+        let end_time: u64 = 1599332177; // Block 2015 unix time
+        let timespan = end_time - start_time; // Faster than expected
+        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        assert_eq!(adjustment, adjustment_bits);
+    }
+
+    #[test]
+    fn compact_target_from_downwards_difficulty_adjustment() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        let start_time: u64 = 1599332844; // Block 2016 unix time
+        let end_time: u64 = 1600591200; // Block 4031 unix time
+        let timespan = end_time - start_time; // Slower than expected
+        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
+        assert_eq!(adjustment, adjustment_bits);
+    }
+
+    #[test]
+    fn compact_target_from_upwards_difficulty_adjustment_using_headers() {
+        use crate::{block::Version, constants::genesis_block, TxMerkleNode};
+        use hashes::Hash;
+        let params = Params::new(crate::Network::Signet);
+        let epoch_start = genesis_block(&params).header;
+        // Block 2015, the only information used are `bits` and `time`
+        let current = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 1599332177,
+            bits: epoch_start.bits,
+            nonce: epoch_start.nonce
+        };
+        let adjustment = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        assert_eq!(adjustment, adjustment_bits);
+    }
+
+    #[test]
+    fn compact_target_from_downwards_difficulty_adjustment_using_headers() {
+        use crate::{block::Version, TxMerkleNode};
+        use hashes::Hash;
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+        // Block 2016, the only information used is `time`
+        let epoch_start = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 1599332844,
+            bits: starting_bits,
+            nonce: 0
+        };
+        // Block 4031, the only information used are `bits` and `time`
+        let current = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::all_zeros(),
+            merkle_root: TxMerkleNode::all_zeros(),
+            time: 1600591200,
+            bits: starting_bits,
+            nonce: 0
+        };
+        let adjustment = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
+        assert_eq!(adjustment, adjustment_bits);
+    }
+
+    #[test]
+    fn compact_target_from_maximum_upward_difficulty_adjustment() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503403001);
+        let timespan = (0.2 * params.pow_target_timespan as f64) as u64;
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
+        let want = Target::from_compact(starting_bits)
+            .min_transition_threshold()
+            .to_compact_lossy();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn compact_target_from_minimum_downward_difficulty_adjustment() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
+        let timespan =  5 * params.pow_target_timespan; // Really slow.
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let want = Target::from_compact(starting_bits)
+            .max_transition_threshold(params)
+            .to_compact_lossy();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn compact_target_from_adjustment_is_max_target() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
+        let timespan =  5 * params.pow_target_timespan; // Really slow.
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let want = params.max_attainable_target.to_compact_lossy();
+        assert_eq!(got, want);
     }
 
     #[test]
