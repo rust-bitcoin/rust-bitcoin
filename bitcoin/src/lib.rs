@@ -139,6 +139,7 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+pub use units::{BlockHeight, BlockInterval};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
@@ -199,4 +200,43 @@ pub mod amount {
 pub mod parse {
     /// Re-export everything from the [`units::parse`] module.
     pub use units::parse::ParseIntError;
+}
+
+mod encode_impls {
+    //! Encodable/Decodable implementations.
+    // While we are deprecating, re-exporting, and generally moving things around just put these here.
+
+    use units::{BlockHeight, BlockInterval};
+
+    use crate::consensus::{encode, Decodable, Encodable};
+    use crate::io::{BufRead, Write};
+
+    /// Implements Encodable and Decodable for a simple wrapper type.
+    ///
+    /// Wrapper type is required to implement `to_u32()` and `From<u32>`.
+    macro_rules! impl_encodable_for_u32_wrapper {
+        ($ty:ident) => {
+            impl Decodable for $ty {
+                #[inline]
+                fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+                    let inner = u32::consensus_decode(r)?;
+                    Ok($ty::from(inner))
+                }
+            }
+
+            impl Encodable for $ty {
+                #[inline]
+                fn consensus_encode<W: Write + ?Sized>(
+                    &self,
+                    w: &mut W,
+                ) -> Result<usize, io::Error> {
+                    let inner = self.to_u32();
+                    inner.consensus_encode(w)
+                }
+            }
+        };
+    }
+
+    impl_encodable_for_u32_wrapper!(BlockHeight);
+    impl_encodable_for_u32_wrapper!(BlockInterval);
 }
