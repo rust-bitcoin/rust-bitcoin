@@ -213,7 +213,7 @@ jobs:
       - name: "Run hashes/embedded with alloc"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
-  ASAN: # hashes crate only.
+  ASAN:                         # hashes crate only.
     name: ASAN - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-latest
@@ -235,7 +235,7 @@ jobs:
       - name: "Run sanitizer script"
         run: cd ./hashes && ./contrib/sanitizer.sh
 
-  WASM: # hashes crate only.
+  WASM:                         # hashes crate only.
     name: WASM - stable toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -249,7 +249,7 @@ jobs:
       - name: "Run wasm script"
         run: cd hashes && ./contrib/wasm.sh
 
-  Schemars: # hashes crate only.
+  Schemars:                     # hashes crate only.
     name: Schemars - stable toolchain
     runs-on: ubuntu-latest
     strategy:
