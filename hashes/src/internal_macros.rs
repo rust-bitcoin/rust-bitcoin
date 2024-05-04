@@ -86,7 +86,7 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
+        impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 use $crate::{Hash, hex::{FromHex}};
