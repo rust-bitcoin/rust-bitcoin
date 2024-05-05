@@ -3,10 +3,10 @@
 //! SHA256t implementation (tagged SHA256).
 //!
 
+use core::cmp;
 use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::cmp;
 
 use crate::{sha256, FromSliceError};
 

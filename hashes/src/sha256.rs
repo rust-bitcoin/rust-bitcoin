@@ -7,9 +7,9 @@
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
+use core::cmp;
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::cmp;
 
 use crate::{sha256d, FromSliceError, HashEngine as _};
 
