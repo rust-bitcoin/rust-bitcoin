@@ -82,6 +82,10 @@ name = "taproot-psbt"
 required-features = ["std", "rand-std", "bitcoinconsensus"]
 
 [[example]]
+name = "taproot-psbt-simple"
+required-features = ["std", "rand-std"]
+
+[[example]]
 name = "sighash"
 
 [lints.rust]
