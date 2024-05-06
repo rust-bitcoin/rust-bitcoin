@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use bitcoin::address::Address;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode;

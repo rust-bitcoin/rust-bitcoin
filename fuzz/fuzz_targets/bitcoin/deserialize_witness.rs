@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::{deserialize, serialize};
 use honggfuzz::fuzz;

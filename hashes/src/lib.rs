@@ -74,6 +74,8 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
+// This one is just batshit. "Your projects are required to either have a build.rs or allow users' dependencies to disable your crypto."
+#![allow(unexpected_cfgs)]
 
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 extern crate alloc;

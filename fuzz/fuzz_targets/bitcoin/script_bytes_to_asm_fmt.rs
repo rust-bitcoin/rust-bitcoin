@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use std::fmt;
 
 use honggfuzz::fuzz;

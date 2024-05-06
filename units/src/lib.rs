@@ -14,6 +14,9 @@
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 #![no_std]
 
+// This one is just batshit. "Your projects are required to either have a build.rs or allow users' dependencies to disable your crypto."
+#![allow(unexpected_cfgs)]
+
 // Disable 16-bit support at least for now as we can't guarantee it yet.
 #[cfg(target_pointer_width = "16")]
 compile_error!(

@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use std::str::FromStr;
 
 use honggfuzz::fuzz;

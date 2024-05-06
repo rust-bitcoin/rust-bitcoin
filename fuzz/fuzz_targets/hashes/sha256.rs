@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use bitcoin::hashes::{sha256, Hash, HashEngine};
 use honggfuzz::fuzz;
 

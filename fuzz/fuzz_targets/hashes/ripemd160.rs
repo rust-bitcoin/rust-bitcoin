@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use bitcoin::hashes::{ripemd160, Hash, HashEngine};
 use honggfuzz::fuzz;
 

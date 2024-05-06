@@ -1,3 +1,4 @@
+#![allow(unexpected_cfgs)]
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
