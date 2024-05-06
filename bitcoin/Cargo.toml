@@ -66,6 +66,10 @@ name = "ecdsa-psbt"
 required-features = ["std", "bitcoinconsensus"]
 
 [[example]]
+name = "ecdsa-psbt-simple"
+required-features = ["std", "rand-std"]
+
+[[example]]
 name = "sign-tx-segwit-v0"
 required-features = ["std", "rand-std"]
 
