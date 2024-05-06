@@ -45,7 +45,7 @@ impl_bytes_newtype!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
-        hmac[32..].try_into().expect("half of hmac is guaranteed to be 32 bytes")
+        hmac.as_ref()[32..].try_into().expect("half of hmac is guaranteed to be 32 bytes")
     }
 }
 
@@ -566,7 +566,7 @@ impl Xpriv {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
-            private_key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
+            private_key: secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?,
             chain_code: ChainCode::from_hmac(hmac_result),
         })
     }
@@ -621,7 +621,7 @@ impl Xpriv {
 
         hmac_engine.input(&u32::from(i).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let sk = secp256k1::SecretKey::from_slice(&hmac_result[..32])
+        let sk = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])
             .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
@@ -742,7 +742,7 @@ impl Xpub {
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let private_key = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
+                let private_key = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?;
                 let chain_code = ChainCode::from_hmac(hmac_result);
                 Ok((private_key, chain_code))
             }
