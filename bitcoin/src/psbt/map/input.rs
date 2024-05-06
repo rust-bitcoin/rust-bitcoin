@@ -514,7 +514,7 @@ where
             if <H as hashes::Hash>::hash(&val) != key_val {
                 return Err(psbt::Error::InvalidPreimageHashPair {
                     preimage: val.into_boxed_slice(),
-                    hash: Box::from(key_val.borrow()),
+                    hash: Box::from(key_val.as_ref()),
                     hash_type,
                 });
             }
