@@ -18,7 +18,7 @@ use crate::blockdata::script;
 use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::Params;
-use crate::internal_macros::impl_bytes_newtype;
+use crate::internal_macros::impl_array_newtype_stringify;
 use crate::network::Network;
 use crate::pow::CompactTarget;
 use crate::Amount;
@@ -141,7 +141,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainHash([u8; 32]);
 impl_array_newtype!(ChainHash, u8, 32);
-impl_bytes_newtype!(ChainHash, 32);
+impl_array_newtype_stringify!(ChainHash, 32);
 
 impl ChainHash {
     // Mainnet value can be verified at https://github.com/lightning/bolts/blob/master/00-introduction.md

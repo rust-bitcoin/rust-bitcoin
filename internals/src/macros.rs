@@ -8,6 +8,34 @@
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:literal) => {
         impl $thing {
+            /// Creates `Self` by wrapping `bytes`.
+            #[inline]
+            pub fn from_byte_array(bytes: [u8; $len]) -> Self { Self(bytes) }
+
+            /// Returns a reference the underlying byte array.
+            #[inline]
+            pub fn as_byte_array(&self) -> &[u8; $len] { &self.0 }
+
+            /// Returns the underlying byte array.
+            #[inline]
+            pub fn to_byte_array(self) -> [u8; $len] {
+                // We rely on `Copy` being implemented for $thing so conversion
+                // methods use the correct Rust naming conventions.
+                fn check_copy<T: Copy>() {}
+                check_copy::<$thing>();
+
+                self.0
+            }
+
+            /// Returns a slice of the underlying bytes.
+            #[inline]
+            pub fn as_bytes(&self) -> &[u8] { &self.0 }
+
+            /// Copies the underlying bytes into a new `Vec`.
+            #[cfg(feature = "alloc")]
+            #[inline]
+            pub fn to_bytes(&self) -> alloc::vec::Vec<u8> { self.0.to_vec() }
+
             /// Converts the object to a raw pointer.
             #[inline]
             pub fn as_ptr(&self) -> *const $ty {

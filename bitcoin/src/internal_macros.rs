@@ -44,30 +44,17 @@ macro_rules! impl_consensus_encoding {
 }
 pub(crate) use impl_consensus_encoding;
 
-/// Implements several traits for byte-based newtypes.
-/// Implements:
-/// - core::fmt::LowerHex
-/// - core::fmt::UpperHex
-/// - core::fmt::Display
-/// - core::str::FromStr
-macro_rules! impl_bytes_newtype {
+/// Implements several string-ish traits for byte-based newtypes.
+///
+/// - `fmt::Display` and `str::FromStr` (using lowercase hex)
+/// - `fmt::LowerHex` and `UpperHex`
+/// - `fmt::Debug` (using `LowerHex`)
+/// - `serde::Serialize` and `Deserialize` (using lowercase hex)
+///
+/// As well as an inherent `from_hex` method.
+macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
-            /// Returns a reference the underlying bytes.
-            #[inline]
-            pub fn as_bytes(&self) -> &[u8; $len] { &self.0 }
-
-            /// Returns the underlying bytes.
-            #[inline]
-            pub fn to_bytes(self) -> [u8; $len] {
-                // We rely on `Copy` being implemented for $t so conversion
-                // methods use the correct Rust naming conventions.
-                fn check_copy<T: Copy>() {}
-                check_copy::<$t>();
-
-                self.0
-            }
-
             /// Creates `Self` from a hex string.
             pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
                 Ok($t($crate::hex::FromHex::from_hex(s)?))
@@ -186,7 +173,7 @@ macro_rules! impl_bytes_newtype {
         }
     };
 }
-pub(crate) use impl_bytes_newtype;
+pub(crate) use impl_array_newtype_stringify;
 
 #[rustfmt::skip]
 macro_rules! impl_hashencode {
