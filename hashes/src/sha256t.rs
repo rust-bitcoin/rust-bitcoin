@@ -66,7 +66,7 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
 }
 
-crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
+crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
     use crate::Hash as _;
@@ -91,8 +91,8 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 ///     pub struct FooTag = hash_str("foo");
 ///
 ///     /// A foo hash.
-///     // Direction works just like in case of hash_newtype! macro.
-///     #[hash_newtype(forward)]
+///     // Direction works just like the hash_newtype! macro.
+///     #[hash_newtype(backward)]
 ///     pub struct FooHash(_);
 /// }
 /// ```
@@ -174,6 +174,13 @@ mod tests {
         108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ];
 
+    // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
+    #[cfg(feature = "alloc")]
+    const HASH_ZERO_BACKWARD: &str = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+    // And the same thing, forward.
+    #[cfg(feature = "alloc")]
+    const HASH_ZERO_FORWARD: &str = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
+
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
 
@@ -185,44 +192,45 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "schemars")]
-    impl schemars::JsonSchema for TestHashTag {
-        fn schema_name() -> String { "Hash".to_owned() }
-
-        fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-            let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(64 * 2),
-                min_length: Some(64 * 2),
-                pattern: Some("[0-9a-fA-F]+".to_owned()),
-            }));
-            schema.into()
-        }
-    }
-
-    /// A hash tagged with `$name`.
+    // We support manually implementing `Tag` and creating a tagged hash from it.
     #[cfg(feature = "alloc")]
     pub type TestHash = sha256t::Hash<TestHashTag>;
 
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn manually_created_sha256t_hash_type() {
+        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
+    }
+
+    // We also provide a macro to create the tag and the hash type.
     sha256t_hash_newtype! {
         /// Test detailed explanation.
-        struct NewTypeTag = raw(TEST_MIDSTATE, 64);
+        struct NewTypeTagBackward = raw(TEST_MIDSTATE, 64);
 
         /// A test hash.
         #[hash_newtype(backward)]
-        struct NewTypeHash(_);
+        struct NewTypeHashBackward(_);
     }
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn test_sha256t() {
-        assert_eq!(
-            TestHash::hash(&[0]).to_string(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
-        assert_eq!(
-            NewTypeHash::hash(&[0]).to_string(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
+    fn macro_created_sha256t_hash_type_backward() {
+        assert_eq!(NewTypeHashBackward::hash(&[0]).to_string(), HASH_ZERO_BACKWARD);
+    }
+
+    // We also provide a macro to create the tag and the hash type.
+    sha256t_hash_newtype! {
+        /// Test detailed explanation.
+        struct NewTypeTagForward = raw(TEST_MIDSTATE, 64);
+
+        /// A test hash.
+        #[hash_newtype(forward)]
+        struct NewTypeHashForward(_);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn macro_created_sha256t_hash_type_prints_forward() {
+        assert_eq!(NewTypeHashForward::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 }

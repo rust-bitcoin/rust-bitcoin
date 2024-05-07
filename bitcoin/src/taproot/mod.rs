@@ -36,7 +36,6 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag \"TapLeaf\".
     ///
     /// This is used for computing tapscript script spend hash.
-    #[hash_newtype(forward)]
     pub struct TapLeafHash(_);
 
     pub struct TapBranchTag = hash_str("TapBranch");
@@ -44,7 +43,6 @@ sha256t_hash_newtype! {
     /// Tagged hash used in taproot trees.
     ///
     /// See BIP-340 for tagging rules.
-    #[hash_newtype(forward)]
     pub struct TapNodeHash(_);
 
     pub struct TapTweakTag = hash_str("TapTweak");
@@ -52,7 +50,6 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag \"TapTweak\".
     ///
     /// This hash type is used while computing the tweaked public key.
-    #[hash_newtype(forward)]
     pub struct TapTweakHash(_);
 }
 

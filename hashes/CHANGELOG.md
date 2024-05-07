@@ -1,3 +1,20 @@
+# unreleased
+
+* Change the default display direction of for tagged hashes to forwards. [#2707](https://github.com/rust-bitcoin/rust-bitcoin/pull/2707)
+
+  Note please this usage if you need to display backward:
+
+```rust
+  sha256t_hash_newtype! {
+    /// Test detailed explanation.
+    struct NewTypeTag = hash_str("tag");
+
+    /// A test hash.
+    #[hash_newtype(backward)]
+    struct NewTypeHash(_);
+  }
+```
+
 # 0.14.0 - 2024-03-21
 
 * Bump MSRV to Rust version 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
