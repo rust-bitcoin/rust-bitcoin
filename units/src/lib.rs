@@ -45,10 +45,11 @@ pub mod parse;
 #[cfg(feature = "alloc")]
 pub mod weight;
 
-pub use self::amount::ParseAmountError;
 #[doc(inline)]
 pub use self::amount::{Amount, SignedAmount};
+// ParseIntError is used by other modules, so we re-export it.
 #[cfg(feature = "alloc")]
+#[doc(inline)]
 pub use self::parse::ParseIntError;
 #[cfg(feature = "alloc")]
 #[doc(inline)]
