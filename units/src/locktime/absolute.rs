@@ -6,7 +6,9 @@ use core::fmt;
 
 use internals::write_err;
 
-use crate::parse::{self, ParseIntError};
+use crate::parse::ParseIntError;
+#[cfg(feature = "alloc")]
+use crate::parse;
 #[cfg(feature = "alloc")]
 use crate::prelude::*;
 
@@ -233,7 +235,7 @@ where
     S: AsRef<str> + Into<String>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
-    let n = i64::from_str_radix(parse::strip_hex_prefix(s.as_ref()), 16)
+    let n = i64::from_str_radix(parse::hex_remove_optional_prefix(s.as_ref()), 16)
         .map_err(ParseError::invalid_int(s))?;
     let n = u32::try_from(n).map_err(|_| ParseError::Conversion(n))?;
     f(n).map_err(ParseError::from).map_err(Into::into)
