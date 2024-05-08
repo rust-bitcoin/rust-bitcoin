@@ -47,13 +47,15 @@ pub mod weight;
 
 #[doc(inline)]
 pub use self::amount::{Amount, SignedAmount};
-// ParseIntError is used by other modules, so we re-export it.
 #[cfg(feature = "alloc")]
 #[doc(inline)]
-pub use self::parse::ParseIntError;
-#[cfg(feature = "alloc")]
-#[doc(inline)]
-pub use self::{fee_rate::FeeRate, weight::Weight};
+#[rustfmt::skip]
+pub use self::{
+    fee_rate::FeeRate,
+    // ParseIntError is used by other modules, so we re-export it.
+    parse::ParseIntError,
+    weight::Weight
+};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
