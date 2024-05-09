@@ -1,4 +1,5 @@
-on:
+---   # rust-bitcoin CI: If you edit this file please update README.md
+on:   # yamllint disable-line rule:truthy
   push:
     branches:
       - master
@@ -29,12 +30,18 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh stable
+        run: ./maintainer-tools/ci/run_task.sh stable
 
   Nightly:                      # 2 jobs, one per manifest.
     name: Test - nightly toolchain
@@ -47,6 +54,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -54,7 +67,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh nightly
+        run: ./maintainer-tools/ci/run_task.sh nightly
 
   MSRV:                         # 2 jobs, one per manifest.
     name: Test - 1.56.1 toolchain
@@ -66,14 +79,20 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.56.1"
-      - name: "Copy lock file"
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh msrv
+        run: ./maintainer-tools/ci/run_task.sh msrv
 
   Lint:
     name: Lint - nightly toolchain
@@ -86,6 +105,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -95,7 +120,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh lint
+        run: ./maintainer-tools/ci/run_task.sh lint
 
   Docs:
     name: Docs - stable toolchain
@@ -107,12 +132,18 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: "Copy lock file"
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh docs
+        run: ./maintainer-tools/ci/run_task.sh docs
 
   Docsrs:
     name: Docs - nightly toolchain
@@ -125,6 +156,12 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -132,7 +169,7 @@ jobs:
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh docsrs
+        run: ./maintainer-tools/ci/run_task.sh docsrs
 
   Bench:
     name: Bench - nightly toolchain
@@ -145,14 +182,20 @@ jobs:
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
+      - name: "Checkout maintainer tools"
+        uses: actions/checkout@v4
+        with:
+          repository: rust-bitcoin/rust-bitcoin-maintainer-tools
+          rev: b2ac115
+          path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: "Copy lock file"
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"
-        run: ./contrib/run_task.sh bench
+        run: ./maintainer-tools/ci/run_task.sh bench
 
   Arch32bit:
     name: Test 32-bit version
@@ -213,7 +256,7 @@ jobs:
       - name: "Run hashes/embedded with alloc"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
 
-  ASAN: # hashes crate only.
+  ASAN:                         # hashes crate only.
     name: ASAN - nightly toolchain
     needs: Prepare
     runs-on: ubuntu-latest
@@ -230,12 +273,12 @@ jobs:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: Install src
         run: rustup component add rust-src
-      - name: "Copy lock file"
+      - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./contrib/run_task.sh asan
+      - name: "Run sanitizer script"
+        run: cd ./hashes && ./contrib/sanitizer.sh
 
-  WASM: # hashes crate only.
+  WASM:                         # hashes crate only.
     name: WASM - stable toolchain
     runs-on: ubuntu-latest
     strategy:
@@ -246,25 +289,22 @@ jobs:
         uses: actions/checkout@v4
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: "Run test script"
-        run: ./contrib/run_task.sh wasm
+      - name: "Run wasm script"
+        run: cd hashes && ./contrib/wasm.sh
 
-  Schemars: # hashes crate only.
+  Schemars:                     # hashes crate only.
     name: Schemars - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        dep: [recent]
+      # Note we do not use the recent lock file for schemars testing.
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
-      - name: "Copy lock file"
-        run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
-      - name: "Run test script"
-        run: ./contrib/run_task.sh schemars
+      - name: "Run schemars test"
+        run: cd hashes/extended_tests/schemars && cargo test
 
   Kani:
     name: Kani codegen - stable toolchain
