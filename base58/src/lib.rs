@@ -19,6 +19,9 @@
 #[macro_use]
 extern crate alloc;
 
+#[cfg(bench)]
+extern crate test;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -283,4 +286,31 @@ mod tests {
         // Check that `len > 4` is enforced.
         assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
     }
+}
+
+
+#[cfg(bench)]
+mod benches {
+    use test::{black_box, Bencher};
+
+    #[bench]
+    pub fn bench_encode_check_50(bh: &mut Bencher) {
+        let data: alloc::vec::Vec<_> = (0u8..50).collect();
+
+        bh.iter(|| {
+            let r = super::encode_check(&data);
+            black_box(&r);
+        });
+    }
+
+    #[bench]
+    pub fn bench_encode_check_xpub(bh: &mut Bencher) {
+        let data: alloc::vec::Vec<_> = (0u8..78).collect(); // lenght of xpub
+
+        bh.iter(|| {
+            let r = super::encode_check(&data);
+            black_box(&r);
+        });
+    }
+
 }
