@@ -19,6 +19,9 @@
 #[macro_use]
 extern crate alloc;
 
+#[cfg(bench)]
+extern crate test;
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -28,7 +31,7 @@ pub mod error;
 
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
-use core::{fmt, iter, slice, str};
+use core::{fmt, str};
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
@@ -115,7 +118,9 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
-pub fn encode(data: &[u8]) -> String { encode_iter(data.iter().cloned()) }
+pub fn encode(data: &[u8]) -> String {
+    encode_iter(data.iter().cloned())
+}
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
@@ -148,7 +153,7 @@ where
     I: Iterator<Item = u8> + Clone,
     W: fmt::Write,
 {
-    let mut ret = SmallVec::new();
+    let mut ret = Vec::with_capacity(128);
 
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
@@ -173,46 +178,13 @@ where
     }
 
     // ... then reverse it and convert to chars
-    for _ in 0..leading_zero_count {
-        ret.push(0);
-    }
+    ret.resize(ret.len() + leading_zero_count, 0);
 
     for ch in ret.iter().rev() {
         writer.write_char(BASE58_CHARS[*ch as usize] as char)?;
     }
 
     Ok(())
-}
-
-/// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
-/// will be allocated on the heap.
-struct SmallVec<T> {
-    len: usize,
-    stack: [T; 100],
-    heap: Vec<T>,
-}
-
-impl<T: Default + Copy> SmallVec<T> {
-    fn new() -> SmallVec<T> { SmallVec { len: 0, stack: [T::default(); 100], heap: Vec::new() } }
-
-    fn push(&mut self, val: T) {
-        if self.len < 100 {
-            self.stack[self.len] = val;
-            self.len += 1;
-        } else {
-            self.heap.push(val);
-        }
-    }
-
-    fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
-        // If len<100 then we just append an empty vec
-        self.stack[0..self.len].iter().chain(self.heap.iter())
-    }
-
-    fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
-        // If len<100 then we just append an empty vec
-        self.stack[0..self.len].iter_mut().chain(self.heap.iter_mut())
-    }
 }
 
 #[cfg(test)]
@@ -282,5 +254,30 @@ mod tests {
         assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
         // Check that `len > 4` is enforced.
         assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(TooShortError { length: 3 }.into()));
+    }
+}
+
+#[cfg(bench)]
+mod benches {
+    use test::{black_box, Bencher};
+
+    #[bench]
+    pub fn bench_encode_check_50(bh: &mut Bencher) {
+        let data: alloc::vec::Vec<_> = (0u8..50).collect();
+
+        bh.iter(|| {
+            let r = super::encode_check(&data);
+            black_box(&r);
+        });
+    }
+
+    #[bench]
+    pub fn bench_encode_check_xpub(bh: &mut Bencher) {
+        let data: alloc::vec::Vec<_> = (0u8..78).collect(); // lenght of xpub
+
+        bh.iter(|| {
+            let r = super::encode_check(&data);
+            black_box(&r);
+        });
     }
 }
