@@ -20,7 +20,7 @@ fi
 
 excluded_crates="fuzz|dep_test"
 
-CRATES="`cd "$SCAN_DIR" && cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'$PWD'/")) | join(" ")'`"
+CRATES="$(cd "$SCAN_DIR" && cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'"$PWD"'/")) | join(" ")')"
 
 for crate in $CRATES;
 do
@@ -29,7 +29,9 @@ do
 		continue
 	fi
 
-	echo "C-$crate:" >> "$config"
-	echo "  - changed-files:" >> "$config"
-	echo "    - any-glob-to-any-file: $crate/**" >> "$config"
+	{
+		echo "C-$crate:"
+		echo "  - changed-files:"
+		echo "    - any-glob-to-any-file: $crate/**"
+	} >> "$config"
 done
