@@ -116,11 +116,11 @@ impl ColdStorage {
         // Hardened children require secret data to derive.
 
         let path = "84h/0h/0h".into_derivation_path()?;
-        let account_0_xpriv = master_xpriv.derive_priv(secp, &path)?;
+        let account_0_xpriv = master_xpriv.derive_priv(secp, &path);
         let account_0_xpub = Xpub::from_priv(secp, &account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
-        let input_xpriv = master_xpriv.derive_priv(secp, &path)?;
+        let input_xpriv = master_xpriv.derive_priv(secp, &path);
         let input_xpub = Xpub::from_priv(secp, &input_xpriv);
 
         let wallet = ColdStorage { master_xpriv, master_xpub };

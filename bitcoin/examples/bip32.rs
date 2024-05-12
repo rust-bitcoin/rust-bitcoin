@@ -41,7 +41,7 @@ fn main() {
 
     // derive child xpub
     let path = DerivationPath::from_str("84h/0h/0h").unwrap();
-    let child = root.derive_priv(&secp, &path).unwrap();
+    let child = root.derive_priv(&secp, &path);
     println!("Child at {}: {}", path, child);
     let xpub = Xpub::from_priv(&secp, &child);
     println!("Public key at {}: {}", path, xpub);

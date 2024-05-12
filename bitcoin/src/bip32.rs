@@ -583,27 +583,23 @@ impl Xpriv {
             .expect("BIP32 internal private key representation is broken")
     }
 
-    /// Attempts to derive an extended private key from a path.
+    /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
     pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpriv, Error> {
+    ) -> Xpriv {
         let mut sk: Xpriv = *self;
         for cnum in path.as_ref() {
-            sk = sk.ckd_priv(secp, *cnum)?;
+            sk = sk.ckd_priv(secp, *cnum)
         }
-        Ok(sk)
+        sk
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv<C: secp256k1::Signing>(
-        &self,
-        secp: &Secp256k1<C>,
-        i: ChildNumber,
-    ) -> Result<Xpriv, Error> {
+    fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Xpriv {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
@@ -626,14 +622,14 @@ impl Xpriv {
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
-        Ok(Xpriv {
+        Xpriv {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac_result),
-        })
+        }
     }
 
     /// Decoding extended private key from binary data according to BIP 32
@@ -1001,7 +997,7 @@ mod tests {
         let mut pk = Xpub::from_priv(secp, &sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_priv(secp, &path).unwrap().to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_priv(secp, &path).to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
@@ -1013,7 +1009,7 @@ mod tests {
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.0.iter() {
-            sk = sk.ckd_priv(secp, num).unwrap();
+            sk = sk.ckd_priv(secp, num);
             match num {
                 Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();

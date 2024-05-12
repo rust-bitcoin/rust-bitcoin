@@ -762,7 +762,7 @@ impl GetKey for Xpriv {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == fingerprint {
-                    let k = self.derive_priv(secp, &path)?;
+                    let k = self.derive_priv(secp, &path);
                     Some(k.to_priv())
                 } else {
                     None
@@ -808,7 +808,7 @@ impl GetKey for $set<Xpriv> {
             KeyRequest::Bip32((fingerprint, path)) => {
                 for xpriv in self.iter() {
                     if xpriv.parent_fingerprint == fingerprint {
-                        let k = xpriv.derive_priv(secp, &path)?;
+                        let k = xpriv.derive_priv(secp, &path);
                         return Ok(Some(k.to_priv()));
                     }
                 }
@@ -1366,7 +1366,7 @@ mod tests {
             ChildNumber::from_normal_idx(31337).unwrap(),
         ];
 
-        sk = sk.derive_priv(secp, &dpath).unwrap();
+        sk = sk.derive_priv(secp, &dpath);
 
         let pk = Xpub::from_priv(secp, &sk);
 
