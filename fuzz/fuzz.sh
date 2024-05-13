@@ -3,7 +3,8 @@ set -euox pipefail
 
 REPO_DIR=$(git rev-parse --show-toplevel)
 
-# shellcheck source=./fuzz-util.sh
+# can't find the file because of the ENV var
+# shellcheck source=/dev/null
 source "$REPO_DIR/fuzz/fuzz-util.sh"
 
 # Check that input files are correct Windows file names

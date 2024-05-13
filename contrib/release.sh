@@ -28,7 +28,7 @@ main () {
 # preparation for releasing the crate.
 release_changes() {
     local crate=$1
-    git log --patch --reverse master.. -- $crate/Cargo.toml | grep version
+    git log --patch --reverse master.. -- "$crate"/Cargo.toml | grep version
 }
 
 # Do a dry run publish to crates.io using the correct package name for crate ($1).
@@ -47,4 +47,4 @@ publish_dry_run() {
 #
 # Main script.
 #
-main $@
+main "$@"
