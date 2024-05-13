@@ -176,10 +176,12 @@ mod tests {
 
     // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
     #[cfg(feature = "alloc")]
-    const HASH_ZERO_BACKWARD: &str = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+    const HASH_ZERO_BACKWARD: &str =
+        "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
     // And the same thing, forward.
     #[cfg(feature = "alloc")]
-    const HASH_ZERO_FORWARD: &str = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
+    const HASH_ZERO_FORWARD: &str =
+        "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
 
     #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
     pub struct TestHashTag;
