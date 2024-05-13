@@ -7,8 +7,6 @@ macro_rules! arr_newtype_fmt_impl {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                #[allow(unused)]
-                use crate::Hash as _;
                 let case = $crate::hex::Case::Lower;
                 if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
@@ -21,8 +19,6 @@ macro_rules! arr_newtype_fmt_impl {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                #[allow(unused)]
-                use crate::Hash as _;
                 let case = $crate::hex::Case::Upper;
                 if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
@@ -89,7 +85,7 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::{Hash, hex::{FromHex}};
+                use $crate::hex::{FromHex};
 
                 let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
                 if $reverse {
@@ -100,7 +96,7 @@ macro_rules! hash_trait_impls {
         }
 
         $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
+        serde_impl!(Hash $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
@@ -117,96 +113,6 @@ macro_rules! hash_trait_impls {
                 &self.0[index]
             }
         }
-
-        impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
-            type Engine = HashEngine;
-            type Bytes = [u8; $bits / 8];
-
-            const LEN: usize = $bits / 8;
-            const DISPLAY_BACKWARD: bool = $reverse;
-
-            fn engine() -> Self::Engine {
-                Self::internal_engine()
-            }
-
-            fn from_engine(e: HashEngine) -> Hash<$($gen),*> {
-                from_engine(e)
-            }
-
-            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
-                if sl.len() != $bits / 8 {
-                    Err(FromSliceError{expected: Self::LEN, got: sl.len()})
-                } else {
-                    let mut ret = [0; $bits / 8];
-                    ret.copy_from_slice(sl);
-                    Ok(Self::internal_new(ret))
-                }
-            }
-
-            fn to_byte_array(self) -> Self::Bytes {
-                self.0
-            }
-
-            fn as_byte_array(&self) -> &Self::Bytes {
-                &self.0
-            }
-
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                Self::internal_new(bytes)
-            }
-
-            fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
-            }
-        }
     }
 }
 pub(crate) use hash_trait_impls;
-
-/// Creates a type called `Hash` and implements standard interface for it.
-///
-/// The created type will have all standard derives, `Hash` impl and implementation of
-/// `internal_engine` returning default. The created type has a single field.
-///
-/// Arguments:
-///
-/// * `$bits` - the number of bits of the hash type
-/// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
-/// * `$doc` - doc string to put on the type
-/// * `$schemars` - a literal that goes into `schema_with`.
-///
-/// The `from_engine` free-standing function is still required with this macro. See the doc of
-/// [`hash_trait_impls`].
-macro_rules! hash_type {
-    ($bits:expr, $reverse:expr, $doc:literal) => {
-        #[doc = $doc]
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        #[repr(transparent)]
-        pub struct Hash([u8; $bits / 8]);
-
-        impl Hash {
-            fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
-
-            fn internal_engine() -> HashEngine { Default::default() }
-        }
-
-        #[cfg(feature = "schemars")]
-        impl schemars::JsonSchema for Hash {
-            fn schema_name() -> String { "Hash".to_owned() }
-
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                let len = $bits / 8;
-                let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-                schema.string = Some(Box::new(schemars::schema::StringValidation {
-                    max_length: Some(len * 2),
-                    min_length: Some(len * 2),
-                    pattern: Some("[0-9a-fA-F]+".to_owned()),
-                }));
-                schema.into()
-            }
-        }
-
-        crate::internal_macros::hash_trait_impls!($bits, $reverse);
-    };
-}
-pub(crate) use hash_type;

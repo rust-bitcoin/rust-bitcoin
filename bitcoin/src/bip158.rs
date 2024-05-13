@@ -41,7 +41,7 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
-use hashes::{sha256d, siphash24, Hash};
+use hashes::{sha256d, siphash24};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -59,9 +59,9 @@ const M: u64 = 784931;
 
 hashes::hash_newtype! {
     /// Filter hash, as defined in BIP-157
-    pub struct FilterHash(sha256d::Hash);
+    pub struct FilterHash(sha256d);
     /// Filter header, as defined in BIP-157
-    pub struct FilterHeader(sha256d::Hash);
+    pub struct FilterHeader(sha256d);
 }
 
 impl_hashencode!(FilterHash);

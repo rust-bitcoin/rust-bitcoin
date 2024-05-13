@@ -12,7 +12,7 @@
 //! Hashing a single byte slice or a string:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::sha256;
 //!
 //! let bytes = [0u8; 5];
 //! let hash_of_bytes = sha256::Hash::hash(&bytes);
@@ -23,12 +23,12 @@
 //! Hashing content from a reader:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::sha256;
 //!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
 //! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
-//! let mut engine = sha256::HashEngine::default();
+//! let mut engine = sha256::Engine::default();
 //! std::io::copy(&mut reader, &mut engine)?;
 //! let hash = sha256::Hash::from_engine(engine);
 //! # Ok(())
@@ -42,7 +42,7 @@
 //! Hashing content by [`std::io::Write`] on HashEngine:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::sha256;
 //! use std::io::Write;
 //!
 //! #[cfg(std)]
@@ -50,7 +50,7 @@
 //! let mut part1: &[u8] = b"hello";
 //! let mut part2: &[u8] = b" ";
 //! let mut part3: &[u8] = b"world";
-//! let mut engine = sha256::HashEngine::default();
+//! let mut engine = sha256::Engine::default();
 //! engine.write_all(part1)?;
 //! engine.write_all(part2)?;
 //! engine.write_all(part3)?;
@@ -82,12 +82,16 @@ extern crate core;
 
 #[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.
-pub extern crate serde;
+pub extern crate actual_serde as serde;
 
 #[cfg(all(test, feature = "serde"))]
 extern crate serde_test;
+
 #[cfg(bench)]
 extern crate test;
+
+/// Re-export the `rust-chf` crate.
+pub extern crate chf;
 
 /// Re-export the `hex-conservative` crate.
 pub extern crate hex;
@@ -103,6 +107,12 @@ pub mod _export {
 #[cfg(feature = "schemars")]
 extern crate schemars;
 
+/// Re-export the cryptographic hash function modules.
+pub use chf::{
+    hmac, ripemd160, sha1, sha256, sha256t::Tag, sha384, sha512, sha512_256, siphash24,
+    FromSliceError, HashEngine,
+};
+
 mod internal_macros;
 #[macro_use]
 mod util;
@@ -110,152 +120,20 @@ mod util;
 pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
-pub mod hmac;
-#[cfg(feature = "bitcoin-io")]
-mod impls;
-pub mod ripemd160;
-pub mod sha1;
-pub mod sha256;
 pub mod sha256d;
+#[macro_use]
 pub mod sha256t;
-pub mod sha384;
-pub mod sha512;
-pub mod sha512_256;
-pub mod siphash24;
-
-use core::{convert, fmt, hash};
-
-pub use hmac::{Hmac, HmacEngine};
-
-/// A hashing engine which bytes can be serialized into.
-pub trait HashEngine: Clone + Default {
-    /// Byte array representing the internal state of the hash engine.
-    type MidState;
-
-    /// Outputs the midstate of the hash engine. This function should not be
-    /// used directly unless you really know what you're doing.
-    fn midstate(&self) -> Self::MidState;
-
-    /// Length of the hash's internal block size, in bytes.
-    const BLOCK_SIZE: usize;
-
-    /// Add data to the hash engine.
-    fn input(&mut self, data: &[u8]);
-
-    /// Return the number of bytes already n_bytes_hashed(inputted).
-    fn n_bytes_hashed(&self) -> usize;
-}
-
-/// Trait which applies to hashes of all types.
-pub trait Hash:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + hash::Hash
-    + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
-    + convert::AsRef<[u8]>
-{
-    /// A hashing engine which bytes can be serialized into. It is expected
-    /// to implement the `io::Write` trait, and to never return errors under
-    /// any conditions.
-    type Engine: HashEngine;
-
-    /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy;
-
-    /// Constructs a new engine.
-    fn engine() -> Self::Engine { Self::Engine::default() }
-
-    /// Produces a hash from the current state of a given engine.
-    fn from_engine(e: Self::Engine) -> Self;
-
-    /// Length of the hash, in bytes.
-    const LEN: usize;
-
-    /// Copies a byte slice into a hash object.
-    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
-
-    /// Hashes some bytes.
-    fn hash(data: &[u8]) -> Self {
-        let mut engine = Self::engine();
-        engine.input(data);
-        Self::from_engine(engine)
-    }
-
-    /// Hashes all the byte slices retrieved from the iterator together.
-    fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-    where
-        B: AsRef<[u8]>,
-        I: IntoIterator<Item = B>,
-    {
-        let mut engine = Self::engine();
-        for slice in byte_slices {
-            engine.input(slice.as_ref());
-        }
-        Self::from_engine(engine)
-    }
-
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = false;
-
-    /// Returns the underlying byte array.
-    fn to_byte_array(self) -> Self::Bytes;
-
-    /// Returns a reference to the underlying byte array.
-    fn as_byte_array(&self) -> &Self::Bytes;
-
-    /// Constructs a hash from the underlying byte array.
-    fn from_byte_array(bytes: Self::Bytes) -> Self;
-
-    /// Returns an all zero hash.
-    ///
-    /// An all zeros hash is a made up construct because there is not a known input that can create
-    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
-    /// previous blockhash and the coinbase transaction's outpoint txid.
-    fn all_zeros() -> Self;
-}
-
-/// Attempted to create a hash from an invalid length slice.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FromSliceError {
-    expected: usize,
-    got: usize,
-}
-
-impl FromSliceError {
-    /// Returns the expected slice length.
-    pub fn expected_length(&self) -> usize { self.expected }
-
-    /// Returns the invalid slice length.
-    pub fn invalid_length(&self) -> usize { self.got }
-}
-
-impl fmt::Display for FromSliceError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid slice length {} (expected {})", self.got, self.expected)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for FromSliceError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256d, Hash};
+    use crate::sha256d;
 
     hash_newtype! {
         /// A test newtype
-        struct TestNewtype(sha256d::Hash);
+        struct TestNewtype(sha256d);
 
         /// A test newtype
-        struct TestNewtype2(sha256d::Hash);
+        struct TestNewtype2(sha256d);
     }
 
     #[test]

@@ -11,33 +11,101 @@
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{ripemd160, sha256, FromSliceError};
+use crate::{ripemd160, sha256, FromSliceError, HashEngine};
 
-crate::internal_macros::hash_type! {
-    160,
-    false,
-    "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"
+/// Engine to compute HASH160 hash function.
+pub type Engine = sha256::Engine;
+
+/// Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256)).
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Hash([u8; 20]);
+
+impl Hash {
+    /// Flag indicating whether user-visible serializations of this hash
+    /// should be backward. For some reason Satoshi decided this should be
+    /// true for `Sha256dHash`, so here we are.
+    pub const DISPLAY_BACKWARD: bool = false;
+
+    /// Length of the hash, in bytes.
+    pub const LEN: usize = 20;
+
+    /// Creates a default hash engine, adds `bytes` to it, then finalizes the engine.
+    ///
+    /// # Returns
+    ///
+    /// The digest created by hashing `bytes` with engine's hashing algorithm.
+    #[allow(clippy::self_named_constructors)] // `hash` is a verb but `Hash` is a noun.
+    pub fn hash(bytes: &[u8]) -> Self {
+        let mut engine = Self::engine();
+        engine.input(bytes);
+        Self::from_engine(engine)
+    }
+
+    /// Constructs a new engine.
+    pub fn engine() -> sha256::Engine { sha256::Engine::new() }
+
+    /// Produces a hash froam the current state of a given engine.
+    pub fn from_engine(e: sha256::Engine) -> Hash {
+        let sha2 = sha256::Hash::from_engine(e);
+        let rmd = ripemd160::Hash::hash(&sha2[..]);
+
+        let mut ret = [0; 20];
+        ret.copy_from_slice(&rmd[..]);
+        Hash(ret)
+    }
+
+    /// Copies a byte slice into a hash object.
+    pub fn from_slice(sl: &[u8]) -> Result<Hash, FromSliceError> {
+        if sl.len() != 20 {
+            Err(FromSliceError::new(sl.len(), 20))
+        } else {
+            let mut ret = [0; 20];
+            ret.copy_from_slice(sl);
+            Ok(Self(ret))
+        }
+    }
+
+    /// Constructs a hash from the underlying byte array.
+    pub fn from_byte_array(bytes: [u8; 20]) -> Self { Self(bytes) }
+
+    /// Returns the underlying byte array.
+    pub fn to_byte_array(self) -> [u8; 20] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub fn as_byte_array(&self) -> &[u8; 20] { &self.0 }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can create
+    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+    /// previous blockhash and the coinbase transaction's outpoint txid.
+    pub fn all_zeros() -> Self { Self([0x00; 20]) }
 }
 
-type HashEngine = sha256::HashEngine;
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Hash {
+    fn schema_name() -> String { "Hash".to_owned() }
 
-fn from_engine(e: HashEngine) -> Hash {
-    use crate::Hash as _;
-
-    let sha2 = sha256::Hash::from_engine(e);
-    let rmd = ripemd160::Hash::hash(&sha2[..]);
-
-    let mut ret = [0; 20];
-    ret.copy_from_slice(&rmd[..]);
-    Hash(ret)
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(20 * 2),
+            min_length: Some(20 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
+    }
 }
+
+crate::internal_macros::hash_trait_impls!(160, false);
 
 #[cfg(test)]
 mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{hash160, Hash, HashEngine};
+        use super::*;
+        use crate::hash160;
 
         #[derive(Clone)]
         #[cfg(feature = "alloc")]
@@ -82,7 +150,7 @@ mod tests {
             for ch in test.input {
                 engine.input(&[ch]);
             }
-            let manual_hash = Hash::from_engine(engine);
+            let manual_hash = hash160::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
             assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
         }
@@ -93,7 +161,7 @@ mod tests {
     fn ripemd_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
-        use crate::{hash160, Hash};
+        use crate::hash160;
 
         #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [

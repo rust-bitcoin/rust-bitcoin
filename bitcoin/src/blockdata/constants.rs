@@ -7,7 +7,7 @@
 //! single transaction.
 //!
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 use hex_lit::hex;
 use internals::impl_array_newtype;
 

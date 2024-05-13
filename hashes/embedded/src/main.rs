@@ -45,7 +45,7 @@ fn main() -> ! {
     loop {}
 }
 
-fn check_result(engine: sha256::HashEngine) {
+fn check_result(engine: sha256::Engine) {
     let hash = TestType::from_engine(engine);
 
     let hash_check =

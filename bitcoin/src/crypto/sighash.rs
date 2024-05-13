@@ -13,7 +13,8 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+// FIXME: Having to import these traits to use the `sha256t_hash_newtype` macro is a bit rubbish.
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Tag as _};
 use internals::write_err;
 use io::Write;
 
@@ -45,11 +46,11 @@ macro_rules! impl_message_from_hash {
 hash_newtype! {
     /// Hash of a transaction according to the legacy signature algorithm.
     #[hash_newtype(forward)]
-    pub struct LegacySighash(sha256d::Hash);
+    pub struct LegacySighash(sha256d);
 
     /// Hash of a transaction according to the segwit version 0 signature algorithm.
     #[hash_newtype(forward)]
-    pub struct SegwitV0Sighash(sha256d::Hash);
+    pub struct SegwitV0Sighash(sha256d);
 }
 
 impl_message_from_hash!(LegacySighash);
@@ -1071,9 +1072,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         self.segwit_cache.get_or_insert_with(|| {
             let common_cache = Self::common_cache_minimal_borrow(common_cache, tx);
             SegwitCache {
-                prevouts: common_cache.prevouts.hash_again(),
-                sequences: common_cache.sequences.hash_again(),
-                outputs: common_cache.outputs.hash_again(),
+                prevouts: sha256d::Hash::from_hash(common_cache.prevouts),
+                sequences: sha256d::Hash::from_hash(common_cache.sequences),
+                outputs: sha256d::Hash::from_hash(common_cache.outputs),
             }
         })
     }

@@ -1205,7 +1205,7 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
-    use hashes::{hash160, ripemd160, sha256, Hash};
+    use hashes::{hash160, ripemd160, sha256};
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};

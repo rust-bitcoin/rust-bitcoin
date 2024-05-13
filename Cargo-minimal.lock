@@ -105,6 +105,7 @@ name = "bitcoin_hashes"
 version = "0.14.0"
 dependencies = [
  "bitcoin-io",
+ "chf",
  "hex-conservative",
  "schemars",
  "serde",
@@ -138,6 +139,17 @@ name = "cfg-if"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
+
+[[package]]
+name = "chf"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2934918c64e1a7c526d7851bfe6e2a5f3ab28efbb089eca2bb60d241b35ad28b"
+dependencies = [
+ "bitcoin-io",
+ "hex-conservative",
+ "serde",
+]
 
 [[package]]
 name = "dyn-clone"

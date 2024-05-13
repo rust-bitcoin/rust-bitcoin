@@ -8,7 +8,7 @@
 
 use core::{fmt, iter};
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 use io::{BufRead, Write};
 
 use crate::blockdata::{block, transaction};
@@ -538,7 +538,6 @@ mod test {
     use std::net::Ipv4Addr;
 
     use hashes::sha256d::Hash;
-    use hashes::Hash as HashTrait;
     use hex::test_hex_unwrap as hex;
 
     use super::message_network::{Reject, RejectReason, VersionMessage};

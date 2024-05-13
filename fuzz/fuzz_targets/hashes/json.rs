@@ -1,11 +1,11 @@
-use bitcoin::hashes::{ripemd160, sha1, sha256d, sha512, Hmac};
+use bitcoin::hashes::{hmac, ripemd160, sha256d};
 use honggfuzz::fuzz;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 struct Hmacs {
-    sha1: Hmac<sha1::Hash>,
-    sha512: Hmac<sha512::Hash>,
+    sha1: hmac::Hash<32>,
+    sha512: hmac::Hash<64>,
 }
 
 #[derive(Deserialize, Serialize)]

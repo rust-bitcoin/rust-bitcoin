@@ -6,7 +6,7 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
-use hashes::{sha256d, Hash as _};
+use hashes::sha256d;
 use io::{BufRead, Write};
 
 use crate::blockdata::block::BlockHash;
@@ -145,7 +145,6 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use hashes::Hash;
     use hex::test_hex_unwrap as hex;
 
     use super::{GetBlocksMessage, GetHeadersMessage};

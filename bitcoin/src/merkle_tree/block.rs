@@ -40,7 +40,6 @@
 
 use core::fmt;
 
-use hashes::Hash;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
@@ -592,9 +591,9 @@ mod tests {
             .collect::<Vec<_>>();
 
         // Calculate the merkle root and height
-        let hashes = tx_ids.iter().map(|t| t.to_raw_hash());
-        let merkle_root_1: TxMerkleNode =
-            merkle_tree::calculate_root(hashes).expect("hashes is not empty").into();
+        let merkle_root_1: TxMerkleNode = merkle_tree::calculate_root_txid(tx_ids.iter().cloned())
+            .expect("hashes is not empty")
+            .into();
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {

@@ -15,23 +15,27 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hex/std", "bitcoin-io/std"]
-alloc = ["hex/alloc"]
+std = ["alloc", "hex/std", "bitcoin-io/std", "chf/std"]
+alloc = ["hex/alloc", "chf/alloc"]
 # If you want I/O you must enable either "std" or "io".
-io = ["bitcoin-io"]
+io = ["bitcoin-io", "chf/io"]   # FIXME: Might be able to remove "bitcoin-io" here.
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
-small-hash = []
+small-hash = ["chf/small-hash"]
+serde = ["actual-serde", "chf/serde"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
+chf = { version = "0.3.0", default-features = false }
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 
-bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
+bitcoin-io = { version = "0.1.2", default-features = false, optional = true }
 schemars = { version = "0.8.3", default-features = false, optional = true }
-serde = { version = "1.0", default-features = false, optional = true }
+
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"

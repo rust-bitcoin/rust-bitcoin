@@ -109,12 +109,10 @@ pub mod serde_details {
 #[macro_export]
 #[cfg(feature = "serde")]
 macro_rules! serde_impl(
-    ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
+    ($t:ident $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {
-            const N : usize = $len;
+            const N : usize = $t::LEN;
             fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, $crate::FromSliceError> {
-                #[allow(unused_imports)]
-                use $crate::Hash as _;
                 $t::from_slice(sl)
             }
         }
@@ -136,5 +134,5 @@ macro_rules! serde_impl(
 #[macro_export]
 #[cfg(not(feature = "serde"))]
 macro_rules! serde_impl(
-        ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()
+        ($t:ident $(, $gen:ident: $gent:ident)*) => ()
 );

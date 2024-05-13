@@ -121,10 +121,10 @@ macro_rules! psbt_insert_hash_pair {
         match $slf.$map.entry(key_val) {
             btree_map::Entry::Vacant(empty_key) => {
                 let val: Vec<u8> = Deserialize::deserialize(&$raw_value)?;
-                if <$hash as hashes::Hash>::hash(&val) != key_val {
+                if <$hash>::hash(&val) != key_val {
                     return Err(psbt::Error::InvalidPreimageHashPair {
                         preimage: val.into_boxed_slice(),
-                        hash: Box::from(key_val.borrow()),
+                        hash: Box::from(key_val.as_ref()),
                         hash_type: $hash_type_error,
                     });
                 }
