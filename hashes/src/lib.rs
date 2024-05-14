@@ -12,11 +12,11 @@
 //! Hashing a single byte slice or a string:
 //!
 //! ```rust
-//! use bitcoin_hashes::sha256;
+//! use bitcoin_hashes::Sha256;
 //!
 //! let bytes = [0u8; 5];
-//! let hash_of_bytes = sha256::Hash::hash(&bytes);
-//! let hash_of_string = sha256::Hash::hash("some string".as_bytes());
+//! let hash_of_bytes = Sha256::hash(&bytes);
+//! let hash_of_string = Sha256::hash("some string".as_bytes());
 //! ```
 //!
 //!
@@ -112,6 +112,39 @@ pub use chf::{
     hmac, ripemd160, sha1, sha256, sha256t::Tag, sha384, sha512, sha512_256, siphash24,
     FromSliceError, HashEngine,
 };
+
+/// Type alias for the [`sha1::Hash`] hash type.
+pub type Sha1 = sha1::Hash;
+
+/// Type alias for the [`sha256::Hash`] hash type.
+pub type Sha256 = sha256::Hash;
+
+/// Type alias for the [`sha384::Hash`] hash type.
+pub type Sha384 = sha384::Hash;
+
+/// Type alias for the [`sha512::Hash`] hash type.
+pub type Sha512 = sha512::Hash;
+
+/// Type alias for the [`sha512_256::Hash`] hash type.
+pub type Sha512_256 = sha512_256::Hash;
+
+/// Type alias for the [`ripemd160::Hash`] hash type.
+pub type Ripemd160 = ripemd160::Hash;
+
+/// Type alias for the [`siphash24::Hash`] hash type.
+pub type Siphash24 = siphash24::Hash;
+
+/// Type alias for the [`hmac::Hash`] hash type.
+pub type Hmac<const N: usize> = hmac::Hash<N>;
+
+/// Type alias for the [`sha256t::Hash`] hash type.
+pub type Sha256t<T> = sha256t::Hash<T>; // FIXME: Perhaps `Sha256T` or `TaggedSha256`?
+
+/// Type alias for the [`hash160::Hash`] hash type.
+pub type Hash160 = hash160::Hash;
+
+/// Type alias for the [`sha256d::Hash`] hash type.
+pub type Sha256d = sha256d::Hash; // FIXME: Perhaps `Sha256D` or maybe `Hash256` (and change the module name)?
 
 mod internal_macros;
 #[macro_use]
