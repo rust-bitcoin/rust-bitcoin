@@ -2,7 +2,7 @@
 
 //! Public macros.
 
-/// Creates a new newtype around a [`Hash`] type.
+/// Creates a new wrapper type - a hash type that wraps the `sha256t::Hash` type.
 ///
 /// The syntax is similar to the usual tuple struct syntax:
 ///

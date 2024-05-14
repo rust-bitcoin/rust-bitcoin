@@ -5,7 +5,7 @@
 /// Re-export everything from `chf::sha256t`.
 pub use chf::sha256t::{Engine, Hash, Tag};
 
-/// Macro used to define a newtype tagged hash.
+/// Creates a new wrapper type - a hash type that wraps another hash type.
 ///
 /// This macro creates two types:
 ///
