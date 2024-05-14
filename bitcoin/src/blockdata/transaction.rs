@@ -120,7 +120,7 @@ pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hex::HexToArrayError),
     /// Error in vout part.
-    Vout(crate::error::ParseIntError),
+    Vout(parse::ParseIntError),
     /// Error in general format.
     Format,
     /// Size exceeds max.
