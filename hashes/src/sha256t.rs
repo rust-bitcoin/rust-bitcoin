@@ -40,8 +40,6 @@ pub use chf::sha256t::{Engine, Hash, Tag};
 /// Just make sure to enter the structs in order `Tag0`, `Hash0`, `Tag1`, `Hash1`...
 ///
 /// [`hash_newtype`]: crate::hash_newtype
-
-#[doc(hidden)]
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
     ($(

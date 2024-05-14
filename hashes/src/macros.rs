@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[macro_export]
+//! Public macros.
+
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[macro_export]
 macro_rules! hex_fmt_impl(
     ($ty:ident) => (
         $crate::hex_fmt_impl!($ty, );
