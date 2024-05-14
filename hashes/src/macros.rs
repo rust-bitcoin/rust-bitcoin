@@ -2,65 +2,6 @@
 
 //! Public macros.
 
-/// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
-#[macro_export]
-macro_rules! hex_fmt_impl(
-    ($ty:ident) => (
-        $crate::hex_fmt_impl!($ty, );
-    );
-    ($ty:ident, $($gen:ident: $gent:ident),*) => (
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                if $ty::DISPLAY_BACKWARD {
-                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array().iter().rev(), $crate::hex::Case::Lower)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array(), $crate::hex::Case::Lower)
-                }
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                if $ty::DISPLAY_BACKWARD {
-                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array().iter().rev(), $crate::hex::Case::Upper)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array(), $crate::hex::Case::Upper)
-                }
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
-            }
-        }
-    );
-);
-
-/// Adds slicing traits implementations to a given type `$ty`
-#[macro_export]
-macro_rules! borrow_slice_impl(
-    ($ty:ident) => (
-        $crate::borrow_slice_impl!($ty, );
-    );
-    ($ty:ident, $($gen:ident: $gent:ident),*) => (
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8] {
-                &self[..]
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
-            fn as_ref(&self) -> &[u8] {
-                &self[..]
-            }
-        }
-    )
-);
-
 /// Creates a new newtype around a [`Hash`] type.
 ///
 /// The syntax is similar to the usual tuple struct syntax:
@@ -264,6 +205,67 @@ macro_rules! hash_newtype {
         )+
     };
 }
+
+/// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! hex_fmt_impl(
+    ($ty:ident) => (
+        $crate::hex_fmt_impl!($ty, );
+    );
+    ($ty:ident, $($gen:ident: $gent:ident),*) => (
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                if $ty::DISPLAY_BACKWARD {
+                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array().iter().rev(), $crate::hex::Case::Lower)
+                } else {
+                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array(), $crate::hex::Case::Lower)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                if $ty::DISPLAY_BACKWARD {
+                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array().iter().rev(), $crate::hex::Case::Upper)
+                } else {
+                    $crate::hex::fmt_hex_exact!(f, $ty::LEN, self.as_byte_array(), $crate::hex::Case::Upper)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
+            }
+        }
+    );
+);
+
+// Adds slicing traits implementations to a given type `$ty`
+#[doc(hidden)]
+#[macro_export]
+macro_rules! borrow_slice_impl(
+    ($ty:ident) => (
+        $crate::borrow_slice_impl!($ty, );
+    );
+    ($ty:ident, $($gen:ident: $gent:ident),*) => (
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8] {
+                &self[..]
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
+            fn as_ref(&self) -> &[u8] {
+                &self[..]
+            }
+        }
+    )
+);
 
 // Generates the struct only (no impls)
 //
