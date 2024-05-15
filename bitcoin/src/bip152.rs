@@ -3,7 +3,6 @@
 //! BIP152 Compact Blocks
 //!
 //! Implementation of compact blocks data structure and algorithms.
-//!
 
 use core::{convert, fmt, mem};
 #[cfg(feature = "std")]

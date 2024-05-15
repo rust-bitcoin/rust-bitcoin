@@ -10,7 +10,6 @@
 //! Bitcoin. As such they must not be relied upon as if they were consensus rules.
 //!
 //! These values were taken from bitcoind v0.21.1 (194b9b8792d9b0798fdb570b79fa51f1d1f5ebaf).
-//!
 
 use core::cmp;
 

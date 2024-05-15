@@ -4,7 +4,6 @@
 //!
 //! This module defines the structures and functions needed to encode
 //! network addresses in Bitcoin messages.
-//!
 
 use core::{fmt, iter};
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};

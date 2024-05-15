@@ -3,7 +3,6 @@
 //! Bitcoin taproot keys.
 //!
 //! This module provides taproot keys used in Bitcoin (including reexporting secp256k1 keys).
-//!
 
 use core::fmt;
 

@@ -3,7 +3,6 @@
 //! Cryptography
 //!
 //! Cryptography related functionality: keys and signatures.
-//!
 
 pub mod ecdsa;
 pub mod key;

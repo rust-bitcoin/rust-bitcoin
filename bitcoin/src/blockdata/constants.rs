@@ -5,7 +5,6 @@
 //! This module provides various constants relating to the blockchain and
 //! consensus code. In particular, it defines the genesis block and its
 //! single transaction.
-//!
 
 use hashes::{sha256d, Hash};
 use hex_lit::hex;

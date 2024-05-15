@@ -4,7 +4,6 @@
 //!
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether bit 22 of the `u32` consensus value is set.
-//!
 
 #[cfg(feature = "ordered")]
 use core::cmp::Ordering;

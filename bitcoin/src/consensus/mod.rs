@@ -4,7 +4,6 @@
 //!
 //! This module defines structures, functions, and traits that are needed to
 //! conform to Bitcoin consensus.
-//!
 
 pub mod encode;
 pub mod params;

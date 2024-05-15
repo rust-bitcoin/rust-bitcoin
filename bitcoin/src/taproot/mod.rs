@@ -3,7 +3,6 @@
 //! Bitcoin Taproot.
 //!
 //! This module provides support for taproot tagged hashes.
-//!
 
 pub mod merkle_branch;
 pub mod serialized_signature;

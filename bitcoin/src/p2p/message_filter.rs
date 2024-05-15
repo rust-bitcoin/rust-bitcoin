@@ -3,7 +3,6 @@
 //! Bitcoin Client Side Block Filtering network messages.
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.
-//!
 
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::BlockHash;

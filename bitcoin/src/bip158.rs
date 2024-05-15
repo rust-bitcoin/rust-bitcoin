@@ -36,7 +36,6 @@
 //!   // get this block
 //! }
 //!  ```
-//!
 
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};

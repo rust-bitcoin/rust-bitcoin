@@ -6,7 +6,6 @@
 //! which commits to an earlier block to form the blockchain. This
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
-//!
 
 use core::fmt;
 
