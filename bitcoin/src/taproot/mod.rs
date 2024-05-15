@@ -392,12 +392,12 @@ impl TaprootBuilder {
     /// example, [(3, S1), (2, S2), (5, S3)] would construct a [`TapTree`] that has optimal
     /// satisfaction weight when probability for S1 is 30%, S2 is 20% and S3 is 50%.
     ///
-    /// # Errors:
+    /// # Errors
     ///
     /// - When the optimal Huffman Tree has a depth more than 128.
     /// - If the provided list of script weights is empty.
     ///
-    /// # Edge Cases:
+    /// # Edge Cases
     ///
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
