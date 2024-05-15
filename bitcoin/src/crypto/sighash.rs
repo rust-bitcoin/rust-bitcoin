@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Tag};
 use internals::write_err;
 use io::Write;
 
@@ -43,16 +43,23 @@ macro_rules! impl_message_from_hash {
 }
 
 hash_newtype! {
+    /// Engine for computing the legacy transaction hash.
+    pub struct LegacySighashEngine(sha256d);
+
     /// Hash of a transaction according to the legacy signature algorithm.
     #[hash_newtype(forward)]
-    pub struct LegacySighash(sha256d::Hash);
+    pub struct LegacySighash(_);
+}
+impl_message_from_hash!(LegacySighash);
+
+hash_newtype! {
+    /// Engine for computing the segwit version 0 transaction hash.
+    pub struct SegwitV0SighashEngine(sha256d);
 
     /// Hash of a transaction according to the segwit version 0 signature algorithm.
     #[hash_newtype(forward)]
-    pub struct SegwitV0Sighash(sha256d::Hash);
+    pub struct SegwitV0Sighash(_);
 }
-
-impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
 sha256t_hash_newtype! {
@@ -61,7 +68,7 @@ sha256t_hash_newtype! {
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
     /// This hash type is used for computing taproot signature hash."
-    pub struct TapSighash(_);
+    pub struct TapSighash(pub _);
 }
 
 impl_message_from_hash!(TapSighash);
@@ -1351,7 +1358,7 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::hex::FromHex;
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
     /// # let mut writer = LegacySighash::engine();

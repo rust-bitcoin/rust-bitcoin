@@ -30,9 +30,9 @@ mod tests {
             0x0b, 0x2d, 0x8a, 0x60, 0x0b, 0xdf, 0x4c, 0x0c,
         ];
 
-        let hash = Hmac::<sha512::Hash>::from_slice(&HASH_BYTES).expect("right number of bytes");
+        let hash = HmacSha512::from_slice(&HASH_BYTES).expect("right number of bytes");
         let js = serde_json::from_str(&serde_json::to_string(&hash).unwrap()).unwrap();
-        let s = schemars::schema_for!(Hmac::<sha512::Hash>);
+        let s = schemars::schema_for!(HmacSha512);
         let schema = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
         assert!(jsonschema_valid::Config::from_schema(&schema, None)
             .unwrap()
@@ -123,10 +123,9 @@ mod tests {
         pub struct TestHashTag;
 
         impl sha256t::Tag for TestHashTag {
-            fn engine() -> sha256::HashEngine {
-                // The TapRoot TapLeaf midstate.
+            fn engine() -> sha256t::Engine<Self> {
                 let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-                sha256::HashEngine::from_midstate(midstate, 64)
+                sha256t::Engine::from_midstate(midstate, 64)
             }
         }
 
@@ -135,8 +134,6 @@ mod tests {
 
         sha256t_hash_newtype! {
             struct NewTypeTag = raw(TEST_MIDSTATE, 64);
-
-            #[hash_newtype(backward)]
             struct NewTypeHash(_);
         }
         static HASH_BYTES: [u8; 32] = [

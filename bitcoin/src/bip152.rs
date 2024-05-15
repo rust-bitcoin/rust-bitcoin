@@ -8,7 +8,7 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, siphash24, Hash};
+use hashes::{sha256, siphash24};
 use internals::impl_array_newtype;
 use io::{BufRead, Write};
 
@@ -219,8 +219,8 @@ impl HeaderAndShortIds {
             } else {
                 short_ids.push(ShortId::with_siphash_keys(
                     &match version {
-                        1 => tx.compute_txid().to_raw_hash(),
-                        2 => tx.compute_wtxid().to_raw_hash(),
+                        1 => tx.compute_txid().0,
+                        2 => tx.compute_wtxid().0,
                         _ => unreachable!(),
                     },
                     siphash_keys,

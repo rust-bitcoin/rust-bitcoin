@@ -1,45 +1,57 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA384 implementation.
+//! SHA-384 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::str;
 
-use crate::{sha512, FromSliceError};
+use crate::{sha512, HashEngine};
 
 crate::internal_macros::hash_type! {
-    384,
-    false,
-    "Output of the SHA384 hash function."
+    DIGEST_SIZE,
+    "Output of the SHA-384 hash function."
 }
 
-fn from_engine(e: HashEngine) -> Hash {
-    let mut ret = [0; 48];
-    ret.copy_from_slice(&sha512::from_engine(e.0)[..48]);
-    Hash(ret)
+/// Length of digest created by SHA-384 hash algorithm, in bytes.
+pub const DIGEST_SIZE: usize = 48;
+
+/// Engine to compute SHA-384 hash function.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Engine(sha512::Engine);
+
+impl Engine {
+    /// Creates a new SHA-384 hash engine.
+    pub const fn new() -> Self { Self(sha512::Engine::sha384()) }
 }
 
-/// Engine to compute SHA384 hash function.
-#[derive(Clone)]
-pub struct HashEngine(sha512::HashEngine);
-
-impl Default for HashEngine {
-    #[rustfmt::skip]
-    fn default() -> Self {
-        HashEngine(sha512::HashEngine::sha384())
-    }
+impl Default for Engine {
+    fn default() -> Self { Self::new() }
 }
 
-impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 64];
-
-    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
-
+impl HashEngine for Engine {
+    type Digest = [u8; 48];
+    type Midstate = [u8; 64]; // SHA-512 midstate.
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
+    #[inline]
     fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
 
-    fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
+    #[inline]
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
+
+    #[inline]
+    fn finalize(self) -> Self::Digest {
+        let mut ret = [0; 48];
+        ret.copy_from_slice(&self.0.finalize()[..48]);
+        ret
+    }
+
+    #[inline]
+    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
+
+    #[inline]
+    fn from_midstate(midstate: [u8; 64], length: usize) -> Engine {
+        Engine(sha512::Engine::from_midstate(midstate, length))
+    }
 }
 
 #[cfg(test)]
@@ -47,7 +59,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha384, Hash, HashEngine};
+        use super::*;
+        use crate::sha384;
 
         #[derive(Clone)]
         struct Test {
@@ -144,7 +157,8 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{sha384, Hash, HashEngine};
+    use super::*;
+    use crate::sha384;
 
     #[bench]
     pub fn sha384_10(bh: &mut Bencher) {

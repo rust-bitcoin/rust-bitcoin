@@ -2,7 +2,7 @@
 
 use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
-    Hash as _, HashEngine as _, Hmac, HmacEngine,
+    HashEngine, HmacSha256, HmacSha512,
 };
 
 const DATA: &str = "arbitrary data to hash as a regression test";
@@ -37,9 +37,9 @@ impl_regression_test! {
 pub struct RegHashTag;
 
 impl sha256t::Tag for RegHashTag {
-    fn engine() -> sha256::HashEngine {
+    fn engine() -> sha256t::Engine<Self> {
         let midstate = sha256::Midstate::from_byte_array([0xab; 32]);
-        sha256::HashEngine::from_midstate(midstate, 64)
+        sha256t::Engine::from_midstate(midstate, 64)
     }
 }
 
@@ -55,7 +55,7 @@ fn regression_sha256t() {
 
 #[test]
 fn regression_hmac_sha256_with_default_key() {
-    let hash = Hmac::<sha256::Hash>::hash(DATA.as_bytes());
+    let hash = HmacSha256::hash(&[], DATA.as_bytes());
     let got = format!("{}", hash);
     let want = "58cc7ed8567bd86eba61f7ed2d5a4edab1774dc10488e57de2eb007a2d9ae82d";
     assert_eq!(got, want);
@@ -63,7 +63,7 @@ fn regression_hmac_sha256_with_default_key() {
 
 #[test]
 fn regression_hmac_sha512_with_default_key() {
-    let hash = Hmac::<sha512::Hash>::hash(DATA.as_bytes());
+    let hash = HmacSha512::hash(&[], DATA.as_bytes());
     let got = format!("{}", hash);
     let want = "5f5db2f3e1178bf19af5db38a0ed04dc5bc52d641648542886eea9b6bbec0db658ed7a5799ca18f5bc1949f39d24151a32990ee85974e40bb8a35e2288f494ce";
     assert_eq!(got, want);
@@ -71,10 +71,7 @@ fn regression_hmac_sha512_with_default_key() {
 
 #[test]
 fn regression_hmac_sha256_with_key() {
-    let mut engine = HmacEngine::<sha256::Hash>::new(HMAC_KEY);
-    engine.input(DATA.as_bytes());
-    let hash = Hmac::from_engine(engine);
-
+    let hash = HmacSha256::hash(HMAC_KEY, DATA.as_bytes());
     let got = format!("{}", hash);
     let want = "d159cecaf4adf90b6a641bab767e4817d3a51c414acea3682686c35ec0b37b52";
     assert_eq!(got, want);
@@ -82,10 +79,7 @@ fn regression_hmac_sha256_with_key() {
 
 #[test]
 fn regression_hmac_sha512_with_key() {
-    let mut engine = HmacEngine::<sha512::Hash>::new(HMAC_KEY);
-    engine.input(DATA.as_bytes());
-    let hash = Hmac::from_engine(engine);
-
+    let hash = HmacSha512::hash(HMAC_KEY, DATA.as_bytes());
     let got = format!("{}", hash);
     let want = "8511773748f89ba22c07fb3a2981a12c1823695119de41f4a62aead6b848bd34939acf16475c35ed7956114fead3e794cc162ecd35e447a4dabc3227d55f757b";
     assert_eq!(got, want);

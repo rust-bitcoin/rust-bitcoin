@@ -85,12 +85,21 @@ pub use self::{
 };
 
 hashes::hash_newtype! {
+    pub(crate) struct ScriptHashEngine(hash160);
+
     /// A hash of Bitcoin Script bytecode.
-    pub struct ScriptHash(hash160::Hash);
-    /// SegWit version of a Bitcoin Script bytecode hash.
-    pub struct WScriptHash(sha256::Hash);
+    pub struct ScriptHash(_);
 }
-impl_asref_push_bytes!(ScriptHash, WScriptHash);
+impl_asref_push_bytes!(ScriptHash);
+
+hashes::hash_newtype! {
+    pub(crate) struct WScriptHashEngine(sha256);
+
+    /// SegWit version of a Bitcoin Script bytecode hash.
+    pub struct WScriptHash(_);
+}
+
+impl_asref_push_bytes!(WScriptHash);
 
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }

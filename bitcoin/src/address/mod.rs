@@ -33,7 +33,7 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::hrp::Hrp;
-use hashes::{sha256, Hash, HashEngine};
+use hashes::{hash160, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::blockdata::constants::{
@@ -863,11 +863,11 @@ impl FromStr for Address<NetworkUnchecked> {
 }
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
-fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
-    let mut sha_engine = sha256::Hash::engine();
+fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> hash160::Hash {
+    let mut sha_engine = hash160::Hash::engine();
     sha_engine.input(&[0, 20]);
     sha_engine.input(pubkey_hash.as_ref());
-    crate::hashes::hash160::Hash::from_engine(sha_engine)
+    hash160::Hash::from_engine(sha_engine)
 }
 
 #[cfg(test)]

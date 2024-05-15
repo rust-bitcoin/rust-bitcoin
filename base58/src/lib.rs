@@ -35,7 +35,7 @@ use core::{fmt, str};
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 
 use crate::error::{IncorrectChecksumError, TooShortError};
 

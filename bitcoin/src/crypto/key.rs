@@ -9,7 +9,7 @@ use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::{hash160, Hash};
+use hashes::hash160;
 use hex::{FromHex, HexToArrayError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;
@@ -254,12 +254,20 @@ impl FromStr for PublicKey {
 }
 
 hashes::hash_newtype! {
+    pub(crate) struct PubkeyHashEngine(hash160);
+
     /// A hash of a public key.
-    pub struct PubkeyHash(hash160::Hash);
-    /// SegWit version of a public key hash.
-    pub struct WPubkeyHash(hash160::Hash);
+    pub struct PubkeyHash(_);
 }
-impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+impl_asref_push_bytes!(PubkeyHash);
+
+hashes::hash_newtype! {
+    pub(crate) struct WPubkeyHashEngine(hash160);
+
+    /// SegWit version of a public key hash.
+    pub struct WPubkeyHash(_);
+}
+impl_asref_push_bytes!(WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }

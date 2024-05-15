@@ -12,7 +12,7 @@
 
 use core::{cmp, fmt, str};
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
@@ -36,19 +36,25 @@ use crate::{Amount, SignedAmount, VarInt};
 pub use crate::consensus::validation::TxVerifyError;
 
 hashes::hash_newtype! {
+    pub(crate) struct TxidEngine(sha256d);
+
     /// A bitcoin transaction hash/transaction ID.
     ///
     /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
+    /// versions of the Bitcoin Core software itself, this and other `sha256d::Hash` types, are
     /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations. See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
+    /// trait operations. See `sha256d::Hash::DISPLAY_BACKWARD` for more details.
+    pub struct Txid(_);
+}
+
+hashes::hash_newtype! {
+    pub(crate) struct WtxidEngine(sha256d);
 
     /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
+    pub struct Wtxid(_);
 }
-impl_hashencode!(Txid);
-impl_hashencode!(Wtxid);
+impl_hashencode!(Txid, sha256d);
+impl_hashencode!(Wtxid, sha256d);
 
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
@@ -2430,22 +2436,22 @@ mod tests {
         let outpoint = OutPoint::default();
 
         let debug = "OutPoint { txid: 0000000000000000000000000000000000000000000000000000000000000000, vout: 4294967295 }";
-        assert_eq!(debug, format!("{:?}", &outpoint));
+        assert_eq!(format!("{:?}", &outpoint), debug);
 
         let display = "0000000000000000000000000000000000000000000000000000000000000000:4294967295";
-        assert_eq!(display, format!("{}", &outpoint));
+        assert_eq!(format!("{}", &outpoint), display);
 
-        let pretty_debug = "OutPoint {\n    txid: 0000000000000000000000000000000000000000000000000000000000000000,\n    vout: 4294967295,\n}";
-        assert_eq!(pretty_debug, format!("{:#?}", &outpoint));
+        let pretty_debug = "OutPoint {\n    txid: 0x0000000000000000000000000000000000000000000000000000000000000000,\n    vout: 4294967295,\n}";
+        assert_eq!(format!("{:#?}", &outpoint), pretty_debug);
 
         let debug_txid = "0000000000000000000000000000000000000000000000000000000000000000";
-        assert_eq!(debug_txid, format!("{:?}", &outpoint.txid));
+        assert_eq!(format!("{:?}", &outpoint.txid), debug_txid);
 
         let display_txid = "0000000000000000000000000000000000000000000000000000000000000000";
-        assert_eq!(display_txid, format!("{}", &outpoint.txid));
+        assert_eq!(format!("{}", &outpoint.txid), display_txid);
 
         let pretty_txid = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        assert_eq!(pretty_txid, format!("{:#}", &outpoint.txid));
+        assert_eq!(format!("{:#}", &outpoint.txid), pretty_txid);
     }
 }
 

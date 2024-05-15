@@ -7,70 +7,242 @@
 
 //! Hash-based Message Authentication Code (HMAC).
 
-use core::{convert, fmt, str};
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+use alloc::vec::Vec;
+use core::marker::PhantomData;
+use core::{fmt, ops, str};
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use hex::DisplayHex;
 
-use crate::{FromSliceError, Hash, HashEngine};
+use crate::{FromSliceError, HashEngine};
 
-/// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
+/// A hash computed from a RFC 2104 HMAC. Parameterized by the engine and size of the underlying hash function.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(transparent)]
-pub struct Hmac<T: Hash>(T);
+pub struct Hmac<E, const N: usize>([u8; N], PhantomData<E>);
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> Hmac<E, N> {
+    /// Creates a default hash engine, adds `bytes` to it, then finalizes the engine.
+    ///
+    /// # Returns
+    ///
+    /// The digest created by hashing `bytes` with engine's hashing algorithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bitcoin_hashes::{hmac::Hmac, sha512};
+    /// let key = b"some key";
+    /// let data = b"some data to hash";
+    /// let hash = Hmac::<64>::hash::<sha512::Engine>(key, data);
+    /// ```
+    pub fn hash(key: &[u8], bytes: &[u8]) -> Self {
+        let mut engine = Self::engine(key);
+        engine.input(bytes);
+        Self(engine.finalize(), PhantomData)
+    }
+
+    /// Returns a hash engine that is ready to be used for the data.
+    pub fn engine(key: &[u8]) -> Engine<E> { Engine::new(key) }
+
+    /// Creates a `Hmac` from an `engine`.
+    ///
+    /// This is equivalent to calling `Hmac::from_byte_array(engine.finalize())`.
+    pub fn from_engine(engine: Engine<E>) -> Self
+    where
+        E: HashEngine<Digest = [u8; N]>,
+    {
+        let digest = engine.finalize();
+        Self::from_byte_array(digest)
+    }
+
+    /// Zero cost conversion between a fixed length byte array shared reference and
+    /// a shared reference to this hash type.
+    pub fn from_bytes_ref(bytes: &[u8; N]) -> &Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; Self::LEN]
+        unsafe { &*(bytes as *const _ as *const Self) }
+    }
+
+    /// Zero cost conversion between a fixed length byte array exclusive reference and
+    /// an exclusive reference to this hash type.
+    pub fn from_bytes_mut(bytes: &mut [u8; N]) -> &mut Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; N]
+        unsafe { &mut *(bytes as *mut _ as *mut Self) }
+    }
+
+    /// Copies a byte slice into a hash object.
+    pub fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError> {
+        if sl.len() != N {
+            Err(FromSliceError { expected: N, got: sl.len() })
+        } else {
+            let mut ret = [0; N];
+            ret.copy_from_slice(sl);
+            Ok(Self::from_byte_array(ret))
+        }
+    }
+
+    /// Constructs a hash from the underlying byte array.
+    pub fn from_byte_array(bytes: [u8; N]) -> Self { Self(bytes, PhantomData) }
+
+    /// Returns the underlying byte array.
+    pub fn to_byte_array(self) -> [u8; N] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub fn as_byte_array(&self) -> &[u8; N] { &self.0 }
+
+    /// Returns a reference to the underlying byte array as a slice.
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
+
+    /// Copies the underlying bytes into a new `Vec`.
+    #[cfg(feature = "alloc")]
+    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_vec() }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can
+    /// create it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis
+    /// block's previous blockhash and the coinbase transaction's outpoint txid.
+    pub fn all_zeros() -> Self { Self([0x00; N], PhantomData) }
+}
 
 #[cfg(feature = "schemars")]
-impl<T: Hash + schemars::JsonSchema> schemars::JsonSchema for Hmac<T> {
-    fn is_referenceable() -> bool { <T as schemars::JsonSchema>::is_referenceable() }
-
-    fn schema_name() -> std::string::String { <T as schemars::JsonSchema>::schema_name() }
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> schemars::JsonSchema for Hmac<E, N> {
+    fn schema_name() -> std::string::String { "Hmac".to_owned() }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        <T as schemars::JsonSchema>::json_schema(gen)
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(N as u32 * 2), // Cast ok, N is digest size (ie, only ever small).
+            min_length: Some(N as u32 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
     }
 }
 
-impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
-    type Err = <T as str::FromStr>::Err;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> str::FromStr for Hmac<E, N> {
+    type Err = hex::HexToArrayError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use hex::FromHex;
+
+        let bytes = <[u8; N]>::from_hex(s)?;
+        Ok(Self::from_byte_array(bytes))
+    }
 }
 
-/// Pair of underlying hash midstates which represent the current state of an `HmacEngine`.
-pub struct HmacMidState<T: Hash> {
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> fmt::Display for Hmac<E, N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> fmt::Debug for Hmac<E, N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> fmt::LowerHex for Hmac<E, N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // We can't use `hex::hex_fmt_exact` because of N.
+        fmt::LowerHex::fmt(&self.0.as_hex(), f)
+    }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> fmt::UpperHex for Hmac<E, N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // We can't use `hex::hex_fmt_exact` because of N.
+        fmt::UpperHex::fmt(&self.0.as_hex(), f)
+    }
+}
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> ops::Index<usize> for Hmac<E, N> {
+    type Output = u8;
+    fn index(&self, index: usize) -> &u8 { &self.0[index] }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> ops::Index<ops::Range<usize>> for Hmac<E, N> {
+    type Output = [u8];
+    fn index(&self, index: ops::Range<usize>) -> &[u8] { &self.0[index] }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> ops::Index<ops::RangeFrom<usize>>
+    for Hmac<E, N>
+{
+    type Output = [u8];
+    fn index(&self, index: ops::RangeFrom<usize>) -> &[u8] { &self.0[index] }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> ops::Index<ops::RangeTo<usize>>
+    for Hmac<E, N>
+{
+    type Output = [u8];
+    fn index(&self, index: ops::RangeTo<usize>) -> &[u8] { &self.0[index] }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> ops::Index<ops::RangeFull> for Hmac<E, N> {
+    type Output = [u8];
+    fn index(&self, index: ops::RangeFull) -> &[u8] { &self.0[index] }
+}
+
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> AsRef<[u8]> for Hmac<E, N> {
+    fn as_ref(&self) -> &[u8] { &self.0 }
+}
+
+#[cfg(feature = "serde")]
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> crate::serde_macros::serde_details::SerdeHash
+    for Hmac<E, N>
+{
+    const N: usize = N;
+    fn from_slice_delegated(sl: &[u8]) -> Result<Self, FromSliceError> { Hmac::from_slice(sl) }
+}
+
+#[cfg(feature = "serde")]
+impl<E: HashEngine<Digest = [u8; N]>, const N: usize> serde::Serialize for Hmac<E, N> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        crate::serde_macros::serde_details::SerdeHash::serialize(self, s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, E: HashEngine<Digest = [u8; N]>, const N: usize> crate::serde::Deserialize<'de>
+    for Hmac<E, N>
+{
+    fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        crate::serde_macros::serde_details::SerdeHash::deserialize(d)
+    }
+}
+
+/// Pair of underlying hash midstates which represent the current state of an `HashEngine`.
+pub struct MidState<E: HashEngine> {
     /// Midstate of the inner hash engine
-    pub inner: <T::Engine as HashEngine>::MidState,
+    pub inner: E::Midstate,
     /// Midstate of the outer hash engine
-    pub outer: <T::Engine as HashEngine>::MidState,
+    pub outer: E::Midstate,
 }
 
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
-#[derive(Clone)]
-pub struct HmacEngine<T: Hash> {
-    iengine: T::Engine,
-    oengine: T::Engine,
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Engine<E: HashEngine> {
+    iengine: E,
+    oengine: E,
 }
 
-impl<T: Hash> Default for HmacEngine<T> {
-    fn default() -> Self { HmacEngine::new(&[]) }
+impl<E: HashEngine> Default for Engine<E> {
+    fn default() -> Self { Self::new(&[]) }
 }
 
-impl<T: Hash> HmacEngine<T> {
-    /// Constructs a new keyed HMAC from `key`.
+impl<E: HashEngine> Engine<E> {
+    /// Constructs a new keyed HMAC engine from `key`.
     ///
-    /// We only support underlying hashes whose block sizes are ≤ 128 bytes.
+    /// We only support hash engines whose internal block sizes are ≤ 128 bytes.
     ///
     /// # Panics
     ///
-    /// Larger hashes will result in a panic.
-    pub fn new(key: &[u8]) -> HmacEngine<T> {
-        debug_assert!(T::Engine::BLOCK_SIZE <= 128);
+    /// Larger block sizes will result in a panic.
+    pub fn new(key: &[u8]) -> Engine<E> {
+        debug_assert!(E::BLOCK_SIZE <= 128);
 
         let mut ipad = [0x36u8; 128];
         let mut opad = [0x5cu8; 128];
-        let mut ret = HmacEngine { iengine: <T as Hash>::engine(), oengine: <T as Hash>::engine() };
+        let mut ret = Engine { iengine: E::default(), oengine: E::default() };
 
-        if key.len() > T::Engine::BLOCK_SIZE {
-            let hash = <T as Hash>::hash(key);
+        if key.len() > E::BLOCK_SIZE {
+            let hash = <E as HashEngine>::hash(key);
             for (b_i, b_h) in ipad.iter_mut().zip(hash.as_ref()) {
                 *b_i ^= *b_h;
             }
@@ -86,96 +258,64 @@ impl<T: Hash> HmacEngine<T> {
             }
         };
 
-        HashEngine::input(&mut ret.iengine, &ipad[..T::Engine::BLOCK_SIZE]);
-        HashEngine::input(&mut ret.oengine, &opad[..T::Engine::BLOCK_SIZE]);
+        ret.iengine.input(&ipad[..E::BLOCK_SIZE]);
+        ret.oengine.input(&opad[..E::BLOCK_SIZE]);
         ret
     }
-
-    /// A special constructor giving direct access to the underlying "inner" and "outer" engines.
-    pub fn from_inner_engines(iengine: T::Engine, oengine: T::Engine) -> HmacEngine<T> {
-        HmacEngine { iengine, oengine }
-    }
 }
 
-impl<T: Hash> HashEngine for HmacEngine<T> {
-    type MidState = HmacMidState<T>;
+impl<E: HashEngine> HashEngine for Engine<E> {
+    type Digest = E::Digest;
+    type Midstate = Midstate<E>;
+    const BLOCK_SIZE: usize = E::BLOCK_SIZE;
 
-    fn midstate(&self) -> Self::MidState {
-        HmacMidState { inner: self.iengine.midstate(), outer: self.oengine.midstate() }
-    }
+    #[inline]
+    fn input(&mut self, data: &[u8]) { self.iengine.input(data) }
 
-    const BLOCK_SIZE: usize = T::Engine::BLOCK_SIZE;
-
+    #[inline]
     fn n_bytes_hashed(&self) -> usize { self.iengine.n_bytes_hashed() }
 
-    fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
-}
-
-impl<T: Hash> fmt::Debug for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
-}
-
-impl<T: Hash> fmt::Display for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-impl<T: Hash> fmt::LowerHex for Hmac<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl<T: Hash> convert::AsRef<[u8]> for Hmac<T> {
-    fn as_ref(&self) -> &[u8] { self.0.as_ref() }
-}
-
-impl<T: Hash> Hash for Hmac<T> {
-    type Engine = HmacEngine<T>;
-    type Bytes = T::Bytes;
-
-    fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
-        let ihash = T::from_engine(e.iengine);
-        e.oengine.input(ihash.as_ref());
-        let ohash = T::from_engine(e.oengine);
-        Hmac(ohash)
+    #[inline]
+    fn finalize(mut self) -> Self::Digest {
+        let ihash = self.iengine.finalize();
+        self.oengine.input(ihash.as_ref());
+        self.oengine.finalize()
     }
 
-    const LEN: usize = T::LEN;
+    #[inline]
+    fn midstate(&self) -> Self::Midstate {
+        Midstate { inner: self.iengine.midstate(), outer: self.oengine.midstate() }
+    }
 
-    fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
-
-    fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
-
-    fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
-
-    fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
-
-    fn all_zeros() -> Self {
-        let zeros = T::all_zeros();
-        Hmac(zeros)
+    #[inline]
+    fn from_midstate(midstate: Midstate<E>, length: usize) -> Self {
+        Engine {
+            iengine: E::from_midstate(midstate.inner, length),
+            oengine: E::from_midstate(midstate.outer, length),
+        }
     }
 }
 
-#[cfg(feature = "serde")]
-impl<T: Hash + Serialize> Serialize for Hmac<T> {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        Serialize::serialize(&self.0, s)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Hmac<T>, D::Error> {
-        let bytes = Deserialize::deserialize(d)?;
-        Ok(Hmac(bytes))
-    }
+/// Pair of underlying hash engine midstates which represent the current state of an `HashEngine`.
+// TODO: Use derives?
+//#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+pub struct Midstate<E: HashEngine> {
+    /// Midstate of the inner hash engine.
+    pub inner: E::Midstate,
+    /// Midstate of the outer hash engine.
+    pub outer: E::Midstate,
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::{hmac, sha256, sha512, Hmac, HmacSha256, HmacSha512};
+
+    const DATA: &str = "some arbitrary data to hash";
+
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha256, Hash, HashEngine, Hmac, HmacEngine};
-
         #[derive(Clone)]
         struct Test {
             key: Vec<u8>,
@@ -289,11 +429,11 @@ mod tests {
         ];
 
         for test in tests {
-            let mut engine = HmacEngine::<sha256::Hash>::new(&test.key);
+            let mut engine = HmacSha256::engine(&test.key);
             engine.input(&test.input);
-            let hash = Hmac::<sha256::Hash>::from_engine(engine);
-            assert_eq!(hash.as_ref(), &test.output[..]);
-            assert_eq!(hash.as_byte_array(), test.output.as_slice());
+            let hash = engine.finalize();
+            assert_eq!(&hash[..], &test.output[..]);
+            assert_eq!(hash, test.output.as_slice());
         }
     }
 
@@ -301,8 +441,6 @@ mod tests {
     #[test]
     fn hmac_sha512_serde() {
         use serde_test::{assert_tokens, Configure, Token};
-
-        use crate::{sha512, Hash, Hmac};
 
         #[rustfmt::skip]
         static HASH_BYTES: [u8; 64] = [
@@ -316,7 +454,8 @@ mod tests {
             0x0b, 0x2d, 0x8a, 0x60, 0x0b, 0xdf, 0x4c, 0x0c,
         ];
 
-        let hash = Hmac::<sha512::Hash>::from_slice(&HASH_BYTES).expect("right number of bytes");
+        let hash = HmacSha512::from_slice(&HASH_BYTES).expect("right number of bytes");
+
         assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
         assert_tokens(
             &hash.readable(),
@@ -326,17 +465,57 @@ mod tests {
             )],
         );
     }
+
+    #[test]
+    fn hmac_sha256_hash_with_default_key() {
+        let mut engine = HmacSha256::engine(&[]);
+        engine.input(DATA.as_bytes());
+        let hash = Hmac::from_engine(engine);
+
+        let hash_a = HmacSha256::hash(&[], DATA.as_bytes());
+        assert_eq!(hash, hash_a);
+
+        let mut engine = hmac::Engine::<sha256::Engine>::default();
+        engine.input(DATA.as_bytes());
+        let hash_b = Hmac::from_engine(engine);
+        assert_eq!(hash, hash_b);
+
+        let mut engine = hmac::Engine::<sha256::Engine>::new(&[]);
+        engine.input(DATA.as_bytes());
+        let hash_c = Hmac::from_engine(engine);
+        assert_eq!(hash, hash_c);
+    }
+
+    #[test]
+    fn hmac_sha512_hash_with_default_key() {
+        let mut engine = HmacSha512::engine(&[]);
+        engine.input(DATA.as_bytes());
+        let hash = Hmac::from_engine(engine);
+
+        let hash_a = HmacSha512::hash(&[], DATA.as_bytes());
+        assert_eq!(hash, hash_a);
+
+        let mut engine = hmac::Engine::<sha512::Engine>::default();
+        engine.input(DATA.as_bytes());
+        let hash_b = Hmac::from_engine(engine);
+        assert_eq!(hash, hash_b);
+
+        let mut engine = hmac::Engine::<sha512::Engine>::new(&[]);
+        engine.input(DATA.as_bytes());
+        let hash_c = Hmac::from_engine(engine);
+        assert_eq!(hash, hash_c);
+    }
 }
 
 #[cfg(bench)]
 mod benches {
     use test::Bencher;
 
-    use crate::{sha256, Hash, HashEngine, Hmac};
+    use crate::{hmac, HashEngine, HmacSha256};
 
     #[bench]
     pub fn hmac_sha256_10(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacSha256::engine(&[]);
         let bytes = [1u8; 10];
         bh.iter(|| {
             engine.input(&bytes);
@@ -346,7 +525,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_1k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacSha256::engine(&[]);
         let bytes = [1u8; 1024];
         bh.iter(|| {
             engine.input(&bytes);
@@ -356,7 +535,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_64k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacSha256::engine(&[]);
         let bytes = [1u8; 65536];
         bh.iter(|| {
             engine.input(&bytes);

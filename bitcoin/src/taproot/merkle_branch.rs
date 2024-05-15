@@ -2,7 +2,7 @@
 
 //! Contains `TaprootMerkleBranch` and its associated types.
 
-use hashes::Hash;
+use hashes::sha256t;
 
 use super::{
     TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
@@ -88,7 +88,7 @@ impl TaprootMerkleBranch {
         for hash in self {
             writer.write_all(hash.as_ref())?;
         }
-        Ok(self.len() * TapNodeHash::LEN)
+        Ok(self.len() * sha256t::DIGEST_SIZE)
     }
 
     /// Serializes `self` as bytes.

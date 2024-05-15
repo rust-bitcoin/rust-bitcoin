@@ -9,7 +9,7 @@
 
 use core::fmt;
 
-use hashes::{sha256d, Hash, HashEngine};
+use hashes::{sha256d, HashEngine};
 use io::{BufRead, Write};
 
 use super::Weight;
@@ -23,18 +23,36 @@ use crate::script::PushBytes;
 use crate::{merkle_tree, VarInt};
 
 hashes::hash_newtype! {
+    pub(crate) struct BlockHashEngine(sha256d);
+
     /// A bitcoin block hash.
-    pub struct BlockHash(sha256d::Hash);
-    /// A hash of the Merkle tree branch or root for transactions.
-    pub struct TxMerkleNode(sha256d::Hash);
-    /// A hash corresponding to the Merkle tree root for witness data.
-    pub struct WitnessMerkleNode(sha256d::Hash);
-    /// A hash corresponding to the witness structure commitment in the coinbase transaction.
-    pub struct WitnessCommitment(sha256d::Hash);
+    pub struct BlockHash(_);
 }
-impl_hashencode!(BlockHash);
-impl_hashencode!(TxMerkleNode);
-impl_hashencode!(WitnessMerkleNode);
+impl_hashencode!(BlockHash, sha256d);
+
+hashes::hash_newtype! {
+    pub(crate) struct TxMerkleNodeEngine(sha256d);
+
+    /// A hash of the Merkle tree branch or root for transactions.
+    pub struct TxMerkleNode(_);
+}
+impl_hashencode!(TxMerkleNode, sha256d);
+
+hashes::hash_newtype! {
+    pub(crate) struct WitnessMerkleNodeEngine(sha256d);
+
+    /// A hash corresponding to the Merkle tree root for witness data.
+    pub struct WitnessMerkleNode(_);
+}
+impl_hashencode!(WitnessMerkleNode, sha256d);
+
+hashes::hash_newtype! {
+    pub(crate) struct WitnessCommitmentEngine(sha256d);
+
+    /// A hash corresponding to the witness structure commitment in the coinbase transaction.
+    pub struct WitnessCommitment(_);
+}
+impl_hashencode!(WitnessCommitment, sha256d);
 
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
@@ -294,7 +312,7 @@ impl Block {
 
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
+        let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
@@ -314,9 +332,9 @@ impl Block {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
-                Wtxid::all_zeros().to_raw_hash()
+                Wtxid::all_zeros()
             } else {
-                t.compute_wtxid().to_raw_hash()
+                t.compute_wtxid()
             }
         });
         merkle_tree::calculate_root(hashes).map(|h| h.into())
