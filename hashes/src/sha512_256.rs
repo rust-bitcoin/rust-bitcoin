@@ -1,55 +1,63 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA512_256 implementation.
+//! SHA-512/256 implementation.
 //!
-//! SHA512/256 is a hash function that uses the sha512 algorithm but it truncates
+//! SHA-512/256 is a hash function that uses the sha512 algorithm but it truncates
 //! the output to 256 bits. It has different initial constants than sha512 so it
 //! produces an entirely different hash compared to sha512. More information at
 //! <https://eprint.iacr.org/2010/548.pdf>.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::str;
 
-use crate::{sha512, FromSliceError};
+use crate::{sha512, HashEngine};
 
 crate::internal_macros::hash_type! {
-    256,
-    false,
-    "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 algorithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>."
+    32,
+    "Output of the SHA-512/256 hash function.\n\nSHA-512/256 is a hash function that uses the sha512 algorithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>."
 }
 
-fn from_engine(e: HashEngine) -> Hash {
-    let mut ret = [0; 32];
-    ret.copy_from_slice(&sha512::from_engine(e.0)[..32]);
-    Hash(ret)
-}
-
-/// Engine to compute SHA512/256 hash function.
+/// Engine to compute SHA-512/256 hash function.
 ///
-/// SHA512/256 is a hash function that uses the sha512 algorithm but it truncates
+/// SHA-512/256 is a hash function that uses the sha512 algorithm but it truncates
 /// the output to 256 bits. It has different initial constants than sha512 so it
 /// produces an entirely different hash compared to sha512. More information at
 /// <https://eprint.iacr.org/2010/548.pdf>.
 #[derive(Clone)]
-pub struct HashEngine(sha512::HashEngine);
+pub struct Engine(sha512::Engine);
 
-impl Default for HashEngine {
+impl Default for Engine {
     #[rustfmt::skip]
     fn default() -> Self {
-        HashEngine(sha512::HashEngine::sha512_256())
+        Engine(sha512::Engine::sha512_256())
     }
 }
 
-impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 64];
-
-    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
-
+impl HashEngine for Engine {
+    type Digest = [u8; 32];
+    type Midstate = [u8; 64]; // SHA-512 midstate.
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
+    #[inline]
     fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
 
-    fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
+    #[inline]
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
+
+    #[inline]
+    fn finalize(self) -> Self::Digest {
+        let sha512 = self.0.finalize();
+        let mut hash = [0; 32];
+        hash.copy_from_slice(&sha512[..32]);
+        hash
+    }
+
+    #[inline]
+    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
+
+    #[inline]
+    fn from_midstate(midstate: [u8; 64], length: usize) -> Engine {
+        Engine(sha512::Engine::from_midstate(midstate, length))
+    }
 }
 
 #[cfg(test)]
@@ -57,7 +65,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha512_256, Hash, HashEngine};
+        use super::*;
+        use crate::sha512_256;
 
         #[derive(Clone)]
         struct Test {
@@ -144,7 +153,8 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{sha512_256, Hash, HashEngine};
+    use super::*;
+    use crate::sha512_256;
 
     #[bench]
     pub fn sha512_256_10(bh: &mut Bencher) {

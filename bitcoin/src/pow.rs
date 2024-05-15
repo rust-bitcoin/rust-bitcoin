@@ -220,7 +220,6 @@ impl Target {
     /// to the target.
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_met_by(&self, hash: BlockHash) -> bool {
-        use hashes::Hash;
         let hash = U256::from_le_bytes(hash.to_byte_array());
         hash <= self.0
     }
@@ -1791,8 +1790,9 @@ mod tests {
 
     #[test]
     fn compact_target_from_upwards_difficulty_adjustment_using_headers() {
-        use crate::{block::Version, constants::genesis_block, TxMerkleNode};
-        use hashes::Hash;
+        use crate::block::Version;
+        use crate::constants::genesis_block;
+        use crate::TxMerkleNode;
         let params = Params::new(crate::Network::Signet);
         let epoch_start = genesis_block(&params).header;
         // Block 2015, the only information used are `bits` and `time`
@@ -1802,27 +1802,28 @@ mod tests {
             merkle_root: TxMerkleNode::all_zeros(),
             time: 1599332177,
             bits: epoch_start.bits,
-            nonce: epoch_start.nonce
+            nonce: epoch_start.nonce,
         };
-        let adjustment = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let adjustment =
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
 
     #[test]
     fn compact_target_from_downwards_difficulty_adjustment_using_headers() {
-        use crate::{block::Version, TxMerkleNode};
-        use hashes::Hash;
+        use crate::block::Version;
+        use crate::TxMerkleNode;
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
-        // Block 2016, the only information used is `time`
+                                                                      // Block 2016, the only information used is `time`
         let epoch_start = Header {
             version: Version::ONE,
             prev_blockhash: BlockHash::all_zeros(),
             merkle_root: TxMerkleNode::all_zeros(),
             time: 1599332844,
             bits: starting_bits,
-            nonce: 0
+            nonce: 0,
         };
         // Block 4031, the only information used are `bits` and `time`
         let current = Header {
@@ -1831,9 +1832,10 @@ mod tests {
             merkle_root: TxMerkleNode::all_zeros(),
             time: 1600591200,
             bits: starting_bits,
-            nonce: 0
+            nonce: 0,
         };
-        let adjustment = CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+        let adjustment =
+            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -1844,9 +1846,8 @@ mod tests {
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan = (0.2 * params.pow_target_timespan as f64) as u64;
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
-        let want = Target::from_compact(starting_bits)
-            .min_transition_threshold()
-            .to_compact_lossy();
+        let want =
+            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -1854,11 +1855,10 @@ mod tests {
     fn compact_target_from_minimum_downward_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
-        let timespan =  5 * params.pow_target_timespan; // Really slow.
+        let timespan = 5 * params.pow_target_timespan; // Really slow.
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
-        let want = Target::from_compact(starting_bits)
-            .max_transition_threshold(params)
-            .to_compact_lossy();
+        let want =
+            Target::from_compact(starting_bits).max_transition_threshold(params).to_compact_lossy();
         assert_eq!(got, want);
     }
 
@@ -1866,7 +1866,7 @@ mod tests {
     fn compact_target_from_adjustment_is_max_target() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
-        let timespan =  5 * params.pow_target_timespan; // Really slow.
+        let timespan = 5 * params.pow_target_timespan; // Really slow.
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
@@ -1894,8 +1894,6 @@ mod tests {
     #[test]
     fn target_is_met_by_for_target_equals_hash() {
         use std::str::FromStr;
-
-        use hashes::Hash;
 
         let hash =
             BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")

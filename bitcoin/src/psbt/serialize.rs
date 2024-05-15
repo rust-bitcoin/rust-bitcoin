@@ -5,7 +5,7 @@
 //! Traits to serialize PSBT values to and from raw bytes
 //! according to the BIP-174 specification.
 
-use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use hashes::{hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};

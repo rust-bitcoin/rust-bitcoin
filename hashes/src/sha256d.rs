@@ -1,40 +1,145 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SHA256d implementation (double SHA256).
-//!
 
-use core::ops::Index;
-use core::slice::SliceIndex;
+use crate::{sha256, FromSliceError, HashEngine};
 
-use crate::{sha256, FromSliceError};
+/// Engine to compute double SHA-256 hash function.
+#[derive(Clone)]
+pub struct Engine(sha256::Engine);
 
-crate::internal_macros::hash_type! {
-    256,
-    true,
-    "Output of the SHA256d hash function."
+impl Default for Engine {
+    fn default() -> Self {
+        let inner = sha256::Engine::default();
+        Self(inner)
+    }
 }
 
-type HashEngine = sha256::HashEngine;
+impl HashEngine for Engine {
+    type Digest = [u8; 32];
+    type Midstate = sha256::Midstate;
+    const BLOCK_SIZE: usize = sha256::BLOCK_SIZE;
 
-fn from_engine(e: sha256::HashEngine) -> Hash {
-    use crate::Hash as _;
+    #[inline]
+    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
 
-    let sha2 = sha256::Hash::from_engine(e);
-    let sha2d = sha256::Hash::hash(&sha2[..]);
+    #[inline]
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
 
-    let mut ret = [0; 32];
-    ret.copy_from_slice(&sha2d[..]);
-    Hash(ret)
+    #[inline]
+    fn finalize(self) -> Self::Digest {
+        let sha2 = sha256::Hash::from_engine(self.0);
+        let sha2d = sha256::Hash::hash(&sha2[..]);
+
+        let mut ret = [0; 32];
+        ret.copy_from_slice(&sha2d[..]);
+        ret
+    }
+
+    #[inline]
+    fn midstate(&self) -> Self::Midstate { self.0.midstate() }
+
+    #[inline]
+    fn from_midstate(midstate: Self::Midstate, length: usize) -> Engine {
+        let inner = sha256::Engine::from_midstate(midstate, length);
+        Self(inner)
+    }
 }
+
+/// Output of the SHA256d hash function.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Hash([u8; 32]);
+
+impl Hash {
+    /// Flag indicating whether user-visible serializations of this hash
+    /// should be backward. For some reason Satoshi decided this should be
+    /// true for `Sha256dHash`, so here we are.
+    pub const DISPLAY_BACKWARD: bool = true;
+
+    /// Length of the hash, in bytes.
+    pub const LEN: usize = 32;
+
+    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
+    pub fn from_hash(sha256: sha256::Hash) -> Self {
+        Self::from_byte_array(sha256::Hash::hash(sha256.as_ref()).to_byte_array())
+    }
+
+    /// Creates a default hash engine, adds `bytes` to it, then finalizes the engine.
+    ///
+    /// # Returns
+    ///
+    /// The digest created by hashing `bytes` with engine's hashing algorithm.
+    #[allow(clippy::self_named_constructors)] // `hash` is a verb but `Hash` is a noun.
+    pub fn hash(bytes: &[u8]) -> Self {
+        let mut engine = Self::engine();
+        engine.input(bytes);
+        Self::from_engine(engine)
+    }
+
+    /// Constructs a new engine.
+    pub fn engine() -> Engine { Engine::new() }
+
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(engine: Engine) -> Hash {
+        let digest = engine.finalize();
+        Self(digest)
+    }
+
+    /// Copies a byte slice into a hash object.
+    pub fn from_slice(sl: &[u8]) -> Result<Hash, FromSliceError> {
+        if sl.len() != 32 {
+            Err(FromSliceError::new(sl.len(), Self::LEN))
+        } else {
+            let mut ret = [0; 32];
+            ret.copy_from_slice(sl);
+            Ok(Self(ret))
+        }
+    }
+
+    /// Constructs a hash from the underlying byte array.
+    pub fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes) }
+
+    /// Returns the underlying byte array.
+    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can create
+    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+    /// previous blockhash and the coinbase transaction's outpoint txid.
+    pub fn all_zeros() -> Self { Self([0x00; 32]) }
+}
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Hash {
+    fn schema_name() -> String { "Hash".to_owned() }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(32 * 2),
+            min_length: Some(32 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
+    }
+}
+
+// Double SHA-256 is displayed backwards.
+crate::impl_bytelike_traits!(Hash, 32, true);
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256d, Hash as _};
+    use crate::sha256d;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha256, HashEngine};
+        use super::*;
+        use crate::sha256;
 
         #[derive(Clone)]
         struct Test {
@@ -75,7 +180,9 @@ mod tests {
 
             // Hash by computing a sha256 then `hash_again`ing it
             let sha2_hash = sha256::Hash::hash(test.input.as_bytes());
-            let sha2d_hash = sha2_hash.hash_again();
+            let sha2d_hash = sha256d::Hash::from_byte_array(
+                sha256::Hash::hash(sha2_hash.as_byte_array()).to_byte_array(),
+            );
             assert_eq!(hash, sha2d_hash);
 
             assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
@@ -116,7 +223,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{sha256d, Hash, HashEngine};
+    use crate::{sha256d, HashEngine};
 
     #[bench]
     pub fn sha256d_10(bh: &mut Bencher) {

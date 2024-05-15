@@ -1,26 +1,132 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SHA256t implementation (tagged SHA256).
-//!
 
 use core::cmp;
 use core::marker::PhantomData;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
-use crate::{sha256, FromSliceError};
+use crate::{sha256, HashEngine};
 
-type HashEngine = sha256::HashEngine;
+/// Engine to compute tagged SHA-256 hash function.
+#[derive(Clone)]
+pub struct Engine<T>(sha256::Engine, PhantomData<T>);
+
+impl<T: Tag> Default for Engine<T> {
+    fn default() -> Self { <T as Tag>::engine() }
+}
+
+impl<T: Tag> HashEngine for Engine<T> {
+    type Digest = [u8; 32];
+    type Midstate = sha256::Midstate;
+    const BLOCK_SIZE: usize = sha256::BLOCK_SIZE;
+
+    #[inline]
+    fn new() -> Self { <T as Tag>::engine() }
+
+    #[inline]
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
+
+    #[inline]
+    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
+
+    #[inline]
+    fn finalize(self) -> Self::Digest { self.0.finalize() }
+
+    #[inline]
+    fn midstate(&self) -> Self::Midstate { self.0.midstate() }
+
+    #[inline]
+    fn from_midstate(midstate: sha256::Midstate, length: usize) -> Engine<T> {
+        let inner = sha256::Engine::from_midstate(midstate, length);
+        Self(inner, PhantomData)
+    }
+}
 
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
-pub trait Tag {
+pub trait Tag: Clone {
     /// Returns a hash engine that is pre-tagged and is ready to be used for the data.
-    fn engine() -> sha256::HashEngine;
+    fn engine() -> Engine<Self>;
 }
 
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
 pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
+
+impl<T: Tag> Hash<T> {
+    /// Length of the hash, in bytes.
+    pub const LEN: usize = 32;
+
+    /// Creates a default hash engine, adds `bytes` to it, then finalizes the engine.
+    ///
+    /// # Returns
+    ///
+    /// The digest created by hashing `bytes` with engine's hashing algorithm.
+    #[allow(clippy::self_named_constructors)] // `hash` is a verb but `Hash` is a noun.
+    pub fn hash(bytes: &[u8]) -> Self {
+        let mut engine = Self::engine();
+        engine.input(bytes);
+        Self(engine.finalize(), PhantomData)
+    }
+
+    /// Returns a hash engine that is ready to be used for data.
+    pub fn engine() -> Engine<T> { <T as Tag>::engine() }
+
+    /// Creates a `Hash` from an `engine`.
+    ///
+    /// This is equivalent to calling `Hash::from_byte_array(engine.finalize())`.
+    pub fn from_engine(engine: Engine<T>) -> Self {
+        let digest = engine.finalize();
+        Self(digest, PhantomData)
+    }
+
+    /// Zero cost conversion between a fixed length byte array shared reference and
+    /// a shared reference to this Hash type.
+    pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; Self::LEN]
+        unsafe { &*(bytes as *const _ as *const Self) }
+    }
+
+    /// Zero cost conversion between a fixed length byte array exclusive reference and
+    /// an exclusive reference to this Hash type.
+    pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+        unsafe { &mut *(bytes as *mut _ as *mut Self) }
+    }
+
+    /// Copies a byte slice into a hash object.
+    pub fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> {
+        if sl.len() != 32 {
+            Err(crate::FromSliceError { expected: 32, got: sl.len() })
+        } else {
+            let mut ret = [0; 32];
+            ret.copy_from_slice(sl);
+            Ok(Self::from_byte_array(ret))
+        }
+    }
+
+    /// Constructs a hash from the underlying byte array.
+    pub fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes, PhantomData) }
+
+    /// Returns the underlying byte array.
+    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+
+    /// Returns a reference to the underlying byte array as a slice.
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
+
+    /// Copies the underlying bytes into a new `Vec`.
+    #[cfg(feature = "alloc")]
+    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_vec() }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can
+    /// create it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis
+    /// block's previous blockhash and the coinbase transaction's outpoint txid.
+    pub fn all_zeros() -> Self { Self([0x00; 32], PhantomData) }
+}
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
@@ -35,12 +141,6 @@ impl<T: Tag> schemars::JsonSchema for Hash<T> {
         }));
         schema.into()
     }
-}
-
-impl<T: Tag> Hash<T> {
-    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
-
-    fn internal_engine() -> HashEngine { T::engine() }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
@@ -66,15 +166,9 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
 }
 
-crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
+crate::impl_bytelike_traits!(Hash, 32, false, T: Tag);
 
-fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
-    use crate::Hash as _;
-
-    Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
-}
-
-/// Macro used to define a newtype tagged hash.
+/// Creates a new wrapper type - a hash type that wraps  `sha256t::Hash` type.
 ///
 /// This macro creates two types:
 ///
@@ -84,15 +178,13 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 /// The syntax is:
 ///
 /// ```
-/// # use bitcoin_hashes::sha256t_hash_newtype;
+/// # use bitcoin_hashes::{sha256t_hash_newtype, Tag, HashEngine};
 /// sha256t_hash_newtype! {
 ///     /// Optional documentation details here.
 ///     /// Summary is always generated.
 ///     pub struct FooTag = hash_str("foo");
 ///
 ///     /// A foo hash.
-///     // Direction works just like the hash_newtype! macro.
-///     #[hash_newtype(backward)]
 ///     pub struct FooHash(_);
 /// }
 /// ```
@@ -113,26 +205,118 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
-    ($($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);)+) => {
+    ($(
+        $(#[$($tag_attrs:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);
+        $(#[$($newtype_attrs:tt)*])* $newtype_vis:vis struct $newtype:ident(_);
+    )+) => {
         $(
-        $crate::sha256t_hash_newtype_tag!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
+        $crate::sha256t_hash_newtype_tag!($tag_vis, $tag, stringify!($newtype), $(#[$($tag_attrs)*])*);
 
         impl $crate::sha256t::Tag for $tag {
             #[inline]
-            fn engine() -> $crate::sha256::HashEngine {
-                const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
+            fn engine() -> $crate::sha256t::Engine<Self> {
+                use $crate::HashEngine;
+
+                const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::tagged_midstate!($constructor, $($tag_value)+);
                 #[allow(unused)]
                 const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
+
+                $crate::sha256t::Engine::from_midstate(MIDSTATE.0, MIDSTATE.1)
             }
         }
 
-        $crate::hash_newtype! {
-            $(#[$($hash_attr)*])*
-            $hash_vis struct $hash_name($(#[$($field_attr)*])* $crate::sha256t::Hash<$tag>);
+        $crate::hash_newtype_struct! {
+            $newtype_vis struct $newtype($crate::sha256t::Hash<$tag>);
+
+            $({ $($newtype_attrs)* })*
         }
+
+        #[allow(unused)] // Not all functions are used by all hash types.
+        impl $newtype {
+            /// Length of the hash, in bytes.
+            pub const LEN: usize = 32;
+
+            const DISPLAY_BACKWARD: bool = false; // Never display backwards for tagged hashes.
+
+            /// Creates this wrapper type from the inner hash type.
+            pub fn from_raw_hash(inner: $crate::sha256t::Hash<$tag>) -> Self { Self(inner) }
+
+            /// Returns the inner hash (sha256, sh256d etc.).
+            pub fn to_raw_hash(self) -> $crate::sha256t::Hash<$tag> { self.0 }
+
+            /// Returns a reference to the inner hash (sha256, sh256d etc.).
+            pub fn as_raw_hash(&self) -> &$crate::sha256t::Hash<$tag> { &self.0 }
+
+            /// Creates a default hash engine, adds `bytes` to it, then finalizes the engine.
+            ///
+            /// # Returns
+            ///
+            /// The digest created by hashing `bytes` with engine's hashing algorithm.
+            #[allow(clippy::self_named_constructors)] // `hash` is a verb but `Hash` is a noun.
+            pub fn hash(bytes: &[u8]) -> Self {
+                let inner = $crate::sha256t::Hash::<$tag>::hash(bytes);
+                Self(inner)
+            }
+
+            /// Returns a hash engine that is ready to be used for data.
+            pub fn engine() -> $crate::sha256t::Engine<$tag> { $tag::engine() }
+
+            /// Creates a `Hash` from an `engine`.
+            ///
+            /// This is equivalent to calling `Hash::from_byte_array(engine.finalize())`.
+            pub fn from_engine(engine: $crate::sha256t::Engine<$tag>) -> Self {
+                let inner = $crate::sha256t::Hash::<$tag>::from_engine(engine);
+                Self(inner)
+            }
+
+            /// Zero cost conversion between a fixed length byte array shared reference and
+            /// a shared reference to this Hash type.
+            pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; Self::LEN]
+                unsafe { &*(bytes as *const _ as *const Self) }
+            }
+
+            /// Zero cost conversion between a fixed length byte array exclusive reference and
+            /// an exclusive reference to this Hash type.
+            pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+                unsafe { &mut *(bytes as *mut _ as *mut Self) }
+            }
+
+            /// Copies a byte slice into a hash object.
+            pub fn from_slice(sl: &[u8]) -> Result<Self, $crate::FromSliceError> {
+                let inner = $crate::sha256t::Hash::<$tag>::from_slice(sl)?;
+                Ok(Self(inner))
+            }
+
+            /// Constructs a hash from the underlying byte array.
+            pub fn from_byte_array(bytes: [u8; 32]) -> Self {
+                let inner = $crate::sha256t::Hash::<$tag>::from_byte_array(bytes);
+                Self(inner)
+            }
+
+            /// Returns the underlying byte array.
+            pub fn to_byte_array(self) -> [u8; 32] { self.0.to_byte_array() }
+
+            /// Returns a reference to the underlying byte array.
+            pub fn as_byte_array(&self) -> &[u8; 32] { self.0.as_byte_array() }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can
+            /// create it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis
+            /// block's previous blockhash and the coinbase transaction's outpoint txid.
+            pub fn all_zeros() -> Self {
+                let inner = $crate::sha256t::Hash::<$tag>::all_zeros();
+                Self(inner)
+            }
+        }
+
+        // Always display tagged hashes forwards.
+        $crate::impl_bytelike_traits!($newtype, 32, false);
+
         )+
-    }
+    };
 }
 
 // Workaround macros being unavailable in attributes.
@@ -149,9 +333,12 @@ macro_rules! sha256t_hash_newtype_tag {
     };
 }
 
+/// Creates a const midstate used to instantiate a SHA256 pre-tagged engine.
+///
+/// Requires `hashes::sha256` to be in scope.
 #[doc(hidden)]
 #[macro_export]
-macro_rules! sha256t_hash_newtype_tag_constructor {
+macro_rules! tagged_midstate {
     (hash_str, $value:expr) => {
         ($crate::sha256::Midstate::hash_tag($value.as_bytes()), 64)
     };
@@ -165,9 +352,7 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use crate::Hash;
-    use crate::{sha256, sha256t};
+    use super::*;
 
     const TEST_MIDSTATE: [u8; 32] = [
         156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
@@ -176,63 +361,51 @@ mod tests {
 
     // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
     #[cfg(feature = "alloc")]
-    const HASH_ZERO_BACKWARD: &str =
-        "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
-    // And the same thing, forward.
-    #[cfg(feature = "alloc")]
-    const HASH_ZERO_FORWARD: &str =
-        "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
+    const HASH_ZERO: &str = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
 
-    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
-    pub struct TestHashTag;
+    // We provide a mechanism for manually creating tagged hashes.
+    #[derive(Clone)]
+    pub struct TestTag;
 
-    impl sha256t::Tag for TestHashTag {
-        fn engine() -> sha256::HashEngine {
-            // The TapRoot TapLeaf midstate.
+    impl Tag for TestTag {
+        fn engine() -> Engine<Self> {
             let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-            sha256::HashEngine::from_midstate(midstate, 64)
+            let inner = sha256::Engine::from_midstate(midstate, 64);
+            Engine(inner, PhantomData)
         }
     }
-
-    // We support manually implementing `Tag` and creating a tagged hash from it.
-    #[cfg(feature = "alloc")]
-    pub type TestHash = sha256t::Hash<TestHashTag>;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn manually_created_sha256t_hash_type() {
-        assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
+        assert_eq!(Hash::<TestTag>::hash(&[0]).to_string(), HASH_ZERO);
     }
 
     // We also provide a macro to create the tag and the hash type.
     sha256t_hash_newtype! {
         /// Test detailed explanation.
-        struct NewTypeTagBackward = raw(TEST_MIDSTATE, 64);
+        struct NewTag = raw(TEST_MIDSTATE, 64);
 
         /// A test hash.
-        #[hash_newtype(backward)]
-        struct NewTypeHashBackward(_);
+        struct NewTaggedHash(_);
     }
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn macro_created_sha256t_hash_type_backward() {
-        assert_eq!(NewTypeHashBackward::hash(&[0]).to_string(), HASH_ZERO_BACKWARD);
-    }
+    fn hash_engine() {
+        let mut engine = Engine::<NewTag>::new();
+        engine.input(&[0]);
+        let digest = engine.finalize();
+        let hash = Hash::<NewTag>::from_byte_array(digest);
 
-    // We also provide a macro to create the tag and the hash type.
-    sha256t_hash_newtype! {
-        /// Test detailed explanation.
-        struct NewTypeTagForward = raw(TEST_MIDSTATE, 64);
-
-        /// A test hash.
-        #[hash_newtype(forward)]
-        struct NewTypeHashForward(_);
+        let got = hash.to_string();
+        assert_eq!(got, HASH_ZERO);
     }
 
     #[test]
     #[cfg(feature = "alloc")]
-    fn macro_created_sha256t_hash_type_prints_forward() {
-        assert_eq!(NewTypeHashForward::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
+    fn hash_type() {
+        let got = Hash::<NewTag>::hash(&[0]).to_string();
+        assert_eq!(got, HASH_ZERO);
     }
 }

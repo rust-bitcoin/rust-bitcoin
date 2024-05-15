@@ -107,14 +107,13 @@ pub mod serde_details {
 /// Implements `Serialize` and `Deserialize` for a type `$t` which
 /// represents a newtype over a byte-slice over length `$len`.
 #[macro_export]
+#[doc(hidden)]
 #[cfg(feature = "serde")]
 macro_rules! serde_impl(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {
             const N : usize = $len;
             fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, $crate::FromSliceError> {
-                #[allow(unused_imports)]
-                use $crate::Hash as _;
                 $t::from_slice(sl)
             }
         }
@@ -134,6 +133,7 @@ macro_rules! serde_impl(
 
 /// Does an "empty" serde implementation for the configuration without serde feature.
 #[macro_export]
+#[doc(hidden)]
 #[cfg(not(feature = "serde"))]
 macro_rules! serde_impl(
         ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => ()

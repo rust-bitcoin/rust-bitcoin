@@ -1,60 +1,29 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! RIPEMD160 implementation.
-//!
 
-use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::str;
 
-use crate::{FromSliceError, HashEngine as _};
+use crate::HashEngine;
 
 crate::internal_macros::hash_type! {
-    160,
-    false,
+    20,
     "Output of the RIPEMD160 hash function."
-}
-
-#[cfg(not(hashes_fuzz))]
-fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let data_len = e.length as u64;
-
-    let zeroes = [0; BLOCK_SIZE - 8];
-    e.input(&[0x80]);
-    if e.length % BLOCK_SIZE > zeroes.len() {
-        e.input(&zeroes);
-    }
-    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
-
-    e.input(&(8 * data_len).to_le_bytes());
-    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
-
-    Hash(e.midstate())
-}
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let mut res = e.midstate();
-    res[0] ^= (e.length & 0xff) as u8;
-    Hash(res)
 }
 
 const BLOCK_SIZE: usize = 64;
 
 /// Engine to compute RIPEMD160 hash function.
 #[derive(Clone)]
-pub struct HashEngine {
+pub struct Engine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 5],
     length: usize,
 }
 
-impl Default for HashEngine {
+impl Default for Engine {
     fn default() -> Self {
-        HashEngine {
+        Engine {
             h: [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
             length: 0,
             buffer: [0; BLOCK_SIZE],
@@ -62,11 +31,47 @@ impl Default for HashEngine {
     }
 }
 
-impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 20];
+impl HashEngine for Engine {
+    type Digest = [u8; 20];
+    type Midstate = [u8; 20];
+    const BLOCK_SIZE: usize = BLOCK_SIZE;
+
+    #[inline]
+    fn n_bytes_hashed(&self) -> usize { self.length }
+
+    crate::internal_macros::engine_input_impl!(20);
 
     #[cfg(not(hashes_fuzz))]
-    fn midstate(&self) -> [u8; 20] {
+    #[inline]
+    fn finalize(mut self) -> Self::Digest {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let data_len = self.length as u64;
+
+        let zeroes = [0; BLOCK_SIZE - 8];
+        self.input(&[0x80]);
+        if self.length % BLOCK_SIZE > zeroes.len() {
+            self.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - (self.length % BLOCK_SIZE);
+        self.input(&zeroes[..pad_length]);
+        debug_assert_eq!(self.length % BLOCK_SIZE, zeroes.len());
+
+        self.input(&(8 * data_len).to_le_bytes());
+        debug_assert_eq!(self.length % BLOCK_SIZE, 0);
+
+        self.midstate()
+    }
+
+    #[cfg(hashes_fuzz)]
+    fn finalize(self) -> Self::Digest {
+        let mut res = self.midstate();
+        res[0] ^= (self.length & 0xff) as u8;
+        res
+    }
+
+    #[cfg(not(hashes_fuzz))]
+    #[inline]
+    fn midstate(&self) -> Self::Midstate {
         let mut ret = [0; 20];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&(*val).to_le_bytes());
@@ -75,17 +80,23 @@ impl crate::HashEngine for HashEngine {
     }
 
     #[cfg(hashes_fuzz)]
-    fn midstate(&self) -> [u8; 20] {
+    fn midstate(&self) -> Self::Midstate {
         let mut ret = [0; 20];
         ret.copy_from_slice(&self.buffer[..20]);
         ret
     }
 
-    const BLOCK_SIZE: usize = 64;
+    #[inline]
+    fn from_midstate(midstate: Self::Midstate, length: usize) -> Engine {
+        assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
 
-    fn n_bytes_hashed(&self) -> usize { self.length }
+        let mut ret = [0; 5];
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate[..].chunks_exact(4)) {
+            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
+        }
 
-    engine_input_impl!();
+        Engine { buffer: [0; BLOCK_SIZE], h: ret, length }
+    }
 }
 
 #[cfg(feature = "small-hash")]
@@ -213,7 +224,7 @@ macro_rules! process_block(
     });
 );
 
-impl HashEngine {
+impl Engine {
     fn process_block(&mut self) {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 
@@ -413,7 +424,7 @@ mod tests {
     fn test() {
         use std::convert::TryFrom;
 
-        use crate::{ripemd160, Hash, HashEngine};
+        use crate::{ripemd160, HashEngine};
 
         #[derive(Clone)]
         struct Test {
@@ -493,7 +504,7 @@ mod tests {
             );
 
             // Hash through engine, checking that we can input byte by byte
-            let mut engine = ripemd160::Hash::engine();
+            let mut engine = ripemd160::Engine::new();
             for ch in test.input.as_bytes() {
                 engine.input(&[*ch]);
             }
@@ -508,7 +519,7 @@ mod tests {
     fn ripemd_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
-        use crate::{ripemd160, Hash};
+        use crate::ripemd160;
 
         #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [
@@ -529,7 +540,8 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{ripemd160, Hash, HashEngine};
+    use super::*;
+    use crate::ripemd160;
 
     #[bench]
     pub fn ripemd160_10(bh: &mut Bencher) {

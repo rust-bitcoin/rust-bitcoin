@@ -164,8 +164,7 @@ checksum = "62aca2aba2d62b4a7f5b33f3712cb1b0692779a56fb510499d5c0aa594daeaf3"
 [[package]]
 name = "hex-conservative"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1aa273bf451e37ed35ced41c71a5e2a4e29064afb104158f2514bcd71c2c986"
+source = "git+https://github.com/tcharding/hex-conservative?branch=05-16-fmt#a06b7ed236a56b881f1b60f213fea04880bde4c4"
 dependencies = [
  "arrayvec",
 ]

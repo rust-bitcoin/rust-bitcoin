@@ -1,27 +1,14 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SipHash 2-4 implementation.
-//!
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-use core::{cmp, mem, ptr};
+use core::{cmp, mem, ptr, str};
 
-use crate::{FromSliceError, Hash as _, HashEngine as _};
+use crate::HashEngine;
 
 crate::internal_macros::hash_type! {
-    64,
-    false,
+    8,
     "Output of the SipHash24 hash function."
-}
-
-#[cfg(not(hashes_fuzz))]
-fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let state = e.midstate();
-    Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
 }
 
 macro_rules! compress {
@@ -64,7 +51,7 @@ macro_rules! load_int_le {
     }};
 }
 
-/// Internal state of the [`HashEngine`].
+/// Internal state of the [`Engine`].
 #[derive(Debug, Clone)]
 pub struct State {
     // v0, v2 and v1, v3 show up in pairs in the algorithm,
@@ -79,7 +66,7 @@ pub struct State {
 
 /// Engine to compute the SipHash24 hash function.
 #[derive(Debug, Clone)]
-pub struct HashEngine {
+pub struct Engine {
     k0: u64,
     k1: u64,
     length: usize, // how many bytes we've processed
@@ -88,11 +75,11 @@ pub struct HashEngine {
     ntail: usize,  // how many bytes in tail are valid
 }
 
-impl HashEngine {
+impl Engine {
     /// Creates a new SipHash24 engine with keys.
     #[inline]
-    pub const fn with_keys(k0: u64, k1: u64) -> HashEngine {
-        HashEngine {
+    pub const fn with_keys(k0: u64, k1: u64) -> Engine {
+        Engine {
             k0,
             k1,
             length: 0,
@@ -109,7 +96,7 @@ impl HashEngine {
 
     /// Creates a new SipHash24 engine.
     #[inline]
-    pub const fn new() -> HashEngine { HashEngine::with_keys(0, 0) }
+    pub const fn new() -> Engine { Engine::with_keys(0, 0) }
 
     /// Retrieves the keys of this engine.
     pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
@@ -129,33 +116,36 @@ impl HashEngine {
     }
 }
 
-impl Default for HashEngine {
-    fn default() -> Self { HashEngine::new() }
+impl Default for Engine {
+    fn default() -> Self { Engine::new() }
 }
 
-impl crate::HashEngine for HashEngine {
-    type MidState = State;
-
-    fn midstate(&self) -> State { self.state.clone() }
-
-    const BLOCK_SIZE: usize = 8;
+impl HashEngine for Engine {
+    type Digest = [u8; 8];
+    type Midstate = State;
+    const BLOCK_SIZE: usize = 32; // Unused in siphash.
 
     #[inline]
-    fn input(&mut self, msg: &[u8]) {
-        let length = msg.len();
+    fn n_bytes_hashed(&self) -> usize { self.length }
+
+    /// Add `bytes` to the hash engine.
+    #[inline]
+    fn input(&mut self, data: &[u8]) {
+        let length = data.len();
         self.length += length;
 
         let mut needed = 0;
 
         if self.ntail != 0 {
             needed = 8 - self.ntail;
-            self.tail |= unsafe { u8to64_le(msg, 0, cmp::min(length, needed)) } << (8 * self.ntail);
+            self.tail |=
+                unsafe { u8to64_le(data, 0, cmp::min(length, needed)) } << (8 * self.ntail);
             if length < needed {
                 self.ntail += length;
                 return;
             } else {
                 self.state.v3 ^= self.tail;
-                HashEngine::c_rounds(&mut self.state);
+                Engine::c_rounds(&mut self.state);
                 self.state.v0 ^= self.tail;
                 self.ntail = 0;
             }
@@ -167,50 +157,81 @@ impl crate::HashEngine for HashEngine {
 
         let mut i = needed;
         while i < len - left {
-            let mi = unsafe { load_int_le!(msg, i, u64) };
+            let mi = unsafe { load_int_le!(data, i, u64) };
 
             self.state.v3 ^= mi;
-            HashEngine::c_rounds(&mut self.state);
+            Engine::c_rounds(&mut self.state);
             self.state.v0 ^= mi;
 
             i += 8;
         }
 
-        self.tail = unsafe { u8to64_le(msg, i, left) };
+        self.tail = unsafe { u8to64_le(data, i, left) };
         self.ntail = left;
     }
 
-    fn n_bytes_hashed(&self) -> usize { self.length }
+    #[cfg(not(hashes_fuzz))]
+    #[inline]
+    fn finalize(self) -> Self::Digest {
+        let mut state = self.state;
+
+        let b: u64 = ((self.length as u64 & 0xff) << 56) | self.tail;
+
+        state.v3 ^= b;
+        Engine::c_rounds(&mut state);
+        state.v0 ^= b;
+
+        state.v2 ^= 0xff;
+        Engine::d_rounds(&mut state);
+
+        let hash = state.v0 ^ state.v1 ^ state.v2 ^ state.v3;
+        hash.to_le_bytes()
+    }
+
+    #[cfg(hashes_fuzz)]
+    fn finalize(mut self) -> Self::Digest {
+        let state = self.midstate();
+        let hash = state.v0 ^ state.v1 ^ state.v2 ^ state.v3;
+        hash.to_le_bytes()
+    }
+
+    #[inline]
+    fn midstate(&self) -> State { self.state.clone() }
+
+    #[inline]
+    fn from_midstate(midstate: Self::Midstate, _length: usize) -> Engine {
+        Engine { state: midstate, ..Default::default() }
+    }
 }
 
 impl Hash {
     /// Hashes the given data with an engine with the provided keys.
     pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Hash {
-        let mut engine = HashEngine::with_keys(k0, k1);
+        let mut engine = Engine::with_keys(k0, k1);
         engine.input(data);
-        Hash::from_engine(engine)
+        Hash(engine.finalize())
     }
 
     /// Hashes the given data directly to u64 with an engine with the provided keys.
     pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
-        let mut engine = HashEngine::with_keys(k0, k1);
+        let mut engine = Engine::with_keys(k0, k1);
         engine.input(data);
         Hash::from_engine_to_u64(engine)
     }
 
     /// Produces a hash as `u64` from the current state of a given engine.
     #[inline]
-    pub fn from_engine_to_u64(e: HashEngine) -> u64 {
+    pub fn from_engine_to_u64(e: Engine) -> u64 {
         let mut state = e.state;
 
         let b: u64 = ((e.length as u64 & 0xff) << 56) | e.tail;
 
         state.v3 ^= b;
-        HashEngine::c_rounds(&mut state);
+        Engine::c_rounds(&mut state);
         state.v0 ^= b;
 
         state.v2 ^= 0xff;
-        HashEngine::d_rounds(&mut state);
+        Engine::d_rounds(&mut state);
 
         state.v0 ^ state.v1 ^ state.v2 ^ state.v3
     }
@@ -323,7 +344,7 @@ mod tests {
         let k0 = 0x_07_06_05_04_03_02_01_00;
         let k1 = 0x_0f_0e_0d_0c_0b_0a_09_08;
         let mut vin = [0u8; 64];
-        let mut state_inc = HashEngine::with_keys(k0, k1);
+        let mut state_inc = Engine::with_keys(k0, k1);
 
         for i in 0..64 {
             vin[i] = i as u8;
@@ -342,7 +363,8 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{siphash24, Hash, HashEngine};
+    use super::*;
+    use crate::siphash24;
 
     #[bench]
     pub fn siphash24_1ki(bh: &mut Bencher) {

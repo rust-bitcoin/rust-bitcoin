@@ -1,68 +1,34 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! SHA256 implementation.
-//!
+//! SHA-256 implementation.
 
 #[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
+use core::str;
 
-use crate::{sha256d, FromSliceError, HashEngine as _};
+use crate::{internal_macros, FromSliceError, HashEngine};
 
-crate::internal_macros::hash_type! {
-    256,
-    false,
-    "Output of the SHA256 hash function."
+internal_macros::hash_type! {
+    32,
+    "Output of the SHA-256 hash function."
 }
 
-#[cfg(not(hashes_fuzz))]
-fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let data_len = e.length as u64;
+/// Length of the SHA-256 hash's internal block size, in bytes.
+pub const BLOCK_SIZE: usize = 64;
 
-    let zeroes = [0; BLOCK_SIZE - 8];
-    e.input(&[0x80]);
-    if e.length % BLOCK_SIZE > zeroes.len() {
-        e.input(&zeroes);
-    }
-    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
-
-    e.input(&(8 * data_len).to_be_bytes());
-    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
-
-    Hash(e.midstate().to_byte_array())
-}
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let mut hash = e.midstate().to_byte_array();
-    if hash == [0; 32] {
-        // Assume sha256 is secure and never generate 0-hashes (which represent invalid
-        // secp256k1 secret keys, causing downstream application breakage).
-        hash[0] = 1;
-    }
-    Hash(hash)
-}
-
-const BLOCK_SIZE: usize = 64;
-
-/// Engine to compute SHA256 hash function.
+/// Engine to compute SHA-256 hash function.
 #[derive(Clone)]
-pub struct HashEngine {
+pub struct Engine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 8],
     length: usize,
 }
 
-impl Default for HashEngine {
+impl Default for Engine {
     fn default() -> Self {
-        HashEngine {
+        Engine {
             h: [
                 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
                 0x5be0cd19,
@@ -73,10 +39,50 @@ impl Default for HashEngine {
     }
 }
 
-impl crate::HashEngine for HashEngine {
-    type MidState = Midstate;
+impl HashEngine for Engine {
+    type Digest = [u8; 32];
+    type Midstate = Midstate;
+    const BLOCK_SIZE: usize = BLOCK_SIZE;
+
+    #[inline]
+    fn n_bytes_hashed(&self) -> usize { self.length }
+
+    internal_macros::engine_input_impl!(32);
 
     #[cfg(not(hashes_fuzz))]
+    #[inline]
+    fn finalize(mut self) -> Self::Digest {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let data_len = self.length as u64;
+
+        let zeroes = [0; BLOCK_SIZE - 8];
+        self.input(&[0x80]);
+        if self.length % BLOCK_SIZE > zeroes.len() {
+            self.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - (self.length % BLOCK_SIZE);
+        self.input(&zeroes[..pad_length]);
+        debug_assert_eq!(self.length % BLOCK_SIZE, zeroes.len());
+
+        self.input(&(8 * data_len).to_be_bytes());
+        debug_assert_eq!(self.length % BLOCK_SIZE, 0);
+
+        self.midstate().to_byte_array()
+    }
+
+    #[cfg(hashes_fuzz)]
+    fn finalize(mut self) -> Self::Digest {
+        let mut hash = e.midstate().to_byte_array();
+        if hash == [0; 32] {
+            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
+            // secp256k1 secret keys, causing downstream application breakage).
+            hash[0] = 1;
+        }
+        hash
+    }
+
+    #[cfg(not(hashes_fuzz))]
+    #[inline]
     fn midstate(&self) -> Midstate {
         let mut ret = [0; 32];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
@@ -92,56 +98,35 @@ impl crate::HashEngine for HashEngine {
         Midstate(ret)
     }
 
-    const BLOCK_SIZE: usize = 64;
+    #[inline]
+    fn from_midstate(midstate: Midstate, length: usize) -> Engine {
+        assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
 
-    fn n_bytes_hashed(&self) -> usize { self.length }
+        let mut ret = [0; 8];
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate[..].chunks_exact(4)) {
+            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
+        }
 
-    engine_input_impl!();
+        Engine { buffer: [0; BLOCK_SIZE], h: ret, length }
+    }
 }
 
 impl Hash {
-    /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
-    pub fn hash_again(&self) -> sha256d::Hash {
-        crate::Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0)
-    }
-
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).0) }
 }
 
-/// Output of the SHA256 hash function.
+/// Output of the SHA-256 hash function.
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 pub struct Midstate(pub [u8; 32]);
 
-crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
-serde_impl!(Midstate, 32);
-borrow_slice_impl!(Midstate);
-
-impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-impl core::str::FromStr for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
-}
+crate::impl_bytelike_traits!(Midstate, 32, false);
 
 impl Midstate {
     /// Length of the midstate, in bytes.
     const LEN: usize = 32;
-
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = true;
-
-    /// Construct a new [`Midstate`] from the inner value.
-    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
     /// Copies a byte slice into the [`Midstate`] object.
     pub fn from_slice(sl: &[u8]) -> Result<Midstate, FromSliceError> {
@@ -154,15 +139,23 @@ impl Midstate {
         }
     }
 
+    /// Construct a new [`Midstate`] from the inner value.
+    #[inline]
+    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
+
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
+    #[inline]
     pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    #[inline]
+    pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
 
     /// Creates midstate for tagged hashes.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     ///
-    /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in
-    /// [`sha256t`](super::sha256t). It's provided for use with [`sha256t`](crate::sha256t).
+    /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in Bitcoin tagged hashes.
     pub const fn hash_tag(tag: &[u8]) -> Self {
         let hash = Hash::const_hash(tag);
         let mut buf = [0u8; 64];
@@ -179,9 +172,7 @@ impl hex::FromHex for Midstate {
     type Error = hex::HexToArrayError;
 
     fn from_hex(s: &str) -> Result<Self, Self::Error> {
-        // DISPLAY_BACKWARD is true
-        let mut bytes = <[u8; 32]>::from_hex(s)?;
-        bytes.reverse();
+        let bytes = <[u8; 32]>::from_hex(s)?;
         Ok(Midstate(bytes))
     }
 }
@@ -424,13 +415,13 @@ impl Midstate {
     }
 }
 
-impl HashEngine {
-    /// Create a new [`HashEngine`] from a [`Midstate`].
+impl Engine {
+    /// Create a new [`Engine`] from a [`Midstate`].
     ///
     /// # Panics
     ///
     /// If `length` is not a multiple of the block size.
-    pub fn from_midstate(midstate: Midstate, length: usize) -> HashEngine {
+    pub fn from_midstate(midstate: Midstate, length: usize) -> Engine {
         assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
 
         let mut ret = [0; 8];
@@ -438,7 +429,7 @@ impl HashEngine {
             *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
         }
 
-        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length }
+        Engine { buffer: [0; BLOCK_SIZE], h: ret, length }
     }
 
     fn process_block(&mut self) {
@@ -816,7 +807,7 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{sha256, Hash as _, HashEngine};
+    use crate::sha256;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -871,7 +862,7 @@ mod tests {
             assert_eq!(&hash.to_string(), &test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
-            let mut engine = sha256::Hash::engine();
+            let mut engine = sha256::Engine::new();
             for ch in test.input.as_bytes() {
                 engine.input(&[*ch]);
             }
@@ -893,7 +884,7 @@ mod tests {
     #[rustfmt::skip]
     fn midstate() {
         // Test vector obtained by doing an asset issuance on Elements
-        let mut engine = sha256::Hash::engine();
+        let mut engine = sha256::Engine::new();
         // sha256dhash of outpoint
         // 73828cbc65fd68ab78dc86992b76ae50ae2bf8ceedbe8de0483172f0886219f7:0
         engine.input(&[
@@ -919,7 +910,7 @@ mod tests {
     #[test]
     fn engine_with_state() {
         let mut engine = sha256::Hash::engine();
-        let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate(), 0);
+        let midstate_engine = sha256::Engine::from_midstate(engine.midstate(), 0);
         // Fresh engine and engine initialized with fresh state should have same state
         assert_eq!(engine.h, midstate_engine.h);
 
@@ -935,7 +926,7 @@ mod tests {
         for data in data_vec {
             let mut engine = engine.clone();
             let mut midstate_engine =
-                sha256::HashEngine::from_midstate(engine.midstate(), engine.length);
+                sha256::Engine::from_midstate(engine.midstate(), engine.length);
             assert_eq!(engine.h, midstate_engine.h);
             assert_eq!(engine.length, midstate_engine.length);
             engine.input(&data);
@@ -964,7 +955,7 @@ mod tests {
             0x8f, 0xf1, 0xf7, 0xa9, 0xd5, 0x69, 0x09, 0x59,
         ];
         let midstate_engine =
-            sha256::HashEngine::from_midstate(sha256::Midstate::from_byte_array(MIDSTATE), 64);
+            sha256::Engine::from_midstate(sha256::Midstate::from_byte_array(MIDSTATE), 64);
         let hash = sha256::Hash::from_engine(midstate_engine);
         assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
     }
@@ -1027,14 +1018,38 @@ mod tests {
 
     #[cfg(target_arch = "wasm32")]
     mod wasm_tests {
+        extern crate wasm_bindgen_test;
+        use self::wasm_bindgen_test::*;
         use super::*;
-        #[test]
-        #[wasm_bindgen_test::wasm_bindgen_test]
+        #[wasm_bindgen_test]
         fn sha256_tests() {
             test();
             midstate();
             engine_with_state();
         }
+    }
+
+    #[test]
+    fn hash_as_ref_array() {
+        let hash = sha256::Hash::all_zeros();
+        let r = AsRef::<[u8; 32]>::as_ref(&hash);
+        assert_eq!(r, hash.as_byte_array());
+    }
+
+    #[test]
+    fn hash_as_ref_slice() {
+        let hash = sha256::Hash::all_zeros();
+        let r = AsRef::<[u8]>::as_ref(&hash);
+        assert_eq!(r, hash.as_byte_array());
+    }
+
+    #[test]
+    fn hash_borrow() {
+        use core::borrow::Borrow;
+
+        let hash = sha256::Hash::all_zeros();
+        let borrowed: &[u8] = hash.borrow();
+        assert_eq!(borrowed, hash.as_byte_array());
     }
 }
 
@@ -1042,7 +1057,8 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{sha256, Hash, HashEngine};
+    use super::*;
+    use crate::sha256;
 
     #[bench]
     pub fn sha256_10(bh: &mut Bencher) {
