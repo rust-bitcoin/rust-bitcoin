@@ -155,6 +155,8 @@ mod tests {
     use super::{Reject, RejectReason, VersionMessage};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn version_message_test() {

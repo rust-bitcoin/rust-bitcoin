@@ -21,6 +21,7 @@ alloc = ["hex/alloc"]
 io = ["bitcoin-io"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
+schemars = ["alloc", "actual-schemars"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -30,8 +31,10 @@ rustdoc-args = ["--cfg", "docsrs"]
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 
 bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
-schemars = { version = "0.8.3", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
+
+# Do not enable this feature, use "schemars" instead (enables "alloc").
+actual-schemars = { package = "schemars", version = "0.8.3", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"

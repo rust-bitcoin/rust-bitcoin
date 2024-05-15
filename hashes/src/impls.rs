@@ -64,10 +64,12 @@ impl_write!(
     T: crate::Hash
 );
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use bitcoin_io::Write;
 
+    use crate::alloc::format;
     use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, Hash};
 
     macro_rules! write_test {

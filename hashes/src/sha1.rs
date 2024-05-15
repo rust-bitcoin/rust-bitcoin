@@ -127,6 +127,10 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
@@ -195,8 +199,8 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha1_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

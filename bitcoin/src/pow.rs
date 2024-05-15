@@ -1117,6 +1117,8 @@ impl kani::Arbitrary for U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     impl<T: Into<u128>> From<T> for Target {
         fn from(x: T) -> Self { Self(U256::from(x)) }
@@ -1668,8 +1670,8 @@ mod tests {
         assert_eq!(got, val);
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn u256_serde() {
         let check = |uint, hex| {
             let json = format!("\"{}\"", hex);
@@ -1894,7 +1896,7 @@ mod tests {
 
     #[test]
     fn target_is_met_by_for_target_equals_hash() {
-        use std::str::FromStr;
+        use core::str::FromStr;
 
         use hashes::Hash;
 
@@ -1952,8 +1954,8 @@ mod tests {
         assert_eq!(back, target)
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn work_log2() {
         // Compare work log2 to historical Bitcoin Core values found in Core logs.
         let tests: Vec<(u128, f64)> = vec![

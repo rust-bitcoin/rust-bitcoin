@@ -9,6 +9,7 @@ use io::{BufRead, Write};
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
+use crate::prelude::*;
 
 /// `filterload` message sets the current bloom filter
 #[derive(Clone, PartialEq, Eq, Debug)]

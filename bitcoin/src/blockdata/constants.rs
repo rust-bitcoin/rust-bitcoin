@@ -200,6 +200,8 @@ mod test {
     use super::*;
     use crate::consensus::encode::serialize;
     use crate::consensus::params;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

@@ -1,7 +1,7 @@
-#![cfg(not(feature = "rand-std"))]
+#![cfg(all(not(feature = "rand-std"), feature = "std"))]
 
+use core::str::FromStr;
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;

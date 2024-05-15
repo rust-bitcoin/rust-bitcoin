@@ -20,10 +20,10 @@
 //  let mut file = File::create("/tmp/script_bincode").unwrap();
 //  file.write_all(&got).unwrap();
 
-#![cfg(feature = "serde")]
+#![cfg(all(feature = "serde", feature = "std"))]
 
+use core::str::FromStr;
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};

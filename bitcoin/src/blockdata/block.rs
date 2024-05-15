@@ -670,6 +670,8 @@ mod benches {
 
     use super::Block;
     use crate::consensus::{deserialize, Decodable, Encodable};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[bench]
     pub fn bench_stream_reader(bh: &mut Bencher) {

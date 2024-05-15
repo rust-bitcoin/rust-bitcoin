@@ -444,6 +444,8 @@ impl HashEngine {
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
+            use std::is_x86_feature_detected;
+
             if is_x86_feature_detected!("sse4.1")
                 && is_x86_feature_detected!("sha")
                 && is_x86_feature_detected!("sse2")
@@ -816,6 +818,9 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
     use crate::{sha256, Hash as _, HashEngine};
 
     #[test]
@@ -882,6 +887,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn fmt_roundtrips() {
         let hash = sha256::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
@@ -917,6 +923,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn engine_with_state() {
         let mut engine = sha256::Hash::engine();
         let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate(), 0);
@@ -970,6 +977,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn const_hash() {
         assert_eq!(Hash::hash(&[]), Hash::const_hash(&[]));
 
@@ -997,6 +1005,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn midstate_fmt_roundtrip() {
         let midstate = Midstate::hash_tag(b"ArbitraryTag");
         let hex = format!("{}", midstate);
@@ -1004,8 +1013,8 @@ mod tests {
         assert_eq!(rinsed, midstate)
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha256_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
