@@ -4,7 +4,6 @@
 //!
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
-//!
 
 use core::cmp::Ordering;
 use core::fmt;

@@ -3,7 +3,6 @@
 //! Bitcoin Connection Bloom filtering network messages.
 //!
 //! This module describes BIP37 Connection Bloom filtering network messages.
-//!
 
 use io::{BufRead, Write};
 
