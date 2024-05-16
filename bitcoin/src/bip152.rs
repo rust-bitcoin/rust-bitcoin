@@ -468,7 +468,7 @@ mod test {
             {
                 // test serialization
                 let raw: Vec<u8> = serialize(&BlockTransactionsRequest {
-                    block_hash: Hash::all_zeros(),
+                    block_hash: BlockHash::all_zeros(),
                     indexes: testcase.1,
                 });
                 let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
@@ -491,7 +491,7 @@ mod test {
     #[should_panic] // 'attempt to add with overflow' in consensus_encode()
     fn test_getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
-            block_hash: Hash::all_zeros(),
+            block_hash: BlockHash::all_zeros(),
             indexes: vec![u64::MAX],
         });
     }
