@@ -4,7 +4,6 @@
 //!
 //! This module defines network messages which describe peers and their
 //! capabilities.
-//!
 
 use hashes::sha256d;
 use io::{BufRead, Write};

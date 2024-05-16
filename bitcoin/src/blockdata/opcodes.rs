@@ -4,7 +4,6 @@
 //!
 //! Bitcoin's script uses a stack-based assembly language. This module defines
 //! all of the opcodes for that language.
-//!
 
 #![allow(non_camel_case_types)]
 

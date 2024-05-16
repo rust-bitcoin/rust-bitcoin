@@ -4,7 +4,6 @@
 //!
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.
-//!
 
 use hashes::{sha256d, Hash as _};
 use io::{BufRead, Write};

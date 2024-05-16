@@ -4,7 +4,6 @@
 //!
 //! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
-//!
 
 use core::cmp;
 use core::fmt::{self, LowerHex, UpperHex};

@@ -4,7 +4,6 @@
 //!
 //! This module defines the `NetworkMessage` and `RawNetworkMessage` types that
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
-//!
 
 use core::{fmt, iter};
 

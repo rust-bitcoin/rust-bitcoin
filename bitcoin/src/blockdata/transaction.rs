@@ -9,7 +9,6 @@
 //! signatures ensures that coins cannot be spent by unauthorized parties.
 //!
 //! This module provides the structures and functions needed to support transactions.
-//!
 
 use core::{cmp, fmt, str};
 
