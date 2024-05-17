@@ -9,6 +9,7 @@
 
 use core::{fmt, ops, str};
 
+#[cfg(feature = "hex")]
 use hex::DisplayHex;
 
 use crate::{sha256, sha512, FromSliceError, HashEngine};
@@ -119,6 +120,7 @@ impl<const N: usize> schemars::JsonSchema for Hash<N> {
     }
 }
 
+#[cfg(feature = "hex")]
 impl<const N: usize> str::FromStr for Hash<N> {
     type Err = hex::HexToArrayError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -129,14 +131,17 @@ impl<const N: usize> str::FromStr for Hash<N> {
     }
 }
 
+#[cfg(feature = "hex")]
 impl<const N: usize> fmt::Display for Hash<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
+#[cfg(feature = "hex")]
 impl<const N: usize> fmt::Debug for Hash<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
 }
 
+#[cfg(feature = "hex")]
 impl<const N: usize> fmt::LowerHex for Hash<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // FIXME: Can't use hex_fmt_exact because of N.
@@ -144,16 +149,19 @@ impl<const N: usize> fmt::LowerHex for Hash<N> {
     }
 }
 
+#[cfg(feature = "hex")]
 impl<const N: usize> fmt::UpperHex for Hash<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // FIXME: Can't use hex_fmt_exact because of N.
         fmt::UpperHex::fmt(&self.0.as_hex(), f)
     }
 }
+
 impl<const N: usize> ops::Index<usize> for Hash<N> {
     type Output = u8;
     fn index(&self, index: usize) -> &u8 { &self.0[index] }
 }
+
 
 impl<const N: usize> ops::Index<ops::Range<usize>> for Hash<N> {
     type Output = [u8];

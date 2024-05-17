@@ -84,6 +84,7 @@ extern crate serde_test;
 extern crate test;
 
 /// Re-export the `hex-conservative` crate.
+#[cfg(feature = "hex")]
 pub extern crate hex;
 
 #[doc(hidden)]
@@ -271,6 +272,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn fmt_roundtrip_sha256d_through_newtype() {
         let h = sha256d::Hash::hash(&[]);
         let h2: TestNewtype = h.to_string().parse().unwrap();
@@ -278,6 +280,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn fmt_roundtrip_newtype() {
         let orig = TestNewtype::hash(&[]);
         let hex = format!("{}", orig);

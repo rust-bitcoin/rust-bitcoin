@@ -360,7 +360,7 @@ mod tests {
     ];
 
     // The digest created by sha256 hashing `&[0]` starting with `TEST_MIDSTATE`.
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     const HASH_ZERO: &str = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
 
     // We provide a mechanism for manually creating tagged hashes.
@@ -376,7 +376,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn manually_created_sha256t_hash_type() {
         assert_eq!(Hash::<TestTag>::hash(&[0]).to_string(), HASH_ZERO);
     }
@@ -391,7 +391,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn hash_engine() {
         let mut engine = Engine::<NewTag>::new();
         engine.input(&[0]);
@@ -403,7 +403,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn hash_type() {
         let got = Hash::<NewTag>::hash(&[0]).to_string();
         assert_eq!(got, HASH_ZERO);

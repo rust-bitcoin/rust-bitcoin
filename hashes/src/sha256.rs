@@ -167,6 +167,7 @@ impl Midstate {
     }
 }
 
+#[cfg(feature = "hex")]
 impl hex::FromHex for Midstate {
     type Error = hex::HexToArrayError;
 
@@ -809,7 +810,7 @@ mod tests {
     use crate::sha256;
 
     #[test]
-    #[cfg(feature = "alloc")]
+    #[cfg(all(feature = "alloc", feature = "hex"))]
     fn test() {
         #[derive(Clone)]
         struct Test {

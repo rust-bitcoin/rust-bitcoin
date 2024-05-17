@@ -402,69 +402,74 @@ mod test {
         assert_eq!(borrowed, hash.as_byte_array());
     }
 
-    #[test]
-    fn display() {
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{}", TestHash::all_zeros());
-        assert_eq!(got, want)
-    }
+    #[cfg(feature = "alloc")]
+    mod alloc {
+        use super::*;
 
-    #[test]
-    fn display_alternate() {
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#}", TestHash::all_zeros());
-        assert_eq!(got, want)
-    }
+        #[test]
+        fn display() {
+            let want = "0000000000000000000000000000000000000000000000000000000000000000";
+            let got = format!("{}", TestHash::all_zeros());
+            assert_eq!(got, want)
+        }
 
-    #[test]
-    fn lower_hex() {
-        let want = "0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:x}", TestHash::all_zeros());
-        assert_eq!(got, want)
-    }
+        #[test]
+        fn display_alternate() {
+            let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            let got = format!("{:#}", TestHash::all_zeros());
+            assert_eq!(got, want)
+        }
 
-    #[test]
-    fn lower_hex_alternate() {
-        let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let got = format!("{:#x}", TestHash::all_zeros());
-        assert_eq!(got, want)
-    }
+        #[test]
+        fn lower_hex() {
+            let want = "0000000000000000000000000000000000000000000000000000000000000000";
+            let got = format!("{:x}", TestHash::all_zeros());
+            assert_eq!(got, want)
+        }
 
-    hash_newtype! {
-        /// Test hash.
-        #[hash_newtype(backward)]
-        struct TestHashBackward(sha256d);
-    }
+        #[test]
+        fn lower_hex_alternate() {
+            let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            let got = format!("{:#x}", TestHash::all_zeros());
+            assert_eq!(got, want)
+        }
 
-    #[test]
-    fn display_backward() {
-        let want = "0x9a538906e6466ebd2617d321f71bc94e56056ce213d366773699e28158e00614";
-        let got = format!("{:#x}", TestHashBackward::hash(&[0]));
-        assert_eq!(got, want)
-    }
+        hash_newtype! {
+            /// Test hash.
+            #[hash_newtype(backward)]
+            struct TestHashBackward(sha256d);
+        }
 
-    hash_newtype! {
-        /// Test hash.
-        #[hash_newtype(forward)]
-        struct TestHashForward(sha256d);
-    }
+        #[test]
+        fn display_backward() {
+            let want = "0x9a538906e6466ebd2617d321f71bc94e56056ce213d366773699e28158e00614";
+            let got = format!("{:#x}", TestHashBackward::hash(&[0]));
+            assert_eq!(got, want)
+        }
 
-    #[test]
-    fn display_forward() {
-        let want = "0x1406e05881e299367766d313e26c05564ec91bf721d31726bd6e46e60689539a";
-        let got = format!("{:#x}", TestHashForward::hash(&[0]));
-        assert_eq!(got, want)
-    }
+        hash_newtype! {
+            /// Test hash.
+            #[hash_newtype(forward)]
+            struct TestHashForward(sha256d);
+        }
 
-    hash_newtype! {
-        /// Test a hash from this crate.
-        struct TestHash160(hash160);
-    }
+        #[test]
+        fn display_forward() {
+            let want = "0x1406e05881e299367766d313e26c05564ec91bf721d31726bd6e46e60689539a";
+            let got = format!("{:#x}", TestHashForward::hash(&[0]));
+            assert_eq!(got, want)
+        }
 
-    #[test]
-    fn wrap_hash160() {
-        let want = "0x9f7fd096d37ed2c0e3f7f0cfc924beef4ffceb68";
-        let got = format!("{:#x}", TestHash160::hash(&[0]));
-        assert_eq!(got, want)
+        hash_newtype! {
+            /// Test a hash from this crate.
+            struct TestHash160(hash160);
+        }
+
+        #[test]
+        fn wrap_hash160() {
+            let want = "0x9f7fd096d37ed2c0e3f7f0cfc924beef4ffceb68";
+            let got = format!("{:#x}", TestHash160::hash(&[0]));
+            assert_eq!(got, want)
+        }
     }
 }
