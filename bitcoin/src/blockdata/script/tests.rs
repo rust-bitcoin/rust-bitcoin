@@ -2,7 +2,6 @@
 
 use core::str::FromStr;
 
-use hashes::Hash;
 use hex_lit::hex;
 
 use super::*;

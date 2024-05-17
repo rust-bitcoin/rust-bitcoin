@@ -5,7 +5,6 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
-use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
 use super::PushBytes;

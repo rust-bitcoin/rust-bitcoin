@@ -5,7 +5,7 @@
 //! This module provides signature related functions including secp256k1 signature recovery when
 //! library is used with the `secp-recovery` feature.
 
-use hashes::{sha256d, Hash, HashEngine};
+use hashes::{sha256d, HashEngine};
 
 use crate::consensus::{encode, Encodable};
 
@@ -21,7 +21,7 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 mod message_signing {
     use core::fmt;
 
-    use hashes::{sha256d, Hash};
+    use hashes::sha256d;
     use internals::write_err;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 

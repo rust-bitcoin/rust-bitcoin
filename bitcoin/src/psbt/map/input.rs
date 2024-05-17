@@ -300,36 +300,24 @@ impl Input {
                 }
             }
             PSBT_IN_RIPEMD160 => {
-                psbt_insert_hash_pair(
-                    &mut self.ripemd160_preimages,
-                    raw_key,
-                    raw_value,
-                    error::PsbtHash::Ripemd,
-                )?;
+                psbt_insert_hash_pair! {
+                    &mut self.ripemd160_preimages <= raw_key|raw_value|ripemd160::Hash|error::PsbtHash::Ripemd
+                }
             }
             PSBT_IN_SHA256 => {
-                psbt_insert_hash_pair(
-                    &mut self.sha256_preimages,
-                    raw_key,
-                    raw_value,
-                    error::PsbtHash::Sha256,
-                )?;
+                psbt_insert_hash_pair! {
+                    &mut self.sha256_preimages <= raw_key|raw_value|sha256::Hash|error::PsbtHash::Sha256
+                }
             }
             PSBT_IN_HASH160 => {
-                psbt_insert_hash_pair(
-                    &mut self.hash160_preimages,
-                    raw_key,
-                    raw_value,
-                    error::PsbtHash::Hash160,
-                )?;
+                psbt_insert_hash_pair! {
+                    &mut self.hash160_preimages <= raw_key|raw_value|hash160::Hash|error::PsbtHash::Hash160
+                }
             }
             PSBT_IN_HASH256 => {
-                psbt_insert_hash_pair(
-                    &mut self.hash256_preimages,
-                    raw_key,
-                    raw_value,
-                    error::PsbtHash::Hash256,
-                )?;
+                psbt_insert_hash_pair! {
+                    &mut self.hash256_preimages <= raw_key|raw_value|sha256d::Hash|error::PsbtHash::Hash256
+                }
             }
             PSBT_IN_TAP_KEY_SIG => {
                 impl_psbt_insert_pair! {
@@ -504,36 +492,6 @@ impl Map for Input {
 }
 
 impl_psbtmap_ser_de_serialize!(Input);
-
-fn psbt_insert_hash_pair<H>(
-    map: &mut BTreeMap<H, Vec<u8>>,
-    raw_key: raw::Key,
-    raw_value: Vec<u8>,
-    hash_type: error::PsbtHash,
-) -> Result<(), Error>
-where
-    H: hashes::Hash + Deserialize,
-{
-    if raw_key.key.is_empty() {
-        return Err(psbt::Error::InvalidKey(raw_key));
-    }
-    let key_val: H = Deserialize::deserialize(&raw_key.key)?;
-    match map.entry(key_val) {
-        btree_map::Entry::Vacant(empty_key) => {
-            let val: Vec<u8> = Deserialize::deserialize(&raw_value)?;
-            if <H as hashes::Hash>::hash(&val) != key_val {
-                return Err(psbt::Error::InvalidPreimageHashPair {
-                    preimage: val.into_boxed_slice(),
-                    hash: Box::from(key_val.as_ref()),
-                    hash_type,
-                });
-            }
-            empty_key.insert(val);
-            Ok(())
-        }
-        btree_map::Entry::Occupied(_) => Err(psbt::Error::DuplicateKey(raw_key)),
-    }
-}
 
 #[cfg(test)]
 mod test {

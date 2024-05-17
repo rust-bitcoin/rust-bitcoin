@@ -8,7 +8,7 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, siphash24, Hash};
+use hashes::{sha256, siphash24};
 use internals::impl_array_newtype;
 use io::{BufRead, Write};
 

@@ -6,7 +6,6 @@
 //!
 //! ```
 //! # use bitcoin::{merkle_tree, Txid};
-//! # use bitcoin::hashes::Hash;
 //! # let tx1 = Txid::all_zeros();  // Dummy hash values.
 //! # let tx2 = Txid::all_zeros();
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
@@ -18,15 +17,32 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-use hashes::Hash;
-use io::Write;
+use hashes::{sha256d, HashEngine};
 
 use crate::consensus::encode::Encodable;
 use crate::prelude::*;
+use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
+
+/// Trait used for types that can be hashed into a merkle tree.
+pub trait Hash {
+    /// Constructs a new [`sha256d`] hash engine.
+    fn engine() -> sha256d::Engine { sha256d::Engine::new() }
+
+    /// Produces a hash froam the current state of a given engine.
+    fn from_engine(e: sha256d::Engine) -> Self;
+}
+
+impl Hash for Txid {
+    fn from_engine(e: sha256d::Engine) -> Self { Self::from_engine(e) }
+}
+
+impl Hash for Wtxid {
+    fn from_engine(e: sha256d::Engine) -> Self { Self::from_engine(e) }
+}
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
@@ -40,8 +56,7 @@ pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: Hash + Encodable + Copy,
 {
     match hashes.len() {
         0 => None,
@@ -58,8 +73,7 @@ where
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: Hash + Encodable + Copy,
     I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
@@ -90,8 +104,7 @@ where
 // `hashes` must contain at least one hash.
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
 where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
+    T: Hash + Encodable + Copy,
 {
     if hashes.len() == 1 {
         return hashes[0];
@@ -112,8 +125,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use hashes::sha256d;
-
     use super::*;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
@@ -125,9 +136,9 @@ mod tests {
         let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
         assert!(block.check_merkle_root()); // Sanity check.
 
-        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
+        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid());
 
-        let mut hashes_array = [sha256d::Hash::all_zeros(); 15];
+        let mut hashes_array = [Txid::all_zeros(); 15];
         for (i, hash) in hashes_iter.clone().enumerate() {
             hashes_array[i] = hash;
         }

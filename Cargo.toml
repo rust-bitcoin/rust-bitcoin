@@ -19,3 +19,7 @@ path = "io"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.hex-conservative]
+git = "https://github.com/tcharding/hex-conservative"
+branch = "05-16-fmt"
