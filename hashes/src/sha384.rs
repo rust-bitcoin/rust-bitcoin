@@ -2,8 +2,6 @@
 
 //! SHA-384 implementation.
 
-use core::str;
-
 use crate::{sha512, HashEngine};
 
 crate::internal_macros::hash_type! {

@@ -2,8 +2,6 @@
 
 //! SHA-512 implementation.
 
-use core::str;
-
 use crate::HashEngine;
 
 crate::internal_macros::hash_type! {

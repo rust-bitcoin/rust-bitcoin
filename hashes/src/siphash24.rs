@@ -2,7 +2,7 @@
 
 //! SipHash 2-4 implementation.
 
-use core::{cmp, mem, ptr, str};
+use core::{cmp, mem, ptr};
 
 use crate::HashEngine;
 
