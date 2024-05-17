@@ -268,14 +268,17 @@ mod tests {
         let h1 = TestNewtype::hash(&[]);
         let h2: TestNewtype2 = h1.to_raw_hash().into();
         assert_eq!(&h1[..], &h2[..]);
+    }
 
+    #[test]
+    fn fmt_roundtrip_sha256d_through_newtype() {
         let h = sha256d::Hash::hash(&[]);
         let h2: TestNewtype = h.to_string().parse().unwrap();
         assert_eq!(h2.to_raw_hash(), h);
     }
 
     #[test]
-    fn newtype_fmt_roundtrip() {
+    fn fmt_roundtrip_newtype() {
         let orig = TestNewtype::hash(&[]);
         let hex = format!("{}", orig);
         let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
