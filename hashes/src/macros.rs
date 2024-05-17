@@ -380,6 +380,29 @@ mod test {
     }
 
     #[test]
+    fn inner_hash_as_ref_array() {
+        let hash = TestHash::all_zeros();
+        let r = AsRef::<[u8; 32]>::as_ref(&hash);
+        assert_eq!(r, hash.as_byte_array());
+    }
+
+    #[test]
+    fn inner_hash_as_ref_slice() {
+        let hash = TestHash::all_zeros();
+        let r = AsRef::<[u8]>::as_ref(&hash);
+        assert_eq!(r, hash.as_byte_array());
+    }
+
+    #[test]
+    fn hash_borrow() {
+        use core::borrow::Borrow;
+
+        let hash = sha256::Hash::hash(&[3, 50]);
+        let borrowed: &[u8] = hash.borrow();
+        assert_eq!(borrowed, hash.as_byte_array());
+    }
+
+    #[test]
     fn display() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{}", TestHash::all_zeros());
@@ -405,29 +428,6 @@ mod test {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());
         assert_eq!(got, want)
-    }
-
-    #[test]
-    fn inner_hash_as_ref_array() {
-        let hash = TestHash::all_zeros();
-        let r = AsRef::<[u8; 32]>::as_ref(&hash);
-        assert_eq!(r, hash.as_byte_array());
-    }
-
-    #[test]
-    fn inner_hash_as_ref_slice() {
-        let hash = TestHash::all_zeros();
-        let r = AsRef::<[u8]>::as_ref(&hash);
-        assert_eq!(r, hash.as_byte_array());
-    }
-
-    #[test]
-    fn hash_borrow() {
-        use core::borrow::Borrow;
-
-        let hash = sha256::Hash::hash(&[3, 50]);
-        let borrowed: &[u8] = hash.borrow();
-        assert_eq!(borrowed, hash.as_byte_array());
     }
 
     hash_newtype! {
