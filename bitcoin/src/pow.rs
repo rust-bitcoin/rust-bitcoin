@@ -1795,6 +1795,7 @@ mod tests {
         use hashes::Hash;
         let params = Params::new(crate::Network::Signet);
         let epoch_start = genesis_block(&params).header;
+
         // Block 2015, the only information used are `bits` and `time`
         let current = Header {
             version: Version::ONE,
@@ -1815,6 +1816,7 @@ mod tests {
         use hashes::Hash;
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+
         // Block 2016, the only information used is `time`
         let epoch_start = Header {
             version: Version::ONE,
@@ -1824,6 +1826,7 @@ mod tests {
             bits: starting_bits,
             nonce: 0
         };
+
         // Block 4031, the only information used are `bits` and `time`
         let current = Header {
             version: Version::ONE,
