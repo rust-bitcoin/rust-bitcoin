@@ -14,9 +14,9 @@ jobs:
     outputs:
       nightly_version: ${{ steps.read_toolchain.outputs.nightly_version }}
     steps:
-      - name: Checkout Crate
+      - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: Read nightly version
+      - name: "Read nightly version"
         id: read_toolchain
         run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
 
@@ -115,7 +115,7 @@ jobs:
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: Install clippy
+      - name: "Install clippy"
         run: rustup component add clippy
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
@@ -271,7 +271,7 @@ jobs:
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
-      - name: Install src
+      - name: "Install rust-src"
         run: rustup component add rust-src
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
