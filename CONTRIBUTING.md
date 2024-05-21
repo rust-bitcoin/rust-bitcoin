@@ -319,8 +319,9 @@ More specifically an error should
 - have private fields unless we are very confident they won't change.
 - derive `Debug, Clone, PartialEq, Eq` (and `Copy` iff not `non_exhaustive`).
 - implement Display using `write_err!()` macro if a variant contains an inner error source.
-- have `Error` suffix
-- call `internals::impl_from_infallible!
+- have `Error` suffix on error types (structs and enums).
+- not have `Error` suffix on enum variants.
+- call `internals::impl_from_infallible!`.
 - implement `std::error::Error` if they are public (feature gated on "std").
 
 ```rust
