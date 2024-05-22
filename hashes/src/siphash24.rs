@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SipHash 2-4 implementation.
-//!
 
 use core::ops::Index;
 use core::slice::SliceIndex;

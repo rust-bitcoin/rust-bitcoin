@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! Macros for serde trait implementations, and supporting code.
-//!
 
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]

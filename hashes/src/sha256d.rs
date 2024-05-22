@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SHA256d implementation (double SHA256).
-//!
 
 use core::ops::Index;
 use core::slice::SliceIndex;

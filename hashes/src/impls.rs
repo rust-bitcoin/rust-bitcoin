@@ -3,7 +3,6 @@
 //! `std` / `io` Impls.
 //!
 //! Implementations of traits defined in `std` / `io` and not in `core`.
-//!
 
 use bitcoin_io::impl_write;
 

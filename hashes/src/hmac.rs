@@ -6,7 +6,6 @@
 // contents here as CC0.
 
 //! Hash-based Message Authentication Code (HMAC).
-//!
 
 use core::{convert, fmt, str};
 
