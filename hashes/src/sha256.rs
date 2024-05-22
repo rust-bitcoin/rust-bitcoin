@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SHA256 implementation.
-//!
 
 #[cfg(all(feature = "std", target_arch = "x86"))]
 use core::arch::x86::*;

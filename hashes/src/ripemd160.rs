@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! RIPEMD160 implementation.
-//!
 
 use core::cmp;
 use core::ops::Index;

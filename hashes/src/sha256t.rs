@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! SHA256t implementation (tagged SHA256).
-//!
 
 use core::cmp;
 use core::marker::PhantomData;
