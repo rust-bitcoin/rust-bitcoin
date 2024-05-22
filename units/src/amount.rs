@@ -1745,7 +1745,7 @@ pub mod serde {
     pub mod as_sat {
         //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
-        //!
+
         use serde::{Deserializer, Serializer};
 
         use super::private;
