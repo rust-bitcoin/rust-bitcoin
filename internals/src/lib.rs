@@ -4,7 +4,6 @@
 //!
 //! This crate is only meant to be used internally by crates in the
 //! [rust-bitcoin](https://github.com/rust-bitcoin) ecosystem.
-//!
 
 #![no_std]
 // Experimental features we need.

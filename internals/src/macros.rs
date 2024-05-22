@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! Various macros used by the Rust Bitcoin ecosystem.
-//!
 
 /// Implements standard array methods for a given wrapper type.
 #[macro_export]
