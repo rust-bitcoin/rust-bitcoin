@@ -9,7 +9,7 @@
 /// The resulting type is public, conditionally implements `std::error::Error` and has a private
 /// `new()` method for convenience.
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// * `name` - the name of the error type
 /// * `source` - the type of the source type
