@@ -739,6 +739,7 @@ pub trait GetKey {
     /// Attempts to get the private key for `key_request`.
     ///
     /// # Returns
+    ///
     /// - `Some(key)` if the key is found.
     /// - `None` if the key was not found but no error was encountered.
     /// - `Err` if an error was encountered while looking for the key.

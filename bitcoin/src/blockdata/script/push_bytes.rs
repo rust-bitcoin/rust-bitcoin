@@ -46,7 +46,7 @@ mod primitive {
     impl PushBytes {
         /// Creates `&Self` without checking the length.
         ///
-        /// ## Safety
+        /// # Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
         unsafe fn from_slice_unchecked(bytes: &[u8]) -> &Self {
@@ -55,7 +55,7 @@ mod primitive {
 
         /// Creates `&mut Self` without checking the length.
         ///
-        /// ## Safety
+        /// # Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
         unsafe fn from_mut_slice_unchecked(bytes: &mut [u8]) -> &mut Self {

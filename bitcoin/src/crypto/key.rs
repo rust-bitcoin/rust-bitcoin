@@ -747,6 +747,7 @@ pub trait TapTweak {
     ///  * G is the generator point
     ///
     /// # Returns
+    ///
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(
         self,
@@ -776,6 +777,7 @@ impl TapTweak for UntweakedPublicKey {
     ///  * G is the generator point
     ///
     /// # Returns
+    ///
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(
         self,
@@ -807,6 +809,7 @@ impl TapTweak for UntweakedKeypair {
     /// The public key is generated from a private key by multiplying with generator point, Q = qG.
     ///
     /// # Returns
+    ///
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(
         self,
