@@ -13,8 +13,8 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
-    ScriptHash, WScriptHash,
+    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
+    RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -115,13 +115,17 @@ impl Script {
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
 
-    /// Returns 160-bit hash of the script.
+    /// Returns 160-bit hash of the script for P2SH outputs.
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash { ScriptHash::hash(self.as_bytes()) }
+    pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+        ScriptHash::from_script(self)
+    }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
     #[inline]
-    pub fn wscript_hash(&self) -> WScriptHash { WScriptHash::hash(self.as_bytes()) }
+    pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+        WScriptHash::from_script(self)
+    }
 
     /// Computes leaf hash of tapscript.
     #[inline]
@@ -148,7 +152,9 @@ impl Script {
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     #[inline]
-    pub fn to_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_p2wsh(&self.wscript_hash()) }
+    pub fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
+        self.wscript_hash().map(|hash| ScriptBuf::new_p2wsh(&hash))
+    }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
@@ -376,7 +382,9 @@ impl Script {
     }
 
     /// Computes the P2SH output corresponding to this redeem script.
-    pub fn to_p2sh(&self) -> ScriptBuf { ScriptBuf::new_p2sh(&self.script_hash()) }
+    pub fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
+        self.script_hash().map(|hash| ScriptBuf::new_p2sh(&hash))
+    }
 
     /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
