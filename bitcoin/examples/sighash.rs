@@ -13,7 +13,7 @@ use hex_lit::hex;
 
 /// Computes segwit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input index
@@ -52,7 +52,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
 
 /// Computes sighash for a legacy multisig transaction input that spends either a p2sh or a p2ms output.
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input inde
@@ -98,7 +98,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
 
 /// Computes sighash for a segwit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input index

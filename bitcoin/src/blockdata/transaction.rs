@@ -1303,7 +1303,7 @@ impl From<&Transaction> for Wtxid {
 /// a [`TxOut`] when adding another [`TxOut`] to the transaction.  This happens when the new
 /// [`TxOut`] added causes the output length `VarInt` to increase its encoding length.
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `satisfaction_weight` - satisfied spending conditions weight.
@@ -1322,7 +1322,7 @@ pub fn effective_value(
 /// This function computes the weight of a transaction which is not fully known. All that is needed
 /// is the lengths of scripts and witness elements.
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `inputs` - an iterator which returns `InputWeightPrediction` for each input of the
 ///   to-be-constructed transaction.
