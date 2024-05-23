@@ -207,7 +207,7 @@ mod primitive {
 
         /// Try pushing a single byte.
         ///
-        /// ## Errors
+        /// # Errors
         ///
         /// This method fails if `self` would exceed the limit.
         #[allow(deprecated)]
@@ -220,7 +220,7 @@ mod primitive {
 
         /// Try appending a slice to `PushBytesBuf`
         ///
-        /// ## Errors
+        /// # Errors
         ///
         /// This method fails if `self` would exceed the limit.
         pub fn extend_from_slice(&mut self, bytes: &[u8]) -> Result<(), PushBytesError> {

@@ -67,7 +67,7 @@ impl Psbt {
     /// For each PSBT input that contains UTXO information `Ok` is returned containing that information.
     /// The order of returned items is same as the order of inputs.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// The function returns error when UTXO information is not present or is invalid.
     ///
@@ -140,7 +140,7 @@ impl Psbt {
 
     /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// [`ExtractTxError`] variants will contain either the [`Psbt`] itself or the [`Transaction`]
     /// that was extracted. These can be extracted from the Errors in order to recover.
@@ -151,7 +151,7 @@ impl Psbt {
 
     /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// See [`extract_tx`].
     ///
@@ -703,7 +703,7 @@ impl Psbt {
     /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
     /// and outputs i.e., the difference in value of the total inputs and the total outputs.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
     /// - [`Error::NegativeFee`] if calculated value is negative.

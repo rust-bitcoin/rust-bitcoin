@@ -188,6 +188,7 @@ where
     /// Constructs a [`ProprietaryKey`] from a [`Key`].
     ///
     /// # Errors
+    ///
     /// Returns [`Error::InvalidProprietaryKey`] if `key` does not start with `0xFC` byte.
     fn try_from(key: Key) -> Result<Self, Self::Error> {
         if key.type_value != 0xFC {

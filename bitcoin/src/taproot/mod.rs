@@ -429,8 +429,13 @@ impl TaprootBuilder {
         Ok(TaprootBuilder { branch: vec![Some(node)] })
     }
 
-    /// Adds a leaf script at `depth` to the builder with script version `ver`. Errors if the leaves
-    /// are not provided in DFS walk order. The depth of the root node is 0.
+    /// Adds a leaf script at `depth` to the builder with script version `ver`.
+    ///
+    /// The depth of the root node is 0.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the leaves are not provided in DFS walk order.
     pub fn add_leaf_with_ver(
         self,
         depth: u8,
@@ -441,16 +446,26 @@ impl TaprootBuilder {
         self.insert(leaf, depth)
     }
 
-    /// Adds a leaf script at `depth` to the builder with default script version. Errors if the
-    /// leaves are not provided in DFS walk order. The depth of the root node is 0.
+    /// Adds a leaf script at `depth` to the builder with default script version.
+    ///
+    /// The depth of the root node is 0.
     ///
     /// See [`TaprootBuilder::add_leaf_with_ver`] for adding a leaf with specific version.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the leaves are not provided in DFS walk order.
     pub fn add_leaf(self, depth: u8, script: ScriptBuf) -> Result<Self, TaprootBuilderError> {
         self.add_leaf_with_ver(depth, script, LeafVersion::TapScript)
     }
 
-    /// Adds a hidden/omitted node at `depth` to the builder. Errors if the leaves are not provided
-    /// in DFS walk order. The depth of the root node is 0.
+    /// Adds a hidden/omitted node at `depth` to the builder.
+    ///
+    /// The depth of the root node is 0.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the leaves are not provided in DFS walk order.
     pub fn add_hidden_node(
         self,
         depth: u8,
