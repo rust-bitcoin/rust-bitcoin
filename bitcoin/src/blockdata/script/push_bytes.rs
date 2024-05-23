@@ -235,7 +235,7 @@ mod primitive {
 
         /// Remove the byte at `index` and return it.
         ///
-        /// ## Panics
+        /// # Panics
         ///
         /// This method panics if `index` is out of bounds.
         #[track_caller]

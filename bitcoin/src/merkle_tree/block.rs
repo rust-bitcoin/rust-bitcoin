@@ -216,6 +216,8 @@ impl PartialMerkleTree {
     /// The `txids` are the transaction hashes of the block and the `matches` is the contains flags
     /// wherever a tx hash should be included in the proof.
     ///
+    /// # Panics
+    ///
     /// Panics when `txids` is empty or when `matches` has a different length
     ///
     /// # Examples

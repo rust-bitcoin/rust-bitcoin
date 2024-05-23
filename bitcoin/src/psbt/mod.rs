@@ -71,7 +71,7 @@ impl Psbt {
     ///
     /// The function returns error when UTXO information is not present or is invalid.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// The function panics if the length of transaction inputs is not equal to the length of PSBT inputs.
     pub fn iter_funding_utxos(&self) -> impl Iterator<Item = Result<&TxOut, Error>> {

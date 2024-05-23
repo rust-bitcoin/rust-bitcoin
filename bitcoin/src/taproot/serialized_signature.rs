@@ -133,7 +133,7 @@ impl<'a> TryFrom<&'a SerializedSignature> for Signature {
 impl SerializedSignature {
     /// Creates `SerializedSignature` from data and length.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// If `len` > `MAX_LEN`
     #[inline]

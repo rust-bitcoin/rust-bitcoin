@@ -241,7 +241,7 @@ impl ScriptBuf {
 
     /// Add a single instruction to the script.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// The method panics if the instruction is a data push with length greater or equal to
     /// 0x100000000.
