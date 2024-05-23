@@ -136,7 +136,7 @@ grammar fixes.
 
 Pull request merge requirements:
 - all CI test should pass,
-- at least two "accepts"/ACKs from the repository maintainers (see "refactor carve-out").
+- at least one "accepts"/ACKs from the repository maintainers
 - no reasonable "rejects"/NACKs from anybody who reviewed the code.
 
 Current list of the project maintainers:
@@ -149,38 +149,6 @@ Current list of the project maintainers:
 - [Martin Habovštiak](https://github.com/Kixunil)
 - [Riccardo Casatta](https://github.com/RCasatta)
 - [Tobin Harding](https://github.com/tcharding)
-
-#### One ACK carve-out
-
-The repository is going through heavy refactoring and "trivial" API redesign
-(eg, rename `Foo::empty` to `Foo::new`) as we push towards API stabilization. As
-such reviewers are either bored or overloaded with notifications, hence we have
-created a carve out to the 2-ACK rule.
-
-We reserve the right to merge PRs with a single ACK [0], at any time, if they match
-any of the following conditions:
-
-0. PR has a single ACK and has sat open for at least two weeks with no comments,
-   questions, or NACKs.
-1. PR only touches CI i.e, only changes any of the test scripts and/or
-   stuff in `.github/workflows`.
-2. Non-content changing documentation fixes i.e., grammar/typos, spelling, full
-   stops, capital letters. Any change with more substance must still get two
-   ACKs.
-3. Code moves that do not change the API e.g., moving error types to a private
-   submodule and re-exporting them from the original module. Must not include
-   any code changes except to import paths. Requires absolutely no change to the
-   public API.
-4. PR has previously had two ACKs, had minimal changes, and gets a single ACK
-   from Andrew. This call is subjective, gives extra privileges, but also
-   requires extra responsibility/accountability (including running a bunch
-   of local CI checks before merging) [1].
-
-
-
-[0] - Obviously author and ACK'er must not be the same person.
-[1] - The aim is to reduce the burden of re-ACK'ing trivial changes and also
-      alleviate the problem of devs spread around the world in different timezones.
 
 #### Backporting
 
