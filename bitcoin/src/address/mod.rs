@@ -490,6 +490,16 @@ impl Address {
         }
     }
 
+    /// Gets the witness program for this address if this is a segwit address.
+    pub fn witness_program(&self) -> Option<WitnessProgram> {
+        use AddressInner::*;
+
+        match self.0 {
+            Segwit { ref program, hrp: _ } => Some(*program),
+            _ => None,
+        }
+    }
+
     /// Checks whether or not the address is following Bitcoin standardness rules when
     /// *spending* from this address. *NOT* to be called by senders.
     ///
