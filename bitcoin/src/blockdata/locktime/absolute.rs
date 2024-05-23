@@ -45,6 +45,7 @@ pub use units::locktime::absolute::{
 /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
 ///
 /// # Examples
+///
 /// ```
 /// # use bitcoin::absolute::{LockTime, LockTime::*};
 /// # let n = LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
@@ -61,6 +62,7 @@ pub enum LockTime {
     /// A block height lock time value.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// use bitcoin::absolute::LockTime;
     ///
@@ -73,6 +75,7 @@ pub enum LockTime {
     /// A UNIX timestamp lock time value.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// use bitcoin::absolute::LockTime;
     ///
@@ -141,6 +144,7 @@ impl LockTime {
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid height value.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// # use bitcoin::absolute::LockTime;
     /// assert!(LockTime::from_height(741521).is_ok());
@@ -157,6 +161,7 @@ impl LockTime {
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid time value.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// # use bitcoin::absolute::LockTime;
     /// assert!(LockTime::from_time(1653195600).is_ok());
@@ -196,6 +201,7 @@ impl LockTime {
     /// `height`/`time` is valid.
     ///
     /// # Examples
+    ///
     /// ```no_run
     /// # use bitcoin::absolute::{LockTime, Height, Time};
     /// // Can be implemented if block chain data is available.

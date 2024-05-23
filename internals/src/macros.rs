@@ -122,7 +122,7 @@ macro_rules! const_assert {
 ///
 /// Note: Paths are not supported (for ex. impl_from_infallible!(Hello<D: std::fmt::Display>).
 ///
-/// ## Examples
+/// # Examples
 ///
 /// ```rust
 /// # use core::fmt::{Display, Debug};

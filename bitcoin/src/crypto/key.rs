@@ -710,6 +710,7 @@ pub type UntweakedKeypair = Keypair;
 /// Tweaked BIP-340 key pair
 ///
 /// # Examples
+///
 /// ```
 /// # #[cfg(feature = "rand-std")] {
 /// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};

@@ -21,6 +21,7 @@ use internals::write_err;
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Examples
+///
 /// ```
 /// # use core::str::FromStr;
 /// # use bitcoin_units::Amount;
@@ -939,6 +940,7 @@ impl Amount {
     /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
+    ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
     /// let amount = Amount::from_sat(100_000);

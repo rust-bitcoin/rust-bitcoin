@@ -51,6 +51,7 @@ impl Height {
     /// If `n` does not represent a valid block height value.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// use bitcoin_units::locktime::absolute::Height;
     ///
@@ -146,6 +147,7 @@ impl Time {
     /// If `n` does not encode a valid UNIX time stamp.
     ///
     /// # Examples
+    ///
     /// ```rust
     /// use bitcoin_units::locktime::absolute::Time;
     ///
