@@ -26,3 +26,6 @@ internals = { package = "bitcoin-internals", version = "0.3.0", features = ["all
 
 [dev-dependencies]
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)' ] }
