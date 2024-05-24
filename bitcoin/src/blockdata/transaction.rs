@@ -2463,7 +2463,7 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use hex_lit::hex;
+    use hex::test_hex_unwrap as hex;
     use io::sink;
     use test::{black_box, Bencher};
 

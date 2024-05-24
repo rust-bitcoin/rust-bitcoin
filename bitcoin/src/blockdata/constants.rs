@@ -7,7 +7,6 @@
 //! single transaction.
 
 use hashes::{sha256d, Hash};
-use hex_lit::hex;
 use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};
@@ -50,6 +49,23 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
 
+// This is the 65 byte (uncompressed) pubkey used as the one-and-only output of the genesis transaction.
+//
+// ref: https://blockstream.info/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b?expand
+// Note output script includes a leading 0x41 and trailing 0xac (added below using the `script::Builder`).
+#[rustfmt::skip]
+const GENESIS_OUTPUT_PK: [u8; 65] = [
+    0x04,
+    0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27,
+    0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7, 0x10,
+    0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6,
+    0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde, 0xb6,
+    0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4,
+    0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12, 0xde,
+    0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57,
+    0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d, 0x5f
+];
+
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
@@ -74,9 +90,8 @@ fn bitcoin_genesis_tx() -> Transaction {
     });
 
     // Outputs
-    let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
     let out_script =
-        script::Builder::new().push_slice(script_bytes).push_opcode(OP_CHECKSIG).into_script();
+        script::Builder::new().push_slice(GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
