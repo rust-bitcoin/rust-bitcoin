@@ -6164,6 +6164,7 @@ pub fn bitcoin::address::Address::pubkey_hash(&self) -> core::option::Option<bit
 pub fn bitcoin::address::Address::script_hash(&self) -> core::option::Option<bitcoin::blockdata::script::ScriptHash>
 pub fn bitcoin::address::Address::script_pubkey(&self) -> bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::address::Address::to_qr_uri(&self) -> alloc::string::String
+pub fn bitcoin::address::Address::witness_program(&self) -> core::option::Option<bitcoin::blockdata::script::witness_program::WitnessProgram>
 pub fn bitcoin::address::Address<V>::as_unchecked(&self) -> &bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
 pub fn bitcoin::address::Address<V>::clone(&self) -> bitcoin::address::Address<V>
 pub fn bitcoin::address::Address<V>::cmp(&self, other: &bitcoin::address::Address<V>) -> core::cmp::Ordering
