@@ -16,8 +16,9 @@ struct Main {
 }
 
 fn do_test(data: &[u8]) {
-    if let Ok(m) = serde_cbor::from_slice::<Main>(data) {
-        let vec = serde_cbor::to_vec(&m).unwrap();
+    if let Ok(m) = ciborium::from_reader::<Main, _>(data) {
+        let mut vec = Vec::new();
+        ciborium::into_writer(&m, &mut vec).unwrap();
         assert_eq!(data, &vec[..]);
     }
 }
