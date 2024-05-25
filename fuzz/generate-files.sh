@@ -27,7 +27,9 @@ bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
-serde_cbor = "0.9"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
 EOF
 
 for targetFile in $(listTargetFiles); do

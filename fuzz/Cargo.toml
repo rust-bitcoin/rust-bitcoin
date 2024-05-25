@@ -15,7 +15,9 @@ bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
-serde_cbor = "0.9"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
 
 [[bin]]
 name = "bitcoin_deserialize_address"
@@ -58,10 +60,6 @@ name = "bitcoin_script_bytes_to_asm_fmt"
 path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 
 [[bin]]
-name = "hashes_cbor"
-path = "fuzz_targets/hashes/cbor.rs"
-
-[[bin]]
 name = "hashes_json"
 path = "fuzz_targets/hashes/json.rs"
 
@@ -88,6 +86,3 @@ path = "fuzz_targets/hashes/sha512.rs"
 [[bin]]
 name = "units_deserialize_amount"
 path = "fuzz_targets/units/deserialize_amount.rs"
-
-[lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
