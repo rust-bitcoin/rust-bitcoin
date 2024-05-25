@@ -6096,6 +6096,7 @@ pub fn bitcoin::address::Address::is_spend_standard(&self) -> bool
 pub fn bitcoin::address::Address::matches_script_pubkey(&self, script: &bitcoin::blockdata::script::Script) -> bool
 pub fn bitcoin::address::Address::p2pkh(pk: impl core::convert::Into<bitcoin::PubkeyHash>, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2sh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> core::result::Result<bitcoin::address::Address, bitcoin::address::error::P2shError>
+pub fn bitcoin::address::Address::p2sh_from_hash(hash: bitcoin::blockdata::script::ScriptHash, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2shwpkh(pk: &bitcoin::CompressedPublicKey, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2shwsh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address

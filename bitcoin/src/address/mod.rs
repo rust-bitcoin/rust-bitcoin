@@ -384,8 +384,13 @@ impl Address {
         Ok(Address::p2sh_from_hash(hash, network))
     }
 
-    // This is intentionally not public so we enforce script length checks.
-    fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Address {
+    /// Creates a pay to script hash P2SH address from a script hash.
+    ///
+    /// # Warning
+    ///
+    /// The `hash` pre-image (redeem script) must not exceed 520 bytes in length
+    /// otherwise outputs created from the returned address will be un-spendable.
+    pub fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Address {
         Self(AddressInner::P2sh { hash, network: network.into() }, PhantomData)
     }
 
