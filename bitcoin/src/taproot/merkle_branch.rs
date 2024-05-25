@@ -66,6 +66,7 @@ impl TaprootMerkleBranch {
     /// Creates a merkle proof from list of hashes.
     ///
     /// # Errors
+    ///
     /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
     #[inline]
     fn from_collection<T: AsRef<[TapNodeHash]> + Into<Vec<TapNodeHash>>>(
@@ -123,6 +124,7 @@ macro_rules! impl_try_from {
             /// Creates a merkle proof from list of hashes.
             ///
             /// # Errors
+            ///
             /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
             #[inline]
             fn try_from(v: $from) -> Result<Self, Self::Error> {

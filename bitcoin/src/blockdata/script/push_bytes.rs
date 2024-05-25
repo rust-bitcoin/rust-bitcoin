@@ -46,7 +46,7 @@ mod primitive {
     impl PushBytes {
         /// Creates `&Self` without checking the length.
         ///
-        /// ## Safety
+        /// # Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
         unsafe fn from_slice_unchecked(bytes: &[u8]) -> &Self {
@@ -55,7 +55,7 @@ mod primitive {
 
         /// Creates `&mut Self` without checking the length.
         ///
-        /// ## Safety
+        /// # Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
         unsafe fn from_mut_slice_unchecked(bytes: &mut [u8]) -> &mut Self {
@@ -207,7 +207,7 @@ mod primitive {
 
         /// Try pushing a single byte.
         ///
-        /// ## Errors
+        /// # Errors
         ///
         /// This method fails if `self` would exceed the limit.
         #[allow(deprecated)]
@@ -220,7 +220,7 @@ mod primitive {
 
         /// Try appending a slice to `PushBytesBuf`
         ///
-        /// ## Errors
+        /// # Errors
         ///
         /// This method fails if `self` would exceed the limit.
         pub fn extend_from_slice(&mut self, bytes: &[u8]) -> Result<(), PushBytesError> {
@@ -235,7 +235,7 @@ mod primitive {
 
         /// Remove the byte at `index` and return it.
         ///
-        /// ## Panics
+        /// # Panics
         ///
         /// This method panics if `index` is out of bounds.
         #[track_caller]

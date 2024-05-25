@@ -480,6 +480,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
     /// Reads nbit bits, returning the bits in a `u64` starting with the rightmost bit.
     ///
     /// # Examples
+    ///
     /// ```
     /// # use bitcoin::bip158::BitStreamReader;
     /// # let data = vec![0xff];

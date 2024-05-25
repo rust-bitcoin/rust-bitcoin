@@ -21,6 +21,7 @@ use crate::consensus::encode;
 /// [`bitcoinconsensus::VERIFY_ALL`].
 ///
 /// # Parameters
+///
 ///  * `index` - The input index in spending which is spending this transaction.
 ///  * `amount` - The amount this script guards.
 ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
@@ -38,6 +39,7 @@ pub fn verify_script(
 /// Verifies spend of an input script.
 ///
 /// # Parameters
+///
 ///  * `index` - The input index in spending which is spending this transaction.
 ///  * `amount` - The amount this script guards.
 ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
@@ -112,6 +114,7 @@ impl Script {
     /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
     ///
     /// # Parameters
+    ///
     ///  * `index` - The input index in spending which is spending this transaction.
     ///  * `amount` - The amount this script guards.
     ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
@@ -129,6 +132,7 @@ impl Script {
     /// Verifies spend of an input script.
     ///
     /// # Parameters
+    ///
     ///  * `index` - The input index in spending which is spending this transaction.
     ///  * `amount` - The amount this script guards.
     ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.

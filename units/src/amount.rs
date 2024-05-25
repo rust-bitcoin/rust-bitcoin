@@ -21,6 +21,7 @@ use internals::write_err;
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Examples
+///
 /// ```
 /// # use core::str::FromStr;
 /// # use bitcoin_units::Amount;
@@ -886,7 +887,7 @@ impl Amount {
     /// Convert from a value expressing integer values of bitcoins to an [Amount]
     /// in const context.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// The function panics if the argument multiplied by the number of sats
     /// per bitcoin overflows a u64 type.
@@ -939,6 +940,7 @@ impl Amount {
     /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
+    ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
     /// let amount = Amount::from_sat(100_000);
@@ -1046,12 +1048,20 @@ impl Amount {
 
     /// Unchecked addition.
     ///
-    /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
+    /// Computes `self + rhs`.
+    ///
+    /// # Panics
+    ///
+    /// On overflow, panics in debug mode, wraps in release mode.
     pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
     ///
-    /// Computes `self - rhs`.  Panics in debug mode, wraps in release mode.
+    /// Computes `self - rhs`.
+    ///
+    /// # Panics
+    ///
+    /// On overflow, panics in debug mode, wraps in release mode.
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Convert to a signed amount.
@@ -1434,12 +1444,20 @@ impl SignedAmount {
 
     /// Unchecked addition.
     ///
-    /// Computes `self + rhs`.  Panics in debug mode, wraps in release mode.
+    /// Computes `self + rhs`.
+    ///
+    /// # Panics
+    ///
+    /// On overflow, panics in debug mode, wraps in release mode.
     pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
     ///
-    /// Computes `self - rhs`.  Panics in debug mode, wraps in release mode.
+    /// Computes `self - rhs`.
+    ///
+    /// # Panics
+    ///
+    /// On overflow, panics in debug mode, wraps in release mode.
     pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [SignedAmount]s.
