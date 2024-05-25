@@ -11,12 +11,11 @@ use core::fmt;
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse;
+use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -92,26 +91,15 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Creates a `LockTime` from an prefixed hex string.
+    /// Creates a `LockTime` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
-            stripped
-        } else if let Some(stripped) = s.strip_prefix("0X") {
-            stripped
-        } else {
-            return Err(MissingPrefixError::new(s).into());
-        };
-
-        let lock_time = parse::hex_u32(stripped)?;
+        let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
     /// Creates a `LockTime` from an unprefixed hex string.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        if s.starts_with("0x") || s.starts_with("0X") {
-            return Err(ContainsPrefixError::new(s).into());
-        }
-        let lock_time = parse::hex_u32(s)?;
+        let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 

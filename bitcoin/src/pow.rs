@@ -12,15 +12,12 @@ use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse;
+use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::Header;
 use crate::blockdata::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::error::{
-    ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError,
-};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -350,27 +347,16 @@ do_impl!(Target);
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
-    /// Creates a `CompactTarget` from an prefixed hex string.
+    /// Creates a `CompactTarget` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
-            stripped
-        } else if let Some(stripped) = s.strip_prefix("0X") {
-            stripped
-        } else {
-            return Err(MissingPrefixError::new(s).into());
-        };
-
-        let target = parse::hex_u32(stripped)?;
+        let target = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(target))
     }
 
     /// Creates a `CompactTarget` from an unprefixed hex string.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        if s.starts_with("0x") || s.starts_with("0X") {
-            return Err(ContainsPrefixError::new(s).into());
-        }
-        let lock_time = parse::hex_u32(s)?;
-        Ok(Self::from_consensus(lock_time))
+        let target = parse::hex_u32_unprefixed(s)?;
+        Ok(Self::from_consensus(target))
     }
 
     /// Computes the [`CompactTarget`] from a difficulty adjustment.
@@ -499,36 +485,28 @@ impl U256 {
 
     /// Creates a `U256` from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
-            stripped
-        } else if let Some(stripped) = s.strip_prefix("0X") {
-            stripped
-        } else {
-            return Err(MissingPrefixError::new(s).into());
-        };
-        Ok(U256::from_hex_internal(stripped)?)
+        let checked = parse::hex_remove_prefix(s)?;
+        Ok(U256::from_hex_internal(checked)?)
     }
 
     /// Creates a `U256` from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        if s.starts_with("0x") || s.starts_with("0X") {
-            return Err(ContainsPrefixError::new(s).into());
-        }
-        Ok(U256::from_hex_internal(s)?)
+        let checked = parse::hex_check_unprefixed(s)?;
+        Ok(U256::from_hex_internal(checked)?)
     }
 
     // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
         let (high, low) = if s.len() < 32 {
-            let low = parse::hex_u128(s)?;
+            let low = parse::hex_u128_unchecked(s)?;
             (0, low)
         } else {
             let high_len = s.len() - 32;
             let high_s = &s[..high_len];
             let low_s = &s[high_len..];
 
-            let high = parse::hex_u128(high_s)?;
-            let low = parse::hex_u128(low_s)?;
+            let high = parse::hex_u128_unchecked(high_s)?;
+            let low = parse::hex_u128_unchecked(low_s)?;
             (high, low)
         };
 

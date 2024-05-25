@@ -88,43 +88,6 @@ pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseInt
     })
 }
 
-/// Parses a `u32` from a hex string.
-///
-/// Input string may or may not contain a `0x` prefix.
-pub fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
-    let stripped = strip_hex_prefix(s.as_ref());
-    u32::from_str_radix(stripped, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 32,
-        is_signed: false,
-        source: error,
-    })
-}
-
-/// Parses a `u128` from a hex string.
-///
-/// Input string may or may not contain a `0x` prefix.
-pub fn hex_u128<S: AsRef<str> + Into<String>>(s: S) -> Result<u128, ParseIntError> {
-    let stripped = strip_hex_prefix(s.as_ref());
-    u128::from_str_radix(stripped, 16).map_err(|error| ParseIntError {
-        input: s.into(),
-        bits: 128,
-        is_signed: false,
-        source: error,
-    })
-}
-
-/// Strips the hex prefix off `s` if one is present.
-pub(crate) fn strip_hex_prefix(s: &str) -> &str {
-    if let Some(stripped) = s.strip_prefix("0x") {
-        stripped
-    } else if let Some(stripped) = s.strip_prefix("0X") {
-        stripped
-    } else {
-        s
-    }
-}
-
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
 /// conversion function `fn`.
 #[macro_export]
@@ -197,6 +160,263 @@ macro_rules! impl_parse_str {
     }
 }
 
+/// Removes the prefix `0x` (or `0X`) from hex string.
+///
+/// # Errors
+///
+/// If input string does not contain a prefix.
+pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
+    if let Some(checked) = s.strip_prefix("0x") {
+        Ok(checked)
+    } else if let Some(checked) = s.strip_prefix("0X") {
+        Ok(checked)
+    } else {
+        Err(MissingPrefixError::new(s.into()).into())
+    }
+}
+
+/// Checks hex string does not have a prefix `0x` (or `0X`).
+///
+/// # Errors
+///
+/// If input string contains a prefix.
+pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
+    if s.starts_with("0x") || s.starts_with("0X") {
+        return Err(ContainsPrefixError::new(s.into()).into());
+    }
+    Ok(s)
+}
+
+/// Parses a `u32` from a hex string.
+///
+/// Input string may or may not contain a `0x` (or `0X`) prefix.
+///
+/// # Errors
+///
+/// If the input string is not a valid hex encoding of a `u32`.
+pub fn hex_u32(s: &str) -> Result<u32, ParseIntError> {
+    let unchecked = hex_remove_optional_prefix(s);
+    Ok(hex_u32_unchecked(unchecked)?)
+}
+
+/// Parses a `u32` from a prefixed hex string.
+///
+/// # Errors
+///
+/// - If input string does not contain a `0x` (or `0X`) prefix.
+/// - If input string is not a valid hex encoding of a `u32`.
+pub fn hex_u32_prefixed(s: &str) -> Result<u32, PrefixedHexError> {
+    let checked = hex_remove_prefix(s)?;
+    Ok(hex_u32_unchecked(checked)?)
+}
+
+/// Parses a `u32` from an unprefixed hex string.
+///
+/// # Errors
+///
+/// - If input string contains a `0x` (or `0X`) prefix.
+/// - If input string is not a valid hex encoding of a `u32`.
+pub fn hex_u32_unprefixed(s: &str) -> Result<u32, UnprefixedHexError> {
+    let checked = hex_check_unprefixed(s)?;
+    Ok(hex_u32_unchecked(checked)?)
+}
+
+/// Parses a `u32` from a hex string.
+///
+/// # Errors
+///
+/// - If input string is not a valid hex encoding of a `u32`.
+/// - With `InvalidDigit` due to the `x` if there is a prefix.
+pub fn hex_u32_unchecked(s: &str) -> Result<u32, ParseIntError> {
+    u32::from_str_radix(s, 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: 32,
+        is_signed: false,
+        source: error,
+    })
+}
+
+/// Parses a `u128` from a hex string.
+///
+/// Input string may or may not contain a `0x` (or `0X`) prefix.
+///
+/// # Errors
+///
+/// If the input string is not a valid hex encoding of a `u128`.
+pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
+    let unchecked = hex_remove_optional_prefix(s);
+    Ok(hex_u128_unchecked(unchecked)?)
+}
+
+/// Parses a `u128` from a hex string.
+///
+/// # Errors
+///
+/// - If input string does not contain a `0x` (or `0X`) prefix.
+/// - If input string is not a valid hex encoding of a `u128`.
+pub fn hex_u128_prefixed(s: &str) -> Result<u128, PrefixedHexError> {
+    let checked = hex_remove_prefix(s)?;
+    Ok(hex_u128_unchecked(checked)?)
+}
+
+/// Parses a `u128` from a hex string.
+///
+/// # Errors
+///
+/// - If input string contains a `0x` (or `0X`) prefix.
+/// - If input string is not a valid hex encoding of a `u128`.
+pub fn hex_u128_unprefixed(s: &str) -> Result<u128, UnprefixedHexError> {
+    let checked = hex_check_unprefixed(s)?;
+    Ok(hex_u128_unchecked(checked)?)
+}
+
+/// Parses a `u128` from a hex string.
+///
+/// # Errors
+///
+/// - If input string is not a valid hex encoding of a `u128`.
+/// - With `InvalidDigit` due to the `x` if there is a prefix.
+pub fn hex_u128_unchecked(s: &str) -> Result<u128, ParseIntError> {
+    u128::from_str_radix(s, 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: 128,
+        is_signed: false,
+        source: error,
+    })
+}
+
+/// Strips the hex prefix off `s` if one is present.
+pub(crate) fn hex_remove_optional_prefix(s: &str) -> &str {
+    if let Some(stripped) = s.strip_prefix("0x") {
+        stripped
+    } else if let Some(stripped) = s.strip_prefix("0X") {
+        stripped
+    } else {
+        s
+    }
+}
+
+/// Error returned when parsing integer from an supposedly prefixed hex string for
+/// a type that can be created infallibly from an integer.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum PrefixedHexError {
+    /// Hex string is missing prefix.
+    MissingPrefix(MissingPrefixError),
+    /// Error parsing integer from hex string.
+    ParseInt(ParseIntError),
+}
+
+impl fmt::Display for PrefixedHexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use PrefixedHexError::*;
+
+        match *self {
+            MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
+            ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PrefixedHexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use PrefixedHexError::*;
+
+        match *self {
+            MissingPrefix(ref e) => Some(e),
+            ParseInt(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<MissingPrefixError> for PrefixedHexError {
+    fn from(e: MissingPrefixError) -> Self { Self::MissingPrefix(e) }
+}
+
+impl From<ParseIntError> for PrefixedHexError {
+    fn from(e: ParseIntError) -> Self { Self::ParseInt(e) }
+}
+
+/// Error returned when parsing integer from an supposedly un-prefixed hex string.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum UnprefixedHexError {
+    /// Hex string contains prefix.
+    ContainsPrefix(ContainsPrefixError),
+    /// Error parsing integer from string.
+    ParseInt(ParseIntError),
+}
+
+impl fmt::Display for UnprefixedHexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use UnprefixedHexError::*;
+
+        match *self {
+            ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
+            ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for UnprefixedHexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use UnprefixedHexError::*;
+
+        match *self {
+            ContainsPrefix(ref e) => Some(e),
+            ParseInt(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<ContainsPrefixError> for UnprefixedHexError {
+    fn from(e: ContainsPrefixError) -> Self { Self::ContainsPrefix(e) }
+}
+
+impl From<ParseIntError> for UnprefixedHexError {
+    fn from(e: ParseIntError) -> Self { Self::ParseInt(e) }
+}
+
+/// Error when hex string is missing a prefix (e.g. 0x).
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct MissingPrefixError {
+    hex: String,
+}
+
+impl MissingPrefixError {
+    /// Creates an error from the string with the missing prefix.
+    pub(crate) fn new(hex: String) -> Self { Self { hex } }
+}
+
+impl fmt::Display for MissingPrefixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "hex string is missing a prefix (e.g. 0x): {}", self.hex)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MissingPrefixError {}
+
+/// Error when hex string contains a prefix (e.g. 0x).
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct ContainsPrefixError {
+    hex: String,
+}
+
+impl ContainsPrefixError {
+    /// Creates an error from the string that contains the prefix.
+    pub(crate) fn new(hex: String) -> Self { Self { hex } }
+}
+
+impl fmt::Display for ContainsPrefixError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "hex string contains a prefix: {}", self.hex)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ContainsPrefixError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -227,5 +447,10 @@ mod tests {
         let want = 3735928559;
         let got = hex_u128("deadbeef").expect("failed to parse non-prefixed hex");
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_u32_from_hex_unchecked_errors_on_prefix() {
+        assert!(hex_u32_unchecked("0xab").is_err());
     }
 }

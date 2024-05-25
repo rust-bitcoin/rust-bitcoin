@@ -525,10 +525,6 @@ impl core::clone::Clone for bitcoin::consensus::params::Params
 impl core::clone::Clone for bitcoin::ecdsa::Error
 impl core::clone::Clone for bitcoin::ecdsa::SerializedSignature
 impl core::clone::Clone for bitcoin::ecdsa::Signature
-impl core::clone::Clone for bitcoin::error::ContainsPrefixError
-impl core::clone::Clone for bitcoin::error::MissingPrefixError
-impl core::clone::Clone for bitcoin::error::PrefixedHexError
-impl core::clone::Clone for bitcoin::error::UnprefixedHexError
 impl core::clone::Clone for bitcoin::key::FromSliceError
 impl core::clone::Clone for bitcoin::key::FromWifError
 impl core::clone::Clone for bitcoin::key::InvalidAddressVersionError
@@ -695,10 +691,6 @@ impl core::cmp::Eq for bitcoin::consensus::encode::VarInt
 impl core::cmp::Eq for bitcoin::ecdsa::Error
 impl core::cmp::Eq for bitcoin::ecdsa::SerializedSignature
 impl core::cmp::Eq for bitcoin::ecdsa::Signature
-impl core::cmp::Eq for bitcoin::error::ContainsPrefixError
-impl core::cmp::Eq for bitcoin::error::MissingPrefixError
-impl core::cmp::Eq for bitcoin::error::PrefixedHexError
-impl core::cmp::Eq for bitcoin::error::UnprefixedHexError
 impl core::cmp::Eq for bitcoin::key::FromSliceError
 impl core::cmp::Eq for bitcoin::key::FromWifError
 impl core::cmp::Eq for bitcoin::key::InvalidAddressVersionError
@@ -948,10 +940,6 @@ impl core::cmp::PartialEq for bitcoin::consensus::encode::VarInt
 impl core::cmp::PartialEq for bitcoin::ecdsa::Error
 impl core::cmp::PartialEq for bitcoin::ecdsa::SerializedSignature
 impl core::cmp::PartialEq for bitcoin::ecdsa::Signature
-impl core::cmp::PartialEq for bitcoin::error::ContainsPrefixError
-impl core::cmp::PartialEq for bitcoin::error::MissingPrefixError
-impl core::cmp::PartialEq for bitcoin::error::PrefixedHexError
-impl core::cmp::PartialEq for bitcoin::error::UnprefixedHexError
 impl core::cmp::PartialEq for bitcoin::key::FromSliceError
 impl core::cmp::PartialEq for bitcoin::key::FromWifError
 impl core::cmp::PartialEq for bitcoin::key::InvalidAddressVersionError
@@ -1651,8 +1639,6 @@ impl core::convert::From<bitcoin::blockdata::transaction::Txid> for bitcoin_hash
 impl core::convert::From<bitcoin::blockdata::transaction::Wtxid> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::From<bitcoin::blockdata::transaction::Wtxid> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::consensus::encode::Error> for bitcoin::psbt::Error
-impl core::convert::From<bitcoin::error::ContainsPrefixError> for bitcoin::error::UnprefixedHexError
-impl core::convert::From<bitcoin::error::MissingPrefixError> for bitcoin::error::PrefixedHexError
 impl core::convert::From<bitcoin::key::FromSliceError> for bitcoin::key::ParsePublicKeyError
 impl core::convert::From<bitcoin::key::InvalidAddressVersionError> for bitcoin::key::FromWifError
 impl core::convert::From<bitcoin::key::InvalidBase58PayloadLengthError> for bitcoin::key::FromWifError
@@ -1711,8 +1697,6 @@ impl core::convert::From<bitcoin_units::locktime::absolute::Time> for bitcoin::b
 impl core::convert::From<bitcoin_units::locktime::relative::Height> for bitcoin::blockdata::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::locktime::relative::Time> for bitcoin::blockdata::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin::blockdata::script::witness_version::FromStrError
-impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin::error::PrefixedHexError
-impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin::error::UnprefixedHexError
 impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::FromScriptError
 impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::P2shError
 impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::ParseError
@@ -1900,10 +1884,6 @@ impl core::fmt::Debug for bitcoin::consensus::params::Params
 impl core::fmt::Debug for bitcoin::ecdsa::Error
 impl core::fmt::Debug for bitcoin::ecdsa::SerializedSignature
 impl core::fmt::Debug for bitcoin::ecdsa::Signature
-impl core::fmt::Debug for bitcoin::error::ContainsPrefixError
-impl core::fmt::Debug for bitcoin::error::MissingPrefixError
-impl core::fmt::Debug for bitcoin::error::PrefixedHexError
-impl core::fmt::Debug for bitcoin::error::UnprefixedHexError
 impl core::fmt::Debug for bitcoin::key::FromSliceError
 impl core::fmt::Debug for bitcoin::key::FromWifError
 impl core::fmt::Debug for bitcoin::key::InvalidAddressVersionError
@@ -2049,10 +2029,6 @@ impl core::fmt::Display for bitcoin::consensus::encode::FromHexError
 impl core::fmt::Display for bitcoin::ecdsa::Error
 impl core::fmt::Display for bitcoin::ecdsa::SerializedSignature
 impl core::fmt::Display for bitcoin::ecdsa::Signature
-impl core::fmt::Display for bitcoin::error::ContainsPrefixError
-impl core::fmt::Display for bitcoin::error::MissingPrefixError
-impl core::fmt::Display for bitcoin::error::PrefixedHexError
-impl core::fmt::Display for bitcoin::error::UnprefixedHexError
 impl core::fmt::Display for bitcoin::key::FromSliceError
 impl core::fmt::Display for bitcoin::key::FromWifError
 impl core::fmt::Display for bitcoin::key::InvalidAddressVersionError
@@ -2447,10 +2423,6 @@ impl core::marker::Freeze for bitcoin::consensus::params::Params
 impl core::marker::Freeze for bitcoin::ecdsa::Error
 impl core::marker::Freeze for bitcoin::ecdsa::SerializedSignature
 impl core::marker::Freeze for bitcoin::ecdsa::Signature
-impl core::marker::Freeze for bitcoin::error::ContainsPrefixError
-impl core::marker::Freeze for bitcoin::error::MissingPrefixError
-impl core::marker::Freeze for bitcoin::error::PrefixedHexError
-impl core::marker::Freeze for bitcoin::error::UnprefixedHexError
 impl core::marker::Freeze for bitcoin::key::FromSliceError
 impl core::marker::Freeze for bitcoin::key::FromWifError
 impl core::marker::Freeze for bitcoin::key::InvalidAddressVersionError
@@ -2626,10 +2598,6 @@ impl core::marker::Send for bitcoin::consensus::params::Params
 impl core::marker::Send for bitcoin::ecdsa::Error
 impl core::marker::Send for bitcoin::ecdsa::SerializedSignature
 impl core::marker::Send for bitcoin::ecdsa::Signature
-impl core::marker::Send for bitcoin::error::ContainsPrefixError
-impl core::marker::Send for bitcoin::error::MissingPrefixError
-impl core::marker::Send for bitcoin::error::PrefixedHexError
-impl core::marker::Send for bitcoin::error::UnprefixedHexError
 impl core::marker::Send for bitcoin::key::FromSliceError
 impl core::marker::Send for bitcoin::key::FromWifError
 impl core::marker::Send for bitcoin::key::InvalidAddressVersionError
@@ -2797,10 +2765,6 @@ impl core::marker::StructuralPartialEq for bitcoin::consensus::encode::CheckedDa
 impl core::marker::StructuralPartialEq for bitcoin::consensus::encode::VarInt
 impl core::marker::StructuralPartialEq for bitcoin::ecdsa::Error
 impl core::marker::StructuralPartialEq for bitcoin::ecdsa::Signature
-impl core::marker::StructuralPartialEq for bitcoin::error::ContainsPrefixError
-impl core::marker::StructuralPartialEq for bitcoin::error::MissingPrefixError
-impl core::marker::StructuralPartialEq for bitcoin::error::PrefixedHexError
-impl core::marker::StructuralPartialEq for bitcoin::error::UnprefixedHexError
 impl core::marker::StructuralPartialEq for bitcoin::key::FromSliceError
 impl core::marker::StructuralPartialEq for bitcoin::key::FromWifError
 impl core::marker::StructuralPartialEq for bitcoin::key::InvalidAddressVersionError
@@ -2971,10 +2935,6 @@ impl core::marker::Sync for bitcoin::consensus::params::Params
 impl core::marker::Sync for bitcoin::ecdsa::Error
 impl core::marker::Sync for bitcoin::ecdsa::SerializedSignature
 impl core::marker::Sync for bitcoin::ecdsa::Signature
-impl core::marker::Sync for bitcoin::error::ContainsPrefixError
-impl core::marker::Sync for bitcoin::error::MissingPrefixError
-impl core::marker::Sync for bitcoin::error::PrefixedHexError
-impl core::marker::Sync for bitcoin::error::UnprefixedHexError
 impl core::marker::Sync for bitcoin::key::FromSliceError
 impl core::marker::Sync for bitcoin::key::FromWifError
 impl core::marker::Sync for bitcoin::key::InvalidAddressVersionError
@@ -3150,10 +3110,6 @@ impl core::marker::Unpin for bitcoin::consensus::params::Params
 impl core::marker::Unpin for bitcoin::ecdsa::Error
 impl core::marker::Unpin for bitcoin::ecdsa::SerializedSignature
 impl core::marker::Unpin for bitcoin::ecdsa::Signature
-impl core::marker::Unpin for bitcoin::error::ContainsPrefixError
-impl core::marker::Unpin for bitcoin::error::MissingPrefixError
-impl core::marker::Unpin for bitcoin::error::PrefixedHexError
-impl core::marker::Unpin for bitcoin::error::UnprefixedHexError
 impl core::marker::Unpin for bitcoin::key::FromSliceError
 impl core::marker::Unpin for bitcoin::key::FromWifError
 impl core::marker::Unpin for bitcoin::key::InvalidAddressVersionError
@@ -3358,10 +3314,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::consensus::params::Par
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::ecdsa::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::ecdsa::SerializedSignature
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::ecdsa::Signature
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::error::ContainsPrefixError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::error::MissingPrefixError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::error::PrefixedHexError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::error::UnprefixedHexError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::key::FromSliceError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::key::FromWifError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::key::InvalidAddressVersionError
@@ -3533,10 +3485,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::consensus::params::Params
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::ecdsa::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::ecdsa::SerializedSignature
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::ecdsa::Signature
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::error::ContainsPrefixError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::error::MissingPrefixError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::error::PrefixedHexError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::error::UnprefixedHexError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::key::FromSliceError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::key::FromWifError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::key::InvalidAddressVersionError
@@ -4474,10 +4422,6 @@ pub bitcoin::ecdsa::Error::Secp256k1(secp256k1::Error)
 pub bitcoin::ecdsa::Error::SighashType(bitcoin::sighash::NonStandardSighashTypeError)
 pub bitcoin::ecdsa::Signature::sighash_type: bitcoin::EcdsaSighashType
 pub bitcoin::ecdsa::Signature::signature: secp256k1::ecdsa::Signature
-pub bitcoin::error::PrefixedHexError::MissingPrefix(bitcoin::error::MissingPrefixError)
-pub bitcoin::error::PrefixedHexError::ParseInt(bitcoin_units::parse::ParseIntError)
-pub bitcoin::error::UnprefixedHexError::ContainsPrefix(bitcoin::error::ContainsPrefixError)
-pub bitcoin::error::UnprefixedHexError::ParseInt(bitcoin_units::parse::ParseIntError)
 pub bitcoin::key::FromSliceError::InvalidKeyPrefix(u8)
 pub bitcoin::key::FromSliceError::InvalidLength(usize)
 pub bitcoin::key::FromSliceError::Secp256k1(secp256k1::Error)
@@ -5499,8 +5443,6 @@ pub enum bitcoin::blockdata::opcodes::ClassifyContext
 pub enum bitcoin::blockdata::script::Instruction<'a>
 pub enum bitcoin::consensus::DecodeError<E>
 pub enum bitcoin::consensus::encode::FromHexError
-pub enum bitcoin::error::PrefixedHexError
-pub enum bitcoin::error::UnprefixedHexError
 pub enum bitcoin::key::ParseCompressedPublicKeyError
 pub enum bitcoin::key::ParsePublicKeyError
 pub enum bitcoin::locktime::absolute::LockTime
@@ -6751,10 +6693,10 @@ pub fn bitcoin::blockdata::locktime::absolute::LockTime::from(h: bitcoin_units::
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from(t: bitcoin_units::locktime::absolute::Time) -> Self
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_consensus(n: u32) -> Self
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_height(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
-pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin::error::PrefixedHexError>
+pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_time(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
-pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
+pub fn bitcoin::blockdata::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::is_implied_by(&self, other: bitcoin::blockdata::locktime::absolute::LockTime) -> bool
 pub fn bitcoin::blockdata::locktime::absolute::LockTime::is_satisfied_by(&self, height: bitcoin_units::locktime::absolute::Height, time: bitcoin_units::locktime::absolute::Time) -> bool
@@ -7316,11 +7258,11 @@ pub fn bitcoin::blockdata::transaction::Sequence::from(lt: bitcoin::blockdata::l
 pub fn bitcoin::blockdata::transaction::Sequence::from_512_second_intervals(intervals: u16) -> Self
 pub fn bitcoin::blockdata::transaction::Sequence::from_consensus(n: u32) -> Self
 pub fn bitcoin::blockdata::transaction::Sequence::from_height(height: u16) -> Self
-pub fn bitcoin::blockdata::transaction::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin::error::PrefixedHexError>
+pub fn bitcoin::blockdata::transaction::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin::blockdata::transaction::Sequence::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
 pub fn bitcoin::blockdata::transaction::Sequence::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
 pub fn bitcoin::blockdata::transaction::Sequence::from_str(s: &str) -> core::result::Result<Self, Self::Err>
-pub fn bitcoin::blockdata::transaction::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
+pub fn bitcoin::blockdata::transaction::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin::blockdata::transaction::Sequence::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::blockdata::transaction::Sequence::is_final(&self) -> bool
 pub fn bitcoin::blockdata::transaction::Sequence::is_height_locked(&self) -> bool
@@ -7597,22 +7539,6 @@ pub fn bitcoin::ecdsa::Signature::serialize(&self) -> bitcoin::ecdsa::Serialized
 pub fn bitcoin::ecdsa::Signature::serialize_to_writer<W: bitcoin_io::Write + core::marker::Sized>(&self, writer: &mut W) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::ecdsa::Signature::sighash_all(signature: secp256k1::ecdsa::Signature) -> bitcoin::ecdsa::Signature
 pub fn bitcoin::ecdsa::Signature::to_vec(self) -> alloc::vec::Vec<u8>
-pub fn bitcoin::error::ContainsPrefixError::clone(&self) -> bitcoin::error::ContainsPrefixError
-pub fn bitcoin::error::ContainsPrefixError::eq(&self, other: &bitcoin::error::ContainsPrefixError) -> bool
-pub fn bitcoin::error::ContainsPrefixError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::error::MissingPrefixError::clone(&self) -> bitcoin::error::MissingPrefixError
-pub fn bitcoin::error::MissingPrefixError::eq(&self, other: &bitcoin::error::MissingPrefixError) -> bool
-pub fn bitcoin::error::MissingPrefixError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::error::PrefixedHexError::clone(&self) -> bitcoin::error::PrefixedHexError
-pub fn bitcoin::error::PrefixedHexError::eq(&self, other: &bitcoin::error::PrefixedHexError) -> bool
-pub fn bitcoin::error::PrefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::error::PrefixedHexError::from(e: bitcoin::error::MissingPrefixError) -> Self
-pub fn bitcoin::error::PrefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
-pub fn bitcoin::error::UnprefixedHexError::clone(&self) -> bitcoin::error::UnprefixedHexError
-pub fn bitcoin::error::UnprefixedHexError::eq(&self, other: &bitcoin::error::UnprefixedHexError) -> bool
-pub fn bitcoin::error::UnprefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::error::UnprefixedHexError::from(e: bitcoin::error::ContainsPrefixError) -> Self
-pub fn bitcoin::error::UnprefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
 pub fn bitcoin::key::FromSliceError::clone(&self) -> bitcoin::key::FromSliceError
 pub fn bitcoin::key::FromSliceError::eq(&self, other: &bitcoin::key::FromSliceError) -> bool
 pub fn bitcoin::key::FromSliceError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7784,9 +7710,9 @@ pub fn bitcoin::pow::CompactTarget::eq(&self, other: &bitcoin::pow::CompactTarge
 pub fn bitcoin::pow::CompactTarget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::pow::CompactTarget::from_consensus(bits: u32) -> Self
 pub fn bitcoin::pow::CompactTarget::from_header_difficulty_adjustment(last_epoch_boundary: bitcoin::blockdata::block::Header, current: bitcoin::blockdata::block::Header, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> bitcoin::pow::CompactTarget
-pub fn bitcoin::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin::error::PrefixedHexError>
+pub fn bitcoin::pow::CompactTarget::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin::pow::CompactTarget::from_next_work_required(last: bitcoin::pow::CompactTarget, timespan: u64, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> bitcoin::pow::CompactTarget
-pub fn bitcoin::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
+pub fn bitcoin::pow::CompactTarget::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin::pow::CompactTarget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::pow::CompactTarget::partial_cmp(&self, other: &bitcoin::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::pow::CompactTarget::to_consensus(self) -> u32
@@ -7799,9 +7725,9 @@ pub fn bitcoin::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> cor
 pub fn bitcoin::pow::Target::from(c: bitcoin::pow::CompactTarget) -> Self
 pub fn bitcoin::pow::Target::from_be_bytes(bytes: [u8; 32]) -> bitcoin::pow::Target
 pub fn bitcoin::pow::Target::from_compact(c: bitcoin::pow::CompactTarget) -> bitcoin::pow::Target
-pub fn bitcoin::pow::Target::from_hex(s: &str) -> core::result::Result<Self, bitcoin::error::PrefixedHexError>
+pub fn bitcoin::pow::Target::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin::pow::Target::from_le_bytes(bytes: [u8; 32]) -> bitcoin::pow::Target
-pub fn bitcoin::pow::Target::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
+pub fn bitcoin::pow::Target::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin::pow::Target::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::pow::Target::is_met_by(&self, hash: bitcoin::blockdata::block::BlockHash) -> bool
 pub fn bitcoin::pow::Target::max_difficulty_transition_threshold(&self) -> Self
@@ -7820,9 +7746,9 @@ pub fn bitcoin::pow::Work::cmp(&self, other: &bitcoin::pow::Work) -> core::cmp::
 pub fn bitcoin::pow::Work::eq(&self, other: &bitcoin::pow::Work) -> bool
 pub fn bitcoin::pow::Work::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::pow::Work::from_be_bytes(bytes: [u8; 32]) -> bitcoin::pow::Work
-pub fn bitcoin::pow::Work::from_hex(s: &str) -> core::result::Result<Self, bitcoin::error::PrefixedHexError>
+pub fn bitcoin::pow::Work::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin::pow::Work::from_le_bytes(bytes: [u8; 32]) -> bitcoin::pow::Work
-pub fn bitcoin::pow::Work::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin::error::UnprefixedHexError>
+pub fn bitcoin::pow::Work::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin::pow::Work::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::pow::Work::partial_cmp(&self, other: &bitcoin::pow::Work) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::pow::Work::sub(self, rhs: Self) -> Self
@@ -8560,7 +8486,6 @@ pub mod bitcoin::consensus::encode
 pub mod bitcoin::consensus::params
 pub mod bitcoin::constants
 pub mod bitcoin::ecdsa
-pub mod bitcoin::error
 pub mod bitcoin::hash_types
 pub mod bitcoin::key
 pub mod bitcoin::locktime
@@ -8727,8 +8652,6 @@ pub struct bitcoin::consensus::encode::VarInt(pub u64)
 pub struct bitcoin::constants::ChainHash(_)
 pub struct bitcoin::ecdsa::SerializedSignature
 pub struct bitcoin::ecdsa::Signature
-pub struct bitcoin::error::ContainsPrefixError
-pub struct bitcoin::error::MissingPrefixError
 pub struct bitcoin::hash_types::BlockHash(_)
 pub struct bitcoin::hash_types::FilterHash(_)
 pub struct bitcoin::hash_types::FilterHeader(_)
@@ -9046,7 +8969,6 @@ pub use bitcoin::blockdata::locktime::relative::Height
 pub use bitcoin::blockdata::locktime::relative::Time
 pub use bitcoin::blockdata::locktime::relative::TimeOverflowError
 pub use bitcoin::blockdata::weight::<<units::weight::*>>
-pub use bitcoin::error::ParseIntError
 pub use bitcoin::key::Keypair
 pub use bitcoin::key::Parity
 pub use bitcoin::key::Secp256k1

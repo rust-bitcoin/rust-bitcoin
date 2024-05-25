@@ -15,7 +15,7 @@ use core::{cmp, fmt, str};
 use hashes::{sha256d, Hash};
 use internals::write_err;
 use io::{BufRead, Write};
-use units::parse;
+use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
@@ -24,7 +24,6 @@ use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::prelude::*;
 #[cfg(doc)]
@@ -121,7 +120,7 @@ pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hex::HexToArrayError),
     /// Error in vout part.
-    Vout(crate::error::ParseIntError),
+    Vout(parse::ParseIntError),
     /// Error in general format.
     Format,
     /// Size exceeds max.
@@ -404,26 +403,15 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
-    /// Creates a `Sequence` from an prefixed hex string.
+    /// Creates a `Sequence` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let stripped = if let Some(stripped) = s.strip_prefix("0x") {
-            stripped
-        } else if let Some(stripped) = s.strip_prefix("0X") {
-            stripped
-        } else {
-            return Err(MissingPrefixError::new(s).into());
-        };
-
-        let sequence = parse::hex_u32(stripped)?;
-        Ok(Self::from_consensus(sequence))
+        let lock_time = parse::hex_u32_prefixed(s)?;
+        Ok(Self::from_consensus(lock_time))
     }
 
     /// Creates a `Sequence` from an unprefixed hex string.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        if s.starts_with("0x") || s.starts_with("0X") {
-            return Err(ContainsPrefixError::new(s).into());
-        }
-        let lock_time = parse::hex_u32(s)?;
+        let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
