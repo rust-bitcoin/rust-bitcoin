@@ -6,9 +6,9 @@ use core::fmt;
 
 use internals::write_err;
 
-use crate::parse::ParseIntError;
 #[cfg(feature = "alloc")]
 use crate::parse;
+use crate::parse::ParseIntError;
 #[cfg(feature = "alloc")]
 use crate::prelude::*;
 
