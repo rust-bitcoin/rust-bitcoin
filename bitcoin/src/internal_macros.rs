@@ -198,7 +198,6 @@ macro_rules! impl_hashencode {
 
         impl $crate::consensus::Decodable for $hashtype {
             fn consensus_decode<R: $crate::io::BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, $crate::consensus::encode::Error> {
-                use $crate::hashes::Hash;
                 Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
             }
         }

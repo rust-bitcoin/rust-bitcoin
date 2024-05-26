@@ -210,16 +210,6 @@ pub trait Hash:
 
     /// Returns a reference to the underlying byte array.
     fn as_byte_array(&self) -> &Self::Bytes;
-
-    /// Constructs a hash from the underlying byte array.
-    fn from_byte_array(bytes: Self::Bytes) -> Self;
-
-    /// Returns an all zero hash.
-    ///
-    /// An all zeros hash is a made up construct because there is not a known input that can create
-    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
-    /// previous blockhash and the coinbase transaction's outpoint txid.
-    fn all_zeros() -> Self;
 }
 
 /// Attempted to create a hash from an invalid length slice.

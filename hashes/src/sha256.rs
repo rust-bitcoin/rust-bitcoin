@@ -101,9 +101,9 @@ impl crate::HashEngine for HashEngine {
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     pub fn hash_again(&self) -> sha256d::Hash {
-        crate::Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0)
+        let sha256_hash = Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0);
+        sha256d::Hash::from_byte_array(sha256_hash.0)
     }
-
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.

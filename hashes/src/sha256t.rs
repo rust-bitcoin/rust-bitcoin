@@ -40,6 +40,18 @@ impl<T: Tag> Hash<T> {
     fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
 
     fn internal_engine() -> HashEngine { T::engine() }
+
+    /// Constructs a hash from the underlying byte array.
+    pub const fn from_byte_array(bytes: <Self as crate::Hash>::Bytes) -> Self {
+        Hash(bytes, PhantomData)
+    }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can create
+    /// it. However, it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+    /// previous blockhash and the coinbase transaction's outpoint txid.
+    pub const fn all_zeros() -> Self { Hash([0x00; 32], PhantomData) }
 }
 
 impl<T: Tag> Copy for Hash<T> {}

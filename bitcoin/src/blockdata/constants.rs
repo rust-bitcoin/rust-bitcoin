@@ -213,7 +213,6 @@ mod test {
 
     use super::*;
     use crate::consensus::encode::serialize;
-    use crate::consensus::params;
     use crate::Txid;
 
     #[test]
@@ -243,7 +242,7 @@ mod test {
     #[test]
     fn bitcoin_genesis_block_calling_convention() {
         // This is the best.
-        let _ = genesis_block(&params::MAINNET);
+        let _ = genesis_block(&Params::MAINNET);
         // this works and is ok too.
         let _ = genesis_block(&Network::Bitcoin);
         let _ = genesis_block(Network::Bitcoin);
@@ -254,7 +253,7 @@ mod test {
 
     #[test]
     fn bitcoin_genesis_full_block() {
-        let gen = genesis_block(&params::MAINNET);
+        let gen = genesis_block(&Params::MAINNET);
 
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
@@ -274,7 +273,7 @@ mod test {
 
     #[test]
     fn testnet_genesis_full_block() {
-        let gen = genesis_block(&params::TESTNET);
+        let gen = genesis_block(&Params::TESTNET);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
         assert_eq!(
@@ -292,7 +291,7 @@ mod test {
 
     #[test]
     fn signet_genesis_full_block() {
-        let gen = genesis_block(&params::SIGNET);
+        let gen = genesis_block(&Params::SIGNET);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
         assert_eq!(

@@ -89,13 +89,13 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::{Hash, hex::{FromHex}};
+                use $crate::{ hex::{FromHex}};
 
                 let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
                 if $reverse {
                     bytes.reverse();
                 }
-                Ok(Self::from_byte_array(bytes))
+                Ok(Hash::from_byte_array(bytes))
             }
         }
 
@@ -150,14 +150,6 @@ macro_rules! hash_trait_impls {
             fn as_byte_array(&self) -> &Self::Bytes {
                 &self.0
             }
-
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                Self::internal_new(bytes)
-            }
-
-            fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
-            }
         }
     }
 }
@@ -188,6 +180,18 @@ macro_rules! hash_type {
             fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
             fn internal_engine() -> HashEngine { Default::default() }
+
+            /// Constructs a hash from the underlying byte array.
+            pub const fn from_byte_array(bytes: <Self as crate::Hash>::Bytes) -> Self {
+                Hash(bytes)
+            }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can create
+            /// it. However, it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+            /// previous blockhash and the coinbase transaction's outpoint txid.
+            pub const fn all_zeros() -> Self { Hash([0x00; $bits / 8]) }
         }
 
         #[cfg(feature = "schemars")]

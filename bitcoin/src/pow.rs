@@ -1776,7 +1776,6 @@ mod tests {
 
     #[test]
     fn compact_target_from_upwards_difficulty_adjustment_using_headers() {
-        use hashes::Hash;
 
         use crate::block::Version;
         use crate::constants::genesis_block;
@@ -1801,7 +1800,6 @@ mod tests {
 
     #[test]
     fn compact_target_from_downwards_difficulty_adjustment_using_headers() {
-        use hashes::Hash;
 
         use crate::block::Version;
         use crate::TxMerkleNode;

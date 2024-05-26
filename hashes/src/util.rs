@@ -210,7 +210,27 @@ macro_rules! hash_newtype {
             pub fn as_raw_hash(&self) -> &$hash {
                 &self.0
             }
+
+            #[allow(unused)]
+            /// Constructs a hash from the underlying byte array.
+            pub const fn from_byte_array(bytes: <Self as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
+            }
+
+
+            #[allow(unused)]
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can create
+            /// it. However, it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+            /// previous blockhash and the coinbase transaction's outpoint txid.
+            pub const fn all_zeros() -> Self {
+                let zeros = <$hash>::all_zeros();
+                $newtype(zeros)
+            }
         }
+
+
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
             fn from(inner: $hash) -> $newtype {
@@ -246,11 +266,6 @@ macro_rules! hash_newtype {
             }
 
             #[inline]
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
-            }
-
-            #[inline]
             fn to_byte_array(self) -> Self::Bytes {
                 self.0.to_byte_array()
             }
@@ -259,18 +274,12 @@ macro_rules! hash_newtype {
             fn as_byte_array(&self) -> &Self::Bytes {
                 self.0.as_byte_array()
             }
-
-            #[inline]
-            fn all_zeros() -> Self {
-                let zeros = <$hash>::all_zeros();
-                $newtype(zeros)
-            }
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::{Hash, hex::FromHex};
+                use $crate::hex::FromHex;
 
                 let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
                 if <Self as $crate::Hash>::DISPLAY_BACKWARD {
