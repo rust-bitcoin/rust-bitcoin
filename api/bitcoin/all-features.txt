@@ -6849,7 +6849,7 @@ pub fn bitcoin::EcdsaSighashType::from_str(s: &str) -> core::result::Result<Self
 pub fn bitcoin::EcdsaSighashType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::EcdsaSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::EcdsaSighashType::to_u32(self) -> u32
-pub fn bitcoin::LegacySighash::all_zeros() -> Self
+pub const fn bitcoin::LegacySighash::all_zeros() -> Self
 pub fn bitcoin::LegacySighash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::LegacySighash::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::LegacySighash::as_ref(&self) -> &[u8; 32]
@@ -6862,7 +6862,7 @@ pub fn bitcoin::LegacySighash::engine() -> Self::Engine
 pub fn bitcoin::LegacySighash::eq(&self, other: &bitcoin::LegacySighash) -> bool
 pub fn bitcoin::LegacySighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::LegacySighash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::LegacySighash
-pub fn bitcoin::LegacySighash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::LegacySighash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::LegacySighash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::LegacySighash::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::LegacySighash
 pub fn bitcoin::LegacySighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::LegacySighash, bitcoin_hashes::FromSliceError>
@@ -6898,7 +6898,7 @@ pub fn bitcoin::PrivateKey::public_key<C: secp256k1::context::Signing>(&self, se
 pub fn bitcoin::PrivateKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::PrivateKey::to_bytes(self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::PrivateKey::to_wif(self) -> alloc::string::String
-pub fn bitcoin::PubkeyHash::all_zeros() -> Self
+pub const fn bitcoin::PubkeyHash::all_zeros() -> Self
 pub fn bitcoin::PubkeyHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::PubkeyHash::as_raw_hash(&self) -> &bitcoin_hashes::hash160::Hash
 pub fn bitcoin::PubkeyHash::as_ref(&self) -> &[u8; 20]
@@ -6916,7 +6916,7 @@ pub fn bitcoin::PubkeyHash::from(key: &bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::PubkeyHash::from(key: &bitcoin::PublicKey) -> bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::from(key: bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::PubkeyHash::from(key: bitcoin::PublicKey) -> bitcoin::PubkeyHash
-pub fn bitcoin::PubkeyHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::PubkeyHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::PubkeyHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::PubkeyHash::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::PubkeyHash, bitcoin_hashes::FromSliceError>
@@ -6951,7 +6951,7 @@ pub fn bitcoin::PublicKey::to_sort_key(self) -> bitcoin::key::SortKey
 pub fn bitcoin::PublicKey::verify<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, msg: &secp256k1::Message, sig: &bitcoin::ecdsa::Signature) -> core::result::Result<(), secp256k1::Error>
 pub fn bitcoin::PublicKey::wpubkey_hash(&self) -> core::result::Result<bitcoin::WPubkeyHash, bitcoin::key::UncompressedPublicKeyError>
 pub fn bitcoin::PublicKey::write_into<W: bitcoin_io::Write + core::marker::Sized>(&self, writer: &mut W) -> core::result::Result<(), bitcoin_io::error::Error>
-pub fn bitcoin::SegwitV0Sighash::all_zeros() -> Self
+pub const fn bitcoin::SegwitV0Sighash::all_zeros() -> Self
 pub fn bitcoin::SegwitV0Sighash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::SegwitV0Sighash::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::SegwitV0Sighash::as_ref(&self) -> &[u8; 32]
@@ -6964,7 +6964,7 @@ pub fn bitcoin::SegwitV0Sighash::engine() -> Self::Engine
 pub fn bitcoin::SegwitV0Sighash::eq(&self, other: &bitcoin::SegwitV0Sighash) -> bool
 pub fn bitcoin::SegwitV0Sighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::SegwitV0Sighash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::SegwitV0Sighash
-pub fn bitcoin::SegwitV0Sighash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::SegwitV0Sighash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::SegwitV0Sighash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::SegwitV0Sighash::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::SegwitV0Sighash
 pub fn bitcoin::SegwitV0Sighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::SegwitV0Sighash, bitcoin_hashes::FromSliceError>
@@ -6976,7 +6976,7 @@ pub fn bitcoin::SegwitV0Sighash::partial_cmp(&self, other: &bitcoin::SegwitV0Sig
 pub fn bitcoin::SegwitV0Sighash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::SegwitV0Sighash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::SegwitV0Sighash::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::TapSighash::all_zeros() -> Self
+pub const fn bitcoin::TapSighash::all_zeros() -> Self
 pub fn bitcoin::TapSighash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::TapSighash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
 pub fn bitcoin::TapSighash::as_ref(&self) -> &[u8; 32]
@@ -6989,7 +6989,7 @@ pub fn bitcoin::TapSighash::engine() -> Self::Engine
 pub fn bitcoin::TapSighash::eq(&self, other: &bitcoin::TapSighash) -> bool
 pub fn bitcoin::TapSighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::TapSighash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>) -> bitcoin::TapSighash
-pub fn bitcoin::TapSighash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::TapSighash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::TapSighash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::TapSighash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>) -> bitcoin::TapSighash
 pub fn bitcoin::TapSighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::TapSighash, bitcoin_hashes::FromSliceError>
@@ -7019,7 +7019,7 @@ pub fn bitcoin::TapSighashType::from_str(s: &str) -> core::result::Result<Self, 
 pub fn bitcoin::TapSighashType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::TapSighashType::partial_cmp(&self, other: &bitcoin::TapSighashType) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::TapSighashType::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
-pub fn bitcoin::WPubkeyHash::all_zeros() -> Self
+pub const fn bitcoin::WPubkeyHash::all_zeros() -> Self
 pub fn bitcoin::WPubkeyHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::WPubkeyHash::as_raw_hash(&self) -> &bitcoin_hashes::hash160::Hash
 pub fn bitcoin::WPubkeyHash::as_ref(&self) -> &[u8; 20]
@@ -7035,7 +7035,7 @@ pub fn bitcoin::WPubkeyHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> cor
 pub fn bitcoin::WPubkeyHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::from(key: &bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::WPubkeyHash::from(key: bitcoin::CompressedPublicKey) -> Self
-pub fn bitcoin::WPubkeyHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::WPubkeyHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::WPubkeyHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::WPubkeyHash::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::WPubkeyHash, bitcoin_hashes::FromSliceError>
@@ -7263,7 +7263,7 @@ pub fn bitcoin::bip158::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> c
 pub fn bitcoin::bip158::Error::from(io: bitcoin_io::error::Error) -> Self
 pub fn bitcoin::bip158::Error::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::bip158::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-pub fn bitcoin::bip158::FilterHash::all_zeros() -> Self
+pub const fn bitcoin::bip158::FilterHash::all_zeros() -> Self
 pub fn bitcoin::bip158::FilterHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::bip158::FilterHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::bip158::FilterHash::as_ref(&self) -> &[u8; 32]
@@ -7279,7 +7279,7 @@ pub fn bitcoin::bip158::FilterHash::eq(&self, other: &bitcoin::bip158::FilterHas
 pub fn bitcoin::bip158::FilterHash::filter_header(&self, previous_filter_header: &bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip158::FilterHash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHash
-pub fn bitcoin::bip158::FilterHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::bip158::FilterHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::bip158::FilterHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::bip158::FilterHash::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip158::FilterHash, bitcoin_hashes::FromSliceError>
@@ -7291,7 +7291,7 @@ pub fn bitcoin::bip158::FilterHash::partial_cmp(&self, other: &bitcoin::bip158::
 pub fn bitcoin::bip158::FilterHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::bip158::FilterHash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::bip158::FilterHash::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::bip158::FilterHeader::all_zeros() -> Self
+pub const fn bitcoin::bip158::FilterHeader::all_zeros() -> Self
 pub fn bitcoin::bip158::FilterHeader::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::bip158::FilterHeader::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::bip158::FilterHeader::as_ref(&self) -> &[u8; 32]
@@ -7306,7 +7306,7 @@ pub fn bitcoin::bip158::FilterHeader::engine() -> Self::Engine
 pub fn bitcoin::bip158::FilterHeader::eq(&self, other: &bitcoin::bip158::FilterHeader) -> bool
 pub fn bitcoin::bip158::FilterHeader::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip158::FilterHeader::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHeader
-pub fn bitcoin::bip158::FilterHeader::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::bip158::FilterHeader::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::bip158::FilterHeader::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::bip158::FilterHeader::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHeader::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip158::FilterHeader, bitcoin_hashes::FromSliceError>
@@ -7438,7 +7438,7 @@ pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::clone(&self) -> bitcoin:
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::eq(&self, other: &bitcoin::bip32::InvalidBase58PayloadLengthError) -> bool
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::invalid_base58_payload_length(&self) -> usize
-pub fn bitcoin::bip32::XKeyIdentifier::all_zeros() -> Self
+pub const fn bitcoin::bip32::XKeyIdentifier::all_zeros() -> Self
 pub fn bitcoin::bip32::XKeyIdentifier::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::bip32::XKeyIdentifier::as_raw_hash(&self) -> &bitcoin_hashes::hash160::Hash
 pub fn bitcoin::bip32::XKeyIdentifier::as_ref(&self) -> &[u8; 20]
@@ -7453,7 +7453,7 @@ pub fn bitcoin::bip32::XKeyIdentifier::fmt(&self, f: &mut core::fmt::Formatter<'
 pub fn bitcoin::bip32::XKeyIdentifier::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from(key: &bitcoin::bip32::Xpub) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from(key: bitcoin::bip32::Xpub) -> bitcoin::bip32::XKeyIdentifier
-pub fn bitcoin::bip32::XKeyIdentifier::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::bip32::XKeyIdentifier::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::bip32::XKeyIdentifier::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::bip32::XKeyIdentifier::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, bitcoin_hashes::FromSliceError>
@@ -7524,7 +7524,7 @@ pub fn bitcoin::blockdata::block::Block::serialize<__S>(&self, __serializer: __S
 pub fn bitcoin::blockdata::block::Block::total_size(&self) -> usize
 pub fn bitcoin::blockdata::block::Block::weight(&self) -> bitcoin_units::weight::Weight
 pub fn bitcoin::blockdata::block::Block::witness_root(&self) -> core::option::Option<bitcoin::blockdata::block::WitnessMerkleNode>
-pub fn bitcoin::blockdata::block::BlockHash::all_zeros() -> Self
+pub const fn bitcoin::blockdata::block::BlockHash::all_zeros() -> Self
 pub fn bitcoin::blockdata::block::BlockHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::block::BlockHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::block::BlockHash::as_ref(&self) -> &[u8; 32]
@@ -7543,7 +7543,7 @@ pub fn bitcoin::blockdata::block::BlockHash::from(block: bitcoin::blockdata::blo
 pub fn bitcoin::blockdata::block::BlockHash::from(header: &bitcoin::blockdata::block::Header) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from(header: bitcoin::blockdata::block::Header) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::BlockHash
-pub fn bitcoin::blockdata::block::BlockHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::block::BlockHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::block::BlockHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::block::BlockHash::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::BlockHash, bitcoin_hashes::FromSliceError>
@@ -7564,7 +7564,7 @@ pub fn bitcoin::blockdata::block::Header::consensus_encode<R: bitcoin_io::Write 
 pub fn bitcoin::blockdata::block::Header::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
 pub fn bitcoin::blockdata::block::Header::difficulty(&self, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> u128
 pub fn bitcoin::blockdata::block::Header::difficulty_float(&self) -> f64
-pub fn bitcoin::blockdata::block::Header::eq(&self, other: &bitcoin::blockdata::block::Header) -> bool
+pub fn bitcoin::blockdata::block::Header::eq(&self, : &bitcoin::blockdata::block::Header) -> bool
 pub fn bitcoin::blockdata::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::blockdata::block::Header::partial_cmp(&self, other: &bitcoin::blockdata::block::Header) -> core::option::Option<core::cmp::Ordering>
@@ -7572,7 +7572,7 @@ pub fn bitcoin::blockdata::block::Header::serialize<__S>(&self, __serializer: __
 pub fn bitcoin::blockdata::block::Header::target(&self) -> bitcoin::pow::Target
 pub fn bitcoin::blockdata::block::Header::validate_pow(&self, required_target: bitcoin::pow::Target) -> core::result::Result<bitcoin::blockdata::block::BlockHash, bitcoin::blockdata::block::ValidationError>
 pub fn bitcoin::blockdata::block::Header::work(&self) -> bitcoin::pow::Work
-pub fn bitcoin::blockdata::block::TxMerkleNode::all_zeros() -> Self
+pub const fn bitcoin::blockdata::block::TxMerkleNode::all_zeros() -> Self
 pub fn bitcoin::blockdata::block::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::block::TxMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::block::TxMerkleNode::as_ref(&self) -> &[u8; 32]
@@ -7588,7 +7588,7 @@ pub fn bitcoin::blockdata::block::TxMerkleNode::eq(&self, other: &bitcoin::block
 pub fn bitcoin::blockdata::block::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::TxMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::TxMerkleNode
 pub fn bitcoin::blockdata::block::TxMerkleNode::from(txid: bitcoin::blockdata::transaction::Txid) -> Self
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::block::TxMerkleNode::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::block::TxMerkleNode::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::block::TxMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::TxMerkleNode
 pub fn bitcoin::blockdata::block::TxMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, bitcoin_hashes::FromSliceError>
@@ -7618,7 +7618,7 @@ pub fn bitcoin::blockdata::block::Version::is_signalling_soft_fork(&self, bit: u
 pub fn bitcoin::blockdata::block::Version::partial_cmp(&self, other: &bitcoin::blockdata::block::Version) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::block::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin::blockdata::block::Version::to_consensus(self) -> i32
-pub fn bitcoin::blockdata::block::WitnessCommitment::all_zeros() -> Self
+pub const fn bitcoin::blockdata::block::WitnessCommitment::all_zeros() -> Self
 pub fn bitcoin::blockdata::block::WitnessCommitment::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::block::WitnessCommitment::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::block::WitnessCommitment::as_ref(&self) -> &[u8; 32]
@@ -7631,7 +7631,7 @@ pub fn bitcoin::blockdata::block::WitnessCommitment::engine() -> Self::Engine
 pub fn bitcoin::blockdata::block::WitnessCommitment::eq(&self, other: &bitcoin::blockdata::block::WitnessCommitment) -> bool
 pub fn bitcoin::blockdata::block::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::WitnessCommitment::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessCommitment
-pub fn bitcoin::blockdata::block::WitnessCommitment::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::block::WitnessCommitment::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, bitcoin_hashes::FromSliceError>
@@ -7643,7 +7643,7 @@ pub fn bitcoin::blockdata::block::WitnessCommitment::partial_cmp(&self, other: &
 pub fn bitcoin::blockdata::block::WitnessCommitment::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::blockdata::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::block::WitnessCommitment::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::all_zeros() -> Self
+pub const fn bitcoin::blockdata::block::WitnessMerkleNode::all_zeros() -> Self
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
@@ -7659,7 +7659,7 @@ pub fn bitcoin::blockdata::block::WitnessMerkleNode::eq(&self, other: &bitcoin::
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessMerkleNode
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from(wtxid: bitcoin::blockdata::transaction::Wtxid) -> Self
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::block::WitnessMerkleNode::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessMerkleNode
 pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, bitcoin_hashes::FromSliceError>
@@ -8147,7 +8147,7 @@ pub fn bitcoin::blockdata::script::ScriptBuf::reserve_exact(&mut self, additiona
 pub fn bitcoin::blockdata::script::ScriptBuf::scan_and_push_verify(&mut self)
 pub fn bitcoin::blockdata::script::ScriptBuf::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::blockdata::script::ScriptBuf::with_capacity(capacity: usize) -> Self
-pub fn bitcoin::blockdata::script::ScriptHash::all_zeros() -> Self
+pub const fn bitcoin::blockdata::script::ScriptHash::all_zeros() -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::script::ScriptHash::as_raw_hash(&self) -> &bitcoin_hashes::hash160::Hash
 pub fn bitcoin::blockdata::script::ScriptHash::as_ref(&self) -> &[u8; 20]
@@ -8164,7 +8164,7 @@ pub fn bitcoin::blockdata::script::ScriptHash::from(inner: bitcoin_hashes::hash1
 pub fn bitcoin::blockdata::script::ScriptHash::from(script: &bitcoin::blockdata::script::Script) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from(script: &bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from(script: bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::script::ScriptHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, bitcoin_hashes::FromSliceError>
@@ -8176,7 +8176,7 @@ pub fn bitcoin::blockdata::script::ScriptHash::partial_cmp(&self, other: &bitcoi
 pub fn bitcoin::blockdata::script::ScriptHash::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::blockdata::script::ScriptHash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::script::ScriptHash::to_raw_hash(self) -> bitcoin_hashes::hash160::Hash
-pub fn bitcoin::blockdata::script::WScriptHash::all_zeros() -> Self
+pub const fn bitcoin::blockdata::script::WScriptHash::all_zeros() -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::script::WScriptHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256::Hash
 pub fn bitcoin::blockdata::script::WScriptHash::as_ref(&self) -> &[u8; 32]
@@ -8193,7 +8193,7 @@ pub fn bitcoin::blockdata::script::WScriptHash::from(inner: bitcoin_hashes::sha2
 pub fn bitcoin::blockdata::script::WScriptHash::from(script: &bitcoin::blockdata::script::Script) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from(script: &bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from(script: bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::script::WScriptHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, bitcoin_hashes::FromSliceError>
@@ -8388,7 +8388,7 @@ pub fn bitcoin::blockdata::transaction::TxOut::partial_cmp(&self, other: &bitcoi
 pub fn bitcoin::blockdata::transaction::TxOut::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin::blockdata::transaction::TxOut::size(&self) -> usize
 pub fn bitcoin::blockdata::transaction::TxOut::weight(&self) -> bitcoin_units::weight::Weight
-pub fn bitcoin::blockdata::transaction::Txid::all_zeros() -> Self
+pub const fn bitcoin::blockdata::transaction::Txid::all_zeros() -> Self
 pub fn bitcoin::blockdata::transaction::Txid::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::transaction::Txid::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::transaction::Txid::as_ref(&self) -> &[u8; 32]
@@ -8405,7 +8405,7 @@ pub fn bitcoin::blockdata::transaction::Txid::fmt(&self, f: &mut core::fmt::Form
 pub fn bitcoin::blockdata::transaction::Txid::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from(tx: &bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from(tx: bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Txid
-pub fn bitcoin::blockdata::transaction::Txid::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::transaction::Txid::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::transaction::Txid::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::transaction::Txid::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::transaction::Txid, bitcoin_hashes::FromSliceError>
@@ -8429,7 +8429,7 @@ pub fn bitcoin::blockdata::transaction::Version::is_standard(&self) -> bool
 pub fn bitcoin::blockdata::transaction::Version::non_standard(version: i32) -> bitcoin::blockdata::transaction::Version
 pub fn bitcoin::blockdata::transaction::Version::partial_cmp(&self, other: &bitcoin::blockdata::transaction::Version) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::transaction::Version::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin::blockdata::transaction::Wtxid::all_zeros() -> Self
+pub const fn bitcoin::blockdata::transaction::Wtxid::all_zeros() -> Self
 pub fn bitcoin::blockdata::transaction::Wtxid::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::transaction::Wtxid::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::transaction::Wtxid::as_ref(&self) -> &[u8; 32]
@@ -8446,7 +8446,7 @@ pub fn bitcoin::blockdata::transaction::Wtxid::fmt(&self, f: &mut core::fmt::For
 pub fn bitcoin::blockdata::transaction::Wtxid::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from(tx: &bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from(tx: bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Wtxid
-pub fn bitcoin::blockdata::transaction::Wtxid::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::blockdata::transaction::Wtxid::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::blockdata::transaction::Wtxid::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::blockdata::transaction::Wtxid::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, bitcoin_hashes::FromSliceError>
@@ -9456,7 +9456,7 @@ pub fn bitcoin::taproot::TapLeaf::fmt(&self, f: &mut core::fmt::Formatter<'_>) -
 pub fn bitcoin::taproot::TapLeaf::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::TapLeaf::partial_cmp(&self, other: &bitcoin::taproot::TapLeaf) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::TapLeaf::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin::taproot::TapLeafHash::all_zeros() -> Self
+pub const fn bitcoin::taproot::TapLeafHash::all_zeros() -> Self
 pub fn bitcoin::taproot::TapLeafHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::taproot::TapLeafHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
 pub fn bitcoin::taproot::TapLeafHash::as_ref(&self) -> &[u8; 32]
@@ -9472,7 +9472,7 @@ pub fn bitcoin::taproot::TapLeafHash::eq(&self, other: &bitcoin::taproot::TapLea
 pub fn bitcoin::taproot::TapLeafHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::taproot::TapLeafHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from(script_path: bitcoin::sighash::ScriptPath<'s>) -> bitcoin::taproot::TapLeafHash
-pub fn bitcoin::taproot::TapLeafHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::taproot::TapLeafHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::taproot::TapLeafHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::taproot::TapLeafHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from_script(script: &bitcoin::blockdata::script::Script, ver: bitcoin::taproot::LeafVersion) -> bitcoin::taproot::TapLeafHash
@@ -9492,7 +9492,7 @@ pub fn bitcoin::taproot::TapLeafTag::engine() -> bitcoin_hashes::sha256::HashEng
 pub fn bitcoin::taproot::TapLeafTag::eq(&self, other: &bitcoin::taproot::TapLeafTag) -> bool
 pub fn bitcoin::taproot::TapLeafTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::TapLeafTag::partial_cmp(&self, other: &bitcoin::taproot::TapLeafTag) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin::taproot::TapNodeHash::all_zeros() -> Self
+pub const fn bitcoin::taproot::TapNodeHash::all_zeros() -> Self
 pub fn bitcoin::taproot::TapNodeHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::taproot::TapNodeHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
 pub fn bitcoin::taproot::TapNodeHash::as_ref(&self) -> &[u8; 32]
@@ -9509,7 +9509,7 @@ pub fn bitcoin::taproot::TapNodeHash::from(inner: bitcoin_hashes::sha256t::Hash<
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: &bitcoin::taproot::LeafNode) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::LeafNode) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::TapLeafHash) -> bitcoin::taproot::TapNodeHash
-pub fn bitcoin::taproot::TapNodeHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::taproot::TapNodeHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::taproot::TapNodeHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::taproot::TapNodeHash::from_node_hashes(a: bitcoin::taproot::TapNodeHash, b: bitcoin::taproot::TapNodeHash) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>) -> bitcoin::taproot::TapNodeHash
@@ -9535,7 +9535,7 @@ pub fn bitcoin::taproot::TapTree::script_leaves(&self) -> bitcoin::taproot::Scri
 pub fn bitcoin::taproot::TapTree::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin::taproot::TapTree::try_from(builder: bitcoin::taproot::TaprootBuilder) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::taproot::TapTree::try_from(node_info: bitcoin::taproot::NodeInfo) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin::taproot::TapTweakHash::all_zeros() -> Self
+pub const fn bitcoin::taproot::TapTweakHash::all_zeros() -> Self
 pub fn bitcoin::taproot::TapTweakHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::taproot::TapTweakHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
 pub fn bitcoin::taproot::TapTweakHash::as_ref(&self) -> &[u8; 32]
@@ -9550,7 +9550,7 @@ pub fn bitcoin::taproot::TapTweakHash::fmt(&self, f: &mut core::fmt::Formatter<'
 pub fn bitcoin::taproot::TapTweakHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: &bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
-pub fn bitcoin::taproot::TapTweakHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub const fn bitcoin::taproot::TapTweakHash::from_byte_array(bytes: <Self as bitcoin_hashes::Hash>::Bytes)  -> Self
 pub fn bitcoin::taproot::TapTweakHash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin::taproot::TapTweakHash::from_key_and_tweak(internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from_raw_hash(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>) -> bitcoin::taproot::TapTweakHash
