@@ -1,6 +1,7 @@
 #[non_exhaustive] pub enum bitcoin::AddressType
 #[non_exhaustive] pub enum bitcoin::KnownHrp
 #[non_exhaustive] pub enum bitcoin::Network
+#[non_exhaustive] pub enum bitcoin::address::AddressData
 #[non_exhaustive] pub enum bitcoin::address::AddressType
 #[non_exhaustive] pub enum bitcoin::address::FromScriptError
 #[non_exhaustive] pub enum bitcoin::address::KnownHrp
@@ -442,6 +443,7 @@ impl core::clone::Clone for bitcoin::TapSighash
 impl core::clone::Clone for bitcoin::TapSighashTag
 impl core::clone::Clone for bitcoin::TapSighashType
 impl core::clone::Clone for bitcoin::WPubkeyHash
+impl core::clone::Clone for bitcoin::address::AddressData
 impl core::clone::Clone for bitcoin::address::AddressType
 impl core::clone::Clone for bitcoin::address::KnownHrp
 impl core::clone::Clone for bitcoin::address::NetworkChecked
@@ -612,6 +614,7 @@ impl core::cmp::Eq for bitcoin::TapSighash
 impl core::cmp::Eq for bitcoin::TapSighashTag
 impl core::cmp::Eq for bitcoin::TapSighashType
 impl core::cmp::Eq for bitcoin::WPubkeyHash
+impl core::cmp::Eq for bitcoin::address::AddressData
 impl core::cmp::Eq for bitcoin::address::AddressType
 impl core::cmp::Eq for bitcoin::address::KnownHrp
 impl core::cmp::Eq for bitcoin::address::NetworkChecked
@@ -778,6 +781,7 @@ impl core::cmp::Ord for bitcoin::TapSighash
 impl core::cmp::Ord for bitcoin::TapSighashTag
 impl core::cmp::Ord for bitcoin::TapSighashType
 impl core::cmp::Ord for bitcoin::WPubkeyHash
+impl core::cmp::Ord for bitcoin::address::AddressData
 impl core::cmp::Ord for bitcoin::address::AddressType
 impl core::cmp::Ord for bitcoin::address::KnownHrp
 impl core::cmp::Ord for bitcoin::address::NetworkChecked
@@ -865,6 +869,7 @@ impl core::cmp::PartialEq for bitcoin::TapSighash
 impl core::cmp::PartialEq for bitcoin::TapSighashTag
 impl core::cmp::PartialEq for bitcoin::TapSighashType
 impl core::cmp::PartialEq for bitcoin::WPubkeyHash
+impl core::cmp::PartialEq for bitcoin::address::AddressData
 impl core::cmp::PartialEq for bitcoin::address::AddressType
 impl core::cmp::PartialEq for bitcoin::address::KnownHrp
 impl core::cmp::PartialEq for bitcoin::address::NetworkChecked
@@ -1035,6 +1040,7 @@ impl core::cmp::PartialOrd for bitcoin::TapSighash
 impl core::cmp::PartialOrd for bitcoin::TapSighashTag
 impl core::cmp::PartialOrd for bitcoin::TapSighashType
 impl core::cmp::PartialOrd for bitcoin::WPubkeyHash
+impl core::cmp::PartialOrd for bitcoin::address::AddressData
 impl core::cmp::PartialOrd for bitcoin::address::AddressType
 impl core::cmp::PartialOrd for bitcoin::address::KnownHrp
 impl core::cmp::PartialOrd for bitcoin::address::NetworkChecked
@@ -1812,6 +1818,7 @@ impl core::fmt::Debug for bitcoin::SegwitV0Sighash
 impl core::fmt::Debug for bitcoin::TapSighash
 impl core::fmt::Debug for bitcoin::TapSighashType
 impl core::fmt::Debug for bitcoin::WPubkeyHash
+impl core::fmt::Debug for bitcoin::address::AddressData
 impl core::fmt::Debug for bitcoin::address::AddressType
 impl core::fmt::Debug for bitcoin::address::KnownHrp
 impl core::fmt::Debug for bitcoin::address::NetworkChecked
@@ -2178,6 +2185,7 @@ impl core::hash::Hash for bitcoin::TapSighash
 impl core::hash::Hash for bitcoin::TapSighashTag
 impl core::hash::Hash for bitcoin::TapSighashType
 impl core::hash::Hash for bitcoin::WPubkeyHash
+impl core::hash::Hash for bitcoin::address::AddressData
 impl core::hash::Hash for bitcoin::address::AddressType
 impl core::hash::Hash for bitcoin::address::KnownHrp
 impl core::hash::Hash for bitcoin::address::NetworkChecked
@@ -2357,6 +2365,7 @@ impl core::marker::Freeze for bitcoin::TapSighash
 impl core::marker::Freeze for bitcoin::TapSighashTag
 impl core::marker::Freeze for bitcoin::TapSighashType
 impl core::marker::Freeze for bitcoin::WPubkeyHash
+impl core::marker::Freeze for bitcoin::address::AddressData
 impl core::marker::Freeze for bitcoin::address::AddressType
 impl core::marker::Freeze for bitcoin::address::KnownHrp
 impl core::marker::Freeze for bitcoin::address::NetworkChecked
@@ -2536,6 +2545,7 @@ impl core::marker::Send for bitcoin::TapSighash
 impl core::marker::Send for bitcoin::TapSighashTag
 impl core::marker::Send for bitcoin::TapSighashType
 impl core::marker::Send for bitcoin::WPubkeyHash
+impl core::marker::Send for bitcoin::address::AddressData
 impl core::marker::Send for bitcoin::address::AddressType
 impl core::marker::Send for bitcoin::address::KnownHrp
 impl core::marker::Send for bitcoin::address::NetworkChecked
@@ -2715,6 +2725,7 @@ impl core::marker::StructuralPartialEq for bitcoin::TapSighash
 impl core::marker::StructuralPartialEq for bitcoin::TapSighashTag
 impl core::marker::StructuralPartialEq for bitcoin::TapSighashType
 impl core::marker::StructuralPartialEq for bitcoin::WPubkeyHash
+impl core::marker::StructuralPartialEq for bitcoin::address::AddressData
 impl core::marker::StructuralPartialEq for bitcoin::address::AddressType
 impl core::marker::StructuralPartialEq for bitcoin::address::KnownHrp
 impl core::marker::StructuralPartialEq for bitcoin::address::NetworkChecked
@@ -2881,6 +2892,7 @@ impl core::marker::Sync for bitcoin::TapSighash
 impl core::marker::Sync for bitcoin::TapSighashTag
 impl core::marker::Sync for bitcoin::TapSighashType
 impl core::marker::Sync for bitcoin::WPubkeyHash
+impl core::marker::Sync for bitcoin::address::AddressData
 impl core::marker::Sync for bitcoin::address::AddressType
 impl core::marker::Sync for bitcoin::address::KnownHrp
 impl core::marker::Sync for bitcoin::address::NetworkChecked
@@ -3060,6 +3072,7 @@ impl core::marker::Unpin for bitcoin::TapSighash
 impl core::marker::Unpin for bitcoin::TapSighashTag
 impl core::marker::Unpin for bitcoin::TapSighashType
 impl core::marker::Unpin for bitcoin::WPubkeyHash
+impl core::marker::Unpin for bitcoin::address::AddressData
 impl core::marker::Unpin for bitcoin::address::AddressType
 impl core::marker::Unpin for bitcoin::address::KnownHrp
 impl core::marker::Unpin for bitcoin::address::NetworkChecked
@@ -3271,6 +3284,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighashTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::TapSighashType
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::WPubkeyHash
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::AddressData
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::AddressType
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::KnownHrp
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::NetworkChecked
@@ -3446,6 +3460,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighashTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::TapSighashType
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::WPubkeyHash
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::AddressData
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::AddressType
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::KnownHrp
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::NetworkChecked
@@ -4257,6 +4272,12 @@ pub bitcoin::WitnessVersion::V8 = 8
 pub bitcoin::WitnessVersion::V9 = 9
 pub bitcoin::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
 pub bitcoin::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::Time)
+pub bitcoin::address::AddressData::P2pkh
+pub bitcoin::address::AddressData::P2pkh::pubkey_hash: bitcoin::PubkeyHash
+pub bitcoin::address::AddressData::P2sh
+pub bitcoin::address::AddressData::P2sh::script_hash: bitcoin::blockdata::script::ScriptHash
+pub bitcoin::address::AddressData::Segwit
+pub bitcoin::address::AddressData::Segwit::witness_program: bitcoin::blockdata::script::witness_program::WitnessProgram
 pub bitcoin::address::AddressType::P2pkh
 pub bitcoin::address::AddressType::P2sh
 pub bitcoin::address::AddressType::P2tr
@@ -6163,6 +6184,7 @@ pub fn bitcoin::address::Address::p2wsh(script: &bitcoin::blockdata::script::Scr
 pub fn bitcoin::address::Address::pubkey_hash(&self) -> core::option::Option<bitcoin::PubkeyHash>
 pub fn bitcoin::address::Address::script_hash(&self) -> core::option::Option<bitcoin::blockdata::script::ScriptHash>
 pub fn bitcoin::address::Address::script_pubkey(&self) -> bitcoin::blockdata::script::ScriptBuf
+pub fn bitcoin::address::Address::to_address_data(&self) -> bitcoin::address::AddressData
 pub fn bitcoin::address::Address::to_qr_uri(&self) -> alloc::string::String
 pub fn bitcoin::address::Address<V>::as_unchecked(&self) -> &bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
 pub fn bitcoin::address::Address<V>::clone(&self) -> bitcoin::address::Address<V>
@@ -6176,6 +6198,12 @@ pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::assume_che
 pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::from_str(s: &str) -> core::result::Result<bitcoin::address::Address<bitcoin::address::NetworkUnchecked>, bitcoin::address::error::ParseError>
 pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::is_valid_for_network(&self, n: bitcoin::network::Network) -> bool
 pub fn bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::require_network(self, required: bitcoin::network::Network) -> core::result::Result<bitcoin::address::Address, bitcoin::address::error::ParseError>
+pub fn bitcoin::address::AddressData::clone(&self) -> bitcoin::address::AddressData
+pub fn bitcoin::address::AddressData::cmp(&self, other: &bitcoin::address::AddressData) -> core::cmp::Ordering
+pub fn bitcoin::address::AddressData::eq(&self, other: &bitcoin::address::AddressData) -> bool
+pub fn bitcoin::address::AddressData::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::address::AddressData::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin::address::AddressData::partial_cmp(&self, other: &bitcoin::address::AddressData) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::address::AddressType::clone(&self) -> bitcoin::address::AddressType
 pub fn bitcoin::address::AddressType::cmp(&self, other: &bitcoin::address::AddressType) -> core::cmp::Ordering
 pub fn bitcoin::address::AddressType::eq(&self, other: &bitcoin::address::AddressType) -> bool
