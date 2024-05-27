@@ -29,6 +29,7 @@ main() {
     generate_api_files "hashes"
     generate_api_files "units"
     generate_api_files "io"
+    generate_api_files "primitives"
 
     check_for_changes
 }

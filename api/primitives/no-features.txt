@@ -1,0 +1,5 @@
+pub extern crate bitcoin_primitives::hashes
+pub extern crate bitcoin_primitives::hex
+pub extern crate bitcoin_primitives::io
+pub extern crate bitcoin_primitives::units
+pub mod bitcoin_primitives
