@@ -235,6 +235,30 @@ impl From<Network> for KnownHrp {
     fn from(n: Network) -> Self { Self::from_network(n) }
 }
 
+/// The data encoded by an `Address`.
+///
+/// This is the data used to encumber an output that pays to this address i.e., it is the address
+/// excluding the network information.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
+pub enum AddressData {
+    /// Data encoded by a P2PKH address.
+    P2pkh {
+        /// The pubkey hash used to encumber outputs to this address.
+        pubkey_hash: PubkeyHash
+    },
+    /// Data encoded by a P2SH address.
+    P2sh {
+        /// The script hash used to encumber outputs to this address.
+        script_hash: ScriptHash
+    },
+    /// Data encoded by a Segwit address.
+    Segwit {
+        /// The witness program used to encumber outputs to this address.
+        witness_program: WitnessProgram
+    },
+}
+
 /// A Bitcoin address.
 ///
 /// ### Parsing addresses
@@ -467,6 +491,17 @@ impl Address {
                 } else {
                     None
                 },
+        }
+    }
+
+    /// Gets the address data from this address.
+    pub fn to_address_data(&self) -> AddressData {
+        use AddressData::*;
+
+        match self.0 {
+            AddressInner::P2pkh { hash, network: _ } => P2pkh { pubkey_hash: hash },
+            AddressInner::P2sh { hash, network: _ } => P2sh { script_hash: hash },
+            AddressInner::Segwit { program, hrp: _ } => Segwit { witness_program: program },
         }
     }
 
