@@ -1,3 +1,14 @@
+# 0.32.1 - 2024-05-29
+
+Fix things we broke/removed from the `Address` API in the last release.
+
+- Enable getting the witness program from an address [#2804](https://github.com/rust-bitcoin/rust-bitcoin/pull/2804)
+- Make `Address:p2sh_from_hash` public [#2806](https://github.com/rust-bitcoin/rust-bitcoin/pull/2806)
+- Add an `AddressData` type [#2810](https://github.com/rust-bitcoin/rust-bitcoin/pull/2810)
+
+If you are looking for the `address::Payload` type we removed in `v0.32.0` then the `AddressData` type
+might be what you are after.
+
 # 0.32.0 - 2024-04-23
 
 - Bump MSRV to Rust 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
