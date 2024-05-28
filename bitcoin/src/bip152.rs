@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! BIP152 Compact Blocks
+//! BIP152 Compact Blocks.
 //!
 //! Implementation of compact blocks data structure and algorithms.
 

@@ -141,7 +141,7 @@ macro_rules! sha256t_hash_newtype_tag {
     ($vis:vis, $tag:ident, $name:expr, $(#[$($attr:meta)*])*) => {
         #[doc = "The tag used for [`"]
         #[doc = $name]
-        #[doc = "`]\n\n"]
+        #[doc = "`].\n\n"]
         $(#[$($attr)*])*
         #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
         $vis struct $tag;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Witness
+//! A witness.
 //!
 //! This module contains the [`Witness`] struct and related methods to operate on it
 

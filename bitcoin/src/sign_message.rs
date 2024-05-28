@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Signature
+//! A signature.
 //!
 //! This module provides signature related functions including secp256k1 signature recovery when
 //! library is used with the `secp-recovery` feature.

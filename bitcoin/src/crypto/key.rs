@@ -28,7 +28,7 @@ pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPu
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
 
-/// A Bitcoin ECDSA public key
+/// A Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
     /// Whether this public key should be serialized as compressed
@@ -269,7 +269,7 @@ impl From<&PublicKey> for PubkeyHash {
     fn from(key: &PublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
-/// An always-compressed Bitcoin ECDSA public key
+/// An always-compressed Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CompressedPublicKey(pub secp256k1::PublicKey);
 
@@ -393,7 +393,7 @@ impl From<&CompressedPublicKey> for WPubkeyHash {
     fn from(key: &CompressedPublicKey) -> Self { key.wpubkey_hash() }
 }
 
-/// A Bitcoin ECDSA private key
+/// A Bitcoin ECDSA private key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
