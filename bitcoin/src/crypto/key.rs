@@ -798,19 +798,16 @@ impl TapTweak for UntweakedKeypair {
     type TweakedAux = TweakedKeypair;
     type TweakedKey = TweakedKeypair;
 
-    /// Tweaks private and public keys within an untweaked [`Keypair`] with corresponding public key
-    /// value and optional script tree merkle root.
+    /// Applies a Taproot tweak to both keys within the keypair.
     ///
-    /// This is done by tweaking private key within the pair using the equation q = p + H(P|c), where
-    ///  * q is the tweaked private key
-    ///  * p is the internal private key
-    ///  * H is the hash function
-    ///  * c is the commitment data
-    /// The public key is generated from a private key by multiplying with generator point, Q = qG.
+    /// If `merkle_root` is provided, produces a Taproot key that can be spent by any
+    /// of the script paths committed to by the root. If it is not provided, produces
+    /// a Taproot key which can [provably only be spent via
+    /// keyspend](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-23).
     ///
     /// # Returns
     ///
-    /// The tweaked key and its parity.
+    /// The tweaked keypair.
     fn tap_tweak<C: Verification>(
         self,
         secp: &Secp256k1<C>,
