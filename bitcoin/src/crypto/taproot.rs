@@ -46,7 +46,7 @@ impl Signature {
     /// Serialize Signature
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
-    pub fn to_vec(self) -> Vec<u8> {
+    pub fn to_bytes(self) -> Vec<u8> {
         let mut ser_sig = self.signature.as_ref().to_vec();
         if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
@@ -55,6 +55,10 @@ impl Signature {
         }
         ser_sig
     }
+
+    /// Serialize Signature
+    #[deprecated(since = "TBD", note = "Use to_bytes instead")]
+    pub fn to_vec(self) -> Vec<u8> { self.to_bytes() }
 
     /// Serializes the signature to `writer`.
     #[inline]
