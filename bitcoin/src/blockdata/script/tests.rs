@@ -548,12 +548,12 @@ fn script_p2pk() {
 fn p2sh_p2wsh_conversion() {
     // Test vectors taken from Core tests/data/script_tests.json
     // bare p2wsh
-    let redeem_script = ScriptBuf::from_hex("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
+    let witness_script = ScriptBuf::from_hex("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
     let expected_witout =
         ScriptBuf::from_hex("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64")
             .unwrap();
-    assert!(redeem_script.to_p2wsh().is_p2wsh());
-    assert_eq!(redeem_script.to_p2wsh(), expected_witout);
+    assert!(witness_script.to_p2wsh().is_p2wsh());
+    assert_eq!(witness_script.to_p2wsh(), expected_witout);
 
     // p2sh
     let redeem_script = ScriptBuf::from_hex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
