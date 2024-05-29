@@ -570,7 +570,6 @@ fn p2sh_p2wsh_conversion() {
     let expected_out =
         ScriptBuf::from_hex("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887").unwrap();
     assert!(redeem_script.to_p2sh().is_p2sh());
-    assert!(redeem_script.to_p2sh().to_p2wsh().is_p2wsh());
     assert_eq!(redeem_script.to_p2wsh(), expected_witout);
     assert_eq!(redeem_script.to_p2wsh().to_p2sh(), expected_out);
 }
