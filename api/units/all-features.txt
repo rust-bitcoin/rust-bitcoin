@@ -1,4 +1,3 @@
-#[non_exhaustive] pub enum bitcoin_units::ParseAmountError
 #[non_exhaustive] pub enum bitcoin_units::amount::Denomination
 #[non_exhaustive] pub enum bitcoin_units::amount::ParseAmountError
 #[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
@@ -557,11 +556,6 @@ impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::Tim
 impl<'de> serde::de::Deserialize<'de> for bitcoin_units::weight::Weight
 impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::amount::Amount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::amount::Amount>
 impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::amount::SignedAmount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::amount::SignedAmount>
-pub bitcoin_units::ParseAmountError::InputTooLarge(bitcoin_units::amount::InputTooLargeError)
-pub bitcoin_units::ParseAmountError::InvalidCharacter(bitcoin_units::amount::InvalidCharacterError)
-pub bitcoin_units::ParseAmountError::MissingDigits(bitcoin_units::amount::MissingDigitsError)
-pub bitcoin_units::ParseAmountError::OutOfRange(bitcoin_units::amount::OutOfRangeError)
-pub bitcoin_units::ParseAmountError::TooPrecise(bitcoin_units::amount::TooPreciseError)
 pub bitcoin_units::amount::Denomination::Bit
 pub bitcoin_units::amount::Denomination::Bitcoin
 pub bitcoin_units::amount::Denomination::CentiBitcoin
