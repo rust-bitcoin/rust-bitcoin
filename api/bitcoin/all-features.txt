@@ -269,6 +269,8 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::taproot::TapLeafHash
 impl bitcoin::consensus::encode::Decodable for bitcoin_hashes::sha256::Hash
 impl bitcoin::consensus::encode::Decodable for bitcoin_hashes::sha256d::Hash
 impl bitcoin::consensus::encode::Decodable for bitcoin_units::amount::Amount
+impl bitcoin::consensus::encode::Decodable for bitcoin_units::block::BlockHeight
+impl bitcoin::consensus::encode::Decodable for bitcoin_units::block::BlockInterval
 impl bitcoin::consensus::encode::Decodable for bool
 impl bitcoin::consensus::encode::Decodable for i16
 impl bitcoin::consensus::encode::Decodable for i32
@@ -370,6 +372,8 @@ impl bitcoin::consensus::encode::Encodable for bitcoin::taproot::TapLeafHash
 impl bitcoin::consensus::encode::Encodable for bitcoin_hashes::sha256::Hash
 impl bitcoin::consensus::encode::Encodable for bitcoin_hashes::sha256d::Hash
 impl bitcoin::consensus::encode::Encodable for bitcoin_units::amount::Amount
+impl bitcoin::consensus::encode::Encodable for bitcoin_units::block::BlockHeight
+impl bitcoin::consensus::encode::Encodable for bitcoin_units::block::BlockInterval
 impl bitcoin::consensus::encode::Encodable for bool
 impl bitcoin::consensus::encode::Encodable for i16
 impl bitcoin::consensus::encode::Encodable for i32
@@ -5163,17 +5167,17 @@ pub bitcoin::consensus::DecodeError::Other(E)
 pub bitcoin::consensus::DecodeError::TooManyBytes
 pub bitcoin::consensus::Params::allow_min_difficulty_blocks: bool
 pub bitcoin::consensus::Params::bip16_time: u32
-pub bitcoin::consensus::Params::bip34_height: u32
-pub bitcoin::consensus::Params::bip65_height: u32
-pub bitcoin::consensus::Params::bip66_height: u32
+pub bitcoin::consensus::Params::bip34_height: bitcoin_units::block::BlockHeight
+pub bitcoin::consensus::Params::bip65_height: bitcoin_units::block::BlockHeight
+pub bitcoin::consensus::Params::bip66_height: bitcoin_units::block::BlockHeight
 pub bitcoin::consensus::Params::max_attainable_target: bitcoin::pow::Target
-pub bitcoin::consensus::Params::miner_confirmation_window: u32
+pub bitcoin::consensus::Params::miner_confirmation_window: bitcoin_units::block::BlockInterval
 pub bitcoin::consensus::Params::network: bitcoin::network::Network
 pub bitcoin::consensus::Params::no_pow_retargeting: bool
 pub bitcoin::consensus::Params::pow_limit: bitcoin::pow::Target
 pub bitcoin::consensus::Params::pow_target_spacing: u64
 pub bitcoin::consensus::Params::pow_target_timespan: u64
-pub bitcoin::consensus::Params::rule_change_activation_threshold: u32
+pub bitcoin::consensus::Params::rule_change_activation_threshold: bitcoin_units::block::BlockInterval
 pub bitcoin::consensus::encode::Error::InvalidChecksum
 pub bitcoin::consensus::encode::Error::InvalidChecksum::actual: [u8; 4]
 pub bitcoin::consensus::encode::Error::InvalidChecksum::expected: [u8; 4]
@@ -5188,17 +5192,17 @@ pub bitcoin::consensus::encode::FromHexError::Decode(bitcoin::consensus::DecodeE
 pub bitcoin::consensus::encode::FromHexError::OddLengthString(hex_conservative::error::OddLengthStringError)
 pub bitcoin::consensus::params::Params::allow_min_difficulty_blocks: bool
 pub bitcoin::consensus::params::Params::bip16_time: u32
-pub bitcoin::consensus::params::Params::bip34_height: u32
-pub bitcoin::consensus::params::Params::bip65_height: u32
-pub bitcoin::consensus::params::Params::bip66_height: u32
+pub bitcoin::consensus::params::Params::bip34_height: bitcoin_units::block::BlockHeight
+pub bitcoin::consensus::params::Params::bip65_height: bitcoin_units::block::BlockHeight
+pub bitcoin::consensus::params::Params::bip66_height: bitcoin_units::block::BlockHeight
 pub bitcoin::consensus::params::Params::max_attainable_target: bitcoin::pow::Target
-pub bitcoin::consensus::params::Params::miner_confirmation_window: u32
+pub bitcoin::consensus::params::Params::miner_confirmation_window: bitcoin_units::block::BlockInterval
 pub bitcoin::consensus::params::Params::network: bitcoin::network::Network
 pub bitcoin::consensus::params::Params::no_pow_retargeting: bool
 pub bitcoin::consensus::params::Params::pow_limit: bitcoin::pow::Target
 pub bitcoin::consensus::params::Params::pow_target_spacing: u64
 pub bitcoin::consensus::params::Params::pow_target_timespan: u64
-pub bitcoin::consensus::params::Params::rule_change_activation_threshold: u32
+pub bitcoin::consensus::params::Params::rule_change_activation_threshold: bitcoin_units::block::BlockInterval
 pub bitcoin::consensus::validation::TxVerifyError::ScriptVerification(bitcoin::consensus::validation::BitcoinconsensusError)
 pub bitcoin::consensus::validation::TxVerifyError::UnknownSpentOutput(bitcoin::blockdata::transaction::OutPoint)
 pub bitcoin::ecdsa::Error::EmptySignature
@@ -5357,10 +5361,10 @@ pub bitcoin::p2p::message_filter::CFilter::filter_type: u8
 pub bitcoin::p2p::message_filter::GetCFCheckpt::filter_type: u8
 pub bitcoin::p2p::message_filter::GetCFCheckpt::stop_hash: bitcoin::blockdata::block::BlockHash
 pub bitcoin::p2p::message_filter::GetCFHeaders::filter_type: u8
-pub bitcoin::p2p::message_filter::GetCFHeaders::start_height: u32
+pub bitcoin::p2p::message_filter::GetCFHeaders::start_height: bitcoin_units::block::BlockHeight
 pub bitcoin::p2p::message_filter::GetCFHeaders::stop_hash: bitcoin::blockdata::block::BlockHash
 pub bitcoin::p2p::message_filter::GetCFilters::filter_type: u8
-pub bitcoin::p2p::message_filter::GetCFilters::start_height: u32
+pub bitcoin::p2p::message_filter::GetCFilters::start_height: bitcoin_units::block::BlockHeight
 pub bitcoin::p2p::message_filter::GetCFilters::stop_hash: bitcoin::blockdata::block::BlockHash
 pub bitcoin::p2p::message_network::Reject::ccode: bitcoin::p2p::message_network::RejectReason
 pub bitcoin::p2p::message_network::Reject::hash: bitcoin_hashes::sha256d::Hash
@@ -5385,17 +5389,17 @@ pub bitcoin::p2p::message_network::VersionMessage::user_agent: alloc::string::St
 pub bitcoin::p2p::message_network::VersionMessage::version: u32
 pub bitcoin::params::Params::allow_min_difficulty_blocks: bool
 pub bitcoin::params::Params::bip16_time: u32
-pub bitcoin::params::Params::bip34_height: u32
-pub bitcoin::params::Params::bip65_height: u32
-pub bitcoin::params::Params::bip66_height: u32
+pub bitcoin::params::Params::bip34_height: bitcoin_units::block::BlockHeight
+pub bitcoin::params::Params::bip65_height: bitcoin_units::block::BlockHeight
+pub bitcoin::params::Params::bip66_height: bitcoin_units::block::BlockHeight
 pub bitcoin::params::Params::max_attainable_target: bitcoin::pow::Target
-pub bitcoin::params::Params::miner_confirmation_window: u32
+pub bitcoin::params::Params::miner_confirmation_window: bitcoin_units::block::BlockInterval
 pub bitcoin::params::Params::network: bitcoin::network::Network
 pub bitcoin::params::Params::no_pow_retargeting: bool
 pub bitcoin::params::Params::pow_limit: bitcoin::pow::Target
 pub bitcoin::params::Params::pow_target_spacing: u64
 pub bitcoin::params::Params::pow_target_timespan: u64
-pub bitcoin::params::Params::rule_change_activation_threshold: u32
+pub bitcoin::params::Params::rule_change_activation_threshold: bitcoin_units::block::BlockInterval
 pub bitcoin::psbt::Error::CombineInconsistentKeySources(alloc::boxed::Box<bitcoin::bip32::Xpub>)
 pub bitcoin::psbt::Error::ConsensusEncoding(bitcoin::consensus::encode::Error)
 pub bitcoin::psbt::Error::DuplicateKey(bitcoin::psbt::raw::Key)
@@ -9874,6 +9878,10 @@ pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>::from(hashtyp
 pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>::from(hashtype: bitcoin::taproot::TapTweakHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>
 pub fn bitcoin_units::amount::Amount::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin_units::amount::Amount::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn bitcoin_units::block::BlockHeight::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
+pub fn bitcoin_units::block::BlockHeight::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn bitcoin_units::block::BlockInterval::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
+pub fn bitcoin_units::block::BlockInterval::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bool::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bool, bitcoin::consensus::encode::Error>
 pub fn bool::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn core::convert::Infallible::input_len(&self) -> usize
@@ -10450,6 +10458,8 @@ pub type bitcoin::taproot::serialized_signature::SerializedSignature::Target = [
 pub type std::collections::hash::map::HashMap<bitcoin::PublicKey, bitcoin::PrivateKey>::Error = bitcoin::psbt::GetKeyError
 pub type std::collections::hash::set::HashSet<bitcoin::bip32::Xpriv>::Error = bitcoin::psbt::GetKeyError
 pub use bitcoin::Amount
+pub use bitcoin::BlockHeight
+pub use bitcoin::BlockInterval
 pub use bitcoin::Denomination
 pub use bitcoin::FeeRate
 pub use bitcoin::SignedAmount
