@@ -5453,6 +5453,7 @@ pub const fn bitcoin::blockdata::witness::Witness::new() -> Self
 pub const fn bitcoin::consensus::encode::VarInt::size(&self) -> usize
 pub const fn bitcoin::consensus::params::Params::new(network: bitcoin::network::Network) -> Self
 pub const fn bitcoin::network::Network::params(self) -> &'static bitcoin::consensus::params::Params
+pub const fn bitcoin::p2p::Magic::from_bytes(bytes: [u8; 4]) -> bitcoin::p2p::Magic
 pub const fn bitcoin::transaction::predict_weight_from_slices(inputs: &[bitcoin::blockdata::transaction::InputWeightPrediction], output_script_lens: &[usize]) -> bitcoin_units::weight::Weight
 pub enum bitcoin::EcdsaSighashType
 pub enum bitcoin::NetworkKind
@@ -7711,7 +7712,6 @@ pub fn bitcoin::p2p::Magic::consensus_encode<W: bitcoin_io::Write + core::marker
 pub fn bitcoin::p2p::Magic::eq(&self, other: &bitcoin::p2p::Magic) -> bool
 pub fn bitcoin::p2p::Magic::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin::p2p::Magic::from(network: bitcoin::network::Network) -> bitcoin::p2p::Magic
-pub fn bitcoin::p2p::Magic::from_bytes(bytes: [u8; 4]) -> bitcoin::p2p::Magic
 pub fn bitcoin::p2p::Magic::from_params(params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> Self
 pub fn bitcoin::p2p::Magic::from_str(s: &str) -> core::result::Result<bitcoin::p2p::Magic, Self::Err>
 pub fn bitcoin::p2p::Magic::hash<__H: core::hash::Hasher>(&self, state: &mut __H)

@@ -223,7 +223,7 @@ impl Magic {
     pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
 
     /// Create network magic from bytes.
-    pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
+    pub const fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
 
     /// Get network magic bytes.
     pub fn to_bytes(self) -> [u8; 4] { self.0 }
