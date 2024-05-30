@@ -4,6 +4,8 @@
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.
 
+use units::BlockHeight;
+
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::blockdata::block::BlockHash;
 use crate::internal_macros::impl_consensus_encoding;
@@ -14,7 +16,7 @@ pub struct GetCFilters {
     /// Filter type for which headers are requested
     pub filter_type: u8,
     /// The height of the first block in the requested range
-    pub start_height: u32,
+    pub start_height: BlockHeight,
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
@@ -38,7 +40,7 @@ pub struct GetCFHeaders {
     /// Byte identifying the type of filter being returned
     pub filter_type: u8,
     /// The height of the first block in the requested range
-    pub start_height: u32,
+    pub start_height: BlockHeight,
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }

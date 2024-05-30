@@ -37,6 +37,8 @@ mod test_macros;
 
 pub mod amount;
 #[cfg(feature = "alloc")]
+pub mod block;
+#[cfg(feature = "alloc")]
 pub mod fee_rate;
 #[cfg(feature = "alloc")]
 pub mod locktime;
@@ -51,6 +53,7 @@ pub use self::amount::{Amount, SignedAmount};
 #[doc(inline)]
 #[rustfmt::skip]
 pub use self::{
+    block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
     // ParseIntError is used by other modules, so we re-export it.
     parse::ParseIntError,
