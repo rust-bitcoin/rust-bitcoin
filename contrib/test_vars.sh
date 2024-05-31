@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+# No shebang, this file should not be executed.
+# shellcheck disable=SC2148
+#
 #
 # Used by labeler.yaml
 #
