@@ -110,6 +110,7 @@ mod util;
 pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
+pub mod hkdf;
 pub mod hmac;
 #[cfg(feature = "bitcoin-io")]
 mod impls;
