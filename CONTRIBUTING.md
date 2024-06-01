@@ -200,6 +200,13 @@ All PRs that change the public API of `rust-bitcoin` must include a patch to
 the `api/` text files. This should be a separate, final patch to the PR
 that is the diff created by running `./contrib/check-for-api-changes.sh`.
 
+Or use `just`:
+
+```bash
+just check-api
+git commit -a -m 'api: Run just check-api'
+```
+
 ### Policy
 
 We have various `rust-bitcoin` specific coding styles and conventions that are
