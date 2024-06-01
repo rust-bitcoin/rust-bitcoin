@@ -734,108 +734,192 @@ fn fmt_satoshi_in(
     show_denom: bool,
     options: FormatOptions,
 ) -> fmt::Result {
-    let precision = denom.precision();
-    // First we normalize the number:
-    // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
-    let mut num_after_decimal_point = 0;
-    let mut norm_nb_decimals = 0;
-    let mut num_before_decimal_point = satoshi;
-    let trailing_decimal_zeros;
-    let mut exp = 0;
-    match precision.cmp(&0) {
-        // We add the number of zeroes to the end
+    let integral: u64;
+    let mut fractional: u64 = 0;
+    let precision_abs = denom.precision().unsigned_abs();
+    let f_precision = options.precision.unwrap_or(precision_abs.into());
+    let mut num_of_zeroes = 0usize;
+
+    match denom.precision().cmp(&0) {
+        Ordering::Equal => integral = satoshi,
         Ordering::Greater => {
-            if satoshi > 0 {
-                exp = precision as usize;
-            }
-            trailing_decimal_zeros = options.precision.unwrap_or(0);
+            let divisor = 10u64.pow(precision_abs.into());
+            integral = satoshi * divisor;
         }
         Ordering::Less => {
-            let precision = precision.unsigned_abs();
-            let divisor = 10u64.pow(precision.into());
-            num_before_decimal_point = satoshi / divisor;
-            num_after_decimal_point = satoshi % divisor;
-            // normalize by stripping trailing zeros
-            if num_after_decimal_point == 0 {
-                norm_nb_decimals = 0;
-            } else {
-                norm_nb_decimals = usize::from(precision);
-                while num_after_decimal_point % 10 == 0 {
-                    norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10
-                }
+            let divisor = 10u64.pow(precision_abs.into());
+            integral = satoshi / divisor;
+            fractional = satoshi % divisor;
+
+            let mut calc_zeroes = fractional;
+            num_of_zeroes = precision_abs as usize;
+            while calc_zeroes % 10 != 0 {
+                num_of_zeroes = num_of_zeroes.saturating_sub(1);
+                calc_zeroes /= 10
             }
-            // compute requested precision
-            let opt_precision = options.precision.unwrap_or(0);
-            trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
         }
-        Ordering::Equal => trailing_decimal_zeros = options.precision.unwrap_or(0),
-    }
-    let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
-    // Compute expected width of the number
-    let mut num_width = if total_decimals > 0 {
-        // 1 for decimal point
-        1 + total_decimals
-    } else {
-        0
-    };
-    num_width += dec_width(num_before_decimal_point) + exp;
-    if options.sign_plus || negative {
-        num_width += 1;
     }
 
+    let mut fractional_buffer = [0u8; 20];
+    let mut valid_fractional_slice = split_num(fractional, &mut fractional_buffer);
+    let fractional_slice = &mut fractional_buffer[..valid_fractional_slice];
+
+    // Round off only if the amount is greater that a satoshi which would yield an amount with a fractional part
+    let (fractional_overflow, mut trailing_zeros) = round_number(fractional_slice, f_precision);
+    trailing_zeros = trailing_zeros.saturating_sub(num_of_zeroes);
+
+    fractional_slice.reverse();
+
+    let mut integral_buffer = [0u8; 20];
+    let mut valid_integral_slice = split_num(integral, &mut integral_buffer);
+    let integral_slice = &mut integral_buffer[..=valid_integral_slice];
+
+    // Round off the integral part
+    if fractional_overflow {
+        for index in 0..integral_slice.len() {
+            integral_slice[index] += 1;
+            if integral_slice[index] == 10 {
+                integral_slice[index] = 0;
+            } else {
+                break;
+            }
+        }
+    }
+
+    if integral_slice.last() != Some(&0) {
+        valid_integral_slice += 1;
+    }
+    integral_buffer[..valid_integral_slice].reverse();
+
+    let mut character_len = valid_integral_slice + f_precision + num_of_zeroes + trailing_zeros;
     if show_denom {
-        // + 1 for space
-        num_width += denom.as_str().len() + 1;
-    }
-
-    let width = options.width.unwrap_or(0);
-    let align = options.align.unwrap_or(fmt::Alignment::Right);
-    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, align) {
-        (false, _, _) => (0, 0),
-        // Alignment is always right (ignored) when zero-padding
-        (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
-        (true, false, fmt::Alignment::Left) => (0, width - num_width),
-        // If the required padding is odd it needs to be skewed to the left
-        (true, false, fmt::Alignment::Center) =>
-            ((width - num_width) / 2, (width - num_width + 1) / 2),
-    };
-
-    if !options.sign_aware_zero_pad {
-        repeat_char(f, options.fill, left_pad)?;
+        character_len += denom.as_str().len();
     }
 
     if negative {
-        write!(f, "-")?;
-    } else if options.sign_plus {
+        character_len += 1
+    };
+
+    let width = options.width.unwrap_or(character_len);
+
+    character_len = width.saturating_sub(character_len);
+
+    let left_half: usize;
+    let right_half: usize;
+
+    // Rust default is left alignment
+    match options.align.unwrap_or(fmt::Alignment::Left) {
+        fmt::Alignment::Left => {
+            left_half = 0;
+            right_half = character_len;
+        }
+        fmt::Alignment::Center => {
+            if character_len.rem_euclid(2) == 0 {
+                left_half = character_len / 2;
+                right_half = character_len / 2;
+            } else {
+                left_half = character_len / 2;
+                // In rust odd numbered width favours the right side
+                right_half = (character_len / 2) + 1;
+            }
+        }
+        fmt::Alignment::Right => {
+            left_half = character_len;
+            right_half = 0;
+        }
+    }
+
+    let fill = options.fill;
+
+    for _ in 0..left_half {
+        write!(f, "{}", fill)?;
+    }
+    if negative {
         write!(f, "+")?;
     }
 
-    if options.sign_aware_zero_pad {
-        repeat_char(f, '0', left_pad)?;
+    if valid_integral_slice == 0 {
+        write!(f, "0")?
+    } else {
+        for number in &integral_buffer[..valid_integral_slice] {
+            write!(f, "{}", number)?
+        }
     }
-
-    write!(f, "{}", num_before_decimal_point)?;
-
-    repeat_char(f, '0', exp)?;
-
-    if total_decimals > 0 {
+    // If the precision from the Formatter is less that the
+    // valid length of the slice use the precision
+    if f_precision < valid_fractional_slice {
+        valid_fractional_slice = f_precision
+    }
+    if valid_fractional_slice != 0 {
         write!(f, ".")?;
+
+        for _ in 0..num_of_zeroes {
+            write!(f, "0")?
+        }
+
+        for number in &fractional_slice[..valid_fractional_slice] {
+            write!(f, "{}", number)?
+        }
+
+        for _ in 0..trailing_zeros {
+            write!(f, "0")?
+        }
     }
-    if norm_nb_decimals > 0 {
-        write!(f, "{:0width$}", num_after_decimal_point, width = norm_nb_decimals)?;
-    }
-    repeat_char(f, '0', trailing_decimal_zeros)?;
 
     if show_denom {
         write!(f, " {}", denom.as_str())?;
     }
+    for _ in 0..right_half {
+        write!(f, "{}", fill)?;
+    }
 
-    repeat_char(f, options.fill, pad_right)?;
     Ok(())
 }
 
-/// An amount.
+fn split_num(value: u64, buf: &mut [u8; 20]) -> usize {
+    let mut value = value;
+    let mut length = 0;
+
+    if value == 0 {
+        return length;
+    };
+
+    while value > 0 {
+        buf[length] = value.rem_euclid(10) as u8;
+
+        value /= 10;
+
+        length += 1;
+    }
+
+    length
+}
+
+// returns if the fractional part results in carrying 1 to the integral part
+// the `f_precision` is the precision from the formatter, example `1` in `{:.1}`
+fn round_number(num_array: &mut [u8], f_precision: usize) -> (bool, usize) {
+    let mut overflow = false;
+
+    if num_array.len() <= f_precision {
+        return (overflow, f_precision.saturating_sub(num_array.len()));
+    }
+
+    (0..=f_precision).for_each(|index| {
+        if num_array[index] > 4 {
+            num_array[index] += 1;
+            if num_array[index] == 10 {
+                num_array[index] = 0;
+                overflow = true
+            }
+        } else {
+            overflow = false;
+        }
+    });
+
+    (overflow, 0)
+}
+
+/// Amount
 ///
 /// The [Amount] type can be used to express Bitcoin amounts that support
 /// arithmetic and conversion to various denominations.
@@ -1494,8 +1578,15 @@ impl fmt::Debug for SignedAmount {
 // Just using Bitcoin denominated string.
 impl fmt::Display for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        let satoshis = self.unsigned_abs().to_sat();
+        let denomination = Denomination::Bitcoin;
+        let mut format_options = FormatOptions::from_formatter(f);
+
+        if f.precision().is_none() && satoshis.rem_euclid(Amount::ONE_BTC.to_sat()) != 0 {
+            format_options.precision = Some(8);
+        }
+
+        fmt_satoshi_in(satoshis, self.is_negative(), f, denomination, true, format_options)
     }
 }
 
@@ -2432,10 +2523,10 @@ mod tests {
         btc_check_fmt_non_negative_6, 1, "{}", "0.00000001";
         btc_check_fmt_non_negative_7, 1, "{:2}", "0.00000001";
         btc_check_fmt_non_negative_8, 1, "{:02}", "0.00000001";
-        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.00000001";
+        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.0";
         btc_check_fmt_non_negative_10, 1, "{:11}", " 0.00000001";
-        btc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.00000001";
-        btc_check_fmt_non_negative_12, 1, "{:011.1}", "00.00000001";
+        btc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.0";
+        btc_check_fmt_non_negative_12, 1, "{:011.1}", "00.0";
         btc_check_fmt_non_negative_13, 1, "{:.9}", "0.000000010";
         btc_check_fmt_non_negative_14, 1, "{:11.9}", "0.000000010";
         btc_check_fmt_non_negative_15, 1, "{:011.9}", "0.000000010";
@@ -2450,7 +2541,7 @@ mod tests {
         btc_check_fmt_non_negative_24, 110_000_000, "{}", "1.1";
         btc_check_fmt_non_negative_25, 100_000_001, "{}", "1.00000001";
         btc_check_fmt_non_negative_26, 100_000_001, "{:1}", "1.00000001";
-        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.00000001";
+        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.0";
         btc_check_fmt_non_negative_28, 100_000_001, "{:10}", "1.00000001";
         btc_check_fmt_non_negative_29, 100_000_001, "{:11}", " 1.00000001";
         btc_check_fmt_non_negative_30, 100_000_001, "{:011}", "01.00000001";
@@ -2482,7 +2573,7 @@ mod tests {
 
     check_format_non_negative_show_denom! {
         Bitcoin, " BTC";
-        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.0";
         btc_check_fmt_non_negative_show_denom_1, 1, "{:14.8}", "0.00000001";
         btc_check_fmt_non_negative_show_denom_2, 1, "{:15}", " 0.00000001";
         btc_check_fmt_non_negative_show_denom_3, 1, "{:015}", "00.00000001";
@@ -2957,18 +3048,60 @@ mod tests {
         assert_eq!(format!("{}", Amount::ONE_BTC), "1 BTC");
         assert_eq!(format!("{}", Amount::from_sat(1)), "0.00000001 BTC");
         assert_eq!(format!("{}", Amount::from_sat(10)), "0.00000010 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.0000001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(100)), "0.000001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(1000)), "0.00001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(10_000)), "0.0001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(100_000)), "0.001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(1_000_000)), "0.01 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(10_000_000)), "0.10 BTC");
+        assert_eq!(format!("{:.1}", Amount::from_sat(10)), "0.0 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.00 BTC");
+        assert_eq!(format!("{:.3}", Amount::from_sat(10)), "0.000 BTC");
+        assert_eq!(format!("{:.4}", Amount::from_sat(10)), "0.0000 BTC");
+        assert_eq!(format!("{:.5}", Amount::from_sat(10)), "0.00000 BTC");
+        assert_eq!(format!("{:.6}", Amount::from_sat(10)), "0.000000 BTC");
+        assert_eq!(format!("{:.7}", Amount::from_sat(10)), "0.0000001 BTC");
+        assert_eq!(format!("{:.8}", Amount::from_sat(10)), "0.00000010 BTC");
+        assert_eq!(format!("{:.9}", Amount::from_sat(10)), "0.000000100 BTC");
+        assert_eq!(format!("{:.1}", Amount::from_sat(100_000_000)), "1.0 BTC");
         assert_eq!(format!("{:.2}", Amount::from_sat(100_000_000)), "1.00 BTC");
         assert_eq!(format!("{}", Amount::from_sat(100_000_000)), "1 BTC");
-        assert_eq!(format!("{}", Amount::from_sat(40_000_000_000)), "400 BTC");
-        assert_eq!(format!("{:.10}", Amount::from_sat(100_000_000)), "1.0000000000 BTC");
-        assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.00000010 BTC");
-        assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
+        assert_eq!(format!("{}", Amount::from_sat(40_000_000_001)), "400.00000001 BTC");
+        assert_eq!(format!("{}", Amount::from_sat(40_000_000_010)), "400.00000010 BTC");
+        assert_eq!(format!("{:.7}", Amount::from_sat(40_000_000_010)), "400.0000001 BTC");
+        assert_eq!(format!("{:.1}", Amount::from_sat(40_000_000_001)), "400.0 BTC");
+        assert_eq!(format!("{}", Amount::from_btc(543.53524).unwrap()), "543.53524000 BTC");
+        assert_eq!(format!("{:.5}", Amount::from_btc(543.53524).unwrap()), "543.53524 BTC");
+        assert_eq!(
+            format!("{:.50}", Amount::from_btc(543.53524).unwrap()),
+            "543.53524000000000000000000000000000000000000000000000 BTC"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn trailing_zeros_for_signed_amount() {
+        assert_eq!(format!("{}", -SignedAmount::ONE_SAT), "-0.00000001 BTC");
+        assert_eq!(format!("{}", -SignedAmount::ONE_BTC), "-1 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_sat(-1)), "-0.00000001 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_sat(-10)), "-0.00000010 BTC");
+        assert_eq!(format!("{:.1}", SignedAmount::from_sat(-10)), "-0.0 BTC");
+        assert_eq!(format!("{:.2}", SignedAmount::from_sat(-10)), "-0.00 BTC");
+        assert_eq!(format!("{:.3}", SignedAmount::from_sat(-10)), "-0.000 BTC");
+        assert_eq!(format!("{:.4}", SignedAmount::from_sat(-10)), "-0.0000 BTC");
+        assert_eq!(format!("{:.5}", SignedAmount::from_sat(-10)), "-0.00000 BTC");
+        assert_eq!(format!("{:.6}", SignedAmount::from_sat(-10)), "-0.000000 BTC");
+        assert_eq!(format!("{:.7}", SignedAmount::from_sat(-10)), "-0.0000001 BTC");
+        assert_eq!(format!("{:.8}", SignedAmount::from_sat(-10)), "-0.00000010 BTC");
+        assert_eq!(format!("{:.9}", SignedAmount::from_sat(-10)), "-0.000000100 BTC");
+        assert_eq!(format!("{:.1}", SignedAmount::from_sat(-100_000_000)), "-1.0 BTC");
+        assert_eq!(format!("{:.2}", SignedAmount::from_sat(-100_000_000)), "-1.00 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_sat(-100_000_000)), "-1 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_sat(-40_000_000_001)), "-400.00000001 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_sat(-40_000_000_010)), "-400.00000010 BTC");
+        assert_eq!(format!("{:.7}", SignedAmount::from_sat(-40_000_000_010)), "-400.0000001 BTC");
+        assert_eq!(format!("{:.1}", SignedAmount::from_sat(-40_000_000_001)), "-400.0 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_btc(543.53524).unwrap()), "543.53524000 BTC");
+        assert_eq!(format!("{:.5}", SignedAmount::from_btc(543.53524).unwrap()), "543.53524 BTC");
+        assert_eq!(format!("{}", SignedAmount::from_btc(-543.53524).unwrap()), "-543.53524000 BTC");
+        assert_eq!(format!("{:.5}", SignedAmount::from_btc(-543.53524).unwrap()), "-543.53524 BTC");
+        assert_eq!(
+            format!("{:.50}", SignedAmount::from_btc(-543.53524).unwrap()),
+            "-543.53524000000000000000000000000000000000000000000000 BTC"
+        );
     }
 }
