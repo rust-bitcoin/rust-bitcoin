@@ -7849,6 +7849,7 @@ pub fn bitcoin::blockdata::script::Instruction<'a>::eq(&self, other: &bitcoin::b
 pub fn bitcoin::blockdata::script::Instruction<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::script::Instruction<'a>::opcode(&self) -> core::option::Option<bitcoin::blockdata::opcodes::Opcode>
 pub fn bitcoin::blockdata::script::Instruction<'a>::push_bytes(&self) -> core::option::Option<&bitcoin::blockdata::script::PushBytes>
+pub fn bitcoin::blockdata::script::Instruction<'a>::read_int(&self) -> core::option::Option<i64>
 pub fn bitcoin::blockdata::script::Instruction<'a>::script_num(&self) -> core::option::Option<i64>
 pub fn bitcoin::blockdata::script::InstructionIndices<'a>::as_script(&self) -> &'a bitcoin::blockdata::script::Script
 pub fn bitcoin::blockdata::script::InstructionIndices<'a>::clone(&self) -> bitcoin::blockdata::script::InstructionIndices<'a>
@@ -7883,6 +7884,7 @@ pub fn bitcoin::blockdata::script::PushBytes::index(&self, index: usize) -> &Sel
 pub fn bitcoin::blockdata::script::PushBytes::is_empty(&self) -> bool
 pub fn bitcoin::blockdata::script::PushBytes::len(&self) -> usize
 pub fn bitcoin::blockdata::script::PushBytes::partial_cmp(&self, other: &bitcoin::blockdata::script::PushBytes) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::blockdata::script::PushBytes::read_scriptint(&self) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::blockdata::script::PushBytes::to_owned(&self) -> Self::Owned
 pub fn bitcoin::blockdata::script::PushBytesBuf::as_mut(&mut self) -> &mut bitcoin::blockdata::script::PushBytes
 pub fn bitcoin::blockdata::script::PushBytesBuf::as_mut_push_bytes(&mut self) -> &mut bitcoin::blockdata::script::PushBytes
@@ -8247,7 +8249,6 @@ pub fn bitcoin::blockdata::script::WScriptHash::serialize<S: serde::ser::Seriali
 pub fn bitcoin::blockdata::script::WScriptHash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::script::WScriptHash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin::blockdata::script::read_scriptbool(v: &[u8]) -> bool
-pub fn bitcoin::blockdata::script::read_scriptint(v: &[u8]) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::blockdata::script::read_scriptint_non_minimal(v: &[u8]) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::blockdata::script::witness_program::Error::clone(&self) -> bitcoin::blockdata::script::witness_program::Error
 pub fn bitcoin::blockdata::script::witness_program::Error::eq(&self, other: &bitcoin::blockdata::script::witness_program::Error) -> bool
@@ -9260,7 +9261,6 @@ pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::to_key(&self) -> bitcoin::ps
 pub fn bitcoin::psbt::raw::ProprietaryKey<Subtype>::try_from(key: bitcoin::psbt::raw::Key) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::script::PushBytesErrorReport::input_len(&self) -> usize
 pub fn bitcoin::script::read_scriptbool(v: &[u8]) -> bool
-pub fn bitcoin::script::read_scriptint(v: &[u8]) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::script::read_scriptint_non_minimal(v: &[u8]) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::script::write_scriptint(out: &mut [u8; 8], n: i64) -> usize
 pub fn bitcoin::sighash::Annex<'a>::as_bytes(&self) -> &[u8]

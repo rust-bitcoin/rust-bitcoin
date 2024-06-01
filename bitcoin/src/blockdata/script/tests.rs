@@ -310,23 +310,51 @@ fn scriptint_round_trip() {
         -((1 << 31) - 1),
     ];
     for &i in test_vectors.iter() {
-        assert_eq!(Ok(i), read_scriptint(&build_scriptint(i)));
-        assert_eq!(Ok(-i), read_scriptint(&build_scriptint(-i)));
+        assert_eq!(
+            Ok(i),
+            PushBytes::read_scriptint(
+                <&PushBytes>::try_from(build_scriptint(i).as_slice()).unwrap()
+            )
+        );
+        assert_eq!(
+            Ok(-i),
+            PushBytes::read_scriptint(
+                <&PushBytes>::try_from(build_scriptint(-i).as_slice()).unwrap()
+            )
+        );
         assert_eq!(Ok(i), read_scriptint_non_minimal(&build_scriptint(i)));
         assert_eq!(Ok(-i), read_scriptint_non_minimal(&build_scriptint(-i)));
     }
-    assert!(read_scriptint(&build_scriptint(1 << 31)).is_err());
-    assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
+    assert!(PushBytes::read_scriptint(
+        <&PushBytes>::try_from(build_scriptint(1 << 31).as_slice()).unwrap()
+    )
+    .is_err());
+    assert!(PushBytes::read_scriptint(
+        <&PushBytes>::try_from(build_scriptint(-(1 << 31)).as_slice()).unwrap()
+    )
+    .is_err());
     assert!(read_scriptint_non_minimal(&build_scriptint(1 << 31)).is_err());
     assert!(read_scriptint_non_minimal(&build_scriptint(-(1 << 31))).is_err());
 }
 
 #[test]
 fn non_minimal_scriptints() {
-    assert_eq!(read_scriptint(&[0x80, 0x00]), Ok(0x80));
-    assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
-    assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
-    assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
+    assert_eq!(
+        PushBytes::read_scriptint(<[_; 2] as AsRef<PushBytes>>::as_ref(&[0x80, 0x00])),
+        Ok(0x80)
+    );
+    assert_eq!(
+        PushBytes::read_scriptint(<[_; 2] as AsRef<PushBytes>>::as_ref(&[0xff, 0x00])),
+        Ok(0xff)
+    );
+    assert_eq!(
+        PushBytes::read_scriptint(<[_; 3] as AsRef<PushBytes>>::as_ref(&[0x8f, 0x00, 0x00])),
+        Err(Error::NonMinimalPush)
+    );
+    assert_eq!(
+        PushBytes::read_scriptint(<[_; 2] as AsRef<PushBytes>>::as_ref(&[0x7f, 0x00])),
+        Err(Error::NonMinimalPush)
+    );
 
     assert_eq!(read_scriptint_non_minimal(&[0x80, 0x00]), Ok(0x80));
     assert_eq!(read_scriptint_non_minimal(&[0xff, 0x00]), Ok(0xff));
