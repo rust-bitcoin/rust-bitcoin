@@ -1,8 +1,22 @@
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::blockdata::block::Block, _> =
+    let block_result: Result<bitcoin::blockdata::block::Block, _> =
         bitcoin::consensus::encode::deserialize(data);
+
+    match block_result {
+        Err(_) => {}
+        Ok(block) => {
+            let ser = bitcoin::consensus::encode::serialize(&block);
+            assert_eq!(&ser[..], data);
+            let _ = block.bip34_block_height();
+            block.block_hash();
+            block.check_merkle_root();
+            block.check_witness_commitment();
+            block.weight();
+            block.witness_root();
+        }
+    }
 }
 
 fn main() {
