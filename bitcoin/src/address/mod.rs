@@ -245,17 +245,17 @@ pub enum AddressData {
     /// Data encoded by a P2PKH address.
     P2pkh {
         /// The pubkey hash used to encumber outputs to this address.
-        pubkey_hash: PubkeyHash
+        pubkey_hash: PubkeyHash,
     },
     /// Data encoded by a P2SH address.
     P2sh {
         /// The script hash used to encumber outputs to this address.
-        script_hash: ScriptHash
+        script_hash: ScriptHash,
     },
     /// Data encoded by a Segwit address.
     Segwit {
         /// The witness program used to encumber outputs to this address.
-        witness_program: WitnessProgram
+        witness_program: WitnessProgram,
     },
 }
 
