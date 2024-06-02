@@ -5,12 +5,11 @@
 //! Implementation based on RFC5869, but the interface is scoped
 //! to BIP324's requirements.
 
-use core::fmt;
-
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 use alloc::vec;
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 use alloc::vec::Vec;
+use core::fmt;
 
 use crate::{Hash, HashEngine, Hmac, HmacEngine};
 
