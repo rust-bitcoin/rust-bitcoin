@@ -18,7 +18,7 @@ use crate::consensus::encode;
 /// Verifies spend of an input script.
 ///
 /// Shorthand for [`consensus::verify_script_with_flags`] with flag
-/// [`bitcoinconsensus::VERIFY_ALL`].
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
 ///
 /// # Parameters
 ///
@@ -26,14 +26,14 @@ use crate::consensus::encode;
 ///  * `amount` - The amount this script guards.
 ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
 ///
-/// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script(
     script: &Script,
     index: usize,
     amount: Amount,
     spending_tx: &[u8],
 ) -> Result<(), BitcoinconsensusError> {
-    verify_script_with_flags(script, index, amount, spending_tx, bitcoinconsensus::VERIFY_ALL)
+    verify_script_with_flags(script, index, amount, spending_tx, bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT)
 }
 
 /// Verifies spend of an input script.
@@ -45,7 +45,7 @@ pub fn verify_script(
 ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
 ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
 ///
-/// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_script_with_flags<F: Into<u32>>(
     script: &Script,
     index: usize,
@@ -57,6 +57,7 @@ pub fn verify_script_with_flags<F: Into<u32>>(
         script.as_bytes(),
         amount.to_sat(),
         spending_tx,
+        None,
         index,
         flags.into(),
     )
@@ -66,16 +67,16 @@ pub fn verify_script_with_flags<F: Into<u32>>(
 /// Verifies that this transaction is able to spend its inputs.
 ///
 /// Shorthand for [`consensus::verify_transaction_with_flags`] with flag
-/// [`bitcoinconsensus::VERIFY_ALL`].
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
 ///
 /// The `spent` closure should not return the same [`TxOut`] twice!
 ///
-/// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
 pub fn verify_transaction<S>(tx: &Transaction, spent: S) -> Result<(), TxVerifyError>
 where
     S: FnMut(&OutPoint) -> Option<TxOut>,
 {
-    verify_transaction_with_flags(tx, spent, bitcoinconsensus::VERIFY_ALL)
+    verify_transaction_with_flags(tx, spent, bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT)
 }
 
 /// Verifies that this transaction is able to spend its inputs.
@@ -111,7 +112,7 @@ where
 impl Script {
     /// Verifies spend of an input script.
     ///
-    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
+    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
     ///
     /// # Parameters
     ///
@@ -119,7 +120,8 @@ impl Script {
     ///  * `amount` - The amount this script guards.
     ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
     ///
-    /// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+
+/// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
     pub fn verify(
         &self,
         index: usize,
@@ -136,9 +138,10 @@ impl Script {
     ///  * `index` - The input index in spending which is spending this transaction.
     ///  * `amount` - The amount this script guards.
     ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
+    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
     ///
-    /// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+
+    /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
     pub fn verify_with_flags<F: Into<u32>>(
         &self,
         index: usize,
@@ -153,11 +156,12 @@ impl Script {
 impl Transaction {
     /// Verifies that this transaction is able to spend its inputs.
     ///
-    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
+    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
     ///
     /// The `spent` closure should not return the same [`TxOut`] twice!
     ///
-    /// [`bitcoinconsensus::VERIFY_ALL`]: https://docs.rs/bitcoinconsensus/0.20.2-0.5.0/bitcoinconsensus/constant.VERIFY_ALL.html
+
+    /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
     pub fn verify<S>(&self, spent: S) -> Result<(), TxVerifyError>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,

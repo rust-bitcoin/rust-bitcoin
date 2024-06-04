@@ -40,7 +40,7 @@ units = { package = "bitcoin-units", version = "0.1.0", default-features = false
 base64 = { version = "0.22.0", optional = true }
 ordered = { version = "0.2.0", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
-bitcoinconsensus = { version = "0.105.0+25.1", default-features = false, optional = true }
+bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
 
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
