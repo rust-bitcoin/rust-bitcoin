@@ -25,7 +25,7 @@ pub struct Signature {
 }
 
 impl Signature {
-    /// Deserialize from slice
+    /// Deserializes the signature from a slice.
     pub fn from_slice(sl: &[u8]) -> Result<Self, SigFromSliceError> {
         match sl.len() {
             64 => {
@@ -43,7 +43,7 @@ impl Signature {
         }
     }
 
-    /// Serialize Signature
+    /// Serializes the signature.
     ///
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
     pub fn to_bytes(self) -> Vec<u8> {
@@ -56,7 +56,7 @@ impl Signature {
         ser_sig
     }
 
-    /// Serialize Signature
+    /// Serializes the signature.
     #[deprecated(since = "TBD", note = "Use to_bytes instead")]
     pub fn to_vec(self) -> Vec<u8> { self.to_bytes() }
 
@@ -67,7 +67,7 @@ impl Signature {
         sig.write_to(writer)
     }
 
-    /// Serializes the signature (without heap allocation)
+    /// Serializes the signature (without heap allocation).
     ///
     /// This returns a type with an API very similar to that of `Box<[u8]>`.
     /// You can get a slice from it using deref coercions or turn it into an iterator.
