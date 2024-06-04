@@ -497,7 +497,7 @@ impl U256 {
 
     // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
-        let (high, low) = if s.len() < 32 {
+        let (high, low) = if s.len() <= 32 {
             let low = parse::hex_u128_unchecked(s)?;
             (0, low)
         } else {
