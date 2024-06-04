@@ -10,7 +10,8 @@ REPO_DIR=$(git rev-parse --show-toplevel)
 API_DIR="$REPO_DIR/api"
 
 NIGHTLY=$(cat nightly-version)
-CARGO="cargo +$NIGHTLY public-api --simplified"
+# Our docs have broken intra doc links if all features are not enabled.
+RUSTDOCFLAGS="-A rustdoc::broken_intra_doc_links"
 
 # `sort -n -u` doesn't work for some reason.
 SORT="sort --numeric-sort"
@@ -33,13 +34,23 @@ main() {
     check_for_changes
 }
 
+# Run cargo with all features enabled.
+run_cargo_all_features() {
+    cargo +"$NIGHTLY" public-api --simplified --all-features
+}
+
+# Run cargo when --all-features is not used.
+run_cargo() {
+    RUSTDOCFLAGS="$RUSTDOCFLAGS" cargo +"$NIGHTLY" public-api --simplified "$@"
+}
+
 generate_api_files_bitcoin() {
     local crate="bitcoin"
     pushd "$REPO_DIR/$crate" > /dev/null
 
-    $CARGO | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
-    $CARGO --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
-    $CARGO --all-features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
+    run_cargo | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
+    run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+    run_cargo_all_features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
 
     popd > /dev/null
 }
@@ -48,8 +59,8 @@ generate_api_files_base58() {
     local crate="base58"
     pushd "$REPO_DIR/$crate" > /dev/null
 
-    $CARGO | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
-    $CARGO --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+    run_cargo | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
+    run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
 
     popd > /dev/null
 }
@@ -65,9 +76,9 @@ generate_api_files() {
     local crate=$1
     pushd "$REPO_DIR/$crate" > /dev/null
 
-    $CARGO --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
-    $CARGO --no-default-features --features=alloc | $SORT | uniq > "$API_DIR/$crate/alloc-only.txt"
-    $CARGO --all-features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
+    run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+    run_cargo --no-default-features --features=alloc | $SORT | uniq > "$API_DIR/$crate/alloc-only.txt"
+    run_cargo_all_features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
 
     popd > /dev/null
 }
