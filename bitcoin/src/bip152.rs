@@ -49,7 +49,7 @@ impl std::error::Error for Error {
     }
 }
 
-/// A [PrefilledTransaction] structure is used in [HeaderAndShortIds] to
+/// A [`PrefilledTransaction`] structure is used in [`HeaderAndShortIds`] to
 /// provide a list of a few transactions explicitly.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 pub struct PrefilledTransaction {
@@ -97,7 +97,7 @@ impl_array_newtype!(ShortId, u8, 6);
 impl_array_newtype_stringify!(ShortId, 6);
 
 impl ShortId {
-    /// Calculate the SipHash24 keys used to calculate short IDs.
+    /// Calculates the SipHash24 keys used to calculate short IDs.
     pub fn calculate_siphash_keys(header: &block::Header, nonce: u64) -> (u64, u64) {
         // 1. single-SHA256 hashing the block header with the nonce appended (in little-endian)
         let h = {
@@ -115,7 +115,7 @@ impl ShortId {
         )
     }
 
-    /// Calculate the short ID with the given (w)txid and using the provided SipHash keys.
+    /// Calculates the short ID with the given (w)txid and using the provided SipHash keys.
     pub fn with_siphash_keys<T: AsRef<[u8]>>(txid: &T, siphash_keys: (u64, u64)) -> ShortId {
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
@@ -142,7 +142,7 @@ impl Decodable for ShortId {
     }
 }
 
-/// A [HeaderAndShortIds] structure is used to relay a block header, the short
+/// A [`HeaderAndShortIds`] structure is used to relay a block header, the short
 /// transactions IDs used for matching already-available transactions, and a
 /// select few transactions which we expect a peer may be missing.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
@@ -161,7 +161,7 @@ pub struct HeaderAndShortIds {
 impl_consensus_encoding!(HeaderAndShortIds, header, nonce, short_ids, prefilled_txs);
 
 impl HeaderAndShortIds {
-    /// Create a new [HeaderAndShortIds] from a full block.
+    /// Creates a new [`HeaderAndShortIds`] from a full block.
     ///
     /// The version number must be either 1 or 2.
     ///
@@ -242,7 +242,7 @@ impl HeaderAndShortIds {
     }
 }
 
-/// A [BlockTransactionsRequest] structure is used to list transaction indexes
+/// A [`BlockTransactionsRequest`] structure is used to list transaction indexes
 /// in a block being requested.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 pub struct BlockTransactionsRequest {
@@ -335,7 +335,7 @@ impl error::Error for TxIndexOutOfRangeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// A [BlockTransactions] structure is used to provide some of the transactions
+/// A [`BlockTransactions`] structure is used to provide some of the transactions
 /// in a block, as requested.
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 pub struct BlockTransactions {
@@ -347,8 +347,8 @@ pub struct BlockTransactions {
 impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
-    /// Construct a [BlockTransactions] from a [BlockTransactionsRequest] and
-    /// the corresponding full [Block] by providing all requested transactions.
+    /// Constructs a [`BlockTransactions`] from a [`BlockTransactionsRequest`] and
+    /// the corresponding full [`Block`] by providing all requested transactions.
     pub fn from_request(
         request: &BlockTransactionsRequest,
         block: &Block,
