@@ -497,7 +497,7 @@ impl U256 {
 
     // Caller to ensure `s` does not contain a prefix.
     fn from_hex_internal(s: &str) -> Result<Self, ParseIntError> {
-        let (high, low) = if s.len() < 32 {
+        let (high, low) = if s.len() <= 32 {
             let low = parse::hex_u128_unchecked(s)?;
             (0, low)
         } else {
@@ -1650,6 +1650,14 @@ mod tests {
         let hex = format!("{:x}", val);
         let got = U256::from_unprefixed_hex(&hex).expect("failed to parse hex");
         assert_eq!(got, val);
+    }
+
+    #[test]
+    fn u256_from_hex_32_characters_long() {
+        let hex = "a69b455cd41bb662a69b4555deadbeef";
+        let want = U256(0x00, 0xA69B_455C_D41B_B662_A69B_4555_DEAD_BEEF);
+        let got = U256::from_unprefixed_hex(hex).expect("failed to parse hex");
+        assert_eq!(got, want);
     }
 
     #[cfg(feature = "serde")]
