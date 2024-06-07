@@ -1,3 +1,7 @@
+# 0.32.2 - 2024-06-07
+
+- Fix a bug when parsing 256-bit numeric types [#2837](https://github.com/rust-bitcoin/rust-bitcoin/pull/2837)
+
 # 0.32.1 - 2024-05-29
 
 Fix things we broke/removed from the `Address` API in the last release.
