@@ -25,9 +25,10 @@ fn do_test(data: &[u8]) {
             assert_eq!(ser, bitcoin::psbt::Psbt::serialize(&deser));
 
             let new_bytes = consume_random_bytes(&mut new_data);
-            let psbt_b: Result<bitcoin::psbt::Psbt, _> = bitcoin::psbt::Psbt::deserialize(new_bytes);
+            let psbt_b: Result<bitcoin::psbt::Psbt, _> =
+                bitcoin::psbt::Psbt::deserialize(new_bytes);
             match psbt_b {
-                Err(_) => {},
+                Err(_) => {}
                 Ok(mut psbt_b) => {
                     assert_eq!(psbt_b.combine(psbt.clone()).is_ok(), psbt.combine(psbt_b).is_ok());
                 }
