@@ -2293,4 +2293,12 @@ mod tests {
         assert_eq!(signing_keys.len(), 1);
         assert_eq!(signing_keys[&0], SigningKeys::Ecdsa(vec![pk]));
     }
+
+    #[test]
+    fn xpriv_sets() {
+        let xpriv = Xpriv::new_master(NetworkKind::Test, &hex!("000102030405060708090a0b0c0d0e0f")).unwrap();
+        Vec::new().push(xpriv.clone());
+        HashSet::new().insert(xpriv.clone());
+        BTreeSet::new().insert(xpriv.clone());
+    }
 }
