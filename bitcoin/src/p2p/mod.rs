@@ -110,7 +110,7 @@ impl ServiceFlags {
     ///
     /// Returns itself.
     pub fn remove(&mut self, other: ServiceFlags) -> ServiceFlags {
-        self.0 ^= other.0;
+        self.0 &= !other.0;
         *self
     }
 
