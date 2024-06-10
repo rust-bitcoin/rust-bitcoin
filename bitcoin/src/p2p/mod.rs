@@ -243,31 +243,38 @@ impl FromStr for Magic {
     }
 }
 
-impl From<Network> for Magic {
-    fn from(network: Network) -> Magic {
-        match network {
-            // Note: new network entries must explicitly be matched in `try_from` below.
-            Network::Bitcoin => Magic::BITCOIN,
-            Network::Testnet => Magic::TESTNET,
-            Network::Signet => Magic::SIGNET,
-            Network::Regtest => Magic::REGTEST,
+macro_rules! generate_network_magic_conversion {
+    ($(Network::$network:ident => Magic::$magic:ident,)*) => {
+        impl From<Network> for Magic {
+            fn from(network: Network) -> Magic {
+                match network {
+                    $(
+                        Network::$network => Magic::$magic,
+                    )*
+                }
+            }
         }
-    }
+
+        impl TryFrom<Magic> for Network {
+            type Error = UnknownMagicError;
+
+            fn try_from(magic: Magic) -> Result<Self, Self::Error> {
+                match magic {
+                    $(
+                        Magic::$magic => Ok(Network::$network),
+                    )*
+                    _ => Err(UnknownMagicError(magic)),
+                }
+            }
+        }
+    };
 }
 
-impl TryFrom<Magic> for Network {
-    type Error = UnknownMagicError;
-
-    fn try_from(magic: Magic) -> Result<Self, Self::Error> {
-        match magic {
-            // Note: any new network entries must be matched against here.
-            Magic::BITCOIN => Ok(Network::Bitcoin),
-            Magic::TESTNET => Ok(Network::Testnet),
-            Magic::SIGNET => Ok(Network::Signet),
-            Magic::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownMagicError(magic)),
-        }
-    }
+generate_network_magic_conversion! {
+    Network::Bitcoin => Magic::BITCOIN,
+    Network::Testnet => Magic::TESTNET,
+    Network::Signet => Magic::SIGNET,
+    Network::Regtest => Magic::REGTEST,
 }
 
 impl fmt::Display for Magic {
