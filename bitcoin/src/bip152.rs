@@ -374,10 +374,10 @@ mod test {
     use hex::FromHex;
 
     use super::*;
-    use crate::blockdata::block::TxMerkleNode;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::merkle_tree::TxMerkleNode;
     use crate::{Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Witness};
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
