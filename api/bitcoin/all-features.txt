@@ -8931,6 +8931,7 @@ pub fn bitcoin::p2p::message::RawNetworkMessage::consensus_decode_from_finite_re
 pub fn bitcoin::p2p::message::RawNetworkMessage::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::p2p::message::RawNetworkMessage::eq(&self, other: &bitcoin::p2p::message::RawNetworkMessage) -> bool
 pub fn bitcoin::p2p::message::RawNetworkMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::p2p::message::RawNetworkMessage::into_payload(self) -> bitcoin::p2p::message::NetworkMessage
 pub fn bitcoin::p2p::message::RawNetworkMessage::magic(&self) -> &bitcoin::p2p::Magic
 pub fn bitcoin::p2p::message::RawNetworkMessage::new(magic: bitcoin::p2p::Magic, payload: bitcoin::p2p::message::NetworkMessage) -> Self
 pub fn bitcoin::p2p::message::RawNetworkMessage::payload(&self) -> &bitcoin::p2p::message::NetworkMessage
