@@ -59,7 +59,7 @@ name = "bip32"
 
 [[example]]
 name = "handshake"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "ecdsa-psbt"
@@ -67,23 +67,23 @@ required-features = ["std", "bitcoinconsensus"]
 
 [[example]]
 name = "ecdsa-psbt-simple"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "sign-tx-segwit-v0"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "sign-tx-taproot"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "taproot-psbt"
-required-features = ["std", "rand-std", "bitcoinconsensus"]
+required-features = ["rand-std", "bitcoinconsensus"]
 
 [[example]]
 name = "taproot-psbt-simple"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "sighash"
