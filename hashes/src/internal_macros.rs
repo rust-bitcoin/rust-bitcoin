@@ -70,22 +70,6 @@ pub(crate) use arr_newtype_fmt_impl;
 /// `internal_engine` is required to initialize the engine for given hash type.
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
-        impl<$($gen: $gent),*> Hash<$($gen),*> {
-            /// Zero cost conversion between a fixed length byte array shared reference and
-            /// a shared reference to this Hash type.
-            pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
-                unsafe { &*(bytes as *const _ as *const Self) }
-            }
-
-            /// Zero cost conversion between a fixed length byte array exclusive reference and
-            /// an exclusive reference to this Hash type.
-            pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
-                unsafe { &mut *(bytes as *mut _ as *mut Self) }
-            }
-        }
-
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
@@ -188,6 +172,20 @@ macro_rules! hash_type {
             fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
             fn internal_engine() -> HashEngine { Default::default() }
+
+            /// Zero cost conversion between a fixed length byte array shared reference and
+            /// a shared reference to this Hash type.
+            pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+                unsafe { &*(bytes as *const _ as *const Self) }
+            }
+
+            /// Zero cost conversion between a fixed length byte array exclusive reference and
+            /// an exclusive reference to this Hash type.
+            pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+                unsafe { &mut *(bytes as *mut _ as *mut Self) }
+            }
         }
 
         #[cfg(feature = "schemars")]
