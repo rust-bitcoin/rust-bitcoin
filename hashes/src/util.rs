@@ -192,24 +192,88 @@ macro_rules! hash_newtype {
         $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
+        #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
             /// Creates this wrapper type from the inner hash type.
-            #[allow(unused)] // the user of macro may not need this
             pub fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Returns the inner hash (sha256, sh256d etc.).
-            #[allow(unused)] // the user of macro may not need this
             pub fn to_raw_hash(self) -> $hash {
                 self.0
             }
 
             /// Returns a reference to the inner hash (sha256, sh256d etc.).
-            #[allow(unused)] // the user of macro may not need this
             pub fn as_raw_hash(&self) -> &$hash {
                 &self.0
             }
+
+            /// Constructs a new engine.
+            pub fn engine() -> <$hash as $crate::Hash>::Engine {
+                <$hash as $crate::Hash>::engine()
+            }
+
+            /// Produces a hash from the current state of a given engine.
+            pub fn from_engine(e: <$hash as $crate::Hash>::Engine) -> Self {
+                Self::from(<$hash as $crate::Hash>::from_engine(e))
+            }
+
+            /// Copies a byte slice into a hash object.
+            pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
+                Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
+            }
+
+            /// Hashes some bytes.
+            #[allow(unused)] // the user of macro may not need this
+            pub fn hash(data: &[u8]) -> Self {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
+            }
+
+            /// Hashes all the byte slices retrieved from the iterator together.
+            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            where
+                B: AsRef<[u8]>,
+                I: IntoIterator<Item = B>,
+            {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                for slice in byte_slices {
+                    engine.input(slice.as_ref());
+                }
+                Self::from_engine(engine)
+            }
+
+            /// Returns the underlying byte array.
+            pub fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
+                self.0.to_byte_array()
+            }
+
+            /// Returns a reference to the underlying byte array.
+            pub fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
+                self.0.as_byte_array()
+            }
+
+            /// Constructs a hash from the underlying byte array.
+            pub fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
+            }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can create
+            /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+            /// previous blockhash and the coinbase transaction's outpoint txid.
+            pub fn all_zeros() -> Self {
+                let zeros = <$hash>::all_zeros();
+                $newtype(zeros)
+            }
+
         }
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
@@ -232,45 +296,27 @@ macro_rules! hash_newtype {
             const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
-            fn engine() -> Self::Engine {
-                <$hash as $crate::Hash>::engine()
-            }
+            fn engine() -> <$hash as $crate::Hash>::Engine { Self::engine() }
 
-            fn from_engine(e: Self::Engine) -> Self {
-                Self::from(<$hash as $crate::Hash>::from_engine(e))
-            }
+            fn from_engine(e: <$hash as $crate::Hash>::Engine) -> $newtype { Self::from_engine(e) }
 
-            #[inline]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
-                Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
+                Self::from_slice(sl)
             }
 
-            #[inline]
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
-            }
+            fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
-            #[inline]
-            fn to_byte_array(self) -> Self::Bytes {
-                self.0.to_byte_array()
-            }
+            fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
-            #[inline]
-            fn as_byte_array(&self) -> &Self::Bytes {
-                self.0.as_byte_array()
-            }
+            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 
-            #[inline]
-            fn all_zeros() -> Self {
-                let zeros = <$hash>::all_zeros();
-                $newtype(zeros)
-            }
+            fn all_zeros() -> Self { Self::all_zeros() }
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::{Hash, hex::FromHex};
+                use $crate::{hex::FromHex};
 
                 let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
                 if <Self as $crate::Hash>::DISPLAY_BACKWARD {
@@ -386,7 +432,7 @@ macro_rules! hash_newtype_known_attrs {
 
 #[cfg(test)]
 mod test {
-    use crate::{sha256, Hash};
+    use crate::sha256;
 
     #[test]
     fn hash_as_ref_array() {

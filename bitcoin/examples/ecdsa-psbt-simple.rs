@@ -26,7 +26,6 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
-use bitcoin::hashes::Hash;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};

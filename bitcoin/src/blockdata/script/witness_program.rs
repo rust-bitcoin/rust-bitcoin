@@ -9,7 +9,6 @@
 
 use core::fmt;
 
-use hashes::Hash as _;
 use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
 

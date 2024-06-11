@@ -6,7 +6,7 @@
 //! consensus code. In particular, it defines the genesis block and its
 //! single transaction.
 
-use hashes::{sha256d, Hash};
+use hashes::sha256d;
 use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};

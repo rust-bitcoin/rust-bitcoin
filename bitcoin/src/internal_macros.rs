@@ -185,7 +185,6 @@ macro_rules! impl_hashencode {
 
         impl $crate::consensus::Decodable for $hashtype {
             fn consensus_decode<R: $crate::io::BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, $crate::consensus::encode::Error> {
-                use $crate::hashes::Hash;
                 Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
             }
         }
@@ -199,14 +198,12 @@ macro_rules! impl_asref_push_bytes {
         $(
             impl AsRef<$crate::blockdata::script::PushBytes> for $hashtype {
                 fn as_ref(&self) -> &$crate::blockdata::script::PushBytes {
-                    use $crate::hashes::Hash;
                     self.as_byte_array().into()
                 }
             }
 
             impl From<$hashtype> for $crate::blockdata::script::PushBytesBuf {
                 fn from(hash: $hashtype) -> Self {
-                    use $crate::hashes::Hash;
                     hash.as_byte_array().into()
                 }
             }
