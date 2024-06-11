@@ -40,6 +40,20 @@ impl<T: Tag> Hash<T> {
     fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
 
     fn internal_engine() -> HashEngine { T::engine() }
+
+    /// Zero cost conversion between a fixed length byte array shared reference and
+    /// a shared reference to this Hash type.
+    pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+        unsafe { &*(bytes as *const _ as *const Self) }
+    }
+
+    /// Zero cost conversion between a fixed length byte array exclusive reference and
+    /// an exclusive reference to this Hash type.
+    pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+        unsafe { &mut *(bytes as *mut _ as *mut Self) }
+    }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
