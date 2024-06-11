@@ -36,14 +36,18 @@ sha256t_hash_newtype! {
     ///
     /// This is used for computing tapscript script spend hash.
     pub struct TapLeafHash(_);
+}
 
+sha256t_hash_newtype! {
     pub struct TapBranchTag = hash_str("TapBranch");
 
     /// Tagged hash used in taproot trees.
     ///
     /// See BIP-340 for tagging rules.
     pub struct TapNodeHash(_);
+}
 
+sha256t_hash_newtype! {
     pub struct TapTweakTag = hash_str("TapTweak");
 
     /// Taproot-tagged hash with tag \"TapTweak\".
