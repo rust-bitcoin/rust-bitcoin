@@ -836,6 +836,7 @@ pub fn bitcoin_hashes::siphash24::State::fmt(&self, f: &mut core::fmt::Formatter
 pub macro bitcoin_hashes::borrow_slice_impl!
 pub macro bitcoin_hashes::hash_newtype!
 pub macro bitcoin_hashes::hex_fmt_impl!
+pub macro bitcoin_hashes::impl_bytelike_traits!
 pub macro bitcoin_hashes::serde_impl!
 pub macro bitcoin_hashes::sha256t_hash_newtype!
 pub mod bitcoin_hashes
