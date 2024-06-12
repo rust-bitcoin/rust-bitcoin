@@ -67,37 +67,8 @@ pub(crate) use arr_newtype_fmt_impl;
 /// `from_engine` obviously implements the finalization algorithm.
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
-        impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::{hex::{FromHex}};
 
-                let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
-                if $reverse {
-                    bytes.reverse();
-                }
-                Ok(Self::from_byte_array(bytes))
-            }
-        }
-
-        $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        borrow_slice_impl!(Hash $(, $gen: $gent)*);
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
-            fn as_ref(&self) -> &[u8; $bits / 8] {
-                &self.0
-            }
-        }
-
-        impl<I: SliceIndex<[u8]> $(, $gen: $gent)*> Index<I> for Hash<$($gen),*> {
-            type Output = I::Output;
-
-            #[inline]
-            fn index(&self, index: I) -> &Self::Output {
-                &self.0[index]
-            }
-        }
+        $crate::impl_bytelike_traits!(Hash, $bits / 8, $reverse $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
             type Engine = HashEngine;

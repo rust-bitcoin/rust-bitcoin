@@ -2,9 +2,6 @@
 
 //! SHA256d implementation (double SHA256).
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{sha256, FromSliceError};
 
 crate::internal_macros::hash_type! {

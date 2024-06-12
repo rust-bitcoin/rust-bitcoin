@@ -7,9 +7,6 @@
 //! produces an entirely different hash compared to sha512. More information at
 //! <https://eprint.iacr.org/2010/548.pdf>.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{sha512, FromSliceError};
 
 crate::internal_macros::hash_type! {
