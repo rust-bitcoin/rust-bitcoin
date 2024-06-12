@@ -59,11 +59,13 @@ const M: u64 = 784931;
 hashes::hash_newtype! {
     /// Filter hash, as defined in BIP-157.
     pub struct FilterHash(sha256d::Hash);
+}
+impl_hashencode!(FilterHash);
+
+hashes::hash_newtype! {
     /// Filter header, as defined in BIP-157.
     pub struct FilterHeader(sha256d::Hash);
 }
-
-impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
 
 /// Errors for blockfilter.

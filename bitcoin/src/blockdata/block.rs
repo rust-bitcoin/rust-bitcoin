@@ -25,16 +25,25 @@ use crate::{merkle_tree, VarInt};
 hashes::hash_newtype! {
     /// A bitcoin block hash.
     pub struct BlockHash(sha256d::Hash);
+}
+impl_hashencode!(BlockHash);
+
+hashes::hash_newtype! {
     /// A hash of the Merkle tree branch or root for transactions.
     pub struct TxMerkleNode(sha256d::Hash);
+}
+impl_hashencode!(TxMerkleNode);
+
+hashes::hash_newtype! {
     /// A hash corresponding to the Merkle tree root for witness data.
     pub struct WitnessMerkleNode(sha256d::Hash);
+}
+impl_hashencode!(WitnessMerkleNode);
+
+hashes::hash_newtype! {
     /// A hash corresponding to the witness structure commitment in the coinbase transaction.
     pub struct WitnessCommitment(sha256d::Hash);
 }
-impl_hashencode!(BlockHash);
-impl_hashencode!(TxMerkleNode);
-impl_hashencode!(WitnessMerkleNode);
 
 impl From<Txid> for TxMerkleNode {
     fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }

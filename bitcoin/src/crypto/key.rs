@@ -256,10 +256,14 @@ impl FromStr for PublicKey {
 hashes::hash_newtype! {
     /// A hash of a public key.
     pub struct PubkeyHash(hash160::Hash);
+}
+impl_asref_push_bytes!(PubkeyHash);
+
+hashes::hash_newtype! {
     /// SegWit version of a public key hash.
     pub struct WPubkeyHash(hash160::Hash);
 }
-impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
+impl_asref_push_bytes!(WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }

@@ -87,10 +87,14 @@ pub use self::{
 hashes::hash_newtype! {
     /// A hash of Bitcoin Script bytecode.
     pub struct ScriptHash(hash160::Hash);
+}
+impl_asref_push_bytes!(ScriptHash);
+
+hashes::hash_newtype! {
     /// SegWit version of a Bitcoin Script bytecode hash.
     pub struct WScriptHash(sha256::Hash);
 }
-impl_asref_push_bytes!(ScriptHash, WScriptHash);
+impl_asref_push_bytes!(WScriptHash);
 
 impl From<ScriptBuf> for ScriptHash {
     fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }

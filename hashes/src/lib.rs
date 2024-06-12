@@ -254,7 +254,9 @@ mod tests {
     hash_newtype! {
         /// A test newtype
         struct TestNewtype(sha256d::Hash);
+    }
 
+    hash_newtype! {
         /// A test newtype
         struct TestNewtype2(sha256d::Hash);
     }

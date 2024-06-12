@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
+use hashes::{sha256, sha256d, sha256t_hash_newtype};
 use internals::write_err;
 use io::Write;
 
@@ -42,17 +42,18 @@ macro_rules! impl_message_from_hash {
     };
 }
 
-hash_newtype! {
+hashes::hash_newtype! {
     /// Hash of a transaction according to the legacy signature algorithm.
     #[hash_newtype(forward)]
     pub struct LegacySighash(sha256d::Hash);
+}
+impl_message_from_hash!(LegacySighash);
 
+hashes::hash_newtype! {
     /// Hash of a transaction according to the segwit version 0 signature algorithm.
     #[hash_newtype(forward)]
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
-
-impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
 sha256t_hash_newtype! {

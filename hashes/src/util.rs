@@ -178,8 +178,7 @@ macro_rules! engine_input_impl(
 // may be composed of multiple token trees - that's the point of "double repetition".
 #[macro_export]
 macro_rules! hash_newtype {
-    ($($(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:tt])* $field_vis:vis $hash:path);)+) => {
-        $(
+    ($(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:tt])* $field_vis:vis $hash:path);) => {
         $($crate::hash_newtype_known_attrs!(#[ $($type_attrs)* ]);)*
 
         $crate::hash_newtype_struct! {
@@ -340,7 +339,6 @@ macro_rules! hash_newtype {
                 &self.0[index]
             }
         }
-        )+
     };
 }
 
