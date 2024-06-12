@@ -153,6 +153,9 @@ impl Midstate {
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
     pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+
     /// Construct a new [`Midstate`] from the inner value.
     pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
