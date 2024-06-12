@@ -7,8 +7,6 @@ use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
 use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{sha256d, FromSliceError, HashEngine as _};
 
@@ -114,30 +112,11 @@ impl Hash {
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 pub struct Midstate(pub [u8; 32]);
 
-crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
-serde_impl!(Midstate, 32);
-borrow_slice_impl!(Midstate);
-
-impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-impl core::str::FromStr for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
-}
+crate::impl_bytelike_traits!(Midstate, 32, true);
 
 impl Midstate {
     /// Length of the midstate, in bytes.
     const LEN: usize = 32;
-
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = true;
 
     /// Copies a byte slice into the [`Midstate`] object.
     pub fn from_slice(sl: &[u8]) -> Result<Midstate, FromSliceError> {
