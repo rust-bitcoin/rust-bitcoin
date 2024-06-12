@@ -3,8 +3,6 @@
 //! RIPEMD160 implementation.
 
 use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::HashEngine as _;
 
