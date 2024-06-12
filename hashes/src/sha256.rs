@@ -139,9 +139,6 @@ impl Midstate {
     /// true for `Sha256dHash`, so here we are.
     const DISPLAY_BACKWARD: bool = true;
 
-    /// Construct a new [`Midstate`] from the inner value.
-    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
-
     /// Copies a byte slice into the [`Midstate`] object.
     pub fn from_slice(sl: &[u8]) -> Result<Midstate, FromSliceError> {
         if sl.len() != Self::LEN {
@@ -155,6 +152,9 @@ impl Midstate {
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
     pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Construct a new [`Midstate`] from the inner value.
+    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
     /// Creates midstate for tagged hashes.
     ///
