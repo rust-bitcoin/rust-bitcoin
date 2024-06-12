@@ -2,49 +2,6 @@
 
 //! Non-public macros
 
-macro_rules! arr_newtype_fmt_impl {
-    ($ty:ident, $bytes:expr $(, $gen:ident: $gent:ident)*) => {
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                let case = $crate::hex::Case::Lower;
-                if <$ty<$($gen),*> as crate::Hash>::DISPLAY_BACKWARD {
-                    $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
-                }
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                let case = $crate::hex::Case::Upper;
-                if <$ty<$($gen),*> as crate::Hash>::DISPLAY_BACKWARD {
-                    $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
-                }
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::_export::_core::fmt::LowerHex::fmt(self, f)
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                write!(f, "{:#}", self)
-            }
-        }
-    }
-}
-pub(crate) use arr_newtype_fmt_impl;
-
 /// Adds trait impls to the type called `Hash` in the current scope.
 ///
 /// Implpements various conversion traits as well as the [`crate::Hash`] trait.
@@ -63,30 +20,10 @@ pub(crate) use arr_newtype_fmt_impl;
 /// `from_engine` obviously implements the finalization algorithm.
 macro_rules! hash_trait_impls {
     ($len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
-        impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::{hex::{FromHex}};
 
-                let mut bytes = <[u8; $len]>::from_hex(s)?;
-                if $reverse {
-                    bytes.reverse();
-                }
-                Ok(Self::from_byte_array(bytes))
-            }
-        }
+        $crate::impl_bytelike_traits!(Hash, $len, $reverse $(, $gen: $gent)*);
 
-        $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $len $(, $gen: $gent)*);
-        serde_impl!(Hash, { $len } $(, $gen: $gent)*);
-        borrow_slice_impl!(Hash $(, $gen: $gent)*);
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $len]> for Hash<$($gen),*> {
-            fn as_ref(&self) -> &[u8; $len] {
-                &self.0
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
+        impl<$($gen: $gent),*> crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
 
             fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
