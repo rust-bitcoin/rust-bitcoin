@@ -39,12 +39,29 @@ hashes::hash_newtype! {
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
-impl From<Txid> for TxMerkleNode {
-    fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
+/// A trait that defines a hash that can appear as a node in a Merkle tree.
+pub trait MerkleNode: Hash + Encodable {
+    /// The root node type produced by this merkle tree.
+    type Root: Hash;
+
+    /// Converts a leaf node to the root node type e.g., when a tree has a single node.
+    fn to_root(self) -> Self::Root;
 }
 
-impl From<Wtxid> for WitnessMerkleNode {
-    fn from(wtxid: Wtxid) -> Self { Self::from_byte_array(wtxid.to_byte_array()) }
+impl MerkleNode for Txid {
+    type Root = TxMerkleNode;
+
+    fn to_root(self) -> Self::Root {
+        TxMerkleNode::from_byte_array(self.to_byte_array())
+    }
+}
+
+impl MerkleNode for Wtxid {
+    type Root = WitnessMerkleNode;
+
+    fn to_root(self) -> Self::Root {
+        WitnessMerkleNode::from_byte_array(self.to_byte_array())
+    }
 }
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
@@ -58,15 +75,15 @@ impl From<Wtxid> for WitnessMerkleNode {
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
+pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T::Root>
 where
-    T: Hash + Encodable,
+    T: MerkleNode,
     <T as Hash>::Engine: Write,
 {
     match hashes.len() {
         0 => None,
-        1 => Some(hashes[0]),
-        _ => Some(merkle_root_r(hashes)),
+        1 => Some(hashes[0].to_root()),
+        _ => Some(merkle_root_r(hashes).to_root()),
     }
 }
 
@@ -77,16 +94,16 @@ where
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
+pub fn calculate_root<T, I>(mut hashes: I) -> Option<T::Root>
 where
-    T: Hash + Encodable,
+    T: MerkleNode,
     <T as Hash>::Engine: Write,
     I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
     let second = match hashes.next() {
         Some(second) => second,
-        None => return Some(first),
+        None => return Some(first.to_root()),
     };
 
     let mut hashes = iter::once(first).chain(iter::once(second)).chain(hashes);
@@ -99,23 +116,23 @@ where
     while let Some(hash1) = hashes.next() {
         // If the size is odd, use the last element twice.
         let hash2 = hashes.next().unwrap_or(hash1);
-        let mut encoder = T::engine();
+        let mut encoder = <T as Hash>::engine();
         hash1.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         hash2.consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        alloc.push(T::from_engine(encoder));
+        alloc.push(<T as Hash>::from_engine(encoder));
     }
 
-    Some(merkle_root_r(&mut alloc))
+    Some(merkle_root_r(&mut alloc).to_root())
 }
 
 // `hashes` must contain at least one hash.
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
 where
-    T: Hash + Encodable,
+    T: MerkleNode + Encodable,
     <T as Hash>::Engine: Write,
 {
     if hashes.len() == 1 {
-        return hashes[0];
+        return T::from_byte_array(hashes[0].to_byte_array());
     }
 
     for idx in 0..((hashes.len() + 1) / 2) {
@@ -133,8 +150,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use hashes::sha256d;
-
     use super::*;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
@@ -146,9 +161,9 @@ mod tests {
         let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
         assert!(block.check_merkle_root()); // Sanity check.
 
-        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
+        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid());
 
-        let mut hashes_array = [sha256d::Hash::all_zeros(); 15];
+        let mut hashes_array = [Txid::all_zeros(); 15];
         for (i, hash) in hashes_iter.clone().enumerate() {
             hashes_array[i] = hash;
         }
