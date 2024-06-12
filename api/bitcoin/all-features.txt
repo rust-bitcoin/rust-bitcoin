@@ -147,10 +147,8 @@ impl bitcoin::bip32::Xpub
 impl bitcoin::blockdata::block::Block
 impl bitcoin::blockdata::block::BlockHash
 impl bitcoin::blockdata::block::Header
-impl bitcoin::blockdata::block::TxMerkleNode
 impl bitcoin::blockdata::block::Version
 impl bitcoin::blockdata::block::WitnessCommitment
-impl bitcoin::blockdata::block::WitnessMerkleNode
 impl bitcoin::blockdata::constants::ChainHash
 impl bitcoin::blockdata::locktime::absolute::LockTime
 impl bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -200,11 +198,11 @@ impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::bip158::
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::bip158::FilterHeader>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::block::BlockHash>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::block::Header>
-impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::block::TxMerkleNode>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::consensus::encode::VarInt>
+impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::p2p::message_blockdata::Inventory>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::taproot::TapLeafHash>
@@ -221,9 +219,7 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::bip158::FilterHeader
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::Block
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::BlockHash
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::Header
-impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::TxMerkleNode
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::Version
-impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::block::WitnessMerkleNode
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::locktime::absolute::LockTime
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::script::ScriptBuf
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::transaction::OutPoint
@@ -238,6 +234,8 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::witness::Witn
 impl bitcoin::consensus::encode::Decodable for bitcoin::consensus::encode::CheckedData
 impl bitcoin::consensus::encode::Decodable for bitcoin::consensus::encode::VarInt
 impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::PartialMerkleTree
+impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::TxMerkleNode
+impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::WitnessMerkleNode
 impl bitcoin::consensus::encode::Decodable for bitcoin::p2p::Magic
 impl bitcoin::consensus::encode::Decodable for bitcoin::p2p::ServiceFlags
 impl bitcoin::consensus::encode::Decodable for bitcoin::p2p::address::AddrV2
@@ -301,11 +299,11 @@ impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::bip158::
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::bip158::FilterHeader>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::block::BlockHash>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::block::Header>
-impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::block::TxMerkleNode>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::consensus::encode::VarInt>
+impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::p2p::message_blockdata::Inventory>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::taproot::TapLeafHash>
@@ -322,9 +320,7 @@ impl bitcoin::consensus::encode::Encodable for bitcoin::bip158::FilterHeader
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::Block
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::BlockHash
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::Header
-impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::TxMerkleNode
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::Version
-impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::block::WitnessMerkleNode
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::locktime::absolute::LockTime
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::script::Script
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::script::ScriptBuf
@@ -340,6 +336,8 @@ impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::witness::Witn
 impl bitcoin::consensus::encode::Encodable for bitcoin::consensus::encode::CheckedData
 impl bitcoin::consensus::encode::Encodable for bitcoin::consensus::encode::VarInt
 impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::PartialMerkleTree
+impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::TxMerkleNode
+impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::WitnessMerkleNode
 impl bitcoin::consensus::encode::Encodable for bitcoin::p2p::Magic
 impl bitcoin::consensus::encode::Encodable for bitcoin::p2p::ServiceFlags
 impl bitcoin::consensus::encode::Encodable for bitcoin::p2p::address::AddrV2
@@ -395,7 +393,11 @@ impl bitcoin::key::TapTweak for bitcoin::key::UntweakedKeypair
 impl bitcoin::key::TapTweak for bitcoin::key::UntweakedPublicKey
 impl bitcoin::key::TweakedKeypair
 impl bitcoin::key::TweakedPublicKey
+impl bitcoin::merkle_tree::MerkleNode for bitcoin::blockdata::transaction::Txid
+impl bitcoin::merkle_tree::MerkleNode for bitcoin::blockdata::transaction::Wtxid
 impl bitcoin::merkle_tree::PartialMerkleTree
+impl bitcoin::merkle_tree::TxMerkleNode
+impl bitcoin::merkle_tree::WitnessMerkleNode
 impl bitcoin::network::Network
 impl bitcoin::network::NetworkKind
 impl bitcoin::p2p::Magic
@@ -451,13 +453,13 @@ impl bitcoin_hashes::Hash for bitcoin::bip158::FilterHash
 impl bitcoin_hashes::Hash for bitcoin::bip158::FilterHeader
 impl bitcoin_hashes::Hash for bitcoin::bip32::XKeyIdentifier
 impl bitcoin_hashes::Hash for bitcoin::blockdata::block::BlockHash
-impl bitcoin_hashes::Hash for bitcoin::blockdata::block::TxMerkleNode
 impl bitcoin_hashes::Hash for bitcoin::blockdata::block::WitnessCommitment
-impl bitcoin_hashes::Hash for bitcoin::blockdata::block::WitnessMerkleNode
 impl bitcoin_hashes::Hash for bitcoin::blockdata::script::ScriptHash
 impl bitcoin_hashes::Hash for bitcoin::blockdata::script::WScriptHash
 impl bitcoin_hashes::Hash for bitcoin::blockdata::transaction::Txid
 impl bitcoin_hashes::Hash for bitcoin::blockdata::transaction::Wtxid
+impl bitcoin_hashes::Hash for bitcoin::merkle_tree::TxMerkleNode
+impl bitcoin_hashes::Hash for bitcoin::merkle_tree::WitnessMerkleNode
 impl bitcoin_hashes::Hash for bitcoin::taproot::TapLeafHash
 impl bitcoin_hashes::Hash for bitcoin::taproot::TapNodeHash
 impl bitcoin_hashes::Hash for bitcoin::taproot::TapTweakHash
@@ -470,13 +472,13 @@ impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::bip158:
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::bip158::FilterHeader
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::bip32::XKeyIdentifier
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::block::BlockHash
-impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::block::TxMerkleNode
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::block::WitnessCommitment
-impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::block::WitnessMerkleNode
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::script::ScriptHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::script::WScriptHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::transaction::Txid
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::blockdata::transaction::Wtxid
+impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::merkle_tree::TxMerkleNode
+impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::merkle_tree::WitnessMerkleNode
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapLeafHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapNodeHash
 impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin::taproot::TapTweakHash
@@ -502,15 +504,15 @@ impl core::borrow::Borrow<[u8]> for bitcoin::bip32::ChainCode
 impl core::borrow::Borrow<[u8]> for bitcoin::bip32::Fingerprint
 impl core::borrow::Borrow<[u8]> for bitcoin::bip32::XKeyIdentifier
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::block::BlockHash
-impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::block::TxMerkleNode
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::block::WitnessCommitment
-impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::constants::ChainHash
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::script::ScriptHash
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::script::WScriptHash
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::transaction::Txid
 impl core::borrow::Borrow<[u8]> for bitcoin::blockdata::transaction::Wtxid
 impl core::borrow::Borrow<[u8]> for bitcoin::ecdsa::SerializedSignature
+impl core::borrow::Borrow<[u8]> for bitcoin::merkle_tree::TxMerkleNode
+impl core::borrow::Borrow<[u8]> for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::borrow::Borrow<[u8]> for bitcoin::p2p::Magic
 impl core::borrow::Borrow<[u8]> for bitcoin::taproot::TapLeafHash
 impl core::borrow::Borrow<[u8]> for bitcoin::taproot::TapNodeHash
@@ -581,11 +583,9 @@ impl core::clone::Clone for bitcoin::blockdata::block::Bip34Error
 impl core::clone::Clone for bitcoin::blockdata::block::Block
 impl core::clone::Clone for bitcoin::blockdata::block::BlockHash
 impl core::clone::Clone for bitcoin::blockdata::block::Header
-impl core::clone::Clone for bitcoin::blockdata::block::TxMerkleNode
 impl core::clone::Clone for bitcoin::blockdata::block::ValidationError
 impl core::clone::Clone for bitcoin::blockdata::block::Version
 impl core::clone::Clone for bitcoin::blockdata::block::WitnessCommitment
-impl core::clone::Clone for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::clone::Clone for bitcoin::blockdata::constants::ChainHash
 impl core::clone::Clone for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::clone::Clone for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -644,6 +644,8 @@ impl core::clone::Clone for bitcoin::key::TweakedPublicKey
 impl core::clone::Clone for bitcoin::key::UncompressedPublicKeyError
 impl core::clone::Clone for bitcoin::merkle_tree::MerkleBlockError
 impl core::clone::Clone for bitcoin::merkle_tree::PartialMerkleTree
+impl core::clone::Clone for bitcoin::merkle_tree::TxMerkleNode
+impl core::clone::Clone for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::clone::Clone for bitcoin::network::Network
 impl core::clone::Clone for bitcoin::network::NetworkKind
 impl core::clone::Clone for bitcoin::network::ParseNetworkError
@@ -780,11 +782,9 @@ impl core::cmp::Eq for bitcoin::blockdata::block::Bip34Error
 impl core::cmp::Eq for bitcoin::blockdata::block::Block
 impl core::cmp::Eq for bitcoin::blockdata::block::BlockHash
 impl core::cmp::Eq for bitcoin::blockdata::block::Header
-impl core::cmp::Eq for bitcoin::blockdata::block::TxMerkleNode
 impl core::cmp::Eq for bitcoin::blockdata::block::ValidationError
 impl core::cmp::Eq for bitcoin::blockdata::block::Version
 impl core::cmp::Eq for bitcoin::blockdata::block::WitnessCommitment
-impl core::cmp::Eq for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::cmp::Eq for bitcoin::blockdata::constants::ChainHash
 impl core::cmp::Eq for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::cmp::Eq for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -843,6 +843,8 @@ impl core::cmp::Eq for bitcoin::key::TweakedPublicKey
 impl core::cmp::Eq for bitcoin::key::UncompressedPublicKeyError
 impl core::cmp::Eq for bitcoin::merkle_tree::MerkleBlockError
 impl core::cmp::Eq for bitcoin::merkle_tree::PartialMerkleTree
+impl core::cmp::Eq for bitcoin::merkle_tree::TxMerkleNode
+impl core::cmp::Eq for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::cmp::Eq for bitcoin::network::Network
 impl core::cmp::Eq for bitcoin::network::NetworkKind
 impl core::cmp::Eq for bitcoin::network::ParseNetworkError
@@ -958,10 +960,8 @@ impl core::cmp::Ord for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::Ord for bitcoin::bip32::Xpub
 impl core::cmp::Ord for bitcoin::blockdata::block::BlockHash
 impl core::cmp::Ord for bitcoin::blockdata::block::Header
-impl core::cmp::Ord for bitcoin::blockdata::block::TxMerkleNode
 impl core::cmp::Ord for bitcoin::blockdata::block::Version
 impl core::cmp::Ord for bitcoin::blockdata::block::WitnessCommitment
-impl core::cmp::Ord for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::cmp::Ord for bitcoin::blockdata::constants::ChainHash
 impl core::cmp::Ord for bitcoin::blockdata::opcodes::ClassifyContext
 impl core::cmp::Ord for bitcoin::blockdata::script::PushBytes
@@ -985,6 +985,8 @@ impl core::cmp::Ord for bitcoin::consensus::encode::VarInt
 impl core::cmp::Ord for bitcoin::key::SortKey
 impl core::cmp::Ord for bitcoin::key::TweakedKeypair
 impl core::cmp::Ord for bitcoin::key::TweakedPublicKey
+impl core::cmp::Ord for bitcoin::merkle_tree::TxMerkleNode
+impl core::cmp::Ord for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::cmp::Ord for bitcoin::network::Network
 impl core::cmp::Ord for bitcoin::network::NetworkKind
 impl core::cmp::Ord for bitcoin::p2p::Magic
@@ -1068,11 +1070,9 @@ impl core::cmp::PartialEq for bitcoin::blockdata::block::Bip34Error
 impl core::cmp::PartialEq for bitcoin::blockdata::block::Block
 impl core::cmp::PartialEq for bitcoin::blockdata::block::BlockHash
 impl core::cmp::PartialEq for bitcoin::blockdata::block::Header
-impl core::cmp::PartialEq for bitcoin::blockdata::block::TxMerkleNode
 impl core::cmp::PartialEq for bitcoin::blockdata::block::ValidationError
 impl core::cmp::PartialEq for bitcoin::blockdata::block::Version
 impl core::cmp::PartialEq for bitcoin::blockdata::block::WitnessCommitment
-impl core::cmp::PartialEq for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::cmp::PartialEq for bitcoin::blockdata::constants::ChainHash
 impl core::cmp::PartialEq for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::cmp::PartialEq for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -1131,6 +1131,8 @@ impl core::cmp::PartialEq for bitcoin::key::TweakedPublicKey
 impl core::cmp::PartialEq for bitcoin::key::UncompressedPublicKeyError
 impl core::cmp::PartialEq for bitcoin::merkle_tree::MerkleBlockError
 impl core::cmp::PartialEq for bitcoin::merkle_tree::PartialMerkleTree
+impl core::cmp::PartialEq for bitcoin::merkle_tree::TxMerkleNode
+impl core::cmp::PartialEq for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::cmp::PartialEq for bitcoin::network::Network
 impl core::cmp::PartialEq for bitcoin::network::NetworkKind
 impl core::cmp::PartialEq for bitcoin::network::ParseNetworkError
@@ -1250,10 +1252,8 @@ impl core::cmp::PartialOrd for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::PartialOrd for bitcoin::bip32::Xpub
 impl core::cmp::PartialOrd for bitcoin::blockdata::block::BlockHash
 impl core::cmp::PartialOrd for bitcoin::blockdata::block::Header
-impl core::cmp::PartialOrd for bitcoin::blockdata::block::TxMerkleNode
 impl core::cmp::PartialOrd for bitcoin::blockdata::block::Version
 impl core::cmp::PartialOrd for bitcoin::blockdata::block::WitnessCommitment
-impl core::cmp::PartialOrd for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::cmp::PartialOrd for bitcoin::blockdata::constants::ChainHash
 impl core::cmp::PartialOrd for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::cmp::PartialOrd for bitcoin::blockdata::locktime::relative::LockTime
@@ -1279,6 +1279,8 @@ impl core::cmp::PartialOrd for bitcoin::consensus::encode::VarInt
 impl core::cmp::PartialOrd for bitcoin::key::SortKey
 impl core::cmp::PartialOrd for bitcoin::key::TweakedKeypair
 impl core::cmp::PartialOrd for bitcoin::key::TweakedPublicKey
+impl core::cmp::PartialOrd for bitcoin::merkle_tree::TxMerkleNode
+impl core::cmp::PartialOrd for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::cmp::PartialOrd for bitcoin::network::Network
 impl core::cmp::PartialOrd for bitcoin::network::NetworkKind
 impl core::cmp::PartialOrd for bitcoin::p2p::Magic
@@ -1424,13 +1426,13 @@ impl core::convert::AsRef<[u8; 32]> for bitcoin::bip158::FilterHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin::bip158::FilterHeader
 impl core::convert::AsRef<[u8; 32]> for bitcoin::bip32::ChainCode
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::block::BlockHash
-impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::block::TxMerkleNode
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::block::WitnessCommitment
-impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::constants::ChainHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::transaction::Txid
 impl core::convert::AsRef<[u8; 32]> for bitcoin::blockdata::transaction::Wtxid
+impl core::convert::AsRef<[u8; 32]> for bitcoin::merkle_tree::TxMerkleNode
+impl core::convert::AsRef<[u8; 32]> for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::convert::AsRef<[u8; 32]> for bitcoin::taproot::TapLeafHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin::taproot::TapNodeHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin::taproot::TapTweakHash
@@ -1449,9 +1451,7 @@ impl core::convert::AsRef<[u8]> for bitcoin::bip32::ChainCode
 impl core::convert::AsRef<[u8]> for bitcoin::bip32::Fingerprint
 impl core::convert::AsRef<[u8]> for bitcoin::bip32::XKeyIdentifier
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::block::BlockHash
-impl core::convert::AsRef<[u8]> for bitcoin::blockdata::block::TxMerkleNode
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::block::WitnessCommitment
-impl core::convert::AsRef<[u8]> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::constants::ChainHash
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::script::PushBytes
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::script::Script
@@ -1461,6 +1461,8 @@ impl core::convert::AsRef<[u8]> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::transaction::Txid
 impl core::convert::AsRef<[u8]> for bitcoin::blockdata::transaction::Wtxid
 impl core::convert::AsRef<[u8]> for bitcoin::ecdsa::SerializedSignature
+impl core::convert::AsRef<[u8]> for bitcoin::merkle_tree::TxMerkleNode
+impl core::convert::AsRef<[u8]> for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::convert::AsRef<[u8]> for bitcoin::p2p::Magic
 impl core::convert::AsRef<[u8]> for bitcoin::taproot::TapLeafHash
 impl core::convert::AsRef<[u8]> for bitcoin::taproot::TapNodeHash
@@ -1819,9 +1821,7 @@ impl core::convert::From<bitcoin::bip32::Xpub> for bitcoin::bip32::XKeyIdentifie
 impl core::convert::From<bitcoin::blockdata::block::Block> for bitcoin::blockdata::block::BlockHash
 impl core::convert::From<bitcoin::blockdata::block::BlockHash> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::blockdata::block::Header> for bitcoin::blockdata::block::BlockHash
-impl core::convert::From<bitcoin::blockdata::block::TxMerkleNode> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::blockdata::block::WitnessCommitment> for bitcoin_hashes::sha256d::Hash
-impl core::convert::From<bitcoin::blockdata::block::WitnessMerkleNode> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::blockdata::locktime::relative::LockTime> for bitcoin::blockdata::transaction::Sequence
 impl core::convert::From<bitcoin::blockdata::script::PushBytesBuf> for alloc::vec::Vec<u8>
 impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for alloc::borrow::Cow<'_, bitcoin::blockdata::script::Script>
@@ -1848,9 +1848,7 @@ impl core::convert::From<bitcoin::blockdata::transaction::InputsIndexError> for 
 impl core::convert::From<bitcoin::blockdata::transaction::Sequence> for u32
 impl core::convert::From<bitcoin::blockdata::transaction::Transaction> for bitcoin::blockdata::transaction::Txid
 impl core::convert::From<bitcoin::blockdata::transaction::Transaction> for bitcoin::blockdata::transaction::Wtxid
-impl core::convert::From<bitcoin::blockdata::transaction::Txid> for bitcoin::blockdata::block::TxMerkleNode
 impl core::convert::From<bitcoin::blockdata::transaction::Txid> for bitcoin_hashes::sha256d::Hash
-impl core::convert::From<bitcoin::blockdata::transaction::Wtxid> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::From<bitcoin::blockdata::transaction::Wtxid> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::consensus::encode::Error> for bitcoin::psbt::Error
 impl core::convert::From<bitcoin::consensus::validation::BitcoinconsensusError> for bitcoin::consensus::validation::TxVerifyError
@@ -1860,6 +1858,8 @@ impl core::convert::From<bitcoin::key::InvalidBase58PayloadLengthError> for bitc
 impl core::convert::From<bitcoin::key::TweakedKeypair> for bitcoin::key::TweakedPublicKey
 impl core::convert::From<bitcoin::key::TweakedKeypair> for secp256k1::key::Keypair
 impl core::convert::From<bitcoin::key::TweakedPublicKey> for secp256k1::key::XOnlyPublicKey
+impl core::convert::From<bitcoin::merkle_tree::TxMerkleNode> for bitcoin_hashes::sha256d::Hash
+impl core::convert::From<bitcoin::merkle_tree::WitnessMerkleNode> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin::network::Network> for &'static bitcoin::consensus::params::Params
 impl core::convert::From<bitcoin::network::Network> for bitcoin::address::KnownHrp
 impl core::convert::From<bitcoin::network::Network> for bitcoin::consensus::params::Params
@@ -1895,11 +1895,11 @@ impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::SegwitV0Sig
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::bip158::FilterHash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::bip158::FilterHeader
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::block::BlockHash
-impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::block::TxMerkleNode
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::block::WitnessCommitment
-impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::transaction::Txid
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::blockdata::transaction::Wtxid
+impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::merkle_tree::TxMerkleNode
+impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>> for bitcoin::TapSighash
 impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>> for bitcoin::taproot::TapNodeHash
 impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>> for bitcoin::taproot::TapLeafHash
@@ -2130,11 +2130,9 @@ impl core::fmt::Debug for bitcoin::blockdata::block::Bip34Error
 impl core::fmt::Debug for bitcoin::blockdata::block::Block
 impl core::fmt::Debug for bitcoin::blockdata::block::BlockHash
 impl core::fmt::Debug for bitcoin::blockdata::block::Header
-impl core::fmt::Debug for bitcoin::blockdata::block::TxMerkleNode
 impl core::fmt::Debug for bitcoin::blockdata::block::ValidationError
 impl core::fmt::Debug for bitcoin::blockdata::block::Version
 impl core::fmt::Debug for bitcoin::blockdata::block::WitnessCommitment
-impl core::fmt::Debug for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::fmt::Debug for bitcoin::blockdata::constants::ChainHash
 impl core::fmt::Debug for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::fmt::Debug for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -2197,6 +2195,8 @@ impl core::fmt::Debug for bitcoin::key::TweakedPublicKey
 impl core::fmt::Debug for bitcoin::key::UncompressedPublicKeyError
 impl core::fmt::Debug for bitcoin::merkle_tree::MerkleBlockError
 impl core::fmt::Debug for bitcoin::merkle_tree::PartialMerkleTree
+impl core::fmt::Debug for bitcoin::merkle_tree::TxMerkleNode
+impl core::fmt::Debug for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::fmt::Debug for bitcoin::network::Network
 impl core::fmt::Debug for bitcoin::network::NetworkKind
 impl core::fmt::Debug for bitcoin::network::ParseNetworkError
@@ -2322,10 +2322,8 @@ impl core::fmt::Display for bitcoin::bip32::Xpriv
 impl core::fmt::Display for bitcoin::bip32::Xpub
 impl core::fmt::Display for bitcoin::blockdata::block::Bip34Error
 impl core::fmt::Display for bitcoin::blockdata::block::BlockHash
-impl core::fmt::Display for bitcoin::blockdata::block::TxMerkleNode
 impl core::fmt::Display for bitcoin::blockdata::block::ValidationError
 impl core::fmt::Display for bitcoin::blockdata::block::WitnessCommitment
-impl core::fmt::Display for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::fmt::Display for bitcoin::blockdata::constants::ChainHash
 impl core::fmt::Display for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::fmt::Display for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -2370,6 +2368,8 @@ impl core::fmt::Display for bitcoin::key::ParsePublicKeyError
 impl core::fmt::Display for bitcoin::key::TweakedPublicKey
 impl core::fmt::Display for bitcoin::key::UncompressedPublicKeyError
 impl core::fmt::Display for bitcoin::merkle_tree::MerkleBlockError
+impl core::fmt::Display for bitcoin::merkle_tree::TxMerkleNode
+impl core::fmt::Display for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::fmt::Display for bitcoin::network::Network
 impl core::fmt::Display for bitcoin::network::ParseNetworkError
 impl core::fmt::Display for bitcoin::network::UnknownChainHashError
@@ -2425,9 +2425,7 @@ impl core::fmt::LowerHex for bitcoin::bip32::ChainCode
 impl core::fmt::LowerHex for bitcoin::bip32::Fingerprint
 impl core::fmt::LowerHex for bitcoin::bip32::XKeyIdentifier
 impl core::fmt::LowerHex for bitcoin::blockdata::block::BlockHash
-impl core::fmt::LowerHex for bitcoin::blockdata::block::TxMerkleNode
 impl core::fmt::LowerHex for bitcoin::blockdata::block::WitnessCommitment
-impl core::fmt::LowerHex for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::fmt::LowerHex for bitcoin::blockdata::constants::ChainHash
 impl core::fmt::LowerHex for bitcoin::blockdata::script::Script
 impl core::fmt::LowerHex for bitcoin::blockdata::script::ScriptBuf
@@ -2438,6 +2436,8 @@ impl core::fmt::LowerHex for bitcoin::blockdata::transaction::Txid
 impl core::fmt::LowerHex for bitcoin::blockdata::transaction::Wtxid
 impl core::fmt::LowerHex for bitcoin::ecdsa::SerializedSignature
 impl core::fmt::LowerHex for bitcoin::key::TweakedPublicKey
+impl core::fmt::LowerHex for bitcoin::merkle_tree::TxMerkleNode
+impl core::fmt::LowerHex for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::fmt::LowerHex for bitcoin::p2p::Magic
 impl core::fmt::LowerHex for bitcoin::p2p::ServiceFlags
 impl core::fmt::LowerHex for bitcoin::pow::CompactTarget
@@ -2460,9 +2460,7 @@ impl core::fmt::UpperHex for bitcoin::bip32::ChainCode
 impl core::fmt::UpperHex for bitcoin::bip32::Fingerprint
 impl core::fmt::UpperHex for bitcoin::bip32::XKeyIdentifier
 impl core::fmt::UpperHex for bitcoin::blockdata::block::BlockHash
-impl core::fmt::UpperHex for bitcoin::blockdata::block::TxMerkleNode
 impl core::fmt::UpperHex for bitcoin::blockdata::block::WitnessCommitment
-impl core::fmt::UpperHex for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::fmt::UpperHex for bitcoin::blockdata::constants::ChainHash
 impl core::fmt::UpperHex for bitcoin::blockdata::script::Script
 impl core::fmt::UpperHex for bitcoin::blockdata::script::ScriptBuf
@@ -2472,6 +2470,8 @@ impl core::fmt::UpperHex for bitcoin::blockdata::transaction::Sequence
 impl core::fmt::UpperHex for bitcoin::blockdata::transaction::Txid
 impl core::fmt::UpperHex for bitcoin::blockdata::transaction::Wtxid
 impl core::fmt::UpperHex for bitcoin::ecdsa::SerializedSignature
+impl core::fmt::UpperHex for bitcoin::merkle_tree::TxMerkleNode
+impl core::fmt::UpperHex for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::fmt::UpperHex for bitcoin::p2p::Magic
 impl core::fmt::UpperHex for bitcoin::p2p::ServiceFlags
 impl core::fmt::UpperHex for bitcoin::pow::CompactTarget
@@ -2512,10 +2512,8 @@ impl core::hash::Hash for bitcoin::bip32::XKeyIdentifier
 impl core::hash::Hash for bitcoin::bip32::Xpub
 impl core::hash::Hash for bitcoin::blockdata::block::BlockHash
 impl core::hash::Hash for bitcoin::blockdata::block::Header
-impl core::hash::Hash for bitcoin::blockdata::block::TxMerkleNode
 impl core::hash::Hash for bitcoin::blockdata::block::Version
 impl core::hash::Hash for bitcoin::blockdata::block::WitnessCommitment
-impl core::hash::Hash for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::hash::Hash for bitcoin::blockdata::constants::ChainHash
 impl core::hash::Hash for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::hash::Hash for bitcoin::blockdata::locktime::relative::LockTime
@@ -2542,6 +2540,8 @@ impl core::hash::Hash for bitcoin::ecdsa::Signature
 impl core::hash::Hash for bitcoin::key::SortKey
 impl core::hash::Hash for bitcoin::key::TweakedKeypair
 impl core::hash::Hash for bitcoin::key::TweakedPublicKey
+impl core::hash::Hash for bitcoin::merkle_tree::TxMerkleNode
+impl core::hash::Hash for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::hash::Hash for bitcoin::network::Network
 impl core::hash::Hash for bitcoin::network::NetworkKind
 impl core::hash::Hash for bitcoin::p2p::Magic
@@ -2622,10 +2622,8 @@ impl core::marker::Copy for bitcoin::bip32::Xpriv
 impl core::marker::Copy for bitcoin::bip32::Xpub
 impl core::marker::Copy for bitcoin::blockdata::block::BlockHash
 impl core::marker::Copy for bitcoin::blockdata::block::Header
-impl core::marker::Copy for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::Copy for bitcoin::blockdata::block::Version
 impl core::marker::Copy for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::Copy for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::Copy for bitcoin::blockdata::constants::ChainHash
 impl core::marker::Copy for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Copy for bitcoin::blockdata::locktime::relative::LockTime
@@ -2648,6 +2646,8 @@ impl core::marker::Copy for bitcoin::ecdsa::Signature
 impl core::marker::Copy for bitcoin::key::SortKey
 impl core::marker::Copy for bitcoin::key::TweakedKeypair
 impl core::marker::Copy for bitcoin::key::TweakedPublicKey
+impl core::marker::Copy for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::Copy for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::Copy for bitcoin::network::Network
 impl core::marker::Copy for bitcoin::network::NetworkKind
 impl core::marker::Copy for bitcoin::p2p::Magic
@@ -2725,11 +2725,9 @@ impl core::marker::Freeze for bitcoin::blockdata::block::Bip34Error
 impl core::marker::Freeze for bitcoin::blockdata::block::Block
 impl core::marker::Freeze for bitcoin::blockdata::block::BlockHash
 impl core::marker::Freeze for bitcoin::blockdata::block::Header
-impl core::marker::Freeze for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::Freeze for bitcoin::blockdata::block::ValidationError
 impl core::marker::Freeze for bitcoin::blockdata::block::Version
 impl core::marker::Freeze for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::Freeze for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::Freeze for bitcoin::blockdata::constants::ChainHash
 impl core::marker::Freeze for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Freeze for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -2794,6 +2792,8 @@ impl core::marker::Freeze for bitcoin::key::TweakedPublicKey
 impl core::marker::Freeze for bitcoin::key::UncompressedPublicKeyError
 impl core::marker::Freeze for bitcoin::merkle_tree::MerkleBlockError
 impl core::marker::Freeze for bitcoin::merkle_tree::PartialMerkleTree
+impl core::marker::Freeze for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::Freeze for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::Freeze for bitcoin::network::Network
 impl core::marker::Freeze for bitcoin::network::NetworkKind
 impl core::marker::Freeze for bitcoin::network::ParseNetworkError
@@ -2936,11 +2936,9 @@ impl core::marker::Send for bitcoin::blockdata::block::Bip34Error
 impl core::marker::Send for bitcoin::blockdata::block::Block
 impl core::marker::Send for bitcoin::blockdata::block::BlockHash
 impl core::marker::Send for bitcoin::blockdata::block::Header
-impl core::marker::Send for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::Send for bitcoin::blockdata::block::ValidationError
 impl core::marker::Send for bitcoin::blockdata::block::Version
 impl core::marker::Send for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::Send for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::Send for bitcoin::blockdata::constants::ChainHash
 impl core::marker::Send for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Send for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -3005,6 +3003,8 @@ impl core::marker::Send for bitcoin::key::TweakedPublicKey
 impl core::marker::Send for bitcoin::key::UncompressedPublicKeyError
 impl core::marker::Send for bitcoin::merkle_tree::MerkleBlockError
 impl core::marker::Send for bitcoin::merkle_tree::PartialMerkleTree
+impl core::marker::Send for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::Send for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::Send for bitcoin::network::Network
 impl core::marker::Send for bitcoin::network::NetworkKind
 impl core::marker::Send for bitcoin::network::ParseNetworkError
@@ -3144,11 +3144,9 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Bip34Error
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Block
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::BlockHash
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Header
-impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::ValidationError
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::Version
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::StructuralPartialEq for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::constants::ChainHash
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -3206,6 +3204,8 @@ impl core::marker::StructuralPartialEq for bitcoin::key::TweakedPublicKey
 impl core::marker::StructuralPartialEq for bitcoin::key::UncompressedPublicKeyError
 impl core::marker::StructuralPartialEq for bitcoin::merkle_tree::MerkleBlockError
 impl core::marker::StructuralPartialEq for bitcoin::merkle_tree::PartialMerkleTree
+impl core::marker::StructuralPartialEq for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::StructuralPartialEq for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::StructuralPartialEq for bitcoin::network::Network
 impl core::marker::StructuralPartialEq for bitcoin::network::NetworkKind
 impl core::marker::StructuralPartialEq for bitcoin::network::ParseNetworkError
@@ -3342,11 +3342,9 @@ impl core::marker::Sync for bitcoin::blockdata::block::Bip34Error
 impl core::marker::Sync for bitcoin::blockdata::block::Block
 impl core::marker::Sync for bitcoin::blockdata::block::BlockHash
 impl core::marker::Sync for bitcoin::blockdata::block::Header
-impl core::marker::Sync for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::Sync for bitcoin::blockdata::block::ValidationError
 impl core::marker::Sync for bitcoin::blockdata::block::Version
 impl core::marker::Sync for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::Sync for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::Sync for bitcoin::blockdata::constants::ChainHash
 impl core::marker::Sync for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Sync for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -3411,6 +3409,8 @@ impl core::marker::Sync for bitcoin::key::TweakedPublicKey
 impl core::marker::Sync for bitcoin::key::UncompressedPublicKeyError
 impl core::marker::Sync for bitcoin::merkle_tree::MerkleBlockError
 impl core::marker::Sync for bitcoin::merkle_tree::PartialMerkleTree
+impl core::marker::Sync for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::Sync for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::Sync for bitcoin::network::Network
 impl core::marker::Sync for bitcoin::network::NetworkKind
 impl core::marker::Sync for bitcoin::network::ParseNetworkError
@@ -3553,11 +3553,9 @@ impl core::marker::Unpin for bitcoin::blockdata::block::Bip34Error
 impl core::marker::Unpin for bitcoin::blockdata::block::Block
 impl core::marker::Unpin for bitcoin::blockdata::block::BlockHash
 impl core::marker::Unpin for bitcoin::blockdata::block::Header
-impl core::marker::Unpin for bitcoin::blockdata::block::TxMerkleNode
 impl core::marker::Unpin for bitcoin::blockdata::block::ValidationError
 impl core::marker::Unpin for bitcoin::blockdata::block::Version
 impl core::marker::Unpin for bitcoin::blockdata::block::WitnessCommitment
-impl core::marker::Unpin for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::marker::Unpin for bitcoin::blockdata::constants::ChainHash
 impl core::marker::Unpin for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::marker::Unpin for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -3622,6 +3620,8 @@ impl core::marker::Unpin for bitcoin::key::TweakedPublicKey
 impl core::marker::Unpin for bitcoin::key::UncompressedPublicKeyError
 impl core::marker::Unpin for bitcoin::merkle_tree::MerkleBlockError
 impl core::marker::Unpin for bitcoin::merkle_tree::PartialMerkleTree
+impl core::marker::Unpin for bitcoin::merkle_tree::TxMerkleNode
+impl core::marker::Unpin for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::marker::Unpin for bitcoin::network::Network
 impl core::marker::Unpin for bitcoin::network::NetworkKind
 impl core::marker::Unpin for bitcoin::network::ParseNetworkError
@@ -3795,11 +3795,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::Bip3
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::Block
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::BlockHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::Header
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::TxMerkleNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::ValidationError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::Version
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::WitnessCommitment
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::constants::ChainHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -3862,6 +3860,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::key::TweakedPublicKey
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::key::UncompressedPublicKeyError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::merkle_tree::MerkleBlockError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::merkle_tree::PartialMerkleTree
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::merkle_tree::TxMerkleNode
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::network::Network
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::network::NetworkKind
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::network::ParseNetworkError
@@ -4001,11 +4001,9 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::Bip34Er
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::Block
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::BlockHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::Header
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::TxMerkleNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::ValidationError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::Version
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::WitnessCommitment
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::constants::ChainHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::locktime::relative::DisabledLockTimeError
@@ -4068,6 +4066,8 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::key::TweakedPublicKey
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::key::UncompressedPublicKeyError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::merkle_tree::MerkleBlockError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::merkle_tree::PartialMerkleTree
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::merkle_tree::TxMerkleNode
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::network::Network
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::network::NetworkKind
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::network::ParseNetworkError
@@ -4179,9 +4179,7 @@ impl core::str::traits::FromStr for bitcoin::bip32::XKeyIdentifier
 impl core::str::traits::FromStr for bitcoin::bip32::Xpriv
 impl core::str::traits::FromStr for bitcoin::bip32::Xpub
 impl core::str::traits::FromStr for bitcoin::blockdata::block::BlockHash
-impl core::str::traits::FromStr for bitcoin::blockdata::block::TxMerkleNode
 impl core::str::traits::FromStr for bitcoin::blockdata::block::WitnessCommitment
-impl core::str::traits::FromStr for bitcoin::blockdata::block::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin::blockdata::constants::ChainHash
 impl core::str::traits::FromStr for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin::blockdata::script::ScriptHash
@@ -4192,6 +4190,8 @@ impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Sequence
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Txid
 impl core::str::traits::FromStr for bitcoin::blockdata::transaction::Wtxid
 impl core::str::traits::FromStr for bitcoin::ecdsa::Signature
+impl core::str::traits::FromStr for bitcoin::merkle_tree::TxMerkleNode
+impl core::str::traits::FromStr for bitcoin::merkle_tree::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin::network::Network
 impl core::str::traits::FromStr for bitcoin::p2p::Magic
 impl core::str::traits::FromStr for bitcoin::p2p::message::CommandString
@@ -4226,10 +4226,8 @@ impl serde::ser::Serialize for bitcoin::bip32::Xpub
 impl serde::ser::Serialize for bitcoin::blockdata::block::Block
 impl serde::ser::Serialize for bitcoin::blockdata::block::BlockHash
 impl serde::ser::Serialize for bitcoin::blockdata::block::Header
-impl serde::ser::Serialize for bitcoin::blockdata::block::TxMerkleNode
 impl serde::ser::Serialize for bitcoin::blockdata::block::Version
 impl serde::ser::Serialize for bitcoin::blockdata::block::WitnessCommitment
-impl serde::ser::Serialize for bitcoin::blockdata::block::WitnessMerkleNode
 impl serde::ser::Serialize for bitcoin::blockdata::constants::ChainHash
 impl serde::ser::Serialize for bitcoin::blockdata::locktime::absolute::LockTime
 impl serde::ser::Serialize for bitcoin::blockdata::locktime::relative::LockTime
@@ -4250,6 +4248,8 @@ impl serde::ser::Serialize for bitcoin::blockdata::witness::Witness
 impl serde::ser::Serialize for bitcoin::ecdsa::Signature
 impl serde::ser::Serialize for bitcoin::key::TweakedKeypair
 impl serde::ser::Serialize for bitcoin::key::TweakedPublicKey
+impl serde::ser::Serialize for bitcoin::merkle_tree::TxMerkleNode
+impl serde::ser::Serialize for bitcoin::merkle_tree::WitnessMerkleNode
 impl serde::ser::Serialize for bitcoin::network::Network
 impl serde::ser::Serialize for bitcoin::pow::CompactTarget
 impl serde::ser::Serialize for bitcoin::pow::Target
@@ -4670,10 +4670,8 @@ impl<'de> serde::de::Deserialize<'de> for bitcoin::bip32::Xpub
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Block
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::BlockHash
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Header
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::TxMerkleNode
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::Version
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessCommitment
-impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::block::WitnessMerkleNode
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::constants::ChainHash
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::locktime::absolute::LockTime
 impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::locktime::relative::LockTime
@@ -4692,6 +4690,8 @@ impl<'de> serde::de::Deserialize<'de> for bitcoin::blockdata::witness::Witness
 impl<'de> serde::de::Deserialize<'de> for bitcoin::ecdsa::Signature
 impl<'de> serde::de::Deserialize<'de> for bitcoin::key::TweakedKeypair
 impl<'de> serde::de::Deserialize<'de> for bitcoin::key::TweakedPublicKey
+impl<'de> serde::de::Deserialize<'de> for bitcoin::merkle_tree::TxMerkleNode
+impl<'de> serde::de::Deserialize<'de> for bitcoin::merkle_tree::WitnessMerkleNode
 impl<'de> serde::de::Deserialize<'de> for bitcoin::network::Network
 impl<'de> serde::de::Deserialize<'de> for bitcoin::pow::CompactTarget
 impl<'de> serde::de::Deserialize<'de> for bitcoin::pow::Target
@@ -4831,13 +4831,13 @@ impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bit
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::bip158::FilterHeader
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::bip32::XKeyIdentifier
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::BlockHash
-impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::TxMerkleNode
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::WitnessCommitment
-impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::block::WitnessMerkleNode
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::script::ScriptHash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::script::WScriptHash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::transaction::Txid
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::blockdata::transaction::Wtxid
+impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::merkle_tree::TxMerkleNode
+impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::merkle_tree::WitnessMerkleNode
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapLeafHash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapNodeHash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin::taproot::TapTweakHash
@@ -5073,7 +5073,7 @@ pub bitcoin::block::Bip34Error::Unsupported
 pub bitcoin::block::Block::header: bitcoin::blockdata::block::Header
 pub bitcoin::block::Block::txdata: alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 pub bitcoin::block::Header::bits: bitcoin::pow::CompactTarget
-pub bitcoin::block::Header::merkle_root: bitcoin::blockdata::block::TxMerkleNode
+pub bitcoin::block::Header::merkle_root: bitcoin::merkle_tree::TxMerkleNode
 pub bitcoin::block::Header::nonce: u32
 pub bitcoin::block::Header::prev_blockhash: bitcoin::blockdata::block::BlockHash
 pub bitcoin::block::Header::time: u32
@@ -5087,7 +5087,7 @@ pub bitcoin::blockdata::block::Bip34Error::Unsupported
 pub bitcoin::blockdata::block::Block::header: bitcoin::blockdata::block::Header
 pub bitcoin::blockdata::block::Block::txdata: alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 pub bitcoin::blockdata::block::Header::bits: bitcoin::pow::CompactTarget
-pub bitcoin::blockdata::block::Header::merkle_root: bitcoin::blockdata::block::TxMerkleNode
+pub bitcoin::blockdata::block::Header::merkle_root: bitcoin::merkle_tree::TxMerkleNode
 pub bitcoin::blockdata::block::Header::nonce: u32
 pub bitcoin::blockdata::block::Header::prev_blockhash: bitcoin::blockdata::block::BlockHash
 pub bitcoin::blockdata::block::Header::time: u32
@@ -5704,18 +5704,12 @@ pub const bitcoin::blockdata::block::BlockHash::DISPLAY_BACKWARD: bool
 pub const bitcoin::blockdata::block::BlockHash::LEN: usize
 pub const bitcoin::blockdata::block::BlockHash::N: usize
 pub const bitcoin::blockdata::block::Header::SIZE: usize
-pub const bitcoin::blockdata::block::TxMerkleNode::DISPLAY_BACKWARD: bool
-pub const bitcoin::blockdata::block::TxMerkleNode::LEN: usize
-pub const bitcoin::blockdata::block::TxMerkleNode::N: usize
 pub const bitcoin::blockdata::block::Version::NO_SOFT_FORK_SIGNALLING: Self
 pub const bitcoin::blockdata::block::Version::ONE: Self
 pub const bitcoin::blockdata::block::Version::TWO: Self
 pub const bitcoin::blockdata::block::WitnessCommitment::DISPLAY_BACKWARD: bool
 pub const bitcoin::blockdata::block::WitnessCommitment::LEN: usize
 pub const bitcoin::blockdata::block::WitnessCommitment::N: usize
-pub const bitcoin::blockdata::block::WitnessMerkleNode::DISPLAY_BACKWARD: bool
-pub const bitcoin::blockdata::block::WitnessMerkleNode::LEN: usize
-pub const bitcoin::blockdata::block::WitnessMerkleNode::N: usize
 pub const bitcoin::blockdata::constants::COINBASE_MATURITY: u32 = 100u32
 pub const bitcoin::blockdata::constants::ChainHash::BITCOIN: Self
 pub const bitcoin::blockdata::constants::ChainHash::REGTEST: Self
@@ -6039,6 +6033,12 @@ pub const bitcoin::constants::SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196u8
 pub const bitcoin::constants::SUBSIDY_HALVING_INTERVAL: u32 = 210_000u32
 pub const bitcoin::constants::TARGET_BLOCK_SPACING: u32 = 600u32
 pub const bitcoin::constants::WITNESS_SCALE_FACTOR: units::weight::WITNESS_SCALE_FACTOR
+pub const bitcoin::merkle_tree::TxMerkleNode::DISPLAY_BACKWARD: bool
+pub const bitcoin::merkle_tree::TxMerkleNode::LEN: usize
+pub const bitcoin::merkle_tree::TxMerkleNode::N: usize
+pub const bitcoin::merkle_tree::WitnessMerkleNode::DISPLAY_BACKWARD: bool
+pub const bitcoin::merkle_tree::WitnessMerkleNode::LEN: usize
+pub const bitcoin::merkle_tree::WitnessMerkleNode::N: usize
 pub const bitcoin::opcodes::all::OP_0NOTEQUAL: _
 pub const bitcoin::opcodes::all::OP_1ADD: _
 pub const bitcoin::opcodes::all::OP_1SUB: _
@@ -6822,8 +6822,6 @@ pub fn alloc::vec::Vec<bitcoin::blockdata::block::BlockHash>::consensus_decode_f
 pub fn alloc::vec::Vec<bitcoin::blockdata::block::BlockHash>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::block::Header>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::block::Header>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn alloc::vec::Vec<bitcoin::blockdata::block::TxMerkleNode>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
-pub fn alloc::vec::Vec<bitcoin::blockdata::block::TxMerkleNode>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
@@ -6832,6 +6830,8 @@ pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>::consensus_decode
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::consensus::encode::VarInt>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::consensus::encode::VarInt>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
+pub fn alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::p2p::message_blockdata::Inventory>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
@@ -7551,8 +7551,8 @@ pub fn bitcoin::blockdata::block::Block::check_merkle_root(&self) -> bool
 pub fn bitcoin::blockdata::block::Block::check_witness_commitment(&self) -> bool
 pub fn bitcoin::blockdata::block::Block::clone(&self) -> bitcoin::blockdata::block::Block
 pub fn bitcoin::blockdata::block::Block::coinbase(&self) -> core::option::Option<&bitcoin::blockdata::transaction::Transaction>
-pub fn bitcoin::blockdata::block::Block::compute_merkle_root(&self) -> core::option::Option<bitcoin::blockdata::block::TxMerkleNode>
-pub fn bitcoin::blockdata::block::Block::compute_witness_commitment(witness_root: &bitcoin::blockdata::block::WitnessMerkleNode, witness_reserved_value: &[u8]) -> bitcoin::blockdata::block::WitnessCommitment
+pub fn bitcoin::blockdata::block::Block::compute_merkle_root(&self) -> core::option::Option<bitcoin::merkle_tree::TxMerkleNode>
+pub fn bitcoin::blockdata::block::Block::compute_witness_commitment(witness_root: &bitcoin::merkle_tree::WitnessMerkleNode, witness_reserved_value: &[u8]) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::Block::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bitcoin::blockdata::block::Block, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::Block::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bitcoin::blockdata::block::Block, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::Block::consensus_encode<R: bitcoin_io::Write + core::marker::Sized>(&self, r: &mut R) -> core::result::Result<usize, bitcoin_io::error::Error>
@@ -7562,7 +7562,7 @@ pub fn bitcoin::blockdata::block::Block::fmt(&self, f: &mut core::fmt::Formatter
 pub fn bitcoin::blockdata::block::Block::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin::blockdata::block::Block::total_size(&self) -> usize
 pub fn bitcoin::blockdata::block::Block::weight(&self) -> bitcoin_units::weight::Weight
-pub fn bitcoin::blockdata::block::Block::witness_root(&self) -> core::option::Option<bitcoin::blockdata::block::WitnessMerkleNode>
+pub fn bitcoin::blockdata::block::Block::witness_root(&self) -> core::option::Option<bitcoin::merkle_tree::WitnessMerkleNode>
 pub fn bitcoin::blockdata::block::BlockHash::all_zeros() -> Self
 pub fn bitcoin::blockdata::block::BlockHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::blockdata::block::BlockHash::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
@@ -7611,34 +7611,6 @@ pub fn bitcoin::blockdata::block::Header::serialize<__S>(&self, __serializer: __
 pub fn bitcoin::blockdata::block::Header::target(&self) -> bitcoin::pow::Target
 pub fn bitcoin::blockdata::block::Header::validate_pow(&self, required_target: bitcoin::pow::Target) -> core::result::Result<bitcoin::blockdata::block::BlockHash, bitcoin::blockdata::block::ValidationError>
 pub fn bitcoin::blockdata::block::Header::work(&self) -> bitcoin::pow::Work
-pub fn bitcoin::blockdata::block::TxMerkleNode::all_zeros() -> Self
-pub fn bitcoin::blockdata::block::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::blockdata::block::TxMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::blockdata::block::TxMerkleNode::as_ref(&self) -> &[u8; 32]
-pub fn bitcoin::blockdata::block::TxMerkleNode::as_ref(&self) -> &[u8]
-pub fn bitcoin::blockdata::block::TxMerkleNode::borrow(&self) -> &[u8]
-pub fn bitcoin::blockdata::block::TxMerkleNode::clone(&self) -> bitcoin::blockdata::block::TxMerkleNode
-pub fn bitcoin::blockdata::block::TxMerkleNode::cmp(&self, other: &bitcoin::blockdata::block::TxMerkleNode) -> core::cmp::Ordering
-pub fn bitcoin::blockdata::block::TxMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
-pub fn bitcoin::blockdata::block::TxMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::blockdata::block::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::blockdata::block::TxMerkleNode::engine() -> Self::Engine
-pub fn bitcoin::blockdata::block::TxMerkleNode::eq(&self, other: &bitcoin::blockdata::block::TxMerkleNode) -> bool
-pub fn bitcoin::blockdata::block::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::blockdata::block::TxMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::TxMerkleNode
-pub fn bitcoin::blockdata::block::TxMerkleNode::from(txid: bitcoin::blockdata::transaction::Txid) -> Self
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_engine(e: Self::Engine) -> Self
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::TxMerkleNode
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, bitcoin_hashes::FromSliceError>
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
-pub fn bitcoin::blockdata::block::TxMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, Self::Err>
-pub fn bitcoin::blockdata::block::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::block::TxMerkleNode::index(&self, index: I) -> &Self::Output
-pub fn bitcoin::blockdata::block::TxMerkleNode::partial_cmp(&self, other: &bitcoin::blockdata::block::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin::blockdata::block::TxMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::blockdata::block::TxMerkleNode::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::blockdata::block::TxMerkleNode::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::block::ValidationError::clone(&self) -> bitcoin::blockdata::block::ValidationError
 pub fn bitcoin::blockdata::block::ValidationError::eq(&self, other: &bitcoin::blockdata::block::ValidationError) -> bool
 pub fn bitcoin::blockdata::block::ValidationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7682,34 +7654,6 @@ pub fn bitcoin::blockdata::block::WitnessCommitment::partial_cmp(&self, other: &
 pub fn bitcoin::blockdata::block::WitnessCommitment::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::blockdata::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::block::WitnessCommitment::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::all_zeros() -> Self
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::as_ref(&self) -> &[u8]
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::borrow(&self) -> &[u8]
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::clone(&self) -> bitcoin::blockdata::block::WitnessMerkleNode
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::cmp(&self, other: &bitcoin::blockdata::block::WitnessMerkleNode) -> core::cmp::Ordering
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::engine() -> Self::Engine
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::eq(&self, other: &bitcoin::blockdata::block::WitnessMerkleNode) -> bool
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessMerkleNode
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from(wtxid: bitcoin::blockdata::transaction::Wtxid) -> Self
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_engine(e: Self::Engine) -> Self
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessMerkleNode
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, bitcoin_hashes::FromSliceError>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::WitnessMerkleNode, Self::Err>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::index(&self, index: I) -> &Self::Output
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin::blockdata::block::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin::blockdata::block::WitnessMerkleNode::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin::blockdata::constants::ChainHash::as_byte_array(&self) -> &[u8; 32]
 pub fn bitcoin::blockdata::constants::ChainHash::as_bytes(&self) -> &[u8]
 pub fn bitcoin::blockdata::constants::ChainHash::as_mut(&mut self) -> &mut [u8; 32]
@@ -8459,6 +8403,7 @@ pub fn bitcoin::blockdata::transaction::Txid::partial_cmp(&self, other: &bitcoin
 pub fn bitcoin::blockdata::transaction::Txid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::blockdata::transaction::Txid::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::transaction::Txid::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::blockdata::transaction::Txid::to_root(self) -> Self::Root
 pub fn bitcoin::blockdata::transaction::Version::clone(&self) -> bitcoin::blockdata::transaction::Version
 pub fn bitcoin::blockdata::transaction::Version::cmp(&self, other: &bitcoin::blockdata::transaction::Version) -> core::cmp::Ordering
 pub fn bitcoin::blockdata::transaction::Version::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
@@ -8500,6 +8445,7 @@ pub fn bitcoin::blockdata::transaction::Wtxid::partial_cmp(&self, other: &bitcoi
 pub fn bitcoin::blockdata::transaction::Wtxid::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::blockdata::transaction::Wtxid::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::transaction::Wtxid::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::blockdata::transaction::Wtxid::to_root(self) -> Self::Root
 pub fn bitcoin::blockdata::transaction::effective_value(fee_rate: bitcoin_units::fee_rate::FeeRate, satisfaction_weight: bitcoin_units::weight::Weight, value: bitcoin_units::amount::Amount) -> core::option::Option<bitcoin_units::amount::SignedAmount>
 pub fn bitcoin::blockdata::transaction::predict_weight<I, O>(inputs: I, output_script_lens: O) -> bitcoin_units::weight::Weight where I: core::iter::traits::collect::IntoIterator<Item = bitcoin::blockdata::transaction::InputWeightPrediction>, O: core::iter::traits::collect::IntoIterator<Item = usize>
 pub fn bitcoin::blockdata::witness::Iter<'a>::next(&mut self) -> core::option::Option<Self::Item>
@@ -8782,18 +8728,73 @@ pub fn bitcoin::merkle_tree::MerkleBlockError::eq(&self, other: &bitcoin::merkle
 pub fn bitcoin::merkle_tree::MerkleBlockError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::merkle_tree::MerkleBlockError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::merkle_tree::MerkleBlockError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin::merkle_tree::MerkleNode::to_root(self) -> Self::Root
 pub fn bitcoin::merkle_tree::PartialMerkleTree::bits(&self) -> &alloc::vec::Vec<bool>
 pub fn bitcoin::merkle_tree::PartialMerkleTree::clone(&self) -> bitcoin::merkle_tree::PartialMerkleTree
 pub fn bitcoin::merkle_tree::PartialMerkleTree::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::merkle_tree::PartialMerkleTree::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::merkle_tree::PartialMerkleTree::eq(&self, other: &bitcoin::merkle_tree::PartialMerkleTree) -> bool
-pub fn bitcoin::merkle_tree::PartialMerkleTree::extract_matches(&self, matches: &mut alloc::vec::Vec<bitcoin::blockdata::transaction::Txid>, indexes: &mut alloc::vec::Vec<u32>) -> core::result::Result<bitcoin::blockdata::block::TxMerkleNode, bitcoin::merkle_tree::MerkleBlockError>
+pub fn bitcoin::merkle_tree::PartialMerkleTree::extract_matches(&self, matches: &mut alloc::vec::Vec<bitcoin::blockdata::transaction::Txid>, indexes: &mut alloc::vec::Vec<u32>) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, bitcoin::merkle_tree::MerkleBlockError>
 pub fn bitcoin::merkle_tree::PartialMerkleTree::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::merkle_tree::PartialMerkleTree::from_txids(txids: &[bitcoin::blockdata::transaction::Txid], matches: &[bool]) -> Self
-pub fn bitcoin::merkle_tree::PartialMerkleTree::hashes(&self) -> &alloc::vec::Vec<bitcoin::blockdata::block::TxMerkleNode>
+pub fn bitcoin::merkle_tree::PartialMerkleTree::hashes(&self) -> &alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>
 pub fn bitcoin::merkle_tree::PartialMerkleTree::num_transactions(&self) -> u32
-pub fn bitcoin::merkle_tree::calculate_root<T, I>(hashes: I) -> core::option::Option<T> where T: bitcoin_hashes::Hash + bitcoin::consensus::encode::Encodable, <T as bitcoin_hashes::Hash>::Engine: bitcoin_io::Write, I: core::iter::traits::iterator::Iterator<Item = T>
-pub fn bitcoin::merkle_tree::calculate_root_inline<T>(hashes: &mut [T]) -> core::option::Option<T> where T: bitcoin_hashes::Hash + bitcoin::consensus::encode::Encodable, <T as bitcoin_hashes::Hash>::Engine: bitcoin_io::Write
+pub fn bitcoin::merkle_tree::TxMerkleNode::all_zeros() -> Self
+pub fn bitcoin::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin::merkle_tree::TxMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8]
+pub fn bitcoin::merkle_tree::TxMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin::merkle_tree::TxMerkleNode::clone(&self) -> bitcoin::merkle_tree::TxMerkleNode
+pub fn bitcoin::merkle_tree::TxMerkleNode::cmp(&self, other: &bitcoin::merkle_tree::TxMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin::merkle_tree::TxMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
+pub fn bitcoin::merkle_tree::TxMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn bitcoin::merkle_tree::TxMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin::merkle_tree::TxMerkleNode::engine() -> Self::Engine
+pub fn bitcoin::merkle_tree::TxMerkleNode::eq(&self, other: &bitcoin::merkle_tree::TxMerkleNode) -> bool
+pub fn bitcoin::merkle_tree::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::merkle_tree::TxMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::TxMerkleNode
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_engine(e: Self::Engine) -> Self
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::TxMerkleNode
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::merkle_tree::TxMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, Self::Err>
+pub fn bitcoin::merkle_tree::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin::merkle_tree::TxMerkleNode::index(&self, index: I) -> &Self::Output
+pub fn bitcoin::merkle_tree::TxMerkleNode::partial_cmp(&self, other: &bitcoin::merkle_tree::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::merkle_tree::TxMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin::merkle_tree::TxMerkleNode::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin::merkle_tree::TxMerkleNode::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::all_zeros() -> Self
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::as_ref(&self) -> &[u8]
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::borrow(&self) -> &[u8]
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::clone(&self) -> bitcoin::merkle_tree::WitnessMerkleNode
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::cmp(&self, other: &bitcoin::merkle_tree::WitnessMerkleNode) -> core::cmp::Ordering
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin::merkle_tree::WitnessMerkleNode, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::engine() -> Self::Engine
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::eq(&self, other: &bitcoin::merkle_tree::WitnessMerkleNode) -> bool
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::WitnessMerkleNode
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_engine(e: Self::Engine) -> Self
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_raw_hash(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::WitnessMerkleNode
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::merkle_tree::WitnessMerkleNode, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::merkle_tree::WitnessMerkleNode, Self::Err>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::index(&self, index: I) -> &Self::Output
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin::merkle_tree::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin::merkle_tree::calculate_root<T, I>(hashes: I) -> core::option::Option<<T as bitcoin::merkle_tree::MerkleNode>::Root> where T: bitcoin::merkle_tree::MerkleNode, <T as bitcoin_hashes::Hash>::Engine: bitcoin_io::Write, I: core::iter::traits::iterator::Iterator<Item = T>
+pub fn bitcoin::merkle_tree::calculate_root_inline<T>(hashes: &mut [T]) -> core::option::Option<<T as bitcoin::merkle_tree::MerkleNode>::Root> where T: bitcoin::merkle_tree::MerkleNode, <T as bitcoin_hashes::Hash>::Engine: bitcoin_io::Write
 pub fn bitcoin::network::Network::as_ref(&self) -> &bitcoin::consensus::params::Params
 pub fn bitcoin::network::Network::chain_hash(self) -> bitcoin::blockdata::constants::ChainHash
 pub fn bitcoin::network::Network::clone(&self) -> bitcoin::network::Network
@@ -9868,11 +9869,11 @@ pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::SegwitV0Sighash) -
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::bip158::FilterHash) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::bip158::FilterHeader) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::BlockHash) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::TxMerkleNode) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::WitnessCommitment) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::block::WitnessMerkleNode) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::transaction::Txid) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::blockdata::transaction::Wtxid) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::merkle_tree::TxMerkleNode) -> bitcoin_hashes::sha256d::Hash
+pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin::merkle_tree::WitnessMerkleNode) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>::from(hashtype: bitcoin::TapSighash) -> bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>
 pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>::from(hashtype: bitcoin::taproot::TapNodeHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>
 pub fn bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>::from(hashtype: bitcoin::taproot::TapLeafHash) -> bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>
@@ -10077,17 +10078,13 @@ pub struct bitcoin::bip32::Xpub
 pub struct bitcoin::block::Block
 pub struct bitcoin::block::BlockHash(_)
 pub struct bitcoin::block::Header
-pub struct bitcoin::block::TxMerkleNode(_)
 pub struct bitcoin::block::Version(_)
 pub struct bitcoin::block::WitnessCommitment(_)
-pub struct bitcoin::block::WitnessMerkleNode(_)
 pub struct bitcoin::blockdata::block::Block
 pub struct bitcoin::blockdata::block::BlockHash(_)
 pub struct bitcoin::blockdata::block::Header
-pub struct bitcoin::blockdata::block::TxMerkleNode(_)
 pub struct bitcoin::blockdata::block::Version(_)
 pub struct bitcoin::blockdata::block::WitnessCommitment(_)
-pub struct bitcoin::blockdata::block::WitnessMerkleNode(_)
 pub struct bitcoin::blockdata::constants::ChainHash(_)
 pub struct bitcoin::blockdata::locktime::relative::DisabledLockTimeError(_)
 pub struct bitcoin::blockdata::opcodes::Opcode
@@ -10147,6 +10144,8 @@ pub struct bitcoin::key::WPubkeyHash(_)
 pub struct bitcoin::locktime::relative::DisabledLockTimeError(_)
 pub struct bitcoin::merkle_tree::MerkleBlock
 pub struct bitcoin::merkle_tree::PartialMerkleTree
+pub struct bitcoin::merkle_tree::TxMerkleNode(_)
+pub struct bitcoin::merkle_tree::WitnessMerkleNode(_)
 pub struct bitcoin::opcodes::Opcode
 pub struct bitcoin::p2p::Address
 pub struct bitcoin::p2p::Magic(_)
@@ -10257,6 +10256,7 @@ pub trait bitcoin::consensus::serde::EncodeBytes
 pub trait bitcoin::consensus::serde::IntoDeError
 pub trait bitcoin::consensus::serde::hex::Case: sealed::Case
 pub trait bitcoin::key::TapTweak
+pub trait bitcoin::merkle_tree::MerkleNode: bitcoin_hashes::Hash + bitcoin::consensus::encode::Encodable
 pub trait bitcoin::psbt::GetKey
 pub trait bitcoin::script::PushBytesErrorReport
 pub type &'a bitcoin::bip32::DerivationPath::IntoIter = core::slice::iter::Iter<'a, bitcoin::bip32::ChildNumber>
@@ -10339,18 +10339,10 @@ pub type bitcoin::blockdata::block::BlockHash::Bytes = <bitcoin_hashes::sha256d:
 pub type bitcoin::blockdata::block::BlockHash::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::block::BlockHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::block::BlockHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
-pub type bitcoin::blockdata::block::TxMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::block::TxMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
-pub type bitcoin::blockdata::block::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin::blockdata::block::TxMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::block::WitnessCommitment::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin::blockdata::block::WitnessCommitment::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::block::WitnessCommitment::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::block::WitnessCommitment::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
-pub type bitcoin::blockdata::block::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::block::WitnessMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
-pub type bitcoin::blockdata::block::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
-pub type bitcoin::blockdata::block::WitnessMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::constants::ChainHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::constants::ChainHash::Error = core::array::TryFromSliceError
 pub type bitcoin::blockdata::constants::ChainHash::Output = <[u8] as core::ops::index::Index<I>>::Output
@@ -10386,10 +10378,12 @@ pub type bitcoin::blockdata::transaction::Txid::Bytes = <bitcoin_hashes::sha256d
 pub type bitcoin::blockdata::transaction::Txid::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::transaction::Txid::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::transaction::Txid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
+pub type bitcoin::blockdata::transaction::Txid::Root = bitcoin::merkle_tree::TxMerkleNode
 pub type bitcoin::blockdata::transaction::Wtxid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin::blockdata::transaction::Wtxid::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::transaction::Wtxid::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::transaction::Wtxid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
+pub type bitcoin::blockdata::transaction::Wtxid::Root = bitcoin::merkle_tree::WitnessMerkleNode
 pub type bitcoin::blockdata::witness::Iter<'a>::Item = &'a [u8]
 pub type bitcoin::blockdata::witness::Witness::Output = [u8]
 pub type bitcoin::consensus::serde::ByteDecoder::DecodeError: bitcoin::consensus::serde::IntoDeError + core::fmt::Debug
@@ -10411,6 +10405,15 @@ pub type bitcoin::key::UntweakedKeypair::TweakedKey = bitcoin::key::TweakedKeypa
 pub type bitcoin::key::UntweakedPublicKey = secp256k1::key::XOnlyPublicKey
 pub type bitcoin::key::UntweakedPublicKey::TweakedAux = (bitcoin::key::TweakedPublicKey, secp256k1::key::Parity)
 pub type bitcoin::key::UntweakedPublicKey::TweakedKey = bitcoin::key::TweakedPublicKey
+pub type bitcoin::merkle_tree::MerkleNode::Root: bitcoin_hashes::Hash
+pub type bitcoin::merkle_tree::TxMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin::merkle_tree::TxMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::merkle_tree::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin::merkle_tree::TxMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
+pub type bitcoin::merkle_tree::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin::merkle_tree::WitnessMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::merkle_tree::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin::merkle_tree::WitnessMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::network::Network::Err = bitcoin::network::ParseNetworkError
 pub type bitcoin::network::Network::Error = bitcoin::network::UnknownChainHashError
 pub type bitcoin::network::Network::Error = bitcoin::p2p::UnknownMagicError
