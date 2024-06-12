@@ -8,35 +8,6 @@
 //! Merkle Block and Partial Merkle Tree.
 //!
 //! Support proofs that transaction(s) belong to a block.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use bitcoin::hash_types::Txid;
-//! use bitcoin::hex::FromHex;
-//! use bitcoin::{Block, MerkleBlock};
-//!
-//! // Get the proof from a bitcoind by running in the terminal:
-//! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
-//! // $ bitcoin-cli gettxoutproof [\"$TXID\"]
-//! let mb_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
-//!     0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
-//!     1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
-//!     2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
-//! let mb: MerkleBlock = bitcoin::consensus::deserialize(&mb_bytes).unwrap();
-//!
-//! // Authenticate and extract matched transaction ids
-//! let mut matches: Vec<Txid> = vec![];
-//! let mut index: Vec<u32> = vec![];
-//! assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
-//! assert_eq!(1, matches.len());
-//! assert_eq!(
-//!     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap(),
-//!     matches[0]
-//! );
-//! assert_eq!(1, index.len());
-//! assert_eq!(1, index[0]);
-//! ```
 
 use core::fmt;
 
@@ -549,6 +520,8 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hash_types::Txid;
+    use crate::hex::FromHex;
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
@@ -840,5 +813,28 @@ mod tests {
         );
         let deser = crate::consensus::deserialize::<MerkleBlock>(&bytes);
         assert!(deser.is_err());
+    }
+
+    #[test]
+    fn extract_matches_from_merkleblock() {
+        // Get the proof from a bitcoind by running in the terminal:
+        // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
+        // $ bitcoin-cli gettxoutproof [\"$TXID\"]
+        let mb_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
+            0000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33a5914ce6ed5b\
+            1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
+            2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
+        let mb: MerkleBlock = encode::deserialize(&mb_bytes).unwrap();
+        // Authenticate and extract matched transaction ids
+        let mut matches: Vec<Txid> = vec![];
+        let mut index: Vec<u32> = vec![];
+        assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
+        assert_eq!(1, matches.len());
+        assert_eq!(
+            "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap(),
+            matches[0]
+        );
+        assert_eq!(1, index.len());
+        assert_eq!(1, index[0]);
     }
 }
