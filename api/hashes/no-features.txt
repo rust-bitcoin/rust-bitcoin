@@ -117,6 +117,7 @@ impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::hash160::Hash
 impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::ripemd160::Hash
 impl core::convert::AsRef<[u8; 20]> for bitcoin_hashes::sha1::Hash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256::Hash
+impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256::Midstate
 impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256d::Hash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha512_256::Hash
 impl core::convert::AsRef<[u8; 48]> for bitcoin_hashes::sha384::Hash
@@ -479,6 +480,7 @@ pub const fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256::Hash::const_hash(bytes: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_hashes::sha256::Midstate::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256::Midstate::from_byte_array(inner: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::hash_tag(tag: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::to_byte_array(self) -> [u8; 32]
@@ -654,6 +656,7 @@ pub fn bitcoin_hashes::sha256::HashEngine::from_midstate(midstate: bitcoin_hashe
 pub fn bitcoin_hashes::sha256::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha256::HashEngine::midstate(&self) -> bitcoin_hashes::sha256::Midstate
 pub fn bitcoin_hashes::sha256::HashEngine::n_bytes_hashed(&self) -> usize
+pub fn bitcoin_hashes::sha256::Midstate::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256::Midstate::as_ref(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256::Midstate::borrow(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256::Midstate::clone(&self) -> bitcoin_hashes::sha256::Midstate
