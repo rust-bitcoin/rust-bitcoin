@@ -267,13 +267,20 @@ impl Target {
     ///
     /// See [`difficulty`] for details.
     ///
-    /// # Returns
+    /// # Panics
     ///
-    /// Returns [`f64::INFINITY`] if `self` is zero (caused by divide by zero).
+    /// Panics if `self` is zero (divide by zero).
     ///
     /// [`difficulty`]: Target::difficulty
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn difficulty_float(&self) -> f64 { TARGET_MAX_F64 / self.0.to_f64() }
+    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+        // We want to explicitly panic to be uniform with `difficulty()`
+        // (float division by zero does not panic).
+        // Note, target 0 is basically impossible to obtain by any "normal" means.
+        assert_ne!(self.0, U256::ZERO, "divide by zero");
+        let max = params.as_ref().max_attainable_target;
+        max.0.to_f64() / self.0.to_f64()
+    }
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
@@ -898,10 +905,6 @@ impl U256 {
         f64::from_bits((exponent << 52) + mantissa)
     }
 }
-
-// Target::MAX as a float value. Calculated with U256::to_f64.
-// This is validated in the unit tests as well.
-const TARGET_MAX_F64: f64 = 2.695953529101131e67;
 
 impl<T: Into<u128>> From<T> for U256 {
     fn from(x: T) -> Self { U256(0, x.into()) }
@@ -1916,17 +1919,22 @@ mod tests {
 
     #[test]
     fn target_difficulty_float() {
-        assert_eq!(Target::MAX.difficulty_float(), 1.0_f64);
+        let params = Params::new(crate::Network::Bitcoin);
+
+        assert_eq!(Target::MAX.difficulty_float(&params), 1.0_f64);
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32)).difficulty_float(),
+            Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32))
+                .difficulty_float(&params),
             256.0_f64
         );
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32)).difficulty_float(),
+            Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32))
+                .difficulty_float(&params),
             65536.0_f64
         );
         assert_eq!(
-            Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32)).difficulty_float(),
+            Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32))
+                .difficulty_float(&params),
             17628585.065897066_f64
         );
     }
@@ -2041,8 +2049,6 @@ mod tests {
 
     #[test]
     fn u256_to_f64() {
-        // Validate that the Target::MAX value matches the constant also used in difficulty calculation.
-        assert_eq!(Target::MAX.0.to_f64(), TARGET_MAX_F64);
         assert_eq!(U256::ZERO.to_f64(), 0.0_f64);
         assert_eq!(U256::ONE.to_f64(), 1.0_f64);
         assert_eq!(U256::MAX.to_f64(), 1.157920892373162e77_f64);

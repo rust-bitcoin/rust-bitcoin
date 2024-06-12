@@ -6600,7 +6600,7 @@ pub fn bitcoin::blockdata::block::Header::consensus_decode<R: bitcoin_io::BufRea
 pub fn bitcoin::blockdata::block::Header::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bitcoin::blockdata::block::Header, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::Header::consensus_encode<R: bitcoin_io::Write + core::marker::Sized>(&self, r: &mut R) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::blockdata::block::Header::difficulty(&self, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> u128
-pub fn bitcoin::blockdata::block::Header::difficulty_float(&self) -> f64
+pub fn bitcoin::blockdata::block::Header::difficulty_float(&self, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> f64
 pub fn bitcoin::blockdata::block::Header::eq(&self, other: &bitcoin::blockdata::block::Header) -> bool
 pub fn bitcoin::blockdata::block::Header::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::Header::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -7763,7 +7763,7 @@ pub fn bitcoin::pow::CompactTarget::to_consensus(self) -> u32
 pub fn bitcoin::pow::Target::clone(&self) -> bitcoin::pow::Target
 pub fn bitcoin::pow::Target::cmp(&self, other: &bitcoin::pow::Target) -> core::cmp::Ordering
 pub fn bitcoin::pow::Target::difficulty(&self, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> u128
-pub fn bitcoin::pow::Target::difficulty_float(&self) -> f64
+pub fn bitcoin::pow::Target::difficulty_float(&self, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> f64
 pub fn bitcoin::pow::Target::eq(&self, other: &bitcoin::pow::Target) -> bool
 pub fn bitcoin::pow::Target::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::pow::Target::from(c: bitcoin::pow::CompactTarget) -> Self

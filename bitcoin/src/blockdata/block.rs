@@ -98,7 +98,9 @@ impl Header {
     }
 
     /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    pub fn difficulty_float(&self) -> f64 { self.target().difficulty_float() }
+    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+        self.target().difficulty_float(params)
+    }
 
     /// Checks that the proof-of-work for the block is valid, returning the block hash.
     pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
@@ -541,7 +543,7 @@ mod tests {
             real_decode.block_hash()
         );
         assert_eq!(real_decode.header.difficulty(&params), 1);
-        assert_eq!(real_decode.header.difficulty_float(), 1.0);
+        assert_eq!(real_decode.header.difficulty_float(&params), 1.0);
 
         assert_eq!(real_decode.total_size(), some_block.len());
         assert_eq!(real_decode.base_size(), some_block.len());
@@ -583,7 +585,7 @@ mod tests {
             real_decode.block_hash()
         );
         assert_eq!(real_decode.header.difficulty(&params), 2456598);
-        assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
+        assert_eq!(real_decode.header.difficulty_float(&params), 2456598.4399242126);
 
         assert_eq!(real_decode.total_size(), segwit_block.len());
         assert_eq!(real_decode.base_size(), 4283);
