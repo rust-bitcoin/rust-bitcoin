@@ -801,7 +801,8 @@ mod tests {
 
     #[test]
     fn regression_2606() {
-        // Attempt
+        // Attempt to deserialize a partial merkle tree with a number of hashes that would
+        // overflow the maximum allowed size.
         let bytes = hex!(
             "000006000000000000000004ee00000004c7f1ccb1000000ffff000000010000\
              0000ffffffffff1f000000000400000000000002000000000500000000000000\
@@ -811,6 +812,8 @@ mod tests {
          "
         );
         let deser = encode::deserialize::<MerkleBlock>(&bytes);
+
+        // The attempt to deserialize should result in an error.
         assert!(deser.is_err());
     }
 
