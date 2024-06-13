@@ -563,9 +563,9 @@ mod tests {
             .collect::<Vec<_>>();
 
         // Calculate the merkle root and height
-        let hashes = tx_ids.iter().map(|t| t.to_raw_hash());
+        let hashes = tx_ids.iter().copied();
         let merkle_root_1: TxMerkleNode =
-            merkle_tree::calculate_root(hashes).expect("hashes is not empty").into();
+            merkle_tree::calculate_root(hashes).expect("hashes is not empty");
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {

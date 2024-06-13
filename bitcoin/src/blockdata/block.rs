@@ -280,8 +280,8 @@ impl Block {
 
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
-        merkle_tree::calculate_root(hashes).map(|h| h.into())
+        let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
+        merkle_tree::calculate_root(hashes)
     }
 
     /// Computes the witness commitment for the block's transaction list.
@@ -300,12 +300,12 @@ impl Block {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
-                Wtxid::all_zeros().to_raw_hash()
+                Wtxid::all_zeros()
             } else {
-                t.compute_wtxid().to_raw_hash()
+                t.compute_wtxid()
             }
         });
-        merkle_tree::calculate_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes)
     }
 
     /// Returns the weight of the block.
