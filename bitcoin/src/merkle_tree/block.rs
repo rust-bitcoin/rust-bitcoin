@@ -514,14 +514,18 @@ impl std::error::Error for MerkleBlockError {
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-    #[cfg(feature = "rand-std")]
-    use secp256k1::rand::prelude::*;
-
     use super::*;
+
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::FromHex;
+    use crate::hex::{FromHex, test_hex_unwrap as hex};
+
+    #[cfg(feature = "rand-std")]
+    use {
+        core::cmp,
+        secp256k1::rand::prelude::*,
+        crate::merkle_tree,
+    };
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
@@ -557,10 +561,6 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
-        use core::cmp::min;
-
-        use crate::merkle_tree;
-
         let mut rng = thread_rng();
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
@@ -601,7 +601,7 @@ mod tests {
             let serialized = encode::serialize(&pmt1);
 
             // Verify PartialMerkleTree's size guarantees
-            let n = min(tx_count, 1 + match_txid1.len() * height);
+            let n = cmp::min(tx_count, 1 + match_txid1.len() * height);
             assert!(serialized.len() <= 10 + (258 * n + 7) / 8);
 
             // Deserialize into a tester copy
@@ -745,7 +745,6 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
-        use hex::FromHex;
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
         encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }
@@ -811,7 +810,7 @@ mod tests {
              00000004bfaac251681b1b25\
          "
         );
-        let deser = crate::consensus::deserialize::<MerkleBlock>(&bytes);
+        let deser = encode::deserialize::<MerkleBlock>(&bytes);
         assert!(deser.is_err());
     }
 
