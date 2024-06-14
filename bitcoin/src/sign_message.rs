@@ -246,12 +246,12 @@ mod tests {
 
         let p2pkh = Address::p2pkh(pubkey, NetworkKind::Main);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
-        let p2wpkh = Address::p2wpkh(&pubkey, Network::Bitcoin);
+        let p2wpkh = Address::p2wpkh(pubkey, Network::Bitcoin);
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
-        let p2shwpkh = Address::p2shwpkh(&pubkey, NetworkKind::Main);
+        let p2shwpkh = Address::p2shwpkh(pubkey, NetworkKind::Main);
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
