@@ -98,8 +98,8 @@ impl Denomination {
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
-const CONFUSING_FORMS: [&str; 9] =
-    ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
+const CONFUSING_FORMS: [&str; 6] =
+    ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_str()) }
@@ -110,11 +110,13 @@ impl FromStr for Denomination {
 
     /// Convert from a str to Denomination.
     ///
-    /// Any combination of upper and/or lower case, excluding uppercase of SI(m, u, n, p) is considered valid.
-    /// - Singular: BTC, mBTC, uBTC, nBTC, pBTC
-    /// - Plural or singular: sat, satoshi, bit, msat
+    /// # Accepted Denominations
     ///
-    /// Due to ambiguity between mega and milli, pico and peta we prohibit usage of leading capital 'M', 'P'.
+    /// All upper or lower case, excluding SI prefix (c, m, u) which must be lower case.
+    /// - Singular: BTC, cBTC, mBTC, uBTC
+    /// - Plural or singular: sat, satoshi, bit
+    ///
+    /// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseDenominationError::*;
 
@@ -2848,7 +2850,7 @@ mod tests {
 
     #[test]
     fn disallow_confusing_forms() {
-        let confusing = ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
+        let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
         for denom in confusing.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
@@ -2861,7 +2863,7 @@ mod tests {
     #[test]
     fn disallow_unknown_denomination() {
         // Non-exhaustive list of unknown forms.
-        let unknown = ["NBTC", "UBTC", "ABC", "abc", "cBtC", "mSat", "msat"];
+        let unknown = ["NBTC", "ABC", "abc", "mSat", "msat"];
         for denom in unknown.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
