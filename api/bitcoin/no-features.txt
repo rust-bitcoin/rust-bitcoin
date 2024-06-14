@@ -7716,6 +7716,7 @@ pub fn bitcoin::merkle_tree::MerkleBlockError::clone(&self) -> bitcoin::merkle_t
 pub fn bitcoin::merkle_tree::MerkleBlockError::eq(&self, other: &bitcoin::merkle_tree::MerkleBlockError) -> bool
 pub fn bitcoin::merkle_tree::MerkleBlockError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::merkle_tree::MerkleBlockError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin::merkle_tree::MerkleNode::calculate_root<I: core::iter::traits::iterator::Iterator<Item = Self::Leaf>>(iter: I) -> core::option::Option<Self>
 pub fn bitcoin::merkle_tree::MerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin::merkle_tree::MerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin::merkle_tree::PartialMerkleTree::bits(&self) -> &alloc::vec::Vec<bool>
@@ -7792,8 +7793,6 @@ pub fn bitcoin::merkle_tree::WitnessMerkleNode::partial_cmp(&self, other: &bitco
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
-pub fn bitcoin::merkle_tree::calculate_root<T, I>(hashes: I) -> core::option::Option<T> where T: bitcoin::merkle_tree::MerkleNode, I: core::iter::traits::iterator::Iterator<Item = <T as bitcoin::merkle_tree::MerkleNode>::Leaf>
-pub fn bitcoin::merkle_tree::calculate_root_inline<T: bitcoin::merkle_tree::MerkleNode>(hashes: &mut [T]) -> core::option::Option<T>
 pub fn bitcoin::network::Network::as_ref(&self) -> &bitcoin::consensus::params::Params
 pub fn bitcoin::network::Network::chain_hash(self) -> bitcoin::blockdata::constants::ChainHash
 pub fn bitcoin::network::Network::clone(&self) -> bitcoin::network::Network
