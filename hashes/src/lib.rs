@@ -249,7 +249,7 @@ impl std::error::Error for FromSliceError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{sha256d, Hash};
+    use crate::sha256d;
 
     hash_newtype! {
         /// A test newtype

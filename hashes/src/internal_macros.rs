@@ -63,17 +63,14 @@ pub(crate) use arr_newtype_fmt_impl;
 ///
 /// * There must be a free-standing `fn from_engine(HashEngine) -> Hash` in the scope
 /// * `fn internal_new([u8; $bits / 8]) -> Self` must exist on `Hash`
-/// * `fn internal_engine() -> HashEngine` must exist on `Hash`
 ///
 /// `from_engine` obviously implements the finalization algorithm.
-/// `internal_new` is required so that types with more than one field are constructible.
-/// `internal_engine` is required to initialize the engine for given hash type.
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::{Hash, hex::{FromHex}};
+                use $crate::{hex::{FromHex}};
 
                 let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
                 if $reverse {
@@ -109,39 +106,21 @@ macro_rules! hash_trait_impls {
             const LEN: usize = $bits / 8;
             const DISPLAY_BACKWARD: bool = $reverse;
 
-            fn engine() -> Self::Engine {
-                Self::internal_engine()
-            }
+            fn engine() -> HashEngine { Self::engine() }
 
-            fn from_engine(e: HashEngine) -> Hash<$($gen),*> {
-                from_engine(e)
-            }
+            fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
 
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
-                if sl.len() != $bits / 8 {
-                    Err(FromSliceError{expected: Self::LEN, got: sl.len()})
-                } else {
-                    let mut ret = [0; $bits / 8];
-                    ret.copy_from_slice(sl);
-                    Ok(Self::internal_new(ret))
-                }
+                Self::from_slice(sl)
             }
 
-            fn to_byte_array(self) -> Self::Bytes {
-                self.0
-            }
+            fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
-            fn as_byte_array(&self) -> &Self::Bytes {
-                &self.0
-            }
+            fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
-            fn from_byte_array(bytes: Self::Bytes) -> Self {
-                Self::internal_new(bytes)
-            }
+            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 
-            fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
-            }
+            fn all_zeros() -> Self { Self::all_zeros() }
         }
     }
 }
@@ -149,8 +128,8 @@ pub(crate) use hash_trait_impls;
 
 /// Creates a type called `Hash` and implements standard interface for it.
 ///
-/// The created type will have all standard derives, `Hash` impl and implementation of
-/// `internal_engine` returning default. The created type has a single field.
+/// The created type has a single field and will have all standard derives as well as an
+/// implementation of [`crate::Hash`].
 ///
 /// Arguments:
 ///
@@ -169,9 +148,7 @@ macro_rules! hash_type {
         pub struct Hash([u8; $bits / 8]);
 
         impl Hash {
-            fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
-
-            fn internal_engine() -> HashEngine { Default::default() }
+            const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
@@ -185,6 +162,68 @@ macro_rules! hash_type {
             pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
                 // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
                 unsafe { &mut *(bytes as *mut _ as *mut Self) }
+            }
+
+            /// Constructs a new engine.
+            pub fn engine() -> HashEngine { Default::default() }
+
+            /// Produces a hash from the current state of a given engine.
+            pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+
+            /// Copies a byte slice into a hash object.
+            pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash, FromSliceError> {
+                if sl.len() != $bits / 8 {
+                    Err(FromSliceError{expected: $bits / 8, got: sl.len()})
+                } else {
+                    let mut ret = [0; $bits / 8];
+                    ret.copy_from_slice(sl);
+                    Ok(Self::internal_new(ret))
+                }
+            }
+
+            /// Hashes some bytes.
+            #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
+            pub fn hash(data: &[u8]) -> Self {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
+            }
+
+            /// Hashes all the byte slices retrieved from the iterator together.
+            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            where
+                B: AsRef<[u8]>,
+                I: IntoIterator<Item = B>,
+            {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                for slice in byte_slices {
+                    engine.input(slice.as_ref());
+                }
+                Self::from_engine(engine)
+            }
+
+            /// Returns the underlying byte array.
+            pub const fn to_byte_array(self) -> [u8; $bits / 8] { self.0 }
+
+            /// Returns a reference to the underlying byte array.
+            pub const fn as_byte_array(&self) -> &[u8; $bits / 8] { &self.0 }
+
+            /// Constructs a hash from the underlying byte array.
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
+                Self::internal_new(bytes)
+            }
+
+            /// Returns an all zero hash.
+            ///
+            /// An all zeros hash is a made up construct because there is not a known input that can create
+            /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+            /// previous blockhash and the coinbase transaction's outpoint txid.
+            pub const fn all_zeros() -> Self {
+                Hash::internal_new([0x00; $bits / 8])
             }
         }
 

@@ -7,7 +7,7 @@ use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{sha256, FromSliceError};
+use crate::{sha256, FromSliceError, HashEngine as _};
 
 type HashEngine = sha256::HashEngine;
 
@@ -39,8 +39,6 @@ impl<T: Tag> schemars::JsonSchema for Hash<T> {
 impl<T: Tag> Hash<T> {
     fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
 
-    fn internal_engine() -> HashEngine { T::engine() }
-
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
     pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
@@ -53,6 +51,68 @@ impl<T: Tag> Hash<T> {
     pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
         // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
         unsafe { &mut *(bytes as *mut _ as *mut Self) }
+    }
+
+    /// Constructs a new engine.
+    pub fn engine() -> HashEngine { T::engine() }
+
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(e: HashEngine) -> Hash<T> {
+        from_engine(e)
+    }
+
+    /// Copies a byte slice into a hash object.
+    pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
+        if sl.len() != 32 {
+            Err(FromSliceError{expected: 32, got: sl.len()})
+        } else {
+            let mut ret = [0; 32];
+            ret.copy_from_slice(sl);
+            Ok(Self::internal_new(ret))
+        }
+    }
+
+    /// Hashes some bytes.
+    #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
+    pub fn hash(data: &[u8]) -> Self {
+        use crate::HashEngine;
+
+        let mut engine = Self::engine();
+        engine.input(data);
+        Self::from_engine(engine)
+    }
+
+    /// Hashes all the byte slices retrieved from the iterator together.
+    pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+    where
+        B: AsRef<[u8]>,
+        I: IntoIterator<Item = B>,
+    {
+        let mut engine = Self::engine();
+        for slice in byte_slices {
+            engine.input(slice.as_ref());
+        }
+        Self::from_engine(engine)
+    }
+
+    /// Returns the underlying byte array.
+    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+
+    /// Constructs a hash from the underlying byte array.
+    pub fn from_byte_array(bytes: [u8; 32]) -> Self {
+        Self::internal_new(bytes)
+    }
+
+    /// Returns an all zero hash.
+    ///
+    /// An all zeros hash is a made up construct because there is not a known input that can create
+    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
+    /// previous blockhash and the coinbase transaction's outpoint txid.
+    pub fn all_zeros() -> Self {
+        Hash::internal_new([0x00; 32])
     }
 }
 
@@ -82,8 +142,6 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
-    use crate::Hash as _;
-
     Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
 }
 
@@ -176,8 +234,6 @@ macro_rules! sha256t_hash_newtype_tag_constructor {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use crate::Hash;
     use crate::{sha256, sha256t};
 
     const TEST_MIDSTATE: [u8; 32] = [

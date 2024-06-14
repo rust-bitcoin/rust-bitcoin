@@ -13,7 +13,7 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
 use internals::write_err;
 use io::Write;
 

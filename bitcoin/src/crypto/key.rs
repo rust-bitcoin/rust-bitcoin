@@ -9,7 +9,7 @@ use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::{hash160, Hash};
+use hashes::hash160;
 use hex::{FromHex, HexToArrayError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;

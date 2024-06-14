@@ -21,8 +21,6 @@ crate::internal_macros::hash_type! {
 type HashEngine = sha256::HashEngine;
 
 fn from_engine(e: HashEngine) -> Hash {
-    use crate::Hash as _;
-
     let sha2 = sha256::Hash::from_engine(e);
     let rmd = ripemd160::Hash::hash(&sha2[..]);
 
@@ -92,7 +90,7 @@ mod tests {
     fn ripemd_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
-        use crate::{hash160, Hash};
+        use crate::hash160;
 
         #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [

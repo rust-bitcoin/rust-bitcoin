@@ -154,7 +154,7 @@ impl Midstate {
     }
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
-    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
     /// Creates midstate for tagged hashes.
     ///
@@ -815,7 +815,7 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{sha256, Hash as _, HashEngine};
+    use crate::{sha256, HashEngine};
 
     #[test]
     #[cfg(feature = "alloc")]

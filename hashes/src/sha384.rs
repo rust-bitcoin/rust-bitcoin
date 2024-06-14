@@ -47,7 +47,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha384, Hash, HashEngine};
+        use crate::{sha384, HashEngine};
 
         #[derive(Clone)]
         struct Test {

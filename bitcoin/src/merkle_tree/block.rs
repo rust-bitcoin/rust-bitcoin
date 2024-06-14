@@ -11,7 +11,6 @@
 
 use core::fmt;
 
-use hashes::Hash;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;

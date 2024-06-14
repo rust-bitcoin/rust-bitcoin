@@ -57,7 +57,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{sha512_256, Hash, HashEngine};
+        use crate::{sha512_256, HashEngine};
 
         #[derive(Clone)]
         struct Test {

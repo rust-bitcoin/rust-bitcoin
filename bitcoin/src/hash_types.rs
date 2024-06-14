@@ -13,7 +13,6 @@ pub use crate::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::Hash;
     use crate::{
         LegacySighash, PubkeyHash, ScriptHash, SegwitV0Sighash, TapSighash, WPubkeyHash,
         WScriptHash, XKeyIdentifier,

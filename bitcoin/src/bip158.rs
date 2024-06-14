@@ -40,7 +40,7 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
-use hashes::{sha256d, siphash24, Hash};
+use hashes::{sha256d, siphash24};
 use internals::write_err;
 use io::{BufRead, Write};
 
