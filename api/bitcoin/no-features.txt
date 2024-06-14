@@ -5915,7 +5915,7 @@ pub fn bitcoin::CompressedPublicKey::clone(&self) -> bitcoin::CompressedPublicKe
 pub fn bitcoin::CompressedPublicKey::cmp(&self, other: &bitcoin::CompressedPublicKey) -> core::cmp::Ordering
 pub fn bitcoin::CompressedPublicKey::eq(&self, other: &bitcoin::CompressedPublicKey) -> bool
 pub fn bitcoin::CompressedPublicKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::CompressedPublicKey::from_private_key<C: secp256k1::context::Signing>(secp: &secp256k1::Secp256k1<C>, sk: &bitcoin::PrivateKey) -> core::result::Result<Self, bitcoin::key::UncompressedPublicKeyError>
+pub fn bitcoin::CompressedPublicKey::from_private_key<C: secp256k1::context::Signing>(secp: &secp256k1::Secp256k1<C>, sk: bitcoin::PrivateKey) -> core::result::Result<Self, bitcoin::key::UncompressedPublicKeyError>
 pub fn bitcoin::CompressedPublicKey::from_slice(data: &[u8]) -> core::result::Result<Self, secp256k1::Error>
 pub fn bitcoin::CompressedPublicKey::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin::CompressedPublicKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -6012,7 +6012,7 @@ pub fn bitcoin::PublicKey::eq(&self, other: &bitcoin::PublicKey) -> bool
 pub fn bitcoin::PublicKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::PublicKey::from(pk: secp256k1::key::PublicKey) -> bitcoin::PublicKey
 pub fn bitcoin::PublicKey::from(value: bitcoin::CompressedPublicKey) -> Self
-pub fn bitcoin::PublicKey::from_private_key<C: secp256k1::context::Signing>(secp: &secp256k1::Secp256k1<C>, sk: &bitcoin::PrivateKey) -> bitcoin::PublicKey
+pub fn bitcoin::PublicKey::from_private_key<C: secp256k1::context::Signing>(secp: &secp256k1::Secp256k1<C>, sk: bitcoin::PrivateKey) -> bitcoin::PublicKey
 pub fn bitcoin::PublicKey::from_slice(data: &[u8]) -> core::result::Result<bitcoin::PublicKey, bitcoin::key::FromSliceError>
 pub fn bitcoin::PublicKey::from_str(s: &str) -> core::result::Result<bitcoin::PublicKey, bitcoin::key::ParsePublicKeyError>
 pub fn bitcoin::PublicKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
@@ -6116,18 +6116,18 @@ pub fn bitcoin::address::Address::address_type(&self) -> core::option::Option<bi
 pub fn bitcoin::address::Address::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::address::Address::from_script(script: &bitcoin::blockdata::script::Script, params: impl core::convert::AsRef<bitcoin::consensus::params::Params>) -> core::result::Result<bitcoin::address::Address, bitcoin::address::error::FromScriptError>
 pub fn bitcoin::address::Address::from_witness_program(program: bitcoin::blockdata::script::witness_program::WitnessProgram, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
-pub fn bitcoin::address::Address::is_related_to_pubkey(&self, pubkey: &bitcoin::PublicKey) -> bool
-pub fn bitcoin::address::Address::is_related_to_xonly_pubkey(&self, xonly_pubkey: &secp256k1::key::XOnlyPublicKey) -> bool
+pub fn bitcoin::address::Address::is_related_to_pubkey(&self, pubkey: bitcoin::PublicKey) -> bool
+pub fn bitcoin::address::Address::is_related_to_xonly_pubkey(&self, xonly_pubkey: secp256k1::key::XOnlyPublicKey) -> bool
 pub fn bitcoin::address::Address::is_spend_standard(&self) -> bool
 pub fn bitcoin::address::Address::matches_script_pubkey(&self, script: &bitcoin::blockdata::script::Script) -> bool
 pub fn bitcoin::address::Address::p2pkh(pk: impl core::convert::Into<bitcoin::PubkeyHash>, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2sh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> core::result::Result<bitcoin::address::Address, bitcoin::address::error::P2shError>
 pub fn bitcoin::address::Address::p2sh_from_hash(hash: bitcoin::blockdata::script::ScriptHash, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
-pub fn bitcoin::address::Address::p2shwpkh(pk: &bitcoin::CompressedPublicKey, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
+pub fn bitcoin::address::Address::p2shwpkh(pk: bitcoin::CompressedPublicKey, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2shwsh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2tr_tweaked(output_key: bitcoin::key::TweakedPublicKey, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
-pub fn bitcoin::address::Address::p2wpkh(pk: &bitcoin::CompressedPublicKey, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> Self
+pub fn bitcoin::address::Address::p2wpkh(pk: bitcoin::CompressedPublicKey, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> Self
 pub fn bitcoin::address::Address::p2wsh(script: &bitcoin::blockdata::script::Script, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::pubkey_hash(&self) -> core::option::Option<bitcoin::PubkeyHash>
 pub fn bitcoin::address::Address::script_hash(&self) -> core::option::Option<bitcoin::blockdata::script::ScriptHash>
@@ -6800,13 +6800,13 @@ pub fn bitcoin::blockdata::script::Builder::into_script(self) -> bitcoin::blockd
 pub fn bitcoin::blockdata::script::Builder::is_empty(&self) -> bool
 pub fn bitcoin::blockdata::script::Builder::len(&self) -> usize
 pub fn bitcoin::blockdata::script::Builder::push_int(self, data: i64) -> bitcoin::blockdata::script::Builder
-pub fn bitcoin::blockdata::script::Builder::push_key(self, key: &bitcoin::PublicKey) -> bitcoin::blockdata::script::Builder
+pub fn bitcoin::blockdata::script::Builder::push_key(self, key: bitcoin::PublicKey) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Builder::push_lock_time(self, lock_time: bitcoin::blockdata::locktime::absolute::LockTime) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Builder::push_opcode(self, data: bitcoin::blockdata::opcodes::Opcode) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Builder::push_sequence(self, sequence: bitcoin::blockdata::transaction::Sequence) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Builder::push_slice<T: core::convert::AsRef<bitcoin::blockdata::script::PushBytes>>(self, data: T) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Builder::push_verify(self) -> bitcoin::blockdata::script::Builder
-pub fn bitcoin::blockdata::script::Builder::push_x_only_key(self, x_only_key: &secp256k1::key::XOnlyPublicKey) -> bitcoin::blockdata::script::Builder
+pub fn bitcoin::blockdata::script::Builder::push_x_only_key(self, x_only_key: secp256k1::key::XOnlyPublicKey) -> bitcoin::blockdata::script::Builder
 pub fn bitcoin::blockdata::script::Bytes<'_>::next(&mut self) -> core::option::Option<Self::Item>
 pub fn bitcoin::blockdata::script::Bytes<'_>::next_back(&mut self) -> core::option::Option<Self::Item>
 pub fn bitcoin::blockdata::script::Bytes<'_>::nth(&mut self, n: usize) -> core::option::Option<Self::Item>
@@ -7137,7 +7137,7 @@ pub fn bitcoin::blockdata::script::ScriptBuf::hash<__H: core::hash::Hasher>(&sel
 pub fn bitcoin::blockdata::script::ScriptBuf::into_boxed_script(self) -> alloc::boxed::Box<bitcoin::blockdata::script::Script>
 pub fn bitcoin::blockdata::script::ScriptBuf::into_bytes(self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::blockdata::script::ScriptBuf::new_op_return<T: core::convert::AsRef<bitcoin::blockdata::script::PushBytes>>(data: T) -> Self
-pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pk(pubkey: &bitcoin::PublicKey) -> Self
+pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pk(pubkey: bitcoin::PublicKey) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pkh(pubkey_hash: &bitcoin::PubkeyHash) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2sh(script_hash: &bitcoin::blockdata::script::ScriptHash) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> Self
@@ -7225,7 +7225,7 @@ pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::is_p2wsh(&se
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::new(version: bitcoin::blockdata::script::witness_version::WitnessVersion, bytes: &[u8]) -> core::result::Result<Self, bitcoin::blockdata::script::witness_program::Error>
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2tr_tweaked(output_key: bitcoin::key::TweakedPublicKey) -> Self
-pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wpkh(pk: &bitcoin::CompressedPublicKey) -> Self
+pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wpkh(pk: bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wsh(script: &bitcoin::blockdata::script::Script) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::partial_cmp(&self, other: &bitcoin::blockdata::script::witness_program::WitnessProgram) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::program(&self) -> &bitcoin::blockdata::script::PushBytes
@@ -7455,7 +7455,7 @@ pub fn bitcoin::blockdata::witness::Witness::last(&self) -> core::option::Option
 pub fn bitcoin::blockdata::witness::Witness::len(&self) -> usize
 pub fn bitcoin::blockdata::witness::Witness::nth(&self, index: usize) -> core::option::Option<&[u8]>
 pub fn bitcoin::blockdata::witness::Witness::p2tr_key_spend(signature: &bitcoin::taproot::Signature) -> bitcoin::blockdata::witness::Witness
-pub fn bitcoin::blockdata::witness::Witness::p2wpkh(signature: &bitcoin::ecdsa::Signature, pubkey: &secp256k1::key::PublicKey) -> bitcoin::blockdata::witness::Witness
+pub fn bitcoin::blockdata::witness::Witness::p2wpkh(signature: &bitcoin::ecdsa::Signature, pubkey: secp256k1::key::PublicKey) -> bitcoin::blockdata::witness::Witness
 pub fn bitcoin::blockdata::witness::Witness::partial_cmp(&self, other: &bitcoin::blockdata::witness::Witness) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::witness::Witness::push<T: core::convert::AsRef<[u8]>>(&mut self, new_element: T)
 pub fn bitcoin::blockdata::witness::Witness::push_ecdsa_signature(&mut self, signature: &bitcoin::ecdsa::Signature)
