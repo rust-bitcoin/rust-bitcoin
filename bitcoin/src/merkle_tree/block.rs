@@ -513,14 +513,18 @@ impl std::error::Error for MerkleBlockError {
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-    #[cfg(feature = "rand-std")]
-    use secp256k1::rand::prelude::*;
-
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+
+    use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::FromHex;
+    use crate::hex::{FromHex, test_hex_unwrap as hex};
+
+    #[cfg(feature = "rand-std")]
+    use {
+        core::cmp,
+        secp256k1::rand::prelude::*,
+        crate::merkle_tree,
+    };
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
@@ -556,10 +560,6 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
-        use core::cmp::min;
-
-        use crate::merkle_tree;
-
         let mut rng = thread_rng();
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
@@ -597,15 +597,15 @@ mod tests {
 
             // Build the partial merkle tree
             let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
-            let serialized = serialize(&pmt1);
+            let serialized = encode::serialize(&pmt1);
 
             // Verify PartialMerkleTree's size guarantees
-            let n = min(tx_count, 1 + match_txid1.len() * height);
+            let n = cmp::min(tx_count, 1 + match_txid1.len() * height);
             assert!(serialized.len() <= 10 + (258 * n + 7) / 8);
 
             // Deserialize into a tester copy
             let pmt2: PartialMerkleTree =
-                deserialize(&serialized).expect("Could not deserialize own data");
+                encode::deserialize(&serialized).expect("Could not deserialize own data");
 
             // Extract merkle root and matched txids from copy
             let mut match_txid2: Vec<Txid> = vec![];
@@ -623,7 +623,7 @@ mod tests {
 
             // check that random bit flips break the authentication
             for _ in 0..4 {
-                let mut pmt3: PartialMerkleTree = deserialize(&serialized).unwrap();
+                let mut pmt3: PartialMerkleTree = encode::deserialize(&serialized).unwrap();
                 pmt3.damage(&mut rng);
                 let mut match_txid3 = vec![];
                 let merkle_root_3 = pmt3.extract_matches(&mut match_txid3, &mut indexes).unwrap();
@@ -655,14 +655,14 @@ mod tests {
         // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
         let mb_hex = include_str!("../../tests/data/merkle_block.hex");
 
-        let mb: MerkleBlock = deserialize(&hex!(mb_hex)).unwrap();
+        let mb: MerkleBlock = encode::deserialize(&hex!(mb_hex)).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, serialize(&mb).to_lower_hex_string().as_str());
+        assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
     }
 
     /// Create a CMerkleBlock using a list of txids which will be found in the
@@ -744,9 +744,8 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
-        use hex::FromHex;
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
-        deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
+        encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }
 
     macro_rules! check_calc_tree_width {
@@ -801,7 +800,8 @@ mod tests {
 
     #[test]
     fn regression_2606() {
-        // Attempt
+        // Attempt to deserialize a partial merkle tree with a number of hashes that would
+        // overflow the maximum allowed size.
         let bytes = hex!(
             "000006000000000000000004ee00000004c7f1ccb1000000ffff000000010000\
              0000ffffffffff1f000000000400000000000002000000000500000000000000\
@@ -810,7 +810,9 @@ mod tests {
              00000004bfaac251681b1b25\
          "
         );
-        let deser = crate::consensus::deserialize::<MerkleBlock>(&bytes);
+        let deser = encode::deserialize::<MerkleBlock>(&bytes);
+
+        // The attempt to deserialize should result in an error.
         assert!(deser.is_err());
     }
 
@@ -824,16 +826,25 @@ mod tests {
             1b01e32f570200000002252bf9d75c4f481ebb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d3\
             2adb5f8ca820731dff234a84e78ec30bce4ec69dbd562d0b2b8266bf4e5a0105").unwrap();
         let mb: MerkleBlock = encode::deserialize(&mb_bytes).unwrap();
+
         // Authenticate and extract matched transaction ids
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
         assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
-        assert_eq!(1, matches.len());
-        assert_eq!(
-            "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap(),
-            matches[0]
-        );
-        assert_eq!(1, index.len());
-        assert_eq!(1, index[0]);
+
+        // The matches and index vectors are coupled, should be the same length.
+        assert_eq!(matches.len(), index.len());
+
+        // There should only be one match.
+        assert_eq!(matches.len(), 1);
+
+        // The match should come from index 1.
+        assert_eq!(index[0], 1);
+
+        // And we know the txid we want.
+        let want = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
+            .parse::<Txid>()
+            .expect("failed to parse txid");
+        assert_eq!(matches[0], want);
     }
 }
