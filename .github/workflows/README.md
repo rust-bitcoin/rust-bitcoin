@@ -8,8 +8,7 @@ The minimal/recent lock files are handled by CI (`rust.yml`).
 
 ## Jobs
 
-Run from `rust.yml` unless stated otherwise. Total 21 jobs but
-`Prepare` is quick and must be run first anyway.
+Run from `rust.yml` unless stated otherwise.
 
 0.  `Prepare`
 1.  `Stable - minimal`
@@ -24,11 +23,10 @@ Run from `rust.yml` unless stated otherwise. Total 21 jobs but
 10. `Bench`
 11. `ASAN`
 12. `WASM`
-13. `schemars`
-14. `Arch32bit`
-15. `Cross`
-16. `Embedded`
-17. `Kani`
-18. `Coveralls` - run by `coveralls.yml`
-19. `release` - run by `release.yml`
-20. `labeler` - run by `manage-pr.yml`
+13. `Arch32bit`
+14. `Cross`
+15. `Embedded`
+16. `Kani`
+17. `Coveralls` - run by `coveralls.yml`
+18. `release` - run by `release.yml`
+19. `labeler` - run by `manage-pr.yml`
