@@ -19,7 +19,6 @@ use crate::consensus::{encode, Decodable, Encodable, Params};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
-use crate::script::PushBytes;
 use crate::{merkle_tree, VarInt};
 
 hashes::hash_newtype! {
@@ -381,7 +380,7 @@ impl Block {
         match push.map_err(|_| Bip34Error::NotPresent)? {
             script::Instruction::PushBytes(b) => {
                 // Check that the number is encoded in the minimal way.
-                let h = PushBytes::read_scriptint(b)
+                let h = b.read_scriptint()
                     .map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))?;
                 if h < 0 {
                     Err(Bip34Error::NegativeHeight)
