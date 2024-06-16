@@ -57,14 +57,12 @@ impl<T: Tag> Hash<T> {
     pub fn engine() -> HashEngine { T::engine() }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash<T> {
-        from_engine(e)
-    }
+    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
 
     /// Copies a byte slice into a hash object.
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
         if sl.len() != 32 {
-            Err(FromSliceError{expected: 32, got: sl.len()})
+            Err(FromSliceError { expected: 32, got: sl.len() })
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);
@@ -102,18 +100,14 @@ impl<T: Tag> Hash<T> {
     pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
 
     /// Constructs a hash from the underlying byte array.
-    pub fn from_byte_array(bytes: [u8; 32]) -> Self {
-        Self::internal_new(bytes)
-    }
+    pub fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
 
     /// Returns an all zero hash.
     ///
     /// An all zeros hash is a made up construct because there is not a known input that can create
     /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
     /// previous blockhash and the coinbase transaction's outpoint txid.
-    pub fn all_zeros() -> Self {
-        Hash::internal_new([0x00; 32])
-    }
+    pub fn all_zeros() -> Self { Hash::internal_new([0x00; 32]) }
 }
 
 impl<T: Tag> Copy for Hash<T> {}

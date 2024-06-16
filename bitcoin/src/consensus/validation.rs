@@ -33,7 +33,13 @@ pub fn verify_script(
     amount: Amount,
     spending_tx: &[u8],
 ) -> Result<(), BitcoinconsensusError> {
-    verify_script_with_flags(script, index, amount, spending_tx, bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT)
+    verify_script_with_flags(
+        script,
+        index,
+        amount,
+        spending_tx,
+        bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT,
+    )
 }
 
 /// Verifies spend of an input script.

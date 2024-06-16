@@ -513,18 +513,13 @@ impl std::error::Error for MerkleBlockError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    #[cfg(feature = "rand-std")]
+    use {crate::merkle_tree, core::cmp, secp256k1::rand::prelude::*};
 
+    use super::*;
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{FromHex, test_hex_unwrap as hex};
-
-    #[cfg(feature = "rand-std")]
-    use {
-        core::cmp,
-        secp256k1::rand::prelude::*,
-        crate::merkle_tree,
-    };
+    use crate::hex::{test_hex_unwrap as hex, FromHex};
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {

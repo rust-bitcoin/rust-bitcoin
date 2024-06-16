@@ -171,9 +171,11 @@ macro_rules! hash_type {
             pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
 
             /// Copies a byte slice into a hash object.
-            pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash, FromSliceError> {
+            pub fn from_slice(
+                sl: &[u8],
+            ) -> $crate::_export::_core::result::Result<Hash, FromSliceError> {
                 if sl.len() != $bits / 8 {
-                    Err(FromSliceError{expected: $bits / 8, got: sl.len()})
+                    Err(FromSliceError { expected: $bits / 8, got: sl.len() })
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);
@@ -222,9 +224,7 @@ macro_rules! hash_type {
             /// An all zeros hash is a made up construct because there is not a known input that can create
             /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
             /// previous blockhash and the coinbase transaction's outpoint txid.
-            pub const fn all_zeros() -> Self {
-                Hash::internal_new([0x00; $bits / 8])
-            }
+            pub const fn all_zeros() -> Self { Hash::internal_new([0x00; $bits / 8]) }
         }
 
         #[cfg(feature = "schemars")]
