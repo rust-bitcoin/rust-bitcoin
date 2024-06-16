@@ -781,7 +781,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
-        let zero_hash = sha256d::Hash::all_zeros();
+        let zero_hash = [0; 32];
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
@@ -819,7 +819,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(hash.as_byte_array())?;
         } else {
-            writer.write_all(zero_hash.as_byte_array())?;
+            writer.write_all(&zero_hash)?;
         }
 
         self.tx.borrow().lock_time.consensus_encode(writer)?;

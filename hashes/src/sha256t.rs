@@ -117,13 +117,6 @@ where
 
     /// Constructs a hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
-
-    /// Returns an all zero hash.
-    ///
-    /// An all zeros hash is a made up construct because there is not a known input that can create
-    /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
-    /// previous blockhash and the coinbase transaction's outpoint txid.
-    pub fn all_zeros() -> Self { Hash::internal_new([0x00; 32]) }
 }
 
 impl<T: Tag> Copy for Hash<T> {}

@@ -28,6 +28,13 @@ hashes::hash_newtype! {
     pub struct WitnessCommitment(sha256d::Hash);
 }
 impl_hashencode!(BlockHash);
+impl BlockHash {
+    /// The "all zeros" blockhash.
+    ///
+    /// This is not the hash of a real block. It is used as the previous blockhash
+    /// of the genesis block and in other placeholder contexts.
+    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+}
 
 /// Bitcoin block header.
 ///

@@ -147,11 +147,6 @@ impl<T: Hash> Hash for Hmac<T> {
     fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
 
     fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
-
-    fn all_zeros() -> Self {
-        let zeros = T::all_zeros();
-        Hmac(zeros)
-    }
 }
 
 #[cfg(feature = "serde")]
