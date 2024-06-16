@@ -17,7 +17,7 @@ use crate::blockdata::script;
 use crate::blockdata::transaction::{Transaction, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::merkle_tree::{self, TxMerkleNode, WitnessMerkleNode};
+use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::VarInt;
@@ -281,7 +281,7 @@ impl Block {
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
-        merkle_tree::calculate_root(hashes)
+        TxMerkleNode::calculate_root(hashes)
     }
 
     /// Computes the witness commitment for the block's transaction list.
@@ -305,7 +305,7 @@ impl Block {
                 t.compute_wtxid()
             }
         });
-        merkle_tree::calculate_root(hashes)
+        WitnessMerkleNode::calculate_root(hashes)
     }
 
     /// Returns the weight of the block.

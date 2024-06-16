@@ -515,7 +515,7 @@ impl std::error::Error for MerkleBlockError {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "rand-std")]
-    use {crate::merkle_tree, core::cmp, secp256k1::rand::prelude::*};
+    use {crate::merkle_tree::MerkleNode as _, core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
     use crate::consensus::encode;
@@ -564,8 +564,7 @@ mod tests {
 
         // Calculate the merkle root and height
         let hashes = tx_ids.iter().copied();
-        let merkle_root_1: TxMerkleNode =
-            merkle_tree::calculate_root(hashes).expect("hashes is not empty");
+        let merkle_root_1 = TxMerkleNode::calculate_root(hashes).expect("hashes is not empty");
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {
