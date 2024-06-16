@@ -11,7 +11,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
-use crate::{Hash, HashEngine, Hmac, HmacEngine};
+use crate::{GeneralHash, HashEngine, Hmac, HmacEngine};
 
 /// Output keying material max length multiple.
 const MAX_OUTPUT_BLOCKS: usize = 255;
@@ -32,12 +32,12 @@ impl fmt::Display for MaxLengthError {
 impl std::error::Error for MaxLengthError {}
 
 /// HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
-pub struct Hkdf<T: Hash> {
+pub struct Hkdf<T: GeneralHash> {
     /// Pseudorandom key based on the extract step.
     prk: Hmac<T>,
 }
 
-impl<T: Hash> Hkdf<T> {
+impl<T: GeneralHash> Hkdf<T> {
     /// Initialize a HKDF by performing the extract step.
     pub fn new(salt: &[u8], ikm: &[u8]) -> Self {
         let mut hmac_engine: HmacEngine<T> = HmacEngine::new(salt);

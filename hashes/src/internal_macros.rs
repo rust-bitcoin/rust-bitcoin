@@ -99,16 +99,19 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
+        impl<$($gen: $gent),*> crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
-            type Bytes = [u8; $bits / 8];
-
-            const LEN: usize = $bits / 8;
-            const DISPLAY_BACKWARD: bool = $reverse;
 
             fn engine() -> HashEngine { Self::engine() }
 
             fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
+        }
+
+        impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
+            type Bytes = [u8; $bits / 8];
+
+            const LEN: usize = $bits / 8;
+            const DISPLAY_BACKWARD: bool = $reverse;
 
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
                 Self::from_slice(sl)

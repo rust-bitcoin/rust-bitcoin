@@ -12,7 +12,7 @@
 //! Hashing a single byte slice or a string:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::{sha256, GeneralHash as _};
 //!
 //! let bytes = [0u8; 5];
 //! let hash_of_bytes = sha256::Hash::hash(&bytes);
@@ -23,7 +23,7 @@
 //! Hashing content from a reader:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::{sha256, GeneralHash as _};
 //!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
@@ -147,39 +147,18 @@ pub trait HashEngine: Clone + Default {
     fn n_bytes_hashed(&self) -> usize;
 }
 
-/// Trait which applies to hashes of all types.
-pub trait Hash:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + hash::Hash
-    + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
-    + convert::AsRef<[u8]>
-{
+/// Trait describing hash digests which can be constructed by hashing arbitrary data.
+pub trait GeneralHash: Hash {
     /// A hashing engine which bytes can be serialized into. It is expected
     /// to implement the `io::Write` trait, and to never return errors under
     /// any conditions.
     type Engine: HashEngine;
-
-    /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
     fn engine() -> Self::Engine { Self::Engine::default() }
 
     /// Produces a hash from the current state of a given engine.
     fn from_engine(e: Self::Engine) -> Self;
-
-    /// Length of the hash, in bytes.
-    const LEN: usize;
-
-    /// Copies a byte slice into a hash object.
-    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Hashes some bytes.
     fn hash(data: &[u8]) -> Self {
@@ -200,6 +179,30 @@ pub trait Hash:
         }
         Self::from_engine(engine)
     }
+}
+
+/// Trait which applies to hashes of all types.
+pub trait Hash:
+    Copy
+    + Clone
+    + PartialEq
+    + Eq
+    + PartialOrd
+    + Ord
+    + hash::Hash
+    + fmt::Debug
+    + fmt::Display
+    + fmt::LowerHex
+    + convert::AsRef<[u8]>
+{
+    /// The byte array that represents the hash internally.
+    type Bytes: hex::FromHex + Copy;
+
+    /// Length of the hash, in bytes.
+    const LEN: usize;
+
+    /// Copies a byte slice into a hash object.
+    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Flag indicating whether user-visible serializations of this hash
     /// should be backward. For some reason Satoshi decided this should be
