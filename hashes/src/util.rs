@@ -209,44 +209,9 @@ macro_rules! hash_newtype {
                 &self.0
             }
 
-            /// Constructs a new engine.
-            pub fn engine() -> <$hash as $crate::GeneralHash>::Engine {
-                <$hash as $crate::GeneralHash>::engine()
-            }
-
-            /// Produces a hash from the current state of a given engine.
-            pub fn from_engine(e: <$hash as $crate::GeneralHash>::Engine) -> Self {
-                Self::from(<$hash as $crate::GeneralHash>::from_engine(e))
-            }
-
             /// Copies a byte slice into a hash object.
             pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
-            }
-
-            /// Hashes some bytes.
-            #[allow(unused)] // the user of macro may not need this
-            pub fn hash(data: &[u8]) -> Self {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                engine.input(data);
-                Self::from_engine(engine)
-            }
-
-            /// Hashes all the byte slices retrieved from the iterator together.
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-            where
-                B: AsRef<[u8]>,
-                I: IntoIterator<Item = B>,
-            {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                for slice in byte_slices {
-                    engine.input(slice.as_ref());
-                }
-                Self::from_engine(engine)
             }
 
             /// Returns the underlying byte array.
@@ -294,19 +259,6 @@ macro_rules! hash_newtype {
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
-        }
-
-        // To be dropped in the next commit
-        impl $crate::GeneralHash for $newtype {
-            type Engine = <$hash as $crate::GeneralHash>::Engine;
-
-            fn engine() -> Self::Engine {
-                <$hash as $crate::GeneralHash>::engine()
-            }
-
-            fn from_engine(e: <$hash as $crate::GeneralHash>::Engine) -> $newtype {
-                Self::from_engine(e)
-            }
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {

@@ -207,6 +207,58 @@ macro_rules! sha256t_hash_newtype {
             $(#[$($hash_attr)*])*
             $hash_vis struct $hash_name($(#[$($field_attr)*])* $crate::sha256t::Hash<$tag>);
         }
+
+        impl $hash_name {
+            /// Constructs a new engine.
+            #[allow(unused)] // the user of macro may not need this
+            pub fn engine() -> <$hash_name as $crate::GeneralHash>::Engine {
+                <$hash_name as $crate::GeneralHash>::engine()
+            }
+
+            /// Produces a hash from the current state of a given engine.
+            #[allow(unused)] // the user of macro may not need this
+            pub fn from_engine(e: <$hash_name as $crate::GeneralHash>::Engine) -> Self {
+                <$hash_name as $crate::GeneralHash>::from_engine(e)
+            }
+
+            /// Hashes some bytes.
+            #[allow(unused)] // the user of macro may not need this
+            pub fn hash(data: &[u8]) -> Self {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                engine.input(data);
+                Self::from_engine(engine)
+            }
+
+            /// Hashes all the byte slices retrieved from the iterator together.
+            #[allow(unused)] // the user of macro may not need this
+            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            where
+                B: AsRef<[u8]>,
+                I: IntoIterator<Item = B>,
+            {
+                use $crate::HashEngine;
+
+                let mut engine = Self::engine();
+                for slice in byte_slices {
+                    engine.input(slice.as_ref());
+                }
+                Self::from_engine(engine)
+            }
+        }
+
+        impl $crate::GeneralHash for $hash_name {
+            type Engine = <$crate::sha256t::Hash<$tag> as $crate::GeneralHash>::Engine;
+
+            fn engine() -> Self::Engine {
+                <$crate::sha256t::Hash<$tag> as $crate::GeneralHash>::engine()
+            }
+
+            fn from_engine(e: Self::Engine) -> $hash_name {
+                Self::from(<$crate::sha256t::Hash<$tag> as $crate::GeneralHash>::from_engine(e))
+            }
+        }
     }
 }
 
