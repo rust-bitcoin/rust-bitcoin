@@ -1757,10 +1757,10 @@ mod tests {
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh(),
+                redeem_script.to_p2sh().unwrap(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
-            assert_eq!(redeem_script.to_p2sh(), expected_out);
+            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
 
             for output in psbt.outputs {
                 assert_eq!(output.get_pairs().len(), 0)
@@ -1803,10 +1803,10 @@ mod tests {
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
-                redeem_script.to_p2sh(),
+                redeem_script.to_p2sh().unwrap(),
                 psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
-            assert_eq!(redeem_script.to_p2sh(), expected_out);
+            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
 
             for output in psbt.outputs {
                 assert!(!output.get_pairs().is_empty())
@@ -1828,11 +1828,11 @@ mod tests {
 
             assert!(redeem_script.is_p2wsh());
             assert_eq!(
-                redeem_script.to_p2sh(),
+                redeem_script.to_p2sh().unwrap(),
                 psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
             );
 
-            assert_eq!(redeem_script.to_p2sh(), expected_out);
+            assert_eq!(redeem_script.to_p2sh().unwrap(), expected_out);
         }
 
         #[test]

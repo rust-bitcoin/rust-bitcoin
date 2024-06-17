@@ -13,7 +13,7 @@ use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{PushBytes, Script};
+use crate::blockdata::script::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::taproot::TapNodeHash;
 
@@ -77,8 +77,12 @@ impl WitnessProgram {
     }
 
     /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
-    pub fn p2wsh(script: &Script) -> Self {
-        let hash = script.wscript_hash();
+    pub fn p2wsh(script: &Script) -> Result<Self, WitnessScriptSizeError> {
+        script.wscript_hash().map(Self::p2wsh_from_hash)
+    }
+
+    /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
+    pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
         WitnessProgram::new_p2wsh(hash.to_byte_array())
     }
 

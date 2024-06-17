@@ -5,10 +5,8 @@
 #[non_exhaustive] pub enum bitcoin::address::AddressType
 #[non_exhaustive] pub enum bitcoin::address::FromScriptError
 #[non_exhaustive] pub enum bitcoin::address::KnownHrp
-#[non_exhaustive] pub enum bitcoin::address::P2shError
 #[non_exhaustive] pub enum bitcoin::address::ParseError
 #[non_exhaustive] pub enum bitcoin::address::error::FromScriptError
-#[non_exhaustive] pub enum bitcoin::address::error::P2shError
 #[non_exhaustive] pub enum bitcoin::address::error::ParseError
 #[non_exhaustive] pub enum bitcoin::bip152::Error
 #[non_exhaustive] pub enum bitcoin::bip158::Error
@@ -554,7 +552,6 @@ impl core::clone::Clone for bitcoin::address::error::InvalidBase58PayloadLengthE
 impl core::clone::Clone for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::clone::Clone for bitcoin::address::error::LegacyAddressTooLongError
 impl core::clone::Clone for bitcoin::address::error::NetworkValidationError
-impl core::clone::Clone for bitcoin::address::error::P2shError
 impl core::clone::Clone for bitcoin::address::error::ParseError
 impl core::clone::Clone for bitcoin::address::error::UnknownAddressTypeError
 impl core::clone::Clone for bitcoin::address::error::UnknownHrpError
@@ -599,9 +596,11 @@ impl core::clone::Clone for bitcoin::blockdata::script::Builder
 impl core::clone::Clone for bitcoin::blockdata::script::Error
 impl core::clone::Clone for bitcoin::blockdata::script::PushBytesBuf
 impl core::clone::Clone for bitcoin::blockdata::script::PushBytesError
+impl core::clone::Clone for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::clone::Clone for bitcoin::blockdata::script::ScriptBuf
 impl core::clone::Clone for bitcoin::blockdata::script::ScriptHash
 impl core::clone::Clone for bitcoin::blockdata::script::WScriptHash
+impl core::clone::Clone for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::clone::Clone for bitcoin::blockdata::script::witness_program::Error
 impl core::clone::Clone for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::clone::Clone for bitcoin::blockdata::script::witness_version::FromStrError
@@ -753,7 +752,6 @@ impl core::cmp::Eq for bitcoin::address::error::InvalidBase58PayloadLengthError
 impl core::cmp::Eq for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::cmp::Eq for bitcoin::address::error::LegacyAddressTooLongError
 impl core::cmp::Eq for bitcoin::address::error::NetworkValidationError
-impl core::cmp::Eq for bitcoin::address::error::P2shError
 impl core::cmp::Eq for bitcoin::address::error::ParseError
 impl core::cmp::Eq for bitcoin::address::error::UnknownAddressTypeError
 impl core::cmp::Eq for bitcoin::address::error::UnknownHrpError
@@ -799,10 +797,12 @@ impl core::cmp::Eq for bitcoin::blockdata::script::Error
 impl core::cmp::Eq for bitcoin::blockdata::script::PushBytes
 impl core::cmp::Eq for bitcoin::blockdata::script::PushBytesBuf
 impl core::cmp::Eq for bitcoin::blockdata::script::PushBytesError
+impl core::cmp::Eq for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::cmp::Eq for bitcoin::blockdata::script::Script
 impl core::cmp::Eq for bitcoin::blockdata::script::ScriptBuf
 impl core::cmp::Eq for bitcoin::blockdata::script::ScriptHash
 impl core::cmp::Eq for bitcoin::blockdata::script::WScriptHash
+impl core::cmp::Eq for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::cmp::Eq for bitcoin::blockdata::script::witness_program::Error
 impl core::cmp::Eq for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::cmp::Eq for bitcoin::blockdata::script::witness_version::FromStrError
@@ -1041,7 +1041,6 @@ impl core::cmp::PartialEq for bitcoin::address::error::InvalidBase58PayloadLengt
 impl core::cmp::PartialEq for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::cmp::PartialEq for bitcoin::address::error::LegacyAddressTooLongError
 impl core::cmp::PartialEq for bitcoin::address::error::NetworkValidationError
-impl core::cmp::PartialEq for bitcoin::address::error::P2shError
 impl core::cmp::PartialEq for bitcoin::address::error::ParseError
 impl core::cmp::PartialEq for bitcoin::address::error::UnknownAddressTypeError
 impl core::cmp::PartialEq for bitcoin::address::error::UnknownHrpError
@@ -1087,10 +1086,12 @@ impl core::cmp::PartialEq for bitcoin::blockdata::script::Error
 impl core::cmp::PartialEq for bitcoin::blockdata::script::PushBytes
 impl core::cmp::PartialEq for bitcoin::blockdata::script::PushBytesBuf
 impl core::cmp::PartialEq for bitcoin::blockdata::script::PushBytesError
+impl core::cmp::PartialEq for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::cmp::PartialEq for bitcoin::blockdata::script::Script
 impl core::cmp::PartialEq for bitcoin::blockdata::script::ScriptBuf
 impl core::cmp::PartialEq for bitcoin::blockdata::script::ScriptHash
 impl core::cmp::PartialEq for bitcoin::blockdata::script::WScriptHash
+impl core::cmp::PartialEq for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::cmp::PartialEq for bitcoin::blockdata::script::witness_program::Error
 impl core::cmp::PartialEq for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::cmp::PartialEq for bitcoin::blockdata::script::witness_version::FromStrError
@@ -1561,10 +1562,6 @@ impl core::convert::From<&bitcoin::PublicKey> for bitcoin::PubkeyHash
 impl core::convert::From<&bitcoin::bip32::Xpub> for bitcoin::bip32::XKeyIdentifier
 impl core::convert::From<&bitcoin::blockdata::block::Block> for bitcoin::blockdata::block::BlockHash
 impl core::convert::From<&bitcoin::blockdata::block::Header> for bitcoin::blockdata::block::BlockHash
-impl core::convert::From<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::ScriptHash
-impl core::convert::From<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::WScriptHash
-impl core::convert::From<&bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::ScriptHash
-impl core::convert::From<&bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::From<&bitcoin::blockdata::transaction::Transaction> for bitcoin::blockdata::transaction::Txid
 impl core::convert::From<&bitcoin::blockdata::transaction::Transaction> for bitcoin::blockdata::transaction::Wtxid
 impl core::convert::From<&bitcoin::network::Network> for &'static bitcoin::consensus::params::Params
@@ -1827,8 +1824,6 @@ impl core::convert::From<bitcoin::blockdata::script::PushBytesBuf> for alloc::ve
 impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for alloc::borrow::Cow<'_, bitcoin::blockdata::script::Script>
 impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for alloc::boxed::Box<bitcoin::blockdata::script::Script>
 impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for alloc::vec::Vec<u8>
-impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::ScriptHash
-impl core::convert::From<bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::From<bitcoin::blockdata::script::ScriptHash> for bitcoin::blockdata::script::PushBytesBuf
 impl core::convert::From<bitcoin::blockdata::script::ScriptHash> for bitcoin_hashes::hash160::Hash
 impl core::convert::From<bitcoin::blockdata::script::WScriptHash> for bitcoin::blockdata::script::PushBytesBuf
@@ -1913,7 +1908,6 @@ impl core::convert::From<bitcoin_units::locktime::relative::Height> for bitcoin:
 impl core::convert::From<bitcoin_units::locktime::relative::Time> for bitcoin::blockdata::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin::blockdata::script::witness_version::FromStrError
 impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::FromScriptError
-impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::P2shError
 impl core::convert::From<core::convert::Infallible> for bitcoin::address::error::ParseError
 impl core::convert::From<core::convert::Infallible> for bitcoin::bip152::Error
 impl core::convert::From<core::convert::Infallible> for bitcoin::bip158::Error
@@ -1921,6 +1915,8 @@ impl core::convert::From<core::convert::Infallible> for bitcoin::bip32::Error
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::block::Bip34Error
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::block::ValidationError
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::Error
+impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::RedeemScriptSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::witness_program::Error
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::witness_version::FromStrError
 impl core::convert::From<core::convert::Infallible> for bitcoin::blockdata::script::witness_version::TryFromInstructionError
@@ -1969,6 +1965,10 @@ impl core::convert::From<u8> for bitcoin::blockdata::opcodes::Opcode
 impl core::convert::From<u8> for bitcoin::consensus::encode::VarInt
 impl core::convert::From<usize> for bitcoin::consensus::encode::VarInt
 impl core::convert::TryFrom<&[bitcoin::taproot::TapNodeHash]> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
+impl core::convert::TryFrom<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::ScriptHash
+impl core::convert::TryFrom<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::WScriptHash
+impl core::convert::TryFrom<&bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::ScriptHash
+impl core::convert::TryFrom<&bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::TryFrom<&str> for bitcoin::blockdata::locktime::absolute::LockTime
 impl core::convert::TryFrom<&str> for bitcoin::blockdata::transaction::Sequence
 impl core::convert::TryFrom<alloc::boxed::Box<[bitcoin::taproot::TapNodeHash]>> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
@@ -1984,6 +1984,8 @@ impl core::convert::TryFrom<bech32::primitives::gf32::Fe32> for bitcoin::blockda
 impl core::convert::TryFrom<bitcoin::PublicKey> for bitcoin::CompressedPublicKey
 impl core::convert::TryFrom<bitcoin::blockdata::constants::ChainHash> for bitcoin::network::Network
 impl core::convert::TryFrom<bitcoin::blockdata::opcodes::Opcode> for bitcoin::blockdata::script::witness_version::WitnessVersion
+impl core::convert::TryFrom<bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::ScriptHash
+impl core::convert::TryFrom<bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::WScriptHash
 impl core::convert::TryFrom<bitcoin::blockdata::transaction::Sequence> for bitcoin::blockdata::locktime::relative::LockTime
 impl core::convert::TryFrom<bitcoin::p2p::Magic> for bitcoin::network::Network
 impl core::convert::TryFrom<bitcoin::taproot::NodeInfo> for bitcoin::taproot::TapTree
@@ -2017,7 +2019,6 @@ impl core::error::Error for bitcoin::address::error::InvalidBase58PayloadLengthE
 impl core::error::Error for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::error::Error for bitcoin::address::error::LegacyAddressTooLongError
 impl core::error::Error for bitcoin::address::error::NetworkValidationError
-impl core::error::Error for bitcoin::address::error::P2shError
 impl core::error::Error for bitcoin::address::error::ParseError
 impl core::error::Error for bitcoin::address::error::UnknownAddressTypeError
 impl core::error::Error for bitcoin::address::error::UnknownHrpError
@@ -2033,6 +2034,8 @@ impl core::error::Error for bitcoin::blockdata::locktime::relative::Incompatible
 impl core::error::Error for bitcoin::blockdata::locktime::relative::IncompatibleTimeError
 impl core::error::Error for bitcoin::blockdata::script::Error
 impl core::error::Error for bitcoin::blockdata::script::PushBytesError
+impl core::error::Error for bitcoin::blockdata::script::RedeemScriptSizeError
+impl core::error::Error for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::error::Error for bitcoin::blockdata::script::witness_program::Error
 impl core::error::Error for bitcoin::blockdata::script::witness_version::FromStrError
 impl core::error::Error for bitcoin::blockdata::script::witness_version::TryFromError
@@ -2102,7 +2105,6 @@ impl core::fmt::Debug for bitcoin::address::error::InvalidBase58PayloadLengthErr
 impl core::fmt::Debug for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::fmt::Debug for bitcoin::address::error::LegacyAddressTooLongError
 impl core::fmt::Debug for bitcoin::address::error::NetworkValidationError
-impl core::fmt::Debug for bitcoin::address::error::P2shError
 impl core::fmt::Debug for bitcoin::address::error::ParseError
 impl core::fmt::Debug for bitcoin::address::error::UnknownAddressTypeError
 impl core::fmt::Debug for bitcoin::address::error::UnknownHrpError
@@ -2149,10 +2151,12 @@ impl core::fmt::Debug for bitcoin::blockdata::script::Error
 impl core::fmt::Debug for bitcoin::blockdata::script::PushBytes
 impl core::fmt::Debug for bitcoin::blockdata::script::PushBytesBuf
 impl core::fmt::Debug for bitcoin::blockdata::script::PushBytesError
+impl core::fmt::Debug for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::fmt::Debug for bitcoin::blockdata::script::Script
 impl core::fmt::Debug for bitcoin::blockdata::script::ScriptBuf
 impl core::fmt::Debug for bitcoin::blockdata::script::ScriptHash
 impl core::fmt::Debug for bitcoin::blockdata::script::WScriptHash
+impl core::fmt::Debug for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::fmt::Debug for bitcoin::blockdata::script::witness_program::Error
 impl core::fmt::Debug for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::fmt::Debug for bitcoin::blockdata::script::witness_version::FromStrError
@@ -2301,7 +2305,6 @@ impl core::fmt::Display for bitcoin::address::error::InvalidBase58PayloadLengthE
 impl core::fmt::Display for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::fmt::Display for bitcoin::address::error::LegacyAddressTooLongError
 impl core::fmt::Display for bitcoin::address::error::NetworkValidationError
-impl core::fmt::Display for bitcoin::address::error::P2shError
 impl core::fmt::Display for bitcoin::address::error::ParseError
 impl core::fmt::Display for bitcoin::address::error::UnknownAddressTypeError
 impl core::fmt::Display for bitcoin::address::error::UnknownHrpError
@@ -2336,10 +2339,12 @@ impl core::fmt::Display for bitcoin::blockdata::opcodes::Opcode
 impl core::fmt::Display for bitcoin::blockdata::script::Builder
 impl core::fmt::Display for bitcoin::blockdata::script::Error
 impl core::fmt::Display for bitcoin::blockdata::script::PushBytesError
+impl core::fmt::Display for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::fmt::Display for bitcoin::blockdata::script::Script
 impl core::fmt::Display for bitcoin::blockdata::script::ScriptBuf
 impl core::fmt::Display for bitcoin::blockdata::script::ScriptHash
 impl core::fmt::Display for bitcoin::blockdata::script::WScriptHash
+impl core::fmt::Display for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::fmt::Display for bitcoin::blockdata::script::witness_program::Error
 impl core::fmt::Display for bitcoin::blockdata::script::witness_version::FromStrError
 impl core::fmt::Display for bitcoin::blockdata::script::witness_version::TryFromError
@@ -2695,7 +2700,6 @@ impl core::marker::Freeze for bitcoin::address::error::InvalidBase58PayloadLengt
 impl core::marker::Freeze for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::marker::Freeze for bitcoin::address::error::LegacyAddressTooLongError
 impl core::marker::Freeze for bitcoin::address::error::NetworkValidationError
-impl core::marker::Freeze for bitcoin::address::error::P2shError
 impl core::marker::Freeze for bitcoin::address::error::ParseError
 impl core::marker::Freeze for bitcoin::address::error::UnknownAddressTypeError
 impl core::marker::Freeze for bitcoin::address::error::UnknownHrpError
@@ -2744,10 +2748,12 @@ impl core::marker::Freeze for bitcoin::blockdata::script::Error
 impl core::marker::Freeze for bitcoin::blockdata::script::PushBytes
 impl core::marker::Freeze for bitcoin::blockdata::script::PushBytesBuf
 impl core::marker::Freeze for bitcoin::blockdata::script::PushBytesError
+impl core::marker::Freeze for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::marker::Freeze for bitcoin::blockdata::script::Script
 impl core::marker::Freeze for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Freeze for bitcoin::blockdata::script::ScriptHash
 impl core::marker::Freeze for bitcoin::blockdata::script::WScriptHash
+impl core::marker::Freeze for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::marker::Freeze for bitcoin::blockdata::script::witness_program::Error
 impl core::marker::Freeze for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::marker::Freeze for bitcoin::blockdata::script::witness_version::FromStrError
@@ -2906,7 +2912,6 @@ impl core::marker::Send for bitcoin::address::error::InvalidBase58PayloadLengthE
 impl core::marker::Send for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::marker::Send for bitcoin::address::error::LegacyAddressTooLongError
 impl core::marker::Send for bitcoin::address::error::NetworkValidationError
-impl core::marker::Send for bitcoin::address::error::P2shError
 impl core::marker::Send for bitcoin::address::error::ParseError
 impl core::marker::Send for bitcoin::address::error::UnknownAddressTypeError
 impl core::marker::Send for bitcoin::address::error::UnknownHrpError
@@ -2955,10 +2960,12 @@ impl core::marker::Send for bitcoin::blockdata::script::Error
 impl core::marker::Send for bitcoin::blockdata::script::PushBytes
 impl core::marker::Send for bitcoin::blockdata::script::PushBytesBuf
 impl core::marker::Send for bitcoin::blockdata::script::PushBytesError
+impl core::marker::Send for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::marker::Send for bitcoin::blockdata::script::Script
 impl core::marker::Send for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Send for bitcoin::blockdata::script::ScriptHash
 impl core::marker::Send for bitcoin::blockdata::script::WScriptHash
+impl core::marker::Send for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::marker::Send for bitcoin::blockdata::script::witness_program::Error
 impl core::marker::Send for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::marker::Send for bitcoin::blockdata::script::witness_version::FromStrError
@@ -3117,7 +3124,6 @@ impl core::marker::StructuralPartialEq for bitcoin::address::error::InvalidBase5
 impl core::marker::StructuralPartialEq for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::marker::StructuralPartialEq for bitcoin::address::error::LegacyAddressTooLongError
 impl core::marker::StructuralPartialEq for bitcoin::address::error::NetworkValidationError
-impl core::marker::StructuralPartialEq for bitcoin::address::error::P2shError
 impl core::marker::StructuralPartialEq for bitcoin::address::error::ParseError
 impl core::marker::StructuralPartialEq for bitcoin::address::error::UnknownAddressTypeError
 impl core::marker::StructuralPartialEq for bitcoin::address::error::UnknownHrpError
@@ -3163,10 +3169,12 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::Error
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::PushBytes
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::PushBytesBuf
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::PushBytesError
+impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::Script
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::ScriptHash
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::WScriptHash
+impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::witness_program::Error
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::script::witness_version::FromStrError
@@ -3312,7 +3320,6 @@ impl core::marker::Sync for bitcoin::address::error::InvalidBase58PayloadLengthE
 impl core::marker::Sync for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::marker::Sync for bitcoin::address::error::LegacyAddressTooLongError
 impl core::marker::Sync for bitcoin::address::error::NetworkValidationError
-impl core::marker::Sync for bitcoin::address::error::P2shError
 impl core::marker::Sync for bitcoin::address::error::ParseError
 impl core::marker::Sync for bitcoin::address::error::UnknownAddressTypeError
 impl core::marker::Sync for bitcoin::address::error::UnknownHrpError
@@ -3361,10 +3368,12 @@ impl core::marker::Sync for bitcoin::blockdata::script::Error
 impl core::marker::Sync for bitcoin::blockdata::script::PushBytes
 impl core::marker::Sync for bitcoin::blockdata::script::PushBytesBuf
 impl core::marker::Sync for bitcoin::blockdata::script::PushBytesError
+impl core::marker::Sync for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::marker::Sync for bitcoin::blockdata::script::Script
 impl core::marker::Sync for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Sync for bitcoin::blockdata::script::ScriptHash
 impl core::marker::Sync for bitcoin::blockdata::script::WScriptHash
+impl core::marker::Sync for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::marker::Sync for bitcoin::blockdata::script::witness_program::Error
 impl core::marker::Sync for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::marker::Sync for bitcoin::blockdata::script::witness_version::FromStrError
@@ -3523,7 +3532,6 @@ impl core::marker::Unpin for bitcoin::address::error::InvalidBase58PayloadLength
 impl core::marker::Unpin for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::marker::Unpin for bitcoin::address::error::LegacyAddressTooLongError
 impl core::marker::Unpin for bitcoin::address::error::NetworkValidationError
-impl core::marker::Unpin for bitcoin::address::error::P2shError
 impl core::marker::Unpin for bitcoin::address::error::ParseError
 impl core::marker::Unpin for bitcoin::address::error::UnknownAddressTypeError
 impl core::marker::Unpin for bitcoin::address::error::UnknownHrpError
@@ -3572,10 +3580,12 @@ impl core::marker::Unpin for bitcoin::blockdata::script::Error
 impl core::marker::Unpin for bitcoin::blockdata::script::PushBytes
 impl core::marker::Unpin for bitcoin::blockdata::script::PushBytesBuf
 impl core::marker::Unpin for bitcoin::blockdata::script::PushBytesError
+impl core::marker::Unpin for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::marker::Unpin for bitcoin::blockdata::script::Script
 impl core::marker::Unpin for bitcoin::blockdata::script::ScriptBuf
 impl core::marker::Unpin for bitcoin::blockdata::script::ScriptHash
 impl core::marker::Unpin for bitcoin::blockdata::script::WScriptHash
+impl core::marker::Unpin for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::marker::Unpin for bitcoin::blockdata::script::witness_program::Error
 impl core::marker::Unpin for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::marker::Unpin for bitcoin::blockdata::script::witness_version::FromStrError
@@ -3766,7 +3776,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::Invali
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::LegacyAddressTooLongError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::NetworkValidationError
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::P2shError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::ParseError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::UnknownAddressTypeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::address::error::UnknownHrpError
@@ -3814,10 +3823,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::Err
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::PushBytes
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::PushBytesBuf
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::PushBytesError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::Script
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::ScriptBuf
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::ScriptHash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::WScriptHash
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::witness_program::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::script::witness_version::FromStrError
@@ -3972,7 +3983,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::InvalidBa
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::InvalidLegacyPrefixError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::LegacyAddressTooLongError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::NetworkValidationError
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::P2shError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::ParseError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::UnknownAddressTypeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::address::error::UnknownHrpError
@@ -4020,10 +4030,12 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::PushBytes
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::PushBytesBuf
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::PushBytesError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::Script
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::ScriptBuf
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::ScriptHash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::WScriptHash
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::witness_program::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::witness_program::WitnessProgram
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::script::witness_version::FromStrError
@@ -5001,7 +5013,6 @@ pub bitcoin::address::FromScriptError::WitnessVersion(bitcoin::blockdata::script
 pub bitcoin::address::KnownHrp::Mainnet
 pub bitcoin::address::KnownHrp::Regtest
 pub bitcoin::address::KnownHrp::Testnets
-pub bitcoin::address::P2shError::ExcessiveScriptSize
 pub bitcoin::address::ParseError::Base58(base58ck::error::Error)
 pub bitcoin::address::ParseError::Bech32(bech32::segwit::DecodeError)
 pub bitcoin::address::ParseError::InvalidBase58PayloadLength(bitcoin::address::error::InvalidBase58PayloadLengthError)
@@ -5014,7 +5025,6 @@ pub bitcoin::address::ParseError::WitnessVersion(bitcoin::blockdata::script::wit
 pub bitcoin::address::error::FromScriptError::UnrecognizedScript
 pub bitcoin::address::error::FromScriptError::WitnessProgram(bitcoin::blockdata::script::witness_program::Error)
 pub bitcoin::address::error::FromScriptError::WitnessVersion(bitcoin::blockdata::script::witness_version::TryFromError)
-pub bitcoin::address::error::P2shError::ExcessiveScriptSize
 pub bitcoin::address::error::ParseError::Base58(base58ck::error::Error)
 pub bitcoin::address::error::ParseError::Bech32(bech32::segwit::DecodeError)
 pub bitcoin::address::error::ParseError::InvalidBase58PayloadLength(bitcoin::address::error::InvalidBase58PayloadLengthError)
@@ -5118,6 +5128,8 @@ pub bitcoin::blockdata::script::Error::Serialization
 pub bitcoin::blockdata::script::Error::UnknownSpentOutput(bitcoin::blockdata::transaction::OutPoint)
 pub bitcoin::blockdata::script::Instruction::Op(bitcoin::blockdata::opcodes::Opcode)
 pub bitcoin::blockdata::script::Instruction::PushBytes(&'a bitcoin::blockdata::script::PushBytes)
+pub bitcoin::blockdata::script::RedeemScriptSizeError::size: usize
+pub bitcoin::blockdata::script::WitnessScriptSizeError::size: usize
 pub bitcoin::blockdata::script::witness_program::Error::InvalidLength(usize)
 pub bitcoin::blockdata::script::witness_program::Error::InvalidSegwitV0Length(usize)
 pub bitcoin::blockdata::script::witness_version::FromStrError::Invalid(bitcoin::blockdata::script::witness_version::TryFromError)
@@ -5539,6 +5551,8 @@ pub bitcoin::script::Error::Serialization
 pub bitcoin::script::Error::UnknownSpentOutput(bitcoin::blockdata::transaction::OutPoint)
 pub bitcoin::script::Instruction::Op(bitcoin::blockdata::opcodes::Opcode)
 pub bitcoin::script::Instruction::PushBytes(&'a bitcoin::blockdata::script::PushBytes)
+pub bitcoin::script::RedeemScriptSizeError::size: usize
+pub bitcoin::script::WitnessScriptSizeError::size: usize
 pub bitcoin::script::witness_program::Error::InvalidLength(usize)
 pub bitcoin::script::witness_program::Error::InvalidSegwitV0Length(usize)
 pub bitcoin::script::witness_version::FromStrError::Invalid(bitcoin::blockdata::script::witness_version::TryFromError)
@@ -5724,8 +5738,10 @@ pub const bitcoin::blockdata::constants::ChainHash::TESTNET: Self
 pub const bitcoin::blockdata::constants::DIFFCHANGE_INTERVAL: u32 = 2_016u32
 pub const bitcoin::blockdata::constants::DIFFCHANGE_TIMESPAN: _
 pub const bitcoin::blockdata::constants::MAX_BLOCK_SIGOPS_COST: i64 = 80_000i64
+pub const bitcoin::blockdata::constants::MAX_REDEEM_SCRIPT_SIZE: usize = 520usize
 pub const bitcoin::blockdata::constants::MAX_SCRIPTNUM_VALUE: u32 = 2_147_483_648u32
-pub const bitcoin::blockdata::constants::MAX_SCRIPT_ELEMENT_SIZE: usize = 520usize
+pub const bitcoin::blockdata::constants::MAX_STACK_ELEMENT_SIZE: usize = 520usize
+pub const bitcoin::blockdata::constants::MAX_WITNESS_SCRIPT_SIZE: usize = 10_000usize
 pub const bitcoin::blockdata::constants::PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0u8
 pub const bitcoin::blockdata::constants::PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111u8
 pub const bitcoin::blockdata::constants::SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5u8
@@ -6030,8 +6046,10 @@ pub const bitcoin::constants::COINBASE_MATURITY: u32 = 100u32
 pub const bitcoin::constants::DIFFCHANGE_INTERVAL: u32 = 2_016u32
 pub const bitcoin::constants::DIFFCHANGE_TIMESPAN: _
 pub const bitcoin::constants::MAX_BLOCK_SIGOPS_COST: i64 = 80_000i64
+pub const bitcoin::constants::MAX_REDEEM_SCRIPT_SIZE: usize = 520usize
 pub const bitcoin::constants::MAX_SCRIPTNUM_VALUE: u32 = 2_147_483_648u32
-pub const bitcoin::constants::MAX_SCRIPT_ELEMENT_SIZE: usize = 520usize
+pub const bitcoin::constants::MAX_STACK_ELEMENT_SIZE: usize = 520usize
+pub const bitcoin::constants::MAX_WITNESS_SCRIPT_SIZE: usize = 10_000usize
 pub const bitcoin::constants::PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0u8
 pub const bitcoin::constants::PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111u8
 pub const bitcoin::constants::SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5u8
@@ -7112,14 +7130,15 @@ pub fn bitcoin::address::Address::is_related_to_xonly_pubkey(&self, xonly_pubkey
 pub fn bitcoin::address::Address::is_spend_standard(&self) -> bool
 pub fn bitcoin::address::Address::matches_script_pubkey(&self, script: &bitcoin::blockdata::script::Script) -> bool
 pub fn bitcoin::address::Address::p2pkh(pk: impl core::convert::Into<bitcoin::PubkeyHash>, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
-pub fn bitcoin::address::Address::p2sh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> core::result::Result<bitcoin::address::Address, bitcoin::address::error::P2shError>
+pub fn bitcoin::address::Address::p2sh(redeem_script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> core::result::Result<bitcoin::address::Address, bitcoin::blockdata::script::RedeemScriptSizeError>
 pub fn bitcoin::address::Address::p2sh_from_hash(hash: bitcoin::blockdata::script::ScriptHash, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2shwpkh(pk: bitcoin::CompressedPublicKey, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
-pub fn bitcoin::address::Address::p2shwsh(script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> bitcoin::address::Address
+pub fn bitcoin::address::Address::p2shwsh(witness_script: &bitcoin::blockdata::script::Script, network: impl core::convert::Into<bitcoin::network::NetworkKind>) -> core::result::Result<bitcoin::address::Address, bitcoin::blockdata::script::WitnessScriptSizeError>
 pub fn bitcoin::address::Address::p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2tr_tweaked(output_key: bitcoin::key::TweakedPublicKey, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::p2wpkh(pk: bitcoin::CompressedPublicKey, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> Self
-pub fn bitcoin::address::Address::p2wsh(script: &bitcoin::blockdata::script::Script, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
+pub fn bitcoin::address::Address::p2wsh(witness_script: &bitcoin::blockdata::script::Script, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> core::result::Result<bitcoin::address::Address, bitcoin::blockdata::script::WitnessScriptSizeError>
+pub fn bitcoin::address::Address::p2wsh_from_hash(hash: bitcoin::blockdata::script::WScriptHash, hrp: impl core::convert::Into<bitcoin::address::KnownHrp>) -> bitcoin::address::Address
 pub fn bitcoin::address::Address::pubkey_hash(&self) -> core::option::Option<bitcoin::PubkeyHash>
 pub fn bitcoin::address::Address::script_hash(&self) -> core::option::Option<bitcoin::blockdata::script::ScriptHash>
 pub fn bitcoin::address::Address::script_pubkey(&self) -> bitcoin::blockdata::script::ScriptBuf
@@ -7194,11 +7213,6 @@ pub fn bitcoin::address::error::LegacyAddressTooLongError::invalid_legcay_addres
 pub fn bitcoin::address::error::NetworkValidationError::clone(&self) -> bitcoin::address::error::NetworkValidationError
 pub fn bitcoin::address::error::NetworkValidationError::eq(&self, other: &bitcoin::address::error::NetworkValidationError) -> bool
 pub fn bitcoin::address::error::NetworkValidationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::address::error::P2shError::clone(&self) -> bitcoin::address::error::P2shError
-pub fn bitcoin::address::error::P2shError::eq(&self, other: &bitcoin::address::error::P2shError) -> bool
-pub fn bitcoin::address::error::P2shError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::address::error::P2shError::from(never: core::convert::Infallible) -> Self
-pub fn bitcoin::address::error::P2shError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin::address::error::ParseError::clone(&self) -> bitcoin::address::error::ParseError
 pub fn bitcoin::address::error::ParseError::eq(&self, other: &bitcoin::address::error::ParseError) -> bool
 pub fn bitcoin::address::error::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -8143,6 +8157,10 @@ pub fn bitcoin::blockdata::script::PushBytesError::fmt(&self, f: &mut core::fmt:
 pub fn bitcoin::blockdata::script::PushBytesError::input_len(&self) -> usize
 pub fn bitcoin::blockdata::script::PushBytesError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin::blockdata::script::PushBytesErrorReport::input_len(&self) -> usize
+pub fn bitcoin::blockdata::script::RedeemScriptSizeError::clone(&self) -> bitcoin::blockdata::script::RedeemScriptSizeError
+pub fn bitcoin::blockdata::script::RedeemScriptSizeError::eq(&self, other: &bitcoin::blockdata::script::RedeemScriptSizeError) -> bool
+pub fn bitcoin::blockdata::script::RedeemScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::blockdata::script::RedeemScriptSizeError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::blockdata::script::Script::as_bytes(&self) -> &[u8]
 pub fn bitcoin::blockdata::script::Script::as_mut(&mut self) -> &mut [u8]
 pub fn bitcoin::blockdata::script::Script::as_mut(&mut self) -> &mut bitcoin::blockdata::script::Script
@@ -8196,20 +8214,20 @@ pub fn bitcoin::blockdata::script::Script::p2pk_public_key(&self) -> core::optio
 pub fn bitcoin::blockdata::script::Script::p2wpkh_script_code(&self) -> core::option::Option<bitcoin::blockdata::script::ScriptBuf>
 pub fn bitcoin::blockdata::script::Script::partial_cmp(&self, other: &bitcoin::blockdata::script::Script) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::script::Script::partial_cmp(&self, other: &bitcoin::blockdata::script::ScriptBuf) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin::blockdata::script::Script::script_hash(&self) -> bitcoin::blockdata::script::ScriptHash
+pub fn bitcoin::blockdata::script::Script::script_hash(&self) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, bitcoin::blockdata::script::RedeemScriptSizeError>
 pub fn bitcoin::blockdata::script::Script::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::blockdata::script::Script::tapscript_leaf_hash(&self) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::blockdata::script::Script::to_asm_string(&self) -> alloc::string::String
 pub fn bitcoin::blockdata::script::Script::to_bytes(&self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::blockdata::script::Script::to_hex_string(&self) -> alloc::string::String
 pub fn bitcoin::blockdata::script::Script::to_owned(&self) -> Self::Owned
-pub fn bitcoin::blockdata::script::Script::to_p2sh(&self) -> bitcoin::blockdata::script::ScriptBuf
+pub fn bitcoin::blockdata::script::Script::to_p2sh(&self) -> core::result::Result<bitcoin::blockdata::script::ScriptBuf, bitcoin::blockdata::script::RedeemScriptSizeError>
 pub fn bitcoin::blockdata::script::Script::to_p2tr<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey) -> bitcoin::blockdata::script::ScriptBuf
-pub fn bitcoin::blockdata::script::Script::to_p2wsh(&self) -> bitcoin::blockdata::script::ScriptBuf
+pub fn bitcoin::blockdata::script::Script::to_p2wsh(&self) -> core::result::Result<bitcoin::blockdata::script::ScriptBuf, bitcoin::blockdata::script::WitnessScriptSizeError>
 pub fn bitcoin::blockdata::script::Script::verify(&self, index: usize, amount: bitcoin_units::amount::Amount, spending_tx: &[u8]) -> core::result::Result<(), bitcoin::consensus::validation::BitcoinconsensusError>
 pub fn bitcoin::blockdata::script::Script::verify_with_flags<F: core::convert::Into<u32>>(&self, index: usize, amount: bitcoin_units::amount::Amount, spending_tx: &[u8], flags: F) -> core::result::Result<(), bitcoin::consensus::validation::BitcoinconsensusError>
 pub fn bitcoin::blockdata::script::Script::witness_version(&self) -> core::option::Option<bitcoin::blockdata::script::witness_version::WitnessVersion>
-pub fn bitcoin::blockdata::script::Script::wscript_hash(&self) -> bitcoin::blockdata::script::WScriptHash
+pub fn bitcoin::blockdata::script::Script::wscript_hash(&self) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, bitcoin::blockdata::script::WitnessScriptSizeError>
 pub fn bitcoin::blockdata::script::ScriptBuf::as_mut(&mut self) -> &mut [u8]
 pub fn bitcoin::blockdata::script::ScriptBuf::as_mut(&mut self) -> &mut bitcoin::blockdata::script::Script
 pub fn bitcoin::blockdata::script::ScriptBuf::as_mut_script(&mut self) -> &mut bitcoin::blockdata::script::Script
@@ -8277,14 +8295,13 @@ pub fn bitcoin::blockdata::script::ScriptHash::engine() -> <bitcoin_hashes::hash
 pub fn bitcoin::blockdata::script::ScriptHash::eq(&self, other: &bitcoin::blockdata::script::ScriptHash) -> bool
 pub fn bitcoin::blockdata::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::script::ScriptHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::from(script: &bitcoin::blockdata::script::Script) -> bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::from(script: &bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::ScriptHash
-pub fn bitcoin::blockdata::script::ScriptHash::from(script: bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from_byte_array(bytes: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::blockdata::script::ScriptHash
+pub fn bitcoin::blockdata::script::ScriptHash::from_script(redeem_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, bitcoin::blockdata::script::RedeemScriptSizeError>
+pub fn bitcoin::blockdata::script::ScriptHash::from_script_unchecked(script: &bitcoin::blockdata::script::Script) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::ScriptHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::ScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, Self::Err>
@@ -8297,6 +8314,9 @@ pub fn bitcoin::blockdata::script::ScriptHash::serialize<S: serde::ser::Serializ
 pub fn bitcoin::blockdata::script::ScriptHash::to_byte_array(self) -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
 pub fn bitcoin::blockdata::script::ScriptHash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::script::ScriptHash::to_raw_hash(self) -> bitcoin_hashes::hash160::Hash
+pub fn bitcoin::blockdata::script::ScriptHash::try_from(redeem_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::blockdata::script::ScriptHash::try_from(redeem_script: &bitcoin::blockdata::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::blockdata::script::ScriptHash::try_from(redeem_script: bitcoin::blockdata::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::blockdata::script::WScriptHash::all_zeros() -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::as_byte_array(&self) -> &<bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
 pub fn bitcoin::blockdata::script::WScriptHash::as_byte_array(&self) -> &Self::Bytes
@@ -8312,14 +8332,13 @@ pub fn bitcoin::blockdata::script::WScriptHash::engine() -> <bitcoin_hashes::sha
 pub fn bitcoin::blockdata::script::WScriptHash::eq(&self, other: &bitcoin::blockdata::script::WScriptHash) -> bool
 pub fn bitcoin::blockdata::script::WScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::script::WScriptHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::from(script: &bitcoin::blockdata::script::Script) -> bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::from(script: &bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::WScriptHash
-pub fn bitcoin::blockdata::script::WScriptHash::from(script: bitcoin::blockdata::script::ScriptBuf) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from_byte_array(bytes: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_engine(e: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_engine(e: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from_raw_hash(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::blockdata::script::WScriptHash
+pub fn bitcoin::blockdata::script::WScriptHash::from_script(witness_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, bitcoin::blockdata::script::WitnessScriptSizeError>
+pub fn bitcoin::blockdata::script::WScriptHash::from_script_unchecked(script: &bitcoin::blockdata::script::Script) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::WScriptHash::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::WScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, Self::Err>
@@ -8332,6 +8351,13 @@ pub fn bitcoin::blockdata::script::WScriptHash::serialize<S: serde::ser::Seriali
 pub fn bitcoin::blockdata::script::WScriptHash::to_byte_array(self) -> <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
 pub fn bitcoin::blockdata::script::WScriptHash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin::blockdata::script::WScriptHash::to_raw_hash(self) -> bitcoin_hashes::sha256::Hash
+pub fn bitcoin::blockdata::script::WScriptHash::try_from(witness_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::blockdata::script::WScriptHash::try_from(witness_script: &bitcoin::blockdata::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::blockdata::script::WScriptHash::try_from(witness_script: bitcoin::blockdata::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::blockdata::script::WitnessScriptSizeError::clone(&self) -> bitcoin::blockdata::script::WitnessScriptSizeError
+pub fn bitcoin::blockdata::script::WitnessScriptSizeError::eq(&self, other: &bitcoin::blockdata::script::WitnessScriptSizeError) -> bool
+pub fn bitcoin::blockdata::script::WitnessScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::blockdata::script::WitnessScriptSizeError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::blockdata::script::read_scriptbool(v: &[u8]) -> bool
 pub fn bitcoin::blockdata::script::read_scriptint_non_minimal(v: &[u8]) -> core::result::Result<i64, bitcoin::blockdata::script::Error>
 pub fn bitcoin::blockdata::script::witness_program::Error::clone(&self) -> bitcoin::blockdata::script::witness_program::Error
@@ -8351,7 +8377,8 @@ pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::new(version:
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2tr_tweaked(output_key: bitcoin::key::TweakedPublicKey) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wpkh(pk: bitcoin::CompressedPublicKey) -> Self
-pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wsh(script: &bitcoin::blockdata::script::Script) -> Self
+pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wsh(script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, bitcoin::blockdata::script::WitnessScriptSizeError>
+pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::p2wsh_from_hash(hash: bitcoin::blockdata::script::WScriptHash) -> Self
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::partial_cmp(&self, other: &bitcoin::blockdata::script::witness_program::WitnessProgram) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::program(&self) -> &bitcoin::blockdata::script::PushBytes
 pub fn bitcoin::blockdata::script::witness_program::WitnessProgram::version(&self) -> bitcoin::blockdata::script::witness_version::WitnessVersion
@@ -10211,9 +10238,11 @@ pub struct bitcoin::blockdata::script::InstructionIndices<'a>
 pub struct bitcoin::blockdata::script::Instructions<'a>
 pub struct bitcoin::blockdata::script::PushBytesBuf(_)
 pub struct bitcoin::blockdata::script::PushBytesError
+pub struct bitcoin::blockdata::script::RedeemScriptSizeError
 pub struct bitcoin::blockdata::script::ScriptBuf(_)
 pub struct bitcoin::blockdata::script::ScriptHash(_)
 pub struct bitcoin::blockdata::script::WScriptHash(_)
+pub struct bitcoin::blockdata::script::WitnessScriptSizeError
 pub struct bitcoin::blockdata::script::witness_program::WitnessProgram
 pub struct bitcoin::blockdata::script::witness_version::TryFromError
 pub struct bitcoin::blockdata::transaction::InputWeightPrediction
@@ -10302,9 +10331,11 @@ pub struct bitcoin::script::InstructionIndices<'a>
 pub struct bitcoin::script::Instructions<'a>
 pub struct bitcoin::script::PushBytesBuf(_)
 pub struct bitcoin::script::PushBytesError
+pub struct bitcoin::script::RedeemScriptSizeError
 pub struct bitcoin::script::ScriptBuf(_)
 pub struct bitcoin::script::ScriptHash(_)
 pub struct bitcoin::script::WScriptHash(_)
+pub struct bitcoin::script::WitnessScriptSizeError
 pub struct bitcoin::script::witness_program::WitnessProgram
 pub struct bitcoin::script::witness_version::TryFromError
 pub struct bitcoin::sighash::Annex<'a>(_)
@@ -10485,10 +10516,12 @@ pub type bitcoin::blockdata::script::ScriptBuf::Target = bitcoin::blockdata::scr
 pub type bitcoin::blockdata::script::ScriptHash::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin::blockdata::script::ScriptHash::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::script::ScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin::blockdata::script::ScriptHash::Error = bitcoin::blockdata::script::RedeemScriptSizeError
 pub type bitcoin::blockdata::script::ScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::script::WScriptHash::Bytes = <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin::blockdata::script::WScriptHash::Engine = <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::script::WScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin::blockdata::script::WScriptHash::Error = bitcoin::blockdata::script::WitnessScriptSizeError
 pub type bitcoin::blockdata::script::WScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::script::witness_version::WitnessVersion::Err = bitcoin::blockdata::script::witness_version::FromStrError
 pub type bitcoin::blockdata::script::witness_version::WitnessVersion::Error = bitcoin::blockdata::script::witness_version::TryFromError

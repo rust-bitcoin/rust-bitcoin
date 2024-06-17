@@ -37,12 +37,14 @@ use hashes::{sha256, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::blockdata::constants::{
-    MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
-    SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
+    PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
+    SCRIPT_ADDRESS_PREFIX_TEST,
 };
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
+use crate::blockdata::script::{
+    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+};
 use crate::consensus::Params;
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
@@ -56,7 +58,7 @@ use crate::taproot::TapNodeHash;
 pub use self::{
     error::{
         FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError, LegacyAddressTooLongError,
-        NetworkValidationError, ParseError, P2shError, UnknownAddressTypeError, UnknownHrpError
+        NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError
     },
 };
 
@@ -400,11 +402,11 @@ impl Address {
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
     /// these days.
     #[inline]
-    pub fn p2sh(script: &Script, network: impl Into<NetworkKind>) -> Result<Address, P2shError> {
-        if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
-            return Err(P2shError::ExcessiveScriptSize);
-        }
-        let hash = script.script_hash();
+    pub fn p2sh(
+        redeem_script: &Script,
+        network: impl Into<NetworkKind>,
+    ) -> Result<Address, RedeemScriptSizeError> {
+        let hash = redeem_script.script_hash()?;
         Ok(Address::p2sh_from_hash(hash, network))
     }
 
@@ -431,23 +433,36 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
         let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
-        let script_hash = builder.as_script().script_hash();
+        let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Address::p2sh_from_hash(script_hash, network)
     }
 
     /// Creates a witness pay to script hash address.
-    pub fn p2wsh(script: &Script, hrp: impl Into<KnownHrp>) -> Address {
-        let program = WitnessProgram::p2wsh(script);
+    pub fn p2wsh(
+        witness_script: &Script,
+        hrp: impl Into<KnownHrp>,
+    ) -> Result<Address, WitnessScriptSizeError> {
+        let program = WitnessProgram::p2wsh(witness_script)?;
+        Ok(Address::from_witness_program(program, hrp))
+    }
+
+    /// Creates a witness pay to script hash address.
+    pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Address {
+        let program = WitnessProgram::p2wsh_from_hash(hash);
         Address::from_witness_program(program, hrp)
     }
 
     /// Creates a pay to script address that embeds a witness pay to script hash address.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwsh(script: &Script, network: impl Into<NetworkKind>) -> Address {
-        let builder = script::Builder::new().push_int(0).push_slice(script.wscript_hash());
-        let script_hash = builder.as_script().script_hash();
-        Address::p2sh_from_hash(script_hash, network)
+    pub fn p2shwsh(
+        witness_script: &Script,
+        network: impl Into<NetworkKind>,
+    ) -> Result<Address, WitnessScriptSizeError> {
+        let hash = witness_script.wscript_hash()?;
+        let builder = script::Builder::new().push_int(0).push_slice(&hash);
+        let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
+        Ok(Address::p2sh_from_hash(script_hash, network))
     }
 
     /// Creates a pay to taproot address from an untweaked key.
@@ -957,7 +972,10 @@ mod tests {
     #[test]
     fn test_p2sh_parse_for_large_script() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
-        assert_eq!(Address::p2sh(&script, NetworkKind::Test), Err(P2shError::ExcessiveScriptSize));
+        assert_eq!(
+            Address::p2sh(&script, NetworkKind::Test),
+            Err(RedeemScriptSizeError { size: script.len() })
+        );
     }
 
     #[test]
@@ -976,7 +994,7 @@ mod tests {
     fn test_p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
-        let addr = Address::p2wsh(&script, KnownHrp::Mainnet);
+        let addr = Address::p2wsh(&script, KnownHrp::Mainnet).expect("script is valid");
         assert_eq!(
             &addr.to_string(),
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
@@ -1001,7 +1019,7 @@ mod tests {
     fn test_p2shwsh() {
         // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
         let script = ScriptBuf::from_hex("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
-        let addr = Address::p2shwsh(&script, NetworkKind::Main);
+        let addr = Address::p2shwsh(&script, NetworkKind::Main).expect("script is valid");
         assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr, Bitcoin);
