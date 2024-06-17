@@ -14,10 +14,11 @@ use core::fmt;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
-use crate::blockdata::block::{self, Block, TxMerkleNode};
+use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
+use crate::merkle_tree::TxMerkleNode;
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.

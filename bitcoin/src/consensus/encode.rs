@@ -23,9 +23,10 @@ use io::{BufRead, Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
-use crate::blockdata::block::{self, BlockHash, TxMerkleNode};
+use crate::blockdata::block::{self, BlockHash};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::consensus::{DecodeError, IterReader};
+use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},

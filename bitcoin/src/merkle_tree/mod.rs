@@ -18,15 +18,34 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-use hashes::Hash;
+use hashes::{sha256d, Hash};
 use io::Write;
 
 use crate::consensus::encode::Encodable;
+use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
+use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
+
+hashes::hash_newtype! {
+    /// A hash of the Merkle tree branch or root for transactions.
+    pub struct TxMerkleNode(sha256d::Hash);
+    /// A hash corresponding to the Merkle tree root for witness data.
+    pub struct WitnessMerkleNode(sha256d::Hash);
+}
+impl_hashencode!(TxMerkleNode);
+impl_hashencode!(WitnessMerkleNode);
+
+impl From<Txid> for TxMerkleNode {
+    fn from(txid: Txid) -> Self { Self::from_byte_array(txid.to_byte_array()) }
+}
+
+impl From<Wtxid> for WitnessMerkleNode {
+    fn from(wtxid: Wtxid) -> Self { Self::from_byte_array(wtxid.to_byte_array()) }
+}
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
