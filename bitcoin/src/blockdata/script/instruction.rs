@@ -76,7 +76,7 @@ impl<'a> Instruction<'a> {
                     _ => None,
                 }
             }
-            Instruction::PushBytes(bytes) => match PushBytes::read_scriptint(bytes) {
+            Instruction::PushBytes(bytes) => match bytes.read_scriptint() {
                 Ok(v) => Some(v),
                 _ => None,
             },
