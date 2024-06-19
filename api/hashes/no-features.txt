@@ -463,19 +463,15 @@ pub const bitcoin_hashes::sha512_256::HashEngine::BLOCK_SIZE: usize
 pub const bitcoin_hashes::siphash24::Hash::DISPLAY_BACKWARD: bool
 pub const bitcoin_hashes::siphash24::Hash::LEN: usize
 pub const bitcoin_hashes::siphash24::HashEngine::BLOCK_SIZE: usize
-pub const fn bitcoin_hashes::hash160::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::hash160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::hash160::Hash::to_byte_array(self) -> [u8; 20]
-pub const fn bitcoin_hashes::ripemd160::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::ripemd160::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::ripemd160::Hash::to_byte_array(self) -> [u8; 20]
-pub const fn bitcoin_hashes::sha1::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &[u8; 20]
 pub const fn bitcoin_hashes::sha1::Hash::from_byte_array(bytes: [u8; 20]) -> Self
 pub const fn bitcoin_hashes::sha1::Hash::to_byte_array(self) -> [u8; 20]
-pub const fn bitcoin_hashes::sha256::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256::Hash::const_hash(bytes: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
@@ -483,26 +479,21 @@ pub const fn bitcoin_hashes::sha256::Hash::to_byte_array(self) -> [u8; 32]
 pub const fn bitcoin_hashes::sha256::Midstate::from_byte_array(inner: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::hash_tag(tag: &[u8]) -> Self
 pub const fn bitcoin_hashes::sha256::Midstate::to_byte_array(self) -> [u8; 32]
-pub const fn bitcoin_hashes::sha256d::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> [u8; 32]
 pub const fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> [u8; 32]
-pub const fn bitcoin_hashes::sha384::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &[u8; 48]
 pub const fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: [u8; 48]) -> Self
 pub const fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> [u8; 48]
-pub const fn bitcoin_hashes::sha512::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &[u8; 64]
 pub const fn bitcoin_hashes::sha512::Hash::from_byte_array(bytes: [u8; 64]) -> Self
 pub const fn bitcoin_hashes::sha512::Hash::to_byte_array(self) -> [u8; 64]
-pub const fn bitcoin_hashes::sha512_256::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha512_256::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha512_256::Hash::to_byte_array(self) -> [u8; 32]
-pub const fn bitcoin_hashes::siphash24::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &[u8; 8]
 pub const fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: [u8; 8]) -> Self
 pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
@@ -515,7 +506,6 @@ pub fn bitcoin_hashes::FromSliceError::eq(&self, other: &bitcoin_hashes::FromSli
 pub fn bitcoin_hashes::FromSliceError::expected_length(&self) -> usize
 pub fn bitcoin_hashes::FromSliceError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::FromSliceError::invalid_length(&self) -> usize
-pub fn bitcoin_hashes::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::Hash::engine() -> Self::Engine
 pub fn bitcoin_hashes::Hash::from_byte_array(bytes: Self::Bytes) -> Self
@@ -528,7 +518,6 @@ pub fn bitcoin_hashes::HashEngine::input(&mut self, data: &[u8])
 pub fn bitcoin_hashes::HashEngine::midstate(&self) -> Self::MidState
 pub fn bitcoin_hashes::HashEngine::n_bytes_hashed(&self) -> usize
 pub fn bitcoin_hashes::cmp::fixed_time_eq(a: &[u8], b: &[u8]) -> bool
-pub fn bitcoin_hashes::hash160::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::hash160::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::hash160::Hash::as_ref(&self) -> &[u8]
@@ -555,7 +544,6 @@ pub fn bitcoin_hashes::hkdf::Hkdf<T>::new(salt: &[u8], ikm: &[u8]) -> Self
 pub fn bitcoin_hashes::hkdf::MaxLengthError::clone(&self) -> bitcoin_hashes::hkdf::MaxLengthError
 pub fn bitcoin_hashes::hkdf::MaxLengthError::eq(&self, other: &bitcoin_hashes::hkdf::MaxLengthError) -> bool
 pub fn bitcoin_hashes::hkdf::MaxLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_hashes::hmac::Hmac<T>::all_zeros() -> Self
 pub fn bitcoin_hashes::hmac::Hmac<T>::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::hmac::Hmac<T>::as_ref(&self) -> &[u8]
 pub fn bitcoin_hashes::hmac::Hmac<T>::clone(&self) -> bitcoin_hashes::hmac::Hmac<T>
@@ -576,7 +564,6 @@ pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8])
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::midstate(&self) -> Self::MidState
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> usize
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::new(key: &[u8]) -> bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::ripemd160::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::ripemd160::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::ripemd160::Hash::as_ref(&self) -> &[u8]
@@ -603,7 +590,6 @@ pub fn bitcoin_hashes::ripemd160::HashEngine::default() -> Self
 pub fn bitcoin_hashes::ripemd160::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::ripemd160::HashEngine::midstate(&self) -> [u8; 20]
 pub fn bitcoin_hashes::ripemd160::HashEngine::n_bytes_hashed(&self) -> usize
-pub fn bitcoin_hashes::sha1::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha1::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin_hashes::sha1::Hash::as_ref(&self) -> &[u8]
@@ -630,7 +616,6 @@ pub fn bitcoin_hashes::sha1::HashEngine::default() -> Self
 pub fn bitcoin_hashes::sha1::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha1::HashEngine::midstate(&self) -> [u8; 20]
 pub fn bitcoin_hashes::sha1::HashEngine::n_bytes_hashed(&self) -> usize
-pub fn bitcoin_hashes::sha256::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha256::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256::Hash::as_ref(&self) -> &[u8]
@@ -672,7 +657,6 @@ pub fn bitcoin_hashes::sha256::Midstate::from_str(s: &str) -> core::result::Resu
 pub fn bitcoin_hashes::sha256::Midstate::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_hashes::sha256::Midstate::index(&self, index: I) -> &Self::Output
 pub fn bitcoin_hashes::sha256::Midstate::partial_cmp(&self, other: &bitcoin_hashes::sha256::Midstate) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_hashes::sha256d::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256d::Hash::as_ref(&self) -> &[u8]
@@ -694,7 +678,6 @@ pub fn bitcoin_hashes::sha256d::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> 
 pub fn bitcoin_hashes::sha256d::Hash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin_hashes::sha256d::Hash::partial_cmp(&self, other: &bitcoin_hashes::sha256d::Hash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin_hashes::sha256t::Hash<T>::all_zeros() -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8]
@@ -718,7 +701,6 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::index(&self, index: I) -> &Self::Output
 pub fn bitcoin_hashes::sha256t::Hash<T>::partial_cmp(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_hashes::sha256t::Tag::engine() -> bitcoin_hashes::sha256::HashEngine
-pub fn bitcoin_hashes::sha384::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
@@ -745,7 +727,6 @@ pub fn bitcoin_hashes::sha384::HashEngine::default() -> Self
 pub fn bitcoin_hashes::sha384::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha384::HashEngine::midstate(&self) -> [u8; 64]
 pub fn bitcoin_hashes::sha384::HashEngine::n_bytes_hashed(&self) -> usize
-pub fn bitcoin_hashes::sha512::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha512::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8; 64]
 pub fn bitcoin_hashes::sha512::Hash::as_ref(&self) -> &[u8]
@@ -772,7 +753,6 @@ pub fn bitcoin_hashes::sha512::HashEngine::default() -> Self
 pub fn bitcoin_hashes::sha512::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha512::HashEngine::midstate(&self) -> [u8; 64]
 pub fn bitcoin_hashes::sha512::HashEngine::n_bytes_hashed(&self) -> usize
-pub fn bitcoin_hashes::sha512_256::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha512_256::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha512_256::Hash::as_ref(&self) -> &[u8]
@@ -799,7 +779,6 @@ pub fn bitcoin_hashes::sha512_256::HashEngine::default() -> Self
 pub fn bitcoin_hashes::sha512_256::HashEngine::input(&mut self, inp: &[u8])
 pub fn bitcoin_hashes::sha512_256::HashEngine::midstate(&self) -> [u8; 64]
 pub fn bitcoin_hashes::sha512_256::HashEngine::n_bytes_hashed(&self) -> usize
-pub fn bitcoin_hashes::siphash24::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::siphash24::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8; 8]
 pub fn bitcoin_hashes::siphash24::Hash::as_ref(&self) -> &[u8]
