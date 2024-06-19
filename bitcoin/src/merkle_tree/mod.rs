@@ -5,137 +5,136 @@
 //! # Examples
 //!
 //! ```
-//! # use bitcoin::{merkle_tree, Txid};
+//! # use bitcoin::Txid;
+//! # use bitcoin::merkle_tree::{MerkleNode as _, TxMerkleNode};
 //! # use bitcoin::hashes::Hash;
 //! # let tx1 = Txid::all_zeros();  // Dummy hash values.
 //! # let tx2 = Txid::all_zeros();
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
-//! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
+//! let root = TxMerkleNode::calculate_root(tx_hashes.into_iter());
 //! ```
 
 mod block;
 
-use core::cmp::min;
-use core::iter;
+use hashes::{sha256d, HashEngine as _};
 
-use hashes::Hash;
-use io::Write;
-
-use crate::consensus::encode::Encodable;
+use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
+use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 
-/// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
+hashes::hash_newtype! {
+    /// A hash of the Merkle tree branch or root for transactions.
+    pub struct TxMerkleNode(sha256d::Hash);
+    /// A hash corresponding to the Merkle tree root for witness data.
+    pub struct WitnessMerkleNode(sha256d::Hash);
+}
+impl_hashencode!(TxMerkleNode);
+impl_hashencode!(WitnessMerkleNode);
+
+/// A node in a Merkle tree of transactions or witness data within a block.
 ///
-/// In most cases, you'll want to use [`calculate_root`] instead. Please note, calling this function
-/// trashes the data in `hashes` (i.e. the `hashes` is left in an undefined state at conclusion of
-/// this method and should not be used again afterwards).
+/// This trait is used to compute the transaction Merkle root contained in
+/// a block header. This is a particularly weird algorithm -- it interprets
+/// the list of transactions as a balanced binary tree, duplicating branches
+/// as needed to fill out the tree to a power of two size.
 ///
-/// # Returns
-///
-/// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
-/// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
-/// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
-where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
-{
-    match hashes.len() {
-        0 => None,
-        1 => Some(hashes[0]),
-        _ => Some(merkle_root_r(hashes)),
+/// Other Merkle trees in Bitcoin, such as those used in Taproot commitments,
+/// do not use this algorithm and cannot use this trait.
+pub trait MerkleNode: Copy {
+    /// The hash (TXID or WTXID) of a transaciton in the tree.
+    type Leaf;
+
+    /// Convert a hash to a leaf node of the tree.
+    fn from_leaf(leaf: Self::Leaf) -> Self;
+    /// Combine two nodes to get a single node. The final node of a tree is called the "root".
+    fn combine(&self, other: &Self) -> Self;
+
+    /// Given an iterator of leaves, compute the Merkle root.
+    ///
+    /// Returns `None` iff the iterator was empty.
+    fn calculate_root<I: Iterator<Item = Self::Leaf>>(iter: I) -> Option<Self> {
+        let mut stack = Vec::<(usize, Self)>::with_capacity(32);
+        // Start with a standard Merkle tree root computation...
+        for (mut n, leaf) in iter.enumerate() {
+            stack.push((0, Self::from_leaf(leaf)));
+
+            while n & 1 == 1 {
+                let right = stack.pop().unwrap();
+                let left = stack.pop().unwrap();
+                debug_assert_eq!(left.0, right.0);
+                stack.push((left.0 + 1, left.1.combine(&right.1)));
+                n >>= 1;
+            }
+        }
+        // ...then, deal with incomplete trees. Bitcoin does a weird thing in
+        // which it doubles-up nodes of the tree to fill out the tree, rather
+        // than treating incomplete branches specially. This, along with its
+        // conflation of leaves with leaf hashes, makes its Merkle tree
+        // construction theoretically (though probably not practically)
+        // vulnerable to collisions. This is consensus logic so we just have
+        // to accept it.
+        while stack.len() > 1 {
+            let mut right = stack.pop().unwrap();
+            let left = stack.pop().unwrap();
+            while right.0 != left.0 {
+                assert!(right.0 < left.0);
+                right = (right.0 + 1, right.1.combine(&right.1)); // combine with self
+            }
+            stack.push((left.0 + 1, left.1.combine(&right.1)));
+        }
+
+        stack.pop().map(|(_, h)| h)
     }
 }
 
-/// Calculates the merkle root of an iterator of *hashes*.
-///
-/// # Returns
-///
-/// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
-/// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
-/// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
-where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
-    I: Iterator<Item = T>,
-{
-    let first = hashes.next()?;
-    let second = match hashes.next() {
-        Some(second) => second,
-        None => return Some(first),
-    };
+// These two impl blocks are identical. FIXME once we have nailed down
+// our hash traits, it should be possible to put bounds on `MerkleNode`
+// and `MerkleNode::Leaf` which are sufficient to turn both methods into
+// provided methods in the trait definition.
+impl MerkleNode for TxMerkleNode {
+    type Leaf = Txid;
+    fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
-    let mut hashes = iter::once(first).chain(iter::once(second)).chain(hashes);
-
-    // We need a local copy to pass to `merkle_root_r`. It's more efficient to do the first loop of
-    // processing as we make the copy instead of copying the whole iterator.
-    let (min, max) = hashes.size_hint();
-    let mut alloc = Vec::with_capacity(max.unwrap_or(min) / 2 + 1);
-
-    while let Some(hash1) = hashes.next() {
-        // If the size is odd, use the last element twice.
-        let hash2 = hashes.next().unwrap_or(hash1);
-        let mut encoder = T::engine();
-        hash1.consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        hash2.consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        alloc.push(T::from_engine(encoder));
+    fn combine(&self, other: &Self) -> Self {
+        let mut encoder = sha256d::Hash::engine();
+        encoder.input(self.as_byte_array());
+        encoder.input(other.as_byte_array());
+        Self(sha256d::Hash::from_engine(encoder))
     }
-
-    Some(merkle_root_r(&mut alloc))
 }
+impl MerkleNode for WitnessMerkleNode {
+    type Leaf = Wtxid;
+    fn from_leaf(leaf: Self::Leaf) -> Self { Self::from_byte_array(leaf.to_byte_array()) }
 
-// `hashes` must contain at least one hash.
-fn merkle_root_r<T>(hashes: &mut [T]) -> T
-where
-    T: Hash + Encodable,
-    <T as Hash>::Engine: Write,
-{
-    if hashes.len() == 1 {
-        return hashes[0];
+    fn combine(&self, other: &Self) -> Self {
+        let mut encoder = sha256d::Hash::engine();
+        encoder.input(self.as_byte_array());
+        encoder.input(other.as_byte_array());
+        Self(sha256d::Hash::from_engine(encoder))
     }
-
-    for idx in 0..((hashes.len() + 1) / 2) {
-        let idx1 = 2 * idx;
-        let idx2 = min(idx1 + 1, hashes.len() - 1);
-        let mut encoder = T::engine();
-        hashes[idx1].consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        hashes[idx2].consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        hashes[idx] = T::from_engine(encoder);
-    }
-    let half_len = hashes.len() / 2 + hashes.len() % 2;
-
-    merkle_root_r(&mut hashes[0..half_len])
 }
 
 #[cfg(test)]
 mod tests {
-    use hashes::sha256d;
-
     use super::*;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
 
     #[test]
-    fn both_merkle_root_functions_return_the_same_result() {
+    fn static_vector() {
         // testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
         let segwit_block = include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
         let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
-        assert!(block.check_merkle_root()); // Sanity check.
 
-        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid().to_raw_hash());
+        assert!(block.check_merkle_root());
 
-        let mut hashes_array = [sha256d::Hash::all_zeros(); 15];
-        for (i, hash) in hashes_iter.clone().enumerate() {
-            hashes_array[i] = hash;
-        }
-
-        let from_iter = calculate_root(hashes_iter);
-        let from_array = calculate_root_inline(&mut hashes_array);
-        assert_eq!(from_iter, from_array);
+        // Same as `block.check_merkle_root` but do it explicitly.
+        let hashes_iter = block.txdata.iter().map(|obj| obj.compute_txid());
+        let from_iter = TxMerkleNode::calculate_root(hashes_iter.clone());
+        assert_eq!(from_iter, Some(block.header.merkle_root));
     }
 }

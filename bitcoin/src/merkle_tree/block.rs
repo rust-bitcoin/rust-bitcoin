@@ -14,10 +14,11 @@ use core::fmt;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
-use crate::blockdata::block::{self, Block, TxMerkleNode};
+use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
+use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
 use crate::prelude::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
@@ -272,7 +273,7 @@ impl PartialMerkleTree {
         if hash_used != self.hashes.len() as u32 {
             return Err(NotAllHashesConsumed);
         }
-        Ok(TxMerkleNode::from_byte_array(hash_merkle_root.to_byte_array()))
+        Ok(hash_merkle_root)
     }
 
     /// Calculates the height of the tree.
@@ -306,7 +307,7 @@ impl PartialMerkleTree {
                 left
             };
             // Combine subhashes
-            PartialMerkleTree::parent_hash(left, right)
+            left.combine(&right)
         }
     }
 
@@ -393,16 +394,8 @@ impl PartialMerkleTree {
                 right = left;
             }
             // and combine them before returning
-            Ok(PartialMerkleTree::parent_hash(left, right))
+            Ok(left.combine(&right))
         }
-    }
-
-    /// Helper method to produce SHA256D(left + right)
-    fn parent_hash(left: TxMerkleNode, right: TxMerkleNode) -> TxMerkleNode {
-        let mut encoder = TxMerkleNode::engine();
-        left.consensus_encode(&mut encoder).expect("engines don't error");
-        right.consensus_encode(&mut encoder).expect("engines don't error");
-        TxMerkleNode::from_engine(encoder)
     }
 }
 
@@ -514,7 +507,7 @@ impl std::error::Error for MerkleBlockError {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "rand-std")]
-    use {crate::merkle_tree, core::cmp, secp256k1::rand::prelude::*};
+    use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
     use crate::consensus::encode;
@@ -562,9 +555,8 @@ mod tests {
             .collect::<Vec<_>>();
 
         // Calculate the merkle root and height
-        let hashes = tx_ids.iter().map(|t| t.to_raw_hash());
-        let merkle_root_1: TxMerkleNode =
-            merkle_tree::calculate_root(hashes).expect("hashes is not empty").into();
+        let hashes = tx_ids.iter().copied();
+        let merkle_root_1 = TxMerkleNode::calculate_root(hashes).expect("hashes is not empty");
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {
