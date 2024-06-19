@@ -11,21 +11,21 @@
 //!
 //! See README.md for detailed documentation about development and supported environments.
 //!
-//! ## Available feature flags
+//! # Cargo features
 //!
-//! * `std` - the usual dependency on `std` (default).
-//! * `secp-recovery` - enables calculating public key from a signature and message.
-//! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
-//! * `rand` - (dependency), makes it more convenient to generate random values.
-//! * `serde` - (dependency), implements `serde`-based serialization and
-//!                 deserialization.
+//! * `base64` (dependency) - enables encoding of PSBTs and message signatures.
+//! * `bitcoinconsensus` (dependency) - enables validating scripts and transactions.
+//! * `bitcoinconsensus-std` - same as `bitcoinconsensus` but also enables `std` here and in the
+//!                            `bitcoinconsensus` crate. Additionally, enables returning
+//!                            `bitcoinconsensus::Error` from `std::error::Error::source()`.
+//! * `default` - enables `std` and `secp-recovery`.
+//! * `ordered` (dependency) - adds implementations of `ArbitraryOrd` to some structs.
+//! * `rand` (transitive dependency) - makes it more convenient to generate random values.
+//! * `rand-std` - same as `rand` but also enables `std` here and in `secp256k1`.
+//! * `serde` (dependency) - implements `serde`-based serialization and deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
-//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
-//!                            to this crate so it knows how to implement
-//!                            `std::error::Error`. At this time there's a hack to
-//!                            achieve the same without this feature but it could
-//!                            happen the implementations diverge one day.
-//! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
+//! * `secp-recovery` - enables calculating public key from a signature and message.
+//! * `std` - the usual dependency on `std`.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
