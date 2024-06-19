@@ -5,7 +5,7 @@
 #[repr(transparent)] pub struct bitcoin_hashes::sha1::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha256::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha256d::Hash(_)
-#[repr(transparent)] pub struct bitcoin_hashes::sha256t::Hash<T: bitcoin_hashes::sha256t::Tag>(_, _)
+#[repr(transparent)] pub struct bitcoin_hashes::sha256t::Hash<T>(_, _)
 #[repr(transparent)] pub struct bitcoin_hashes::sha384::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha512::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha512_256::Hash(_)
@@ -373,7 +373,6 @@ impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<
 impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::Hash for bitcoin_hashes::sha256t::Hash<T>
-impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::borrow::Borrow<[u8]> for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::clone::Clone for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::cmp::Eq for bitcoin_hashes::sha256t::Hash<T>
@@ -398,6 +397,8 @@ impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bi
 impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
 impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
 impl<T: core::marker::Copy + bitcoin_hashes::Hash> core::marker::Copy for bitcoin_hashes::hmac::Hmac<T>
+impl<T> bitcoin_hashes::sha256t::Hash<T> where (T): bitcoin_hashes::sha256t::Tag
+impl<T> bitcoin_hashes::sha256t::Tag for (T) where T: bitcoin_hashes::sha256t::Tag
 impl<T> core::marker::Freeze for bitcoin_hashes::hkdf::Hkdf<T> where T: core::marker::Freeze
 impl<T> core::marker::Freeze for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Freeze
 impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::marker::Freeze
@@ -505,6 +506,7 @@ pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
 pub const fn bitcoin_hashes::siphash24::HashEngine::new() -> bitcoin_hashes::siphash24::HashEngine
 pub const fn bitcoin_hashes::siphash24::HashEngine::with_keys(k0: u64, k1: u64) -> bitcoin_hashes::siphash24::HashEngine
 pub extern crate bitcoin_hashes::hex
+pub fn (T)::engine() -> bitcoin_hashes::sha256::HashEngine
 pub fn bitcoin_hashes::FromSliceError::clone(&self) -> bitcoin_hashes::FromSliceError
 pub fn bitcoin_hashes::FromSliceError::eq(&self, other: &bitcoin_hashes::FromSliceError) -> bool
 pub fn bitcoin_hashes::FromSliceError::expected_length(&self) -> usize

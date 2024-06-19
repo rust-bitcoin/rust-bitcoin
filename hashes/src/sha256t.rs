@@ -19,7 +19,7 @@ pub trait Tag {
 
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
-pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
+pub struct Hash<T>([u8; 32], PhantomData<T>);
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
@@ -36,8 +36,24 @@ impl<T: Tag> schemars::JsonSchema for Hash<T> {
     }
 }
 
-impl<T: Tag> Hash<T> {
-    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
+// This impl, and the trait bound `(T,): Tag` below, are hacks to allow defining
+// constfns on Hash<T> for a generic T. This trick was discovered by
+// https://github.com/rust-lang/rust/issues/90912
+//
+// When we drop rustc 1.56.1 we will be able to remove this, which will be a
+// technically breaking change but in practice probably fine to just drop.
+impl<T> Tag for (T,)
+where
+    T: Tag,
+{
+    fn engine() -> sha256::HashEngine { T::engine() }
+}
+
+impl<T> Hash<T>
+where
+    (T,): Tag,
+{
+    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
 
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
@@ -54,7 +70,7 @@ impl<T: Tag> Hash<T> {
     }
 
     /// Constructs a new engine.
-    pub fn engine() -> HashEngine { T::engine() }
+    pub fn engine() -> HashEngine { <(T,)>::engine() }
 
     /// Produces a hash from the current state of a given engine.
     pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
@@ -135,7 +151,10 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
-fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
+fn from_engine<T>(e: sha256::HashEngine) -> Hash<T>
+where
+    (T,): Tag,
+{
     Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
 }
 
