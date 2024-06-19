@@ -8,7 +8,8 @@ The minimal/recent lock files are handled by CI (`rust.yml`).
 
 ## Jobs
 
-Run from `rust.yml` unless stated otherwise.
+Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding the 20 job target.
+(Prepare is quick and must be run first anyway.)
 
 0.  `Prepare`
 1.  `Stable - minimal`
@@ -30,3 +31,4 @@ Run from `rust.yml` unless stated otherwise.
 17. `Coveralls` - run by `coveralls.yml`
 18. `release` - run by `release.yml`
 19. `labeler` - run by `manage-pr.yml`
+20. `Shellcheck` - run by `shellcheck.yml`
