@@ -2,16 +2,14 @@
 
 //! # Rust Bitcoin Library
 //!
-//! This is a library that supports the Bitcoin network protocol and associated
-//! primitives. It is designed for Rust programs built to work with the Bitcoin
-//! network.
+//! This is a library that supports the Bitcoin network protocol and associated primitives. It is
+//! designed for Rust programs built to work with the Bitcoin network.
 //!
-//! Except for its dependency on libsecp256k1 (and optionally libbitcoinconsensus),
-//! this library is written entirely in Rust. It illustrates the benefits of
-//! strong type safety, including ownership and lifetime, for financial and/or cryptographic software.
+//! Except for its dependency on libsecp256k1 (and optionally libbitcoinconsensus), this library is
+//! written entirely in Rust. It illustrates the benefits of strong type safety, including ownership
+//! and lifetime, for financial and/or cryptographic software.
 //!
-//! See README.md for detailed documentation about development and supported
-//! environments.
+//! See README.md for detailed documentation about development and supported environments.
 //!
 //! ## Available feature flags
 //!
