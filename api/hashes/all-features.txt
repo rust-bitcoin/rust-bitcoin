@@ -559,6 +559,9 @@ pub const fn bitcoin_hashes::sha256d::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256d::Hash::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &[u8; 32]
+pub const fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: [u8; 32]) -> Self
+pub const fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> [u8; 32]
 pub const fn bitcoin_hashes::sha384::Hash::all_zeros() -> Self
 pub const fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &[u8; 48]
 pub const fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: [u8; 48]) -> Self
@@ -819,7 +822,6 @@ pub fn bitcoin_hashes::sha256d::Hash::serialize<S: serde::ser::Serializer>(&self
 pub fn bitcoin_hashes::sha256d::Hash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_hashes::sha256t::Hash<T>::all_zeros() -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256t::Hash<T>::as_ref(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256t::Hash<T>::borrow(&self) -> &[u8]
@@ -831,7 +833,6 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::engine() -> bitcoin_hashes::sha256::Has
 pub fn bitcoin_hashes::sha256t::Hash<T>::eq(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> bool
 pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: [u8; 32]) -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_ref(bytes: &[u8; 32]) -> &Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_engine(e: bitcoin_hashes::sha256::HashEngine) -> bitcoin_hashes::sha256t::Hash<T>
@@ -847,7 +848,6 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::partial_cmp(&self, other: &bitcoin_hash
 pub fn bitcoin_hashes::sha256t::Hash<T>::schema_name() -> alloc::string::String
 pub fn bitcoin_hashes::sha256t::Hash<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> [u8; 32]
 pub fn bitcoin_hashes::sha256t::Tag::engine() -> bitcoin_hashes::sha256::HashEngine
 pub fn bitcoin_hashes::sha384::Hash::all_zeros() -> Self
 pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
