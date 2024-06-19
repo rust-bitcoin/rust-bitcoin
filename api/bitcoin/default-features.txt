@@ -6987,15 +6987,15 @@ pub fn bitcoin::bip158::BitStreamWriter<'a, W>::new(writer: &'a mut W) -> bitcoi
 pub fn bitcoin::bip158::BitStreamWriter<'a, W>::write(&mut self, data: u64, nbits: u8) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::bip158::BlockFilter::clone(&self) -> bitcoin::bip158::BlockFilter
 pub fn bitcoin::bip158::BlockFilter::eq(&self, other: &bitcoin::bip158::BlockFilter) -> bool
-pub fn bitcoin::bip158::BlockFilter::filter_header(&self, previous_filter_header: &bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
+pub fn bitcoin::bip158::BlockFilter::filter_header(&self, previous_filter_header: bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::BlockFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::bip158::BlockFilter::match_all<I>(&self, block_hash: &bitcoin::blockdata::block::BlockHash, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>
-pub fn bitcoin::bip158::BlockFilter::match_any<I>(&self, block_hash: &bitcoin::blockdata::block::BlockHash, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>
+pub fn bitcoin::bip158::BlockFilter::match_all<I>(&self, block_hash: bitcoin::blockdata::block::BlockHash, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>
+pub fn bitcoin::bip158::BlockFilter::match_any<I>(&self, block_hash: bitcoin::blockdata::block::BlockHash, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>
 pub fn bitcoin::bip158::BlockFilter::new(content: &[u8]) -> bitcoin::bip158::BlockFilter
 pub fn bitcoin::bip158::BlockFilter::new_script_filter<M, S>(block: &bitcoin::blockdata::block::Block, script_for_coin: M) -> core::result::Result<bitcoin::bip158::BlockFilter, bitcoin::bip158::Error> where M: core::ops::function::Fn(&bitcoin::blockdata::transaction::OutPoint) -> core::result::Result<S, bitcoin::bip158::Error>, S: core::borrow::Borrow<bitcoin::blockdata::script::Script>
 pub fn bitcoin::bip158::BlockFilterReader::match_all<I, R>(&self, reader: &mut R, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>, R: bitcoin_io::BufRead + core::marker::Sized
 pub fn bitcoin::bip158::BlockFilterReader::match_any<I, R>(&self, reader: &mut R, query: I) -> core::result::Result<bool, bitcoin::bip158::Error> where I: core::iter::traits::iterator::Iterator, <I as core::iter::traits::iterator::Iterator>::Item: core::borrow::Borrow<[u8]>, R: bitcoin_io::BufRead + core::marker::Sized
-pub fn bitcoin::bip158::BlockFilterReader::new(block_hash: &bitcoin::blockdata::block::BlockHash) -> bitcoin::bip158::BlockFilterReader
+pub fn bitcoin::bip158::BlockFilterReader::new(block_hash: bitcoin::blockdata::block::BlockHash) -> bitcoin::bip158::BlockFilterReader
 pub fn bitcoin::bip158::BlockFilterWriter<'a, W>::add_element(&mut self, data: &[u8])
 pub fn bitcoin::bip158::BlockFilterWriter<'a, W>::add_input_scripts<M, S>(&mut self, script_for_coin: M) -> core::result::Result<(), bitcoin::bip158::Error> where M: core::ops::function::Fn(&bitcoin::blockdata::transaction::OutPoint) -> core::result::Result<S, bitcoin::bip158::Error>, S: core::borrow::Borrow<bitcoin::blockdata::script::Script>
 pub fn bitcoin::bip158::BlockFilterWriter<'a, W>::add_output_scripts(&mut self)
@@ -7019,7 +7019,7 @@ pub fn bitcoin::bip158::FilterHash::consensus_decode<R: bitcoin_io::BufRead + co
 pub fn bitcoin::bip158::FilterHash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::bip158::FilterHash::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::bip158::FilterHash::eq(&self, other: &bitcoin::bip158::FilterHash) -> bool
-pub fn bitcoin::bip158::FilterHash::filter_header(&self, previous_filter_header: &bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
+pub fn bitcoin::bip158::FilterHash::filter_header(&self, previous_filter_header: bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip158::FilterHash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
@@ -7257,7 +7257,7 @@ pub fn bitcoin::blockdata::block::Block::check_witness_commitment(&self) -> bool
 pub fn bitcoin::blockdata::block::Block::clone(&self) -> bitcoin::blockdata::block::Block
 pub fn bitcoin::blockdata::block::Block::coinbase(&self) -> core::option::Option<&bitcoin::blockdata::transaction::Transaction>
 pub fn bitcoin::blockdata::block::Block::compute_merkle_root(&self) -> core::option::Option<bitcoin::merkle_tree::TxMerkleNode>
-pub fn bitcoin::blockdata::block::Block::compute_witness_commitment(witness_root: &bitcoin::merkle_tree::WitnessMerkleNode, witness_reserved_value: &[u8]) -> bitcoin::blockdata::block::WitnessCommitment
+pub fn bitcoin::blockdata::block::Block::compute_witness_commitment(witness_root: bitcoin::merkle_tree::WitnessMerkleNode, witness_reserved_value: &[u8]) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::Block::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bitcoin::blockdata::block::Block, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::Block::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<bitcoin::blockdata::block::Block, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::Block::consensus_encode<R: bitcoin_io::Write + core::marker::Sized>(&self, r: &mut R) -> core::result::Result<usize, bitcoin_io::error::Error>
@@ -7811,12 +7811,12 @@ pub fn bitcoin::blockdata::script::ScriptBuf::into_boxed_script(self) -> alloc::
 pub fn bitcoin::blockdata::script::ScriptBuf::into_bytes(self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::blockdata::script::ScriptBuf::new_op_return<T: core::convert::AsRef<bitcoin::blockdata::script::PushBytes>>(data: T) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pk(pubkey: bitcoin::PublicKey) -> Self
-pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pkh(pubkey_hash: &bitcoin::PubkeyHash) -> Self
-pub fn bitcoin::blockdata::script::ScriptBuf::new_p2sh(script_hash: &bitcoin::blockdata::script::ScriptHash) -> Self
+pub fn bitcoin::blockdata::script::ScriptBuf::new_p2pkh(pubkey_hash: bitcoin::PubkeyHash) -> Self
+pub fn bitcoin::blockdata::script::ScriptBuf::new_p2sh(script_hash: bitcoin::blockdata::script::ScriptHash) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2tr<C: secp256k1::context::Verification>(secp: &secp256k1::Secp256k1<C>, internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_p2tr_tweaked(output_key: bitcoin::key::TweakedPublicKey) -> Self
-pub fn bitcoin::blockdata::script::ScriptBuf::new_p2wpkh(pubkey_hash: &bitcoin::WPubkeyHash) -> Self
-pub fn bitcoin::blockdata::script::ScriptBuf::new_p2wsh(script_hash: &bitcoin::blockdata::script::WScriptHash) -> Self
+pub fn bitcoin::blockdata::script::ScriptBuf::new_p2wpkh(pubkey_hash: bitcoin::WPubkeyHash) -> Self
+pub fn bitcoin::blockdata::script::ScriptBuf::new_p2wsh(script_hash: bitcoin::blockdata::script::WScriptHash) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::new_witness_program(witness_program: &bitcoin::blockdata::script::witness_program::WitnessProgram) -> Self
 pub fn bitcoin::blockdata::script::ScriptBuf::p2wpkh_script_code(wpkh: bitcoin::WPubkeyHash) -> bitcoin::blockdata::script::ScriptBuf
 pub fn bitcoin::blockdata::script::ScriptBuf::partial_cmp(&self, other: &bitcoin::blockdata::script::Script) -> core::option::Option<core::cmp::Ordering>
