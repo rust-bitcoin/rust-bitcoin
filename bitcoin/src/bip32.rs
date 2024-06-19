@@ -126,8 +126,19 @@ pub enum ChildNumber {
         index: u32,
     },
 }
-
 impl ChildNumber {
+    /// Normal child number with index 0.
+    pub const ZERO_NORMAL: Self = ChildNumber::Normal { index: 0 };
+
+    /// Normal child number with index 1.
+    pub const ONE_NORMAL: Self = ChildNumber::Normal { index: 1 };
+
+    /// Hardened child number with index 0.
+    pub const ZERO_HARDENED: Self = ChildNumber::Hardened { index: 0 };
+
+    /// Hardened child number with index 1.
+    pub const ONE_HARDENED: Self = ChildNumber::Hardened { index: 1 };
+
     /// Create a [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
@@ -417,8 +428,8 @@ impl DerivationPath {
     ///
     /// let deriv_1 = base.extend(DerivationPath::from_str("0/1").unwrap());
     /// let deriv_2 = base.extend(&[
-    ///     ChildNumber::from_normal_idx(0).unwrap(),
-    ///     ChildNumber::from_normal_idx(1).unwrap()
+    ///     ChildNumber::ZERO_NORMAL,
+    ///     ChildNumber::ONE_NORMAL
     /// ]);
     ///
     /// assert_eq!(deriv_1, deriv_2);
@@ -564,7 +575,7 @@ impl Xpriv {
             network: network.into(),
             depth: 0,
             parent_fingerprint: Default::default(),
-            child_number: ChildNumber::from_normal_idx(0)?,
+            child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?,
             chain_code: ChainCode::from_hmac(hmac_result),
         })
@@ -919,23 +930,16 @@ mod tests {
         assert_eq!(DerivationPath::from_str("m/").unwrap(), DerivationPath(vec![]));
         assert_eq!(DerivationPath::from_str("").unwrap(), DerivationPath(vec![]));
 
-        assert_eq!(
-            DerivationPath::from_str("0'"),
-            Ok(vec![ChildNumber::from_hardened_idx(0).unwrap()].into())
-        );
+        assert_eq!(DerivationPath::from_str("0'"), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
         assert_eq!(
             DerivationPath::from_str("0'/1"),
-            Ok(vec![
-                ChildNumber::from_hardened_idx(0).unwrap(),
-                ChildNumber::from_normal_idx(1).unwrap()
-            ]
-            .into())
+            Ok(vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL].into())
         );
         assert_eq!(
             DerivationPath::from_str("0h/1/2'"),
             Ok(vec![
-                ChildNumber::from_hardened_idx(0).unwrap(),
-                ChildNumber::from_normal_idx(1).unwrap(),
+                ChildNumber::ZERO_HARDENED,
+                ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
             ]
             .into())
@@ -943,16 +947,16 @@ mod tests {
         assert_eq!(
             DerivationPath::from_str("0'/1/2h/2"),
             Ok(vec![
-                ChildNumber::from_hardened_idx(0).unwrap(),
-                ChildNumber::from_normal_idx(1).unwrap(),
+                ChildNumber::ZERO_HARDENED,
+                ChildNumber::ONE_NORMAL,
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
             ]
             .into())
         );
         let want = DerivationPath::from(vec![
-            ChildNumber::from_hardened_idx(0).unwrap(),
-            ChildNumber::from_normal_idx(1).unwrap(),
+            ChildNumber::ZERO_HARDENED,
+            ChildNumber::ONE_NORMAL,
             ChildNumber::from_hardened_idx(2).unwrap(),
             ChildNumber::from_normal_idx(2).unwrap(),
             ChildNumber::from_normal_idx(1000000000).unwrap(),
@@ -975,10 +979,7 @@ mod tests {
         let numbers: Vec<ChildNumber> = path.clone().into();
         let path2: DerivationPath = numbers.into();
         assert_eq!(path, path2);
-        assert_eq!(
-            &path[..2],
-            &[ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()]
-        );
+        assert_eq!(&path[..2], &[ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]);
         let indexed: DerivationPath = path[..2].into();
         assert_eq!(indexed, DerivationPath::from_str("0h/1").unwrap());
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
@@ -1166,11 +1167,11 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_childnumber() {
-        serde_round_trip!(ChildNumber::from_normal_idx(0).unwrap());
-        serde_round_trip!(ChildNumber::from_normal_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::ZERO_NORMAL);
+        serde_round_trip!(ChildNumber::ONE_NORMAL);
         serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1).unwrap());
-        serde_round_trip!(ChildNumber::from_hardened_idx(0).unwrap());
-        serde_round_trip!(ChildNumber::from_hardened_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::ZERO_HARDENED);
+        serde_round_trip!(ChildNumber::ONE_HARDENED);
         serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
     }
 
