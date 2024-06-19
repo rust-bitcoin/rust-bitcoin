@@ -195,17 +195,17 @@ macro_rules! hash_newtype {
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
             /// Creates this wrapper type from the inner hash type.
-            pub fn from_raw_hash(inner: $hash) -> $newtype {
+            pub const fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Returns the inner hash (sha256, sh256d etc.).
-            pub fn to_raw_hash(self) -> $hash {
+            pub const fn to_raw_hash(self) -> $hash {
                 self.0
             }
 
             /// Returns a reference to the inner hash (sha256, sh256d etc.).
-            pub fn as_raw_hash(&self) -> &$hash {
+            pub const fn as_raw_hash(&self) -> &$hash {
                 &self.0
             }
 
@@ -250,18 +250,18 @@ macro_rules! hash_newtype {
             }
 
             /// Returns the underlying byte array.
-            pub fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
+            pub const fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
                 self.0.to_byte_array()
             }
 
             /// Returns a reference to the underlying byte array.
-            pub fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
+            pub const fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
                 self.0.as_byte_array()
             }
 
             /// Constructs a hash from the underlying byte array.
-            pub fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
+            pub const fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
             }
 
             /// Returns an all zero hash.

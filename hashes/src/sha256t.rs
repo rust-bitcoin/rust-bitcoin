@@ -53,7 +53,7 @@ impl<T> Hash<T>
 where
     (T,): Tag,
 {
-    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
+    const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
 
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
@@ -110,13 +110,13 @@ where
     }
 
     /// Returns the underlying byte array.
-    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
     /// Returns a reference to the underlying byte array.
-    pub fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
 
     /// Constructs a hash from the underlying byte array.
-    pub fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
 
     /// Returns an all zero hash.
     ///
