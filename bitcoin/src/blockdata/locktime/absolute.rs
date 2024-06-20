@@ -129,6 +129,12 @@ impl LockTime {
 
     /// Constructs a `LockTime` from `n`, expecting `n` to be a valid block height.
     ///
+    /// # Note
+    ///
+    /// If the current block height is `h` and the locktime is set to `h`,
+    /// the transaction can be included in block `h+1` or later.
+    /// It is possible to broadcast the transaction at block height `h`.
+    ///
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid height value.
     ///
     /// # Examples
@@ -145,6 +151,15 @@ impl LockTime {
     }
 
     /// Constructs a `LockTime` from `n`, expecting `n` to be a valid block time.
+    ///
+    /// # Note
+    ///
+    /// If the locktime is set to a timestamp `T`,
+    /// the transaction can be included in a block only if the median time past (MTP) of the
+    /// last 11 blocks is greater than `T`.
+    /// It is possible to broadcast the transaction once the MTP is greater than `T`.[see BIP-113]
+    ///
+    /// [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     ///
     /// See [`LOCK_TIME_THRESHOLD`] for definition of a valid time value.
     ///
