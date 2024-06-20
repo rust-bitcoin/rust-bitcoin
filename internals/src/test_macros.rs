@@ -4,7 +4,9 @@
 //!
 //! This module provides internal macros used for unit tests.
 
+/// Does roundtrip test to/from serde value.
 #[cfg(feature = "serde")]
+#[macro_export]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
         use serde_json;

@@ -1616,6 +1616,7 @@ mod tests {
     use core::str::FromStr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
+    use internals::serde_round_trip;
 
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;

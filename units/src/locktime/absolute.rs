@@ -372,6 +372,8 @@ impl From<ConversionError> for ParseError {
 
 #[cfg(test)]
 mod tests {
+    use internals::serde_round_trip;
+
     use super::*;
 
     #[test]

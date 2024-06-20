@@ -27,3 +27,4 @@ pub mod error;
 pub mod macros;
 mod parse;
 pub mod serde;
+pub mod test_macros;
