@@ -1,5 +1,5 @@
-use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::{deserialize, serialize};
+use bitcoin::witness::Witness;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

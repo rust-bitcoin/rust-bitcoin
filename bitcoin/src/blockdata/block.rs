@@ -13,14 +13,13 @@ use hashes::{sha256d, HashEngine};
 use io::{BufRead, Write};
 
 use super::Weight;
-use crate::blockdata::script;
-use crate::blockdata::transaction::{Transaction, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable, Params};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
-use crate::VarInt;
+use crate::transaction::{Transaction, Wtxid};
+use crate::{script, VarInt};
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
@@ -367,7 +366,8 @@ impl Block {
         match push.map_err(|_| Bip34Error::NotPresent)? {
             script::Instruction::PushBytes(b) => {
                 // Check that the number is encoded in the minimal way.
-                let h = b.read_scriptint()
+                let h = b
+                    .read_scriptint()
                     .map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))?;
                 if h < 0 {
                     Err(Bip34Error::NegativeHeight)

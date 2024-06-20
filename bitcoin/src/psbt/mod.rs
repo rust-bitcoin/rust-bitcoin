@@ -21,12 +21,12 @@ use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
-use crate::blockdata::transaction::{self, Transaction, TxOut};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
+use crate::transaction::{self, Transaction, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -1212,12 +1212,12 @@ mod tests {
 
     use super::*;
     use crate::bip32::ChildNumber;
-    use crate::blockdata::locktime::absolute;
-    use crate::blockdata::script::ScriptBuf;
-    use crate::blockdata::transaction::{self, OutPoint, Sequence, TxIn};
-    use crate::blockdata::witness::Witness;
+    use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
+    use crate::script::ScriptBuf;
+    use crate::transaction::{self, OutPoint, Sequence, TxIn};
+    use crate::witness::Witness;
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {

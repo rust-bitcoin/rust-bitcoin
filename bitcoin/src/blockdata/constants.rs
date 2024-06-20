@@ -9,17 +9,16 @@
 use hashes::sha256d;
 use internals::impl_array_newtype;
 
-use crate::blockdata::block::{self, Block};
-use crate::blockdata::locktime::absolute;
-use crate::blockdata::opcodes::all::*;
-use crate::blockdata::script;
-use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
-use crate::blockdata::witness::Witness;
+use crate::block::{self, Block};
 use crate::consensus::Params;
 use crate::internal_macros::impl_array_newtype_stringify;
+use crate::locktime::absolute;
 use crate::network::Network;
+use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
-use crate::{Amount, BlockHash};
+use crate::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
+use crate::witness::Witness;
+use crate::{script, Amount, BlockHash};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;

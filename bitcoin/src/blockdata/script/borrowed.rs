@@ -8,23 +8,23 @@ use core::ops::{
 use secp256k1::{Secp256k1, Verification};
 
 use super::PushBytes;
-use crate::blockdata::fee_rate::FeeRate;
-use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self, Opcode};
-use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{
+use crate::consensus::Encodable;
+use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
+use crate::opcodes::all::*;
+use crate::opcodes::{self, Opcode};
+use crate::policy::DUST_RELAY_TX_FEE;
+use crate::prelude::*;
+use crate::script::witness_version::WitnessVersion;
+use crate::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
-use crate::consensus::Encodable;
-use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
-use crate::policy::DUST_RELAY_TX_FEE;
-use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::FeeRate;
 
 /// Bitcoin script slice.
 ///
-/// *[See also the `bitcoin::blockdata::script` module](crate::blockdata::script).*
+/// *[See also the `bitcoin::script` module](crate::script).*
 ///
 /// `Script` is a script slice, the most primitive script type. It's usually seen in its borrowed
 /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
@@ -368,7 +368,7 @@ impl Script {
     )]
     #[inline]
     pub fn is_provably_unspendable(&self) -> bool {
-        use crate::blockdata::opcodes::Class::{IllegalOp, ReturnOp};
+        use crate::opcodes::Class::{IllegalOp, ReturnOp};
 
         match self.0.first() {
             Some(b) => {
@@ -685,7 +685,7 @@ delegate_index!(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::blockdata::script::witness_program::WitnessProgram;
+    use crate::script::witness_program::WitnessProgram;
 
     #[test]
     fn shortest_witness_program() {

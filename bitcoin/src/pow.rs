@@ -14,8 +14,7 @@ use io::{BufRead, Write};
 use mutagen::mutate;
 use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
-use crate::block::Header;
-use crate::blockdata::block::BlockHash;
+use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
 
@@ -251,7 +250,7 @@ impl Target {
     /// Panics if `self` is zero (divide by zero).
     ///
     /// [max]: Target::max
-    /// [target]: crate::blockdata::block::Header::target
+    /// [target]: crate::block::Header::target
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
         // Panic here may be eaiser to debug than during the actual division.

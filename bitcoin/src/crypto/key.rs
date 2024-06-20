@@ -15,11 +15,11 @@ use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
 
-use crate::blockdata::script::ScriptBuf;
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::*;
+use crate::script::ScriptBuf;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.

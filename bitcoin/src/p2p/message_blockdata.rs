@@ -8,11 +8,11 @@
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use crate::blockdata::block::BlockHash;
-use crate::blockdata::transaction::{Txid, Wtxid};
+use crate::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p;
+use crate::transaction::{Txid, Wtxid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]

@@ -4,13 +4,13 @@ use core::fmt;
 
 use secp256k1::XOnlyPublicKey;
 
-use crate::blockdata::locktime::absolute;
-use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self, Opcode};
-use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
-use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
+use crate::locktime::absolute;
+use crate::opcodes::all::*;
+use crate::opcodes::{self, Opcode};
 use crate::prelude::*;
+use crate::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
+use crate::transaction::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]

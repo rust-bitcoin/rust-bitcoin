@@ -17,10 +17,10 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
 use internals::write_err;
 use io::Write;
 
-use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
+use crate::witness::Witness;
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -1453,8 +1453,8 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
-    use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
+    use crate::locktime::absolute;
 
     extern crate serde_json;
 
