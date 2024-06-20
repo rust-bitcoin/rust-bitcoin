@@ -27,4 +27,5 @@ pub mod error;
 pub mod macros;
 mod parse;
 #[cfg(feature = "serde")]
+#[macro_use]
 pub mod serde;
