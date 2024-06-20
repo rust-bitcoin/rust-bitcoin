@@ -26,4 +26,5 @@ pub mod const_tools;
 pub mod error;
 pub mod macros;
 mod parse;
+#[cfg(feature = "serde")]
 pub mod serde;
