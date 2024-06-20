@@ -149,7 +149,7 @@ impl Network {
     ///
     /// ```rust
     /// use bitcoin::Network;
-    /// use bitcoin::blockdata::constants::ChainHash;
+    /// use bitcoin::constants::ChainHash;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
@@ -162,7 +162,7 @@ impl Network {
     ///
     /// ```rust
     /// use bitcoin::Network;
-    /// use bitcoin::blockdata::constants::ChainHash;
+    /// use bitcoin::constants::ChainHash;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
     /// ```

@@ -9,11 +9,11 @@ use core::fmt;
 use internals::write_err;
 
 use crate::amount::Amount;
-use crate::blockdata::script::Script;
-use crate::blockdata::transaction::{OutPoint, Transaction, TxOut};
 #[cfg(doc)]
 use crate::consensus;
 use crate::consensus::encode;
+use crate::script::Script;
+use crate::transaction::{OutPoint, Transaction, TxOut};
 
 /// Verifies spend of an input script.
 ///

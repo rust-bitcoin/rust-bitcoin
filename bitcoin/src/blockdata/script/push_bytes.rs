@@ -19,10 +19,9 @@ mod primitive {
     };
 
     use super::PushBytesError;
-    use crate::blockdata::script::Error;
     #[allow(unused)]
     use crate::prelude::*;
-    use crate::script::scriptint_parse;
+    use crate::script::{scriptint_parse, Error};
 
     #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
     fn check_limit(_: usize) -> Result<(), PushBytesError> { Ok(()) }

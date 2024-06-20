@@ -23,8 +23,7 @@ use io::{BufRead, Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
-use crate::blockdata::block::{self, BlockHash};
-use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::block::{self, BlockHash};
 use crate::consensus::{DecodeError, IterReader};
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
@@ -34,6 +33,7 @@ use crate::p2p::{
 };
 use crate::prelude::*;
 use crate::taproot::TapLeafHash;
+use crate::transaction::{Transaction, TxIn, TxOut};
 
 /// Encoding error.
 #[derive(Debug)]

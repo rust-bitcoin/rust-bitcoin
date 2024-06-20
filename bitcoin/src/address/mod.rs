@@ -36,21 +36,21 @@ use bech32::primitives::hrp::Hrp;
 use hashes::{sha256, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
-use crate::blockdata::constants::{
+use crate::consensus::Params;
+use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
     SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::script::witness_program::WitnessProgram;
-use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{
-    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
-};
-use crate::consensus::Params;
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
 };
 use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
+use crate::script::witness_program::WitnessProgram;
+use crate::script::witness_version::WitnessVersion;
+use crate::script::{
+    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+};
 use crate::taproot::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.

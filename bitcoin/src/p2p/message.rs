@@ -10,7 +10,6 @@ use core::{fmt, iter};
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
@@ -19,6 +18,7 @@ use crate::p2p::{
     Magic,
 };
 use crate::prelude::*;
+use crate::{block, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -544,9 +544,7 @@ mod test {
 
     use super::*;
     use crate::bip152::BlockTransactionsRequest;
-    use crate::blockdata::block::Block;
-    use crate::blockdata::script::ScriptBuf;
-    use crate::blockdata::transaction::Transaction;
+    use crate::block::Block;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::p2p::address::AddrV2;
     use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
@@ -557,6 +555,8 @@ mod test {
     };
     use crate::p2p::message_network::{Reject, RejectReason, VersionMessage};
     use crate::p2p::ServiceFlags;
+    use crate::script::ScriptBuf;
+    use crate::transaction::Transaction;
 
     fn hash(slice: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_slice(&slice).unwrap() }
 

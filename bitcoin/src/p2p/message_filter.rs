@@ -7,7 +7,7 @@
 use units::BlockHeight;
 
 use crate::bip158::{FilterHash, FilterHeader};
-use crate::blockdata::block::BlockHash;
+use crate::block::BlockHash;
 use crate::internal_macros::impl_consensus_encoding;
 
 /// getcfilters message

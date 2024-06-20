@@ -12,9 +12,9 @@ use core::fmt;
 use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
 
-use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::script::witness_version::WitnessVersion;
+use crate::script::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
 use crate::taproot::TapNodeHash;
 
 /// The minimum byte size of a segregated witness program.

@@ -196,13 +196,13 @@ pub(crate) use impl_hashencode;
 macro_rules! impl_asref_push_bytes {
     ($($hashtype:ident),*) => {
         $(
-            impl AsRef<$crate::blockdata::script::PushBytes> for $hashtype {
-                fn as_ref(&self) -> &$crate::blockdata::script::PushBytes {
+            impl AsRef<$crate::script::PushBytes> for $hashtype {
+                fn as_ref(&self) -> &$crate::script::PushBytes {
                     self.as_byte_array().into()
                 }
             }
 
-            impl From<$hashtype> for $crate::blockdata::script::PushBytesBuf {
+            impl From<$hashtype> for $crate::script::PushBytesBuf {
                 fn from(hash: $hashtype) -> Self {
                     hash.as_byte_array().into()
                 }

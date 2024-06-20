@@ -10,17 +10,17 @@ use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
-use crate::blockdata::script::ScriptBuf;
-use crate::blockdata::transaction::{Transaction, TxOut};
-use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
+use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
+use crate::transaction::{Transaction, TxOut};
+use crate::witness::Witness;
 use crate::VarInt;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.

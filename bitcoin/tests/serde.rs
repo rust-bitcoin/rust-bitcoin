@@ -27,15 +27,15 @@ use std::str::FromStr;
 
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
-use bitcoin::blockdata::locktime::{absolute, relative};
-use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
+use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
+use bitcoin::witness::Witness;
 use bitcoin::{
     ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
     ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,

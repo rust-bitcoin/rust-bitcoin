@@ -44,13 +44,13 @@ use hashes::{sha256d, siphash24};
 use internals::write_err;
 use io::{BufRead, Write};
 
-use crate::blockdata::block::{Block, BlockHash};
-use crate::blockdata::script::Script;
-use crate::blockdata::transaction::OutPoint;
+use crate::block::{Block, BlockHash};
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
+use crate::script::Script;
+use crate::transaction::OutPoint;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;

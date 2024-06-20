@@ -5,8 +5,8 @@ use core::fmt;
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
-use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::*;
+use crate::script::{witness_program, witness_version};
 use crate::Network;
 
 /// Error while generating address from script.
