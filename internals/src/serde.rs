@@ -293,3 +293,20 @@ macro_rules! serde_struct_human_string_impl {
         }
     )
 }
+
+/// Does round trip test to/from serde value.
+#[cfg(feature = "test-serde")]
+#[macro_export]
+macro_rules! serde_round_trip (
+    ($var:expr) => ({
+        use serde_json;
+
+        let encoded = $crate::serde_json::to_value(&$var).expect("serde_json failed to encode");
+        let decoded = $crate::serde_json::from_value(encoded).expect("serde_json failed to decode");
+        assert_eq!($var, decoded);
+
+        let encoded = $crate::bincode::serialize(&$var).expect("bincode failed to encode");
+        let decoded = $crate::bincode::deserialize(&encoded).expect("bincode failed to decode");
+        assert_eq!($var, decoded);
+    })
+);

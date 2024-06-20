@@ -31,10 +31,6 @@ extern crate std;
 #[cfg(feature = "serde")]
 pub extern crate serde;
 
-#[cfg(test)]
-#[macro_use]
-mod test_macros;
-
 pub mod amount;
 #[cfg(feature = "alloc")]
 pub mod block;
