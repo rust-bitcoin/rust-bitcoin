@@ -68,7 +68,7 @@ pub struct OutPoint {
     pub vout: u32,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
+internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.

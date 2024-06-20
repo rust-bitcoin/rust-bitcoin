@@ -365,7 +365,7 @@ impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
 }
 
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_deserialize_impl!(Address<NetworkUnchecked>, "a Bitcoin address");
+internals::serde_string_deserialize_impl!(Address<NetworkUnchecked>, "a Bitcoin address");
 
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> serde::Serialize for Address<N> {

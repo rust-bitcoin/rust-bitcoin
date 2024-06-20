@@ -77,7 +77,7 @@ pub struct Xpriv {
     pub chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(Xpriv, "a BIP-32 extended private key");
+internals::serde_string_impl!(Xpriv, "a BIP-32 extended private key");
 
 #[cfg(not(feature = "std"))]
 impl fmt::Debug for Xpriv {
@@ -110,7 +110,7 @@ pub struct Xpub {
     pub chain_code: ChainCode,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(Xpub, "a BIP-32 extended public key");
+internals::serde_string_impl!(Xpub, "a BIP-32 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
@@ -259,7 +259,7 @@ pub trait IntoDerivationPath {
 pub struct DerivationPath(Vec<ChildNumber>);
 
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+internals::serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
 
 impl<I> Index<I> for DerivationPath
 where
