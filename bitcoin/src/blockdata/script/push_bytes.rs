@@ -295,19 +295,15 @@ impl PushBytes {
 
     /// Decodes an integer in script(minimal CScriptNum) format.
     ///
-    /// Notice that this fails on overflow: the result is the same as in
-    /// bitcoind, that only 4-byte signed-magnitude values may be read as
-    /// numbers. They can be added or subtracted (and a long time ago,
-    /// multiplied and divided), and this may result in numbers which
-    /// can't be written out in 4 bytes or less. This is ok! The number
-    /// just can't be read as a number again.
-    /// This is a bit crazy and subtle, but it makes sense: you can load
-    /// 32-bit numbers and do anything with them, which back when mult/div
-    /// was allowed, could result in up to a 64-bit number. We don't want
-    /// overflow since that's surprising --- and we don't want numbers that
-    /// don't fit in 64 bits (for efficiency on modern processors) so we
-    /// simply say, anything in excess of 32 bits is no longer a number.
-    /// This is basically a ranged type implementation.
+    /// Notice that this fails on overflow: the result is the same as in bitcoind, that only 4-byte
+    /// signed-magnitude values may be read as numbers. They can be added or subtracted (and a long
+    /// time ago, multiplied and divided), and this may result in numbers which can't be written out
+    /// in 4 bytes or less. This is ok! The number just can't be read as a number again. This is a
+    /// bit crazy and subtle, but it makes sense: you can load 32-bit numbers and do anything with
+    /// them, which back when mult/div was allowed, could result in up to a 64-bit number. We don't
+    /// want overflow since that's surprising --- and we don't want numbers that don't fit in 64
+    /// bits (for efficiency on modern processors) so we simply say, anything in excess of 32 bits
+    /// is no longer a number. This is basically a ranged type implementation.
     ///
     /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
     pub fn read_scriptint(&self) -> Result<i64, script::Error> {
