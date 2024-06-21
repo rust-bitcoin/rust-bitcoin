@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin"
-version = "0.32.0-rc1"
+version = "0.33.0-rc1"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -15,33 +15,39 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
+std = ["address/std", "base58/std", "bip32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "psbt/std", "secp256k1/std", "units/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde"]
+serde = ["actual-serde", "address/serde", "bip32/serde", "hashes/serde", "internals/serde", "primitives/serde", "psbt/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
+base64 = ["actual-base64", "psbt/base64"]
+bitcoinconsensus-std = ["std", "bitcoinconsensus", "primitives/bitcoinconsensus-std"]
+bitcoinconsensus = ["actual-bitcoinconsensus", "primitives/bitcoinconsensus"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
+address = { package = "bitcoin-address", version = "0.1.0", default-features = false }
 base58 = { package = "base58ck", version = "0.1.0", default-features = false }
-bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+bip32 = { version = "0.1.0", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
+primitives = { package = "bitcoin-primitives", version = "0.1.0", default-features = false, features = ["crypto"] }
+psbt = { package = "psbt-v0", version = "0.1.0", default-features = false, features = [] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 
-base64 = { version = "0.22.0", optional = true }
 ordered = { version = "0.2.0", optional = true }
-# Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
-bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
 
+# Do NOT use this as a feature! Use the `bitcoinconsensus` feature instead.
+actual-bitcoinconsensus = { package = "bitcoinconsensus", version = "0.106.0+26", default-features = false, optional = true }
+# Do NOT use this as a feature! Use the `base64` feature instead.
+actual-base64 = { package = "base64", version = "0.22.0", optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 

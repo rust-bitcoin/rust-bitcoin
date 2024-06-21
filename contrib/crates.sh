@@ -5,4 +5,4 @@
 # shellcheck disable=SC2034
 
 # Crates in this workspace to test (note "fuzz" is only built not tested).
-CRATES=("base58" "bitcoin" "fuzz" "hashes" "internals" "io" "units")
+CRATES=("base58" "bip32" "bitcoin" "fuzz" "hashes" "internals" "io" "primitives" "psbt" "units")

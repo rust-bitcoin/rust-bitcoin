@@ -11,11 +11,11 @@ use std::error;
 use hashes::{sha256, siphash24};
 use internals::impl_array_newtype;
 use io::{BufRead, Write};
+use primitives::consensus::encode::{self, Decodable, Encodable, VarInt};
+use primitives::{block, Block, BlockHash, Transaction};
 
-use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::{block, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,6 +90,8 @@ impl Decodable for PrefilledTransaction {
     }
 }
 
+impl primitives::consensus::encode::GenericEncodeVec for PrefilledTransaction {}
+
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
@@ -141,6 +143,8 @@ impl Decodable for ShortId {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
+
+impl primitives::consensus::encode::GenericEncodeVec for ShortId {}
 
 /// A [`HeaderAndShortIds`] structure is used to relay a block header, the short
 /// transactions IDs used for matching already-available transactions, and a
@@ -372,15 +376,14 @@ impl BlockTransactions {
 #[cfg(test)]
 mod test {
     use hex::FromHex;
+    use primitives::consensus::{deserialize, serialize};
+    use primitives::locktime::absolute;
+    use primitives::{
+        transaction, Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxMerkleNode,
+        TxOut, Txid, Witness,
+    };
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
-    use crate::locktime::absolute;
-    use crate::merkle_tree::TxMerkleNode;
-    use crate::{
-        transaction, Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
-        Witness,
-    };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {

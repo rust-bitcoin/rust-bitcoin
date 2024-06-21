@@ -21,12 +21,11 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 mod message_signing {
     use core::fmt;
 
+    use address::{Address, AddressType};
     use hashes::sha256d;
     use internals::write_err;
+    use primitives::PublicKey;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-
-    use crate::address::{Address, AddressType};
-    use crate::crypto::key::PublicKey;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -265,11 +264,10 @@ mod tests {
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_incorrect_message_signature() {
+        use address::Address;
         use base64::prelude::{Engine as _, BASE64_STANDARD};
+        use primitives::{NetworkKind, PublicKey};
         use secp256k1;
-
-        use crate::crypto::key::PublicKey;
-        use crate::{Address, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";

@@ -6,17 +6,18 @@
 
 #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use crate::T instead")]
 pub use crate::{
-    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode,
-    Wtxid,
+    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WScriptHash, WitnessCommitment,
+    WitnessMerkleNode, Wtxid,
 };
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{
+    use bip32::XKeyIdentifier;
+    use primitives::{
         LegacySighash, PubkeyHash, ScriptHash, SegwitV0Sighash, TapSighash, WPubkeyHash,
-        WScriptHash, XKeyIdentifier,
     };
+
+    use super::*;
 
     #[test]
     fn hash_display() {

@@ -55,12 +55,18 @@ extern crate test;
 #[macro_use]
 extern crate alloc;
 
+/// Re-expot the `bitcoin-address` crate.
+pub extern crate address;
+
 #[cfg(feature = "base64")]
 /// Encodes and decodes base64 as bytes or utf8.
-pub extern crate base64;
+pub extern crate actual_base64 as base64;
 
 /// Bitcoin base58 encoding and decoding.
 pub extern crate base58;
+
+/// Re-expot the `bip32` crate.
+pub extern crate bip32;
 
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
@@ -75,71 +81,68 @@ pub extern crate io;
 #[cfg(feature = "ordered")]
 pub extern crate ordered;
 
+/// Re-export the `bitcoin-primitives` crate.
+pub extern crate primitives;
+
+/// Re-export the `psbt-v0` crate.
+pub extern crate psbt;
+
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
-#[macro_use]
 extern crate actual_serde as serde;
 
-#[cfg(test)]
-#[macro_use]
-mod test_macros;
 mod internal_macros;
-#[cfg(feature = "serde")]
-mod serde_utils;
 
 #[macro_use]
 pub mod p2p;
-pub mod address;
 pub mod bip152;
 pub mod bip158;
-pub mod bip32;
-pub mod blockdata;
 pub mod consensus;
-// Private until we either make this a crate or flatten it - still to be decided.
-pub(crate) mod crypto;
 pub mod hash_types;
-pub mod merkle_tree;
 pub mod network;
-pub mod policy;
-pub mod pow;
-pub mod psbt;
 pub mod sign_message;
-pub mod taproot;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use crate::{
-    address::{Address, AddressType, KnownHrp},
-    amount::{Amount, Denomination, SignedAmount},
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
-    blockdata::block::{self, Block, BlockHash, WitnessCommitment},
-    blockdata::constants,
-    blockdata::fee_rate::FeeRate,
-    blockdata::locktime::{self, absolute, relative},
-    blockdata::opcodes::{self, Opcode},
-    blockdata::script::witness_program::{self, WitnessProgram},
-    blockdata::script::witness_version::{self, WitnessVersion},
-    blockdata::script::{self, Script, ScriptBuf, ScriptHash, WScriptHash},
-    blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
-    blockdata::weight::Weight,
-    blockdata::witness::{self, Witness},
+    network::NetworkExt,
+    psbt::Psbt,
+};
+#[doc(inline)]
+pub use address::{Address, AddressType, KnownHrp};
+#[doc(inline)]
+pub use primitives::{
+    amount::{self, Amount, Denomination, SignedAmount},
+    block::{self, Block, BlockHash, BlockHeight, BlockInterval, WitnessCommitment},
     consensus::encode::VarInt,
     consensus::params,
-    crypto::ecdsa,
-    crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
-    crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
+    constants,
+    ecdsa,
+    fee_rate::{self, FeeRate}, // Comes from `units`.
+    key::{
+        self, CompressedPublicKey, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
+    },
+    locktime::{self, absolute, relative},
     merkle_tree::{MerkleBlock, TxMerkleNode, WitnessMerkleNode},
     network::{Network, NetworkKind},
+    opcodes::{self, Opcode},
     pow::{CompactTarget, Target, Work},
-    psbt::Psbt,
+    script::witness_program::{self, WitnessProgram},
+    script::witness_version::{self, WitnessVersion},
+    script::{self, Script, ScriptBuf, ScriptHash, WScriptHash},
+    sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     sighash::{EcdsaSighashType, TapSighashType},
+    taproot,
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
+    transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
+    weight::{self, Weight}, // Comes from `units`.
+    witness::{self, Witness},
 };
-pub use units::{BlockHeight, BlockInterval};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
@@ -164,79 +167,8 @@ mod prelude {
     pub use hex::DisplayHex;
 }
 
-pub mod amount {
-    //! Bitcoin amounts.
-    //!
-    //! This module mainly introduces the [Amount] and [SignedAmount] types.
-    //! We refer to the documentation on the types for more information.
-
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
-    #[rustfmt::skip]            // Keep public re-exports separate.
-    #[doc(inline)]
-    pub use units::amount::{
-        Amount, CheckedSum, Denomination, Display, ParseAmountError, SignedAmount,
-    };
-    #[cfg(feature = "serde")]
-    pub use units::amount::serde;
-
-    impl Decodable for Amount {
-        #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
-        }
-    }
-
-    impl Encodable for Amount {
-        #[inline]
-        fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-            self.to_sat().consensus_encode(w)
-        }
-    }
-}
-
 /// Unit parsing utilities.
 pub mod parse {
     /// Re-export everything from the [`units::parse`] module.
     pub use units::parse::ParseIntError;
-}
-
-mod encode_impls {
-    //! Encodable/Decodable implementations.
-    // While we are deprecating, re-exporting, and generally moving things around just put these here.
-
-    use units::{BlockHeight, BlockInterval};
-
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
-    /// Implements Encodable and Decodable for a simple wrapper type.
-    ///
-    /// Wrapper type is required to implement `to_u32()` and `From<u32>`.
-    macro_rules! impl_encodable_for_u32_wrapper {
-        ($ty:ident) => {
-            impl Decodable for $ty {
-                #[inline]
-                fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                    let inner = u32::consensus_decode(r)?;
-                    Ok($ty::from(inner))
-                }
-            }
-
-            impl Encodable for $ty {
-                #[inline]
-                fn consensus_encode<W: Write + ?Sized>(
-                    &self,
-                    w: &mut W,
-                ) -> Result<usize, io::Error> {
-                    let inner = self.to_u32();
-                    inner.consensus_encode(w)
-                }
-            }
-        };
-    }
-
-    impl_encodable_for_u32_wrapper!(BlockHeight);
-    impl_encodable_for_u32_wrapper!(BlockInterval);
 }

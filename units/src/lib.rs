@@ -27,10 +27,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-/// A generic serialization/deserialization framework.
-#[cfg(feature = "serde")]
-pub extern crate serde;
-
 #[cfg(test)]
 #[macro_use]
 mod test_macros;

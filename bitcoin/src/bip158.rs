@@ -43,14 +43,11 @@ use core::fmt::{self, Display, Formatter};
 use hashes::{sha256d, siphash24};
 use internals::write_err;
 use io::{BufRead, Write};
+use primitives::consensus::{Decodable, Encodable, VarInt};
+use primitives::{Block, BlockHash, OutPoint, Script};
 
-use crate::block::{Block, BlockHash};
-use crate::consensus::encode::VarInt;
-use crate::consensus::{Decodable, Encodable};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
-use crate::script::Script;
-use crate::transaction::OutPoint;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -65,6 +62,9 @@ hashes::hash_newtype! {
 
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
+
+impl primitives::consensus::encode::GenericEncodeVec for FilterHash {}
+impl primitives::consensus::encode::GenericEncodeVec for FilterHeader {}
 
 /// Errors for blockfilter.
 #[derive(Debug)]

@@ -7,12 +7,11 @@
 
 use hashes::sha256d;
 use io::{BufRead, Write};
+use primitives::consensus::{encode, Decodable, Encodable};
+use primitives::{BlockHash, Txid, Wtxid};
 
-use crate::block::BlockHash;
-use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p;
-use crate::transaction::{Txid, Wtxid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -95,6 +94,8 @@ impl Decodable for Inventory {
         })
     }
 }
+
+impl primitives::consensus::encode::GenericEncodeVec for Inventory {}
 
 // Some simple messages
 

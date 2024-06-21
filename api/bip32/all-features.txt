@@ -1,0 +1,487 @@
+#[non_exhaustive] pub enum bip32::Error
+impl bip32::ChainCode
+impl bip32::ChildNumber
+impl bip32::DerivationPath
+impl bip32::Fingerprint
+impl bip32::IntoDerivationPath for alloc::string::String
+impl bip32::InvalidBase58PayloadLengthError
+impl bip32::XKeyIdentifier
+impl bip32::Xpriv
+impl bip32::Xpub
+impl bitcoin_hashes::Hash for bip32::XKeyIdentifier
+impl bitcoin_hashes::serde_macros::serde_details::SerdeHash for bip32::XKeyIdentifier
+impl core::borrow::Borrow<[u8; 32]> for bip32::ChainCode
+impl core::borrow::Borrow<[u8; 4]> for bip32::Fingerprint
+impl core::borrow::Borrow<[u8]> for bip32::ChainCode
+impl core::borrow::Borrow<[u8]> for bip32::Fingerprint
+impl core::borrow::Borrow<[u8]> for bip32::XKeyIdentifier
+impl core::borrow::BorrowMut<[u8; 32]> for bip32::ChainCode
+impl core::borrow::BorrowMut<[u8; 4]> for bip32::Fingerprint
+impl core::borrow::BorrowMut<[u8]> for bip32::ChainCode
+impl core::borrow::BorrowMut<[u8]> for bip32::Fingerprint
+impl core::clone::Clone for bip32::ChainCode
+impl core::clone::Clone for bip32::ChildNumber
+impl core::clone::Clone for bip32::DerivationPath
+impl core::clone::Clone for bip32::Error
+impl core::clone::Clone for bip32::Fingerprint
+impl core::clone::Clone for bip32::InvalidBase58PayloadLengthError
+impl core::clone::Clone for bip32::XKeyIdentifier
+impl core::clone::Clone for bip32::Xpriv
+impl core::clone::Clone for bip32::Xpub
+impl core::cmp::Eq for bip32::ChainCode
+impl core::cmp::Eq for bip32::ChildNumber
+impl core::cmp::Eq for bip32::DerivationPath
+impl core::cmp::Eq for bip32::Error
+impl core::cmp::Eq for bip32::Fingerprint
+impl core::cmp::Eq for bip32::InvalidBase58PayloadLengthError
+impl core::cmp::Eq for bip32::XKeyIdentifier
+impl core::cmp::Eq for bip32::Xpriv
+impl core::cmp::Eq for bip32::Xpub
+impl core::cmp::Ord for bip32::ChainCode
+impl core::cmp::Ord for bip32::ChildNumber
+impl core::cmp::Ord for bip32::DerivationPath
+impl core::cmp::Ord for bip32::Fingerprint
+impl core::cmp::Ord for bip32::XKeyIdentifier
+impl core::cmp::Ord for bip32::Xpub
+impl core::cmp::PartialEq for bip32::ChainCode
+impl core::cmp::PartialEq for bip32::ChildNumber
+impl core::cmp::PartialEq for bip32::DerivationPath
+impl core::cmp::PartialEq for bip32::Error
+impl core::cmp::PartialEq for bip32::Fingerprint
+impl core::cmp::PartialEq for bip32::InvalidBase58PayloadLengthError
+impl core::cmp::PartialEq for bip32::XKeyIdentifier
+impl core::cmp::PartialEq for bip32::Xpriv
+impl core::cmp::PartialEq for bip32::Xpub
+impl core::cmp::PartialOrd for bip32::ChainCode
+impl core::cmp::PartialOrd for bip32::ChildNumber
+impl core::cmp::PartialOrd for bip32::DerivationPath
+impl core::cmp::PartialOrd for bip32::Fingerprint
+impl core::cmp::PartialOrd for bip32::XKeyIdentifier
+impl core::cmp::PartialOrd for bip32::Xpub
+impl core::convert::AsMut<[u8; 32]> for bip32::ChainCode
+impl core::convert::AsMut<[u8; 4]> for bip32::Fingerprint
+impl core::convert::AsMut<[u8]> for bip32::ChainCode
+impl core::convert::AsMut<[u8]> for bip32::Fingerprint
+impl core::convert::AsRef<[bip32::ChildNumber]> for bip32::ChildNumber
+impl core::convert::AsRef<[bip32::ChildNumber]> for bip32::DerivationPath
+impl core::convert::AsRef<[u8; 20]> for bip32::XKeyIdentifier
+impl core::convert::AsRef<[u8; 32]> for bip32::ChainCode
+impl core::convert::AsRef<[u8; 4]> for bip32::Fingerprint
+impl core::convert::AsRef<[u8]> for bip32::ChainCode
+impl core::convert::AsRef<[u8]> for bip32::Fingerprint
+impl core::convert::AsRef<[u8]> for bip32::XKeyIdentifier
+impl core::convert::From<&bip32::Xpub> for bip32::XKeyIdentifier
+impl core::convert::From<alloc::vec::Vec<bip32::ChildNumber>> for bip32::DerivationPath
+impl core::convert::From<base58ck::error::Error> for bip32::Error
+impl core::convert::From<bip32::ChildNumber> for u32
+impl core::convert::From<bip32::DerivationPath> for alloc::vec::Vec<bip32::ChildNumber>
+impl core::convert::From<bip32::InvalidBase58PayloadLengthError> for bip32::Error
+impl core::convert::From<bip32::XKeyIdentifier> for bitcoin_hashes::hash160::Hash
+impl core::convert::From<bip32::Xpub> for bip32::XKeyIdentifier
+impl core::convert::From<bitcoin_hashes::hash160::Hash> for bip32::XKeyIdentifier
+impl core::convert::From<core::convert::Infallible> for bip32::Error
+impl core::convert::From<secp256k1::Error> for bip32::Error
+impl core::convert::From<u32> for bip32::ChildNumber
+impl core::default::Default for bip32::DerivationPath
+impl core::default::Default for bip32::Fingerprint
+impl core::error::Error for bip32::Error
+impl core::error::Error for bip32::InvalidBase58PayloadLengthError
+impl core::fmt::Debug for bip32::ChainCode
+impl core::fmt::Debug for bip32::ChildNumber
+impl core::fmt::Debug for bip32::DerivationPath
+impl core::fmt::Debug for bip32::Error
+impl core::fmt::Debug for bip32::Fingerprint
+impl core::fmt::Debug for bip32::InvalidBase58PayloadLengthError
+impl core::fmt::Debug for bip32::XKeyIdentifier
+impl core::fmt::Debug for bip32::Xpriv
+impl core::fmt::Debug for bip32::Xpub
+impl core::fmt::Display for bip32::ChainCode
+impl core::fmt::Display for bip32::ChildNumber
+impl core::fmt::Display for bip32::DerivationPath
+impl core::fmt::Display for bip32::Error
+impl core::fmt::Display for bip32::Fingerprint
+impl core::fmt::Display for bip32::InvalidBase58PayloadLengthError
+impl core::fmt::Display for bip32::XKeyIdentifier
+impl core::fmt::Display for bip32::Xpriv
+impl core::fmt::Display for bip32::Xpub
+impl core::fmt::LowerHex for bip32::ChainCode
+impl core::fmt::LowerHex for bip32::Fingerprint
+impl core::fmt::LowerHex for bip32::XKeyIdentifier
+impl core::fmt::UpperHex for bip32::ChainCode
+impl core::fmt::UpperHex for bip32::Fingerprint
+impl core::fmt::UpperHex for bip32::XKeyIdentifier
+impl core::hash::Hash for bip32::ChainCode
+impl core::hash::Hash for bip32::ChildNumber
+impl core::hash::Hash for bip32::DerivationPath
+impl core::hash::Hash for bip32::Fingerprint
+impl core::hash::Hash for bip32::XKeyIdentifier
+impl core::hash::Hash for bip32::Xpub
+impl core::iter::traits::collect::FromIterator<bip32::ChildNumber> for bip32::DerivationPath
+impl core::marker::Copy for bip32::ChainCode
+impl core::marker::Copy for bip32::ChildNumber
+impl core::marker::Copy for bip32::Fingerprint
+impl core::marker::Copy for bip32::XKeyIdentifier
+impl core::marker::Copy for bip32::Xpriv
+impl core::marker::Copy for bip32::Xpub
+impl core::marker::Freeze for bip32::ChainCode
+impl core::marker::Freeze for bip32::ChildNumber
+impl core::marker::Freeze for bip32::DerivationPath
+impl core::marker::Freeze for bip32::Error
+impl core::marker::Freeze for bip32::Fingerprint
+impl core::marker::Freeze for bip32::InvalidBase58PayloadLengthError
+impl core::marker::Freeze for bip32::XKeyIdentifier
+impl core::marker::Freeze for bip32::Xpriv
+impl core::marker::Freeze for bip32::Xpub
+impl core::marker::Send for bip32::ChainCode
+impl core::marker::Send for bip32::ChildNumber
+impl core::marker::Send for bip32::DerivationPath
+impl core::marker::Send for bip32::Error
+impl core::marker::Send for bip32::Fingerprint
+impl core::marker::Send for bip32::InvalidBase58PayloadLengthError
+impl core::marker::Send for bip32::XKeyIdentifier
+impl core::marker::Send for bip32::Xpriv
+impl core::marker::Send for bip32::Xpub
+impl core::marker::StructuralPartialEq for bip32::ChainCode
+impl core::marker::StructuralPartialEq for bip32::ChildNumber
+impl core::marker::StructuralPartialEq for bip32::DerivationPath
+impl core::marker::StructuralPartialEq for bip32::Error
+impl core::marker::StructuralPartialEq for bip32::Fingerprint
+impl core::marker::StructuralPartialEq for bip32::InvalidBase58PayloadLengthError
+impl core::marker::StructuralPartialEq for bip32::XKeyIdentifier
+impl core::marker::StructuralPartialEq for bip32::Xpriv
+impl core::marker::StructuralPartialEq for bip32::Xpub
+impl core::marker::Sync for bip32::ChainCode
+impl core::marker::Sync for bip32::ChildNumber
+impl core::marker::Sync for bip32::DerivationPath
+impl core::marker::Sync for bip32::Error
+impl core::marker::Sync for bip32::Fingerprint
+impl core::marker::Sync for bip32::InvalidBase58PayloadLengthError
+impl core::marker::Sync for bip32::XKeyIdentifier
+impl core::marker::Sync for bip32::Xpriv
+impl core::marker::Sync for bip32::Xpub
+impl core::marker::Unpin for bip32::ChainCode
+impl core::marker::Unpin for bip32::ChildNumber
+impl core::marker::Unpin for bip32::DerivationPath
+impl core::marker::Unpin for bip32::Error
+impl core::marker::Unpin for bip32::Fingerprint
+impl core::marker::Unpin for bip32::InvalidBase58PayloadLengthError
+impl core::marker::Unpin for bip32::XKeyIdentifier
+impl core::marker::Unpin for bip32::Xpriv
+impl core::marker::Unpin for bip32::Xpub
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::ChainCode
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::ChildNumber
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::DerivationPath
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::Error
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::Fingerprint
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::InvalidBase58PayloadLengthError
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::XKeyIdentifier
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::Xpriv
+impl core::panic::unwind_safe::RefUnwindSafe for bip32::Xpub
+impl core::panic::unwind_safe::UnwindSafe for bip32::ChainCode
+impl core::panic::unwind_safe::UnwindSafe for bip32::ChildNumber
+impl core::panic::unwind_safe::UnwindSafe for bip32::DerivationPath
+impl core::panic::unwind_safe::UnwindSafe for bip32::Error
+impl core::panic::unwind_safe::UnwindSafe for bip32::Fingerprint
+impl core::panic::unwind_safe::UnwindSafe for bip32::InvalidBase58PayloadLengthError
+impl core::panic::unwind_safe::UnwindSafe for bip32::XKeyIdentifier
+impl core::panic::unwind_safe::UnwindSafe for bip32::Xpriv
+impl core::panic::unwind_safe::UnwindSafe for bip32::Xpub
+impl core::str::traits::FromStr for bip32::ChainCode
+impl core::str::traits::FromStr for bip32::ChildNumber
+impl core::str::traits::FromStr for bip32::DerivationPath
+impl core::str::traits::FromStr for bip32::Fingerprint
+impl core::str::traits::FromStr for bip32::XKeyIdentifier
+impl core::str::traits::FromStr for bip32::Xpriv
+impl core::str::traits::FromStr for bip32::Xpub
+impl serde::ser::Serialize for bip32::ChainCode
+impl serde::ser::Serialize for bip32::ChildNumber
+impl serde::ser::Serialize for bip32::DerivationPath
+impl serde::ser::Serialize for bip32::Fingerprint
+impl serde::ser::Serialize for bip32::XKeyIdentifier
+impl serde::ser::Serialize for bip32::Xpriv
+impl serde::ser::Serialize for bip32::Xpub
+impl<'a> bip32::DerivationPathIterator<'a>
+impl<'a> bip32::IntoDerivationPath for &'a str
+impl<'a> core::convert::From<&'a [bip32::ChildNumber]> for bip32::DerivationPath
+impl<'a> core::convert::From<&'a [u8; 32]> for bip32::ChainCode
+impl<'a> core::convert::From<&'a [u8; 4]> for bip32::Fingerprint
+impl<'a> core::convert::From<[u8; 32]> for bip32::ChainCode
+impl<'a> core::convert::From<[u8; 4]> for bip32::Fingerprint
+impl<'a> core::convert::TryFrom<&'a [u8]> for bip32::ChainCode
+impl<'a> core::convert::TryFrom<&'a [u8]> for bip32::Fingerprint
+impl<'a> core::iter::traits::collect::IntoIterator for &'a bip32::DerivationPath
+impl<'a> core::iter::traits::iterator::Iterator for bip32::DerivationPathIterator<'a>
+impl<'a> core::marker::Freeze for bip32::DerivationPathIterator<'a>
+impl<'a> core::marker::Send for bip32::DerivationPathIterator<'a>
+impl<'a> core::marker::Sync for bip32::DerivationPathIterator<'a>
+impl<'a> core::marker::Unpin for bip32::DerivationPathIterator<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for bip32::DerivationPathIterator<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for bip32::DerivationPathIterator<'a>
+impl<'de> serde::de::Deserialize<'de> for bip32::ChainCode
+impl<'de> serde::de::Deserialize<'de> for bip32::ChildNumber
+impl<'de> serde::de::Deserialize<'de> for bip32::DerivationPath
+impl<'de> serde::de::Deserialize<'de> for bip32::Fingerprint
+impl<'de> serde::de::Deserialize<'de> for bip32::XKeyIdentifier
+impl<'de> serde::de::Deserialize<'de> for bip32::Xpriv
+impl<'de> serde::de::Deserialize<'de> for bip32::Xpub
+impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bip32::XKeyIdentifier
+impl<I> core::ops::index::Index<I> for bip32::ChainCode where [u8]: core::ops::index::Index<I>
+impl<I> core::ops::index::Index<I> for bip32::DerivationPath where alloc::vec::Vec<bip32::ChildNumber>: core::ops::index::Index<I>
+impl<I> core::ops::index::Index<I> for bip32::Fingerprint where [u8]: core::ops::index::Index<I>
+impl<T> bip32::IntoDerivationPath for T where T: core::convert::Into<bip32::DerivationPath>
+pub bip32::ChildNumber::Hardened
+pub bip32::ChildNumber::Hardened::index: u32
+pub bip32::ChildNumber::Normal
+pub bip32::ChildNumber::Normal::index: u32
+pub bip32::Error::Base58(base58ck::error::Error)
+pub bip32::Error::CannotDeriveFromHardenedKey
+pub bip32::Error::Hex(hex_conservative::error::HexToArrayError)
+pub bip32::Error::InvalidBase58PayloadLength(bip32::InvalidBase58PayloadLengthError)
+pub bip32::Error::InvalidChildNumber(u32)
+pub bip32::Error::InvalidChildNumberFormat
+pub bip32::Error::InvalidDerivationPathFormat
+pub bip32::Error::InvalidPublicKeyHexLength(usize)
+pub bip32::Error::Secp256k1(secp256k1::Error)
+pub bip32::Error::UnknownVersion([u8; 4])
+pub bip32::Error::WrongExtendedKeyLength(usize)
+pub bip32::Xpriv::chain_code: bip32::ChainCode
+pub bip32::Xpriv::child_number: bip32::ChildNumber
+pub bip32::Xpriv::depth: u8
+pub bip32::Xpriv::network: bitcoin_primitives::network::NetworkKind
+pub bip32::Xpriv::parent_fingerprint: bip32::Fingerprint
+pub bip32::Xpriv::private_key: secp256k1::key::SecretKey
+pub bip32::Xpub::chain_code: bip32::ChainCode
+pub bip32::Xpub::child_number: bip32::ChildNumber
+pub bip32::Xpub::depth: u8
+pub bip32::Xpub::network: bitcoin_primitives::network::NetworkKind
+pub bip32::Xpub::parent_fingerprint: bip32::Fingerprint
+pub bip32::Xpub::public_key: secp256k1::key::PublicKey
+pub const bip32::XKeyIdentifier::DISPLAY_BACKWARD: bool
+pub const bip32::XKeyIdentifier::LEN: usize
+pub const bip32::XKeyIdentifier::N: usize
+pub enum bip32::ChildNumber
+pub extern crate bip32::primitives
+pub fn &'a bip32::DerivationPath::into_iter(self) -> Self::IntoIter
+pub fn &'a str::into_derivation_path(self) -> core::result::Result<bip32::DerivationPath, bip32::Error>
+pub fn T::into_derivation_path(self) -> core::result::Result<bip32::DerivationPath, bip32::Error>
+pub fn alloc::string::String::into_derivation_path(self) -> core::result::Result<bip32::DerivationPath, bip32::Error>
+pub fn alloc::vec::Vec<bip32::ChildNumber>::from(path: bip32::DerivationPath) -> Self
+pub fn bip32::ChainCode::as_byte_array(&self) -> &[u8; 32]
+pub fn bip32::ChainCode::as_bytes(&self) -> &[u8]
+pub fn bip32::ChainCode::as_mut(&mut self) -> &mut [u8; 32]
+pub fn bip32::ChainCode::as_mut(&mut self) -> &mut [u8]
+pub fn bip32::ChainCode::as_mut_ptr(&mut self) -> *mut u8
+pub fn bip32::ChainCode::as_ptr(&self) -> *const u8
+pub fn bip32::ChainCode::as_ref(&self) -> &[u8; 32]
+pub fn bip32::ChainCode::as_ref(&self) -> &[u8]
+pub fn bip32::ChainCode::borrow(&self) -> &[u8; 32]
+pub fn bip32::ChainCode::borrow(&self) -> &[u8]
+pub fn bip32::ChainCode::borrow_mut(&mut self) -> &mut [u8; 32]
+pub fn bip32::ChainCode::borrow_mut(&mut self) -> &mut [u8]
+pub fn bip32::ChainCode::clone(&self) -> bip32::ChainCode
+pub fn bip32::ChainCode::cmp(&self, other: &bip32::ChainCode) -> core::cmp::Ordering
+pub fn bip32::ChainCode::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bip32::ChainCode, <D as serde::de::Deserializer>::Error>
+pub fn bip32::ChainCode::eq(&self, other: &bip32::ChainCode) -> bool
+pub fn bip32::ChainCode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::ChainCode::from(data: &'a [u8; 32]) -> Self
+pub fn bip32::ChainCode::from(data: [u8; 32]) -> Self
+pub fn bip32::ChainCode::from_byte_array(bytes: [u8; 32]) -> Self
+pub fn bip32::ChainCode::from_hex(s: &str) -> core::result::Result<Self, hex_conservative::error::HexToArrayError>
+pub fn bip32::ChainCode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bip32::ChainCode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::ChainCode::index(&self, index: I) -> &Self::Output
+pub fn bip32::ChainCode::is_empty(&self) -> bool
+pub fn bip32::ChainCode::len(&self) -> usize
+pub fn bip32::ChainCode::partial_cmp(&self, other: &bip32::ChainCode) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::ChainCode::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bip32::ChainCode::to_byte_array(self) -> [u8; 32]
+pub fn bip32::ChainCode::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
+pub fn bip32::ChildNumber::as_ref(&self) -> &[bip32::ChildNumber]
+pub fn bip32::ChildNumber::clone(&self) -> bip32::ChildNumber
+pub fn bip32::ChildNumber::cmp(&self, other: &bip32::ChildNumber) -> core::cmp::Ordering
+pub fn bip32::ChildNumber::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bip32::ChildNumber::eq(&self, other: &bip32::ChildNumber) -> bool
+pub fn bip32::ChildNumber::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::ChildNumber::from(number: u32) -> Self
+pub fn bip32::ChildNumber::from_hardened_idx(index: u32) -> core::result::Result<Self, bip32::Error>
+pub fn bip32::ChildNumber::from_normal_idx(index: u32) -> core::result::Result<Self, bip32::Error>
+pub fn bip32::ChildNumber::from_str(inp: &str) -> core::result::Result<bip32::ChildNumber, bip32::Error>
+pub fn bip32::ChildNumber::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::ChildNumber::increment(self) -> core::result::Result<bip32::ChildNumber, bip32::Error>
+pub fn bip32::ChildNumber::is_hardened(&self) -> bool
+pub fn bip32::ChildNumber::is_normal(&self) -> bool
+pub fn bip32::ChildNumber::partial_cmp(&self, other: &bip32::ChildNumber) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::ChildNumber::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bip32::DerivationPath::as_ref(&self) -> &[bip32::ChildNumber]
+pub fn bip32::DerivationPath::child(&self, cn: bip32::ChildNumber) -> bip32::DerivationPath
+pub fn bip32::DerivationPath::children_from(&self, cn: bip32::ChildNumber) -> bip32::DerivationPathIterator<'_>
+pub fn bip32::DerivationPath::clone(&self) -> bip32::DerivationPath
+pub fn bip32::DerivationPath::cmp(&self, other: &bip32::DerivationPath) -> core::cmp::Ordering
+pub fn bip32::DerivationPath::default() -> bip32::DerivationPath
+pub fn bip32::DerivationPath::deserialize<D>(deserializer: D) -> core::result::Result<bip32::DerivationPath, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bip32::DerivationPath::eq(&self, other: &bip32::DerivationPath) -> bool
+pub fn bip32::DerivationPath::extend<T: core::convert::AsRef<[bip32::ChildNumber]>>(&self, path: T) -> bip32::DerivationPath
+pub fn bip32::DerivationPath::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::DerivationPath::from(numbers: &'a [bip32::ChildNumber]) -> Self
+pub fn bip32::DerivationPath::from(numbers: alloc::vec::Vec<bip32::ChildNumber>) -> Self
+pub fn bip32::DerivationPath::from_iter<T>(iter: T) -> Self where T: core::iter::traits::collect::IntoIterator<Item = bip32::ChildNumber>
+pub fn bip32::DerivationPath::from_str(path: &str) -> core::result::Result<bip32::DerivationPath, bip32::Error>
+pub fn bip32::DerivationPath::hardened_children(&self) -> bip32::DerivationPathIterator<'_>
+pub fn bip32::DerivationPath::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::DerivationPath::index(&self, index: I) -> &Self::Output
+pub fn bip32::DerivationPath::into_child(self, cn: bip32::ChildNumber) -> bip32::DerivationPath
+pub fn bip32::DerivationPath::is_empty(&self) -> bool
+pub fn bip32::DerivationPath::is_master(&self) -> bool
+pub fn bip32::DerivationPath::len(&self) -> usize
+pub fn bip32::DerivationPath::master() -> bip32::DerivationPath
+pub fn bip32::DerivationPath::normal_children(&self) -> bip32::DerivationPathIterator<'_>
+pub fn bip32::DerivationPath::partial_cmp(&self, other: &bip32::DerivationPath) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::DerivationPath::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bip32::DerivationPath::to_u32_vec(&self) -> alloc::vec::Vec<u32>
+pub fn bip32::DerivationPathIterator<'a>::next(&mut self) -> core::option::Option<Self::Item>
+pub fn bip32::DerivationPathIterator<'a>::start_from(path: &'a bip32::DerivationPath, start: bip32::ChildNumber) -> bip32::DerivationPathIterator<'a>
+pub fn bip32::Error::clone(&self) -> bip32::Error
+pub fn bip32::Error::eq(&self, other: &bip32::Error) -> bool
+pub fn bip32::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Error::from(e: bip32::InvalidBase58PayloadLengthError) -> bip32::Error
+pub fn bip32::Error::from(e: secp256k1::Error) -> bip32::Error
+pub fn bip32::Error::from(err: base58ck::error::Error) -> Self
+pub fn bip32::Error::from(never: core::convert::Infallible) -> Self
+pub fn bip32::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bip32::Fingerprint::as_byte_array(&self) -> &[u8; 4]
+pub fn bip32::Fingerprint::as_bytes(&self) -> &[u8]
+pub fn bip32::Fingerprint::as_mut(&mut self) -> &mut [u8; 4]
+pub fn bip32::Fingerprint::as_mut(&mut self) -> &mut [u8]
+pub fn bip32::Fingerprint::as_mut_ptr(&mut self) -> *mut u8
+pub fn bip32::Fingerprint::as_ptr(&self) -> *const u8
+pub fn bip32::Fingerprint::as_ref(&self) -> &[u8; 4]
+pub fn bip32::Fingerprint::as_ref(&self) -> &[u8]
+pub fn bip32::Fingerprint::borrow(&self) -> &[u8; 4]
+pub fn bip32::Fingerprint::borrow(&self) -> &[u8]
+pub fn bip32::Fingerprint::borrow_mut(&mut self) -> &mut [u8; 4]
+pub fn bip32::Fingerprint::borrow_mut(&mut self) -> &mut [u8]
+pub fn bip32::Fingerprint::clone(&self) -> bip32::Fingerprint
+pub fn bip32::Fingerprint::cmp(&self, other: &bip32::Fingerprint) -> core::cmp::Ordering
+pub fn bip32::Fingerprint::default() -> bip32::Fingerprint
+pub fn bip32::Fingerprint::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bip32::Fingerprint, <D as serde::de::Deserializer>::Error>
+pub fn bip32::Fingerprint::eq(&self, other: &bip32::Fingerprint) -> bool
+pub fn bip32::Fingerprint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Fingerprint::from(data: &'a [u8; 4]) -> Self
+pub fn bip32::Fingerprint::from(data: [u8; 4]) -> Self
+pub fn bip32::Fingerprint::from_byte_array(bytes: [u8; 4]) -> Self
+pub fn bip32::Fingerprint::from_hex(s: &str) -> core::result::Result<Self, hex_conservative::error::HexToArrayError>
+pub fn bip32::Fingerprint::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bip32::Fingerprint::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::Fingerprint::index(&self, index: I) -> &Self::Output
+pub fn bip32::Fingerprint::is_empty(&self) -> bool
+pub fn bip32::Fingerprint::len(&self) -> usize
+pub fn bip32::Fingerprint::partial_cmp(&self, other: &bip32::Fingerprint) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::Fingerprint::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bip32::Fingerprint::to_byte_array(self) -> [u8; 4]
+pub fn bip32::Fingerprint::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
+pub fn bip32::IntoDerivationPath::into_derivation_path(self) -> core::result::Result<bip32::DerivationPath, bip32::Error>
+pub fn bip32::InvalidBase58PayloadLengthError::clone(&self) -> bip32::InvalidBase58PayloadLengthError
+pub fn bip32::InvalidBase58PayloadLengthError::eq(&self, other: &bip32::InvalidBase58PayloadLengthError) -> bool
+pub fn bip32::InvalidBase58PayloadLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::InvalidBase58PayloadLengthError::invalid_base58_payload_length(&self) -> usize
+pub fn bip32::XKeyIdentifier::all_zeros() -> Self
+pub fn bip32::XKeyIdentifier::as_byte_array(&self) -> &<bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub fn bip32::XKeyIdentifier::as_byte_array(&self) -> &Self::Bytes
+pub fn bip32::XKeyIdentifier::as_raw_hash(&self) -> &bitcoin_hashes::hash160::Hash
+pub fn bip32::XKeyIdentifier::as_ref(&self) -> &[u8; 20]
+pub fn bip32::XKeyIdentifier::as_ref(&self) -> &[u8]
+pub fn bip32::XKeyIdentifier::borrow(&self) -> &[u8]
+pub fn bip32::XKeyIdentifier::clone(&self) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::cmp(&self, other: &bip32::XKeyIdentifier) -> core::cmp::Ordering
+pub fn bip32::XKeyIdentifier::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bip32::XKeyIdentifier, <D as serde::de::Deserializer>::Error>
+pub fn bip32::XKeyIdentifier::engine() -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
+pub fn bip32::XKeyIdentifier::eq(&self, other: &bip32::XKeyIdentifier) -> bool
+pub fn bip32::XKeyIdentifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::XKeyIdentifier::from(inner: bitcoin_hashes::hash160::Hash) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::from(key: &bip32::Xpub) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::from(key: bip32::Xpub) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::from_byte_array(bytes: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub fn bip32::XKeyIdentifier::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bip32::XKeyIdentifier::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
+pub fn bip32::XKeyIdentifier::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::from_raw_hash(inner: bitcoin_hashes::hash160::Hash) -> bip32::XKeyIdentifier
+pub fn bip32::XKeyIdentifier::from_slice(sl: &[u8]) -> core::result::Result<bip32::XKeyIdentifier, bitcoin_hashes::FromSliceError>
+pub fn bip32::XKeyIdentifier::from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
+pub fn bip32::XKeyIdentifier::from_str(s: &str) -> core::result::Result<bip32::XKeyIdentifier, Self::Err>
+pub fn bip32::XKeyIdentifier::hash(data: &[u8]) -> Self
+pub fn bip32::XKeyIdentifier::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::XKeyIdentifier::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
+pub fn bip32::XKeyIdentifier::index(&self, index: I) -> &Self::Output
+pub fn bip32::XKeyIdentifier::partial_cmp(&self, other: &bip32::XKeyIdentifier) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::XKeyIdentifier::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bip32::XKeyIdentifier::to_byte_array(self) -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub fn bip32::XKeyIdentifier::to_byte_array(self) -> Self::Bytes
+pub fn bip32::XKeyIdentifier::to_raw_hash(self) -> bitcoin_hashes::hash160::Hash
+pub fn bip32::Xpriv::clone(&self) -> bip32::Xpriv
+pub fn bip32::Xpriv::decode(data: &[u8]) -> core::result::Result<bip32::Xpriv, bip32::Error>
+pub fn bip32::Xpriv::derive_priv<C: secp256k1::context::Signing, P: core::convert::AsRef<[bip32::ChildNumber]>>(&self, secp: &secp256k1::Secp256k1<C>, path: &P) -> bip32::Xpriv
+pub fn bip32::Xpriv::deserialize<D>(deserializer: D) -> core::result::Result<bip32::Xpriv, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bip32::Xpriv::encode(&self) -> [u8; 78]
+pub fn bip32::Xpriv::eq(&self, other: &bip32::Xpriv) -> bool
+pub fn bip32::Xpriv::fingerprint<C: secp256k1::context::Signing>(&self, secp: &secp256k1::Secp256k1<C>) -> bip32::Fingerprint
+pub fn bip32::Xpriv::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Xpriv::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Xpriv::from_str(inp: &str) -> core::result::Result<bip32::Xpriv, bip32::Error>
+pub fn bip32::Xpriv::identifier<C: secp256k1::context::Signing>(&self, secp: &secp256k1::Secp256k1<C>) -> bip32::XKeyIdentifier
+pub fn bip32::Xpriv::new_master(network: impl core::convert::Into<bitcoin_primitives::network::NetworkKind>, seed: &[u8]) -> core::result::Result<bip32::Xpriv, bip32::Error>
+pub fn bip32::Xpriv::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bip32::Xpriv::to_keypair<C: secp256k1::context::Signing>(self, secp: &secp256k1::Secp256k1<C>) -> secp256k1::key::Keypair
+pub fn bip32::Xpriv::to_priv(self) -> bitcoin_primitives::crypto::key::PrivateKey
+pub fn bip32::Xpub::ckd_pub<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, i: bip32::ChildNumber) -> core::result::Result<bip32::Xpub, bip32::Error>
+pub fn bip32::Xpub::ckd_pub_tweak(&self, i: bip32::ChildNumber) -> core::result::Result<(secp256k1::key::SecretKey, bip32::ChainCode), bip32::Error>
+pub fn bip32::Xpub::clone(&self) -> bip32::Xpub
+pub fn bip32::Xpub::cmp(&self, other: &bip32::Xpub) -> core::cmp::Ordering
+pub fn bip32::Xpub::decode(data: &[u8]) -> core::result::Result<bip32::Xpub, bip32::Error>
+pub fn bip32::Xpub::derive_pub<C: secp256k1::context::Verification, P: core::convert::AsRef<[bip32::ChildNumber]>>(&self, secp: &secp256k1::Secp256k1<C>, path: &P) -> core::result::Result<bip32::Xpub, bip32::Error>
+pub fn bip32::Xpub::deserialize<D>(deserializer: D) -> core::result::Result<bip32::Xpub, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bip32::Xpub::encode(&self) -> [u8; 78]
+pub fn bip32::Xpub::eq(&self, other: &bip32::Xpub) -> bool
+pub fn bip32::Xpub::fingerprint(&self) -> bip32::Fingerprint
+pub fn bip32::Xpub::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Xpub::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bip32::Xpub::from_priv<C: secp256k1::context::Signing>(secp: &secp256k1::Secp256k1<C>, sk: &bip32::Xpriv) -> bip32::Xpub
+pub fn bip32::Xpub::from_str(inp: &str) -> core::result::Result<bip32::Xpub, bip32::Error>
+pub fn bip32::Xpub::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bip32::Xpub::identifier(&self) -> bip32::XKeyIdentifier
+pub fn bip32::Xpub::partial_cmp(&self, other: &bip32::Xpub) -> core::option::Option<core::cmp::Ordering>
+pub fn bip32::Xpub::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bip32::Xpub::to_pub(self) -> bitcoin_primitives::crypto::key::CompressedPublicKey
+pub fn bip32::Xpub::to_x_only_pub(self) -> secp256k1::key::XOnlyPublicKey
+pub fn bitcoin_hashes::hash160::Hash::from(hashtype: bip32::XKeyIdentifier) -> bitcoin_hashes::hash160::Hash
+pub fn u32::from(cnum: bip32::ChildNumber) -> Self
+pub mod bip32
+pub struct bip32::ChainCode(_)
+pub struct bip32::DerivationPath(_)
+pub struct bip32::DerivationPathIterator<'a>
+pub struct bip32::Fingerprint(_)
+pub struct bip32::InvalidBase58PayloadLengthError
+pub struct bip32::XKeyIdentifier(_)
+pub struct bip32::Xpriv
+pub struct bip32::Xpub
+pub trait bip32::IntoDerivationPath
+pub type &'a bip32::DerivationPath::IntoIter = core::slice::iter::Iter<'a, bip32::ChildNumber>
+pub type &'a bip32::DerivationPath::Item = &'a bip32::ChildNumber
+pub type bip32::ChainCode::Err = hex_conservative::error::HexToArrayError
+pub type bip32::ChainCode::Error = core::array::TryFromSliceError
+pub type bip32::ChainCode::Output = <[u8] as core::ops::index::Index<I>>::Output
+pub type bip32::ChildNumber::Err = bip32::Error
+pub type bip32::DerivationPath::Err = bip32::Error
+pub type bip32::DerivationPath::Output = <alloc::vec::Vec<bip32::ChildNumber> as core::ops::index::Index<I>>::Output
+pub type bip32::DerivationPathIterator<'a>::Item = bip32::DerivationPath
+pub type bip32::ExtendedPrivKey = bip32::Xpriv
+pub type bip32::ExtendedPubKey = bip32::Xpub
+pub type bip32::Fingerprint::Err = hex_conservative::error::HexToArrayError
+pub type bip32::Fingerprint::Error = core::array::TryFromSliceError
+pub type bip32::Fingerprint::Output = <[u8] as core::ops::index::Index<I>>::Output
+pub type bip32::KeySource = (bip32::Fingerprint, bip32::DerivationPath)
+pub type bip32::XKeyIdentifier::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bip32::XKeyIdentifier::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
+pub type bip32::XKeyIdentifier::Err = hex_conservative::error::HexToArrayError
+pub type bip32::XKeyIdentifier::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
+pub type bip32::Xpriv::Err = bip32::Error
+pub type bip32::Xpub::Err = bip32::Error

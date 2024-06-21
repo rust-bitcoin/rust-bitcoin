@@ -1,0 +1,499 @@
+#[non_exhaustive] pub enum psbt_v0::Error
+#[non_exhaustive] pub enum psbt_v0::ExtractTxError
+#[non_exhaustive] pub enum psbt_v0::GetKeyError
+#[non_exhaustive] pub enum psbt_v0::IndexOutOfBoundsError
+#[non_exhaustive] pub enum psbt_v0::KeyRequest
+#[non_exhaustive] pub enum psbt_v0::OutputType
+#[non_exhaustive] pub enum psbt_v0::SignError
+impl !core::panic::unwind_safe::RefUnwindSafe for psbt_v0::Error
+impl !core::panic::unwind_safe::UnwindSafe for psbt_v0::Error
+impl core::clone::Clone for psbt_v0::ExtractTxError
+impl core::clone::Clone for psbt_v0::GetKeyError
+impl core::clone::Clone for psbt_v0::IndexOutOfBoundsError
+impl core::clone::Clone for psbt_v0::Input
+impl core::clone::Clone for psbt_v0::KeyRequest
+impl core::clone::Clone for psbt_v0::Output
+impl core::clone::Clone for psbt_v0::OutputType
+impl core::clone::Clone for psbt_v0::Psbt
+impl core::clone::Clone for psbt_v0::PsbtSighashType
+impl core::clone::Clone for psbt_v0::SignError
+impl core::clone::Clone for psbt_v0::SigningAlgorithm
+impl core::clone::Clone for psbt_v0::SigningKeys
+impl core::clone::Clone for psbt_v0::raw::Key
+impl core::cmp::Eq for psbt_v0::ExtractTxError
+impl core::cmp::Eq for psbt_v0::GetKeyError
+impl core::cmp::Eq for psbt_v0::IndexOutOfBoundsError
+impl core::cmp::Eq for psbt_v0::Input
+impl core::cmp::Eq for psbt_v0::KeyRequest
+impl core::cmp::Eq for psbt_v0::Output
+impl core::cmp::Eq for psbt_v0::OutputType
+impl core::cmp::Eq for psbt_v0::Psbt
+impl core::cmp::Eq for psbt_v0::PsbtSighashType
+impl core::cmp::Eq for psbt_v0::SignError
+impl core::cmp::Eq for psbt_v0::SigningAlgorithm
+impl core::cmp::Eq for psbt_v0::SigningKeys
+impl core::cmp::Eq for psbt_v0::raw::Key
+impl core::cmp::Eq for psbt_v0::raw::Pair
+impl core::cmp::Ord for psbt_v0::OutputType
+impl core::cmp::Ord for psbt_v0::PsbtSighashType
+impl core::cmp::Ord for psbt_v0::SigningAlgorithm
+impl core::cmp::Ord for psbt_v0::SigningKeys
+impl core::cmp::Ord for psbt_v0::raw::Key
+impl core::cmp::PartialEq for psbt_v0::ExtractTxError
+impl core::cmp::PartialEq for psbt_v0::GetKeyError
+impl core::cmp::PartialEq for psbt_v0::IndexOutOfBoundsError
+impl core::cmp::PartialEq for psbt_v0::Input
+impl core::cmp::PartialEq for psbt_v0::KeyRequest
+impl core::cmp::PartialEq for psbt_v0::Output
+impl core::cmp::PartialEq for psbt_v0::OutputType
+impl core::cmp::PartialEq for psbt_v0::Psbt
+impl core::cmp::PartialEq for psbt_v0::PsbtSighashType
+impl core::cmp::PartialEq for psbt_v0::SignError
+impl core::cmp::PartialEq for psbt_v0::SigningAlgorithm
+impl core::cmp::PartialEq for psbt_v0::SigningKeys
+impl core::cmp::PartialEq for psbt_v0::raw::Key
+impl core::cmp::PartialEq for psbt_v0::raw::Pair
+impl core::cmp::PartialOrd for psbt_v0::OutputType
+impl core::cmp::PartialOrd for psbt_v0::PsbtSighashType
+impl core::cmp::PartialOrd for psbt_v0::SigningAlgorithm
+impl core::cmp::PartialOrd for psbt_v0::SigningKeys
+impl core::cmp::PartialOrd for psbt_v0::raw::Key
+impl core::convert::From<bip32::Error> for psbt_v0::GetKeyError
+impl core::convert::From<bitcoin_hashes::FromSliceError> for psbt_v0::Error
+impl core::convert::From<bitcoin_io::error::Error> for psbt_v0::Error
+impl core::convert::From<bitcoin_primitives::consensus::encode::Error> for psbt_v0::Error
+impl core::convert::From<bitcoin_primitives::crypto::sighash::EcdsaSighashType> for psbt_v0::PsbtSighashType
+impl core::convert::From<bitcoin_primitives::crypto::sighash::P2wpkhError> for psbt_v0::SignError
+impl core::convert::From<bitcoin_primitives::crypto::sighash::TapSighashType> for psbt_v0::PsbtSighashType
+impl core::convert::From<bitcoin_primitives::crypto::sighash::TaprootError> for psbt_v0::SignError
+impl core::convert::From<core::convert::Infallible> for psbt_v0::Error
+impl core::convert::From<core::convert::Infallible> for psbt_v0::ExtractTxError
+impl core::convert::From<core::convert::Infallible> for psbt_v0::GetKeyError
+impl core::convert::From<core::convert::Infallible> for psbt_v0::IndexOutOfBoundsError
+impl core::convert::From<core::convert::Infallible> for psbt_v0::SignError
+impl core::convert::From<psbt_v0::IndexOutOfBoundsError> for psbt_v0::SignError
+impl core::default::Default for psbt_v0::Input
+impl core::default::Default for psbt_v0::Output
+impl core::fmt::Debug for psbt_v0::Error
+impl core::fmt::Debug for psbt_v0::ExtractTxError
+impl core::fmt::Debug for psbt_v0::GetKeyError
+impl core::fmt::Debug for psbt_v0::IndexOutOfBoundsError
+impl core::fmt::Debug for psbt_v0::Input
+impl core::fmt::Debug for psbt_v0::KeyRequest
+impl core::fmt::Debug for psbt_v0::Output
+impl core::fmt::Debug for psbt_v0::OutputType
+impl core::fmt::Debug for psbt_v0::Psbt
+impl core::fmt::Debug for psbt_v0::PsbtSighashType
+impl core::fmt::Debug for psbt_v0::SignError
+impl core::fmt::Debug for psbt_v0::SigningAlgorithm
+impl core::fmt::Debug for psbt_v0::SigningKeys
+impl core::fmt::Debug for psbt_v0::raw::Key
+impl core::fmt::Debug for psbt_v0::raw::Pair
+impl core::fmt::Display for psbt_v0::Error
+impl core::fmt::Display for psbt_v0::ExtractTxError
+impl core::fmt::Display for psbt_v0::GetKeyError
+impl core::fmt::Display for psbt_v0::IndexOutOfBoundsError
+impl core::fmt::Display for psbt_v0::PsbtSighashType
+impl core::fmt::Display for psbt_v0::SignError
+impl core::fmt::Display for psbt_v0::raw::Key
+impl core::hash::Hash for psbt_v0::Input
+impl core::hash::Hash for psbt_v0::Output
+impl core::hash::Hash for psbt_v0::OutputType
+impl core::hash::Hash for psbt_v0::Psbt
+impl core::hash::Hash for psbt_v0::PsbtSighashType
+impl core::hash::Hash for psbt_v0::SigningAlgorithm
+impl core::hash::Hash for psbt_v0::raw::Key
+impl core::marker::Copy for psbt_v0::OutputType
+impl core::marker::Copy for psbt_v0::PsbtSighashType
+impl core::marker::Copy for psbt_v0::SigningAlgorithm
+impl core::marker::Freeze for psbt_v0::Error
+impl core::marker::Freeze for psbt_v0::ExtractTxError
+impl core::marker::Freeze for psbt_v0::GetKeyError
+impl core::marker::Freeze for psbt_v0::IndexOutOfBoundsError
+impl core::marker::Freeze for psbt_v0::Input
+impl core::marker::Freeze for psbt_v0::KeyRequest
+impl core::marker::Freeze for psbt_v0::Output
+impl core::marker::Freeze for psbt_v0::OutputType
+impl core::marker::Freeze for psbt_v0::Psbt
+impl core::marker::Freeze for psbt_v0::PsbtSighashType
+impl core::marker::Freeze for psbt_v0::SignError
+impl core::marker::Freeze for psbt_v0::SigningAlgorithm
+impl core::marker::Freeze for psbt_v0::SigningKeys
+impl core::marker::Freeze for psbt_v0::raw::Key
+impl core::marker::Freeze for psbt_v0::raw::Pair
+impl core::marker::Send for psbt_v0::Error
+impl core::marker::Send for psbt_v0::ExtractTxError
+impl core::marker::Send for psbt_v0::GetKeyError
+impl core::marker::Send for psbt_v0::IndexOutOfBoundsError
+impl core::marker::Send for psbt_v0::Input
+impl core::marker::Send for psbt_v0::KeyRequest
+impl core::marker::Send for psbt_v0::Output
+impl core::marker::Send for psbt_v0::OutputType
+impl core::marker::Send for psbt_v0::Psbt
+impl core::marker::Send for psbt_v0::PsbtSighashType
+impl core::marker::Send for psbt_v0::SignError
+impl core::marker::Send for psbt_v0::SigningAlgorithm
+impl core::marker::Send for psbt_v0::SigningKeys
+impl core::marker::Send for psbt_v0::raw::Key
+impl core::marker::Send for psbt_v0::raw::Pair
+impl core::marker::StructuralPartialEq for psbt_v0::ExtractTxError
+impl core::marker::StructuralPartialEq for psbt_v0::GetKeyError
+impl core::marker::StructuralPartialEq for psbt_v0::IndexOutOfBoundsError
+impl core::marker::StructuralPartialEq for psbt_v0::Input
+impl core::marker::StructuralPartialEq for psbt_v0::KeyRequest
+impl core::marker::StructuralPartialEq for psbt_v0::Output
+impl core::marker::StructuralPartialEq for psbt_v0::OutputType
+impl core::marker::StructuralPartialEq for psbt_v0::Psbt
+impl core::marker::StructuralPartialEq for psbt_v0::PsbtSighashType
+impl core::marker::StructuralPartialEq for psbt_v0::SignError
+impl core::marker::StructuralPartialEq for psbt_v0::SigningAlgorithm
+impl core::marker::StructuralPartialEq for psbt_v0::SigningKeys
+impl core::marker::StructuralPartialEq for psbt_v0::raw::Key
+impl core::marker::StructuralPartialEq for psbt_v0::raw::Pair
+impl core::marker::Sync for psbt_v0::Error
+impl core::marker::Sync for psbt_v0::ExtractTxError
+impl core::marker::Sync for psbt_v0::GetKeyError
+impl core::marker::Sync for psbt_v0::IndexOutOfBoundsError
+impl core::marker::Sync for psbt_v0::Input
+impl core::marker::Sync for psbt_v0::KeyRequest
+impl core::marker::Sync for psbt_v0::Output
+impl core::marker::Sync for psbt_v0::OutputType
+impl core::marker::Sync for psbt_v0::Psbt
+impl core::marker::Sync for psbt_v0::PsbtSighashType
+impl core::marker::Sync for psbt_v0::SignError
+impl core::marker::Sync for psbt_v0::SigningAlgorithm
+impl core::marker::Sync for psbt_v0::SigningKeys
+impl core::marker::Sync for psbt_v0::raw::Key
+impl core::marker::Sync for psbt_v0::raw::Pair
+impl core::marker::Unpin for psbt_v0::Error
+impl core::marker::Unpin for psbt_v0::ExtractTxError
+impl core::marker::Unpin for psbt_v0::GetKeyError
+impl core::marker::Unpin for psbt_v0::IndexOutOfBoundsError
+impl core::marker::Unpin for psbt_v0::Input
+impl core::marker::Unpin for psbt_v0::KeyRequest
+impl core::marker::Unpin for psbt_v0::Output
+impl core::marker::Unpin for psbt_v0::OutputType
+impl core::marker::Unpin for psbt_v0::Psbt
+impl core::marker::Unpin for psbt_v0::PsbtSighashType
+impl core::marker::Unpin for psbt_v0::SignError
+impl core::marker::Unpin for psbt_v0::SigningAlgorithm
+impl core::marker::Unpin for psbt_v0::SigningKeys
+impl core::marker::Unpin for psbt_v0::raw::Key
+impl core::marker::Unpin for psbt_v0::raw::Pair
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::ExtractTxError
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::GetKeyError
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::IndexOutOfBoundsError
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::Input
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::KeyRequest
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::Output
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::OutputType
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::Psbt
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::PsbtSighashType
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::SignError
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::SigningAlgorithm
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::SigningKeys
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::raw::Key
+impl core::panic::unwind_safe::RefUnwindSafe for psbt_v0::raw::Pair
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::ExtractTxError
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::GetKeyError
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::IndexOutOfBoundsError
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::Input
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::KeyRequest
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::Output
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::OutputType
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::Psbt
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::PsbtSighashType
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::SignError
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::SigningAlgorithm
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::SigningKeys
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::raw::Key
+impl core::panic::unwind_safe::UnwindSafe for psbt_v0::raw::Pair
+impl core::str::traits::FromStr for psbt_v0::PsbtSighashType
+impl psbt_v0::GetKey for alloc::collections::btree::map::BTreeMap<bitcoin_primitives::crypto::key::PublicKey, bitcoin_primitives::crypto::key::PrivateKey>
+impl psbt_v0::GetKey for alloc::collections::btree::set::BTreeSet<bip32::Xpriv>
+impl psbt_v0::GetKey for bip32::Xpriv
+impl psbt_v0::Input
+impl psbt_v0::Output
+impl psbt_v0::OutputType
+impl psbt_v0::Psbt
+impl psbt_v0::PsbtSighashType
+impl<Subtype> bitcoin_primitives::consensus::encode::Decodable for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+impl<Subtype> bitcoin_primitives::consensus::encode::Encodable for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+impl<Subtype> core::clone::Clone for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::clone::Clone
+impl<Subtype> core::cmp::Eq for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::Eq
+impl<Subtype> core::cmp::Ord for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::Ord
+impl<Subtype> core::cmp::PartialEq for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::PartialEq
+impl<Subtype> core::cmp::PartialOrd for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::cmp::PartialOrd
+impl<Subtype> core::convert::TryFrom<psbt_v0::raw::Key> for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+impl<Subtype> core::fmt::Debug for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::fmt::Debug
+impl<Subtype> core::hash::Hash for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8> + core::hash::Hash
+impl<Subtype> core::marker::Freeze for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Freeze
+impl<Subtype> core::marker::Send for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Send
+impl<Subtype> core::marker::StructuralPartialEq for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+impl<Subtype> core::marker::Sync for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Sync
+impl<Subtype> core::marker::Unpin for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Unpin
+impl<Subtype> core::panic::unwind_safe::RefUnwindSafe for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::panic::unwind_safe::RefUnwindSafe
+impl<Subtype> core::panic::unwind_safe::UnwindSafe for psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::panic::unwind_safe::UnwindSafe
+impl<Subtype> psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+pub const psbt_v0::Psbt::DEFAULT_MAX_FEE_RATE: bitcoin_units::fee_rate::FeeRate
+pub enum psbt_v0::SigningAlgorithm
+pub enum psbt_v0::SigningKeys
+pub extern crate psbt_v0::bip32
+pub extern crate psbt_v0::primitives
+pub fn alloc::collections::btree::map::BTreeMap<bitcoin_primitives::crypto::key::PublicKey, bitcoin_primitives::crypto::key::PrivateKey>::get_key<C: secp256k1::context::Signing>(&self, key_request: psbt_v0::KeyRequest, &secp256k1::Secp256k1<C>) -> core::result::Result<core::option::Option<bitcoin_primitives::crypto::key::PrivateKey>, Self::Error>
+pub fn alloc::collections::btree::set::BTreeSet<bip32::Xpriv>::get_key<C: secp256k1::context::Signing>(&self, key_request: psbt_v0::KeyRequest, secp: &secp256k1::Secp256k1<C>) -> core::result::Result<core::option::Option<bitcoin_primitives::crypto::key::PrivateKey>, Self::Error>
+pub fn bip32::Xpriv::get_key<C: secp256k1::context::Signing>(&self, key_request: psbt_v0::KeyRequest, secp: &secp256k1::Secp256k1<C>) -> core::result::Result<core::option::Option<bitcoin_primitives::crypto::key::PrivateKey>, Self::Error>
+pub fn psbt_v0::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::Error::from(e: bitcoin_hashes::FromSliceError) -> psbt_v0::Error
+pub fn psbt_v0::Error::from(e: bitcoin_io::error::Error) -> Self
+pub fn psbt_v0::Error::from(e: bitcoin_primitives::consensus::encode::Error) -> Self
+pub fn psbt_v0::Error::from(never: core::convert::Infallible) -> Self
+pub fn psbt_v0::ExtractTxError::clone(&self) -> psbt_v0::ExtractTxError
+pub fn psbt_v0::ExtractTxError::eq(&self, other: &psbt_v0::ExtractTxError) -> bool
+pub fn psbt_v0::ExtractTxError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::ExtractTxError::from(never: core::convert::Infallible) -> Self
+pub fn psbt_v0::GetKey::get_key<C: secp256k1::context::Signing>(&self, key_request: psbt_v0::KeyRequest, secp: &secp256k1::Secp256k1<C>) -> core::result::Result<core::option::Option<bitcoin_primitives::crypto::key::PrivateKey>, Self::Error>
+pub fn psbt_v0::GetKeyError::clone(&self) -> psbt_v0::GetKeyError
+pub fn psbt_v0::GetKeyError::eq(&self, other: &psbt_v0::GetKeyError) -> bool
+pub fn psbt_v0::GetKeyError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::GetKeyError::from(e: bip32::Error) -> Self
+pub fn psbt_v0::GetKeyError::from(never: core::convert::Infallible) -> Self
+pub fn psbt_v0::IndexOutOfBoundsError::clone(&self) -> psbt_v0::IndexOutOfBoundsError
+pub fn psbt_v0::IndexOutOfBoundsError::eq(&self, other: &psbt_v0::IndexOutOfBoundsError) -> bool
+pub fn psbt_v0::IndexOutOfBoundsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::IndexOutOfBoundsError::from(never: core::convert::Infallible) -> Self
+pub fn psbt_v0::Input::clone(&self) -> psbt_v0::Input
+pub fn psbt_v0::Input::combine(&mut self, other: Self)
+pub fn psbt_v0::Input::default() -> psbt_v0::Input
+pub fn psbt_v0::Input::ecdsa_hash_ty(&self) -> core::result::Result<bitcoin_primitives::crypto::sighash::EcdsaSighashType, bitcoin_primitives::crypto::sighash::NonStandardSighashTypeError>
+pub fn psbt_v0::Input::eq(&self, other: &psbt_v0::Input) -> bool
+pub fn psbt_v0::Input::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::Input::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::Input::taproot_hash_ty(&self) -> core::result::Result<bitcoin_primitives::crypto::sighash::TapSighashType, bitcoin_primitives::crypto::sighash::InvalidSighashTypeError>
+pub fn psbt_v0::KeyRequest::clone(&self) -> psbt_v0::KeyRequest
+pub fn psbt_v0::KeyRequest::eq(&self, other: &psbt_v0::KeyRequest) -> bool
+pub fn psbt_v0::KeyRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::Output::clone(&self) -> psbt_v0::Output
+pub fn psbt_v0::Output::combine(&mut self, other: Self)
+pub fn psbt_v0::Output::default() -> psbt_v0::Output
+pub fn psbt_v0::Output::eq(&self, other: &psbt_v0::Output) -> bool
+pub fn psbt_v0::Output::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::Output::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::OutputType::clone(&self) -> psbt_v0::OutputType
+pub fn psbt_v0::OutputType::cmp(&self, other: &psbt_v0::OutputType) -> core::cmp::Ordering
+pub fn psbt_v0::OutputType::eq(&self, other: &psbt_v0::OutputType) -> bool
+pub fn psbt_v0::OutputType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::OutputType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::OutputType::partial_cmp(&self, other: &psbt_v0::OutputType) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::OutputType::signing_algorithm(&self) -> psbt_v0::SigningAlgorithm
+pub fn psbt_v0::Psbt::clone(&self) -> psbt_v0::Psbt
+pub fn psbt_v0::Psbt::combine(&mut self, other: Self) -> core::result::Result<(), psbt_v0::Error>
+pub fn psbt_v0::Psbt::deserialize(bytes: &[u8]) -> core::result::Result<Self, psbt_v0::Error>
+pub fn psbt_v0::Psbt::eq(&self, other: &psbt_v0::Psbt) -> bool
+pub fn psbt_v0::Psbt::extract_tx(self) -> core::result::Result<bitcoin_primitives::transaction::Transaction, psbt_v0::ExtractTxError>
+pub fn psbt_v0::Psbt::extract_tx_fee_rate_limit(self) -> core::result::Result<bitcoin_primitives::transaction::Transaction, psbt_v0::ExtractTxError>
+pub fn psbt_v0::Psbt::extract_tx_unchecked_fee_rate(self) -> bitcoin_primitives::transaction::Transaction
+pub fn psbt_v0::Psbt::extract_tx_with_fee_rate_limit(self, max_fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::result::Result<bitcoin_primitives::transaction::Transaction, psbt_v0::ExtractTxError>
+pub fn psbt_v0::Psbt::fee(&self) -> core::result::Result<bitcoin_units::amount::Amount, psbt_v0::Error>
+pub fn psbt_v0::Psbt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::Psbt::from_unsigned_tx(tx: bitcoin_primitives::transaction::Transaction) -> core::result::Result<Self, psbt_v0::Error>
+pub fn psbt_v0::Psbt::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::Psbt::iter_funding_utxos(&self) -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<&bitcoin_primitives::transaction::TxOut, psbt_v0::Error>>
+pub fn psbt_v0::Psbt::serialize(&self) -> alloc::vec::Vec<u8>
+pub fn psbt_v0::Psbt::serialize_hex(&self) -> alloc::string::String
+pub fn psbt_v0::Psbt::sighash_ecdsa<T: core::borrow::Borrow<bitcoin_primitives::transaction::Transaction>>(&self, input_index: usize, cache: &mut bitcoin_primitives::crypto::sighash::SighashCache<T>) -> core::result::Result<(secp256k1::Message, bitcoin_primitives::crypto::sighash::EcdsaSighashType), psbt_v0::SignError>
+pub fn psbt_v0::Psbt::sign<C, K>(&mut self, k: &K, secp: &secp256k1::Secp256k1<C>) -> core::result::Result<psbt_v0::SigningKeysMap, (psbt_v0::SigningKeysMap, psbt_v0::SigningErrors)> where C: secp256k1::context::Signing + secp256k1::context::Verification, K: psbt_v0::GetKey
+pub fn psbt_v0::Psbt::spend_utxo(&self, input_index: usize) -> core::result::Result<&bitcoin_primitives::transaction::TxOut, psbt_v0::SignError>
+pub fn psbt_v0::PsbtSighashType::clone(&self) -> psbt_v0::PsbtSighashType
+pub fn psbt_v0::PsbtSighashType::cmp(&self, other: &psbt_v0::PsbtSighashType) -> core::cmp::Ordering
+pub fn psbt_v0::PsbtSighashType::ecdsa_hash_ty(self) -> core::result::Result<bitcoin_primitives::crypto::sighash::EcdsaSighashType, bitcoin_primitives::crypto::sighash::NonStandardSighashTypeError>
+pub fn psbt_v0::PsbtSighashType::eq(&self, other: &psbt_v0::PsbtSighashType) -> bool
+pub fn psbt_v0::PsbtSighashType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::PsbtSighashType::from(ecdsa_hash_ty: bitcoin_primitives::crypto::sighash::EcdsaSighashType) -> Self
+pub fn psbt_v0::PsbtSighashType::from(taproot_hash_ty: bitcoin_primitives::crypto::sighash::TapSighashType) -> Self
+pub fn psbt_v0::PsbtSighashType::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn psbt_v0::PsbtSighashType::from_u32(n: u32) -> psbt_v0::PsbtSighashType
+pub fn psbt_v0::PsbtSighashType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::PsbtSighashType::partial_cmp(&self, other: &psbt_v0::PsbtSighashType) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::PsbtSighashType::taproot_hash_ty(self) -> core::result::Result<bitcoin_primitives::crypto::sighash::TapSighashType, bitcoin_primitives::crypto::sighash::InvalidSighashTypeError>
+pub fn psbt_v0::PsbtSighashType::to_u32(self) -> u32
+pub fn psbt_v0::SignError::clone(&self) -> psbt_v0::SignError
+pub fn psbt_v0::SignError::eq(&self, other: &psbt_v0::SignError) -> bool
+pub fn psbt_v0::SignError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::SignError::from(e: bitcoin_primitives::crypto::sighash::P2wpkhError) -> Self
+pub fn psbt_v0::SignError::from(e: bitcoin_primitives::crypto::sighash::TaprootError) -> Self
+pub fn psbt_v0::SignError::from(e: psbt_v0::IndexOutOfBoundsError) -> Self
+pub fn psbt_v0::SignError::from(never: core::convert::Infallible) -> Self
+pub fn psbt_v0::SigningAlgorithm::clone(&self) -> psbt_v0::SigningAlgorithm
+pub fn psbt_v0::SigningAlgorithm::cmp(&self, other: &psbt_v0::SigningAlgorithm) -> core::cmp::Ordering
+pub fn psbt_v0::SigningAlgorithm::eq(&self, other: &psbt_v0::SigningAlgorithm) -> bool
+pub fn psbt_v0::SigningAlgorithm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::SigningAlgorithm::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::SigningAlgorithm::partial_cmp(&self, other: &psbt_v0::SigningAlgorithm) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::SigningKeys::clone(&self) -> psbt_v0::SigningKeys
+pub fn psbt_v0::SigningKeys::cmp(&self, other: &psbt_v0::SigningKeys) -> core::cmp::Ordering
+pub fn psbt_v0::SigningKeys::eq(&self, other: &psbt_v0::SigningKeys) -> bool
+pub fn psbt_v0::SigningKeys::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::SigningKeys::partial_cmp(&self, other: &psbt_v0::SigningKeys) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::raw::Key::clone(&self) -> psbt_v0::raw::Key
+pub fn psbt_v0::raw::Key::cmp(&self, other: &psbt_v0::raw::Key) -> core::cmp::Ordering
+pub fn psbt_v0::raw::Key::eq(&self, other: &psbt_v0::raw::Key) -> bool
+pub fn psbt_v0::raw::Key::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::raw::Key::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::raw::Key::partial_cmp(&self, other: &psbt_v0::raw::Key) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::raw::Pair::eq(&self, other: &psbt_v0::raw::Pair) -> bool
+pub fn psbt_v0::raw::Pair::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::clone(&self) -> psbt_v0::raw::ProprietaryKey<Subtype>
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::cmp(&self, other: &psbt_v0::raw::ProprietaryKey<Subtype>) -> core::cmp::Ordering
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin_primitives::consensus::encode::Error>
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::eq(&self, other: &psbt_v0::raw::ProprietaryKey<Subtype>) -> bool
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::partial_cmp(&self, other: &psbt_v0::raw::ProprietaryKey<Subtype>) -> core::option::Option<core::cmp::Ordering>
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::to_key(&self) -> psbt_v0::raw::Key
+pub fn psbt_v0::raw::ProprietaryKey<Subtype>::try_from(key: psbt_v0::raw::Key) -> core::result::Result<Self, Self::Error>
+pub mod psbt_v0
+pub mod psbt_v0::raw
+pub mod psbt_v0::serialize
+pub psbt_v0::Error::CombineInconsistentKeySources(alloc::boxed::Box<bip32::Xpub>)
+pub psbt_v0::Error::ConsensusEncoding(bitcoin_primitives::consensus::encode::Error)
+pub psbt_v0::Error::DuplicateKey(psbt_v0::raw::Key)
+pub psbt_v0::Error::FeeOverflow
+pub psbt_v0::Error::InvalidControlBlock
+pub psbt_v0::Error::InvalidEcdsaSignature(bitcoin_primitives::crypto::ecdsa::Error)
+pub psbt_v0::Error::InvalidHash(bitcoin_hashes::FromSliceError)
+pub psbt_v0::Error::InvalidKey(psbt_v0::raw::Key)
+pub psbt_v0::Error::InvalidLeafVersion
+pub psbt_v0::Error::InvalidMagic
+pub psbt_v0::Error::InvalidPreimageHashPair
+pub psbt_v0::Error::InvalidPreimageHashPair::hash: alloc::boxed::Box<[u8]>
+pub psbt_v0::Error::InvalidPreimageHashPair::hash_type: PsbtHash
+pub psbt_v0::Error::InvalidPreimageHashPair::preimage: alloc::boxed::Box<[u8]>
+pub psbt_v0::Error::InvalidProprietaryKey
+pub psbt_v0::Error::InvalidPublicKey(bitcoin_primitives::crypto::key::FromSliceError)
+pub psbt_v0::Error::InvalidSecp256k1PublicKey(secp256k1::Error)
+pub psbt_v0::Error::InvalidSeparator
+pub psbt_v0::Error::InvalidTaprootSignature(bitcoin_primitives::crypto::taproot::SigFromSliceError)
+pub psbt_v0::Error::InvalidXOnlyPublicKey
+pub psbt_v0::Error::Io(bitcoin_io::error::Error)
+pub psbt_v0::Error::MissingUtxo
+pub psbt_v0::Error::MustHaveUnsignedTx
+pub psbt_v0::Error::NegativeFee
+pub psbt_v0::Error::NoMorePairs
+pub psbt_v0::Error::NonStandardSighashType(u32)
+pub psbt_v0::Error::PartialDataConsumption
+pub psbt_v0::Error::PsbtUtxoOutOfbounds
+pub psbt_v0::Error::TapTree(bitcoin_primitives::taproot::IncompleteBuilderError)
+pub psbt_v0::Error::Taproot(&'static str)
+pub psbt_v0::Error::UnexpectedUnsignedTx
+pub psbt_v0::Error::UnexpectedUnsignedTx::actual: alloc::boxed::Box<bitcoin_primitives::transaction::Transaction>
+pub psbt_v0::Error::UnexpectedUnsignedTx::expected: alloc::boxed::Box<bitcoin_primitives::transaction::Transaction>
+pub psbt_v0::Error::UnsignedTxHasScriptSigs
+pub psbt_v0::Error::UnsignedTxHasScriptWitnesses
+pub psbt_v0::Error::Version(&'static str)
+pub psbt_v0::Error::XPubKey(&'static str)
+pub psbt_v0::ExtractTxError::AbsurdFeeRate
+pub psbt_v0::ExtractTxError::AbsurdFeeRate::fee_rate: bitcoin_units::fee_rate::FeeRate
+pub psbt_v0::ExtractTxError::AbsurdFeeRate::tx: bitcoin_primitives::transaction::Transaction
+pub psbt_v0::ExtractTxError::MissingInputValue
+pub psbt_v0::ExtractTxError::MissingInputValue::tx: bitcoin_primitives::transaction::Transaction
+pub psbt_v0::ExtractTxError::SendingTooMuch
+pub psbt_v0::ExtractTxError::SendingTooMuch::psbt: psbt_v0::Psbt
+pub psbt_v0::GetKeyError::Bip32(bip32::Error)
+pub psbt_v0::GetKeyError::NotSupported
+pub psbt_v0::IndexOutOfBoundsError::Inputs
+pub psbt_v0::IndexOutOfBoundsError::Inputs::index: usize
+pub psbt_v0::IndexOutOfBoundsError::Inputs::length: usize
+pub psbt_v0::IndexOutOfBoundsError::TxInput
+pub psbt_v0::IndexOutOfBoundsError::TxInput::index: usize
+pub psbt_v0::IndexOutOfBoundsError::TxInput::length: usize
+pub psbt_v0::Input::bip32_derivation: alloc::collections::btree::map::BTreeMap<secp256k1::key::PublicKey, bip32::KeySource>
+pub psbt_v0::Input::final_script_sig: core::option::Option<bitcoin_primitives::script::owned::ScriptBuf>
+pub psbt_v0::Input::final_script_witness: core::option::Option<bitcoin_primitives::witness::Witness>
+pub psbt_v0::Input::hash160_preimages: alloc::collections::btree::map::BTreeMap<bitcoin_hashes::hash160::Hash, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::hash256_preimages: alloc::collections::btree::map::BTreeMap<bitcoin_hashes::sha256d::Hash, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::non_witness_utxo: core::option::Option<bitcoin_primitives::transaction::Transaction>
+pub psbt_v0::Input::partial_sigs: alloc::collections::btree::map::BTreeMap<bitcoin_primitives::crypto::key::PublicKey, bitcoin_primitives::crypto::ecdsa::Signature>
+pub psbt_v0::Input::proprietary: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::ProprietaryKey, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::redeem_script: core::option::Option<bitcoin_primitives::script::owned::ScriptBuf>
+pub psbt_v0::Input::ripemd160_preimages: alloc::collections::btree::map::BTreeMap<bitcoin_hashes::ripemd160::Hash, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::sha256_preimages: alloc::collections::btree::map::BTreeMap<bitcoin_hashes::sha256::Hash, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::sighash_type: core::option::Option<psbt_v0::PsbtSighashType>
+pub psbt_v0::Input::tap_internal_key: core::option::Option<secp256k1::key::XOnlyPublicKey>
+pub psbt_v0::Input::tap_key_origins: alloc::collections::btree::map::BTreeMap<secp256k1::key::XOnlyPublicKey, (alloc::vec::Vec<bitcoin_primitives::taproot::TapLeafHash>, bip32::KeySource)>
+pub psbt_v0::Input::tap_key_sig: core::option::Option<bitcoin_primitives::crypto::taproot::Signature>
+pub psbt_v0::Input::tap_merkle_root: core::option::Option<bitcoin_primitives::taproot::TapNodeHash>
+pub psbt_v0::Input::tap_script_sigs: alloc::collections::btree::map::BTreeMap<(secp256k1::key::XOnlyPublicKey, bitcoin_primitives::taproot::TapLeafHash), bitcoin_primitives::crypto::taproot::Signature>
+pub psbt_v0::Input::tap_scripts: alloc::collections::btree::map::BTreeMap<bitcoin_primitives::taproot::ControlBlock, (bitcoin_primitives::script::owned::ScriptBuf, bitcoin_primitives::taproot::LeafVersion)>
+pub psbt_v0::Input::unknown: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::Key, alloc::vec::Vec<u8>>
+pub psbt_v0::Input::witness_script: core::option::Option<bitcoin_primitives::script::owned::ScriptBuf>
+pub psbt_v0::Input::witness_utxo: core::option::Option<bitcoin_primitives::transaction::TxOut>
+pub psbt_v0::KeyRequest::Bip32(bip32::KeySource)
+pub psbt_v0::KeyRequest::Pubkey(bitcoin_primitives::crypto::key::PublicKey)
+pub psbt_v0::Output::bip32_derivation: alloc::collections::btree::map::BTreeMap<secp256k1::key::PublicKey, bip32::KeySource>
+pub psbt_v0::Output::proprietary: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::ProprietaryKey, alloc::vec::Vec<u8>>
+pub psbt_v0::Output::redeem_script: core::option::Option<bitcoin_primitives::script::owned::ScriptBuf>
+pub psbt_v0::Output::tap_internal_key: core::option::Option<secp256k1::key::XOnlyPublicKey>
+pub psbt_v0::Output::tap_key_origins: alloc::collections::btree::map::BTreeMap<secp256k1::key::XOnlyPublicKey, (alloc::vec::Vec<bitcoin_primitives::taproot::TapLeafHash>, bip32::KeySource)>
+pub psbt_v0::Output::tap_tree: core::option::Option<bitcoin_primitives::taproot::TapTree>
+pub psbt_v0::Output::unknown: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::Key, alloc::vec::Vec<u8>>
+pub psbt_v0::Output::witness_script: core::option::Option<bitcoin_primitives::script::owned::ScriptBuf>
+pub psbt_v0::OutputType::Bare
+pub psbt_v0::OutputType::Sh
+pub psbt_v0::OutputType::ShWpkh
+pub psbt_v0::OutputType::ShWsh
+pub psbt_v0::OutputType::Tr
+pub psbt_v0::OutputType::Wpkh
+pub psbt_v0::OutputType::Wsh
+pub psbt_v0::Psbt::inputs: alloc::vec::Vec<psbt_v0::Input>
+pub psbt_v0::Psbt::outputs: alloc::vec::Vec<psbt_v0::Output>
+pub psbt_v0::Psbt::proprietary: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::ProprietaryKey, alloc::vec::Vec<u8>>
+pub psbt_v0::Psbt::unknown: alloc::collections::btree::map::BTreeMap<psbt_v0::raw::Key, alloc::vec::Vec<u8>>
+pub psbt_v0::Psbt::unsigned_tx: bitcoin_primitives::transaction::Transaction
+pub psbt_v0::Psbt::version: u32
+pub psbt_v0::Psbt::xpub: alloc::collections::btree::map::BTreeMap<bip32::Xpub, bip32::KeySource>
+pub psbt_v0::SignError::IndexOutOfBounds(psbt_v0::IndexOutOfBoundsError)
+pub psbt_v0::SignError::InvalidSighashType
+pub psbt_v0::SignError::KeyNotFound
+pub psbt_v0::SignError::MismatchedAlgoKey
+pub psbt_v0::SignError::MissingInputUtxo
+pub psbt_v0::SignError::MissingRedeemScript
+pub psbt_v0::SignError::MissingSpendUtxo
+pub psbt_v0::SignError::MissingWitnessScript
+pub psbt_v0::SignError::NotEcdsa
+pub psbt_v0::SignError::NotWpkh
+pub psbt_v0::SignError::P2wpkhSighash(bitcoin_primitives::crypto::sighash::P2wpkhError)
+pub psbt_v0::SignError::SegwitV0Sighash(bitcoin_primitives::transaction::InputsIndexError)
+pub psbt_v0::SignError::TaprootError(bitcoin_primitives::crypto::sighash::TaprootError)
+pub psbt_v0::SignError::UnknownOutputType
+pub psbt_v0::SignError::Unsupported
+pub psbt_v0::SignError::WrongSigningAlgorithm
+pub psbt_v0::SigningAlgorithm::Ecdsa
+pub psbt_v0::SigningAlgorithm::Schnorr
+pub psbt_v0::SigningKeys::Ecdsa(alloc::vec::Vec<bitcoin_primitives::crypto::key::PublicKey>)
+pub psbt_v0::SigningKeys::Schnorr(alloc::vec::Vec<secp256k1::key::XOnlyPublicKey>)
+pub psbt_v0::raw::Key::key: alloc::vec::Vec<u8>
+pub psbt_v0::raw::Key::type_value: u8
+pub psbt_v0::raw::Pair::key: psbt_v0::raw::Key
+pub psbt_v0::raw::Pair::value: alloc::vec::Vec<u8>
+pub psbt_v0::raw::ProprietaryKey::key: alloc::vec::Vec<u8>
+pub psbt_v0::raw::ProprietaryKey::prefix: alloc::vec::Vec<u8>
+pub psbt_v0::raw::ProprietaryKey::subtype: Subtype
+pub struct psbt_v0::Input
+pub struct psbt_v0::Output
+pub struct psbt_v0::Psbt
+pub struct psbt_v0::PsbtSighashType
+pub struct psbt_v0::raw::Key
+pub struct psbt_v0::raw::Pair
+pub struct psbt_v0::raw::ProprietaryKey<Subtype> where Subtype: core::marker::Copy + core::convert::From<u8> + core::convert::Into<u8>
+pub trait psbt_v0::GetKey
+pub type alloc::collections::btree::map::BTreeMap<bitcoin_primitives::crypto::key::PublicKey, bitcoin_primitives::crypto::key::PrivateKey>::Error = psbt_v0::GetKeyError
+pub type alloc::collections::btree::set::BTreeSet<bip32::Xpriv>::Error = psbt_v0::GetKeyError
+pub type bip32::Xpriv::Error = psbt_v0::GetKeyError
+pub type psbt_v0::GetKey::Error: core::fmt::Debug
+pub type psbt_v0::PsbtSighashType::Err = SighashTypeParseError
+pub type psbt_v0::SigningErrors = alloc::collections::btree::map::BTreeMap<usize, psbt_v0::SignError>
+pub type psbt_v0::SigningKeysMap = alloc::collections::btree::map::BTreeMap<usize, psbt_v0::SigningKeys>
+pub type psbt_v0::raw::ProprietaryKey<Subtype>::Error = psbt_v0::Error
+pub type psbt_v0::raw::ProprietaryType = u8

@@ -242,6 +242,8 @@ impl Decodable for AddrV2 {
     }
 }
 
+impl primitives::consensus::encode::GenericEncodeVecU32 for Address {}
+
 /// Address received from BIP155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct AddrV2Message {
@@ -292,6 +294,8 @@ impl Decodable for AddrV2Message {
         })
     }
 }
+
+impl primitives::consensus::encode::GenericEncodeVec for AddrV2Message {}
 
 impl ToSocketAddrs for AddrV2Message {
     type Iter = iter::Once<SocketAddr>;
