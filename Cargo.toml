@@ -1,9 +1,15 @@
 [workspace]
-members = ["bitcoin", "hashes", "internals", "fuzz", "io", "units", "base58"]
+members = ["address", "base58", "bip32", "bitcoin", "fuzz", "hashes", "internals", "io", "primitives", "psbt", "units",]
 resolver = "2"
+
+[patch.crates-io.bitcoin-address]
+path = "address"
 
 [patch.crates-io.base58ck]
 path = "base58"
+
+[patch.crates-io.bip32]
+path = "bip32"
 
 [patch.crates-io.bitcoin]
 path = "bitcoin"
@@ -16,6 +22,12 @@ path = "internals"
 
 [patch.crates-io.bitcoin-io]
 path = "io"
+
+[patch.crates-io.bitcoin-primitives]
+path = "primitives"
+
+[patch.crates-io.psbt-v0]
+path = "psbt"
 
 [patch.crates-io.bitcoin-units]
 path = "units"

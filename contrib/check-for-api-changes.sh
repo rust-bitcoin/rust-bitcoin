@@ -27,9 +27,14 @@ main() {
     generate_api_files_base58
 
     # These ones have an "alloc" feature we want to check.
-    generate_api_files "hashes"
-    generate_api_files "units"
-    generate_api_files "io"
+    generate_api_files_alloc_only "hashes"
+    generate_api_files_alloc_only "units"
+    generate_api_files_alloc_only "io"
+
+    # These three do not have an "alloc" feature [yet].
+    generate_api_files "primitives"
+    generate_api_files "psbt"
+    generate_api_files "bip32"
 
     check_for_changes
 }
@@ -69,10 +74,28 @@ generate_api_files_base58() {
 #
 # Files:
 #
+# - default-features.txt
+# - no-features.txt
+# - all-features.txt
+generate_api_files() {
+    local crate=$1
+    pushd "$REPO_DIR/$crate" > /dev/null
+
+    run_cargo | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
+    run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+    run_cargo_all_features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
+
+    popd > /dev/null
+}
+
+# Uses `CARGO` to generate API files in the specified crate.
+#
+# Files:
+#
 # - no-features.txt
 # - alloc-only.txt
 # - all-features.txt
-generate_api_files() {
+generate_api_files_alloc_only() {
     local crate=$1
     pushd "$REPO_DIR/$crate" > /dev/null
 

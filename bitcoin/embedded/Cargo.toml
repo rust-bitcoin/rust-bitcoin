@@ -30,6 +30,9 @@ lto = true # better optimizations
 [patch.crates-io.base58ck]
 path = "../../base58"
 
+[patch.crates-io.bip32]
+path = "../../bip32"
+     
 [patch.crates-io.bitcoin_hashes]
 path = "../../hashes"
 
@@ -38,6 +41,12 @@ path = "../../internals"
 
 [patch.crates-io.bitcoin-io]
 path = "../../io"
+
+[patch.crates-io.bitcoin-primitives]
+path = "../../primitives"
+
+[patch.crates-io.psbt-v0]
+path = "../../psbt"
 
 [patch.crates-io.bitcoin-units]
 path = "../../units"
