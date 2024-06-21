@@ -13,7 +13,7 @@ use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
-use crate::prelude::*;
+use crate::prelude::{Cow, String};
 
 /// Some simple messages
 

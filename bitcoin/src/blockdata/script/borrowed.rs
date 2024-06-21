@@ -13,7 +13,7 @@ use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
-use crate::prelude::*;
+use crate::prelude::{Box, DisplayHex, sink, String, ToOwned, Vec};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,

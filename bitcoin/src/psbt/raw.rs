@@ -13,7 +13,7 @@ use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
     self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
 };
-use crate::prelude::*;
+use crate::prelude::{DisplayHex, Vec};
 use crate::psbt::Error;
 
 /// A PSBT key in its raw byte form.

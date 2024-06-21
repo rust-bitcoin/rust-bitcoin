@@ -10,7 +10,7 @@ use internals::write_err;
 use crate::parse;
 use crate::parse::ParseIntError;
 #[cfg(feature = "alloc")]
-use crate::prelude::*;
+use crate::prelude::{Box, String};
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///

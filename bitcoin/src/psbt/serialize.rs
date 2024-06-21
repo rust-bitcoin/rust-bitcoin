@@ -13,7 +13,7 @@ use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::prelude::*;
+use crate::prelude::{DisplayHex, String, Vec};
 use crate::psbt::{Error, Psbt};
 use crate::script::ScriptBuf;
 use crate::taproot::{

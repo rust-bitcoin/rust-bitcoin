@@ -8,7 +8,7 @@ use crate::key::PublicKey;
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
-use crate::prelude::*;
+use crate::prelude::Vec;
 use crate::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
 use crate::transaction::Sequence;
 

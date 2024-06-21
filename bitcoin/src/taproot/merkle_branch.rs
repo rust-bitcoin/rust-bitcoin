@@ -8,7 +8,7 @@ use super::{
     TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
     TAPROOT_CONTROL_NODE_SIZE,
 };
-use crate::prelude::*;
+use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 
 /// The merkle proof for inclusion of a tree in a taptree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]

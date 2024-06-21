@@ -19,7 +19,7 @@ mod block;
 use hashes::{sha256d, HashEngine as _};
 
 use crate::internal_macros::impl_hashencode;
-use crate::prelude::*;
+use crate::prelude::Vec;
 use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]

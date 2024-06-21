@@ -48,7 +48,7 @@ use crate::block::{Block, BlockHash};
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
 use crate::internal_macros::impl_hashencode;
-use crate::prelude::*;
+use crate::prelude::{Borrow, BTreeSet, Vec};
 use crate::script::Script;
 use crate::transaction::OutPoint;
 

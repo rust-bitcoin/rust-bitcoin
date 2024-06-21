@@ -72,7 +72,7 @@ use crate::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
-use crate::prelude::*;
+use crate::prelude::{Borrow, BorrowMut, Box, Cow, DisplayHex, ToOwned, Vec};
 use crate::OutPoint;
 
 #[rustfmt::skip]                // Keep public re-exports separate.

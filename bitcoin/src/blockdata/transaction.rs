@@ -22,7 +22,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, Time};
 use crate::locktime::relative::{self, TimeOverflowError};
-use crate::prelude::*;
+use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};

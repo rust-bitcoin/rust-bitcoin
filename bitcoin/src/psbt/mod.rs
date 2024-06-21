@@ -24,7 +24,7 @@ use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
-use crate::prelude::*;
+use crate::prelude::{Borrow, Box, BTreeMap, BTreeSet, btree_map, Vec};
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
