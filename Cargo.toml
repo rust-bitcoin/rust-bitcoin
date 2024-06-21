@@ -31,3 +31,6 @@ path = "psbt"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.miniscript]
+path = "/home/tobin/build/github.com/tcharding/rust-miniscript/crate-smashing/"
