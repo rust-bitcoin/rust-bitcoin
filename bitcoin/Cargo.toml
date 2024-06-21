@@ -15,10 +15,10 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["address/std", "base58/std", "bip32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "psbt/std", "secp256k1/std", "units/std"]
-rand-std = ["secp256k1/rand-std", "std"]
-rand = ["secp256k1/rand"]
-serde = ["actual-serde", "address/serde", "bip32/serde", "hashes/serde", "internals/serde", "primitives/serde", "psbt/serde", "secp256k1/serde", "units/serde"]
+std = ["address/std", "base58/std", "bip32/std", "hashes/std", "hex/std", "internals/std", "io/std", "miniscript/std", "primitives/crypto-std", "psbt/std", "secp256k1/std", "units/std"]
+rand-std = ["miniscript/rand", "secp256k1/rand-std", "primitives/rand-std", "std"]
+rand = ["miniscript/rand", "secp256k1/rand"]
+serde = ["actual-serde", "address/serde", "bip32/serde", "hashes/serde", "internals/serde", "miniscript/serde", "primitives/crypto-serde", "psbt/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 base64 = ["actual-base64", "psbt/base64"]
@@ -37,6 +37,7 @@ hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = fa
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
+miniscript = { version = "13.0.0", default-features = false }
 primitives = { package = "bitcoin-primitives", version = "0.1.0", default-features = false, features = ["crypto"] }
 psbt = { package = "psbt-v0", version = "0.1.0", default-features = false, features = [] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
