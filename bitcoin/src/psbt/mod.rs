@@ -1356,8 +1356,8 @@ mod tests {
         let fprint = sk.fingerprint(secp);
 
         let dpath: Vec<ChildNumber> = vec![
-            ChildNumber::from_normal_idx(0).unwrap(),
-            ChildNumber::from_normal_idx(1).unwrap(),
+            ChildNumber::ZERO_NORMAL,
+            ChildNumber::ONE_NORMAL,
             ChildNumber::from_normal_idx(2).unwrap(),
             ChildNumber::from_normal_idx(4).unwrap(),
             ChildNumber::from_normal_idx(42).unwrap(),

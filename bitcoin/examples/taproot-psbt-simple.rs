@@ -60,7 +60,7 @@ fn get_external_address_xpriv<C: Signing>(
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv = master_xpriv.derive_priv(secp, &derivation_path);
-    let external_index = ChildNumber::from_normal_idx(0).unwrap();
+    let external_index = ChildNumber::ZERO_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
     child_xpriv.derive_priv(secp, &[external_index, idx])
@@ -75,7 +75,7 @@ fn get_internal_address_xpriv<C: Signing>(
     let derivation_path =
         BIP86_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
     let child_xpriv = master_xpriv.derive_priv(secp, &derivation_path);
-    let internal_index = ChildNumber::from_normal_idx(1).unwrap();
+    let internal_index = ChildNumber::ONE_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
     child_xpriv.derive_priv(secp, &[internal_index, idx])

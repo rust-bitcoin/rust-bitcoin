@@ -5422,6 +5422,10 @@ pub const bitcoin::bip158::FilterHash::DISPLAY_BACKWARD: bool
 pub const bitcoin::bip158::FilterHash::LEN: usize
 pub const bitcoin::bip158::FilterHeader::DISPLAY_BACKWARD: bool
 pub const bitcoin::bip158::FilterHeader::LEN: usize
+pub const bitcoin::bip32::ChildNumber::ONE_HARDENED: Self
+pub const bitcoin::bip32::ChildNumber::ONE_NORMAL: Self
+pub const bitcoin::bip32::ChildNumber::ZERO_HARDENED: Self
+pub const bitcoin::bip32::ChildNumber::ZERO_NORMAL: Self
 pub const bitcoin::bip32::XKeyIdentifier::DISPLAY_BACKWARD: bool
 pub const bitcoin::bip32::XKeyIdentifier::LEN: usize
 pub const bitcoin::blockdata::block::BlockHash::DISPLAY_BACKWARD: bool

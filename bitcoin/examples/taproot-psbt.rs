@@ -360,7 +360,7 @@ impl BenefactorWallet {
             current_spend_info: None,
             next_psbt: None,
             secp: Secp256k1::new(),
-            next: ChildNumber::from_normal_idx(0).expect("Zero is a valid child number"),
+            next: ChildNumber::ZERO_NORMAL,
         })
     }
 
