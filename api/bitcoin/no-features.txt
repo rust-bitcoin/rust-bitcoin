@@ -4736,7 +4736,6 @@ pub bitcoin::taproot::Signature::signature: secp256k1::schnorr::Signature
 pub bitcoin::taproot::TapLeaf::Hidden(bitcoin::taproot::TapNodeHash)
 pub bitcoin::taproot::TapLeaf::Script(bitcoin::blockdata::script::ScriptBuf, bitcoin::taproot::LeafVersion)
 pub bitcoin::taproot::TaprootBuilderError::EmptyTree
-pub bitcoin::taproot::TaprootBuilderError::InvalidInternalKey(secp256k1::Error)
 pub bitcoin::taproot::TaprootBuilderError::InvalidMerkleTreeDepth(usize)
 pub bitcoin::taproot::TaprootBuilderError::NodeNotInDfsOrder
 pub bitcoin::taproot::TaprootBuilderError::OverCompleteTree

@@ -1337,8 +1337,6 @@ pub enum TaprootBuilderError {
     NodeNotInDfsOrder,
     /// Two nodes at depth 0 are not allowed.
     OverCompleteTree,
-    /// Invalid taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
     /// Called finalize on a empty tree.
     EmptyTree,
 }
@@ -1365,9 +1363,6 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            InvalidInternalKey(ref e) => {
-                write_err!(f, "invalid internal x-only key"; e)
-            }
             EmptyTree => {
                 write!(f, "Called finalize on an empty tree")
             }
@@ -1381,7 +1376,6 @@ impl std::error::Error for TaprootBuilderError {
         use TaprootBuilderError::*;
 
         match self {
-            InvalidInternalKey(e) => Some(e),
             InvalidMerkleTreeDepth(_) | NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
         }
     }
