@@ -1,0 +1,25 @@
+[package]
+name = "bitcoin-receive"
+version = "0.0.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+description = "Support for receiving bitcoin - a.k.a. bitcoin addresses"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "types"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+
+[dev-dependencies]

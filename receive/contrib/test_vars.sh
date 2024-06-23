@@ -4,5 +4,11 @@
 # disable verify unused vars, despite the fact that they are used when sourced
 # shellcheck disable=SC2034
 
-# Crates in this workspace to test (note "fuzz" is only built not tested).
-CRATES=("base58" "bitcoin" "fuzz" "hashes" "internals" "io" "units" "receive")
+# Test all these features with "std" enabled.
+FEATURES_WITH_STD=""
+
+# Test all these features without "std" enabled.
+FEATURES_WITHOUT_STD=""
+
+# Run these examples.
+EXAMPLES=""
