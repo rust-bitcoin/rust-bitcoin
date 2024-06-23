@@ -221,7 +221,6 @@ We use the following style for import statements, see
 (https://github.com/rust-bitcoin/rust-bitcoin/discussions/2088) for the discussion that led to this.
 
 ```rust
-
 // Modules first, as they are part of the project's structure.
 pub mod aa_this;
 mod bb_private;
@@ -237,6 +236,24 @@ pub use {
     crate::aa_aa_this,
     crate::bb_bb::That,
 }
+
+// Avoid wildcard imports, except for 3 rules:
+
+// Rule 1 - test modules.
+#[cfg(test)]
+mod tests {
+    use super::*; // OK
+}
+
+// Rule 2 - enum variants.
+use LockTime::*; // OK
+
+// Rule 3 - opcodes.
+use opcodes::all::*; // OK
+
+// Finally here is an example where we don't allow wildcard imports:
+use crate::prelude::*; // *NOT* OK
+use crate::prelude::{DisplayHex, String, Vec} // OK
 ```
 
 #### Return `Self`
