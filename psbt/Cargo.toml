@@ -1,0 +1,42 @@
+[package]
+name = "psbt-v0"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+description = "Support for Partially Signed Bitcoin Transactions - version 0"
+categories = ["cryptography::cryptocurrencies"]
+keywords = [ "psbt", "bip-174", "bip174", "bip-370", "bip370"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = [ "std" ]
+std = ["bip32/std", "internals/std", "primitives/crypto-std"]
+rand-std = ["secp256k1/rand-std", "std"]
+serde = ["actual-serde", "bip32/serde", "internals/serde", "primitives/crypto-serde"]
+
+[dependencies]
+bip32 = { package = "bip32", version = "0.1.0", default-features = false, features = [] }
+internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
+primitives = { package = "bitcoin-primitives", version = "0.1.0", default-features = false, features = ["crypto"] }
+# We need an explicit dependency on `secp256k1` in order to enable `rand-std`.
+secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes"] }
+
+base64 = { version = "0.22.0", optional = true }
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+
+[dev-dependencies]
+secp256k1 = { version = "0.29.0", features = ["rand-std", "global-context"] }
+serde_json = "1.0.0"
+serde_test = "1.0.19"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_60)'] }

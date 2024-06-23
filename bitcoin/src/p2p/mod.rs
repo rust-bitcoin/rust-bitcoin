@@ -251,6 +251,7 @@ macro_rules! generate_network_magic_conversion {
                     $(
                         Network::$network => Magic::$magic,
                     )*
+                    _ => todo!("handle non_exhaustive"),
                 }
             }
         }

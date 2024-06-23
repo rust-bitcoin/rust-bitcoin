@@ -8,6 +8,7 @@ use std::{env, process};
 use bitcoin::consensus::{encode, Decodable};
 use bitcoin::p2p::{self, address, message, message_network};
 use bitcoin::secp256k1::rand::Rng;
+use bitcoin::NetworkExt;
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the initial
