@@ -24,7 +24,7 @@ impl Map for Psbt {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key: vec![] },
+            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX as u64, key: vec![] },
             value: {
                 // Manually serialized to ensure 0-input txs are serialized
                 // without witnesses.
@@ -39,7 +39,7 @@ impl Map for Psbt {
 
         for (xpub, (fingerprint, derivation)) in &self.xpub {
             rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_XPUB, key: xpub.encode().to_vec() },
+                key: raw::Key { type_value: PSBT_GLOBAL_XPUB as u64, key: xpub.encode().to_vec() },
                 value: {
                     let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
                     ret.extend(fingerprint.as_bytes());
@@ -52,7 +52,7 @@ impl Map for Psbt {
         // Serializing version only for non-default value; otherwise test vectors fail
         if self.version > 0 {
             rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
+                key: raw::Key { type_value: PSBT_GLOBAL_VERSION as u64, key: vec![] },
                 value: self.version.to_le_bytes().to_vec(),
             });
         }
@@ -81,7 +81,7 @@ impl Psbt {
         loop {
             match raw::Pair::decode(&mut r) {
                 Ok(pair) => {
-                    match pair.key.type_value {
+                    match pair.key.type_value as u8 {
                         PSBT_GLOBAL_UNSIGNED_TX => {
                             // key has to be empty
                             if pair.key.key.is_empty() {

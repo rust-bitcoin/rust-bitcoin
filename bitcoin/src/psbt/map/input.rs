@@ -253,7 +253,7 @@ impl Input {
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
         let raw::Pair { key: raw_key, value: raw_value } = pair;
 
-        match raw_key.type_value {
+        match raw_key.type_value as u8 {
             PSBT_IN_NON_WITNESS_UTXO => {
                 impl_psbt_insert_pair! {
                     self.non_witness_utxo <= <raw_key: _>|<raw_value: Transaction>

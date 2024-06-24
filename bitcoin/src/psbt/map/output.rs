@@ -57,7 +57,7 @@ impl Output {
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
         let raw::Pair { key: raw_key, value: raw_value } = pair;
 
-        match raw_key.type_value {
+        match raw_key.type_value as u8 {
             PSBT_OUT_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
                     self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf>

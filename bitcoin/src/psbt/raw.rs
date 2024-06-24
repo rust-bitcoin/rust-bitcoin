@@ -22,7 +22,7 @@ use crate::psbt::Error;
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Key {
     /// The type of this PSBT key.
-    pub type_value: u8,
+    pub type_value: u64,
     /// The key itself in raw byte form.
     /// `<key> := <keylen> <keytype> <keydata>`
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
@@ -74,13 +74,15 @@ impl fmt::Display for Key {
 
 impl Key {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
+        let VarInt(key_len): VarInt = Decodable::consensus_decode(r)?;
 
-        if byte_size == 0 {
+        if key_len == 0 {
             return Err(Error::NoMorePairs);
         }
 
-        let key_byte_size: u64 = byte_size - 1;
+        let key_type: VarInt = Decodable::consensus_decode(r)?;
+
+        let key_byte_size: u64 = key_len - key_type.size() as u64;
 
         if key_byte_size > MAX_VEC_SIZE as u64 {
             return Err(encode::Error::OversizedVectorAllocation {
@@ -90,28 +92,32 @@ impl Key {
             .into());
         }
 
-        let type_value: u8 = Decodable::consensus_decode(r)?;
-
         let mut key = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
             key.push(Decodable::consensus_decode(r)?);
         }
 
-        Ok(Key { type_value, key })
+        Ok(Key { type_value: key_type.0, key })
     }
 }
 
 impl Serialize for Key {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        VarInt::from(self.key.len() + 1)
-            .consensus_encode(&mut buf)
+
+        // `<key> := <keylen> <keytype> <keydata>`
+        let key_type = VarInt(self.type_value);
+        let key_len = VarInt((key_type.size() + self.key.len()) as u64); // Cast ok until 128 bit architectures exist.
+        let key_data = &self.key;
+
+        key_len.consensus_encode(&mut buf)
             .expect("in-memory writers don't error");
 
-        self.type_value.consensus_encode(&mut buf).expect("in-memory writers don't error");
+        key_type.consensus_encode(&mut buf)
+            .expect("in-memory writers don't error");
 
-        for key in &self.key {
-            key.consensus_encode(&mut buf).expect("in-memory writers don't error");
+        for b in key_data {
+            b.consensus_encode(&mut buf).expect("in-memory writers don't error");
         }
 
         buf
@@ -196,5 +202,19 @@ where
         }
 
         Ok(deserialize(&key.key)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serialize_key_byte_size_type_vaule_is_minimal() {
+        let key = Key { type_value: 0x0fu64, key: vec![3, 4] };
+
+        let got = key.serialize();
+        let want = vec![0x03, 0x0f, 0x03, 0x04]; // <keylen>, <keytype>, <key>
+        assert_eq!(got, want);
     }
 }
