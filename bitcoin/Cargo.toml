@@ -23,10 +23,6 @@ secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
 [dependencies]
 base58 = { package = "base58ck", version = "0.1.0", default-features = false }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
@@ -53,6 +49,10 @@ hex_lit = "0.1.1"
 
 [target.'cfg(mutate)'.dev-dependencies]
 mutagen = { git = "https://github.com/llogiq/mutagen" }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [[example]]
 name = "bip32"

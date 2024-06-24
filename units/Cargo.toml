@@ -17,10 +17,6 @@ default = ["std"]
 std = ["alloc", "internals/std"]
 alloc = ["internals/alloc"]
 
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 
@@ -29,6 +25,10 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"], 
 [dev-dependencies]
 serde_test = "1.0"
 serde_json = "1.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(kani)'] }
