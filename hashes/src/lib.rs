@@ -12,25 +12,25 @@
 //! Hashing a single byte slice or a string:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, GeneralHash as _};
+//! use bitcoin_hashes::Sha256;
 //!
 //! let bytes = [0u8; 5];
-//! let hash_of_bytes = sha256::Hash::hash(&bytes);
-//! let hash_of_string = sha256::Hash::hash("some string".as_bytes());
+//! let hash_of_bytes = Sha256::hash(&bytes);
+//! let hash_of_string = Sha256::hash("some string".as_bytes());
 //! ```
 //!
 //!
 //! Hashing content from a reader:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, GeneralHash as _};
+//! use bitcoin_hashes::Sha256;
 //!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
 //! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
-//! let mut engine = sha256::HashEngine::default();
+//! let mut engine = Sha256::engine();
 //! std::io::copy(&mut reader, &mut engine)?;
-//! let hash = sha256::Hash::from_engine(engine);
+//! let hash = Sha256::from_engine(engine);
 //! # Ok(())
 //! # }
 //!
@@ -39,10 +39,10 @@
 //! ```
 //!
 //!
-//! Hashing content by [`std::io::Write`] on HashEngine:
+//! Hashing content by [`std::io::Write`] on `HashEngine`:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::Sha256;
 //! use std::io::Write;
 //!
 //! #[cfg(std)]
@@ -50,11 +50,11 @@
 //! let mut part1: &[u8] = b"hello";
 //! let mut part2: &[u8] = b" ";
 //! let mut part3: &[u8] = b"world";
-//! let mut engine = sha256::HashEngine::default();
+//! let mut engine = Sha256::engine();
 //! engine.write_all(part1)?;
 //! engine.write_all(part2)?;
 //! engine.write_all(part3)?;
-//! let hash = sha256::Hash::from_engine(engine);
+//! let hash = Sha256::from_engine(engine);
 //! # Ok(())
 //! # }
 //!
@@ -132,6 +132,57 @@ pub use self::{
     hkdf::Hkdf,
     hmac::{Hmac, HmacEngine},
 };
+
+/// SHA-1: Alias for the [`sha1::Hash`] hash type.
+#[doc(inline)]
+pub use sha1::Hash as Sha1;
+
+/// SHA-256: Alias for the [`sha256::Hash`] hash type.
+#[doc(inline)]
+pub use sha256::Hash as Sha256;
+
+/// SHA-384: Alias for the [`sha384::Hash`] hash type.
+#[doc(inline)]
+pub use sha384::Hash as Sha384;
+
+/// SHA-512: Alias for the [`sha512::Hash`] hash type.
+#[doc(inline)]
+pub use sha512::Hash as Sha512;
+
+/// SHA-512-256: Alias for the [`sha512_256::Hash`] hash type.
+#[doc(inline)]
+pub use sha512_256::Hash as Sha512_256;
+
+/// RIPEMD-160: Alias for the [`ripemd160::Hash`] hash type.
+#[doc(inline)]
+pub use ripemd160::Hash as Ripemd160;
+
+/// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
+#[doc(inline)]
+pub use siphash24::Hash as Siphash24;
+
+/// HASH-160: Alias for the [`hash160::Hash`] hash type.
+#[doc(inline)]
+pub use hash160::Hash as Hash160;
+
+/// Double SHA-256: Alias for the [`sha256d::Hash`] hash type.
+#[doc(inline)]
+pub use sha256d::Hash as Sha256d;
+
+/// Tagged SHA-256: Type alias for the [`sha256t::Hash`] hash type.
+pub type Sha256t<T> = sha256t::Hash<T>;
+
+/// HMAC-SHA-256: Type alias for the [`Hmac<Sha256>`] type.
+pub type HmacSha256 = Hmac<sha256::Hash>;
+
+/// HMAC-SHA-512: Type alias for the [`Hmac<Sha512>`] type.
+pub type HmacSha512 = Hmac<sha512::Hash>;
+
+/// HKDF-HMAC-SHA-256: Type alias for the [`Hkdf<Sha256>`] type.
+pub type HkdfSha256 = Hkdf<sha256::Hash>;
+
+/// HKDF-HMAC-SHA-512: Type alias for the [`Hkdf<Sha512>`] type.
+pub type HkdfSha512 = Hkdf<sha512::Hash>;
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone + Default {
