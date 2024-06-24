@@ -89,6 +89,23 @@ name = "bitcoin-io"
 version = "0.1.2"
 
 [[package]]
+name = "bitcoin-primitives"
+version = "0.100.0"
+dependencies = [
+ "base58ck",
+ "bech32",
+ "bitcoin-internals",
+ "bitcoin-io",
+ "bitcoin-units",
+ "bitcoin_hashes",
+ "bitcoinconsensus",
+ "hex-conservative",
+ "ordered",
+ "secp256k1",
+ "serde",
+]
+
+[[package]]
 name = "bitcoin-units"
 version = "0.1.1"
 dependencies = [
@@ -155,6 +172,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1aa273bf451e37ed35ced41c71a5e2a4e29064afb104158f2514bcd71c2c986"
 dependencies = [
  "arrayvec",
+ "serde",
 ]
 
 [[package]]

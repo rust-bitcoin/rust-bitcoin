@@ -1,0 +1,60 @@
+[package]
+name = "bitcoin-primitives"
+# Arbitrary high version number so as to not clash with the original
+# `bitcoin-primitives` crate that we replaced `v0.1.16-alpha`.
+version = "0.100.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+description = "Primitive types used by the rust-bitcoin eccosystem"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "types"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["std"]
+std = ["hashes/std", "hex/std", "internals/std", "io/std", "units/std"]
+
+# Note, optional dependencies `base58`, `bech32`, and `bitcoinconsensus` do not have a serde feature.
+serde = ["actual-serde", "hashes/serde", "hex/serde", "internals/serde", "units/serde"]
+
+# Features for optional dependencies that have a `std` feature that needs enabling for std builds.
+bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
+base58-std = ["base58/std", "std"]
+bech32-std = ["bech32/std", "std"]
+
+# Enables transient dependency on the `rand` crate.
+rand-std = ["secp256k1/rand-std", "std"]
+
+[dependencies]
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
+internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
+io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
+units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
+
+# Only use these features for no-std builds, otherwise use the appropriate feature eg, `base58-std`.
+base58 = { package = "base58ck", version = "0.1.0", default-features = false, optional = true }
+bech32 = { version = "0.11.0", default-features = false, features = ["alloc"], optional = true }
+bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
+
+# Enables implementations of `ArbitraryOrd` on some structs.
+ordered = { version = "0.2.0", optional = true }
+
+# Enables cryptography by way of `rust-secp256k1`.
+secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes"], optional = true }
+
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+
+[dev-dependencies]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)'] }

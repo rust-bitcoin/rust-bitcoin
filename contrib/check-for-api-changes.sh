@@ -25,6 +25,7 @@ main() {
 
     generate_api_files_bitcoin
     generate_api_files_base58
+    generate_api_files_primitives
 
     # These ones have an "alloc" feature we want to check.
     generate_api_files "hashes"
@@ -61,6 +62,17 @@ generate_api_files_base58() {
 
     run_cargo | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
     run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+
+    popd > /dev/null
+}
+
+generate_api_files_primitives() {
+    local crate="primitives"
+    pushd "$REPO_DIR/$crate" > /dev/null
+
+    run_cargo | $SORT | uniq > "$API_DIR/$crate/default-features.txt"
+    run_cargo --no-default-features | $SORT | uniq > "$API_DIR/$crate/no-features.txt"
+    run_cargo_all_features | $SORT | uniq > "$API_DIR/$crate/all-features.txt"
 
     popd > /dev/null
 }
