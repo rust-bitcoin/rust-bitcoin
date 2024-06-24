@@ -6559,6 +6559,7 @@ pub fn bitcoin::bip32::DerivationPath::from(numbers: &'a [bitcoin::bip32::ChildN
 pub fn bitcoin::bip32::DerivationPath::from(numbers: alloc::vec::Vec<bitcoin::bip32::ChildNumber>) -> Self
 pub fn bitcoin::bip32::DerivationPath::from_iter<T>(iter: T) -> Self where T: core::iter::traits::collect::IntoIterator<Item = bitcoin::bip32::ChildNumber>
 pub fn bitcoin::bip32::DerivationPath::from_str(path: &str) -> core::result::Result<bitcoin::bip32::DerivationPath, bitcoin::bip32::Error>
+pub fn bitcoin::bip32::DerivationPath::from_u32_slice(numbers: &[u32]) -> Self
 pub fn bitcoin::bip32::DerivationPath::hardened_children(&self) -> bitcoin::bip32::DerivationPathIterator<'_>
 pub fn bitcoin::bip32::DerivationPath::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::bip32::DerivationPath::index(&self, index: I) -> &Self::Output
