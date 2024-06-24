@@ -9,7 +9,7 @@ extern crate bitcoin_hashes;
 #[cfg(feature = "alloc")] use alloc_cortex_m::CortexMHeap;
 #[cfg(feature = "alloc")] use alloc::string::ToString;
 
-use bitcoin_hashes::{sha256, Hash, HashEngine};
+use bitcoin_hashes::{sha256, HashEngine};
 use bitcoin_io::Write;
 use core::str::FromStr;
 use cortex_m_rt::entry;
