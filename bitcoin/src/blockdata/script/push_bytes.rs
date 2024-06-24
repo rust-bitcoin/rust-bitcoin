@@ -4,10 +4,9 @@
 
 use core::ops::{Deref, DerefMut};
 
-use crate::script;
-
 #[allow(unused)]
 use crate::prelude::*;
+use crate::script;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
