@@ -128,7 +128,12 @@ use core::{convert, fmt, hash};
 
 pub use hmac::{Hmac, HmacEngine};
 
-/// A hashing engine which bytes can be serialized into.
+/// Hash engine trait for use in [`Hmac`] and [`Hkdf`] generics.
+///
+/// # Note
+///
+/// This trait is only required for the [`Hmac`] and [`Hkdf`] types, all other
+/// hash engine types provide functionality by way of inherent functions.
 pub trait HashEngine: Clone + Default {
     /// Byte array representing the internal state of the hash engine.
     type MidState;
@@ -147,7 +152,12 @@ pub trait HashEngine: Clone + Default {
     fn n_bytes_hashed(&self) -> usize;
 }
 
-/// Trait which applies to hashes of all types.
+/// Hash trait for use in [`Hmac`] and [`Hkdf`].
+///
+/// # Note
+///
+/// This trait is only required for use of the [`Hmac`] and [`Hkdf`] types, all other
+/// hash types provide functionality by way of inherent functions.
 pub trait Hash:
     Copy
     + Clone
