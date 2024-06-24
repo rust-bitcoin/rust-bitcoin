@@ -207,6 +207,15 @@ just check-api
 git commit -a -m 'api: Run just check-api'
 ```
 
+Please note, we pin the version in CI, you'll need to install cargo-public-api using:
+
+```bash
+cargo install --locked cargo-public-api@0.35.0
+```
+
+Tip: If you get a strangely noisy diff, on `master` check that `just check-api` runs without
+dirtying the index.
+
 ### Policy
 
 We have various `rust-bitcoin` specific coding styles and conventions that are

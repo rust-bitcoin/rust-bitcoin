@@ -317,6 +317,6 @@ jobs:
         with:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install cargo-public-api"
-        run: cargo install cargo-public-api@0.35.0 --locked
+        run: cargo install --locked cargo-public-api@0.35.0
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
