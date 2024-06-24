@@ -18,65 +18,89 @@ mod tests {
         WScriptHash, XKeyIdentifier,
     };
 
+    #[rustfmt::skip]
+    /// sha256d of the empty string
+    const DUMMY32: [u8; 32] = [
+        0x5d, 0xf6, 0xe0, 0xe2, 0x76, 0x13, 0x59, 0xd3,
+        0x0a, 0x82, 0x75, 0x05, 0x8e, 0x29, 0x9f, 0xcc,
+        0x03, 0x81, 0x53, 0x45, 0x45, 0xf5, 0x5c, 0xf4,
+        0x3e, 0x41, 0x98, 0x3f, 0x5d, 0x4c, 0x94, 0x56,
+    ];
+    /// hash160 of the empty string
+    #[rustfmt::skip]
+    const DUMMY20: [u8; 20] = [
+        0xb4, 0x72, 0xa2, 0x66, 0xd0, 0xbd, 0x89, 0xc1, 0x37, 0x06,
+        0xa4, 0x13, 0x2c, 0xcf, 0xb1, 0x6f, 0x7c, 0x3b, 0x9f, 0xcb,
+    ];
+
     #[test]
     fn hash_display() {
         assert_eq!(
-            Txid::hash(&[]).to_string(),
+            Txid::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
 
         assert_eq!(
-            Wtxid::hash(&[]).to_string(),
+            Wtxid::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            BlockHash::hash(&[]).to_string(),
+            BlockHash::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            LegacySighash::hash(&[]).to_string(),
+            LegacySighash::from_byte_array(DUMMY32).to_string(),
             "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456",
         );
         assert_eq!(
-            SegwitV0Sighash::hash(&[]).to_string(),
+            SegwitV0Sighash::from_byte_array(DUMMY32).to_string(),
             "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456",
         );
         assert_eq!(
-            TapSighash::hash(&[]).to_string(),
-            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803",
-        );
-
-        assert_eq!(PubkeyHash::hash(&[]).to_string(), "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",);
-        assert_eq!(ScriptHash::hash(&[]).to_string(), "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",);
-        assert_eq!(WPubkeyHash::hash(&[]).to_string(), "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",);
-        assert_eq!(
-            WScriptHash::hash(&[]).to_string(),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            TapSighash::from_byte_array(DUMMY32).to_string(),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456",
         );
 
         assert_eq!(
-            TxMerkleNode::hash(&[]).to_string(),
+            PubkeyHash::from_byte_array(DUMMY20).to_string(),
+            "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
+        );
+        assert_eq!(
+            ScriptHash::from_byte_array(DUMMY20).to_string(),
+            "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
+        );
+        assert_eq!(
+            WPubkeyHash::from_byte_array(DUMMY20).to_string(),
+            "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
+        );
+        assert_eq!(
+            WScriptHash::from_byte_array(DUMMY32).to_string(),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456",
+        );
+
+        assert_eq!(
+            TxMerkleNode::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            WitnessMerkleNode::hash(&[]).to_string(),
+            WitnessMerkleNode::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            WitnessCommitment::hash(&[]).to_string(),
+            WitnessCommitment::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            XKeyIdentifier::hash(&[]).to_string(),
+            XKeyIdentifier::from_byte_array(DUMMY20).to_string(),
             "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb",
         );
 
         assert_eq!(
-            FilterHash::hash(&[]).to_string(),
+            FilterHash::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
         assert_eq!(
-            FilterHeader::hash(&[]).to_string(),
+            FilterHeader::from_byte_array(DUMMY32).to_string(),
             "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d",
         );
     }

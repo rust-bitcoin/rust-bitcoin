@@ -1366,10 +1366,10 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::hashes::{sha256d, Hash, hex::FromHex};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # let mut writer = LegacySighash::engine();
+    /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -1381,6 +1381,8 @@ impl<E> EncodeSigningDataResult<E> {
     ///         .is_sighash_single_bug()
     ///         .expect("writer can't fail") {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
+    /// } else {
+    ///     // use the hash from `writer`
     /// }
     /// ```
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {

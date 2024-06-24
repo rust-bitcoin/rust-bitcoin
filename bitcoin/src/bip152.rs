@@ -383,11 +383,12 @@ mod test {
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
+        let dummy_txid = Txid::from_byte_array(hashes::sha256::Hash::hash(nonce).to_byte_array());
         Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
-                previous_output: OutPoint::new(Txid::hash(nonce), 0),
+                previous_output: OutPoint::new(dummy_txid, 0),
                 script_sig: ScriptBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
@@ -400,8 +401,8 @@ mod test {
         Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::hash(&[0]),
-                merkle_root: TxMerkleNode::hash(&[1]),
+                prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
+                merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
                 time: 2,
                 bits: CompactTarget::from_consensus(3),
                 nonce: 4,
