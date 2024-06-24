@@ -5,7 +5,6 @@
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.
 
-use hashes::sha256d;
 use io::{BufRead, Write};
 
 use crate::block::BlockHash;
@@ -67,7 +66,7 @@ impl Encodable for Inventory {
             };
         }
         Ok(match *self {
-            Inventory::Error => encode_inv!(0, sha256d::Hash::all_zeros()),
+            Inventory::Error => encode_inv!(0, [0; 32]),
             Inventory::Transaction(ref t) => encode_inv!(1, t),
             Inventory::Block(ref b) => encode_inv!(2, b),
             Inventory::CompactBlock(ref b) => encode_inv!(4, b),

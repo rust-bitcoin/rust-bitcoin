@@ -49,6 +49,24 @@ hashes::hash_newtype! {
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 
+impl Txid {
+    /// The "all zeros" TXID.
+    ///
+    /// This is used as the "txid" of the dummy input of a coinbase transaction. It is
+    /// not a real TXID and should not be used in other contexts.
+    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+}
+
+impl Wtxid {
+    /// The "all zeros" wTXID.
+    ///
+    /// This is used as the wTXID for the coinbase transaction when constructing blocks,
+    /// since the coinbase transaction contains a commitment to all transactions' wTXIDs
+    /// but naturally cannot commit to its own. It is not a real wTXID and should not be
+    /// used in other contexts.
+    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+}
+
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)

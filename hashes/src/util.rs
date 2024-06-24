@@ -195,17 +195,17 @@ macro_rules! hash_newtype {
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
             /// Creates this wrapper type from the inner hash type.
-            pub fn from_raw_hash(inner: $hash) -> $newtype {
+            pub const fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Returns the inner hash (sha256, sh256d etc.).
-            pub fn to_raw_hash(self) -> $hash {
+            pub const fn to_raw_hash(self) -> $hash {
                 self.0
             }
 
             /// Returns a reference to the inner hash (sha256, sh256d etc.).
-            pub fn as_raw_hash(&self) -> &$hash {
+            pub const fn as_raw_hash(&self) -> &$hash {
                 &self.0
             }
 
@@ -250,30 +250,19 @@ macro_rules! hash_newtype {
             }
 
             /// Returns the underlying byte array.
-            pub fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
+            pub const fn to_byte_array(self) -> <$hash as $crate::Hash>::Bytes {
                 self.0.to_byte_array()
             }
 
             /// Returns a reference to the underlying byte array.
-            pub fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
+            pub const fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
                 self.0.as_byte_array()
             }
 
             /// Constructs a hash from the underlying byte array.
-            pub fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
+            pub const fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
             }
-
-            /// Returns an all zero hash.
-            ///
-            /// An all zeros hash is a made up construct because there is not a known input that can create
-            /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
-            /// previous blockhash and the coinbase transaction's outpoint txid.
-            pub fn all_zeros() -> Self {
-                let zeros = <$hash>::all_zeros();
-                $newtype(zeros)
-            }
-
         }
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
@@ -309,8 +298,6 @@ macro_rules! hash_newtype {
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
-
-            fn all_zeros() -> Self { Self::all_zeros() }
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
@@ -460,6 +447,10 @@ mod test {
     hash_newtype! {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
+    }
+
+    impl TestHash {
+        fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
     }
 
     #[test]

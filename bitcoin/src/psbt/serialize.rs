@@ -404,6 +404,7 @@ mod tests {
 
     #[test]
     fn taptree_hidden() {
+        let dummy_hash = TapNodeHash::from_byte_array([0x12; 32]);
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
         builder = builder
             .add_leaf_with_ver(
@@ -412,7 +413,7 @@ mod tests {
                 LeafVersion::from_consensus(0xC2).unwrap(),
             )
             .unwrap();
-        builder = builder.add_hidden_node(3, TapNodeHash::all_zeros()).unwrap();
+        builder = builder.add_hidden_node(3, dummy_hash).unwrap();
         assert!(TapTree::try_from(builder).is_err());
     }
 

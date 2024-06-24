@@ -119,8 +119,6 @@ macro_rules! hash_trait_impls {
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
-
-            fn all_zeros() -> Self { Self::all_zeros() }
         }
     }
 }
@@ -218,13 +216,6 @@ macro_rules! hash_type {
             pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
                 Self::internal_new(bytes)
             }
-
-            /// Returns an all zero hash.
-            ///
-            /// An all zeros hash is a made up construct because there is not a known input that can create
-            /// it, however it is used in various places in Bitcoin e.g., the Bitcoin genesis block's
-            /// previous blockhash and the coinbase transaction's outpoint txid.
-            pub const fn all_zeros() -> Self { Hash::internal_new([0x00; $bits / 8]) }
         }
 
         #[cfg(feature = "schemars")]
