@@ -40,3 +40,7 @@ update-lock-files:
 # Check for API changes.
 check-api:
  contrib/check-for-api-changes.sh
+
+# Check for API changes and commit changes if index is dirty.
+update-api:
+ contrib/check-for-api-changes.sh  && git commit -a -m 'api: Run just check-api' -n
