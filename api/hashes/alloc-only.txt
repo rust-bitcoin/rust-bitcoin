@@ -1,4 +1,13 @@
+#[repr(transparent)] pub struct bitcoin_hashes::Hash160(_)
 #[repr(transparent)] pub struct bitcoin_hashes::Hmac<T: bitcoin_hashes::GeneralHash>(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Ripemd160(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha1(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha256(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha256d(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha384(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha512(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Sha512_256(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Siphash24(_)
 #[repr(transparent)] pub struct bitcoin_hashes::hash160::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::GeneralHash>(_)
 #[repr(transparent)] pub struct bitcoin_hashes::ripemd160::Hash(_)
@@ -847,6 +856,7 @@ pub mod bitcoin_hashes::sha512
 pub mod bitcoin_hashes::sha512_256
 pub mod bitcoin_hashes::siphash24
 pub struct bitcoin_hashes::FromSliceError
+pub struct bitcoin_hashes::Hkdf<T: bitcoin_hashes::GeneralHash>
 pub struct bitcoin_hashes::HmacEngine<T: bitcoin_hashes::GeneralHash>
 pub struct bitcoin_hashes::hkdf::Hkdf<T: bitcoin_hashes::GeneralHash>
 pub struct bitcoin_hashes::hkdf::MaxLengthError
@@ -868,6 +878,11 @@ pub trait bitcoin_hashes::sha256t::Tag
 pub type bitcoin_hashes::GeneralHash::Engine: bitcoin_hashes::HashEngine
 pub type bitcoin_hashes::Hash::Bytes: hex_conservative::parse::FromHex + core::marker::Copy
 pub type bitcoin_hashes::HashEngine::MidState
+pub type bitcoin_hashes::HkdfSha256 = bitcoin_hashes::hkdf::Hkdf<bitcoin_hashes::sha256::Hash>
+pub type bitcoin_hashes::HkdfSha512 = bitcoin_hashes::hkdf::Hkdf<bitcoin_hashes::sha512::Hash>
+pub type bitcoin_hashes::HmacSha256 = bitcoin_hashes::hmac::Hmac<bitcoin_hashes::sha256::Hash>
+pub type bitcoin_hashes::HmacSha512 = bitcoin_hashes::hmac::Hmac<bitcoin_hashes::sha512::Hash>
+pub type bitcoin_hashes::Sha256t<T> = bitcoin_hashes::sha256t::Hash<T>
 pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
 pub type bitcoin_hashes::hash160::Hash::Engine = bitcoin_hashes::sha256::HashEngine
 pub type bitcoin_hashes::hash160::Hash::Err = hex_conservative::error::HexToArrayError
