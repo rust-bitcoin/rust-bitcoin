@@ -1214,7 +1214,7 @@ mod tests {
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::ScriptBuf;
     #[cfg(feature = "rand-std")]
-    use crate::secp256k1::{All, SecretKey};
+    use crate::secp256k1::{self, All, SecretKey};
     use crate::transaction::{self, OutPoint, Sequence, TxIn};
     use crate::witness::Witness;
 

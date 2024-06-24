@@ -11,12 +11,12 @@ use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
+use crate::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -979,13 +979,13 @@ macro_rules! impl_hex {
     ($hex:ident, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                crate::hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(LowerHex, hex::Case::Lower);
-impl_hex!(UpperHex, hex::Case::Upper);
+impl_hex!(LowerHex, crate::hex::Case::Lower);
+impl_hex!(UpperHex, crate::hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 impl crate::serde::Serialize for U256 {

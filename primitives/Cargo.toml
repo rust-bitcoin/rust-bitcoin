@@ -14,10 +14,7 @@ edition = "2021"
 rust-version = "1.56.1"
 exclude = ["tests", "contrib"]
 
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
-
+# TODO: Document features in lib.rs?
 [features]
 default = ["std"]
 std = ["hashes/std", "hex/std", "internals/std", "io/std", "units/std"]
@@ -55,6 +52,10 @@ secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes"
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)'] }

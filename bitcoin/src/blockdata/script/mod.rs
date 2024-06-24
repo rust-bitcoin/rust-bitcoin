@@ -66,9 +66,9 @@ use core::ops::{Deref, DerefMut};
 
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
-use crate::hashes::{hash160, sha256};
+use crate::hashes::{self, hash160, sha256};
 use crate::internal_macros::impl_asref_push_bytes;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::*;

@@ -3,7 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use crate::hex::FromHex;
+use crate::hex::{self, FromHex};
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };

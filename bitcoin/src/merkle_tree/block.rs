@@ -14,7 +14,7 @@ use core::fmt;
 use self::MerkleBlockError::*;
 use crate::block::{self, Block};
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
 use crate::prelude::*;
 use crate::transaction::{Transaction, Txid};
@@ -506,7 +506,7 @@ impl std::error::Error for MerkleBlockError {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "rand-std")]
-    use {core::cmp, secp256k1::rand::prelude::*};
+    use {crate::secp256k1::rand::prelude::*, core::cmp};
 
     use super::*;
     use crate::consensus::encode;

@@ -18,7 +18,7 @@ use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash};
+use crate::{script, weight, Amount, BlockHash};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -28,7 +28,7 @@ pub const DIFFCHANGE_INTERVAL: u32 = 2016;
 pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
-pub const WITNESS_SCALE_FACTOR: usize = units::weight::WITNESS_SCALE_FACTOR;
+pub const WITNESS_SCALE_FACTOR: usize = weight::WITNESS_SCALE_FACTOR;
 /// The maximum allowed number of signature check operations in a block.
 pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 /// Mainnet (bitcoin) pubkey address prefix.

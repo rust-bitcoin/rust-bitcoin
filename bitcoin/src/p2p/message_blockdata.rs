@@ -8,7 +8,7 @@
 use crate::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::p2p;
 use crate::transaction::{Txid, Wtxid};
 

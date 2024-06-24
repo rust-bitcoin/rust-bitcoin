@@ -12,18 +12,19 @@ use core::str::FromStr;
 use internals::array_vec::ArrayVec;
 use internals::write_err;
 
+use crate::base58;
 use crate::crypto::ecdsa;
-use crate::hashes::hash160;
-use crate::hex::{FromHex, HexToArrayError};
+use crate::hashes::{self, hash160};
+use crate::hex::{self, FromHex, HexToArrayError};
 use crate::internal_macros::impl_asref_push_bytes;
-use crate::io::{Read, Write};
+use crate::io::{self, Read, Write};
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::script::ScriptBuf;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use crate::secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use crate::secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 #[cfg(feature = "rand-std")]
 pub use crate::secp256k1::rand;

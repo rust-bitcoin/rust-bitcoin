@@ -55,7 +55,7 @@ macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
             /// Creates `Self` from a hex string.
-            pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
+            pub fn from_hex(s: &str) -> Result<Self, $crate::hex::HexToArrayError> {
                 Ok($t($crate::hex::FromHex::from_hex(s)?))
             }
         }

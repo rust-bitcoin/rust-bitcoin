@@ -60,26 +60,27 @@ extern crate alloc;
 pub extern crate base64;
 
 /// Bitcoin base58 encoding and decoding.
-pub extern crate base58;
-
+pub use primitives::base58;
+use primitives::bech32;
+/// Re-export the `rust-bitcoinconsensus` crate.
+#[cfg(feature = "bitcoinconsensus")]
+pub use primitives::bitcoinconsensus;
 /// Rust implementation of cryptographic hash function algorithms.
-pub extern crate hashes;
-
-extern crate bech32;
-
+pub use primitives::hashes;
 /// Re-export the `hex-conservative` crate.
-pub extern crate hex;
-
+pub use primitives::hex;
 /// Re-export the `bitcoin-io` crate.
-pub extern crate io;
-
+pub use primitives::io;
 /// Re-export the `ordered` crate.
 #[cfg(feature = "ordered")]
-pub extern crate ordered;
+pub use primitives::ordered;
+
+/// Re-export the `bitcoin-primitives` crate.
+pub extern crate primitives;
 
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
-pub extern crate secp256k1;
+pub use primitives::secp256k1;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -118,16 +119,14 @@ pub use crate::{
     amount::{Amount, Denomination, SignedAmount},
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
-    blockdata::block::{self, Block, BlockHash, WitnessCommitment},
+    blockdata::block::{self, Block, BlockHash, WitnessCommitment, BlockHeight, BlockInterval},
     blockdata::constants,
-    blockdata::fee_rate::FeeRate,
     blockdata::locktime::{self, absolute, relative},
     blockdata::opcodes::{self, Opcode},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
     blockdata::script::{self, Script, ScriptBuf, ScriptHash, WScriptHash},
     blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
-    blockdata::weight::Weight,
     blockdata::witness::{self, Witness},
     consensus::encode::VarInt,
     consensus::params,
@@ -141,7 +140,9 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
-pub use units::{BlockHeight, BlockInterval};
+pub use crate::primitives::units::fee_rate::{self, FeeRate};
+pub use crate::primitives::units::parse;
+pub use crate::primitives::units::weight::{self, Weight};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
@@ -173,15 +174,21 @@ pub mod amount {
     //! We refer to the documentation on the types for more information.
 
     use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
+    use crate::io::{self, BufRead, Write};
 
-    #[rustfmt::skip]            // Keep public re-exports separate.
+    // We have to re-export everything so that users only ever need to go to `bitcoin::amount`. Once
+    // encodable moves to `primitives` this noisy re-export will go too.
     #[doc(inline)]
-    pub use units::amount::{
-        Amount, CheckedSum, Denomination, Display, ParseAmountError, SignedAmount,
+    #[rustfmt::skip]            // Keep public re-exports separate.
+    pub use primitives::amount::{
+        Amount, CheckedSum, Denomination, Display, InputTooLargeError,
+        InvalidCharacterError, MissingDenominationError, MissingDigitsError, OutOfRangeError,
+        ParseAmountError, ParseDenominationError, ParseError,
+        PossiblyConfusingDenominationError, SignedAmount, TooPreciseError,
+        UnknownDenominationError,
     };
     #[cfg(feature = "serde")]
-    pub use units::amount::serde;
+    pub use primitives::amount::serde;
 
     impl Decodable for Amount {
         #[inline]
@@ -198,20 +205,14 @@ pub mod amount {
     }
 }
 
-/// Unit parsing utilities.
-pub mod parse {
-    /// Re-export everything from the [`units::parse`] module.
-    pub use units::parse::ParseIntError;
-}
-
 mod encode_impls {
     //! Encodable/Decodable implementations.
     // While we are deprecating, re-exporting, and generally moving things around just put these here.
 
-    use units::{BlockHeight, BlockInterval};
+    use primitives::{BlockHeight, BlockInterval};
 
     use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
+    use crate::io::{self, BufRead, Write};
 
     /// Implements Encodable and Decodable for a simple wrapper type.
     ///

@@ -51,6 +51,7 @@ use crate::script::{
 };
 use crate::secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::taproot::TapNodeHash;
+use crate::{base58, bech32};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

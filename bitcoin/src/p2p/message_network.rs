@@ -8,7 +8,7 @@
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::hashes::sha256d;
 use crate::internal_macros::impl_consensus_encoding;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::p2p;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;

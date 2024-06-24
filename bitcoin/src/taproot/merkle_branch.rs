@@ -7,6 +7,7 @@ use super::{
     TAPROOT_CONTROL_NODE_SIZE,
 };
 use crate::hashes::Hash;
+use crate::io;
 use crate::prelude::*;
 
 /// The merkle proof for inclusion of a tree in a taptree hash.

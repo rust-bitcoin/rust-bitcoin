@@ -10,16 +10,17 @@ use core::fmt;
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
+use crate::primitives::units;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::absolute::{
+pub use primitives::units::locktime::absolute::{
     Height, Time, LOCK_TIME_THRESHOLD, ConversionError, ParseHeightError, ParseTimeError,
 };
 
@@ -401,7 +402,7 @@ impl<'de> serde::Deserialize<'de> for LockTime {
 }
 
 #[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
+impl crate::ordered::ArbitraryOrd for LockTime {
     fn arbitrary_cmp(&self, other: &Self) -> Ordering {
         use LockTime::*;
 

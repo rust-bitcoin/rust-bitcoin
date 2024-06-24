@@ -16,7 +16,7 @@
 
 mod block;
 
-use crate::hashes::{sha256d, HashEngine as _};
+use crate::hashes::{self, sha256d, HashEngine as _};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
 use crate::{Txid, Wtxid};

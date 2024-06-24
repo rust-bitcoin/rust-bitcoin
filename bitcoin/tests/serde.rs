@@ -37,8 +37,8 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, secp256k1, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey,
+    PublicKey, ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.

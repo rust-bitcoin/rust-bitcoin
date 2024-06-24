@@ -13,7 +13,7 @@ use internals::impl_array_newtype;
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::prelude::*;
 use crate::{block, Block, BlockHash, Transaction};
 

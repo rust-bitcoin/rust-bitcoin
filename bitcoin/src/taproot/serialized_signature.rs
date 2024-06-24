@@ -11,7 +11,8 @@ use core::{fmt, ops};
 pub use into_iter::IntoIter;
 
 use super::{SigFromSliceError, Signature};
-use crate::io::Write;
+use crate::hex;
+use crate::io::{self, Write};
 
 pub(crate) const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 
@@ -28,7 +29,7 @@ impl fmt::Debug for SerializedSignature {
 
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        hex::fmt_hex_exact!(f, MAX_LEN, self, hex::Case::Lower)
+        crate::hex::fmt_hex_exact!(f, MAX_LEN, self, hex::Case::Lower)
     }
 }
 

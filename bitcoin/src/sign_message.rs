@@ -25,6 +25,7 @@ mod message_signing {
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
     use crate::hashes::sha256d;
+    use crate::secp256k1;
     use crate::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     /// An error used for dealing with Bitcoin Signed Messages.

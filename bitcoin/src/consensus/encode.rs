@@ -23,8 +23,9 @@ use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::{self, BlockHash};
 use crate::consensus::{DecodeError, IterReader};
 use crate::hashes::{sha256, sha256d, Hash};
+use crate::hex;
 use crate::hex::error::{InvalidCharError, OddLengthStringError};
-use crate::io::{BufRead, Cursor, Read, Write};
+use crate::io::{self, BufRead, Cursor, Read, Write};
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
 use crate::p2p::{

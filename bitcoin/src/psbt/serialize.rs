@@ -14,13 +14,14 @@ use crate::hashes::{hash160, ripemd160, sha256, sha256d};
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
 use crate::script::ScriptBuf;
-use crate::secp256k1::XOnlyPublicKey;
+use crate::secp256k1::{self, XOnlyPublicKey};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-use crate::VarInt;
+use crate::{io, VarInt};
+
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {

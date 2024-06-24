@@ -12,8 +12,8 @@ use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
-    absolute, script, transaction, Amount, Denomination, NetworkKind, OutPoint, PrivateKey,
-    PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    absolute, script, secp256k1, transaction, Amount, Denomination, NetworkKind, OutPoint,
+    PrivateKey, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 
 #[track_caller]

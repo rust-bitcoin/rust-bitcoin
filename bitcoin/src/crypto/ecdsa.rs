@@ -9,10 +9,11 @@ use core::{fmt, iter};
 
 use internals::write_err;
 
-use crate::hex::FromHex;
-use crate::io::Write;
+use crate::hex::{self, FromHex};
+use crate::io::{self, Write};
 use crate::prelude::*;
 use crate::script::PushBytes;
+use crate::secp256k1;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;

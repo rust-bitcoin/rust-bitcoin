@@ -11,14 +11,20 @@ use core::fmt;
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable, Params};
-use crate::hashes::{sha256d, HashEngine};
+use crate::hashes::{self, sha256d, HashEngine};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::transaction::{Transaction, Wtxid};
 use crate::{script, VarInt};
+
+#[rustfmt::skip]                // Keep prelude types separate.
+#[doc(inline)]
+pub use primitives::units::block::{
+    BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError,
+};
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.

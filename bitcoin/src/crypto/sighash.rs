@@ -17,11 +17,13 @@ use internals::write_err;
 
 use crate::consensus::{encode, Encodable};
 use crate::hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
-use crate::io::Write;
+use crate::io::{self, Write};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::witness::Witness;
-use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{
+    secp256k1, transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
+};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -1786,7 +1788,7 @@ mod tests {
         }
 
         use crate::consensus::serde as con_serde;
-        use crate::secp256k1::{SecretKey, XOnlyPublicKey};
+        use crate::secp256k1::{self, SecretKey, XOnlyPublicKey};
         use crate::taproot::{TapNodeHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]

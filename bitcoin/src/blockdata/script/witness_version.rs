@@ -11,9 +11,9 @@ use core::fmt;
 use core::str::FromStr;
 
 use internals::write_err;
-use units::{parse, ParseIntError};
+use primitives::parse;
 
-use crate::bech32::Fe32;
+use crate::bech32::{self, Fe32};
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::script::Instruction;
@@ -170,7 +170,7 @@ impl From<WitnessVersion> for Opcode {
 #[non_exhaustive]
 pub enum FromStrError {
     /// Unable to parse integer from string.
-    Unparsable(ParseIntError),
+    Unparsable(parse::ParseIntError),
     /// String contained an invalid witness version number.
     Invalid(TryFromError),
 }
@@ -200,8 +200,8 @@ impl std::error::Error for FromStrError {
     }
 }
 
-impl From<ParseIntError> for FromStrError {
-    fn from(e: ParseIntError) -> Self { Self::Unparsable(e) }
+impl From<parse::ParseIntError> for FromStrError {
+    fn from(e: parse::ParseIntError) -> Self { Self::Unparsable(e) }
 }
 
 impl From<TryFromError> for FromStrError {

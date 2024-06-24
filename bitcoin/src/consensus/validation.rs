@@ -9,6 +9,7 @@ use core::fmt;
 use internals::write_err;
 
 use crate::amount::Amount;
+use crate::bitcoinconsensus;
 #[cfg(doc)]
 use crate::consensus;
 use crate::consensus::encode;

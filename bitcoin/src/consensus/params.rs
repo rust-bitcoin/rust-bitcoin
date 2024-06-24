@@ -65,7 +65,7 @@
 //! # }
 //! ```
 
-use units::{BlockHeight, BlockInterval};
+use primitives::{BlockHeight, BlockInterval};
 
 use crate::network::Network;
 #[cfg(doc)]

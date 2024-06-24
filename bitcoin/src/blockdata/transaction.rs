@@ -13,21 +13,22 @@
 use core::{cmp, fmt, str};
 
 use internals::write_err;
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hashes::sha256d;
+use crate::hashes::{self, sha256d};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::locktime::absolute::{self, Height, Time};
 use crate::locktime::relative::{self, TimeOverflowError};
+use crate::parse::{self, PrefixedHexError, UnprefixedHexError};
 use crate::prelude::*;
+use crate::primitives::units;
 use crate::script::{Script, ScriptBuf};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount, VarInt};
+use crate::{hex, Amount, FeeRate, SignedAmount, VarInt};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[cfg(feature = "bitcoinconsensus")]

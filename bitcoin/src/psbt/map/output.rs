@@ -5,7 +5,7 @@ use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
 use crate::script::ScriptBuf;
-use crate::secp256k1::XOnlyPublicKey;
+use crate::secp256k1::{self, XOnlyPublicKey};
 use crate::taproot::{TapLeafHash, TapTree};
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00

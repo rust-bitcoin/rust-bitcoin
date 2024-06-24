@@ -15,15 +15,12 @@ pub mod witness;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use self::{
-    fee_rate::FeeRate,
-    weight::Weight
-};
+pub use primitives::weight::{self, Weight};
 
 /// Implements `FeeRate` and assoctiated features.
 pub mod fee_rate {
     /// Re-export everything from the [`units::fee_rate`] module.
-    pub use units::fee_rate::*;
+    pub use primitives::fee_rate::FeeRate;
 
     #[cfg(test)]
     mod tests {
@@ -45,10 +42,4 @@ pub mod fee_rate {
             assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
         }
     }
-}
-
-/// Implements `Weight` and associated features.
-pub mod weight {
-    /// Re-export everything from the [`units::weight`] module.
-    pub use units::weight::*;
 }

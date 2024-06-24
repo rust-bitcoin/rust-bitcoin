@@ -17,7 +17,7 @@ use core::fmt;
 use internals::write_err;
 
 use crate::consensus;
-use crate::io::{BufRead, Read};
+use crate::io::{self, BufRead, Read};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

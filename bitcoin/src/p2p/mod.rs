@@ -27,8 +27,8 @@ use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
-use crate::hex::FromHex;
-use crate::io::{BufRead, Write};
+use crate::hex::{self, FromHex};
+use crate::io::{self, BufRead, Write};
 use crate::prelude::*;
 use crate::Network;
 

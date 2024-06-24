@@ -9,7 +9,7 @@ use core::{fmt, iter};
 
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
 use crate::hashes::sha256d;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -538,11 +538,9 @@ impl Decodable for RawNetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use units::BlockHeight;
-
     use super::*;
     use crate::bip152::BlockTransactionsRequest;
-    use crate::block::Block;
+    use crate::block::{Block, BlockHeight};
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::hex::test_hex_unwrap as hex;
     use crate::p2p::address::AddrV2;

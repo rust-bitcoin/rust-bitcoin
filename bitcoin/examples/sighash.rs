@@ -1,5 +1,6 @@
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
+    consensus, ecdsa, secp256k1, sighash, Amount, CompressedPublicKey, Script, ScriptBuf,
+    Transaction,
 };
 use hex_lit::hex;
 

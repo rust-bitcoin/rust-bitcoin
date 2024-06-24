@@ -10,10 +10,10 @@ use core::ops::Index;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::io::{BufRead, Write};
+use crate::io::{self, BufRead, Write};
 use crate::prelude::*;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
-use crate::{Script, VarInt};
+use crate::{secp256k1, Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///

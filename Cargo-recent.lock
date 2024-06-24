@@ -48,16 +48,10 @@ dependencies = [
 name = "bitcoin"
 version = "0.32.0-rc1"
 dependencies = [
- "base58ck",
  "base64",
- "bech32",
  "bincode",
  "bitcoin-internals",
- "bitcoin-io",
- "bitcoin-units",
- "bitcoin_hashes",
- "bitcoinconsensus",
- "hex-conservative",
+ "bitcoin-primitives",
  "hex_lit",
  "mutagen",
  "ordered",

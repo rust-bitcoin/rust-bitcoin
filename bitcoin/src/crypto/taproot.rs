@@ -8,8 +8,9 @@ use core::fmt;
 
 use internals::write_err;
 
-use crate::io::Write;
+use crate::io::{self, Write};
 use crate::prelude::*;
+use crate::secp256k1;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
 

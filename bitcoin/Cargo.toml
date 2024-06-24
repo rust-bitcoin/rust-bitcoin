@@ -13,32 +13,32 @@ edition = "2021"
 rust-version = "1.56.1"
 exclude = ["tests", "contrib"]
 
+# TODO: If #2833 merges document features in lib.rs
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
-rand-std = ["secp256k1/rand-std", "std"]
+std = ["internals/std", "primitives/base58-std", "primitives/bech32-std", "primitives/std", "secp256k1/std"]
+
+bitcoinconsensus = ["primitives/bitcoinconsensus"]
+bitcoinconsensus-std = ["bitcoinconsensus", "std"]
+
+ordered = ["actual-ordered", "primitives/ordered"]
+
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "internals/serde", "secp256k1/serde", "units/serde"]
+rand-std = ["secp256k1/rand-std", "std"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
+
+serde = ["actual-serde", "internals/serde", "primitives/serde", "secp256k1/serde"]
 
 [dependencies]
-base58 = { package = "base58ck", version = "0.1.0", default-features = false }
-bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
-hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
-hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
-io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
-secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
-units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
+primitives = { package = "bitcoin-primitives", version = "0.100.0", default-features = false, features = ["base58", "bech32", "secp256k1"] }
+secp256k1 = { package = "secp256k1", version = "0.29.0", default-features = false, features = ["hashes"]}
 
 base64 = { version = "0.22.0", optional = true }
-ordered = { version = "0.2.0", optional = true }
-# Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
-bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
 
-# Do NOT use this as a feature! Use the `serde` feature instead.
+# Do NOT use these dependencies as features! Use the respective feature instead.
+actual-ordered = { package = "ordered", version = "0.2.0", optional = true }
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]

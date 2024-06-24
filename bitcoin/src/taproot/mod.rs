@@ -16,9 +16,9 @@ use internals::write_err;
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::hashes::{sha256t_hash_newtype, HashEngine};
-use crate::io::Write;
+use crate::io::{self, Write};
 use crate::prelude::*;
-use crate::secp256k1::{Scalar, Secp256k1};
+use crate::secp256k1::{self, Scalar, Secp256k1};
 use crate::{Script, ScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
@@ -1463,7 +1463,7 @@ mod test {
 
     #[cfg(feature = "serde")]
     use {
-        hex::test_hex_unwrap as hex,
+        crate::hex::test_hex_unwrap as hex,
         serde_test::Configure,
         serde_test::{assert_tokens, Token},
     };
