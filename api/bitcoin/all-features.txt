@@ -137,8 +137,10 @@ impl bitcoin::bip32::ChainCode
 impl bitcoin::bip32::ChildNumber
 impl bitcoin::bip32::DerivationPath
 impl bitcoin::bip32::Fingerprint
+impl bitcoin::bip32::HardenedChildNumber
 impl bitcoin::bip32::IntoDerivationPath for alloc::string::String
 impl bitcoin::bip32::InvalidBase58PayloadLengthError
+impl bitcoin::bip32::NormalChildNumber
 impl bitcoin::bip32::XKeyIdentifier
 impl bitcoin::bip32::Xpriv
 impl bitcoin::bip32::Xpub
@@ -576,7 +578,9 @@ impl core::clone::Clone for bitcoin::bip32::ChildNumber
 impl core::clone::Clone for bitcoin::bip32::DerivationPath
 impl core::clone::Clone for bitcoin::bip32::Error
 impl core::clone::Clone for bitcoin::bip32::Fingerprint
+impl core::clone::Clone for bitcoin::bip32::HardenedChildNumber
 impl core::clone::Clone for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::clone::Clone for bitcoin::bip32::NormalChildNumber
 impl core::clone::Clone for bitcoin::bip32::XKeyIdentifier
 impl core::clone::Clone for bitcoin::bip32::Xpriv
 impl core::clone::Clone for bitcoin::bip32::Xpub
@@ -776,7 +780,9 @@ impl core::cmp::Eq for bitcoin::bip32::ChildNumber
 impl core::cmp::Eq for bitcoin::bip32::DerivationPath
 impl core::cmp::Eq for bitcoin::bip32::Error
 impl core::cmp::Eq for bitcoin::bip32::Fingerprint
+impl core::cmp::Eq for bitcoin::bip32::HardenedChildNumber
 impl core::cmp::Eq for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::cmp::Eq for bitcoin::bip32::NormalChildNumber
 impl core::cmp::Eq for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::Eq for bitcoin::bip32::Xpriv
 impl core::cmp::Eq for bitcoin::bip32::Xpub
@@ -960,6 +966,8 @@ impl core::cmp::Ord for bitcoin::bip32::ChainCode
 impl core::cmp::Ord for bitcoin::bip32::ChildNumber
 impl core::cmp::Ord for bitcoin::bip32::DerivationPath
 impl core::cmp::Ord for bitcoin::bip32::Fingerprint
+impl core::cmp::Ord for bitcoin::bip32::HardenedChildNumber
+impl core::cmp::Ord for bitcoin::bip32::NormalChildNumber
 impl core::cmp::Ord for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::Ord for bitcoin::bip32::Xpub
 impl core::cmp::Ord for bitcoin::blockdata::block::BlockHash
@@ -1065,7 +1073,9 @@ impl core::cmp::PartialEq for bitcoin::bip32::ChildNumber
 impl core::cmp::PartialEq for bitcoin::bip32::DerivationPath
 impl core::cmp::PartialEq for bitcoin::bip32::Error
 impl core::cmp::PartialEq for bitcoin::bip32::Fingerprint
+impl core::cmp::PartialEq for bitcoin::bip32::HardenedChildNumber
 impl core::cmp::PartialEq for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::cmp::PartialEq for bitcoin::bip32::NormalChildNumber
 impl core::cmp::PartialEq for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::PartialEq for bitcoin::bip32::Xpriv
 impl core::cmp::PartialEq for bitcoin::bip32::Xpub
@@ -1253,6 +1263,8 @@ impl core::cmp::PartialOrd for bitcoin::bip32::ChainCode
 impl core::cmp::PartialOrd for bitcoin::bip32::ChildNumber
 impl core::cmp::PartialOrd for bitcoin::bip32::DerivationPath
 impl core::cmp::PartialOrd for bitcoin::bip32::Fingerprint
+impl core::cmp::PartialOrd for bitcoin::bip32::HardenedChildNumber
+impl core::cmp::PartialOrd for bitcoin::bip32::NormalChildNumber
 impl core::cmp::PartialOrd for bitcoin::bip32::XKeyIdentifier
 impl core::cmp::PartialOrd for bitcoin::bip32::Xpub
 impl core::cmp::PartialOrd for bitcoin::blockdata::block::BlockHash
@@ -1816,7 +1828,9 @@ impl core::convert::From<bitcoin::bip158::FilterHeader> for bitcoin_hashes::sha2
 impl core::convert::From<bitcoin::bip32::ChildNumber> for u32
 impl core::convert::From<bitcoin::bip32::DerivationPath> for alloc::vec::Vec<bitcoin::bip32::ChildNumber>
 impl core::convert::From<bitcoin::bip32::Error> for bitcoin::psbt::GetKeyError
+impl core::convert::From<bitcoin::bip32::HardenedChildNumber> for bitcoin::bip32::ChildNumber
 impl core::convert::From<bitcoin::bip32::InvalidBase58PayloadLengthError> for bitcoin::bip32::Error
+impl core::convert::From<bitcoin::bip32::NormalChildNumber> for bitcoin::bip32::ChildNumber
 impl core::convert::From<bitcoin::bip32::XKeyIdentifier> for bitcoin_hashes::hash160::Hash
 impl core::convert::From<bitcoin::bip32::Xpub> for bitcoin::bip32::XKeyIdentifier
 impl core::convert::From<bitcoin::blockdata::block::Block> for bitcoin::blockdata::block::BlockHash
@@ -1986,6 +2000,8 @@ impl core::convert::TryFrom<alloc::vec::Vec<bitcoin::taproot::TapNodeHash>> for 
 impl core::convert::TryFrom<alloc::vec::Vec<u8>> for bitcoin::blockdata::script::PushBytesBuf
 impl core::convert::TryFrom<bech32::primitives::gf32::Fe32> for bitcoin::blockdata::script::witness_version::WitnessVersion
 impl core::convert::TryFrom<bitcoin::PublicKey> for bitcoin::CompressedPublicKey
+impl core::convert::TryFrom<bitcoin::bip32::ChildNumber> for bitcoin::bip32::HardenedChildNumber
+impl core::convert::TryFrom<bitcoin::bip32::ChildNumber> for bitcoin::bip32::NormalChildNumber
 impl core::convert::TryFrom<bitcoin::blockdata::constants::ChainHash> for bitcoin::network::Network
 impl core::convert::TryFrom<bitcoin::blockdata::opcodes::Opcode> for bitcoin::blockdata::script::witness_version::WitnessVersion
 impl core::convert::TryFrom<bitcoin::blockdata::script::ScriptBuf> for bitcoin::blockdata::script::ScriptHash
@@ -2128,7 +2144,9 @@ impl core::fmt::Debug for bitcoin::bip32::ChildNumber
 impl core::fmt::Debug for bitcoin::bip32::DerivationPath
 impl core::fmt::Debug for bitcoin::bip32::Error
 impl core::fmt::Debug for bitcoin::bip32::Fingerprint
+impl core::fmt::Debug for bitcoin::bip32::HardenedChildNumber
 impl core::fmt::Debug for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::fmt::Debug for bitcoin::bip32::NormalChildNumber
 impl core::fmt::Debug for bitcoin::bip32::XKeyIdentifier
 impl core::fmt::Debug for bitcoin::bip32::Xpriv
 impl core::fmt::Debug for bitcoin::bip32::Xpub
@@ -2517,6 +2535,8 @@ impl core::hash::Hash for bitcoin::bip32::ChainCode
 impl core::hash::Hash for bitcoin::bip32::ChildNumber
 impl core::hash::Hash for bitcoin::bip32::DerivationPath
 impl core::hash::Hash for bitcoin::bip32::Fingerprint
+impl core::hash::Hash for bitcoin::bip32::HardenedChildNumber
+impl core::hash::Hash for bitcoin::bip32::NormalChildNumber
 impl core::hash::Hash for bitcoin::bip32::XKeyIdentifier
 impl core::hash::Hash for bitcoin::bip32::Xpub
 impl core::hash::Hash for bitcoin::blockdata::block::BlockHash
@@ -2626,6 +2646,8 @@ impl core::marker::Copy for bitcoin::bip158::FilterHeader
 impl core::marker::Copy for bitcoin::bip32::ChainCode
 impl core::marker::Copy for bitcoin::bip32::ChildNumber
 impl core::marker::Copy for bitcoin::bip32::Fingerprint
+impl core::marker::Copy for bitcoin::bip32::HardenedChildNumber
+impl core::marker::Copy for bitcoin::bip32::NormalChildNumber
 impl core::marker::Copy for bitcoin::bip32::XKeyIdentifier
 impl core::marker::Copy for bitcoin::bip32::Xpriv
 impl core::marker::Copy for bitcoin::bip32::Xpub
@@ -2725,7 +2747,9 @@ impl core::marker::Freeze for bitcoin::bip32::ChildNumber
 impl core::marker::Freeze for bitcoin::bip32::DerivationPath
 impl core::marker::Freeze for bitcoin::bip32::Error
 impl core::marker::Freeze for bitcoin::bip32::Fingerprint
+impl core::marker::Freeze for bitcoin::bip32::HardenedChildNumber
 impl core::marker::Freeze for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::marker::Freeze for bitcoin::bip32::NormalChildNumber
 impl core::marker::Freeze for bitcoin::bip32::XKeyIdentifier
 impl core::marker::Freeze for bitcoin::bip32::Xpriv
 impl core::marker::Freeze for bitcoin::bip32::Xpub
@@ -2937,7 +2961,9 @@ impl core::marker::Send for bitcoin::bip32::ChildNumber
 impl core::marker::Send for bitcoin::bip32::DerivationPath
 impl core::marker::Send for bitcoin::bip32::Error
 impl core::marker::Send for bitcoin::bip32::Fingerprint
+impl core::marker::Send for bitcoin::bip32::HardenedChildNumber
 impl core::marker::Send for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::marker::Send for bitcoin::bip32::NormalChildNumber
 impl core::marker::Send for bitcoin::bip32::XKeyIdentifier
 impl core::marker::Send for bitcoin::bip32::Xpriv
 impl core::marker::Send for bitcoin::bip32::Xpub
@@ -3146,7 +3172,9 @@ impl core::marker::StructuralPartialEq for bitcoin::bip32::ChildNumber
 impl core::marker::StructuralPartialEq for bitcoin::bip32::DerivationPath
 impl core::marker::StructuralPartialEq for bitcoin::bip32::Error
 impl core::marker::StructuralPartialEq for bitcoin::bip32::Fingerprint
+impl core::marker::StructuralPartialEq for bitcoin::bip32::HardenedChildNumber
 impl core::marker::StructuralPartialEq for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::marker::StructuralPartialEq for bitcoin::bip32::NormalChildNumber
 impl core::marker::StructuralPartialEq for bitcoin::bip32::XKeyIdentifier
 impl core::marker::StructuralPartialEq for bitcoin::bip32::Xpriv
 impl core::marker::StructuralPartialEq for bitcoin::bip32::Xpub
@@ -3345,7 +3373,9 @@ impl core::marker::Sync for bitcoin::bip32::ChildNumber
 impl core::marker::Sync for bitcoin::bip32::DerivationPath
 impl core::marker::Sync for bitcoin::bip32::Error
 impl core::marker::Sync for bitcoin::bip32::Fingerprint
+impl core::marker::Sync for bitcoin::bip32::HardenedChildNumber
 impl core::marker::Sync for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::marker::Sync for bitcoin::bip32::NormalChildNumber
 impl core::marker::Sync for bitcoin::bip32::XKeyIdentifier
 impl core::marker::Sync for bitcoin::bip32::Xpriv
 impl core::marker::Sync for bitcoin::bip32::Xpub
@@ -3557,7 +3587,9 @@ impl core::marker::Unpin for bitcoin::bip32::ChildNumber
 impl core::marker::Unpin for bitcoin::bip32::DerivationPath
 impl core::marker::Unpin for bitcoin::bip32::Error
 impl core::marker::Unpin for bitcoin::bip32::Fingerprint
+impl core::marker::Unpin for bitcoin::bip32::HardenedChildNumber
 impl core::marker::Unpin for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::marker::Unpin for bitcoin::bip32::NormalChildNumber
 impl core::marker::Unpin for bitcoin::bip32::XKeyIdentifier
 impl core::marker::Unpin for bitcoin::bip32::Xpriv
 impl core::marker::Unpin for bitcoin::bip32::Xpub
@@ -3800,7 +3832,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::ChildNumber
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::DerivationPath
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::Fingerprint
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::HardenedChildNumber
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::NormalChildNumber
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::XKeyIdentifier
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::Xpriv
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::bip32::Xpub
@@ -4007,7 +4041,9 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::ChildNumber
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::DerivationPath
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::Fingerprint
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::HardenedChildNumber
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::InvalidBase58PayloadLengthError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::NormalChildNumber
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::XKeyIdentifier
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::Xpriv
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::bip32::Xpub
@@ -5053,10 +5089,8 @@ pub bitcoin::bip152::PrefilledTransaction::tx: bitcoin::blockdata::transaction::
 pub bitcoin::bip158::BlockFilter::content: alloc::vec::Vec<u8>
 pub bitcoin::bip158::Error::Io(bitcoin_io::error::Error)
 pub bitcoin::bip158::Error::UtxoMissing(bitcoin::blockdata::transaction::OutPoint)
-pub bitcoin::bip32::ChildNumber::Hardened
-pub bitcoin::bip32::ChildNumber::Hardened::index: u32
-pub bitcoin::bip32::ChildNumber::Normal
-pub bitcoin::bip32::ChildNumber::Normal::index: u32
+pub bitcoin::bip32::ChildNumber::Hardened(bitcoin::bip32::HardenedChildNumber)
+pub bitcoin::bip32::ChildNumber::Normal(bitcoin::bip32::NormalChildNumber)
 pub bitcoin::bip32::Error::Base58(base58ck::error::Error)
 pub bitcoin::bip32::Error::CannotDeriveFromHardenedKey
 pub bitcoin::bip32::Error::Hex(hex_conservative::error::HexToArrayError)
@@ -7495,9 +7529,11 @@ pub fn bitcoin::bip32::ChildNumber::cmp(&self, other: &bitcoin::bip32::ChildNumb
 pub fn bitcoin::bip32::ChildNumber::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin::bip32::ChildNumber::eq(&self, other: &bitcoin::bip32::ChildNumber) -> bool
 pub fn bitcoin::bip32::ChildNumber::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::bip32::ChildNumber::from(child: bitcoin::bip32::HardenedChildNumber) -> Self
+pub fn bitcoin::bip32::ChildNumber::from(child: bitcoin::bip32::NormalChildNumber) -> Self
 pub fn bitcoin::bip32::ChildNumber::from(number: u32) -> Self
-pub fn bitcoin::bip32::ChildNumber::from_hardened_idx(index: u32) -> core::result::Result<Self, bitcoin::bip32::Error>
-pub fn bitcoin::bip32::ChildNumber::from_normal_idx(index: u32) -> core::result::Result<Self, bitcoin::bip32::Error>
+pub fn bitcoin::bip32::ChildNumber::from_hardened_child_number(index: u32) -> core::result::Result<Self, bitcoin::bip32::Error>
+pub fn bitcoin::bip32::ChildNumber::from_normal_child_number(index: u32) -> core::result::Result<Self, bitcoin::bip32::Error>
 pub fn bitcoin::bip32::ChildNumber::from_str(inp: &str) -> core::result::Result<bitcoin::bip32::ChildNumber, bitcoin::bip32::Error>
 pub fn bitcoin::bip32::ChildNumber::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::bip32::ChildNumber::increment(self) -> core::result::Result<bitcoin::bip32::ChildNumber, bitcoin::bip32::Error>
@@ -7506,8 +7542,8 @@ pub fn bitcoin::bip32::ChildNumber::is_normal(&self) -> bool
 pub fn bitcoin::bip32::ChildNumber::partial_cmp(&self, other: &bitcoin::bip32::ChildNumber) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::bip32::ChildNumber::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::bip32::DerivationPath::as_ref(&self) -> &[bitcoin::bip32::ChildNumber]
-pub fn bitcoin::bip32::DerivationPath::child(&self, cn: bitcoin::bip32::ChildNumber) -> bitcoin::bip32::DerivationPath
-pub fn bitcoin::bip32::DerivationPath::children_from(&self, cn: bitcoin::bip32::ChildNumber) -> bitcoin::bip32::DerivationPathIterator<'_>
+pub fn bitcoin::bip32::DerivationPath::child(&self, cn: impl core::convert::Into<bitcoin::bip32::ChildNumber>) -> bitcoin::bip32::DerivationPath
+pub fn bitcoin::bip32::DerivationPath::children_from(&self, cn: impl core::convert::Into<bitcoin::bip32::ChildNumber>) -> bitcoin::bip32::DerivationPathIterator<'_>
 pub fn bitcoin::bip32::DerivationPath::clone(&self) -> bitcoin::bip32::DerivationPath
 pub fn bitcoin::bip32::DerivationPath::cmp(&self, other: &bitcoin::bip32::DerivationPath) -> core::cmp::Ordering
 pub fn bitcoin::bip32::DerivationPath::default() -> bitcoin::bip32::DerivationPath
@@ -7522,7 +7558,7 @@ pub fn bitcoin::bip32::DerivationPath::from_str(path: &str) -> core::result::Res
 pub fn bitcoin::bip32::DerivationPath::hardened_children(&self) -> bitcoin::bip32::DerivationPathIterator<'_>
 pub fn bitcoin::bip32::DerivationPath::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::bip32::DerivationPath::index(&self, index: I) -> &Self::Output
-pub fn bitcoin::bip32::DerivationPath::into_child(self, cn: bitcoin::bip32::ChildNumber) -> bitcoin::bip32::DerivationPath
+pub fn bitcoin::bip32::DerivationPath::into_child(self, cn: impl core::convert::Into<bitcoin::bip32::ChildNumber>) -> bitcoin::bip32::DerivationPath
 pub fn bitcoin::bip32::DerivationPath::is_empty(&self) -> bool
 pub fn bitcoin::bip32::DerivationPath::is_master(&self) -> bool
 pub fn bitcoin::bip32::DerivationPath::len(&self) -> usize
@@ -7532,7 +7568,7 @@ pub fn bitcoin::bip32::DerivationPath::partial_cmp(&self, other: &bitcoin::bip32
 pub fn bitcoin::bip32::DerivationPath::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::bip32::DerivationPath::to_u32_vec(&self) -> alloc::vec::Vec<u32>
 pub fn bitcoin::bip32::DerivationPathIterator<'a>::next(&mut self) -> core::option::Option<Self::Item>
-pub fn bitcoin::bip32::DerivationPathIterator<'a>::start_from(path: &'a bitcoin::bip32::DerivationPath, start: bitcoin::bip32::ChildNumber) -> bitcoin::bip32::DerivationPathIterator<'a>
+pub fn bitcoin::bip32::DerivationPathIterator<'a>::start_from(path: &'a bitcoin::bip32::DerivationPath, start: impl core::convert::Into<bitcoin::bip32::ChildNumber>) -> bitcoin::bip32::DerivationPathIterator<'a>
 pub fn bitcoin::bip32::Error::clone(&self) -> bitcoin::bip32::Error
 pub fn bitcoin::bip32::Error::eq(&self, other: &bitcoin::bip32::Error) -> bool
 pub fn bitcoin::bip32::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7572,11 +7608,29 @@ pub fn bitcoin::bip32::Fingerprint::partial_cmp(&self, other: &bitcoin::bip32::F
 pub fn bitcoin::bip32::Fingerprint::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::bip32::Fingerprint::to_byte_array(self) -> [u8; 4]
 pub fn bitcoin::bip32::Fingerprint::try_from(data: &'a [u8]) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin::bip32::HardenedChildNumber::clone(&self) -> bitcoin::bip32::HardenedChildNumber
+pub fn bitcoin::bip32::HardenedChildNumber::cmp(&self, other: &bitcoin::bip32::HardenedChildNumber) -> core::cmp::Ordering
+pub fn bitcoin::bip32::HardenedChildNumber::eq(&self, other: &bitcoin::bip32::HardenedChildNumber) -> bool
+pub fn bitcoin::bip32::HardenedChildNumber::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::bip32::HardenedChildNumber::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin::bip32::HardenedChildNumber::index(&self) -> u32
+pub fn bitcoin::bip32::HardenedChildNumber::new(index: u32) -> Self
+pub fn bitcoin::bip32::HardenedChildNumber::partial_cmp(&self, other: &bitcoin::bip32::HardenedChildNumber) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::bip32::HardenedChildNumber::try_from(child: bitcoin::bip32::ChildNumber) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::bip32::IntoDerivationPath::into_derivation_path(self) -> core::result::Result<bitcoin::bip32::DerivationPath, bitcoin::bip32::Error>
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::clone(&self) -> bitcoin::bip32::InvalidBase58PayloadLengthError
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::eq(&self, other: &bitcoin::bip32::InvalidBase58PayloadLengthError) -> bool
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip32::InvalidBase58PayloadLengthError::invalid_base58_payload_length(&self) -> usize
+pub fn bitcoin::bip32::NormalChildNumber::clone(&self) -> bitcoin::bip32::NormalChildNumber
+pub fn bitcoin::bip32::NormalChildNumber::cmp(&self, other: &bitcoin::bip32::NormalChildNumber) -> core::cmp::Ordering
+pub fn bitcoin::bip32::NormalChildNumber::eq(&self, other: &bitcoin::bip32::NormalChildNumber) -> bool
+pub fn bitcoin::bip32::NormalChildNumber::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::bip32::NormalChildNumber::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin::bip32::NormalChildNumber::index(&self) -> u32
+pub fn bitcoin::bip32::NormalChildNumber::new(index: u32) -> Self
+pub fn bitcoin::bip32::NormalChildNumber::partial_cmp(&self, other: &bitcoin::bip32::NormalChildNumber) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::bip32::NormalChildNumber::try_from(child: bitcoin::bip32::ChildNumber) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::bip32::XKeyIdentifier::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::bip32::XKeyIdentifier::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin::bip32::XKeyIdentifier::as_ref(&self) -> &[u8]
@@ -7614,12 +7668,12 @@ pub fn bitcoin::bip32::Xpriv::new_master(network: impl core::convert::Into<bitco
 pub fn bitcoin::bip32::Xpriv::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::bip32::Xpriv::to_keypair<C: secp256k1::context::Signing>(self, secp: &secp256k1::Secp256k1<C>) -> secp256k1::key::Keypair
 pub fn bitcoin::bip32::Xpriv::to_priv(self) -> bitcoin::PrivateKey
-pub fn bitcoin::bip32::Xpub::ckd_pub<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, i: bitcoin::bip32::ChildNumber) -> core::result::Result<bitcoin::bip32::Xpub, bitcoin::bip32::Error>
+pub fn bitcoin::bip32::Xpub::ckd_pub<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, i: bitcoin::bip32::NormalChildNumber) -> bitcoin::bip32::Xpub
 pub fn bitcoin::bip32::Xpub::ckd_pub_tweak(&self, i: bitcoin::bip32::ChildNumber) -> core::result::Result<(secp256k1::key::SecretKey, bitcoin::bip32::ChainCode), bitcoin::bip32::Error>
 pub fn bitcoin::bip32::Xpub::clone(&self) -> bitcoin::bip32::Xpub
 pub fn bitcoin::bip32::Xpub::cmp(&self, other: &bitcoin::bip32::Xpub) -> core::cmp::Ordering
 pub fn bitcoin::bip32::Xpub::decode(data: &[u8]) -> core::result::Result<bitcoin::bip32::Xpub, bitcoin::bip32::Error>
-pub fn bitcoin::bip32::Xpub::derive_pub<C: secp256k1::context::Verification, P: core::convert::AsRef<[bitcoin::bip32::ChildNumber]>>(&self, secp: &secp256k1::Secp256k1<C>, path: &P) -> core::result::Result<bitcoin::bip32::Xpub, bitcoin::bip32::Error>
+pub fn bitcoin::bip32::Xpub::derive_pub<C: secp256k1::context::Verification, P: core::convert::AsRef<[bitcoin::bip32::NormalChildNumber]>>(&self, secp: &secp256k1::Secp256k1<C>, path: &P) -> bitcoin::bip32::Xpub
 pub fn bitcoin::bip32::Xpub::deserialize<D>(deserializer: D) -> core::result::Result<bitcoin::bip32::Xpub, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin::bip32::Xpub::encode(&self) -> [u8; 78]
 pub fn bitcoin::bip32::Xpub::eq(&self, other: &bitcoin::bip32::Xpub) -> bool
@@ -10135,7 +10189,9 @@ pub struct bitcoin::bip32::ChainCode(_)
 pub struct bitcoin::bip32::DerivationPath(_)
 pub struct bitcoin::bip32::DerivationPathIterator<'a>
 pub struct bitcoin::bip32::Fingerprint(_)
+pub struct bitcoin::bip32::HardenedChildNumber(_)
 pub struct bitcoin::bip32::InvalidBase58PayloadLengthError
+pub struct bitcoin::bip32::NormalChildNumber(_)
 pub struct bitcoin::bip32::XKeyIdentifier(_)
 pub struct bitcoin::bip32::Xpriv
 pub struct bitcoin::bip32::Xpub
@@ -10389,7 +10445,9 @@ pub type bitcoin::bip32::ExtendedPubKey = bitcoin::bip32::Xpub
 pub type bitcoin::bip32::Fingerprint::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::bip32::Fingerprint::Error = core::array::TryFromSliceError
 pub type bitcoin::bip32::Fingerprint::Output = <[u8] as core::ops::index::Index<I>>::Output
+pub type bitcoin::bip32::HardenedChildNumber::Error = bitcoin::bip32::Error
 pub type bitcoin::bip32::KeySource = (bitcoin::bip32::Fingerprint, bitcoin::bip32::DerivationPath)
+pub type bitcoin::bip32::NormalChildNumber::Error = bitcoin::bip32::Error
 pub type bitcoin::bip32::XKeyIdentifier::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin::bip32::XKeyIdentifier::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::bip32::XKeyIdentifier::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
