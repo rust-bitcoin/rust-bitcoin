@@ -7,12 +7,11 @@
 
 use core::fmt;
 
-use io::{BufRead, Write};
-
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
     self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
 };
+use crate::io::{BufRead, Write};
 use crate::prelude::*;
 use crate::psbt::Error;
 

@@ -8,12 +8,12 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, siphash24};
 use internals::impl_array_newtype;
-use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
+use crate::hashes::{sha256, siphash24};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
+use crate::io::{BufRead, Write};
 use crate::prelude::*;
 use crate::{block, Block, BlockHash, Transaction};
 
@@ -371,10 +371,9 @@ impl BlockTransactions {
 
 #[cfg(test)]
 mod test {
-    use hex::FromHex;
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hex::FromHex;
     use crate::locktime::absolute;
     use crate::merkle_tree::TxMerkleNode;
     use crate::{

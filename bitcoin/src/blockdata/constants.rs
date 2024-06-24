@@ -6,11 +6,11 @@
 //! consensus code. In particular, it defines the genesis block and its
 //! single transaction.
 
-use hashes::sha256d;
 use internals::impl_array_newtype;
 
 use crate::block::{self, Block};
 use crate::consensus::Params;
+use crate::hashes::sha256d;
 use crate::internal_macros::impl_array_newtype_stringify;
 use crate::locktime::absolute;
 use crate::network::Network;
@@ -212,11 +212,10 @@ impl ChainHash {
 mod test {
     use core::str::FromStr;
 
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::encode::serialize;
     use crate::consensus::params;
+    use crate::hex::test_hex_unwrap as hex;
     use crate::Txid;
 
     #[test]
@@ -314,7 +313,7 @@ mod test {
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {
-        use hashes::sha256;
+        use crate::hashes::sha256;
 
         // The genesis block hash is a double-sha256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();

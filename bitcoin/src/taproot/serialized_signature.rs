@@ -9,9 +9,9 @@ use core::borrow::Borrow;
 use core::{fmt, ops};
 
 pub use into_iter::IntoIter;
-use io::Write;
 
 use super::{SigFromSliceError, Signature};
+use crate::io::Write;
 
 pub(crate) const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 

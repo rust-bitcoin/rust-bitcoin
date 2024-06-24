@@ -9,24 +9,24 @@ use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::hash160;
-use hex::{FromHex, HexToArrayError};
 use internals::array_vec::ArrayVec;
 use internals::write_err;
-use io::{Read, Write};
 
 use crate::crypto::ecdsa;
+use crate::hashes::hash160;
+use crate::hex::{FromHex, HexToArrayError};
 use crate::internal_macros::impl_asref_push_bytes;
+use crate::io::{Read, Write};
 use crate::network::NetworkKind;
 use crate::prelude::*;
 use crate::script::ScriptBuf;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use crate::secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 #[cfg(feature = "rand-std")]
-pub use secp256k1::rand;
+pub use crate::secp256k1::rand;
 
 /// A Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1436,7 +1436,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn public_key_constructors() {
-        use secp256k1::rand;
+        use crate::secp256k1::rand;
 
         let secp = Secp256k1::new();
         let kp = Keypair::new(&secp, &mut rand::thread_rng());

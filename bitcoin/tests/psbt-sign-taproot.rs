@@ -13,8 +13,9 @@ use bitcoin::{
     absolute, script, Address, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
 };
-use secp256k1::{Keypair, Secp256k1, Signing, XOnlyPublicKey};
 use units::Amount;
+
+use crate::secp256k1::{Keypair, Secp256k1, Signing, XOnlyPublicKey};
 
 #[test]
 fn psbt_sign_taproot() {

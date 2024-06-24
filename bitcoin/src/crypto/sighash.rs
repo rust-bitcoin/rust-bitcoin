@@ -13,11 +13,11 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
 use internals::write_err;
-use io::Write;
 
 use crate::consensus::{encode, Encodable};
+use crate::hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
+use crate::io::Write;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::witness::Witness;
@@ -1449,11 +1449,10 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::HashEngine;
-    use hex::{test_hex_unwrap as hex, FromHex};
-
     use super::*;
     use crate::consensus::deserialize;
+    use crate::hashes::HashEngine;
+    use crate::hex::{test_hex_unwrap as hex, FromHex};
     use crate::locktime::absolute;
 
     extern crate serde_json;
@@ -1769,7 +1768,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        use hex::DisplayHex;
+        use crate::hex::DisplayHex;
 
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where
@@ -1786,9 +1785,8 @@ mod tests {
             })
         }
 
-        use secp256k1::{SecretKey, XOnlyPublicKey};
-
         use crate::consensus::serde as con_serde;
+        use crate::secp256k1::{SecretKey, XOnlyPublicKey};
         use crate::taproot::{TapNodeHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]

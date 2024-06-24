@@ -8,9 +8,8 @@
 use core::{fmt, iter};
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
-use io::{BufRead, Read, Write};
-
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
+use crate::io::{BufRead, Read, Write};
 use crate::p2p::ServiceFlags;
 
 /// A message which can be sent on the Bitcoin network
@@ -305,10 +304,9 @@ mod test {
     use core::str::FromStr;
     use std::net::IpAddr;
 
-    use hex::{test_hex_unwrap as hex, FromHex};
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hex::{test_hex_unwrap as hex, FromHex};
 
     #[test]
     fn serialize_address_test() {

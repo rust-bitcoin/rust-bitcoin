@@ -5,11 +5,10 @@
 //! This module defines network messages which describe peers and their
 //! capabilities.
 
-use hashes::sha256d;
-use io::{BufRead, Write};
-
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::hashes::sha256d;
 use crate::internal_macros::impl_consensus_encoding;
+use crate::io::{BufRead, Write};
 use crate::p2p;
 use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
@@ -148,10 +147,9 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hex::test_hex_unwrap as hex;
 
     #[test]
     fn version_message_test() {

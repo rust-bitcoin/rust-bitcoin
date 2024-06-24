@@ -9,15 +9,15 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
-use io::Write;
-use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
+use crate::hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use crate::internal_macros::impl_array_newtype_stringify;
+use crate::io::Write;
 use crate::network::NetworkKind;
 use crate::prelude::*;
+use crate::secp256k1::{Secp256k1, XOnlyPublicKey};
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
@@ -906,10 +906,9 @@ impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-
     use super::ChildNumber::{Hardened, Normal};
     use super::*;
+    use crate::hex::test_hex_unwrap as hex;
 
     #[test]
     fn test_parse_derivation_path() {

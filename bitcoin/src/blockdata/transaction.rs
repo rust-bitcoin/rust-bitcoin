@@ -12,14 +12,14 @@
 
 use core::{cmp, fmt, str};
 
-use hashes::sha256d;
 use internals::write_err;
-use io::{BufRead, Write};
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::hashes::sha256d;
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::io::{BufRead, Write};
 use crate::locktime::absolute::{self, Height, Time};
 use crate::locktime::relative::{self, TimeOverflowError};
 use crate::prelude::*;
@@ -1632,11 +1632,10 @@ impl InputWeightPrediction {
 mod tests {
     use core::str::FromStr;
 
-    use hex::{test_hex_unwrap as hex, FromHex};
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::constants::WITNESS_SCALE_FACTOR;
+    use crate::hex::{test_hex_unwrap as hex, FromHex};
     use crate::sighash::EcdsaSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
@@ -2468,12 +2467,12 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use hex::test_hex_unwrap as hex;
-    use io::sink;
     use test::{black_box, Bencher};
 
     use super::Transaction;
     use crate::consensus::{deserialize, Encodable};
+    use crate::hex::test_hex_unwrap as hex;
+    use crate::io::sink;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 

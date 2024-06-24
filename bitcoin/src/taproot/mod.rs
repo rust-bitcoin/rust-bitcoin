@@ -11,14 +11,14 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{sha256t_hash_newtype, HashEngine};
 use internals::write_err;
-use io::Write;
-use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::hashes::{sha256t_hash_newtype, HashEngine};
+use crate::io::Write;
 use crate::prelude::*;
+use crate::secp256k1::{Scalar, Secp256k1};
 use crate::{Script, ScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
@@ -1452,12 +1452,11 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
-    use hashes::sha256;
-    use hashes::sha256t::Tag;
-    use hex::FromHex;
-    use secp256k1::VerifyOnly;
-
     use super::*;
+    use crate::hashes::sha256;
+    use crate::hashes::sha256t::Tag;
+    use crate::hex::FromHex;
+    use crate::secp256k1::VerifyOnly;
     use crate::sighash::{TapSighash, TapSighashTag};
     use crate::{Address, KnownHrp};
     extern crate serde_json;

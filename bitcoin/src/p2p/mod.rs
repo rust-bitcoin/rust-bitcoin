@@ -23,12 +23,12 @@ pub mod message_network;
 use core::str::FromStr;
 use core::{fmt, ops};
 
-use hex::FromHex;
 use internals::{debug_from_display, write_err};
-use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
+use crate::hex::FromHex;
+use crate::io::{BufRead, Write};
 use crate::prelude::*;
 use crate::Network;
 

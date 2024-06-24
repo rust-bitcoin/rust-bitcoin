@@ -65,6 +65,8 @@ pub extern crate base58;
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
+extern crate bech32;
+
 /// Re-export the `hex-conservative` crate.
 pub extern crate hex;
 
@@ -161,7 +163,7 @@ mod prelude {
 
     pub use crate::io::sink;
 
-    pub use hex::DisplayHex;
+    pub use crate::hex::DisplayHex;
 }
 
 pub mod amount {

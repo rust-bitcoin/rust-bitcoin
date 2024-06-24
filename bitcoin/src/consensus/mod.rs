@@ -15,9 +15,9 @@ pub mod validation;
 use core::fmt;
 
 use internals::write_err;
-use io::{BufRead, Read};
 
 use crate::consensus;
+use crate::io::{BufRead, Read};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

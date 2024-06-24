@@ -5,8 +5,6 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
-use secp256k1::{Secp256k1, Verification};
-
 use super::PushBytes;
 use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
@@ -19,6 +17,7 @@ use crate::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
+use crate::secp256k1::{Secp256k1, Verification};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 use crate::FeeRate;
 

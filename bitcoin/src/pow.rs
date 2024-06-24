@@ -9,7 +9,6 @@ use core::cmp;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
-use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
@@ -17,6 +16,7 @@ use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
+use crate::io::{BufRead, Write};
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -1011,8 +1011,7 @@ impl crate::serde::Serialize for U256 {
 #[cfg(feature = "serde")]
 impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        use hex::FromHex;
-
+        use crate::hex::FromHex;
         use crate::serde::de;
 
         if d.is_human_readable() {

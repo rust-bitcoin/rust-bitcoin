@@ -8,7 +8,6 @@
 use core::cmp::Ordering;
 use core::fmt;
 
-use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
@@ -16,6 +15,7 @@ use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::io::{BufRead, Write};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

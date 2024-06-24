@@ -5,9 +5,8 @@
 //! This module provides signature related functions including secp256k1 signature recovery when
 //! library is used with the `secp-recovery` feature.
 
-use hashes::{sha256d, HashEngine};
-
 use crate::consensus::{encode, Encodable};
+use crate::hashes::{sha256d, HashEngine};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -21,12 +20,12 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 mod message_signing {
     use core::fmt;
 
-    use hashes::sha256d;
     use internals::write_err;
-    use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
+    use crate::hashes::sha256d;
+    use crate::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -224,9 +223,7 @@ mod tests {
     fn test_message_signature() {
         use core::str::FromStr;
 
-        use secp256k1;
-
-        use crate::{Address, AddressType, Network, NetworkKind};
+        use crate::{secp256k1, Address, AddressType, Network, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
@@ -266,10 +263,9 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_incorrect_message_signature() {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
-        use secp256k1;
 
         use crate::crypto::key::PublicKey;
-        use crate::{Address, NetworkKind};
+        use crate::{secp256k1, Address, NetworkKind};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";

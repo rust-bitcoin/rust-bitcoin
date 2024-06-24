@@ -18,13 +18,13 @@ use core::{cmp, fmt};
 use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
-use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::*;
+use crate::secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TxOut};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
@@ -1205,17 +1205,16 @@ pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]
 mod tests {
-    use hashes::{hash160, ripemd160, sha256};
-    use hex::{test_hex_unwrap as hex, FromHex};
-    #[cfg(feature = "rand-std")]
-    use secp256k1::{All, SecretKey};
-
     use super::*;
     use crate::bip32::ChildNumber;
+    use crate::hashes::{hash160, ripemd160, sha256};
+    use crate::hex::{test_hex_unwrap as hex, FromHex};
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::ScriptBuf;
+    #[cfg(feature = "rand-std")]
+    use crate::secp256k1::{All, SecretKey};
     use crate::transaction::{self, OutPoint, Sequence, TxIn};
     use crate::witness::Witness;
 
@@ -1457,8 +1456,7 @@ mod tests {
     #[test]
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
-        use hashes::sha256d;
-
+        use crate::hashes::sha256d;
         use crate::psbt::map::Input;
 
         // create some values to use in the PSBT
@@ -2114,7 +2112,7 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
-        use secp256k1::rand::thread_rng;
+        use crate::secp256k1::rand::thread_rng;
 
         let secp = Secp256k1::new();
 

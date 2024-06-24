@@ -5,11 +5,10 @@
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.
 
-use io::{BufRead, Write};
-
 use crate::block::BlockHash;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::internal_macros::impl_consensus_encoding;
+use crate::io::{BufRead, Write};
 use crate::p2p;
 use crate::transaction::{Txid, Wtxid};
 
@@ -143,10 +142,9 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hex::test_hex_unwrap as hex;
 
     #[test]
     fn getblocks_message_test() {

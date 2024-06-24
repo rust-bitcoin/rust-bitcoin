@@ -12,7 +12,6 @@
 use core::fmt;
 use core::marker::PhantomData;
 
-use io::Write;
 use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
@@ -20,6 +19,7 @@ use serde::{Deserializer, Serializer};
 use super::encode::Error as ConsensusError;
 use super::{Decodable, Encodable};
 use crate::consensus::{DecodeError, IterReader};
+use crate::io::Write;
 
 /// Hex-encoding strategy
 pub struct Hex<Case = hex::Lower>(PhantomData<Case>)
@@ -39,7 +39,7 @@ pub mod hex {
     use core::fmt;
     use core::marker::PhantomData;
 
-    use hex::buf_encoder::BufEncoder;
+    use crate::hex::buf_encoder::BufEncoder;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
     ///

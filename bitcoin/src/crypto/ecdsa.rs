@@ -7,10 +7,10 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use hex::FromHex;
 use internals::write_err;
-use io::Write;
 
+use crate::hex::FromHex;
+use crate::io::Write;
 use crate::prelude::*;
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};

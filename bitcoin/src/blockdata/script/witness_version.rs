@@ -10,10 +10,10 @@
 use core::fmt;
 use core::str::FromStr;
 
-use bech32::Fe32;
 use internals::write_err;
 use units::{parse, ParseIntError};
 
+use crate::bech32::Fe32;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
 use crate::script::Instruction;

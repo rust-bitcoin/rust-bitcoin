@@ -3,17 +3,16 @@
 use core::fmt;
 use core::str::FromStr;
 
-use hashes::{hash160, ripemd160, sha256, sha256d};
-use secp256k1::XOnlyPublicKey;
-
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
+use crate::hashes::{hash160, ripemd160, sha256, sha256d};
 use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
 use crate::script::ScriptBuf;
+use crate::secp256k1::XOnlyPublicKey;
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
     TapSighashType,

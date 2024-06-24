@@ -11,11 +11,10 @@
 
 use core::fmt;
 
-use io::{BufRead, Write};
-
 use self::MerkleBlockError::*;
 use crate::block::{self, Block};
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
+use crate::io::{BufRead, Write};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
 use crate::prelude::*;
 use crate::transaction::{Transaction, Txid};

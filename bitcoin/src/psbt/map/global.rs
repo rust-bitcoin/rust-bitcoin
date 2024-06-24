@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use io::{BufRead, Cursor, Read};
-
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
+use crate::io::{BufRead, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, Psbt};

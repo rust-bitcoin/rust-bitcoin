@@ -32,10 +32,7 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
-use bech32::primitives::hrp::Hrp;
-use hashes::{sha256, HashEngine};
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
-
+use crate::bech32::primitives::hrp::Hrp;
 use crate::consensus::Params;
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
@@ -44,6 +41,7 @@ use crate::constants::{
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
 };
+use crate::hashes::{sha256, HashEngine};
 use crate::network::{Network, NetworkKind};
 use crate::prelude::*;
 use crate::script::witness_program::WitnessProgram;
@@ -51,6 +49,7 @@ use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
+use crate::secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::taproot::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.

@@ -40,14 +40,14 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
-use hashes::{sha256d, siphash24};
 use internals::write_err;
-use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash};
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
+use crate::hashes::{sha256d, siphash24};
 use crate::internal_macros::impl_hashencode;
+use crate::io::{BufRead, Write};
 use crate::prelude::*;
 use crate::script::Script;
 use crate::transaction::OutPoint;
@@ -563,11 +563,11 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
-    use hex::test_hex_unwrap as hex;
     use serde_json::Value;
 
     use super::*;
     use crate::consensus::encode::deserialize;
+    use crate::hex::test_hex_unwrap as hex;
     use crate::ScriptBuf;
 
     #[test]

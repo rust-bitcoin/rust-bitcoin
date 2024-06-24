@@ -64,12 +64,11 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
-use hashes::{hash160, sha256};
-use io::{BufRead, Write};
-
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
+use crate::hashes::{hash160, sha256};
 use crate::internal_macros::impl_asref_push_bytes;
+use crate::io::{BufRead, Write};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::*;
@@ -561,7 +560,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     {
         use core::fmt::Formatter;
 
-        use hex::FromHex;
+        use crate::hex::FromHex;
 
         if deserializer.is_human_readable() {
             struct Visitor;

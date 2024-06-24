@@ -7,11 +7,10 @@
 use core::fmt;
 use core::ops::Index;
 
-use io::{BufRead, Write};
-
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
+use crate::io::{BufRead, Write};
 use crate::prelude::*;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
@@ -494,9 +493,10 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hex::FromHex;
-                use hex::HexToBytesError::*;
                 use serde::de::{self, Unexpected};
+
+                use crate::hex::FromHex;
+                use crate::hex::HexToBytesError::*;
 
                 let mut ret = match a.size_hint() {
                     Some(len) => Vec::with_capacity(len),
@@ -555,10 +555,9 @@ impl Default for Witness {
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::{deserialize, serialize};
+    use crate::hex::test_hex_unwrap as hex;
     use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
 

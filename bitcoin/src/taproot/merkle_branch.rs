@@ -2,12 +2,11 @@
 
 //! Contains `TaprootMerkleBranch` and its associated types.
 
-use hashes::Hash;
-
 use super::{
     TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
     TAPROOT_CONTROL_NODE_SIZE,
 };
+use crate::hashes::Hash;
 use crate::prelude::*;
 
 /// The merkle proof for inclusion of a tree in a taptree hash.

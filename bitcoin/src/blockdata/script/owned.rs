@@ -3,9 +3,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex::FromHex;
-use secp256k1::{Secp256k1, Verification};
-
+use crate::hex::FromHex;
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
@@ -17,6 +15,7 @@ use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
 };
+use crate::secp256k1::{Secp256k1, Verification};
 use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.

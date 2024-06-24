@@ -16,15 +16,15 @@
 
 use core::{fmt, mem};
 
-use hashes::{sha256, sha256d, Hash};
-use hex::error::{InvalidCharError, OddLengthStringError};
 use internals::write_err;
-use io::{BufRead, Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::{self, BlockHash};
 use crate::consensus::{DecodeError, IterReader};
+use crate::hashes::{sha256, sha256d, Hash};
+use crate::hex::error::{InvalidCharError, OddLengthStringError};
+use crate::io::{BufRead, Cursor, Read, Write};
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
 use crate::p2p::{
@@ -1238,7 +1238,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn serialization_round_trips() {
-        use secp256k1::rand::{thread_rng, Rng};
+        use crate::secp256k1::rand::{thread_rng, Rng};
 
         macro_rules! round_trip {
             ($($val_type:ty),*) => {
