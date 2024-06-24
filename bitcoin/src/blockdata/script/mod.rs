@@ -109,7 +109,7 @@ impl ScriptHash {
             return Err(RedeemScriptSizeError { size: redeem_script.len() });
         }
 
-        Ok(ScriptHash::hash(redeem_script.as_bytes()))
+        Ok(ScriptHash(hash160::Hash::hash(redeem_script.as_bytes())))
     }
 
     /// Creates a `ScriptHash` from any script irrespective of script size.
@@ -118,7 +118,9 @@ impl ScriptHash {
     /// then the output will be unspendable (see [BIP-16]).
     ///
     /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
-    pub fn from_script_unchecked(script: &Script) -> Self { ScriptHash::hash(script.as_bytes()) }
+    pub fn from_script_unchecked(script: &Script) -> Self {
+        ScriptHash(hash160::Hash::hash(script.as_bytes()))
+    }
 }
 
 impl WScriptHash {
@@ -135,7 +137,7 @@ impl WScriptHash {
             return Err(WitnessScriptSizeError { size: witness_script.len() });
         }
 
-        Ok(WScriptHash::hash(witness_script.as_bytes()))
+        Ok(WScriptHash(sha256::Hash::hash(witness_script.as_bytes())))
     }
 
     /// Creates a `WScriptHash` from any script irrespective of script size.
@@ -144,7 +146,9 @@ impl WScriptHash {
     /// output then the output will be unspendable (see [BIP-141]).
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    pub fn from_script_unchecked(script: &Script) -> Self { WScriptHash::hash(script.as_bytes()) }
+    pub fn from_script_unchecked(script: &Script) -> Self {
+        WScriptHash(sha256::Hash::hash(script.as_bytes()))
+    }
 }
 
 impl TryFrom<ScriptBuf> for ScriptHash {

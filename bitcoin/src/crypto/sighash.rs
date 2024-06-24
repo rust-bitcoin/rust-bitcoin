@@ -55,6 +55,21 @@ hash_newtype! {
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
+// Implement private engine/from_engine methods for use within this module;
+// but outside of it, it should not be possible to construct these hash
+// types from arbitrary data (except by casting via to/from_byte_array).
+//
+// These will be uncommented in the next commit; in this one they cause
+// "duplicate definition" errors against the `hash_newtype!` macro.
+impl LegacySighash {
+    //fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
+    //fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+}
+impl SegwitV0Sighash {
+    //fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
+    //fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+}
+
 sha256t_hash_newtype! {
     pub struct TapSighashTag = hash_str("TapSighash");
 

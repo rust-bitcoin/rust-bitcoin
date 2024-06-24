@@ -2251,7 +2251,7 @@ mod tests {
     fn sign_psbt() {
         use crate::bip32::{DerivationPath, Fingerprint};
         use crate::witness_version::WitnessVersion;
-        use crate::{WPubkeyHash, WitnessProgram};
+        use crate::WitnessProgram;
 
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,
@@ -2271,7 +2271,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_p2wpkh(WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_p2wpkh(pk.wpubkey_hash().unwrap()),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 

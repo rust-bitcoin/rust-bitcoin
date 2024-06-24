@@ -11,7 +11,6 @@ use core::{fmt, slice};
 
 use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
-use io::Write;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
@@ -820,9 +819,7 @@ impl Xpub {
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> XKeyIdentifier {
-        let mut engine = XKeyIdentifier::engine();
-        engine.write_all(&self.public_key.serialize()).expect("engines don't error");
-        XKeyIdentifier::from_engine(engine)
+        XKeyIdentifier(hash160::Hash::hash(&self.public_key.serialize()))
     }
 
     /// Returns the first four bytes of the identifier

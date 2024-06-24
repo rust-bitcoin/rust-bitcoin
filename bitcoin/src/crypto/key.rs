@@ -58,7 +58,9 @@ impl PublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key.
-    pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
+    pub fn pubkey_hash(&self) -> PubkeyHash {
+        PubkeyHash(self.with_serialized(hash160::Hash::hash))
+    }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Result<WPubkeyHash, UncompressedPublicKeyError> {
@@ -275,7 +277,7 @@ pub struct CompressedPublicKey(pub secp256k1::PublicKey);
 
 impl CompressedPublicKey {
     /// Returns bitcoin 160-bit hash of the public key.
-    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash::hash(&self.to_bytes()) }
+    pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program.
     pub fn wpubkey_hash(&self) -> WPubkeyHash {
