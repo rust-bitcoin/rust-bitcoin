@@ -126,7 +126,12 @@ pub mod siphash24;
 
 use core::{convert, fmt, hash};
 
-pub use hmac::{Hmac, HmacEngine};
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    hkdf::Hkdf,
+    hmac::{Hmac, HmacEngine},
+};
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone + Default {
