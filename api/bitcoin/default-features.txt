@@ -5252,7 +5252,7 @@ pub bitcoin::psbt::SigningAlgorithm::Schnorr
 pub bitcoin::psbt::SigningKeys::Ecdsa(alloc::vec::Vec<bitcoin::PublicKey>)
 pub bitcoin::psbt::SigningKeys::Schnorr(alloc::vec::Vec<secp256k1::key::XOnlyPublicKey>)
 pub bitcoin::psbt::raw::Key::key: alloc::vec::Vec<u8>
-pub bitcoin::psbt::raw::Key::type_value: u8
+pub bitcoin::psbt::raw::Key::type_value: u64
 pub bitcoin::psbt::raw::Pair::key: bitcoin::psbt::raw::Key
 pub bitcoin::psbt::raw::Pair::value: alloc::vec::Vec<u8>
 pub bitcoin::psbt::raw::ProprietaryKey::key: alloc::vec::Vec<u8>
