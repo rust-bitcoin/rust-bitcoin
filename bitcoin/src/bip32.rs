@@ -453,6 +453,19 @@ impl DerivationPath {
     /// assert_eq!(path.to_u32_vec(), vec![84 + HARDENED, HARDENED, HARDENED, 0, 1]);
     /// ```
     pub fn to_u32_vec(&self) -> Vec<u32> { self.into_iter().map(|&el| el.into()).collect() }
+
+    /// Creates a derivation path from a slice of u32s.
+    /// ```
+    /// use bitcoin::bip32::DerivationPath;
+    ///
+    /// const HARDENED: u32 = 0x80000000;
+    /// let expected = vec![84 + HARDENED, HARDENED, HARDENED, 0, 1];
+    /// let path = DerivationPath::from_u32_slice(expected.as_slice());
+    /// assert_eq!(path.to_u32_vec(), expected);
+    /// ```
+    pub fn from_u32_slice(numbers: &[u32]) -> Self {
+        numbers.iter().map(|&n| ChildNumber::from(n)).collect()
+    }
 }
 
 impl fmt::Display for DerivationPath {
