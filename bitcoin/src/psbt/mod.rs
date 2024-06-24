@@ -987,8 +987,9 @@ impl fmt::Display for SignError {
             TaprootError(ref e) => write_err!(f, "taproot sighash"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
-            WrongSigningAlgorithm =>
-                write!(f, "attempt to sign an input with the wrong signing algorithm"),
+            WrongSigningAlgorithm => {
+                write!(f, "attempt to sign an input with the wrong signing algorithm")
+            }
             Unsupported => write!(f, "signing request currently unsupported"),
         }
     }
@@ -1062,8 +1063,9 @@ impl fmt::Display for ExtractTxError {
         use ExtractTxError::*;
 
         match *self {
-            AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "An absurdly high fee rate of {}", fee_rate),
+            AbsurdFeeRate { fee_rate, .. } => {
+                write!(f, "An absurdly high fee rate of {}", fee_rate)
+            }
             MissingInputValue { .. } => write!(
                 f,
                 "One of the inputs lacked value information (witness_utxo or non_witness_utxo)"
@@ -1358,12 +1360,12 @@ mod tests {
         let dpath: Vec<ChildNumber> = vec![
             ChildNumber::ZERO_NORMAL,
             ChildNumber::ONE_NORMAL,
-            ChildNumber::from_normal_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(4).unwrap(),
-            ChildNumber::from_normal_idx(42).unwrap(),
-            ChildNumber::from_hardened_idx(69).unwrap(),
-            ChildNumber::from_normal_idx(420).unwrap(),
-            ChildNumber::from_normal_idx(31337).unwrap(),
+            ChildNumber::from_normal_child_number(2).unwrap(),
+            ChildNumber::from_normal_child_number(4).unwrap(),
+            ChildNumber::from_normal_child_number(42).unwrap(),
+            ChildNumber::from_hardened_child_number(69).unwrap(),
+            ChildNumber::from_normal_child_number(420).unwrap(),
+            ChildNumber::from_normal_child_number(31337).unwrap(),
         ];
 
         sk = sk.derive_priv(secp, &dpath);

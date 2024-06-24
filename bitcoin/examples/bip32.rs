@@ -49,7 +49,8 @@ fn main() {
     // generate first receiving address at m/0/0
     // manually creating indexes this time
     let zero = ChildNumber::ZERO_NORMAL;
-    let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
+    let public_key =
+        xpub.derive_pub(&secp, &[zero.try_into().unwrap(), zero.try_into().unwrap()]).public_key;
     let address = Address::p2wpkh(CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {}", address);
 }

@@ -26,7 +26,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use bincode::serialize;
-use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
+use bitcoin::bip32::{ChildNumber, KeySource, NormalChildNumber, Xpriv, Xpub};
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
@@ -194,7 +194,7 @@ fn serde_regression_control_block() {
 
 #[test]
 fn serde_regression_child_number() {
-    let num = ChildNumber::Normal { index: 0xDEADBEEF };
+    let num = ChildNumber::Normal(NormalChildNumber::new(0xDEADBEEF));
     let got = serialize(&num).unwrap();
     let want = include_bytes!("data/serde/child_number_bincode") as &[_];
     assert_eq!(got, want)

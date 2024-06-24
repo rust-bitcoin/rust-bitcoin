@@ -111,40 +111,96 @@ pub struct Xpub {
 #[cfg(feature = "serde")]
 crate::serde_utils::serde_string_impl!(Xpub, "a BIP-32 extended public key");
 
+/// A non-hardened child number.
+///
+/// # Note
+///
+/// Key index, within [0, 2^31 - 1].
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
+pub struct NormalChildNumber(u32);
+
+impl NormalChildNumber {
+    /// Creates a new [`NormalChildNumber`] from an index.
+    pub fn new(index: u32) -> Self { NormalChildNumber(index) }
+
+    /// Returns the index of the child number.
+    pub fn index(&self) -> u32 { self.0 }
+}
+
+/// A hardened child number
+///
+/// # Note
+///
+/// Key index, within [0, 2^31 - 1].
+#[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
+pub struct HardenedChildNumber(u32);
+
+impl HardenedChildNumber {
+    /// Creates a new [`HardenedChildNumber`] from an index.
+    pub fn new(index: u32) -> Self { HardenedChildNumber(index) }
+
+    /// Returns the index of the child number.
+    pub fn index(&self) -> u32 { self.0 }
+}
+
+impl From<NormalChildNumber> for ChildNumber {
+    fn from(child: NormalChildNumber) -> Self { ChildNumber::Normal(child) }
+}
+
+impl TryFrom<ChildNumber> for NormalChildNumber {
+    type Error = Error;
+
+    fn try_from(child: ChildNumber) -> Result<Self, Self::Error> {
+        match child {
+            ChildNumber::Normal(normal) => Ok(normal),
+            _ => Err(Error::InvalidChildNumberFormat),
+        }
+    }
+}
+
+impl From<HardenedChildNumber> for ChildNumber {
+    fn from(child: HardenedChildNumber) -> Self { ChildNumber::Hardened(child) }
+}
+
+impl TryFrom<ChildNumber> for HardenedChildNumber {
+    type Error = Error;
+
+    fn try_from(child: ChildNumber) -> Result<Self, Self::Error> {
+        match child {
+            ChildNumber::Hardened(hardened) => Ok(hardened),
+            _ => Err(Error::InvalidChildNumberFormat),
+        }
+    }
+}
+
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub enum ChildNumber {
     /// Non-hardened key
-    Normal {
-        /// Key index, within [0, 2^31 - 1]
-        index: u32,
-    },
+    Normal(NormalChildNumber),
     /// Hardened key
-    Hardened {
-        /// Key index, within [0, 2^31 - 1]
-        index: u32,
-    },
+    Hardened(HardenedChildNumber),
 }
 impl ChildNumber {
     /// Normal child number with index 0.
-    pub const ZERO_NORMAL: Self = ChildNumber::Normal { index: 0 };
+    pub const ZERO_NORMAL: Self = ChildNumber::Normal(NormalChildNumber(0));
 
     /// Normal child number with index 1.
-    pub const ONE_NORMAL: Self = ChildNumber::Normal { index: 1 };
+    pub const ONE_NORMAL: Self = ChildNumber::Normal(NormalChildNumber(1));
 
     /// Hardened child number with index 0.
-    pub const ZERO_HARDENED: Self = ChildNumber::Hardened { index: 0 };
+    pub const ZERO_HARDENED: Self = ChildNumber::Hardened(HardenedChildNumber(0));
 
     /// Hardened child number with index 1.
-    pub const ONE_HARDENED: Self = ChildNumber::Hardened { index: 1 };
+    pub const ONE_HARDENED: Self = ChildNumber::Hardened(HardenedChildNumber(1));
 
     /// Create a [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
+    pub fn from_normal_child_number(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Normal { index })
+            Ok(ChildNumber::Normal(NormalChildNumber(index)))
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -154,9 +210,9 @@ impl ChildNumber {
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
+    pub fn from_hardened_child_number(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Hardened { index })
+            Ok(ChildNumber::Hardened(HardenedChildNumber(index)))
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -172,16 +228,18 @@ impl ChildNumber {
     /// [`Hardened`]: #variant.Hardened
     pub fn is_hardened(&self) -> bool {
         match self {
-            ChildNumber::Hardened { .. } => true,
-            ChildNumber::Normal { .. } => false,
+            ChildNumber::Hardened(_) => true,
+            ChildNumber::Normal(_) => false,
         }
     }
 
     /// Returns the child number that is a single increment from this one.
     pub fn increment(self) -> Result<ChildNumber, Error> {
         match self {
-            ChildNumber::Normal { index: idx } => ChildNumber::from_normal_idx(idx + 1),
-            ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
+            ChildNumber::Normal(NormalChildNumber(idx)) =>
+                ChildNumber::from_normal_child_number(idx + 1),
+            ChildNumber::Hardened(HardenedChildNumber(idx)) =>
+                ChildNumber::from_hardened_child_number(idx + 1),
         }
     }
 }
@@ -189,9 +247,9 @@ impl ChildNumber {
 impl From<u32> for ChildNumber {
     fn from(number: u32) -> Self {
         if number & (1 << 31) != 0 {
-            ChildNumber::Hardened { index: number ^ (1 << 31) }
+            ChildNumber::Hardened(HardenedChildNumber(number ^ (1 << 31)))
         } else {
-            ChildNumber::Normal { index: number }
+            ChildNumber::Normal(NormalChildNumber(number))
         }
     }
 }
@@ -199,8 +257,8 @@ impl From<u32> for ChildNumber {
 impl From<ChildNumber> for u32 {
     fn from(cnum: ChildNumber) -> Self {
         match cnum {
-            ChildNumber::Normal { index } => index,
-            ChildNumber::Hardened { index } => index | (1 << 31),
+            ChildNumber::Normal(NormalChildNumber(index)) => index,
+            ChildNumber::Hardened(HardenedChildNumber(index)) => index | (1 << 31),
         }
     }
 }
@@ -208,12 +266,12 @@ impl From<ChildNumber> for u32 {
 impl fmt::Display for ChildNumber {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ChildNumber::Hardened { index } => {
+            ChildNumber::Hardened(HardenedChildNumber(index)) => {
                 fmt::Display::fmt(&index, f)?;
                 let alt = f.alternate();
                 f.write_str(if alt { "h" } else { "'" })
             }
-            ChildNumber::Normal { index } => fmt::Display::fmt(&index, f),
+            ChildNumber::Normal(NormalChildNumber(index)) => fmt::Display::fmt(&index, f),
         }
     }
 }
@@ -224,11 +282,13 @@ impl FromStr for ChildNumber {
     fn from_str(inp: &str) -> Result<ChildNumber, Error> {
         let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
         Ok(if is_hardened {
-            ChildNumber::from_hardened_idx(
+            ChildNumber::from_hardened_child_number(
                 inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?,
             )?
         } else {
-            ChildNumber::from_normal_idx(inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
+            ChildNumber::from_normal_child_number(
+                inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?,
+            )?
         })
     }
 }
@@ -358,8 +418,11 @@ pub struct DerivationPathIterator<'a> {
 
 impl<'a> DerivationPathIterator<'a> {
     /// Start a new [DerivationPathIterator] at the given child.
-    pub fn start_from(path: &'a DerivationPath, start: ChildNumber) -> DerivationPathIterator<'a> {
-        DerivationPathIterator { base: path, next_child: Some(start) }
+    pub fn start_from(
+        path: &'a DerivationPath,
+        start: impl Into<ChildNumber>,
+    ) -> DerivationPathIterator<'a> {
+        DerivationPathIterator { base: path, next_child: Some(start.into()) }
     }
 }
 
@@ -388,33 +451,33 @@ impl DerivationPath {
     pub fn is_master(&self) -> bool { self.0.is_empty() }
 
     /// Create a new [DerivationPath] that is a child of this one.
-    pub fn child(&self, cn: ChildNumber) -> DerivationPath {
+    pub fn child(&self, cn: impl Into<ChildNumber>) -> DerivationPath {
         let mut path = self.0.clone();
-        path.push(cn);
+        path.push(cn.into());
         DerivationPath(path)
     }
 
     /// Convert into a [DerivationPath] that is a child of this one.
-    pub fn into_child(self, cn: ChildNumber) -> DerivationPath {
+    pub fn into_child(self, cn: impl Into<ChildNumber>) -> DerivationPath {
         let mut path = self.0;
-        path.push(cn);
+        path.push(cn.into());
         DerivationPath(path)
     }
 
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
-    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator {
+    pub fn children_from(&self, cn: impl Into<ChildNumber>) -> DerivationPathIterator {
         DerivationPathIterator::start_from(self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
     pub fn normal_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Normal(NormalChildNumber(0)))
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
     pub fn hardened_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Hardened(HardenedChildNumber(0)))
     }
 
     /// Concatenate `self` with `path` and return the resulting new path.
@@ -514,17 +577,20 @@ impl fmt::Display for Error {
             CannotDeriveFromHardenedKey =>
                 f.write_str("cannot derive hardened key from public key"),
             Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-            InvalidChildNumber(ref n) =>
-                write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
+            InvalidChildNumber(ref n) => {
+                write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n)
+            }
             InvalidChildNumberFormat => f.write_str("invalid child number format"),
             InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            WrongExtendedKeyLength(ref len) =>
-                write!(f, "encoded extended key data has wrong length {}", len),
+            WrongExtendedKeyLength(ref len) => {
+                write!(f, "encoded extended key data has wrong length {}", len)
+            }
             Base58(ref e) => write_err!(f, "base58 encoding error"; e),
             Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
-            InvalidPublicKeyHexLength(got) =>
-                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
+            InvalidPublicKeyHexLength(got) => {
+                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got)
+            }
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
         }
     }
@@ -608,23 +674,27 @@ impl Xpriv {
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Xpriv {
+    fn ckd_priv<C: secp256k1::Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        i: impl Into<ChildNumber> + Copy,
+    ) -> Xpriv {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
-        match i {
-            ChildNumber::Normal { .. } => {
+        match i.into() {
+            ChildNumber::Normal(_) => {
                 // Non-hardened key: compute public data and use that
                 hmac_engine.input(
                     &secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..],
                 );
             }
-            ChildNumber::Hardened { .. } => {
+            ChildNumber::Hardened(_) => {
                 // Hardened key: use only secret data to prevent public derivation
                 hmac_engine.input(&[0u8]);
                 hmac_engine.input(&self.private_key[..]);
             }
         }
 
-        hmac_engine.input(&u32::from(i).to_be_bytes());
+        hmac_engine.input(&u32::from(i.into()).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let sk = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])
             .expect("statistically impossible to hit");
@@ -635,7 +705,7 @@ impl Xpriv {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(secp),
-            child_number: i,
+            child_number: i.into(),
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac_result),
         }
@@ -717,19 +787,19 @@ impl Xpub {
     /// the internal public key representation.
     pub fn to_x_only_pub(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
-    /// Attempts to derive an extended public key from a path.
+    /// Derives an extended public key from a path.
     ///
-    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
-    pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
+    /// The `path` argument can be any type implementing `AsRef<NormalChildNumber>`, such as `DerivationPath`, for instance.
+    pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[NormalChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpub, Error> {
+    ) -> Xpub {
         let mut pk: Xpub = *self;
         for cnum in path.as_ref() {
-            pk = pk.ckd_pub(secp, *cnum)?
+            pk = pk.ckd_pub(secp, *cnum)
         }
-        Ok(pk)
+        pk
     }
 
     /// Compute the scalar tweak added to this key to get a child key
@@ -738,8 +808,8 @@ impl Xpub {
         i: ChildNumber,
     ) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
         match i {
-            ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
-            ChildNumber::Normal { index: n } => {
+            ChildNumber::Hardened(_) => Err(Error::CannotDeriveFromHardenedKey),
+            ChildNumber::Normal(NormalChildNumber(n)) => {
                 let mut hmac_engine: HmacEngine<sha512::Hash> =
                     HmacEngine::new(&self.chain_code[..]);
                 hmac_engine.input(&self.public_key.serialize()[..]);
@@ -758,19 +828,23 @@ impl Xpub {
     pub fn ckd_pub<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        i: ChildNumber,
-    ) -> Result<Xpub, Error> {
-        let (sk, chain_code) = self.ckd_pub_tweak(i)?;
-        let tweaked = self.public_key.add_exp_tweak(secp, &sk.into())?;
+        i: NormalChildNumber,
+    ) -> Xpub {
+        let (sk, chain_code) =
+            self.ckd_pub_tweak(i.into()).expect("resulting key would be invalid");
+        let tweaked = self
+            .public_key
+            .add_exp_tweak(secp, &sk.into())
+            .expect("resulting key would be invalid");
 
-        Ok(Xpub {
+        Xpub {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(),
-            child_number: i,
+            child_number: i.into(),
             public_key: tweaked,
             chain_code,
-        })
+        }
     }
 
     /// Decoding extended public key from binary data according to BIP 32
@@ -937,7 +1011,7 @@ mod tests {
             Ok(vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
-                ChildNumber::from_hardened_idx(2).unwrap(),
+                ChildNumber::from_hardened_child_number(2).unwrap(),
             ]
             .into())
         );
@@ -946,17 +1020,17 @@ mod tests {
             Ok(vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
-                ChildNumber::from_hardened_idx(2).unwrap(),
-                ChildNumber::from_normal_idx(2).unwrap(),
+                ChildNumber::from_hardened_child_number(2).unwrap(),
+                ChildNumber::from_normal_child_number(2).unwrap(),
             ]
             .into())
         );
         let want = DerivationPath::from(vec![
             ChildNumber::ZERO_HARDENED,
             ChildNumber::ONE_NORMAL,
-            ChildNumber::from_hardened_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(1000000000).unwrap(),
+            ChildNumber::from_hardened_child_number(2).unwrap(),
+            ChildNumber::from_normal_child_number(2).unwrap(),
+            ChildNumber::from_normal_child_number(1000000000).unwrap(),
         ]);
         assert_eq!(DerivationPath::from_str("0'/1/2'/2/1000000000").unwrap(), want);
         assert_eq!(DerivationPath::from_str("m/0'/1/2'/2/1000000000").unwrap(), want);
@@ -979,7 +1053,7 @@ mod tests {
         assert_eq!(&path[..2], &[ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]);
         let indexed: DerivationPath = path[..2].into();
         assert_eq!(indexed, DerivationPath::from_str("0h/1").unwrap());
-        assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
+        assert_eq!(indexed.child(ChildNumber::from_hardened_child_number(2).unwrap()), path);
     }
 
     fn test_path<C: secp256k1::Signing + secp256k1::Verification>(
@@ -996,25 +1070,16 @@ mod tests {
         // Check derivation convenience method for Xpriv
         assert_eq!(&sk.derive_priv(secp, &path).to_string()[..], expected_sk);
 
-        // Check derivation convenience method for Xpub, should error
-        // appropriately if any ChildNumber is hardened
-        if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(pk.derive_pub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
-        } else {
-            assert_eq!(&pk.derive_pub(secp, &path).unwrap().to_string()[..], expected_pk);
-        }
-
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.0.iter() {
             sk = sk.ckd_priv(secp, num);
             match num {
-                Normal { .. } => {
-                    let pk2 = pk.ckd_pub(secp, num).unwrap();
+                Normal(NormalChildNumber(num)) => {
+                    let pk2 = pk.ckd_pub(secp, NormalChildNumber(num));
                     pk = Xpub::from_priv(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
-                    assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
                     pk = Xpub::from_priv(secp, &sk);
                 }
             }
@@ -1033,18 +1098,24 @@ mod tests {
     #[test]
     fn test_increment() {
         let idx = 9345497; // randomly generated, I promise
-        let cn = ChildNumber::from_normal_idx(idx).unwrap();
-        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_normal_idx(idx + 1).unwrap()));
-        let cn = ChildNumber::from_hardened_idx(idx).unwrap();
-        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_hardened_idx(idx + 1).unwrap()));
+        let cn = ChildNumber::from_normal_child_number(idx).unwrap();
+        assert_eq!(
+            cn.increment().ok(),
+            Some(ChildNumber::from_normal_child_number(idx + 1).unwrap())
+        );
+        let cn = ChildNumber::from_hardened_child_number(idx).unwrap();
+        assert_eq!(
+            cn.increment().ok(),
+            Some(ChildNumber::from_hardened_child_number(idx + 1).unwrap())
+        );
 
         let max = (1 << 31) - 1;
-        let cn = ChildNumber::from_normal_idx(max).unwrap();
+        let cn = ChildNumber::from_normal_child_number(max).unwrap();
         assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
-        let cn = ChildNumber::from_hardened_idx(max).unwrap();
+        let cn = ChildNumber::from_hardened_child_number(max).unwrap();
         assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
 
-        let cn = ChildNumber::from_normal_idx(350).unwrap();
+        let cn = ChildNumber::from_normal_child_number(350).unwrap();
         let path = DerivationPath::from_str("42'").unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/350".parse().unwrap()));
@@ -1060,13 +1131,13 @@ mod tests {
         assert_eq!(iter.next(), Some("42'/350'/0'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/350'/1'".parse().unwrap()));
 
-        let cn = ChildNumber::from_hardened_idx(42350).unwrap();
+        let cn = ChildNumber::from_hardened_child_number(42350).unwrap();
         let path = DerivationPath::from_str("42'").unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/42350'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/42351'".parse().unwrap()));
 
-        let cn = ChildNumber::from_hardened_idx(max).unwrap();
+        let cn = ChildNumber::from_hardened_child_number(max).unwrap();
         let path = DerivationPath::from_str("42'").unwrap();
         let mut iter = path.children_from(cn);
         assert!(iter.next().is_some());
@@ -1166,10 +1237,10 @@ mod tests {
     pub fn encode_decode_childnumber() {
         serde_round_trip!(ChildNumber::ZERO_NORMAL);
         serde_round_trip!(ChildNumber::ONE_NORMAL);
-        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1).unwrap());
+        serde_round_trip!(ChildNumber::from_normal_child_number((1 << 31) - 1).unwrap());
         serde_round_trip!(ChildNumber::ZERO_HARDENED);
         serde_round_trip!(ChildNumber::ONE_HARDENED);
-        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_child_number((1 << 31) - 1).unwrap());
     }
 
     #[test]
@@ -1199,12 +1270,18 @@ mod tests {
 
     #[test]
     fn fmt_child_number() {
-        assert_eq!("000005h", &format!("{:#06}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("5h", &format!("{:#}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("000005'", &format!("{:06}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("5'", &format!("{}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("42", &format!("{}", ChildNumber::from_normal_idx(42).unwrap()));
-        assert_eq!("000042", &format!("{:06}", ChildNumber::from_normal_idx(42).unwrap()));
+        assert_eq!(
+            "000005h",
+            &format!("{:#06}", ChildNumber::from_hardened_child_number(5).unwrap())
+        );
+        assert_eq!("5h", &format!("{:#}", ChildNumber::from_hardened_child_number(5).unwrap()));
+        assert_eq!(
+            "000005'",
+            &format!("{:06}", ChildNumber::from_hardened_child_number(5).unwrap())
+        );
+        assert_eq!("5'", &format!("{}", ChildNumber::from_hardened_child_number(5).unwrap()));
+        assert_eq!("42", &format!("{}", ChildNumber::from_normal_child_number(42).unwrap()));
+        assert_eq!("000042", &format!("{:06}", ChildNumber::from_normal_child_number(42).unwrap()));
     }
 
     #[test]

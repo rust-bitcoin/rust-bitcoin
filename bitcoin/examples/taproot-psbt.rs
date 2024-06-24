@@ -78,7 +78,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
+use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, NormalChildNumber, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -382,8 +382,9 @@ impl BenefactorWallet {
         lock_time: absolute::LockTime,
         input_utxo: P2trUtxo,
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
-        if let ChildNumber::Normal { index } = self.next {
-            if index > 0 && self.current_spend_info.is_some() {
+        if let ChildNumber::Normal(_) = self.next {
+            let index = NormalChildNumber::new(self.next.into());
+            if index > NormalChildNumber::new(0) && self.current_spend_info.is_some() {
                 return Err("Transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
             }
         }
@@ -393,7 +394,7 @@ impl BenefactorWallet {
         let internal_keypair =
             self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_keypair(&self.secp);
         let beneficiary_key =
-            self.beneficiary_xpub.derive_pub(&self.secp, &derivation_path)?.to_x_only_pub();
+            self.beneficiary_xpub.derive_pub(&self.secp, &derivation_path).to_x_only_pub();
 
         // Build up the leaf script and combine with internal key into a taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
@@ -484,7 +485,7 @@ impl BenefactorWallet {
                 .derive_priv(&self.secp, &new_derivation_path)
                 .to_keypair(&self.secp);
             let beneficiary_key =
-                self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
+                self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path).to_x_only_pub();
 
             // Build up the leaf script and combine with internal key into a taproot commitment
             let lock_time = absolute::LockTime::from_height(
