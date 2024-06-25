@@ -422,14 +422,14 @@ impl TaprootBuilder {
             // Insert the sum of first two in the tree as a new node
             // N.B.: p1 + p2 can not practically saturate as you would need to have 2**32 max u32s
             // from the input to overflow. However, saturating is a reasonable behavior here as
-            // huffman tree construction would treat all such elements as "very likely".
+            // Huffman tree construction would treat all such elements as "very likely".
             let p = Reverse(p1.0.saturating_add(p2.0));
             node_weights.push((p, NodeInfo::combine(s1, s2)?));
         }
         // Every iteration of the loop reduces the node_weights.len() by exactly 1
         // Therefore, the loop will eventually terminate with exactly 1 element
         debug_assert_eq!(node_weights.len(), 1);
-        let node = node_weights.pop().expect("huffman tree algorithm is broken").1;
+        let node = node_weights.pop().expect("Huffman tree algorithm is broken").1;
         Ok(TaprootBuilder { branch: vec![Some(node)] })
     }
 
