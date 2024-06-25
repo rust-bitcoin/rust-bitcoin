@@ -342,7 +342,7 @@ pub struct TaprootBuilder {
     // For each level in the tree, one NodeInfo object may be present. Branch at index 0 is
     // information about the root; further values are for deeper subtrees being explored.
     //
-    // During the construction of Taptree, for every right branch taken to reach the position we're
+    // During the construction of [`TapTree`], for every right branch taken to reach the position we're
     // currently working on, there will be a `(Some(_))` entry in branch corresponding to the left
     // branch at that level.
     //
@@ -596,9 +596,9 @@ impl Default for TaprootBuilder {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum IncompleteBuilderError {
-    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
+    /// Indicates an attempt to construct a Taproot tree from a builder containing incomplete branches.
     NotFinalized(TaprootBuilder),
-    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    /// Indicates an attempt to construct a Taproot tree from a builder containing hidden parts.
     HiddenParts(TaprootBuilder),
 }
 
@@ -621,9 +621,9 @@ impl core::fmt::Display for IncompleteBuilderError {
 
         f.write_str(match self {
             NotFinalized(_) =>
-                "an attempt to construct a tap tree from a builder containing incomplete branches.",
+                "an attempt to construct a Taproot tree from a builder containing incomplete branches.",
             HiddenParts(_) =>
-                "an attempt to construct a tap tree from a builder containing hidden parts.",
+                "an attempt to construct a Taproot tree from a builder containing hidden parts.",
         })
     }
 }
@@ -644,7 +644,7 @@ impl std::error::Error for IncompleteBuilderError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum HiddenNodesError {
-    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    /// Indicates an attempt to construct a Taproot tree from a builder containing hidden parts.
     HiddenParts(NodeInfo),
 }
 
@@ -667,7 +667,7 @@ impl core::fmt::Display for HiddenNodesError {
 
         f.write_str(match self {
             HiddenParts(_) =>
-                "an attempt to construct a tap tree from a node_info containing hidden parts.",
+                "an attempt to construct a Taproot tree from a node_info containing hidden parts.",
         })
     }
 }
@@ -1000,7 +1000,7 @@ impl LeafNode {
         Self { leaf: TapLeaf::Hidden(hash), merkle_branch: Default::default() }
     }
 
-    /// Returns the depth of this script leaf in the tap tree.
+    /// Returns the depth of this script leaf in the Taproot tree.
     #[inline]
     pub fn depth(&self) -> u8 {
         // Depth is guarded by TAPROOT_CONTROL_MAX_NODE_COUNT.
@@ -1157,7 +1157,7 @@ impl ControlBlock {
 
     /// Verifies that a control block is correct proof for a given output key and script.
     ///
-    /// Only checks that script is contained inside the taptree described by output key. Full
+    /// Only checks that script is contained inside the [`TapTree`] described by output key. Full
     /// verification must also execute the script with witness data.
     pub fn verify_taproot_commitment<C: secp256k1::Verification>(
         &self,
@@ -1394,7 +1394,7 @@ pub enum TaprootError {
     InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid Taproot internal key.
     InvalidInternalKey(secp256k1::Error),
-    /// Empty tap tree.
+    /// Empty Taproot tree.
     EmptyTree,
 }
 

@@ -10,7 +10,7 @@ use super::{
 };
 use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 
-/// The merkle proof for inclusion of a tree in a taptree hash.
+/// The merkle proof for inclusion of a tree in a Taproot tree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
