@@ -364,6 +364,10 @@ impl bitcoin::taproot::merkle_branch::IntoIter
 impl bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl bitcoin::taproot::serialized_signature::IntoIter
 impl bitcoin::taproot::serialized_signature::SerializedSignature
+impl bitcoin_hashes::GeneralHash for bitcoin::TapSighash
+impl bitcoin_hashes::GeneralHash for bitcoin::taproot::TapLeafHash
+impl bitcoin_hashes::GeneralHash for bitcoin::taproot::TapNodeHash
+impl bitcoin_hashes::GeneralHash for bitcoin::taproot::TapTweakHash
 impl bitcoin_hashes::Hash for bitcoin::LegacySighash
 impl bitcoin_hashes::Hash for bitcoin::PubkeyHash
 impl bitcoin_hashes::Hash for bitcoin::SegwitV0Sighash
@@ -6076,18 +6080,13 @@ pub fn bitcoin::LegacySighash::as_ref(&self) -> &[u8]
 pub fn bitcoin::LegacySighash::borrow(&self) -> &[u8]
 pub fn bitcoin::LegacySighash::clone(&self) -> bitcoin::LegacySighash
 pub fn bitcoin::LegacySighash::cmp(&self, other: &bitcoin::LegacySighash) -> core::cmp::Ordering
-pub fn bitcoin::LegacySighash::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::LegacySighash::eq(&self, other: &bitcoin::LegacySighash) -> bool
 pub fn bitcoin::LegacySighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::LegacySighash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::LegacySighash
 pub fn bitcoin::LegacySighash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::LegacySighash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::LegacySighash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::LegacySighash
 pub fn bitcoin::LegacySighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::LegacySighash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::LegacySighash::from_str(s: &str) -> core::result::Result<bitcoin::LegacySighash, Self::Err>
-pub fn bitcoin::LegacySighash::hash(data: &[u8]) -> Self
 pub fn bitcoin::LegacySighash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::LegacySighash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::LegacySighash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::LegacySighash::partial_cmp(&self, other: &bitcoin::LegacySighash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::LegacySighash::to_byte_array(self) -> Self::Bytes
@@ -6119,7 +6118,6 @@ pub fn bitcoin::PubkeyHash::as_ref(&self) -> &bitcoin::blockdata::script::PushBy
 pub fn bitcoin::PubkeyHash::borrow(&self) -> &[u8]
 pub fn bitcoin::PubkeyHash::clone(&self) -> bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::cmp(&self, other: &bitcoin::PubkeyHash) -> core::cmp::Ordering
-pub fn bitcoin::PubkeyHash::engine() -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::PubkeyHash::eq(&self, other: &bitcoin::PubkeyHash) -> bool
 pub fn bitcoin::PubkeyHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::PubkeyHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::PubkeyHash
@@ -6128,13 +6126,9 @@ pub fn bitcoin::PubkeyHash::from(key: &bitcoin::PublicKey) -> bitcoin::PubkeyHas
 pub fn bitcoin::PubkeyHash::from(key: bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::PubkeyHash::from(key: bitcoin::PublicKey) -> bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::PubkeyHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::PubkeyHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::PubkeyHash
 pub fn bitcoin::PubkeyHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::PubkeyHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::PubkeyHash::from_str(s: &str) -> core::result::Result<bitcoin::PubkeyHash, Self::Err>
-pub fn bitcoin::PubkeyHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::PubkeyHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::PubkeyHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::PubkeyHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::PubkeyHash::partial_cmp(&self, other: &bitcoin::PubkeyHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::PubkeyHash::to_byte_array(self) -> Self::Bytes
@@ -6165,18 +6159,13 @@ pub fn bitcoin::SegwitV0Sighash::as_ref(&self) -> &[u8]
 pub fn bitcoin::SegwitV0Sighash::borrow(&self) -> &[u8]
 pub fn bitcoin::SegwitV0Sighash::clone(&self) -> bitcoin::SegwitV0Sighash
 pub fn bitcoin::SegwitV0Sighash::cmp(&self, other: &bitcoin::SegwitV0Sighash) -> core::cmp::Ordering
-pub fn bitcoin::SegwitV0Sighash::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::SegwitV0Sighash::eq(&self, other: &bitcoin::SegwitV0Sighash) -> bool
 pub fn bitcoin::SegwitV0Sighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::SegwitV0Sighash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::SegwitV0Sighash
 pub fn bitcoin::SegwitV0Sighash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::SegwitV0Sighash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::SegwitV0Sighash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::SegwitV0Sighash
 pub fn bitcoin::SegwitV0Sighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::SegwitV0Sighash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::SegwitV0Sighash::from_str(s: &str) -> core::result::Result<bitcoin::SegwitV0Sighash, Self::Err>
-pub fn bitcoin::SegwitV0Sighash::hash(data: &[u8]) -> Self
 pub fn bitcoin::SegwitV0Sighash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::SegwitV0Sighash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::SegwitV0Sighash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::SegwitV0Sighash::partial_cmp(&self, other: &bitcoin::SegwitV0Sighash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::SegwitV0Sighash::to_byte_array(self) -> Self::Bytes
@@ -6186,13 +6175,14 @@ pub fn bitcoin::TapSighash::as_ref(&self) -> &[u8]
 pub fn bitcoin::TapSighash::borrow(&self) -> &[u8]
 pub fn bitcoin::TapSighash::clone(&self) -> bitcoin::TapSighash
 pub fn bitcoin::TapSighash::cmp(&self, other: &bitcoin::TapSighash) -> core::cmp::Ordering
-pub fn bitcoin::TapSighash::engine() -> <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Engine
+pub fn bitcoin::TapSighash::engine() -> <bitcoin::TapSighash as bitcoin_hashes::GeneralHash>::Engine
+pub fn bitcoin::TapSighash::engine() -> Self::Engine
 pub fn bitcoin::TapSighash::eq(&self, other: &bitcoin::TapSighash) -> bool
 pub fn bitcoin::TapSighash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::TapSighash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag>) -> bitcoin::TapSighash
 pub fn bitcoin::TapSighash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::TapSighash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::TapSighash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Engine) -> bitcoin::TapSighash
+pub fn bitcoin::TapSighash::from_engine(e: <bitcoin::TapSighash as bitcoin_hashes::GeneralHash>::Engine) -> Self
+pub fn bitcoin::TapSighash::from_engine(e: Self::Engine) -> bitcoin::TapSighash
 pub fn bitcoin::TapSighash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::TapSighash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::TapSighash::from_str(s: &str) -> core::result::Result<bitcoin::TapSighash, Self::Err>
 pub fn bitcoin::TapSighash::hash(data: &[u8]) -> Self
@@ -6224,20 +6214,15 @@ pub fn bitcoin::WPubkeyHash::as_ref(&self) -> &bitcoin::blockdata::script::PushB
 pub fn bitcoin::WPubkeyHash::borrow(&self) -> &[u8]
 pub fn bitcoin::WPubkeyHash::clone(&self) -> bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::cmp(&self, other: &bitcoin::WPubkeyHash) -> core::cmp::Ordering
-pub fn bitcoin::WPubkeyHash::engine() -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::WPubkeyHash::eq(&self, other: &bitcoin::WPubkeyHash) -> bool
 pub fn bitcoin::WPubkeyHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::WPubkeyHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::from(key: &bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::WPubkeyHash::from(key: bitcoin::CompressedPublicKey) -> Self
 pub fn bitcoin::WPubkeyHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::WPubkeyHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::WPubkeyHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::WPubkeyHash
 pub fn bitcoin::WPubkeyHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::WPubkeyHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::WPubkeyHash::from_str(s: &str) -> core::result::Result<bitcoin::WPubkeyHash, Self::Err>
-pub fn bitcoin::WPubkeyHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::WPubkeyHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::WPubkeyHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::WPubkeyHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::WPubkeyHash::partial_cmp(&self, other: &bitcoin::WPubkeyHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::WPubkeyHash::to_byte_array(self) -> Self::Bytes
@@ -6459,19 +6444,14 @@ pub fn bitcoin::bip158::FilterHash::clone(&self) -> bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::cmp(&self, other: &bitcoin::bip158::FilterHash) -> core::cmp::Ordering
 pub fn bitcoin::bip158::FilterHash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::bip158::FilterHash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::bip158::FilterHash::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::bip158::FilterHash::eq(&self, other: &bitcoin::bip158::FilterHash) -> bool
 pub fn bitcoin::bip158::FilterHash::filter_header(&self, previous_filter_header: bitcoin::bip158::FilterHeader) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip158::FilterHash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::bip158::FilterHash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::bip158::FilterHash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::bip158::FilterHash
 pub fn bitcoin::bip158::FilterHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip158::FilterHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::bip158::FilterHash::from_str(s: &str) -> core::result::Result<bitcoin::bip158::FilterHash, Self::Err>
-pub fn bitcoin::bip158::FilterHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::bip158::FilterHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::bip158::FilterHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::bip158::FilterHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::bip158::FilterHash::partial_cmp(&self, other: &bitcoin::bip158::FilterHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::bip158::FilterHash::to_byte_array(self) -> Self::Bytes
@@ -6483,18 +6463,13 @@ pub fn bitcoin::bip158::FilterHeader::clone(&self) -> bitcoin::bip158::FilterHea
 pub fn bitcoin::bip158::FilterHeader::cmp(&self, other: &bitcoin::bip158::FilterHeader) -> core::cmp::Ordering
 pub fn bitcoin::bip158::FilterHeader::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::bip158::FilterHeader::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::bip158::FilterHeader::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::bip158::FilterHeader::eq(&self, other: &bitcoin::bip158::FilterHeader) -> bool
 pub fn bitcoin::bip158::FilterHeader::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip158::FilterHeader::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHeader::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::bip158::FilterHeader::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::bip158::FilterHeader::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::bip158::FilterHeader
 pub fn bitcoin::bip158::FilterHeader::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip158::FilterHeader, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::bip158::FilterHeader::from_str(s: &str) -> core::result::Result<bitcoin::bip158::FilterHeader, Self::Err>
-pub fn bitcoin::bip158::FilterHeader::hash(data: &[u8]) -> Self
 pub fn bitcoin::bip158::FilterHeader::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::bip158::FilterHeader::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::bip158::FilterHeader::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::bip158::FilterHeader::partial_cmp(&self, other: &bitcoin::bip158::FilterHeader) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::bip158::FilterHeader::to_byte_array(self) -> Self::Bytes
@@ -6619,20 +6594,15 @@ pub fn bitcoin::bip32::XKeyIdentifier::as_ref(&self) -> &[u8]
 pub fn bitcoin::bip32::XKeyIdentifier::borrow(&self) -> &[u8]
 pub fn bitcoin::bip32::XKeyIdentifier::clone(&self) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::cmp(&self, other: &bitcoin::bip32::XKeyIdentifier) -> core::cmp::Ordering
-pub fn bitcoin::bip32::XKeyIdentifier::engine() -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::bip32::XKeyIdentifier::eq(&self, other: &bitcoin::bip32::XKeyIdentifier) -> bool
 pub fn bitcoin::bip32::XKeyIdentifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::bip32::XKeyIdentifier::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from(key: &bitcoin::bip32::Xpub) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from(key: bitcoin::bip32::Xpub) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::bip32::XKeyIdentifier::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::bip32::XKeyIdentifier::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::bip32::XKeyIdentifier
 pub fn bitcoin::bip32::XKeyIdentifier::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::bip32::XKeyIdentifier::from_str(s: &str) -> core::result::Result<bitcoin::bip32::XKeyIdentifier, Self::Err>
-pub fn bitcoin::bip32::XKeyIdentifier::hash(data: &[u8]) -> Self
 pub fn bitcoin::bip32::XKeyIdentifier::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::bip32::XKeyIdentifier::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::bip32::XKeyIdentifier::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::bip32::XKeyIdentifier::partial_cmp(&self, other: &bitcoin::bip32::XKeyIdentifier) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::bip32::XKeyIdentifier::to_byte_array(self) -> Self::Bytes
@@ -6697,7 +6667,6 @@ pub fn bitcoin::blockdata::block::BlockHash::clone(&self) -> bitcoin::blockdata:
 pub fn bitcoin::blockdata::block::BlockHash::cmp(&self, other: &bitcoin::blockdata::block::BlockHash) -> core::cmp::Ordering
 pub fn bitcoin::blockdata::block::BlockHash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::block::BlockHash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::blockdata::block::BlockHash::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::block::BlockHash::eq(&self, other: &bitcoin::blockdata::block::BlockHash) -> bool
 pub fn bitcoin::blockdata::block::BlockHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::BlockHash::from(block: &bitcoin::blockdata::block::Block) -> bitcoin::blockdata::block::BlockHash
@@ -6706,13 +6675,9 @@ pub fn bitcoin::blockdata::block::BlockHash::from(header: &bitcoin::blockdata::b
 pub fn bitcoin::blockdata::block::BlockHash::from(header: bitcoin::blockdata::block::Header) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::block::BlockHash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::block::BlockHash::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::block::BlockHash
 pub fn bitcoin::blockdata::block::BlockHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::BlockHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::block::BlockHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::BlockHash, Self::Err>
-pub fn bitcoin::blockdata::block::BlockHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::block::BlockHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::block::BlockHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::block::BlockHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::block::BlockHash::partial_cmp(&self, other: &bitcoin::blockdata::block::BlockHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::block::BlockHash::to_byte_array(self) -> Self::Bytes
@@ -6752,18 +6717,13 @@ pub fn bitcoin::blockdata::block::WitnessCommitment::as_ref(&self) -> &[u8]
 pub fn bitcoin::blockdata::block::WitnessCommitment::borrow(&self) -> &[u8]
 pub fn bitcoin::blockdata::block::WitnessCommitment::clone(&self) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::WitnessCommitment::cmp(&self, other: &bitcoin::blockdata::block::WitnessCommitment) -> core::cmp::Ordering
-pub fn bitcoin::blockdata::block::WitnessCommitment::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::block::WitnessCommitment::eq(&self, other: &bitcoin::blockdata::block::WitnessCommitment) -> bool
 pub fn bitcoin::blockdata::block::WitnessCommitment::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::block::WitnessCommitment::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::block::WitnessCommitment::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::block::WitnessCommitment::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::block::WitnessCommitment
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::block::WitnessCommitment::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::block::WitnessCommitment, Self::Err>
-pub fn bitcoin::blockdata::block::WitnessCommitment::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::block::WitnessCommitment::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::block::WitnessCommitment::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::block::WitnessCommitment::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::block::WitnessCommitment::partial_cmp(&self, other: &bitcoin::blockdata::block::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
@@ -7239,20 +7199,15 @@ pub fn bitcoin::blockdata::script::ScriptHash::as_ref(&self) -> &bitcoin::blockd
 pub fn bitcoin::blockdata::script::ScriptHash::borrow(&self) -> &[u8]
 pub fn bitcoin::blockdata::script::ScriptHash::clone(&self) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::cmp(&self, other: &bitcoin::blockdata::script::ScriptHash) -> core::cmp::Ordering
-pub fn bitcoin::blockdata::script::ScriptHash::engine() -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::script::ScriptHash::eq(&self, other: &bitcoin::blockdata::script::ScriptHash) -> bool
 pub fn bitcoin::blockdata::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::script::ScriptHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::script::ScriptHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::script::ScriptHash::from_engine(e: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::script::ScriptHash
 pub fn bitcoin::blockdata::script::ScriptHash::from_script(redeem_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, bitcoin::blockdata::script::RedeemScriptSizeError>
 pub fn bitcoin::blockdata::script::ScriptHash::from_script_unchecked(script: &bitcoin::blockdata::script::Script) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::ScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::ScriptHash, Self::Err>
-pub fn bitcoin::blockdata::script::ScriptHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::script::ScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::script::ScriptHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::script::ScriptHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::script::ScriptHash::partial_cmp(&self, other: &bitcoin::blockdata::script::ScriptHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::script::ScriptHash::to_byte_array(self) -> Self::Bytes
@@ -7266,20 +7221,15 @@ pub fn bitcoin::blockdata::script::WScriptHash::as_ref(&self) -> &bitcoin::block
 pub fn bitcoin::blockdata::script::WScriptHash::borrow(&self) -> &[u8]
 pub fn bitcoin::blockdata::script::WScriptHash::clone(&self) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::cmp(&self, other: &bitcoin::blockdata::script::WScriptHash) -> core::cmp::Ordering
-pub fn bitcoin::blockdata::script::WScriptHash::engine() -> <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::script::WScriptHash::eq(&self, other: &bitcoin::blockdata::script::WScriptHash) -> bool
 pub fn bitcoin::blockdata::script::WScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::script::WScriptHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::script::WScriptHash::from_engine(e: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::script::WScriptHash::from_engine(e: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::script::WScriptHash
 pub fn bitcoin::blockdata::script::WScriptHash::from_script(witness_script: &bitcoin::blockdata::script::Script) -> core::result::Result<Self, bitcoin::blockdata::script::WitnessScriptSizeError>
 pub fn bitcoin::blockdata::script::WScriptHash::from_script_unchecked(script: &bitcoin::blockdata::script::Script) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::script::WScriptHash::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::script::WScriptHash, Self::Err>
-pub fn bitcoin::blockdata::script::WScriptHash::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::script::WScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::script::WScriptHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::script::WScriptHash::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::script::WScriptHash::partial_cmp(&self, other: &bitcoin::blockdata::script::WScriptHash) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::script::WScriptHash::to_byte_array(self) -> Self::Bytes
@@ -7460,20 +7410,15 @@ pub fn bitcoin::blockdata::transaction::Txid::clone(&self) -> bitcoin::blockdata
 pub fn bitcoin::blockdata::transaction::Txid::cmp(&self, other: &bitcoin::blockdata::transaction::Txid) -> core::cmp::Ordering
 pub fn bitcoin::blockdata::transaction::Txid::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::transaction::Txid::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::blockdata::transaction::Txid::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::transaction::Txid::eq(&self, other: &bitcoin::blockdata::transaction::Txid) -> bool
 pub fn bitcoin::blockdata::transaction::Txid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::transaction::Txid::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from(tx: &bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from(tx: bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::transaction::Txid::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::transaction::Txid::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::transaction::Txid
 pub fn bitcoin::blockdata::transaction::Txid::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::transaction::Txid, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::transaction::Txid::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::transaction::Txid, Self::Err>
-pub fn bitcoin::blockdata::transaction::Txid::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::transaction::Txid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::transaction::Txid::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::transaction::Txid::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::transaction::Txid::partial_cmp(&self, other: &bitcoin::blockdata::transaction::Txid) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::transaction::Txid::to_byte_array(self) -> Self::Bytes
@@ -7496,20 +7441,15 @@ pub fn bitcoin::blockdata::transaction::Wtxid::clone(&self) -> bitcoin::blockdat
 pub fn bitcoin::blockdata::transaction::Wtxid::cmp(&self, other: &bitcoin::blockdata::transaction::Wtxid) -> core::cmp::Ordering
 pub fn bitcoin::blockdata::transaction::Wtxid::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::blockdata::transaction::Wtxid::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::blockdata::transaction::Wtxid::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::blockdata::transaction::Wtxid::eq(&self, other: &bitcoin::blockdata::transaction::Wtxid) -> bool
 pub fn bitcoin::blockdata::transaction::Wtxid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::blockdata::transaction::Wtxid::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from(tx: &bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from(tx: bitcoin::blockdata::transaction::Transaction) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::blockdata::transaction::Wtxid::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::blockdata::transaction::Wtxid::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::blockdata::transaction::Wtxid
 pub fn bitcoin::blockdata::transaction::Wtxid::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::blockdata::transaction::Wtxid::from_str(s: &str) -> core::result::Result<bitcoin::blockdata::transaction::Wtxid, Self::Err>
-pub fn bitcoin::blockdata::transaction::Wtxid::hash(data: &[u8]) -> Self
 pub fn bitcoin::blockdata::transaction::Wtxid::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::blockdata::transaction::Wtxid::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::blockdata::transaction::Wtxid::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::blockdata::transaction::Wtxid::partial_cmp(&self, other: &bitcoin::blockdata::transaction::Wtxid) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::transaction::Wtxid::to_byte_array(self) -> Self::Bytes
@@ -7760,19 +7700,14 @@ pub fn bitcoin::merkle_tree::TxMerkleNode::cmp(&self, other: &bitcoin::merkle_tr
 pub fn bitcoin::merkle_tree::TxMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin::merkle_tree::TxMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::merkle_tree::TxMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::merkle_tree::TxMerkleNode::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::merkle_tree::TxMerkleNode::eq(&self, other: &bitcoin::merkle_tree::TxMerkleNode) -> bool
 pub fn bitcoin::merkle_tree::TxMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::merkle_tree::TxMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::TxMerkleNode
 pub fn bitcoin::merkle_tree::TxMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::merkle_tree::TxMerkleNode::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::merkle_tree::TxMerkleNode::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::merkle_tree::TxMerkleNode
 pub fn bitcoin::merkle_tree::TxMerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin::merkle_tree::TxMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::merkle_tree::TxMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::merkle_tree::TxMerkleNode, Self::Err>
-pub fn bitcoin::merkle_tree::TxMerkleNode::hash(data: &[u8]) -> Self
 pub fn bitcoin::merkle_tree::TxMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::merkle_tree::TxMerkleNode::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::merkle_tree::TxMerkleNode::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::merkle_tree::TxMerkleNode::partial_cmp(&self, other: &bitcoin::merkle_tree::TxMerkleNode) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::merkle_tree::TxMerkleNode::to_byte_array(self) -> Self::Bytes
@@ -7785,19 +7720,14 @@ pub fn bitcoin::merkle_tree::WitnessMerkleNode::cmp(&self, other: &bitcoin::merk
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::combine(&self, other: &Self) -> Self
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::merkle_tree::WitnessMerkleNode::engine() -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::eq(&self, other: &bitcoin::merkle_tree::WitnessMerkleNode) -> bool
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::from(inner: bitcoin_hashes::sha256d::Hash) -> bitcoin::merkle_tree::WitnessMerkleNode
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_engine(e: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine) -> bitcoin::merkle_tree::WitnessMerkleNode
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_leaf(leaf: Self::Leaf) -> Self
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::merkle_tree::WitnessMerkleNode, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::from_str(s: &str) -> core::result::Result<bitcoin::merkle_tree::WitnessMerkleNode, Self::Err>
-pub fn bitcoin::merkle_tree::WitnessMerkleNode::hash(data: &[u8]) -> Self
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
-pub fn bitcoin::merkle_tree::WitnessMerkleNode::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::index(&self, index: I) -> &Self::Output
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::partial_cmp(&self, other: &bitcoin::merkle_tree::WitnessMerkleNode) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::merkle_tree::WitnessMerkleNode::to_byte_array(self) -> Self::Bytes
@@ -8250,14 +8180,15 @@ pub fn bitcoin::taproot::TapLeafHash::clone(&self) -> bitcoin::taproot::TapLeafH
 pub fn bitcoin::taproot::TapLeafHash::cmp(&self, other: &bitcoin::taproot::TapLeafHash) -> core::cmp::Ordering
 pub fn bitcoin::taproot::TapLeafHash::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn bitcoin::taproot::TapLeafHash::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::taproot::TapLeafHash::engine() -> <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Engine
+pub fn bitcoin::taproot::TapLeafHash::engine() -> <bitcoin::taproot::TapLeafHash as bitcoin_hashes::GeneralHash>::Engine
+pub fn bitcoin::taproot::TapLeafHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapLeafHash::eq(&self, other: &bitcoin::taproot::TapLeafHash) -> bool
 pub fn bitcoin::taproot::TapLeafHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::taproot::TapLeafHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag>) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from(script_path: bitcoin::sighash::ScriptPath<'s>) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapLeafHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::taproot::TapLeafHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Engine) -> bitcoin::taproot::TapLeafHash
+pub fn bitcoin::taproot::TapLeafHash::from_engine(e: <bitcoin::taproot::TapLeafHash as bitcoin_hashes::GeneralHash>::Engine) -> Self
+pub fn bitcoin::taproot::TapLeafHash::from_engine(e: Self::Engine) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from_script(script: &bitcoin::blockdata::script::Script, ver: bitcoin::taproot::LeafVersion) -> bitcoin::taproot::TapLeafHash
 pub fn bitcoin::taproot::TapLeafHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapLeafHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapLeafHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapLeafHash, Self::Err>
@@ -8281,7 +8212,8 @@ pub fn bitcoin::taproot::TapNodeHash::assume_hidden(hash: [u8; 32]) -> bitcoin::
 pub fn bitcoin::taproot::TapNodeHash::borrow(&self) -> &[u8]
 pub fn bitcoin::taproot::TapNodeHash::clone(&self) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::cmp(&self, other: &bitcoin::taproot::TapNodeHash) -> core::cmp::Ordering
-pub fn bitcoin::taproot::TapNodeHash::engine() -> <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Engine
+pub fn bitcoin::taproot::TapNodeHash::engine() -> <bitcoin::taproot::TapNodeHash as bitcoin_hashes::GeneralHash>::Engine
+pub fn bitcoin::taproot::TapNodeHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapNodeHash::eq(&self, other: &bitcoin::taproot::TapNodeHash) -> bool
 pub fn bitcoin::taproot::TapNodeHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::taproot::TapNodeHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag>) -> bitcoin::taproot::TapNodeHash
@@ -8289,8 +8221,8 @@ pub fn bitcoin::taproot::TapNodeHash::from(leaf: &bitcoin::taproot::LeafNode) ->
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::LeafNode) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from(leaf: bitcoin::taproot::TapLeafHash) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapNodeHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::taproot::TapNodeHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Engine) -> bitcoin::taproot::TapNodeHash
+pub fn bitcoin::taproot::TapNodeHash::from_engine(e: <bitcoin::taproot::TapNodeHash as bitcoin_hashes::GeneralHash>::Engine) -> Self
+pub fn bitcoin::taproot::TapNodeHash::from_engine(e: Self::Engine) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from_node_hashes(a: bitcoin::taproot::TapNodeHash, b: bitcoin::taproot::TapNodeHash) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from_script(script: &bitcoin::blockdata::script::Script, ver: bitcoin::taproot::LeafVersion) -> bitcoin::taproot::TapNodeHash
 pub fn bitcoin::taproot::TapNodeHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapNodeHash, bitcoin_hashes::FromSliceError>
@@ -8317,15 +8249,16 @@ pub fn bitcoin::taproot::TapTweakHash::as_ref(&self) -> &[u8]
 pub fn bitcoin::taproot::TapTweakHash::borrow(&self) -> &[u8]
 pub fn bitcoin::taproot::TapTweakHash::clone(&self) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::cmp(&self, other: &bitcoin::taproot::TapTweakHash) -> core::cmp::Ordering
-pub fn bitcoin::taproot::TapTweakHash::engine() -> <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Engine
+pub fn bitcoin::taproot::TapTweakHash::engine() -> <bitcoin::taproot::TapTweakHash as bitcoin_hashes::GeneralHash>::Engine
+pub fn bitcoin::taproot::TapTweakHash::engine() -> Self::Engine
 pub fn bitcoin::taproot::TapTweakHash::eq(&self, other: &bitcoin::taproot::TapTweakHash) -> bool
 pub fn bitcoin::taproot::TapTweakHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::taproot::TapTweakHash::from(inner: bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag>) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: &bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from(spend_info: bitcoin::taproot::TaprootSpendInfo) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin::taproot::TapTweakHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Engine) -> Self
-pub fn bitcoin::taproot::TapTweakHash::from_engine(e: <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Engine) -> bitcoin::taproot::TapTweakHash
+pub fn bitcoin::taproot::TapTweakHash::from_engine(e: <bitcoin::taproot::TapTweakHash as bitcoin_hashes::GeneralHash>::Engine) -> Self
+pub fn bitcoin::taproot::TapTweakHash::from_engine(e: Self::Engine) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from_key_and_tweak(internal_key: bitcoin::key::UntweakedPublicKey, merkle_root: core::option::Option<bitcoin::taproot::TapNodeHash>) -> bitcoin::taproot::TapTweakHash
 pub fn bitcoin::taproot::TapTweakHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin::taproot::TapTweakHash, bitcoin_hashes::FromSliceError>
 pub fn bitcoin::taproot::TapTweakHash::from_str(s: &str) -> core::result::Result<bitcoin::taproot::TapTweakHash, Self::Err>
@@ -8960,27 +8893,23 @@ pub type bitcoin::CompressedPublicKey::Err = bitcoin::key::ParseCompressedPublic
 pub type bitcoin::CompressedPublicKey::Error = bitcoin::key::UncompressedPublicKeyError
 pub type bitcoin::EcdsaSighashType::Err = bitcoin::sighash::SighashTypeParseError
 pub type bitcoin::LegacySighash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::LegacySighash::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::LegacySighash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::LegacySighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::PrivateKey::Err = bitcoin::key::FromWifError
 pub type bitcoin::PrivateKey::Output = [u8]
 pub type bitcoin::PubkeyHash::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::PubkeyHash::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::PubkeyHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::PubkeyHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::PublicKey::Err = bitcoin::key::ParsePublicKeyError
 pub type bitcoin::SegwitV0Sighash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::SegwitV0Sighash::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::SegwitV0Sighash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::SegwitV0Sighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::TapSighash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::TapSighash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::TapSighash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::TapSighashTag> as bitcoin_hashes::GeneralHash>::Engine
 pub type bitcoin::TapSighash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::TapSighash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::TapSighashType::Err = bitcoin::sighash::SighashTypeParseError
 pub type bitcoin::WPubkeyHash::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::WPubkeyHash::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::WPubkeyHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::WPubkeyHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::address::Address<bitcoin::address::NetworkUnchecked>::Err = bitcoin::address::error::ParseError
@@ -8989,11 +8918,9 @@ pub type bitcoin::bip152::ShortId::Err = hex_conservative::error::HexToArrayErro
 pub type bitcoin::bip152::ShortId::Error = core::array::TryFromSliceError
 pub type bitcoin::bip152::ShortId::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub type bitcoin::bip158::FilterHash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::bip158::FilterHash::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::bip158::FilterHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::bip158::FilterHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::bip158::FilterHeader::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::bip158::FilterHeader::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::bip158::FilterHeader::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::bip158::FilterHeader::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::bip32::ChainCode::Err = hex_conservative::error::HexToArrayError
@@ -9010,18 +8937,15 @@ pub type bitcoin::bip32::Fingerprint::Error = core::array::TryFromSliceError
 pub type bitcoin::bip32::Fingerprint::Output = <[u8] as core::ops::index::Index<I>>::Output
 pub type bitcoin::bip32::KeySource = (bitcoin::bip32::Fingerprint, bitcoin::bip32::DerivationPath)
 pub type bitcoin::bip32::XKeyIdentifier::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::bip32::XKeyIdentifier::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::bip32::XKeyIdentifier::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::bip32::XKeyIdentifier::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::bip32::Xpriv::Err = bitcoin::bip32::Error
 pub type bitcoin::bip32::Xpriv::Error = bitcoin::psbt::GetKeyError
 pub type bitcoin::bip32::Xpub::Err = bitcoin::bip32::Error
 pub type bitcoin::blockdata::block::BlockHash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::block::BlockHash::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::block::BlockHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::block::BlockHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::block::WitnessCommitment::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::block::WitnessCommitment::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::block::WitnessCommitment::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::block::WitnessCommitment::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::constants::ChainHash::Err = hex_conservative::error::HexToArrayError
@@ -9041,12 +8965,10 @@ pub type bitcoin::blockdata::script::Script::Output = bitcoin::blockdata::script
 pub type bitcoin::blockdata::script::Script::Owned = bitcoin::blockdata::script::ScriptBuf
 pub type bitcoin::blockdata::script::ScriptBuf::Target = bitcoin::blockdata::script::Script
 pub type bitcoin::blockdata::script::ScriptHash::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::script::ScriptHash::Engine = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::script::ScriptHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::script::ScriptHash::Error = bitcoin::blockdata::script::RedeemScriptSizeError
 pub type bitcoin::blockdata::script::ScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::script::WScriptHash::Bytes = <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::script::WScriptHash::Engine = <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::script::WScriptHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::script::WScriptHash::Error = bitcoin::blockdata::script::WitnessScriptSizeError
 pub type bitcoin::blockdata::script::WScriptHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
@@ -9056,11 +8978,9 @@ pub type bitcoin::blockdata::script::witness_version::WitnessVersion::Error = bi
 pub type bitcoin::blockdata::transaction::OutPoint::Err = bitcoin::blockdata::transaction::ParseOutPointError
 pub type bitcoin::blockdata::transaction::Sequence::Err = bitcoin_units::parse::ParseIntError
 pub type bitcoin::blockdata::transaction::Txid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::transaction::Txid::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::transaction::Txid::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::transaction::Txid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::transaction::Wtxid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::blockdata::transaction::Wtxid::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::blockdata::transaction::Wtxid::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::blockdata::transaction::Wtxid::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::blockdata::witness::Iter<'a>::Item = &'a [u8]
@@ -9077,12 +8997,10 @@ pub type bitcoin::key::UntweakedPublicKey::TweakedAux = (bitcoin::key::TweakedPu
 pub type bitcoin::key::UntweakedPublicKey::TweakedKey = bitcoin::key::TweakedPublicKey
 pub type bitcoin::merkle_tree::MerkleNode::Leaf
 pub type bitcoin::merkle_tree::TxMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::merkle_tree::TxMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::merkle_tree::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::merkle_tree::TxMerkleNode::Leaf = bitcoin::blockdata::transaction::Txid
 pub type bitcoin::merkle_tree::TxMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::merkle_tree::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::merkle_tree::WitnessMerkleNode::Engine = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Engine
 pub type bitcoin::merkle_tree::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::merkle_tree::WitnessMerkleNode::Leaf = bitcoin::blockdata::transaction::Wtxid
 pub type bitcoin::merkle_tree::WitnessMerkleNode::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
@@ -9103,17 +9021,17 @@ pub type bitcoin::taproot::NodeInfo::Error = bitcoin::taproot::IncompleteBuilder
 pub type bitcoin::taproot::ScriptLeaves<'tree>::Item = bitcoin::taproot::ScriptLeaf<'tree>
 pub type bitcoin::taproot::Signature::Error = bitcoin::taproot::SigFromSliceError
 pub type bitcoin::taproot::TapLeafHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapLeafHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::taproot::TapLeafHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapLeafTag> as bitcoin_hashes::GeneralHash>::Engine
 pub type bitcoin::taproot::TapLeafHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapLeafHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::TapNodeHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapNodeHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::taproot::TapNodeHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapBranchTag> as bitcoin_hashes::GeneralHash>::Engine
 pub type bitcoin::taproot::TapNodeHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapNodeHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::TapTree::Error = bitcoin::taproot::HiddenNodesError
 pub type bitcoin::taproot::TapTree::Error = bitcoin::taproot::IncompleteBuilderError
 pub type bitcoin::taproot::TapTweakHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Bytes
-pub type bitcoin::taproot::TapTweakHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::Hash>::Engine
+pub type bitcoin::taproot::TapTweakHash::Engine = <bitcoin_hashes::sha256t::Hash<bitcoin::taproot::TapTweakTag> as bitcoin_hashes::GeneralHash>::Engine
 pub type bitcoin::taproot::TapTweakHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapTweakHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::merkle_branch::IntoIter::Item = bitcoin::taproot::TapNodeHash

@@ -12,7 +12,7 @@
 //! Hashing a single byte slice or a string:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::{sha256, GeneralHash as _};
 //!
 //! let bytes = [0u8; 5];
 //! let hash_of_bytes = sha256::Hash::hash(&bytes);
@@ -23,7 +23,7 @@
 //! Hashing content from a reader:
 //!
 //! ```rust
-//! use bitcoin_hashes::{sha256, Hash as _};
+//! use bitcoin_hashes::{sha256, GeneralHash as _};
 //!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
@@ -147,39 +147,18 @@ pub trait HashEngine: Clone + Default {
     fn n_bytes_hashed(&self) -> usize;
 }
 
-/// Trait which applies to hashes of all types.
-pub trait Hash:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + hash::Hash
-    + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
-    + convert::AsRef<[u8]>
-{
+/// Trait describing hash digests which can be constructed by hashing arbitrary data.
+pub trait GeneralHash: Hash {
     /// A hashing engine which bytes can be serialized into. It is expected
     /// to implement the `io::Write` trait, and to never return errors under
     /// any conditions.
     type Engine: HashEngine;
-
-    /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
     fn engine() -> Self::Engine { Self::Engine::default() }
 
     /// Produces a hash from the current state of a given engine.
     fn from_engine(e: Self::Engine) -> Self;
-
-    /// Length of the hash, in bytes.
-    const LEN: usize;
-
-    /// Copies a byte slice into a hash object.
-    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Hashes some bytes.
     fn hash(data: &[u8]) -> Self {
@@ -200,6 +179,30 @@ pub trait Hash:
         }
         Self::from_engine(engine)
     }
+}
+
+/// Trait which applies to hashes of all types.
+pub trait Hash:
+    Copy
+    + Clone
+    + PartialEq
+    + Eq
+    + PartialOrd
+    + Ord
+    + hash::Hash
+    + fmt::Debug
+    + fmt::Display
+    + fmt::LowerHex
+    + convert::AsRef<[u8]>
+{
+    /// The byte array that represents the hash internally.
+    type Bytes: hex::FromHex + Copy;
+
+    /// Length of the hash, in bytes.
+    const LEN: usize;
+
+    /// Copies a byte slice into a hash object.
+    fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Flag indicating whether user-visible serializations of this hash
     /// should be backward. For some reason Satoshi decided this should be
@@ -252,9 +255,17 @@ mod tests {
         struct TestNewtype2(sha256d::Hash);
     }
 
+    #[rustfmt::skip]
+    const DUMMY: TestNewtype = TestNewtype::from_byte_array([
+        0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89,
+        0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, 0x8a,
+        0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, 0x8b,
+        0x15, 0x26, 0x37, 0x48, 0x59, 0x6a, 0x7b, 0x8c,
+    ]);
+
     #[test]
     fn convert_newtypes() {
-        let h1 = TestNewtype::hash(&[]);
+        let h1 = DUMMY;
         let h2: TestNewtype2 = h1.to_raw_hash().into();
         assert_eq!(&h1[..], &h2[..]);
 
@@ -265,7 +276,7 @@ mod tests {
 
     #[test]
     fn newtype_fmt_roundtrip() {
-        let orig = TestNewtype::hash(&[]);
+        let orig = DUMMY;
         let hex = format!("{}", orig);
         let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
         assert_eq!(rinsed, orig)

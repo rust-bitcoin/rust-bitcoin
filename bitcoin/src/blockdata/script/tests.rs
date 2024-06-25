@@ -6,7 +6,7 @@ use hex_lit::hex;
 
 use super::*;
 use crate::consensus::encode::{deserialize, serialize};
-use crate::crypto::key::{PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey};
+use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::FeeRate;
 
 #[test]
@@ -203,10 +203,10 @@ fn script_generators() {
             .unwrap();
     assert!(ScriptBuf::new_p2pk(pubkey).is_p2pk());
 
-    let pubkey_hash = PubkeyHash::hash(&pubkey.inner.serialize());
+    let pubkey_hash = pubkey.pubkey_hash();
     assert!(ScriptBuf::new_p2pkh(pubkey_hash).is_p2pkh());
 
-    let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
+    let wpubkey_hash = pubkey.wpubkey_hash().unwrap();
     assert!(ScriptBuf::new_p2wpkh(wpubkey_hash).is_p2wpkh());
 
     let script = Builder::new().push_opcode(OP_NUMEQUAL).push_verify().into_script();

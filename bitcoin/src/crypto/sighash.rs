@@ -55,6 +55,18 @@ hash_newtype! {
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
+// Implement private engine/from_engine methods for use within this module;
+// but outside of it, it should not be possible to construct these hash
+// types from arbitrary data (except by casting via to/from_byte_array).
+impl LegacySighash {
+    fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
+    fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+}
+impl SegwitV0Sighash {
+    fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
+    fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+}
+
 sha256t_hash_newtype! {
     pub struct TapSighashTag = hash_str("TapSighash");
 
@@ -1351,10 +1363,10 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::hashes::{sha256d, Hash, hex::FromHex};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # let mut writer = LegacySighash::engine();
+    /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -1366,6 +1378,8 @@ impl<E> EncodeSigningDataResult<E> {
     ///         .is_sighash_single_bug()
     ///         .expect("writer can't fail") {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
+    /// } else {
+    ///     // use the hash from `writer`
     /// }
     /// ```
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {

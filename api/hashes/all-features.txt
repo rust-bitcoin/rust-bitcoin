@@ -1,6 +1,6 @@
-#[repr(transparent)] pub struct bitcoin_hashes::Hmac<T: bitcoin_hashes::Hash>(_)
+#[repr(transparent)] pub struct bitcoin_hashes::Hmac<T: bitcoin_hashes::GeneralHash>(_)
 #[repr(transparent)] pub struct bitcoin_hashes::hash160::Hash(_)
-#[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::Hash>(_)
+#[repr(transparent)] pub struct bitcoin_hashes::hmac::Hmac<T: bitcoin_hashes::GeneralHash>(_)
 #[repr(transparent)] pub struct bitcoin_hashes::ripemd160::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha1::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::sha256::Hash(_)
@@ -11,6 +11,15 @@
 #[repr(transparent)] pub struct bitcoin_hashes::sha512_256::Hash(_)
 #[repr(transparent)] pub struct bitcoin_hashes::siphash24::Hash(_)
 impl bitcoin_hashes::FromSliceError
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::hash160::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::ripemd160::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha1::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha256::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha256d::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha384::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha512::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::sha512_256::Hash
+impl bitcoin_hashes::GeneralHash for bitcoin_hashes::siphash24::Hash
 impl bitcoin_hashes::Hash for bitcoin_hashes::hash160::Hash
 impl bitcoin_hashes::Hash for bitcoin_hashes::ripemd160::Hash
 impl bitcoin_hashes::Hash for bitcoin_hashes::sha1::Hash
@@ -391,7 +400,7 @@ impl std::io::Write for bitcoin_hashes::sha1::HashEngine
 impl std::io::Write for bitcoin_hashes::sha256::HashEngine
 impl std::io::Write for bitcoin_hashes::sha512::HashEngine
 impl std::io::Write for bitcoin_hashes::siphash24::HashEngine
-impl<'de, T: bitcoin_hashes::Hash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
+impl<'de, T: bitcoin_hashes::GeneralHash + serde::de::Deserialize<'de>> serde::de::Deserialize<'de> for bitcoin_hashes::hmac::Hmac<T>
 impl<'de, T: bitcoin_hashes::sha256t::Tag> serde::de::Deserialize<'de> for bitcoin_hashes::sha256t::Hash<T>
 impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::hash160::Hash
 impl<'de> serde::de::Deserialize<'de> for bitcoin_hashes::ripemd160::Hash
@@ -414,21 +423,23 @@ impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bit
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha512::Hash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::sha512_256::Hash
 impl<I: core::slice::index::SliceIndex<[u8]>> core::ops::index::Index<I> for bitcoin_hashes::siphash24::Hash
-impl<T: bitcoin_hashes::Hash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash + schemars::JsonSchema> schemars::JsonSchema for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash + serde::ser::Serialize> serde::ser::Serialize for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::hkdf::Hkdf<T>
-impl<T: bitcoin_hashes::Hash> bitcoin_hashes::hmac::HmacEngine<T>
-impl<T: bitcoin_hashes::Hash> bitcoin_io::Write for bitcoin_hashes::hmac::HmacEngine<T>
-impl<T: bitcoin_hashes::Hash> core::convert::AsRef<[u8]> for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> core::default::Default for bitcoin_hashes::hmac::HmacEngine<T>
-impl<T: bitcoin_hashes::Hash> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::Hash> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::GeneralHash + core::str::traits::FromStr> core::str::traits::FromStr for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash + schemars::JsonSchema> schemars::JsonSchema for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash + serde::ser::Serialize> serde::ser::Serialize for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::GeneralHash for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::hkdf::Hkdf<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_io::Write for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::GeneralHash> core::convert::AsRef<[u8]> for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> core::default::Default for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::GeneralHash> core::fmt::Debug for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> core::fmt::Display for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> core::fmt::LowerHex for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
+impl<T: bitcoin_hashes::GeneralHash> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
+impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::GeneralHash for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::Hash for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::serde_macros::serde_details::SerdeHash for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::borrow::Borrow<[u8]> for bitcoin_hashes::sha256t::Hash<T>
@@ -449,48 +460,48 @@ impl<T: bitcoin_hashes::sha256t::Tag> core::marker::Copy for bitcoin_hashes::sha
 impl<T: bitcoin_hashes::sha256t::Tag> core::str::traits::FromStr for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> schemars::JsonSchema for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> serde::ser::Serialize for bitcoin_hashes::sha256t::Hash<T>
-impl<T: core::clone::Clone + bitcoin_hashes::Hash> core::clone::Clone for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::clone::Clone + bitcoin_hashes::Hash> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::clone::Clone
-impl<T: core::cmp::Eq + bitcoin_hashes::Hash> core::cmp::Eq for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::cmp::Ord + bitcoin_hashes::Hash> core::cmp::Ord for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::cmp::PartialEq + bitcoin_hashes::Hash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::cmp::PartialOrd + bitcoin_hashes::Hash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::hash::Hash + bitcoin_hashes::Hash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
-impl<T: core::marker::Copy + bitcoin_hashes::Hash> core::marker::Copy for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::clone::Clone + bitcoin_hashes::GeneralHash> core::clone::Clone for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::clone::Clone + bitcoin_hashes::GeneralHash> core::clone::Clone for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::clone::Clone
+impl<T: core::cmp::Eq + bitcoin_hashes::GeneralHash> core::cmp::Eq for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::cmp::Ord + bitcoin_hashes::GeneralHash> core::cmp::Ord for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::cmp::PartialEq + bitcoin_hashes::GeneralHash> core::cmp::PartialEq for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::cmp::PartialOrd + bitcoin_hashes::GeneralHash> core::cmp::PartialOrd for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::hash::Hash + bitcoin_hashes::GeneralHash> core::hash::Hash for bitcoin_hashes::hmac::Hmac<T>
+impl<T: core::marker::Copy + bitcoin_hashes::GeneralHash> core::marker::Copy for bitcoin_hashes::hmac::Hmac<T>
 impl<T> bitcoin_hashes::sha256t::Hash<T> where (T): bitcoin_hashes::sha256t::Tag
 impl<T> bitcoin_hashes::sha256t::Tag for (T) where T: bitcoin_hashes::sha256t::Tag
 impl<T> core::marker::Freeze for bitcoin_hashes::hkdf::Hkdf<T> where T: core::marker::Freeze
 impl<T> core::marker::Freeze for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Freeze
-impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::marker::Freeze
-impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Freeze
+impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::marker::Freeze
+impl<T> core::marker::Freeze for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Freeze
 impl<T> core::marker::Freeze for bitcoin_hashes::sha256t::Hash<T>
 impl<T> core::marker::Send for bitcoin_hashes::hkdf::Hkdf<T> where T: core::marker::Send
 impl<T> core::marker::Send for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Send
-impl<T> core::marker::Send for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::marker::Send
-impl<T> core::marker::Send for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Send
+impl<T> core::marker::Send for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::marker::Send
+impl<T> core::marker::Send for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Send
 impl<T> core::marker::Send for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Send
 impl<T> core::marker::Sync for bitcoin_hashes::hkdf::Hkdf<T> where T: core::marker::Sync
 impl<T> core::marker::Sync for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Sync
-impl<T> core::marker::Sync for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::marker::Sync
-impl<T> core::marker::Sync for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Sync
+impl<T> core::marker::Sync for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::marker::Sync
+impl<T> core::marker::Sync for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Sync
 impl<T> core::marker::Sync for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for bitcoin_hashes::hkdf::Hkdf<T> where T: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_hashes::hmac::Hmac<T> where T: core::marker::Unpin
-impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::marker::Unpin
-impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Unpin
+impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::marker::Unpin
+impl<T> core::marker::Unpin for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::marker::Unpin
 impl<T> core::marker::Unpin for bitcoin_hashes::sha256t::Hash<T> where T: core::marker::Unpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hkdf::Hkdf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::Hmac<T> where T: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256t::Hash<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hkdf::Hkdf<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::Hmac<T> where T: core::panic::unwind_safe::UnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::Hash>::Engine: core::panic::unwind_safe::UnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::panic::unwind_safe::UnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::panic::unwind_safe::UnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::hmac::HmacMidState<T> where <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState: core::panic::unwind_safe::UnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256t::Hash<T> where T: core::panic::unwind_safe::UnwindSafe
-pub bitcoin_hashes::hmac::HmacMidState::inner: <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState
-pub bitcoin_hashes::hmac::HmacMidState::outer: <<T as bitcoin_hashes::Hash>::Engine as bitcoin_hashes::HashEngine>::MidState
+pub bitcoin_hashes::hmac::HmacMidState::inner: <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState
+pub bitcoin_hashes::hmac::HmacMidState::outer: <<T as bitcoin_hashes::GeneralHash>::Engine as bitcoin_hashes::HashEngine>::MidState
 pub const bitcoin_hashes::Hash::DISPLAY_BACKWARD: bool
 pub const bitcoin_hashes::Hash::LEN: usize
 pub const bitcoin_hashes::HashEngine::BLOCK_SIZE: usize
@@ -579,13 +590,13 @@ pub fn bitcoin_hashes::FromSliceError::eq(&self, other: &bitcoin_hashes::FromSli
 pub fn bitcoin_hashes::FromSliceError::expected_length(&self) -> usize
 pub fn bitcoin_hashes::FromSliceError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::FromSliceError::invalid_length(&self) -> usize
+pub fn bitcoin_hashes::GeneralHash::engine() -> Self::Engine
+pub fn bitcoin_hashes::GeneralHash::from_engine(e: Self::Engine) -> Self
+pub fn bitcoin_hashes::GeneralHash::hash(data: &[u8]) -> Self
+pub fn bitcoin_hashes::GeneralHash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin_hashes::Hash::as_byte_array(&self) -> &Self::Bytes
-pub fn bitcoin_hashes::Hash::engine() -> Self::Engine
 pub fn bitcoin_hashes::Hash::from_byte_array(bytes: Self::Bytes) -> Self
-pub fn bitcoin_hashes::Hash::from_engine(e: Self::Engine) -> Self
 pub fn bitcoin_hashes::Hash::from_slice(sl: &[u8]) -> core::result::Result<Self, bitcoin_hashes::FromSliceError>
-pub fn bitcoin_hashes::Hash::hash(data: &[u8]) -> Self
-pub fn bitcoin_hashes::Hash::hash_byte_chunks<B, I>(byte_slices: I) -> Self where B: core::convert::AsRef<[u8]>, I: core::iter::traits::collect::IntoIterator<Item = B>
 pub fn bitcoin_hashes::Hash::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_hashes::HashEngine::input(&mut self, data: &[u8])
 pub fn bitcoin_hashes::HashEngine::midstate(&self) -> Self::MidState
@@ -645,7 +656,7 @@ pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone(&self) -> bitcoin_hashes::hmac
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::default() -> Self
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> std::io::error::Result<()>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: <T as bitcoin_hashes::Hash>::Engine, oengine: <T as bitcoin_hashes::Hash>::Engine) -> bitcoin_hashes::hmac::HmacEngine<T>
+pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: <T as bitcoin_hashes::GeneralHash>::Engine, oengine: <T as bitcoin_hashes::GeneralHash>::Engine) -> bitcoin_hashes::hmac::HmacEngine<T>
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::input(&mut self, buf: &[u8])
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::midstate(&self) -> Self::MidState
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::n_bytes_hashed(&self) -> usize
@@ -995,11 +1006,11 @@ pub mod bitcoin_hashes::sha512
 pub mod bitcoin_hashes::sha512_256
 pub mod bitcoin_hashes::siphash24
 pub struct bitcoin_hashes::FromSliceError
-pub struct bitcoin_hashes::HmacEngine<T: bitcoin_hashes::Hash>
-pub struct bitcoin_hashes::hkdf::Hkdf<T: bitcoin_hashes::Hash>
+pub struct bitcoin_hashes::HmacEngine<T: bitcoin_hashes::GeneralHash>
+pub struct bitcoin_hashes::hkdf::Hkdf<T: bitcoin_hashes::GeneralHash>
 pub struct bitcoin_hashes::hkdf::MaxLengthError
-pub struct bitcoin_hashes::hmac::HmacEngine<T: bitcoin_hashes::Hash>
-pub struct bitcoin_hashes::hmac::HmacMidState<T: bitcoin_hashes::Hash>
+pub struct bitcoin_hashes::hmac::HmacEngine<T: bitcoin_hashes::GeneralHash>
+pub struct bitcoin_hashes::hmac::HmacMidState<T: bitcoin_hashes::GeneralHash>
 pub struct bitcoin_hashes::ripemd160::HashEngine
 pub struct bitcoin_hashes::sha1::HashEngine
 pub struct bitcoin_hashes::sha256::HashEngine
@@ -1009,12 +1020,13 @@ pub struct bitcoin_hashes::sha512::HashEngine
 pub struct bitcoin_hashes::sha512_256::HashEngine(_)
 pub struct bitcoin_hashes::siphash24::HashEngine
 pub struct bitcoin_hashes::siphash24::State
+pub trait bitcoin_hashes::GeneralHash: bitcoin_hashes::Hash
 pub trait bitcoin_hashes::Hash: core::marker::Copy + core::clone::Clone + core::cmp::PartialEq + core::cmp::Eq + core::cmp::PartialOrd + core::cmp::Ord + core::hash::Hash + core::fmt::Debug + core::fmt::Display + core::fmt::LowerHex + core::convert::AsRef<[u8]>
 pub trait bitcoin_hashes::HashEngine: core::clone::Clone + core::default::Default
 pub trait bitcoin_hashes::serde_macros::serde_details::SerdeHash where Self: core::marker::Sized + core::str::traits::FromStr + core::fmt::Display + core::ops::index::Index<usize, Output = u8> + core::ops::index::Index<core::ops::range::RangeFull, Output = [u8]>, <Self as core::str::traits::FromStr>::Err: core::fmt::Display
 pub trait bitcoin_hashes::sha256t::Tag
+pub type bitcoin_hashes::GeneralHash::Engine: bitcoin_hashes::HashEngine
 pub type bitcoin_hashes::Hash::Bytes: hex_conservative::parse::FromHex + core::marker::Copy
-pub type bitcoin_hashes::Hash::Engine: bitcoin_hashes::HashEngine
 pub type bitcoin_hashes::HashEngine::MidState
 pub type bitcoin_hashes::hash160::Hash::Bytes = [u8; 20]
 pub type bitcoin_hashes::hash160::Hash::Engine = bitcoin_hashes::sha256::HashEngine

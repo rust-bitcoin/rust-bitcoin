@@ -209,44 +209,9 @@ macro_rules! hash_newtype {
                 &self.0
             }
 
-            /// Constructs a new engine.
-            pub fn engine() -> <$hash as $crate::Hash>::Engine {
-                <$hash as $crate::Hash>::engine()
-            }
-
-            /// Produces a hash from the current state of a given engine.
-            pub fn from_engine(e: <$hash as $crate::Hash>::Engine) -> Self {
-                Self::from(<$hash as $crate::Hash>::from_engine(e))
-            }
-
             /// Copies a byte slice into a hash object.
             pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
-            }
-
-            /// Hashes some bytes.
-            #[allow(unused)] // the user of macro may not need this
-            pub fn hash(data: &[u8]) -> Self {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                engine.input(data);
-                Self::from_engine(engine)
-            }
-
-            /// Hashes all the byte slices retrieved from the iterator together.
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-            where
-                B: AsRef<[u8]>,
-                I: IntoIterator<Item = B>,
-            {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                for slice in byte_slices {
-                    engine.input(slice.as_ref());
-                }
-                Self::from_engine(engine)
             }
 
             /// Returns the underlying byte array.
@@ -279,16 +244,12 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::Hash for $newtype {
-            type Engine = <$hash as $crate::Hash>::Engine;
             type Bytes = <$hash as $crate::Hash>::Bytes;
 
             const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
-            fn engine() -> <$hash as $crate::Hash>::Engine { Self::engine() }
-
-            fn from_engine(e: <$hash as $crate::Hash>::Engine) -> $newtype { Self::from_engine(e) }
-
+            #[inline]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }

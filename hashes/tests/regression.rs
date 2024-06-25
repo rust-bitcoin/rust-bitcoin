@@ -2,7 +2,7 @@
 
 use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
-    Hash as _, HashEngine as _, Hmac, HmacEngine,
+    GeneralHash as _, HashEngine as _, Hmac, HmacEngine,
 };
 
 const DATA: &str = "arbitrary data to hash as a regression test";

@@ -34,7 +34,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{hash160, Hash, HashEngine};
+        use super::Hash;
+        use crate::{hash160, HashEngine};
 
         #[derive(Clone)]
         #[cfg(feature = "alloc")]
@@ -111,7 +112,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{hash160, Hash, HashEngine};
+    use crate::{hash160, GeneralHash as _, Hash as _, HashEngine};
 
     #[bench]
     pub fn hash160_10(bh: &mut Bencher) {

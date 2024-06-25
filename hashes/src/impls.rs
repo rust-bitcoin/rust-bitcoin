@@ -60,14 +60,16 @@ impl_write!(
         Ok(buf.len())
     },
     |_us| { Ok(()) },
-    T: crate::Hash
+    T: crate::GeneralHash
 );
 
 #[cfg(test)]
 mod tests {
     use bitcoin_io::Write;
 
-    use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, Hash};
+    use crate::{
+        hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, GeneralHash as _,
+    };
 
     macro_rules! write_test {
         ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {

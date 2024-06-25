@@ -73,9 +73,9 @@ impl Header {
 
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
-        let mut engine = BlockHash::engine();
+        let mut engine = sha256d::Hash::engine();
         self.consensus_encode(&mut engine).expect("engines don't error");
-        BlockHash::from_engine(engine)
+        BlockHash(sha256d::Hash::from_engine(engine))
     }
 
     /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
@@ -295,10 +295,10 @@ impl Block {
         witness_root: WitnessMerkleNode,
         witness_reserved_value: &[u8],
     ) -> WitnessCommitment {
-        let mut encoder = WitnessCommitment::engine();
+        let mut encoder = sha256d::Hash::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
-        WitnessCommitment::from_engine(encoder)
+        WitnessCommitment(sha256d::Hash::from_engine(encoder))
     }
 
     /// Computes the merkle root of transactions hashed for witness.
