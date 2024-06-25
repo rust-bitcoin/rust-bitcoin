@@ -83,13 +83,13 @@ pub enum Error {
     InvalidXOnlyPublicKey,
     /// Parsing error indicating invalid ECDSA signatures
     InvalidEcdsaSignature(crate::crypto::ecdsa::Error),
-    /// Parsing error indicating invalid taproot signatures
+    /// Parsing error indicating invalid Taproot signatures
     InvalidTaprootSignature(crate::crypto::taproot::SigFromSliceError),
     /// Parsing error indicating invalid control block
     InvalidControlBlock,
     /// Parsing error indicating invalid leaf version
     InvalidLeafVersion,
-    /// Parsing error indicating a taproot error
+    /// Parsing error indicating a Taproot error
     Taproot(&'static str),
     /// Taproot tree deserilaization error
     TapTree(crate::taproot::IncompleteBuilderError),
@@ -147,11 +147,11 @@ impl fmt::Display for Error {
             InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
             InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
             InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
-            InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
+            InvalidTaprootSignature(ref e) => write_err!(f, "invalid Taproot signature"; e),
             InvalidControlBlock => f.write_str("invalid control block"),
             InvalidLeafVersion => f.write_str("invalid leaf version"),
-            Taproot(s) => write!(f, "taproot error -  {}", s),
-            TapTree(ref e) => write_err!(f, "taproot tree error"; e),
+            Taproot(s) => write!(f, "Taproot error -  {}", s),
+            TapTree(ref e) => write_err!(f, "Taproot tree error"; e),
             XPubKey(s) => write!(f, "xpub key error -  {}", s),
             Version(s) => write!(f, "version error {}", s),
             PartialDataConsumption =>

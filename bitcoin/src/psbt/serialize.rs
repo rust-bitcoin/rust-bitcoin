@@ -117,7 +117,7 @@ impl_psbt_hash_de_serialize!(TapNodeHash);
 impl_psbt_hash_de_serialize!(hash160::Hash);
 impl_psbt_hash_de_serialize!(sha256d::Hash);
 
-// taproot
+// Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
 impl Serialize for ScriptBuf {

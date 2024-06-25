@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin taproot keys.
+//! Bitcoin Taproot keys.
 //!
-//! This module provides taproot keys used in Bitcoin (including reexporting secp256k1 keys).
+//! This module provides Taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 
 use core::fmt;
 
@@ -13,7 +13,7 @@ use crate::prelude::Vec;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
 
-/// A BIP340-341 serialized taproot signature with the corresponding hash type.
+/// A BIP340-341 serialized Taproot signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -96,7 +96,7 @@ pub enum SigFromSliceError {
     SighashType(InvalidSighashTypeError),
     /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
-    /// Invalid taproot signature size
+    /// Invalid Taproot signature size
     InvalidSignatureSize(usize),
 }
 
@@ -109,7 +109,7 @@ impl fmt::Display for SigFromSliceError {
         match *self {
             SighashType(ref e) => write_err!(f, "sighash"; e),
             Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
-            InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
+            InvalidSignatureSize(sz) => write!(f, "invalid Taproot signature size: {}", sz),
         }
     }
 }

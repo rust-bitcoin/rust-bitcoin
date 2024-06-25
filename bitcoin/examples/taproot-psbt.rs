@@ -1,4 +1,4 @@
-//! Example of taproot PSBT workflow
+//! Example of Taproot PSBT workflow
 
 // We use the alias `alias bt='bitcoin-cli -regtest'` for brevity.
 
@@ -192,7 +192,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // At some point we may want to extend the locktime further into the future for the beneficiary.
         // We can do this by "refreshing" the inheritance transaction as the benefactor. This effectively
-        // spends the inheritance transaction via the key path of the taproot output, and is not encumbered
+        // spends the inheritance transaction via the key path of the Taproot output, and is not encumbered
         // by the timelock so we can spend it immediately. We set up a new output similar to the first with
         // a locktime that is 'locktime_delta' blocks greater.
         let (tx, _) = benefactor.refresh_tx(1000)?;
@@ -294,7 +294,7 @@ fn generate_bip86_key_spend_tx(
             let (_, (_, derivation_path)) = input
                 .tap_key_origins
                 .get(&input.tap_internal_key.ok_or("Internal key missing in PSBT")?)
-                .ok_or("Missing taproot key origin")?;
+                .ok_or("Missing Taproot key origin")?;
 
             let secret_key = master_xpriv.derive_priv(secp, &derivation_path).to_priv().inner;
             sign_psbt_taproot(
@@ -395,7 +395,7 @@ impl BenefactorWallet {
         let beneficiary_key =
             self.beneficiary_xpub.derive_pub(&self.secp, &derivation_path)?.to_x_only_pub();
 
-        // Build up the leaf script and combine with internal key into a taproot commitment
+        // Build up the leaf script and combine with internal key into a Taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
         let leaf_hash = script.tapscript_leaf_hash();
 
@@ -486,7 +486,7 @@ impl BenefactorWallet {
             let beneficiary_key =
                 self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
 
-            // Build up the leaf script and combine with internal key into a taproot commitment
+            // Build up the leaf script and combine with internal key into a Taproot commitment
             let lock_time = absolute::LockTime::from_height(
                 psbt.unsigned_tx.lock_time.to_consensus_u32() + lock_time_delta,
             )
@@ -528,7 +528,7 @@ impl BenefactorWallet {
                 let (_, (_, derivation_path)) = input
                     .tap_key_origins
                     .get(&input.tap_internal_key.ok_or("Internal key missing in PSBT")?)
-                    .ok_or("Missing taproot key origin")?;
+                    .ok_or("Missing Taproot key origin")?;
                 let secret_key =
                     self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
                 sign_psbt_taproot(

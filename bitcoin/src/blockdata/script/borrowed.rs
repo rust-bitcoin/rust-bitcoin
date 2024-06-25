@@ -468,9 +468,9 @@ impl Script {
     /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
     /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
     ///
-    /// (Note: taproot scripts don't count toward the sigop count of the block,
+    /// (Note: Taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-    /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
     pub fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
 
     /// Counts the sigops for this Script using legacy counting.
@@ -482,9 +482,9 @@ impl Script {
     /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
     /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
     ///
-    /// (Note: taproot scripts don't count toward the sigop count of the block,
+    /// (Note: Taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-    /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
     pub fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
 
     fn count_sigops_internal(&self, accurate: bool) -> usize {
