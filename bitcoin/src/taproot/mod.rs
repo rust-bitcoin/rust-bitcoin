@@ -58,7 +58,7 @@ sha256t_hash_newtype! {
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the merkle root.
+    /// `P` is the internal key and `R` is the Merkle root.
     pub fn from_key_and_tweak(
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
@@ -158,7 +158,7 @@ pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
 pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
-// type alias for versioned tap script corresponding merkle proof
+// type alias for versioned tap script corresponding Merkle proof
 type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
 
 /// Represents Taproot spending information.
@@ -184,7 +184,7 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
-    /// The merkle root of the script tree (None if there are no scripts).
+    /// The Merkle root of the script tree (None if there are no scripts).
     merkle_root: Option<TapNodeHash>,
     /// The sign final output pubkey as per BIP 341.
     output_key_parity: secp256k1::Parity,
@@ -220,7 +220,7 @@ impl TaprootSpendInfo {
     ///
     /// *Note*: As per BIP341
     ///
-    /// When the merkle root is [`None`], the output key commits to an unspendable script path
+    /// When the Merkle root is [`None`], the output key commits to an unspendable script path
     /// instead of having no script path. This is achieved by computing the output key point as
     /// `Q = P + int(hashTapTweak(bytes(P)))G`. See also [`TaprootSpendInfo::tap_tweak`].
     ///
@@ -250,7 +250,7 @@ impl TaprootSpendInfo {
     /// Returns the internal key for this [`TaprootSpendInfo`].
     pub fn internal_key(&self) -> UntweakedPublicKey { self.internal_key }
 
-    /// Returns the merkle root for this [`TaprootSpendInfo`].
+    /// Returns the Merkle root for this [`TaprootSpendInfo`].
     pub fn merkle_root(&self) -> Option<TapNodeHash> { self.merkle_root }
 
     /// Returns the output key (the key used in script pubkey) for this [`TaprootSpendInfo`].
@@ -271,7 +271,7 @@ impl TaprootSpendInfo {
         internal_key: UntweakedPublicKey,
         node: NodeInfo,
     ) -> TaprootSpendInfo {
-        // Create as if it is a key spend path with the given merkle root
+        // Create as if it is a key spend path with the given Merkle root
         let root_hash = Some(node.hash);
         let mut info = TaprootSpendInfo::new_key_spend(secp, internal_key, root_hash);
 
@@ -686,7 +686,7 @@ impl std::error::Error for HiddenNodesError {
 /// Taproot tree representing a complete binary tree without any hidden nodes.
 ///
 /// This is in contrast to [`NodeInfo`], which allows hidden nodes.
-/// The implementations for Eq, PartialEq and Hash compare the merkle root of the tree
+/// The implementations for Eq, PartialEq and Hash compare the Merkle root of the tree
 //
 // This is a bug in BIP370 that does not specify how to share trees with hidden nodes,
 // for which we need a separate type.
@@ -801,11 +801,11 @@ impl<'tree> DoubleEndedIterator for LeafNodes<'tree> {
 /// Represents the node information in Taproot tree. In contrast to [`TapTree`], this
 /// is allowed to have hidden leaves as children.
 ///
-/// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
+/// Helper type used in Merkle tree construction allowing one to build sparse Merkle trees. The node
 /// represents part of the tree that has information about all of its descendants.
 /// See how [`TaprootBuilder`] works for more details.
 ///
-/// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the merkle
+/// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the Merkle
 /// root [`NodeInfo`].
 #[derive(Debug, Clone, PartialOrd, Ord)]
 pub struct NodeInfo {
@@ -985,17 +985,17 @@ impl TapLeaf {
 pub struct LeafNode {
     /// The [`TapLeaf`]
     leaf: TapLeaf,
-    /// The merkle proof (hashing partners) to get this node.
+    /// The Merkle proof (hashing partners) to get this node.
     merkle_branch: TaprootMerkleBranch,
 }
 
 impl LeafNode {
-    /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
+    /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
     pub fn new_script(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self { leaf: TapLeaf::Script(script, ver), merkle_branch: Default::default() }
     }
 
-    /// Creates an new [`ScriptLeaf`] from `hash` and no merkle branch.
+    /// Creates an new [`ScriptLeaf`] from `hash` and no Merkle branch.
     pub fn new_hidden(hash: TapNodeHash) -> Self {
         Self { leaf: TapLeaf::Hidden(hash), merkle_branch: Default::default() }
     }
@@ -1039,7 +1039,7 @@ impl LeafNode {
     #[inline]
     pub fn leaf_version(&self) -> Option<LeafVersion> { self.leaf.as_script().map(|x| x.1) }
 
-    /// Returns reference to the merkle proof (hashing partners) to get this
+    /// Returns reference to the Merkle proof (hashing partners) to get this
     /// node in form of [`TaprootMerkleBranch`].
     #[inline]
     pub fn merkle_branch(&self) -> &TaprootMerkleBranch { &self.merkle_branch }
@@ -1049,7 +1049,7 @@ impl LeafNode {
     pub fn leaf(&self) -> &TapLeaf { &self.leaf }
 }
 
-/// Script leaf node in a Taproot tree along with the merkle proof to get this node.
+/// Script leaf node in a Taproot tree along with the Merkle proof to get this node.
 /// Returned by [`TapTree::script_leaves`]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ScriptLeaf<'leaf> {
@@ -1057,7 +1057,7 @@ pub struct ScriptLeaf<'leaf> {
     version: LeafVersion,
     /// The script.
     script: &'leaf Script,
-    /// The merkle proof (hashing partners) to get this node.
+    /// The Merkle proof (hashing partners) to get this node.
     merkle_branch: &'leaf TaprootMerkleBranch,
 }
 
@@ -1068,7 +1068,7 @@ impl<'leaf> ScriptLeaf<'leaf> {
     /// Obtains a reference to the script inside the leaf.
     pub fn script(&self) -> &Script { self.script }
 
-    /// Obtains a reference to the merkle proof of the leaf.
+    /// Obtains a reference to the Merkle proof of the leaf.
     pub fn merkle_branch(&self) -> &TaprootMerkleBranch { self.merkle_branch }
 
     /// Obtains a script leaf from the leaf node if the leaf is not hidden.
@@ -1089,7 +1089,7 @@ pub struct ControlBlock {
     pub output_key_parity: secp256k1::Parity,
     /// The internal key.
     pub internal_key: UntweakedPublicKey,
-    /// The merkle proof of a script associated with this leaf.
+    /// The Merkle proof of a script associated with this leaf.
     pub merkle_branch: TaprootMerkleBranch,
 }
 
@@ -1105,7 +1105,7 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidControlBlockSize`] if `sl` is not of size 1 + 32 + 32N for any N >= 0.
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
-    /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
+    /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
     pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0

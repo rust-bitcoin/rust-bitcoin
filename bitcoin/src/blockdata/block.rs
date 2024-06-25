@@ -39,9 +39,9 @@ impl BlockHash {
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but
-/// including a root of a [merkle tree] committing to all transactions in the block.
+/// including a root of a [Merkle tree] committing to all transactions in the block.
 ///
-/// [merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
+/// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
 /// ### Bitcoin Core References
 ///
@@ -54,7 +54,7 @@ pub struct Header {
     pub version: Version,
     /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
-    /// The root hash of the merkle tree of transactions in the block.
+    /// The root hash of the Merkle tree of transactions in the block.
     pub merkle_root: TxMerkleNode,
     /// The timestamp of the block, as claimed by the miner.
     pub time: u32,
@@ -236,7 +236,7 @@ impl Block {
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 
-    /// Checks if merkle root of header matches merkle root of the transaction list.
+    /// Checks if Merkle root of header matches Merkle root of the transaction list.
     pub fn check_merkle_root(&self) -> bool {
         match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
@@ -284,7 +284,7 @@ impl Block {
         false
     }
 
-    /// Computes the transaction merkle root.
+    /// Computes the transaction Merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
         TxMerkleNode::calculate_root(hashes)
@@ -301,7 +301,7 @@ impl Block {
         WitnessCommitment(sha256d::Hash::from_engine(encoder))
     }
 
-    /// Computes the merkle root of transactions hashed for witness.
+    /// Computes the Merkle root of transactions hashed for witness.
     pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {

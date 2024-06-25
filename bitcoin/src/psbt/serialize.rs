@@ -339,7 +339,7 @@ impl Serialize for TapTree {
             .script_leaves()
             .map(|l| {
                 l.script().len() + VarInt::from(l.script().len()).size() // script version
-            + 1 // merkle branch
+            + 1 // Merkle branch
             + 1 // leaf version
             })
             .sum::<usize>();
