@@ -212,7 +212,7 @@ impl TaprootSpendInfo {
         C: secp256k1::Verification,
     {
         let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
-        Ok(builder.finalize(secp, internal_key).expect("Huffman Tree is always complete"))
+        Ok(builder.finalize(secp, internal_key).expect("Huffman tree is always complete"))
     }
 
     /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
@@ -386,7 +386,7 @@ impl TaprootBuilder {
     /// weights of satisfaction for that script.
     ///
     /// The weights represent the probability of each branch being taken. If probabilities/weights
-    /// for each condition are known, constructing the tree as a Huffman Tree is the optimal way to
+    /// for each condition are known, constructing the tree as a Huffman tree is the optimal way to
     /// minimize average case satisfaction cost. This function takes as input an iterator of
     /// `tuple(u32, ScriptBuf)` where `u32` represents the satisfaction weights of the branch. For
     /// example, [(3, S1), (2, S2), (5, S3)] would construct a [`TapTree`] that has optimal
@@ -394,7 +394,7 @@ impl TaprootBuilder {
     ///
     /// # Errors
     ///
-    /// - When the optimal Huffman Tree has a depth more than 128.
+    /// - When the optimal Huffman tree has a depth more than 128.
     /// - If the provided list of script weights is empty.
     ///
     /// # Edge Cases
@@ -683,7 +683,7 @@ impl std::error::Error for HiddenNodesError {
     }
 }
 
-/// Taproot Tree representing a complete binary tree without any hidden nodes.
+/// Taproot tree representing a complete binary tree without any hidden nodes.
 ///
 /// This is in contrast to [`NodeInfo`], which allows hidden nodes.
 /// The implementations for Eq, PartialEq and Hash compare the merkle root of the tree
@@ -1410,7 +1410,7 @@ impl fmt::Display for TaprootError {
             InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
             InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
             InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
-            EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
+            EmptyTree => write!(f, "Taproot tree must contain at least one script"),
         }
     }
 }
