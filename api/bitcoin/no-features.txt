@@ -5433,6 +5433,7 @@ pub const bitcoin::pow::Target::MAX_ATTAINABLE_SIGNET: Self
 pub const bitcoin::pow::Target::MAX_ATTAINABLE_TESTNET: Self
 pub const bitcoin::pow::Target::ZERO: bitcoin::pow::Target
 pub const bitcoin::psbt::Psbt::DEFAULT_MAX_FEE_RATE: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin::psbt::PsbtSighashType::ALL: bitcoin::psbt::PsbtSighashType
 pub const bitcoin::script::witness_program::MAX_SIZE: usize = 40usize
 pub const bitcoin::script::witness_program::MIN_SIZE: usize = 2usize
 pub const bitcoin::sign_message::BITCOIN_SIGNED_MSG_PREFIX: &[u8]
