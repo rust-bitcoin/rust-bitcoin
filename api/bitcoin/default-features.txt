@@ -418,6 +418,10 @@ impl bitcoin::taproot::ControlBlock
 impl bitcoin::taproot::FutureLeafVersion
 impl bitcoin::taproot::HiddenNodesError
 impl bitcoin::taproot::IncompleteBuilderError
+impl bitcoin::taproot::InvalidControlBlockSizeError
+impl bitcoin::taproot::InvalidMerkleBranchSizeError
+impl bitcoin::taproot::InvalidMerkleTreeDepthError
+impl bitcoin::taproot::InvalidTaprootLeafVersionError
 impl bitcoin::taproot::LeafNode
 impl bitcoin::taproot::LeafVersion
 impl bitcoin::taproot::NodeInfo
@@ -679,6 +683,10 @@ impl core::clone::Clone for bitcoin::taproot::ControlBlock
 impl core::clone::Clone for bitcoin::taproot::FutureLeafVersion
 impl core::clone::Clone for bitcoin::taproot::HiddenNodesError
 impl core::clone::Clone for bitcoin::taproot::IncompleteBuilderError
+impl core::clone::Clone for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::clone::Clone for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::clone::Clone for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::clone::Clone for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::clone::Clone for bitcoin::taproot::LeafNode
 impl core::clone::Clone for bitcoin::taproot::LeafVersion
 impl core::clone::Clone for bitcoin::taproot::NodeInfo
@@ -876,6 +884,10 @@ impl core::cmp::Eq for bitcoin::taproot::ControlBlock
 impl core::cmp::Eq for bitcoin::taproot::FutureLeafVersion
 impl core::cmp::Eq for bitcoin::taproot::HiddenNodesError
 impl core::cmp::Eq for bitcoin::taproot::IncompleteBuilderError
+impl core::cmp::Eq for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::cmp::Eq for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::cmp::Eq for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::cmp::Eq for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::cmp::Eq for bitcoin::taproot::LeafNode
 impl core::cmp::Eq for bitcoin::taproot::LeafVersion
 impl core::cmp::Eq for bitcoin::taproot::NodeInfo
@@ -1161,6 +1173,10 @@ impl core::cmp::PartialEq for bitcoin::taproot::ControlBlock
 impl core::cmp::PartialEq for bitcoin::taproot::FutureLeafVersion
 impl core::cmp::PartialEq for bitcoin::taproot::HiddenNodesError
 impl core::cmp::PartialEq for bitcoin::taproot::IncompleteBuilderError
+impl core::cmp::PartialEq for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::cmp::PartialEq for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::cmp::PartialEq for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::cmp::PartialEq for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::cmp::PartialEq for bitcoin::taproot::LeafNode
 impl core::cmp::PartialEq for bitcoin::taproot::LeafVersion
 impl core::cmp::PartialEq for bitcoin::taproot::NodeInfo
@@ -1829,6 +1845,11 @@ impl core::convert::From<bitcoin::sighash::PrevoutsIndexError> for bitcoin::sigh
 impl core::convert::From<bitcoin::sighash::PrevoutsKindError> for bitcoin::sighash::TaprootError
 impl core::convert::From<bitcoin::sighash::PrevoutsSizeError> for bitcoin::sighash::TaprootError
 impl core::convert::From<bitcoin::sighash::TaprootError> for bitcoin::psbt::SignError
+impl core::convert::From<bitcoin::taproot::InvalidControlBlockSizeError> for bitcoin::taproot::TaprootError
+impl core::convert::From<bitcoin::taproot::InvalidMerkleBranchSizeError> for bitcoin::taproot::TaprootError
+impl core::convert::From<bitcoin::taproot::InvalidMerkleTreeDepthError> for bitcoin::taproot::TaprootBuilderError
+impl core::convert::From<bitcoin::taproot::InvalidMerkleTreeDepthError> for bitcoin::taproot::TaprootError
+impl core::convert::From<bitcoin::taproot::InvalidTaprootLeafVersionError> for bitcoin::taproot::TaprootError
 impl core::convert::From<bitcoin::taproot::LeafNode> for bitcoin::taproot::TapNodeHash
 impl core::convert::From<bitcoin::taproot::Signature> for bitcoin::taproot::serialized_signature::SerializedSignature
 impl core::convert::From<bitcoin::taproot::TapLeafHash> for bitcoin::taproot::TapNodeHash
@@ -1899,6 +1920,10 @@ impl core::convert::From<core::convert::Infallible> for bitcoin::sighash::Taproo
 impl core::convert::From<core::convert::Infallible> for bitcoin::sign_message::MessageSignatureError
 impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::HiddenNodesError
 impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::IncompleteBuilderError
+impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::SigFromSliceError
 impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::TaprootBuilderError
 impl core::convert::From<core::convert::Infallible> for bitcoin::taproot::TaprootError
@@ -2035,6 +2060,10 @@ impl core::error::Error for bitcoin::sighash::TaprootError
 impl core::error::Error for bitcoin::sign_message::MessageSignatureError
 impl core::error::Error for bitcoin::taproot::HiddenNodesError
 impl core::error::Error for bitcoin::taproot::IncompleteBuilderError
+impl core::error::Error for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::error::Error for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::error::Error for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::error::Error for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::error::Error for bitcoin::taproot::SigFromSliceError
 impl core::error::Error for bitcoin::taproot::TaprootBuilderError
 impl core::error::Error for bitcoin::taproot::TaprootError
@@ -2219,6 +2248,10 @@ impl core::fmt::Debug for bitcoin::taproot::ControlBlock
 impl core::fmt::Debug for bitcoin::taproot::FutureLeafVersion
 impl core::fmt::Debug for bitcoin::taproot::HiddenNodesError
 impl core::fmt::Debug for bitcoin::taproot::IncompleteBuilderError
+impl core::fmt::Debug for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::fmt::Debug for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::fmt::Debug for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::fmt::Debug for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::fmt::Debug for bitcoin::taproot::LeafNode
 impl core::fmt::Debug for bitcoin::taproot::LeafVersion
 impl core::fmt::Debug for bitcoin::taproot::NodeInfo
@@ -2354,6 +2387,10 @@ impl core::fmt::Display for bitcoin::sign_message::MessageSignatureError
 impl core::fmt::Display for bitcoin::taproot::FutureLeafVersion
 impl core::fmt::Display for bitcoin::taproot::HiddenNodesError
 impl core::fmt::Display for bitcoin::taproot::IncompleteBuilderError
+impl core::fmt::Display for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::fmt::Display for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::fmt::Display for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::fmt::Display for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::fmt::Display for bitcoin::taproot::LeafVersion
 impl core::fmt::Display for bitcoin::taproot::SigFromSliceError
 impl core::fmt::Display for bitcoin::taproot::TapLeafHash
@@ -2806,6 +2843,10 @@ impl core::marker::Freeze for bitcoin::taproot::ControlBlock
 impl core::marker::Freeze for bitcoin::taproot::FutureLeafVersion
 impl core::marker::Freeze for bitcoin::taproot::HiddenNodesError
 impl core::marker::Freeze for bitcoin::taproot::IncompleteBuilderError
+impl core::marker::Freeze for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::marker::Freeze for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::marker::Freeze for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::marker::Freeze for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::marker::Freeze for bitcoin::taproot::LeafNode
 impl core::marker::Freeze for bitcoin::taproot::LeafVersion
 impl core::marker::Freeze for bitcoin::taproot::NodeInfo
@@ -3011,6 +3052,10 @@ impl core::marker::Send for bitcoin::taproot::ControlBlock
 impl core::marker::Send for bitcoin::taproot::FutureLeafVersion
 impl core::marker::Send for bitcoin::taproot::HiddenNodesError
 impl core::marker::Send for bitcoin::taproot::IncompleteBuilderError
+impl core::marker::Send for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::marker::Send for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::marker::Send for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::marker::Send for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::marker::Send for bitcoin::taproot::LeafNode
 impl core::marker::Send for bitcoin::taproot::LeafVersion
 impl core::marker::Send for bitcoin::taproot::NodeInfo
@@ -3207,6 +3252,10 @@ impl core::marker::StructuralPartialEq for bitcoin::taproot::ControlBlock
 impl core::marker::StructuralPartialEq for bitcoin::taproot::FutureLeafVersion
 impl core::marker::StructuralPartialEq for bitcoin::taproot::HiddenNodesError
 impl core::marker::StructuralPartialEq for bitcoin::taproot::IncompleteBuilderError
+impl core::marker::StructuralPartialEq for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::marker::StructuralPartialEq for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::marker::StructuralPartialEq for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::marker::StructuralPartialEq for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::marker::StructuralPartialEq for bitcoin::taproot::LeafNode
 impl core::marker::StructuralPartialEq for bitcoin::taproot::LeafVersion
 impl core::marker::StructuralPartialEq for bitcoin::taproot::SigFromSliceError
@@ -3408,6 +3457,10 @@ impl core::marker::Sync for bitcoin::taproot::ControlBlock
 impl core::marker::Sync for bitcoin::taproot::FutureLeafVersion
 impl core::marker::Sync for bitcoin::taproot::HiddenNodesError
 impl core::marker::Sync for bitcoin::taproot::IncompleteBuilderError
+impl core::marker::Sync for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::marker::Sync for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::marker::Sync for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::marker::Sync for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::marker::Sync for bitcoin::taproot::LeafNode
 impl core::marker::Sync for bitcoin::taproot::LeafVersion
 impl core::marker::Sync for bitcoin::taproot::NodeInfo
@@ -3613,6 +3666,10 @@ impl core::marker::Unpin for bitcoin::taproot::ControlBlock
 impl core::marker::Unpin for bitcoin::taproot::FutureLeafVersion
 impl core::marker::Unpin for bitcoin::taproot::HiddenNodesError
 impl core::marker::Unpin for bitcoin::taproot::IncompleteBuilderError
+impl core::marker::Unpin for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::marker::Unpin for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::marker::Unpin for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::marker::Unpin for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::marker::Unpin for bitcoin::taproot::LeafNode
 impl core::marker::Unpin for bitcoin::taproot::LeafVersion
 impl core::marker::Unpin for bitcoin::taproot::NodeInfo
@@ -3846,6 +3903,10 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::ControlBlock
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::FutureLeafVersion
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::HiddenNodesError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::IncompleteBuilderError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::LeafNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::LeafVersion
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::taproot::NodeInfo
@@ -4047,6 +4108,10 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::ControlBlock
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::FutureLeafVersion
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::HiddenNodesError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::IncompleteBuilderError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::InvalidControlBlockSizeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::InvalidMerkleBranchSizeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::InvalidMerkleTreeDepthError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::InvalidTaprootLeafVersionError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::LeafNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::LeafVersion
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::taproot::NodeInfo
@@ -5353,15 +5418,15 @@ pub bitcoin::taproot::Signature::signature: secp256k1::schnorr::Signature
 pub bitcoin::taproot::TapLeaf::Hidden(bitcoin::taproot::TapNodeHash)
 pub bitcoin::taproot::TapLeaf::Script(bitcoin::blockdata::script::ScriptBuf, bitcoin::taproot::LeafVersion)
 pub bitcoin::taproot::TaprootBuilderError::EmptyTree
-pub bitcoin::taproot::TaprootBuilderError::InvalidMerkleTreeDepth(usize)
+pub bitcoin::taproot::TaprootBuilderError::InvalidMerkleTreeDepth(bitcoin::taproot::InvalidMerkleTreeDepthError)
 pub bitcoin::taproot::TaprootBuilderError::NodeNotInDfsOrder
 pub bitcoin::taproot::TaprootBuilderError::OverCompleteTree
 pub bitcoin::taproot::TaprootError::EmptyTree
-pub bitcoin::taproot::TaprootError::InvalidControlBlockSize(usize)
+pub bitcoin::taproot::TaprootError::InvalidControlBlockSize(bitcoin::taproot::InvalidControlBlockSizeError)
 pub bitcoin::taproot::TaprootError::InvalidInternalKey(secp256k1::Error)
-pub bitcoin::taproot::TaprootError::InvalidMerkleBranchSize(usize)
-pub bitcoin::taproot::TaprootError::InvalidMerkleTreeDepth(usize)
-pub bitcoin::taproot::TaprootError::InvalidTaprootLeafVersion(u8)
+pub bitcoin::taproot::TaprootError::InvalidMerkleBranchSize(bitcoin::taproot::InvalidMerkleBranchSizeError)
+pub bitcoin::taproot::TaprootError::InvalidMerkleTreeDepth(bitcoin::taproot::InvalidMerkleTreeDepthError)
+pub bitcoin::taproot::TaprootError::InvalidTaprootLeafVersion(bitcoin::taproot::InvalidTaprootLeafVersionError)
 pub bitcoin::transaction::IndexOutOfBoundsError::index: usize
 pub bitcoin::transaction::IndexOutOfBoundsError::length: usize
 pub bitcoin::transaction::OutPoint::txid: bitcoin::blockdata::transaction::Txid
@@ -9039,6 +9104,26 @@ pub fn bitcoin::taproot::IncompleteBuilderError::fmt(&self, f: &mut core::fmt::F
 pub fn bitcoin::taproot::IncompleteBuilderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::taproot::IncompleteBuilderError::into_builder(self) -> bitcoin::taproot::TaprootBuilder
 pub fn bitcoin::taproot::IncompleteBuilderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin::taproot::InvalidControlBlockSizeError::clone(&self) -> bitcoin::taproot::InvalidControlBlockSizeError
+pub fn bitcoin::taproot::InvalidControlBlockSizeError::eq(&self, other: &bitcoin::taproot::InvalidControlBlockSizeError) -> bool
+pub fn bitcoin::taproot::InvalidControlBlockSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::InvalidControlBlockSizeError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin::taproot::InvalidControlBlockSizeError::invalid_control_block_size(&self) -> usize
+pub fn bitcoin::taproot::InvalidMerkleBranchSizeError::clone(&self) -> bitcoin::taproot::InvalidMerkleBranchSizeError
+pub fn bitcoin::taproot::InvalidMerkleBranchSizeError::eq(&self, other: &bitcoin::taproot::InvalidMerkleBranchSizeError) -> bool
+pub fn bitcoin::taproot::InvalidMerkleBranchSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::InvalidMerkleBranchSizeError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin::taproot::InvalidMerkleBranchSizeError::invalid_merkle_branch_size(&self) -> usize
+pub fn bitcoin::taproot::InvalidMerkleTreeDepthError::clone(&self) -> bitcoin::taproot::InvalidMerkleTreeDepthError
+pub fn bitcoin::taproot::InvalidMerkleTreeDepthError::eq(&self, other: &bitcoin::taproot::InvalidMerkleTreeDepthError) -> bool
+pub fn bitcoin::taproot::InvalidMerkleTreeDepthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::InvalidMerkleTreeDepthError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin::taproot::InvalidMerkleTreeDepthError::invalid_merkle_tree_depth(&self) -> usize
+pub fn bitcoin::taproot::InvalidTaprootLeafVersionError::clone(&self) -> bitcoin::taproot::InvalidTaprootLeafVersionError
+pub fn bitcoin::taproot::InvalidTaprootLeafVersionError::eq(&self, other: &bitcoin::taproot::InvalidTaprootLeafVersionError) -> bool
+pub fn bitcoin::taproot::InvalidTaprootLeafVersionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::InvalidTaprootLeafVersionError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin::taproot::InvalidTaprootLeafVersionError::invalid_leaf_version(&self) -> u8
 pub fn bitcoin::taproot::LeafNode::clone(&self) -> bitcoin::taproot::LeafNode
 pub fn bitcoin::taproot::LeafNode::cmp(&self, other: &bitcoin::taproot::LeafNode) -> core::cmp::Ordering
 pub fn bitcoin::taproot::LeafNode::depth(&self) -> u8
@@ -9061,7 +9146,7 @@ pub fn bitcoin::taproot::LeafVersion::clone(&self) -> bitcoin::taproot::LeafVers
 pub fn bitcoin::taproot::LeafVersion::cmp(&self, other: &bitcoin::taproot::LeafVersion) -> core::cmp::Ordering
 pub fn bitcoin::taproot::LeafVersion::eq(&self, other: &bitcoin::taproot::LeafVersion) -> bool
 pub fn bitcoin::taproot::LeafVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::taproot::LeafVersion::from_consensus(version: u8) -> core::result::Result<Self, bitcoin::taproot::TaprootError>
+pub fn bitcoin::taproot::LeafVersion::from_consensus(version: u8) -> core::result::Result<Self, bitcoin::taproot::InvalidTaprootLeafVersionError>
 pub fn bitcoin::taproot::LeafVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::taproot::LeafVersion::partial_cmp(&self, other: &bitcoin::taproot::LeafVersion) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::taproot::LeafVersion::to_consensus(self) -> u8
@@ -9269,11 +9354,16 @@ pub fn bitcoin::taproot::TaprootBuilder::with_huffman_tree<I>(script_weights: I)
 pub fn bitcoin::taproot::TaprootBuilderError::clone(&self) -> bitcoin::taproot::TaprootBuilderError
 pub fn bitcoin::taproot::TaprootBuilderError::eq(&self, other: &bitcoin::taproot::TaprootBuilderError) -> bool
 pub fn bitcoin::taproot::TaprootBuilderError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::TaprootBuilderError::from(e: bitcoin::taproot::InvalidMerkleTreeDepthError) -> Self
 pub fn bitcoin::taproot::TaprootBuilderError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::taproot::TaprootBuilderError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin::taproot::TaprootError::clone(&self) -> bitcoin::taproot::TaprootError
 pub fn bitcoin::taproot::TaprootError::eq(&self, other: &bitcoin::taproot::TaprootError) -> bool
 pub fn bitcoin::taproot::TaprootError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin::taproot::TaprootError::from(e: bitcoin::taproot::InvalidControlBlockSizeError) -> Self
+pub fn bitcoin::taproot::TaprootError::from(e: bitcoin::taproot::InvalidMerkleBranchSizeError) -> Self
+pub fn bitcoin::taproot::TaprootError::from(e: bitcoin::taproot::InvalidMerkleTreeDepthError) -> Self
+pub fn bitcoin::taproot::TaprootError::from(e: bitcoin::taproot::InvalidTaprootLeafVersionError) -> Self
 pub fn bitcoin::taproot::TaprootError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin::taproot::TaprootError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin::taproot::TaprootSpendInfo::clone(&self) -> bitcoin::taproot::TaprootSpendInfo
@@ -9828,6 +9918,10 @@ pub struct bitcoin::sighash::TapSighashTag
 pub struct bitcoin::sign_message::MessageSignature
 pub struct bitcoin::taproot::ControlBlock
 pub struct bitcoin::taproot::FutureLeafVersion(_)
+pub struct bitcoin::taproot::InvalidControlBlockSizeError(_)
+pub struct bitcoin::taproot::InvalidMerkleBranchSizeError(_)
+pub struct bitcoin::taproot::InvalidMerkleTreeDepthError(_)
+pub struct bitcoin::taproot::InvalidTaprootLeafVersionError(_)
 pub struct bitcoin::taproot::LeafNode
 pub struct bitcoin::taproot::LeafNodes<'a>
 pub struct bitcoin::taproot::NodeInfo
@@ -10061,7 +10155,7 @@ pub type bitcoin::taproot::TapTweakHash::Engine = <bitcoin_hashes::sha256t::Hash
 pub type bitcoin::taproot::TapTweakHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin::taproot::TapTweakHash::Output = <I as core::slice::index::SliceIndex<[u8]>>::Output
 pub type bitcoin::taproot::merkle_branch::IntoIter::Item = bitcoin::taproot::TapNodeHash
-pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Error = bitcoin::taproot::TaprootError
+pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Error = bitcoin::taproot::InvalidMerkleTreeDepthError
 pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::IntoIter = bitcoin::taproot::merkle_branch::IntoIter
 pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Item = bitcoin::taproot::TapNodeHash
 pub type bitcoin::taproot::merkle_branch::TaprootMerkleBranch::Target = [bitcoin::taproot::TapNodeHash]
