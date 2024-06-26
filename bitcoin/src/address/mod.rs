@@ -55,11 +55,9 @@ use crate::taproot::TapNodeHash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use self::{
-    error::{
+pub use self::error::{
         FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError, LegacyAddressTooLongError,
-        NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError
-    },
+        NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError,
 };
 
 /// The different types of addresses.
