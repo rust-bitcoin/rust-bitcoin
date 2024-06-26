@@ -249,9 +249,6 @@ pub bitcoin_units::amount::Denomination::Bitcoin
 pub bitcoin_units::amount::Denomination::CentiBitcoin
 pub bitcoin_units::amount::Denomination::MicroBitcoin
 pub bitcoin_units::amount::Denomination::MilliBitcoin
-pub bitcoin_units::amount::Denomination::MilliSatoshi
-pub bitcoin_units::amount::Denomination::NanoBitcoin
-pub bitcoin_units::amount::Denomination::PicoBitcoin
 pub bitcoin_units::amount::Denomination::Satoshi
 pub bitcoin_units::amount::ParseAmountError::InputTooLarge(bitcoin_units::amount::InputTooLargeError)
 pub bitcoin_units::amount::ParseAmountError::InvalidCharacter(bitcoin_units::amount::InvalidCharacterError)
