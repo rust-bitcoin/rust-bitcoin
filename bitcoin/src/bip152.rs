@@ -232,7 +232,7 @@ impl HeaderAndShortIds {
         }
 
         Ok(HeaderAndShortIds {
-            header: block.header,
+            header: block.header.clone(),
             nonce,
             // Provide coinbase prefilled.
             prefilled_txs: prefilled,
@@ -405,6 +405,7 @@ mod test {
                 time: 2,
                 bits: CompactTarget::from_consensus(3),
                 nonce: 4,
+                aux_data: None,
             },
             txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],
         }

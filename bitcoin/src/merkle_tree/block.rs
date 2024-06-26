@@ -123,7 +123,7 @@ impl MerkleBlock {
         let matches: Vec<bool> = block_txids.iter().map(match_txids).collect();
 
         let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
-        MerkleBlock { header: *header, txn: pmt }
+        MerkleBlock { header: header.clone(), txn: pmt }
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
