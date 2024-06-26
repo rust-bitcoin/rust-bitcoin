@@ -96,7 +96,7 @@ fn bitcoin_genesis_tx() -> Transaction {
 /// Constructs and returns the genesis block.
 pub fn genesis_block(network: Network) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
-    let hash: sha256d::Hash = sha256d::Hash(hex!("696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b"));
+    let hash: sha256d::Hash = sha256d::Hash::from_slice(&hex!("696ad20e2dd4365c7459b4a4a5af743d5e92c6da3229e6532cd605f6533f2a5b")).unwrap();
     let merkle_root = hash.into();
     match network {
         Network::Bitcoin => Block {
