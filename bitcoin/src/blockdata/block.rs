@@ -152,11 +152,20 @@ impl_consensus_encoding!(SimpleHeader, version, prev_blockhash, merkle_root, tim
 impl Header {
     /// The number of bytes that the block header contributes to the size of a block.
     // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
-
+    pub fn to_simple_header(&self) -> SimpleHeader {
+        SimpleHeader {
+            version: self.version,
+            prev_blockhash: self.prev_blockhash,
+            merkle_root: self.merkle_root,
+            time: self.time,
+            bits: self.bits,
+            nonce: self.nonce,
+        }
+    }
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = BlockHash::engine();
-        self.consensus_encode(&mut engine).expect("engines don't error");
+        self.to_simple_header().consensus_encode(&mut engine).expect("engines don't error");
         BlockHash::from_engine(engine)
     }
 
