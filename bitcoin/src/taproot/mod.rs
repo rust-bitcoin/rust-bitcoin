@@ -1409,9 +1409,7 @@ impl fmt::Display for TaprootError {
             InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
             InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
             InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
-            InvalidInternalKey(ref e) => {
-                write_err!(f, "invalid internal x-only key"; e)
-            }
+            InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
             EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
