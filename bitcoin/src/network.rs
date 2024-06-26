@@ -19,7 +19,6 @@
 //! ```
 
 use core::fmt;
-use core::fmt::Display;
 use core::str::FromStr;
 
 use internals::write_err;
@@ -279,7 +278,7 @@ impl fmt::Display for Network {
 #[non_exhaustive]
 pub struct UnknownChainHashError(ChainHash);
 
-impl Display for UnknownChainHashError {
+impl fmt::Display for UnknownChainHashError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "unknown chain hash: {}", self.0)
     }

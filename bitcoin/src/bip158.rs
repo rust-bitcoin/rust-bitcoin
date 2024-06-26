@@ -38,7 +38,7 @@
 //!  ```
 
 use core::cmp::{self, Ordering};
-use core::fmt::{self, Display, Formatter};
+use core::fmt;
 
 use hashes::{sha256d, siphash24};
 use internals::write_err;
@@ -78,8 +78,8 @@ pub enum Error {
 
 internals::impl_from_infallible!(Error);
 
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         use Error::*;
 
         match *self {

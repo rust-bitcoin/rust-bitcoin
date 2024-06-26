@@ -6,7 +6,7 @@
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 
 use core::cmp;
-use core::fmt::{self, LowerHex, UpperHex};
+use core::fmt;
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
 use io::{BufRead, Write};
@@ -465,14 +465,14 @@ impl Decodable for CompactTarget {
     }
 }
 
-impl LowerHex for CompactTarget {
+impl fmt::LowerHex for CompactTarget {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { LowerHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
 
-impl UpperHex for CompactTarget {
+impl fmt::UpperHex for CompactTarget {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { UpperHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 /// Big-endian 256 bit integer type.
@@ -976,7 +976,7 @@ impl fmt::Debug for U256 {
 }
 
 macro_rules! impl_hex {
-    ($hex:ident, $case:expr) => {
+    ($hex:path, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
                 hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
@@ -984,8 +984,8 @@ macro_rules! impl_hex {
         }
     };
 }
-impl_hex!(LowerHex, hex::Case::Lower);
-impl_hex!(UpperHex, hex::Case::Upper);
+impl_hex!(fmt::LowerHex, hex::Case::Lower);
+impl_hex!(fmt::UpperHex, hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 impl crate::serde::Serialize for U256 {
