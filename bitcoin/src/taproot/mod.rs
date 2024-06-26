@@ -1110,7 +1110,7 @@ impl ControlBlock {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
         {
-            return Err(TaprootError::InvalidControlBlockSize(sl.len()));
+            return Err(InvalidControlBlockSizeError(sl.len()).into());
         }
         let output_key_parity = match sl[0] & 1 {
             0 => secp256k1::Parity::Even,
@@ -1385,13 +1385,13 @@ impl From<InvalidMerkleTreeDepthError> for TaprootBuilderError {
 #[non_exhaustive]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
-    InvalidMerkleBranchSize(usize),
+    InvalidMerkleBranchSize(InvalidMerkleBranchSizeError),
     /// Merkle tree depth must not be more than 128.
     InvalidMerkleTreeDepth(InvalidMerkleTreeDepthError),
     /// The last bit of tapleaf version must be zero.
     InvalidTaprootLeafVersion(InvalidTaprootLeafVersionError),
     /// Invalid control block size.
-    InvalidControlBlockSize(usize),
+    InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid taproot internal key.
     InvalidInternalKey(secp256k1::Error),
     /// Empty tap tree.
@@ -1405,18 +1405,10 @@ impl fmt::Display for TaprootError {
         use TaprootError::*;
 
         match *self {
-            InvalidMerkleBranchSize(sz) => write!(
-                f,
-                "Merkle branch size({}) must be a multiple of {}",
-                sz, TAPROOT_CONTROL_NODE_SIZE
-            ),
+            InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
             InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
             InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
-            InvalidControlBlockSize(sz) => write!(
-                f,
-                "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
-                sz, TAPROOT_CONTROL_MAX_NODE_COUNT
-            ),
+            InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
             InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
@@ -1439,6 +1431,10 @@ impl std::error::Error for TaprootError {
     }
 }
 
+impl From<InvalidMerkleBranchSizeError> for TaprootError {
+    fn from(e: InvalidMerkleBranchSizeError) -> Self { Self::InvalidMerkleBranchSize(e) }
+}
+
 impl From<InvalidMerkleTreeDepthError> for TaprootError {
     fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
 }
@@ -1446,6 +1442,34 @@ impl From<InvalidMerkleTreeDepthError> for TaprootError {
 impl From<InvalidTaprootLeafVersionError> for TaprootError {
     fn from(e: InvalidTaprootLeafVersionError) -> Self { Self::InvalidTaprootLeafVersion(e) }
 }
+
+impl From<InvalidControlBlockSizeError> for TaprootError {
+    fn from(e: InvalidControlBlockSizeError) -> Self { Self::InvalidControlBlockSize(e) }
+}
+
+/// Proof size must be a multiple of 32.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidMerkleBranchSizeError(usize);
+
+impl InvalidMerkleBranchSizeError {
+    /// Accessor for the invalid merkle branch size.
+    pub fn invalid_merkle_branch_size(&self) -> usize { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidMerkleBranchSizeError);
+
+impl fmt::Display for InvalidMerkleBranchSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Merkle branch size({}) must be a multiple of {}",
+            self.0, TAPROOT_CONTROL_NODE_SIZE
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidMerkleBranchSizeError {}
 
 /// Merkle tree depth must not be more than 128.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1490,6 +1514,30 @@ impl fmt::Display for InvalidTaprootLeafVersionError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidTaprootLeafVersionError {}
+
+/// Invalid control block size.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidControlBlockSizeError(usize);
+
+impl InvalidControlBlockSizeError {
+    /// Accessor for the invalid control block size.
+    pub fn invalid_control_block_size(&self) -> usize { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidControlBlockSizeError);
+
+impl fmt::Display for InvalidControlBlockSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
+            self.0, TAPROOT_CONTROL_MAX_NODE_COUNT
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidControlBlockSizeError {}
 
 #[cfg(test)]
 mod test {

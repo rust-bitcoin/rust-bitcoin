@@ -5,8 +5,8 @@
 use hashes::Hash;
 
 use super::{
-    InvalidMerkleTreeDepthError, TapNodeHash, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
-    TAPROOT_CONTROL_NODE_SIZE,
+    InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash, TaprootError,
+    TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
 };
 use crate::prelude::*;
 
@@ -47,7 +47,7 @@ impl TaprootMerkleBranch {
     /// if the number of hashes exceeds 128.
     pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
-            Err(TaprootError::InvalidMerkleBranchSize(sl.len()))
+            Err(InvalidMerkleBranchSizeError(sl.len()).into())
         } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(sl.len() / TAPROOT_CONTROL_NODE_SIZE).into())
         } else {
