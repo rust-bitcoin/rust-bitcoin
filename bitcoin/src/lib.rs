@@ -199,7 +199,12 @@ pub mod amount {
 /// Unit parsing utilities.
 pub mod parse {
     /// Re-export everything from the [`units::parse`] module.
-    pub use units::parse::ParseIntError;
+    #[doc(inline)]
+    pub use units::parse::{
+        hex_check_unprefixed, hex_remove_prefix, hex_u128, hex_u128_unchecked, hex_u128_unprefixed,
+        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int, ContainsPrefixError,
+        MissingPrefixError, ParseIntError, PrefixedHexError, UnprefixedHexError,
+    };
 }
 
 mod encode_impls {
