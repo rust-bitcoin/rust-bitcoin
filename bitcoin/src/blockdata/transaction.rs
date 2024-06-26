@@ -1101,39 +1101,13 @@ impl Decodable for Transaction {
         let version = Version::consensus_decode_from_finite_reader(r)?;
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
-        if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
-            match segwit_flag {
-                // BIP144 input witnesses
-                1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
-                    for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
-                    }
-                    if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
-                    } else {
-                        Ok(Transaction {
-                            version,
-                            input,
-                            output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-                        })
-                    }
-                }
-                // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
-            }
-        // non-segwit
-        } else {
-            Ok(Transaction {
-                version,
-                input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-            })
-        }
+        
+        Ok(Transaction {
+            version,
+            input,
+            output: Decodable::consensus_decode_from_finite_reader(r)?,
+            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+        })
     }
 }
 

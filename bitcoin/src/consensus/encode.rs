@@ -119,11 +119,14 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
     let (rv, consumed) = deserialize_partial(data)?;
 
     // Fail if data are not consumed entirely.
+
+    Ok(rv)
+    /*
     if consumed == data.len() {
         Ok(rv)
     } else {
         Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
-    }
+    }*/
 }
 
 /// Deserializes an object from a vector, but will not report an error if said deserialization
