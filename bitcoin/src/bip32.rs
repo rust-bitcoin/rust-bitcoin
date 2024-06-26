@@ -28,9 +28,9 @@ use crate::network::Network;
 use crate::prelude::*;
 
 /// Version bytes for extended public keys on the Bitcoin network.
-const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
+const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x02, 0xfa, 0xca, 0xfd];
 /// Version bytes for extended private keys on the Bitcoin network.
-const VERSION_BYTES_MAINNET_PRIVATE: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
+const VERSION_BYTES_MAINNET_PRIVATE: [u8; 4] = [0x02, 0xfa, 0xc3, 0x98];
 /// Version bytes for extended public keys on any of the testnet networks.
 const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
 /// Version bytes for extended private keys on any of the testnet networks.

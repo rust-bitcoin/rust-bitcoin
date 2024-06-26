@@ -205,9 +205,9 @@ pub struct Magic([u8; 4]);
 
 impl Magic {
     /// Bitcoin mainnet network magic bytes.
-    pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
+    pub const BITCOIN: Self = Self([0xc0, 0xc0, 0xc0, 0xc0]);
     /// Bitcoin testnet network magic bytes.
-    pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
+    pub const TESTNET: Self = Self([0xfc, 0xc1, 0xb7, 0xdc]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
@@ -408,8 +408,8 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
+            ("c0c0c0c0", Network::Bitcoin),
+            ("fcc1b7dc", Network::Testnet),
             ("fabfb5da", Network::Regtest),
             ("0a03cf40", Network::Signet),
         ];

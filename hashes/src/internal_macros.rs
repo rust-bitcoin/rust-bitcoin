@@ -202,7 +202,7 @@ macro_rules! hash_type {
         #[cfg_attr(feature = "schemars", derive(crate::schemars::JsonSchema))]
         #[repr(transparent)]
         pub struct Hash(
-            #[cfg_attr(feature = "schemars", schemars(schema_with = $schemars))] [u8; $bits / 8],
+            #[cfg_attr(feature = "schemars", schemars(schema_with = $schemars))] pub [u8; $bits / 8],
         );
 
         impl Hash {
