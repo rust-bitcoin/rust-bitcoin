@@ -9,6 +9,7 @@ use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, Psbt};
 use crate::transaction::Transaction;
+use crate::ToU64;
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -71,7 +72,7 @@ impl Map for Psbt {
 
 impl Psbt {
     pub(crate) fn decode_global<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let mut r = r.take(MAX_VEC_SIZE as u64);
+        let mut r = r.take(MAX_VEC_SIZE.to_u64());
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
@@ -100,7 +101,7 @@ impl Psbt {
                                         lock_time: Decodable::consensus_decode(&mut decoder)?,
                                     });
 
-                                    if decoder.position() != vlen as u64 {
+                                    if decoder.position() != vlen.to_u64() {
                                         return Err(Error::PartialDataConsumption);
                                     }
                                 } else {

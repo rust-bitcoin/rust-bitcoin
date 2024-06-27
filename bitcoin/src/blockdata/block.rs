@@ -485,7 +485,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::Network;
+    use crate::{Network, ToU64};
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -542,7 +542,7 @@ mod tests {
         assert_eq!(real_decode.base_size(), some_block.len());
         assert_eq!(
             real_decode.weight(),
-            Weight::from_non_witness_data_size(some_block.len() as u64)
+            Weight::from_non_witness_data_size(some_block.len().to_u64())
         );
 
         // should be also ok for a non-witness block as commitment is optional in that case
