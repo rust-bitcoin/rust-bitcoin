@@ -4,6 +4,7 @@
 use core::ops::Deref;
 
 use hex::FromHex;
+use internals::ToU64 as _;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
 use crate::opcodes::all::*;
@@ -100,7 +101,7 @@ impl ScriptBuf {
     /// Pushes the slice without reserving
     fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
-        match data.len() as u64 {
+        match data.len().to_u64() {
             n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
                 self.0.push(n as u8);
             }

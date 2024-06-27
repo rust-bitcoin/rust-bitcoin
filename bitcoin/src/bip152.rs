@@ -9,7 +9,7 @@ use core::{convert, fmt, mem};
 use std::error;
 
 use hashes::{sha256, siphash24};
-use internals::impl_array_newtype;
+use internals::{impl_array_newtype, ToU64 as _};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
@@ -287,7 +287,7 @@ impl Encodable for BlockTransactionsRequest {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded VarInts.
-        len += VarInt(self.indexes.len() as u64).consensus_encode(w)?;
+        len += VarInt(self.indexes.len().to_u64()).consensus_encode(w)?;
         let mut last_idx = 0;
         for idx in &self.indexes {
             len += VarInt(*idx - last_idx).consensus_encode(w)?;
@@ -383,7 +383,7 @@ impl BlockTransactions {
             transactions: {
                 let mut txs = Vec::with_capacity(request.indexes.len());
                 for idx in &request.indexes {
-                    if *idx >= block.txdata.len() as u64 {
+                    if *idx >= block.txdata.len().to_u64() {
                         return Err(TxIndexOutOfRangeError(*idx));
                     }
                     txs.push(block.txdata[*idx as usize].clone());

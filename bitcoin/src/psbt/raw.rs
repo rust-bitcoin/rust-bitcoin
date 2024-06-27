@@ -7,6 +7,7 @@
 
 use core::fmt;
 
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
@@ -80,7 +81,7 @@ impl Key {
 
         let key_byte_size: u64 = byte_size - 1;
 
-        if key_byte_size > MAX_VEC_SIZE as u64 {
+        if key_byte_size > MAX_VEC_SIZE.to_u64() {
             return Err(encode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,

@@ -41,7 +41,7 @@ use core::cmp::{self, Ordering};
 use core::fmt;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
-use internals::write_err;
+use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash};
@@ -387,7 +387,7 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
 
     /// Writes the filter to the wrapped writer.
     pub fn finish(&mut self) -> Result<usize, io::Error> {
-        let nm = self.elements.len() as u64 * self.m;
+        let nm = self.elements.len().to_u64() * self.m;
 
         // map hashes to [0, n_elements * M)
         let mut mapped: Vec<_> = self

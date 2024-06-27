@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use internals::ToU64 as _;
 use io::{BufRead, Cursor, Read};
 
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
@@ -71,7 +72,7 @@ impl Map for Psbt {
 
 impl Psbt {
     pub(crate) fn decode_global<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let mut r = r.take(MAX_VEC_SIZE as u64);
+        let mut r = r.take(MAX_VEC_SIZE.to_u64());
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
@@ -100,7 +101,7 @@ impl Psbt {
                                         lock_time: Decodable::consensus_decode(&mut decoder)?,
                                     });
 
-                                    if decoder.position() != vlen as u64 {
+                                    if decoder.position() != vlen.to_u64() {
                                         return Err(Error::PartialDataConsumption);
                                     }
                                 } else {

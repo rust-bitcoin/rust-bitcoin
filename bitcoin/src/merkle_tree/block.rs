@@ -11,6 +11,7 @@
 
 use core::fmt;
 
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
@@ -245,7 +246,7 @@ impl PartialMerkleTree {
             return Err(NoTransactions);
         };
         // check for excessively high numbers of transactions
-        if self.num_transactions as u64 > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
+        if self.num_transactions.to_u64() > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
             return Err(TooManyTransactions);
         }
         // there can never be more hashes provided than one for every txid
