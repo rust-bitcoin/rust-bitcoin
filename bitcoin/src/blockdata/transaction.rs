@@ -13,7 +13,7 @@
 use core::{cmp, fmt, str};
 
 use hashes::sha256d;
-use internals::write_err;
+use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 use primitives::Sequence;
 use units::parse;
@@ -277,7 +277,7 @@ impl TxIn {
     /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
     /// the input length `VarInt` to increase its encoding length.
     pub fn legacy_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size() as u64)
+        Weight::from_non_witness_data_size(self.base_size().to_u64())
     }
 
     /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
@@ -292,8 +292,8 @@ impl TxIn {
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
     ///   transaction weight to take into account the segwit marker
     pub fn segwit_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size() as u64)
-            + Weight::from_witness_data_size(self.witness.size() as u64)
+        Weight::from_non_witness_data_size(self.base_size().to_u64())
+            + Weight::from_witness_data_size(self.witness.size().to_u64())
     }
 
     /// Returns the base size of this input.
@@ -359,10 +359,10 @@ impl TxOut {
     /// # Panics
     ///
     /// If output size * 4 overflows, this should never happen under normal conditions. Use
-    /// `Weght::from_vb_checked(self.size() as u64)` if you are concerned.
+    /// `Weght::from_vb_checked(self.size().to_u64())` if you are concerned.
     pub fn weight(&self) -> Weight {
         // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
-        Weight::from_vb(self.size() as u64).expect("should never happen under normal conditions")
+        Weight::from_vb(self.size().to_u64()).expect("should never happen under normal conditions")
     }
 
     /// Returns the total number of bytes that this output contributes to a transaction.
@@ -1184,7 +1184,7 @@ where
     let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
         (0, 0),
         |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + VarInt(script_len as u64).size();
+            let script_size = script_len + VarInt(script_len.to_u64()).size();
             (output_count + 1, total_scripts_size + script_size)
         },
     );
@@ -1376,11 +1376,11 @@ impl InputWeightPrediction {
         let (count, total_size) =
             witness_element_lengths.into_iter().fold((0, 0), |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
-                let elem_size = elem_len + VarInt(elem_len as u64).size();
+                let elem_size = elem_len + VarInt(elem_len.to_u64()).size();
                 (count + 1, total_size + elem_size)
             });
         let witness_size = if count > 0 { total_size + VarInt(count as u64).size() } else { 0 };
-        let script_size = input_script_len + VarInt(input_script_len as u64).size();
+        let script_size = input_script_len + VarInt(input_script_len.to_u64()).size();
 
         InputWeightPrediction { script_size, witness_size }
     }

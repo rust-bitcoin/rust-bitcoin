@@ -18,7 +18,7 @@ use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, GeneralHash, Hash};
 use hex::error::{InvalidCharError, OddLengthStringError};
-use internals::write_err;
+use internals::{write_err, ToU64 as _};
 use io::{BufRead, Cursor, Read, Write};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
@@ -369,7 +369,7 @@ pub trait Decodable: Sized {
     /// instead.
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE.to_u64()))
     }
 }
 
@@ -458,7 +458,7 @@ macro_rules! impl_var_int_from {
         $(
             /// Creates a `VarInt` from a `usize` by casting the to a `u64`.
             impl From<$ty> for VarInt {
-                fn from(x: $ty) -> Self { VarInt(x as u64) }
+                fn from(x: $ty) -> Self { VarInt(x.to_u64()) }
             }
         )*
     }
@@ -545,7 +545,7 @@ impl Encodable for String {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let b = self.as_bytes();
-        let vi_len = VarInt(b.len() as u64).consensus_encode(w)?;
+        let vi_len = VarInt(b.len().to_u64()).consensus_encode(w)?;
         w.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
@@ -563,7 +563,7 @@ impl Encodable for Cow<'static, str> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let b = self.as_bytes();
-        let vi_len = VarInt(b.len() as u64).consensus_encode(w)?;
+        let vi_len = VarInt(b.len().to_u64()).consensus_encode(w)?;
         w.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
@@ -644,7 +644,7 @@ macro_rules! impl_vec {
                 w: &mut W,
             ) -> core::result::Result<usize, io::Error> {
                 let mut len = 0;
-                len += VarInt(self.len() as u64).consensus_encode(w)?;
+                len += VarInt(self.len().to_u64()).consensus_encode(w)?;
                 for c in self.iter() {
                     len += c.consensus_encode(w)?;
                 }
@@ -700,7 +700,7 @@ pub(crate) fn consensus_encode_with_size<W: Write + ?Sized>(
     data: &[u8],
     w: &mut W,
 ) -> Result<usize, io::Error> {
-    let vi_len = VarInt(data.len() as u64).consensus_encode(w)?;
+    let vi_len = VarInt(data.len().to_u64()).consensus_encode(w)?;
     w.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
@@ -1202,7 +1202,7 @@ mod tests {
         T: fmt::Debug,
     {
         let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
-        let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
+        let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()).to_u64());
         let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
         assert_eq!(discriminant(&err), discriminant(&rand_io_err));
     }

@@ -8,6 +8,7 @@
 use core::{fmt, iter};
 
 use hashes::sha256d;
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
@@ -426,7 +427,7 @@ impl Decodable for HeaderDeserializationWrapper {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
@@ -531,7 +532,7 @@ impl Decodable for RawNetworkMessage {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
