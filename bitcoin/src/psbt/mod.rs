@@ -1141,7 +1141,7 @@ impl std::error::Error for IndexOutOfBoundsError {
 
 #[cfg(feature = "base64")]
 mod display_from_str {
-    use core::fmt::{self, Display, Formatter};
+    use core::fmt;
     use core::str::FromStr;
 
     use base64::display::Base64Display;
@@ -1162,8 +1162,8 @@ mod display_from_str {
 
     internals::impl_from_infallible!(PsbtParseError);
 
-    impl Display for PsbtParseError {
-        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    impl fmt::Display for PsbtParseError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             use self::PsbtParseError::*;
 
             match *self {
@@ -1185,8 +1185,8 @@ mod display_from_str {
         }
     }
 
-    impl Display for Psbt {
-        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    impl fmt::Display for Psbt {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "{}", Base64Display::new(&self.serialize(), &BASE64_STANDARD))
         }
     }

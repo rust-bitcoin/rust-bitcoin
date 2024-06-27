@@ -1,6 +1,6 @@
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::boxed::Box;
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt;
 
 /// The `io` crate error type.
 #[derive(Debug)]
@@ -10,7 +10,7 @@ pub struct Error {
     #[cfg(feature = "std")]
     error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    error: Option<Box<dyn Debug + Send + Sync + 'static>>,
+    error: Option<Box<dyn fmt::Debug + Send + Sync + 'static>>,
 }
 
 impl Error {
@@ -40,7 +40,7 @@ impl Error {
 
     /// Returns a reference to this error.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn get_ref(&self) -> Option<&(dyn Debug + Send + Sync + 'static)> { self.error.as_deref() }
+    pub fn get_ref(&self) -> Option<&(dyn fmt::Debug + Send + Sync + 'static)> { self.error.as_deref() }
 }
 
 impl From<ErrorKind> for Error {
@@ -53,8 +53,8 @@ impl From<ErrorKind> for Error {
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, fmt: &mut Formatter) -> core::result::Result<(), core::fmt::Error> {
+impl fmt::Display for Error {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
         fmt.write_fmt(format_args!("I/O Error: {}", self.kind.description()))?;
         #[cfg(any(feature = "alloc", feature = "std"))]
         if let Some(e) = &self.error {
@@ -189,17 +189,17 @@ define_errorkind!(
 mod sealed {
     use alloc::boxed::Box;
     use alloc::string::String;
-    use core::fmt::Debug;
+    use core::fmt;
 
     pub trait IntoBoxDynDebug {
-        fn into(self) -> Box<dyn Debug + Send + Sync + 'static>;
+        fn into(self) -> Box<dyn fmt::Debug + Send + Sync + 'static>;
     }
 
     impl IntoBoxDynDebug for &str {
-        fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(String::from(self)) }
+        fn into(self) -> Box<dyn fmt::Debug + Send + Sync + 'static> { Box::new(String::from(self)) }
     }
 
     impl IntoBoxDynDebug for String {
-        fn into(self) -> Box<dyn Debug + Send + Sync + 'static> { Box::new(self) }
+        fn into(self) -> Box<dyn fmt::Debug + Send + Sync + 'static> { Box::new(self) }
     }
 }
