@@ -110,6 +110,11 @@ impl bitcoin::PublicKey
 impl bitcoin::SegwitV0Sighash
 impl bitcoin::TapSighash
 impl bitcoin::TapSighashType
+impl bitcoin::ToU64 for u16
+impl bitcoin::ToU64 for u32
+impl bitcoin::ToU64 for u64
+impl bitcoin::ToU64 for u8
+impl bitcoin::ToU64 for usize
 impl bitcoin::WPubkeyHash
 impl bitcoin::address::Address
 impl bitcoin::address::Address<bitcoin::address::NetworkUnchecked>
@@ -192,7 +197,6 @@ impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdat
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>
-impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::consensus::encode::VarInt>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>
 impl bitcoin::consensus::encode::Decodable for alloc::vec::Vec<bitcoin::p2p::message_blockdata::Inventory>
@@ -223,7 +227,6 @@ impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::transaction::
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::transaction::Wtxid
 impl bitcoin::consensus::encode::Decodable for bitcoin::blockdata::witness::Witness
 impl bitcoin::consensus::encode::Decodable for bitcoin::consensus::encode::CheckedData
-impl bitcoin::consensus::encode::Decodable for bitcoin::consensus::encode::VarInt
 impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::PartialMerkleTree
 impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::TxMerkleNode
 impl bitcoin::consensus::encode::Decodable for bitcoin::merkle_tree::WitnessMerkleNode
@@ -293,7 +296,6 @@ impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdat
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::Transaction>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>
-impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::consensus::encode::VarInt>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>
 impl bitcoin::consensus::encode::Encodable for alloc::vec::Vec<bitcoin::p2p::message_blockdata::Inventory>
@@ -325,7 +327,6 @@ impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::transaction::
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::transaction::Wtxid
 impl bitcoin::consensus::encode::Encodable for bitcoin::blockdata::witness::Witness
 impl bitcoin::consensus::encode::Encodable for bitcoin::consensus::encode::CheckedData
-impl bitcoin::consensus::encode::Encodable for bitcoin::consensus::encode::VarInt
 impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::PartialMerkleTree
 impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::TxMerkleNode
 impl bitcoin::consensus::encode::Encodable for bitcoin::merkle_tree::WitnessMerkleNode
@@ -372,7 +373,11 @@ impl bitcoin::consensus::encode::Encodable for u16
 impl bitcoin::consensus::encode::Encodable for u32
 impl bitcoin::consensus::encode::Encodable for u64
 impl bitcoin::consensus::encode::Encodable for u8
-impl bitcoin::consensus::encode::VarInt
+impl bitcoin::consensus::encode::IntoU64 for u16
+impl bitcoin::consensus::encode::IntoU64 for u32
+impl bitcoin::consensus::encode::IntoU64 for u64
+impl bitcoin::consensus::encode::IntoU64 for u8
+impl bitcoin::consensus::encode::IntoU64 for usize
 impl bitcoin::consensus::params::Params
 impl bitcoin::ecdsa::SerializedSignature
 impl bitcoin::ecdsa::Signature
@@ -598,7 +603,6 @@ impl core::clone::Clone for bitcoin::blockdata::transaction::Version
 impl core::clone::Clone for bitcoin::blockdata::transaction::Wtxid
 impl core::clone::Clone for bitcoin::blockdata::witness::Witness
 impl core::clone::Clone for bitcoin::consensus::encode::CheckedData
-impl core::clone::Clone for bitcoin::consensus::encode::VarInt
 impl core::clone::Clone for bitcoin::consensus::params::Params
 impl core::clone::Clone for bitcoin::ecdsa::Error
 impl core::clone::Clone for bitcoin::ecdsa::SerializedSignature
@@ -795,7 +799,6 @@ impl core::cmp::Eq for bitcoin::blockdata::transaction::Version
 impl core::cmp::Eq for bitcoin::blockdata::transaction::Wtxid
 impl core::cmp::Eq for bitcoin::blockdata::witness::Witness
 impl core::cmp::Eq for bitcoin::consensus::encode::CheckedData
-impl core::cmp::Eq for bitcoin::consensus::encode::VarInt
 impl core::cmp::Eq for bitcoin::ecdsa::Error
 impl core::cmp::Eq for bitcoin::ecdsa::SerializedSignature
 impl core::cmp::Eq for bitcoin::ecdsa::Signature
@@ -949,7 +952,6 @@ impl core::cmp::Ord for bitcoin::blockdata::transaction::Txid
 impl core::cmp::Ord for bitcoin::blockdata::transaction::Version
 impl core::cmp::Ord for bitcoin::blockdata::transaction::Wtxid
 impl core::cmp::Ord for bitcoin::blockdata::witness::Witness
-impl core::cmp::Ord for bitcoin::consensus::encode::VarInt
 impl core::cmp::Ord for bitcoin::key::SortKey
 impl core::cmp::Ord for bitcoin::key::TweakedKeypair
 impl core::cmp::Ord for bitcoin::key::TweakedPublicKey
@@ -1080,7 +1082,6 @@ impl core::cmp::PartialEq for bitcoin::blockdata::transaction::Version
 impl core::cmp::PartialEq for bitcoin::blockdata::transaction::Wtxid
 impl core::cmp::PartialEq for bitcoin::blockdata::witness::Witness
 impl core::cmp::PartialEq for bitcoin::consensus::encode::CheckedData
-impl core::cmp::PartialEq for bitcoin::consensus::encode::VarInt
 impl core::cmp::PartialEq for bitcoin::ecdsa::Error
 impl core::cmp::PartialEq for bitcoin::ecdsa::SerializedSignature
 impl core::cmp::PartialEq for bitcoin::ecdsa::Signature
@@ -1240,7 +1241,6 @@ impl core::cmp::PartialOrd for bitcoin::blockdata::transaction::Txid
 impl core::cmp::PartialOrd for bitcoin::blockdata::transaction::Version
 impl core::cmp::PartialOrd for bitcoin::blockdata::transaction::Wtxid
 impl core::cmp::PartialOrd for bitcoin::blockdata::witness::Witness
-impl core::cmp::PartialOrd for bitcoin::consensus::encode::VarInt
 impl core::cmp::PartialOrd for bitcoin::key::SortKey
 impl core::cmp::PartialOrd for bitcoin::key::TweakedKeypair
 impl core::cmp::PartialOrd for bitcoin::key::TweakedPublicKey
@@ -1917,14 +1917,9 @@ impl core::convert::From<secp256k1::Error> for bitcoin::key::ParseCompressedPubl
 impl core::convert::From<secp256k1::Error> for bitcoin::sign_message::MessageSignatureError
 impl core::convert::From<secp256k1::Error> for bitcoin::taproot::SigFromSliceError
 impl core::convert::From<secp256k1::key::PublicKey> for bitcoin::PublicKey
-impl core::convert::From<u16> for bitcoin::consensus::encode::VarInt
 impl core::convert::From<u32> for bitcoin::bip32::ChildNumber
-impl core::convert::From<u32> for bitcoin::consensus::encode::VarInt
-impl core::convert::From<u64> for bitcoin::consensus::encode::VarInt
 impl core::convert::From<u64> for bitcoin::p2p::ServiceFlags
 impl core::convert::From<u8> for bitcoin::blockdata::opcodes::Opcode
-impl core::convert::From<u8> for bitcoin::consensus::encode::VarInt
-impl core::convert::From<usize> for bitcoin::consensus::encode::VarInt
 impl core::convert::TryFrom<&[bitcoin::taproot::TapNodeHash]> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::convert::TryFrom<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::ScriptHash
 impl core::convert::TryFrom<&bitcoin::blockdata::script::Script> for bitcoin::blockdata::script::WScriptHash
@@ -2136,7 +2131,6 @@ impl core::fmt::Debug for bitcoin::blockdata::witness::Witness
 impl core::fmt::Debug for bitcoin::consensus::encode::CheckedData
 impl core::fmt::Debug for bitcoin::consensus::encode::Error
 impl core::fmt::Debug for bitcoin::consensus::encode::FromHexError
-impl core::fmt::Debug for bitcoin::consensus::encode::VarInt
 impl core::fmt::Debug for bitcoin::consensus::params::Params
 impl core::fmt::Debug for bitcoin::ecdsa::Error
 impl core::fmt::Debug for bitcoin::ecdsa::SerializedSignature
@@ -2723,7 +2717,6 @@ impl core::marker::Freeze for bitcoin::blockdata::witness::Witness
 impl core::marker::Freeze for bitcoin::consensus::encode::CheckedData
 impl core::marker::Freeze for bitcoin::consensus::encode::Error
 impl core::marker::Freeze for bitcoin::consensus::encode::FromHexError
-impl core::marker::Freeze for bitcoin::consensus::encode::VarInt
 impl core::marker::Freeze for bitcoin::consensus::params::Params
 impl core::marker::Freeze for bitcoin::ecdsa::Error
 impl core::marker::Freeze for bitcoin::ecdsa::SerializedSignature
@@ -2928,7 +2921,6 @@ impl core::marker::Send for bitcoin::blockdata::witness::Witness
 impl core::marker::Send for bitcoin::consensus::encode::CheckedData
 impl core::marker::Send for bitcoin::consensus::encode::Error
 impl core::marker::Send for bitcoin::consensus::encode::FromHexError
-impl core::marker::Send for bitcoin::consensus::encode::VarInt
 impl core::marker::Send for bitcoin::consensus::params::Params
 impl core::marker::Send for bitcoin::ecdsa::Error
 impl core::marker::Send for bitcoin::ecdsa::SerializedSignature
@@ -3127,7 +3119,6 @@ impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Vers
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::transaction::Wtxid
 impl core::marker::StructuralPartialEq for bitcoin::blockdata::witness::Witness
 impl core::marker::StructuralPartialEq for bitcoin::consensus::encode::CheckedData
-impl core::marker::StructuralPartialEq for bitcoin::consensus::encode::VarInt
 impl core::marker::StructuralPartialEq for bitcoin::ecdsa::Error
 impl core::marker::StructuralPartialEq for bitcoin::ecdsa::Signature
 impl core::marker::StructuralPartialEq for bitcoin::key::FromSliceError
@@ -3325,7 +3316,6 @@ impl core::marker::Sync for bitcoin::blockdata::witness::Witness
 impl core::marker::Sync for bitcoin::consensus::encode::CheckedData
 impl core::marker::Sync for bitcoin::consensus::encode::Error
 impl core::marker::Sync for bitcoin::consensus::encode::FromHexError
-impl core::marker::Sync for bitcoin::consensus::encode::VarInt
 impl core::marker::Sync for bitcoin::consensus::params::Params
 impl core::marker::Sync for bitcoin::ecdsa::Error
 impl core::marker::Sync for bitcoin::ecdsa::SerializedSignature
@@ -3530,7 +3520,6 @@ impl core::marker::Unpin for bitcoin::blockdata::witness::Witness
 impl core::marker::Unpin for bitcoin::consensus::encode::CheckedData
 impl core::marker::Unpin for bitcoin::consensus::encode::Error
 impl core::marker::Unpin for bitcoin::consensus::encode::FromHexError
-impl core::marker::Unpin for bitcoin::consensus::encode::VarInt
 impl core::marker::Unpin for bitcoin::consensus::params::Params
 impl core::marker::Unpin for bitcoin::ecdsa::Error
 impl core::marker::Unpin for bitcoin::ecdsa::SerializedSignature
@@ -3764,7 +3753,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::transaction
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::transaction::Wtxid
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::blockdata::witness::Witness
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::consensus::encode::CheckedData
-impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::consensus::encode::VarInt
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::consensus::params::Params
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::ecdsa::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin::ecdsa::SerializedSignature
@@ -3965,7 +3953,6 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::transaction::V
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::transaction::Wtxid
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::blockdata::witness::Witness
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::consensus::encode::CheckedData
-impl core::panic::unwind_safe::UnwindSafe for bitcoin::consensus::encode::VarInt
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::consensus::params::Params
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::ecdsa::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin::ecdsa::SerializedSignature
@@ -6178,7 +6165,7 @@ pub const fn bitcoin::blockdata::transaction::Wtxid::to_byte_array(self) -> <bit
 pub const fn bitcoin::blockdata::transaction::Wtxid::to_raw_hash(self) -> bitcoin_hashes::sha256d::Hash
 pub const fn bitcoin::blockdata::transaction::predict_weight_from_slices(inputs: &[bitcoin::blockdata::transaction::InputWeightPrediction], output_script_lens: &[usize]) -> bitcoin_units::weight::Weight
 pub const fn bitcoin::blockdata::witness::Witness::new() -> Self
-pub const fn bitcoin::consensus::encode::VarInt::size(&self) -> usize
+pub const fn bitcoin::consensus::encode::varint_size_const(v: u64) -> usize
 pub const fn bitcoin::consensus::params::Params::new(network: bitcoin::network::Network) -> Self
 pub const fn bitcoin::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin::merkle_tree::TxMerkleNode::as_raw_hash(&self) -> &bitcoin_hashes::sha256d::Hash
@@ -6440,17 +6427,19 @@ pub fn R::read_u16(&mut self) -> core::result::Result<u16, bitcoin::consensus::e
 pub fn R::read_u32(&mut self) -> core::result::Result<u32, bitcoin::consensus::encode::Error>
 pub fn R::read_u64(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn R::read_u8(&mut self) -> core::result::Result<u8, bitcoin::consensus::encode::Error>
+pub fn R::read_varint(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn T::into_derivation_path(self) -> core::result::Result<bitcoin::bip32::DerivationPath, bitcoin::bip32::Error>
 pub fn W::emit_bool(&mut self, v: bool) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_i16(&mut self, v: i16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_i32(&mut self, v: i32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_i64(&mut self, v: i64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_i8(&mut self, v: i8) -> core::result::Result<(), bitcoin_io::error::Error>
-pub fn W::emit_slice(&mut self, v: &[u8]) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn W::emit_slice(&mut self, v: &[u8]) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn W::emit_u16(&mut self, v: u16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_u32(&mut self, v: u32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_u64(&mut self, v: u64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn W::emit_u8(&mut self, v: u8) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn W::emit_varint(&mut self, v: impl bitcoin::consensus::encode::IntoU64) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn [u16; 8]::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn [u16; 8]::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn [u8; 0]::as_mut(&mut self) -> &mut bitcoin::blockdata::script::PushBytes
@@ -6662,8 +6651,6 @@ pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>::consensus_decode_
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxIn>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::blockdata::transaction::TxOut>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn alloc::vec::Vec<bitcoin::consensus::encode::VarInt>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
-pub fn alloc::vec::Vec<bitcoin::consensus::encode::VarInt>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn alloc::vec::Vec<bitcoin::merkle_tree::TxMerkleNode>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<bitcoin::p2p::address::AddrV2Message>::consensus_decode_from_finite_reader<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
@@ -6838,6 +6825,7 @@ pub fn bitcoin::TapSighashType::from_consensus_u8(sighash_type: u8) -> core::res
 pub fn bitcoin::TapSighashType::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin::TapSighashType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::TapSighashType::partial_cmp(&self, other: &bitcoin::TapSighashType) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::ToU64::to_u64(self) -> u64
 pub fn bitcoin::WPubkeyHash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin::WPubkeyHash::as_ref(&self) -> &[u8; 20]
 pub fn bitcoin::WPubkeyHash::as_ref(&self) -> &[u8]
@@ -8159,16 +8147,18 @@ pub fn bitcoin::consensus::ReadExt::read_u16(&mut self) -> core::result::Result<
 pub fn bitcoin::consensus::ReadExt::read_u32(&mut self) -> core::result::Result<u32, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::ReadExt::read_u64(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::ReadExt::read_u8(&mut self) -> core::result::Result<u8, bitcoin::consensus::encode::Error>
+pub fn bitcoin::consensus::ReadExt::read_varint(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::WriteExt::emit_bool(&mut self, v: bool) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_i16(&mut self, v: i16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_i32(&mut self, v: i32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_i64(&mut self, v: i64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_i8(&mut self, v: i8) -> core::result::Result<(), bitcoin_io::error::Error>
-pub fn bitcoin::consensus::WriteExt::emit_slice(&mut self, v: &[u8]) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn bitcoin::consensus::WriteExt::emit_slice(&mut self, v: &[u8]) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_u16(&mut self, v: u16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_u32(&mut self, v: u32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_u64(&mut self, v: u64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::WriteExt::emit_u8(&mut self, v: u8) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn bitcoin::consensus::WriteExt::emit_varint(&mut self, v: impl bitcoin::consensus::encode::IntoU64) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::consensus::deserialize<T: bitcoin::consensus::encode::Decodable>(data: &[u8]) -> core::result::Result<T, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::deserialize_partial<T: bitcoin::consensus::encode::Decodable>(data: &[u8]) -> core::result::Result<(T, usize), bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::CheckedData::checksum(&self) -> [u8; 4]
@@ -8190,6 +8180,7 @@ pub fn bitcoin::consensus::encode::Error::source(&self) -> core::option::Option<
 pub fn bitcoin::consensus::encode::FromHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::consensus::encode::FromHexError::from(e: hex_conservative::error::OddLengthStringError) -> Self
 pub fn bitcoin::consensus::encode::FromHexError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin::consensus::encode::IntoU64::into_u64(self) -> u64
 pub fn bitcoin::consensus::encode::ReadExt::read_bool(&mut self) -> core::result::Result<bool, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::ReadExt::read_i16(&mut self) -> core::result::Result<i16, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::ReadExt::read_i32(&mut self) -> core::result::Result<i32, bitcoin::consensus::encode::Error>
@@ -8200,33 +8191,24 @@ pub fn bitcoin::consensus::encode::ReadExt::read_u16(&mut self) -> core::result:
 pub fn bitcoin::consensus::encode::ReadExt::read_u32(&mut self) -> core::result::Result<u32, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::ReadExt::read_u64(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::ReadExt::read_u8(&mut self) -> core::result::Result<u8, bitcoin::consensus::encode::Error>
-pub fn bitcoin::consensus::encode::VarInt::clone(&self) -> bitcoin::consensus::encode::VarInt
-pub fn bitcoin::consensus::encode::VarInt::cmp(&self, other: &bitcoin::consensus::encode::VarInt) -> core::cmp::Ordering
-pub fn bitcoin::consensus::encode::VarInt::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
-pub fn bitcoin::consensus::encode::VarInt::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
-pub fn bitcoin::consensus::encode::VarInt::eq(&self, other: &bitcoin::consensus::encode::VarInt) -> bool
-pub fn bitcoin::consensus::encode::VarInt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin::consensus::encode::VarInt::from(x: u16) -> Self
-pub fn bitcoin::consensus::encode::VarInt::from(x: u32) -> Self
-pub fn bitcoin::consensus::encode::VarInt::from(x: u64) -> Self
-pub fn bitcoin::consensus::encode::VarInt::from(x: u8) -> Self
-pub fn bitcoin::consensus::encode::VarInt::from(x: usize) -> Self
-pub fn bitcoin::consensus::encode::VarInt::partial_cmp(&self, other: &bitcoin::consensus::encode::VarInt) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin::consensus::encode::ReadExt::read_varint(&mut self) -> core::result::Result<u64, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_bool(&mut self, v: bool) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_i16(&mut self, v: i16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_i32(&mut self, v: i32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_i64(&mut self, v: i64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_i8(&mut self, v: i8) -> core::result::Result<(), bitcoin_io::error::Error>
-pub fn bitcoin::consensus::encode::WriteExt::emit_slice(&mut self, v: &[u8]) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn bitcoin::consensus::encode::WriteExt::emit_slice(&mut self, v: &[u8]) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_u16(&mut self, v: u16) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_u32(&mut self, v: u32) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_u64(&mut self, v: u64) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::WriteExt::emit_u8(&mut self, v: u8) -> core::result::Result<(), bitcoin_io::error::Error>
+pub fn bitcoin::consensus::encode::WriteExt::emit_varint(&mut self, v: impl bitcoin::consensus::encode::IntoU64) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn bitcoin::consensus::encode::deserialize<T: bitcoin::consensus::encode::Decodable>(data: &[u8]) -> core::result::Result<T, bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::deserialize_hex<T: bitcoin::consensus::encode::Decodable>(hex: &str) -> core::result::Result<T, bitcoin::consensus::encode::FromHexError>
 pub fn bitcoin::consensus::encode::deserialize_partial<T: bitcoin::consensus::encode::Decodable>(data: &[u8]) -> core::result::Result<(T, usize), bitcoin::consensus::encode::Error>
 pub fn bitcoin::consensus::encode::serialize<T: bitcoin::consensus::encode::Encodable + core::marker::Sized>(data: &T) -> alloc::vec::Vec<u8>
 pub fn bitcoin::consensus::encode::serialize_hex<T: bitcoin::consensus::encode::Encodable + core::marker::Sized>(data: &T) -> alloc::string::String
+pub fn bitcoin::consensus::encode::varint_size(v: impl bitcoin::consensus::encode::IntoU64) -> usize
 pub fn bitcoin::consensus::params::Params::as_ref(&self) -> &bitcoin::consensus::params::Params
 pub fn bitcoin::consensus::params::Params::clone(&self) -> bitcoin::consensus::params::Params
 pub fn bitcoin::consensus::params::Params::difficulty_adjustment_interval(&self) -> u64
@@ -9454,15 +9436,25 @@ pub fn std::collections::hash::map::HashMap<bitcoin::PublicKey, bitcoin::Private
 pub fn std::collections::hash::set::HashSet<bitcoin::bip32::Xpriv>::get_key<C: secp256k1::context::Signing>(&self, key_request: bitcoin::psbt::KeyRequest, secp: &secp256k1::Secp256k1<C>) -> core::result::Result<core::option::Option<bitcoin::PrivateKey>, Self::Error>
 pub fn u16::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn u16::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn u16::into_u64(self) -> u64
+pub fn u16::to_u64(self) -> u64
 pub fn u32::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn u32::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn u32::from(cnum: bitcoin::bip32::ChildNumber) -> Self
 pub fn u32::from(sequence: bitcoin::blockdata::transaction::Sequence) -> u32
+pub fn u32::into_u64(self) -> u64
+pub fn u32::to_u64(self) -> u64
 pub fn u64::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn u64::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn u64::from(flags: bitcoin::p2p::ServiceFlags) -> Self
+pub fn u64::into_u64(self) -> u64
+pub fn u64::to_u64(self) -> u64
 pub fn u8::consensus_decode<R: bitcoin_io::BufRead + core::marker::Sized>(r: &mut R) -> core::result::Result<Self, bitcoin::consensus::encode::Error>
 pub fn u8::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
+pub fn u8::into_u64(self) -> u64
+pub fn u8::to_u64(self) -> u64
+pub fn usize::into_u64(self) -> u64
+pub fn usize::to_u64(self) -> u64
 pub mod bitcoin
 pub mod bitcoin::absolute
 pub mod bitcoin::address
@@ -9579,7 +9571,6 @@ pub struct bitcoin::TxIn
 pub struct bitcoin::TxMerkleNode(_)
 pub struct bitcoin::TxOut
 pub struct bitcoin::Txid(_)
-pub struct bitcoin::VarInt(pub u64)
 pub struct bitcoin::WPubkeyHash(_)
 pub struct bitcoin::WScriptHash(_)
 pub struct bitcoin::Witness
@@ -9659,7 +9650,6 @@ pub struct bitcoin::blockdata::transaction::Wtxid(_)
 pub struct bitcoin::blockdata::witness::Iter<'a>
 pub struct bitcoin::blockdata::witness::Witness
 pub struct bitcoin::consensus::encode::CheckedData
-pub struct bitcoin::consensus::encode::VarInt(pub u64)
 pub struct bitcoin::constants::ChainHash(_)
 pub struct bitcoin::ecdsa::SerializedSignature
 pub struct bitcoin::ecdsa::Signature
@@ -9781,6 +9771,7 @@ pub struct bitcoin::witness::Iter<'a>
 pub struct bitcoin::witness::Witness
 pub struct bitcoin::witness_program::WitnessProgram
 pub struct bitcoin::witness_version::TryFromError
+pub trait bitcoin::ToU64
 pub trait bitcoin::address::NetworkValidation: sealed::NetworkValidation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
 pub trait bitcoin::bip32::IntoDerivationPath
 pub trait bitcoin::blockdata::script::PushBytesErrorReport
@@ -9790,6 +9781,7 @@ pub trait bitcoin::consensus::ReadExt: bitcoin_io::Read
 pub trait bitcoin::consensus::WriteExt: bitcoin_io::Write
 pub trait bitcoin::consensus::encode::Decodable: core::marker::Sized
 pub trait bitcoin::consensus::encode::Encodable
+pub trait bitcoin::consensus::encode::IntoU64
 pub trait bitcoin::consensus::encode::ReadExt: bitcoin_io::Read
 pub trait bitcoin::consensus::encode::WriteExt: bitcoin_io::Write
 pub trait bitcoin::key::TapTweak
