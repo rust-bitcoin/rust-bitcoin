@@ -15,6 +15,7 @@ use crate::consensus::encode::{
 };
 use crate::prelude::*;
 use crate::psbt::Error;
+use crate::ToU64;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
@@ -82,7 +83,7 @@ impl Key {
 
         let key_byte_size: u64 = byte_size - 1;
 
-        if key_byte_size > MAX_VEC_SIZE as u64 {
+        if key_byte_size > MAX_VEC_SIZE.to_u64() {
             return Err(encode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,

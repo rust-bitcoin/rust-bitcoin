@@ -242,3 +242,25 @@ mod encode_impls {
     impl_encodable_for_u32_wrapper!(BlockHeight);
     impl_encodable_for_u32_wrapper!(BlockInterval);
 }
+
+/// A conversion trait for unsigned integer types smaller than or equal to 64-bits.
+///
+/// This trait exists because [`usize`] doesn't implement `Into<u64>`, however because we only
+/// support 32 and 64 bit architectures we can infallibly do the conversion.
+pub trait ToU64 {
+    /// Converts unsigned integer type to a [`u64`].
+    fn to_u64(self) -> u64;
+}
+
+macro_rules! impl_to_u64 {
+    ($($ty:ident),*) => {
+        $(
+            impl ToU64 for $ty { fn to_u64(self) -> u64 { self.into() } }
+        )*
+    }
+}
+impl_to_u64!(u8, u16, u32, u64);
+
+impl ToU64 for usize {
+    fn to_u64(self) -> u64 { self.try_into().expect("definitely fits in 64 bits") }
+}
