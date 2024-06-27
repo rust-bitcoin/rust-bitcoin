@@ -533,7 +533,7 @@ impl TaprootBuilder {
                 if let Some(Some(node)) = self.branch.pop() {
                     Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
                 } else {
-                    unreachable!("Size checked above. Builder guarantees the last element is Some")
+                    unreachable!("size checked above. Builder guarantees the last element is Some")
                 },
             _ => Err(self),
         }
@@ -557,7 +557,7 @@ impl TaprootBuilder {
 
         while self.branch.len() == depth as usize + 1 {
             let child = match self.branch.pop() {
-                None => unreachable!("Len of branch checked to be >= 1"),
+                None => unreachable!("length of branch checked to be >= 1"),
                 Some(Some(child)) => child,
                 // Needs an explicit push to add the None that we just popped.
                 // Cannot use .last() because of borrow checker issues.
@@ -621,9 +621,9 @@ impl core::fmt::Display for IncompleteBuilderError {
 
         f.write_str(match self {
             NotFinalized(_) =>
-                "an attempt to construct a Taproot tree from a builder containing incomplete branches.",
+                "an attempt to construct a Taproot tree from a builder containing incomplete branches",
             HiddenParts(_) =>
-                "an attempt to construct a Taproot tree from a builder containing hidden parts.",
+                "an attempt to construct a Taproot tree from a builder containing hidden parts",
         })
     }
 }
@@ -667,7 +667,7 @@ impl core::fmt::Display for HiddenNodesError {
 
         f.write_str(match self {
             HiddenParts(_) =>
-                "an attempt to construct a Taproot tree from a node_info containing hidden parts.",
+                "an attempt to construct a Taproot tree from a node_info containing hidden parts",
         })
     }
 }
@@ -921,18 +921,18 @@ impl<'de> serde::Deserialize<'de> for NodeInfo {
                 while let Some(depth) = seq.next_element()? {
                     let tap_leaf: TapLeaf = seq
                         .next_element()?
-                        .ok_or_else(|| serde::de::Error::custom("Missing tap_leaf"))?;
+                        .ok_or_else(|| serde::de::Error::custom("missing tap_leaf"))?;
                     match tap_leaf {
                         TapLeaf::Script(script, ver) => {
                             builder =
                                 builder.add_leaf_with_ver(depth, script, ver).map_err(|e| {
-                                    serde::de::Error::custom(format!("Leaf insertion error: {}", e))
+                                    serde::de::Error::custom(format!("leaf insertion error: {}", e))
                                 })?;
                         }
                         TapLeaf::Hidden(h) => {
                             builder = builder.add_hidden_node(depth, h).map_err(|e| {
                                 serde::de::Error::custom(format!(
-                                    "Hidden node insertion error: {}",
+                                    "hidden node insertion error: {}",
                                     e
                                 ))
                             })?;
@@ -940,7 +940,7 @@ impl<'de> serde::Deserialize<'de> for NodeInfo {
                     }
                 }
                 NodeInfo::try_from(builder).map_err(|e| {
-                    serde::de::Error::custom(format!("Incomplete Taproot tree: {}", e))
+                    serde::de::Error::custom(format!("incomplete Taproot tree: {}", e))
                 })
             }
         }
@@ -1354,11 +1354,11 @@ impl fmt::Display for TaprootBuilderError {
             }
             OverCompleteTree => write!(
                 f,
-                "Attempted to create a tree with two nodes at depth 0. There must\
-                only be a exactly one node at depth 0",
+                "attempted to create a tree with two nodes at depth 0. There must\
+                only be exactly one node at depth 0",
             ),
             EmptyTree => {
-                write!(f, "Called finalize on an empty tree")
+                write!(f, "called finalize on an empty tree")
             }
         }
     }
