@@ -10,7 +10,7 @@ source "$REPO_DIR/fuzz/fuzz-util.sh"
 # Check that input files are correct Windows file names
 checkWindowsFiles
 
-if [ "$1" == "" ]; then
+if [ -z "${1:-}" ]; then
   targetFiles="$(listTargetFiles)"
 else
   targetFiles=fuzz_targets/"$1".rs
