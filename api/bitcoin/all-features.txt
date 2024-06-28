@@ -7067,7 +7067,7 @@ pub fn bitcoin::CompressedPublicKey::read_from<R: bitcoin_io::Read + core::marke
 pub fn bitcoin::CompressedPublicKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::CompressedPublicKey::to_bytes(&self) -> [u8; 33]
 pub fn bitcoin::CompressedPublicKey::try_from(value: bitcoin::PublicKey) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin::CompressedPublicKey::verify<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, msg: &secp256k1::Message, sig: &bitcoin::ecdsa::Signature) -> core::result::Result<(), secp256k1::Error>
+pub fn bitcoin::CompressedPublicKey::verify<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, msg: secp256k1::Message, sig: bitcoin::ecdsa::Signature) -> core::result::Result<(), secp256k1::Error>
 pub fn bitcoin::CompressedPublicKey::wpubkey_hash(&self) -> bitcoin::WPubkeyHash
 pub fn bitcoin::CompressedPublicKey::write_into<W: bitcoin_io::Write + core::marker::Sized>(&self, writer: &mut W) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::EcdsaSighashType::clone(&self) -> bitcoin::EcdsaSighashType
@@ -7167,7 +7167,7 @@ pub fn bitcoin::PublicKey::read_from<R: bitcoin_io::Read + core::marker::Sized>(
 pub fn bitcoin::PublicKey::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin::PublicKey::to_bytes(self) -> alloc::vec::Vec<u8>
 pub fn bitcoin::PublicKey::to_sort_key(self) -> bitcoin::key::SortKey
-pub fn bitcoin::PublicKey::verify<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, msg: &secp256k1::Message, sig: &bitcoin::ecdsa::Signature) -> core::result::Result<(), secp256k1::Error>
+pub fn bitcoin::PublicKey::verify<C: secp256k1::context::Verification>(&self, secp: &secp256k1::Secp256k1<C>, msg: secp256k1::Message, sig: bitcoin::ecdsa::Signature) -> core::result::Result<(), secp256k1::Error>
 pub fn bitcoin::PublicKey::wpubkey_hash(&self) -> core::result::Result<bitcoin::WPubkeyHash, bitcoin::key::UncompressedPublicKeyError>
 pub fn bitcoin::PublicKey::write_into<W: bitcoin_io::Write + core::marker::Sized>(&self, writer: &mut W) -> core::result::Result<(), bitcoin_io::error::Error>
 pub fn bitcoin::SegwitV0Sighash::as_byte_array(&self) -> &Self::Bytes
@@ -8609,10 +8609,10 @@ pub fn bitcoin::blockdata::witness::Witness::last(&self) -> core::option::Option
 pub fn bitcoin::blockdata::witness::Witness::len(&self) -> usize
 pub fn bitcoin::blockdata::witness::Witness::nth(&self, index: usize) -> core::option::Option<&[u8]>
 pub fn bitcoin::blockdata::witness::Witness::p2tr_key_spend(signature: &bitcoin::taproot::Signature) -> bitcoin::blockdata::witness::Witness
-pub fn bitcoin::blockdata::witness::Witness::p2wpkh(signature: &bitcoin::ecdsa::Signature, pubkey: secp256k1::key::PublicKey) -> bitcoin::blockdata::witness::Witness
+pub fn bitcoin::blockdata::witness::Witness::p2wpkh(signature: bitcoin::ecdsa::Signature, pubkey: secp256k1::key::PublicKey) -> bitcoin::blockdata::witness::Witness
 pub fn bitcoin::blockdata::witness::Witness::partial_cmp(&self, other: &bitcoin::blockdata::witness::Witness) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin::blockdata::witness::Witness::push<T: core::convert::AsRef<[u8]>>(&mut self, new_element: T)
-pub fn bitcoin::blockdata::witness::Witness::push_ecdsa_signature(&mut self, signature: &bitcoin::ecdsa::Signature)
+pub fn bitcoin::blockdata::witness::Witness::push_ecdsa_signature(&mut self, signature: bitcoin::ecdsa::Signature)
 pub fn bitcoin::blockdata::witness::Witness::second_to_last(&self) -> core::option::Option<&[u8]>
 pub fn bitcoin::blockdata::witness::Witness::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin::blockdata::witness::Witness::size(&self) -> usize
@@ -9999,7 +9999,7 @@ pub fn bitcoin::taproot::serialized_signature::SerializedSignature::eq(&self, ot
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::from(value: &'a bitcoin::taproot::Signature) -> Self
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::from(value: bitcoin::taproot::Signature) -> Self
-pub fn bitcoin::taproot::serialized_signature::SerializedSignature::from_signature(sig: &bitcoin::taproot::Signature) -> bitcoin::taproot::serialized_signature::SerializedSignature
+pub fn bitcoin::taproot::serialized_signature::SerializedSignature::from_signature(sig: bitcoin::taproot::Signature) -> bitcoin::taproot::serialized_signature::SerializedSignature
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::hash<H: core::hash::Hasher>(&self, state: &mut H)
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::into_iter(self) -> Self::IntoIter
 pub fn bitcoin::taproot::serialized_signature::SerializedSignature::len(&self) -> usize
