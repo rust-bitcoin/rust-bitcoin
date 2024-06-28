@@ -546,7 +546,7 @@ impl TaprootBuilder {
         // early error on invalid depth. Though this will be checked later
         // while constructing TaprootMerkelBranch
         if depth as usize > TAPROOT_CONTROL_MAX_NODE_COUNT {
-            return Err(TaprootBuilderError::InvalidMerkleTreeDepth(depth as usize));
+            return Err(InvalidMerkleTreeDepthError(depth as usize).into());
         }
         // We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing
         // so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a
@@ -1110,7 +1110,7 @@ impl ControlBlock {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
         {
-            return Err(TaprootError::InvalidControlBlockSize(sl.len()));
+            return Err(InvalidControlBlockSizeError(sl.len()).into());
         }
         let output_key_parity = match sl[0] & 1 {
             0 => secp256k1::Parity::Even,
@@ -1188,14 +1188,15 @@ impl ControlBlock {
 pub struct FutureLeafVersion(u8);
 
 impl FutureLeafVersion {
-    pub(self) fn from_consensus(version: u8) -> Result<FutureLeafVersion, TaprootError> {
+    pub(self) fn from_consensus(
+        version: u8,
+    ) -> Result<FutureLeafVersion, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
                 "FutureLeafVersion::from_consensus should be never called for 0xC0 value"
             ),
-            TAPROOT_ANNEX_PREFIX =>
-                Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
-            odd if odd & 0xFE != odd => Err(TaprootError::InvalidTaprootLeafVersion(odd)),
+            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
+            odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
             even => Ok(FutureLeafVersion(even)),
         }
     }
@@ -1237,11 +1238,10 @@ impl LeafVersion {
     ///
     /// - If the last bit of the `version` is odd.
     /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    pub fn from_consensus(version: u8) -> Result<Self, TaprootError> {
+    pub fn from_consensus(version: u8) -> Result<Self, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
-            TAPROOT_ANNEX_PREFIX =>
-                Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
+            TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
             future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
         }
     }
@@ -1332,7 +1332,7 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
 #[non_exhaustive]
 pub enum TaprootBuilderError {
     /// Merkle tree depth must not be more than 128.
-    InvalidMerkleTreeDepth(usize),
+    InvalidMerkleTreeDepth(InvalidMerkleTreeDepthError),
     /// Nodes must be added specified in DFS walk order.
     NodeNotInDfsOrder,
     /// Two nodes at depth 0 are not allowed.
@@ -1348,13 +1348,7 @@ impl fmt::Display for TaprootBuilderError {
         use TaprootBuilderError::*;
 
         match *self {
-            InvalidMerkleTreeDepth(d) => {
-                write!(
-                    f,
-                    "Merkle Tree depth({}) must be less than {}",
-                    d, TAPROOT_CONTROL_MAX_NODE_COUNT
-                )
-            }
+            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
             NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
@@ -1375,10 +1369,15 @@ impl std::error::Error for TaprootBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use TaprootBuilderError::*;
 
-        match self {
-            InvalidMerkleTreeDepth(_) | NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
+        match *self {
+            InvalidMerkleTreeDepth(ref e) => Some(e),
+            NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
         }
     }
+}
+
+impl From<InvalidMerkleTreeDepthError> for TaprootBuilderError {
+    fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
 }
 
 /// Detailed error type for taproot utilities.
@@ -1386,13 +1385,13 @@ impl std::error::Error for TaprootBuilderError {
 #[non_exhaustive]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
-    InvalidMerkleBranchSize(usize),
+    InvalidMerkleBranchSize(InvalidMerkleBranchSizeError),
     /// Merkle tree depth must not be more than 128.
-    InvalidMerkleTreeDepth(usize),
+    InvalidMerkleTreeDepth(InvalidMerkleTreeDepthError),
     /// The last bit of tapleaf version must be zero.
-    InvalidTaprootLeafVersion(u8),
+    InvalidTaprootLeafVersion(InvalidTaprootLeafVersionError),
     /// Invalid control block size.
-    InvalidControlBlockSize(usize),
+    InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid taproot internal key.
     InvalidInternalKey(secp256k1::Error),
     /// Empty tap tree.
@@ -1406,27 +1405,11 @@ impl fmt::Display for TaprootError {
         use TaprootError::*;
 
         match *self {
-            InvalidMerkleBranchSize(sz) => write!(
-                f,
-                "Merkle branch size({}) must be a multiple of {}",
-                sz, TAPROOT_CONTROL_NODE_SIZE
-            ),
-            InvalidMerkleTreeDepth(d) => write!(
-                f,
-                "Merkle Tree depth({}) must be less than {}",
-                d, TAPROOT_CONTROL_MAX_NODE_COUNT
-            ),
-            InvalidTaprootLeafVersion(v) => {
-                write!(f, "Leaf version({}) must have the least significant bit 0", v)
-            }
-            InvalidControlBlockSize(sz) => write!(
-                f,
-                "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
-                sz, TAPROOT_CONTROL_MAX_NODE_COUNT
-            ),
-            InvalidInternalKey(ref e) => {
-                write_err!(f, "invalid internal x-only key"; e)
-            }
+            InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
+            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+            InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
+            InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
+            InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
             EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
@@ -1439,14 +1422,120 @@ impl std::error::Error for TaprootError {
 
         match self {
             InvalidInternalKey(e) => Some(e),
-            InvalidMerkleBranchSize(_)
-            | InvalidMerkleTreeDepth(_)
-            | InvalidTaprootLeafVersion(_)
-            | InvalidControlBlockSize(_)
-            | EmptyTree => None,
+            InvalidTaprootLeafVersion(ref e) => Some(e),
+            InvalidMerkleTreeDepth(ref e) => Some(e),
+            InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) | EmptyTree => None,
         }
     }
 }
+
+impl From<InvalidMerkleBranchSizeError> for TaprootError {
+    fn from(e: InvalidMerkleBranchSizeError) -> Self { Self::InvalidMerkleBranchSize(e) }
+}
+
+impl From<InvalidMerkleTreeDepthError> for TaprootError {
+    fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
+}
+
+impl From<InvalidTaprootLeafVersionError> for TaprootError {
+    fn from(e: InvalidTaprootLeafVersionError) -> Self { Self::InvalidTaprootLeafVersion(e) }
+}
+
+impl From<InvalidControlBlockSizeError> for TaprootError {
+    fn from(e: InvalidControlBlockSizeError) -> Self { Self::InvalidControlBlockSize(e) }
+}
+
+/// Proof size must be a multiple of 32.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidMerkleBranchSizeError(usize);
+
+impl InvalidMerkleBranchSizeError {
+    /// Accessor for the invalid merkle branch size.
+    pub fn invalid_merkle_branch_size(&self) -> usize { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidMerkleBranchSizeError);
+
+impl fmt::Display for InvalidMerkleBranchSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Merkle branch size({}) must be a multiple of {}",
+            self.0, TAPROOT_CONTROL_NODE_SIZE
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidMerkleBranchSizeError {}
+
+/// Merkle tree depth must not be more than 128.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidMerkleTreeDepthError(usize);
+
+impl InvalidMerkleTreeDepthError {
+    /// Accessor for the invalid merkle tree depth.
+    pub fn invalid_merkle_tree_depth(&self) -> usize { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidMerkleTreeDepthError);
+
+impl fmt::Display for InvalidMerkleTreeDepthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Merkle tree depth({}) must be less than {}",
+            self.0, TAPROOT_CONTROL_MAX_NODE_COUNT
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidMerkleTreeDepthError {}
+
+/// The last bit of tapleaf version must be zero.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidTaprootLeafVersionError(u8);
+
+impl InvalidTaprootLeafVersionError {
+    /// Accessor for the invalid leaf version.
+    pub fn invalid_leaf_version(&self) -> u8 { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidTaprootLeafVersionError);
+
+impl fmt::Display for InvalidTaprootLeafVersionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "leaf version({}) must have the least significant bit 0", self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidTaprootLeafVersionError {}
+
+/// Invalid control block size.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidControlBlockSizeError(usize);
+
+impl InvalidControlBlockSizeError {
+    /// Accessor for the invalid control block size.
+    pub fn invalid_control_block_size(&self) -> usize { self.0 }
+}
+
+internals::impl_from_infallible!(InvalidControlBlockSizeError);
+
+impl fmt::Display for InvalidControlBlockSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
+            self.0, TAPROOT_CONTROL_MAX_NODE_COUNT
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidControlBlockSizeError {}
 
 #[cfg(test)]
 mod test {

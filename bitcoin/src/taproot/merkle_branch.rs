@@ -5,8 +5,8 @@
 use hashes::Hash;
 
 use super::{
-    TapNodeHash, TaprootBuilderError, TaprootError, TAPROOT_CONTROL_MAX_NODE_COUNT,
-    TAPROOT_CONTROL_NODE_SIZE,
+    InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash, TaprootError,
+    TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
 };
 use crate::prelude::*;
 
@@ -47,9 +47,9 @@ impl TaprootMerkleBranch {
     /// if the number of hashes exceeds 128.
     pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
-            Err(TaprootError::InvalidMerkleBranchSize(sl.len()))
+            Err(InvalidMerkleBranchSizeError(sl.len()).into())
         } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(TaprootError::InvalidMerkleTreeDepth(sl.len() / TAPROOT_CONTROL_NODE_SIZE))
+            Err(InvalidMerkleTreeDepthError(sl.len() / TAPROOT_CONTROL_NODE_SIZE).into())
         } else {
             let inner = sl
                 .chunks_exact(TAPROOT_CONTROL_NODE_SIZE)
@@ -71,9 +71,9 @@ impl TaprootMerkleBranch {
     #[inline]
     fn from_collection<T: AsRef<[TapNodeHash]> + Into<Vec<TapNodeHash>>>(
         collection: T,
-    ) -> Result<Self, TaprootError> {
+    ) -> Result<Self, InvalidMerkleTreeDepthError> {
         if collection.as_ref().len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(TaprootError::InvalidMerkleTreeDepth(collection.as_ref().len()))
+            Err(InvalidMerkleTreeDepthError(collection.as_ref().len()))
         } else {
             Ok(TaprootMerkleBranch(collection.into()))
         }
@@ -97,9 +97,9 @@ impl TaprootMerkleBranch {
     }
 
     /// Appends elements to proof.
-    pub(super) fn push(&mut self, h: TapNodeHash) -> Result<(), TaprootBuilderError> {
+    pub(super) fn push(&mut self, h: TapNodeHash) -> Result<(), InvalidMerkleTreeDepthError> {
         if self.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(TaprootBuilderError::InvalidMerkleTreeDepth(self.0.len()))
+            Err(InvalidMerkleTreeDepthError(self.0.len()))
         } else {
             self.0.push(h);
             Ok(())
@@ -119,7 +119,7 @@ impl TaprootMerkleBranch {
 macro_rules! impl_try_from {
     ($from:ty) => {
         impl TryFrom<$from> for TaprootMerkleBranch {
-            type Error = TaprootError;
+            type Error = InvalidMerkleTreeDepthError;
 
             /// Creates a merkle proof from list of hashes.
             ///
