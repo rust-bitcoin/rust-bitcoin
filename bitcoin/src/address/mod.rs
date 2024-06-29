@@ -33,6 +33,7 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::hrp::Hrp;
+use bech32::primitives::gf32::Fe32;
 use hashes::{sha256, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
@@ -168,7 +169,8 @@ impl fmt::Display for AddressInner {
             }
             Segwit { program, hrp } => {
                 let hrp = hrp.to_hrp();
-                let version = program.version().to_fe();
+                let version = Fe32::try_from(program.version().to_num())
+                    .expect("version nums 0-16 are valid fe32 values");
                 let program = program.program().as_ref();
 
                 if fmt.alternate() {
@@ -829,7 +831,7 @@ impl FromStr for Address<NetworkUnchecked> {
 
     fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
         if let Ok((hrp, witness_version, data)) = bech32::segwit::decode(s) {
-            let version = WitnessVersion::try_from(witness_version)?;
+            let version = WitnessVersion::try_from(witness_version.to_u8())?;
             let program = WitnessProgram::new(version, &data)
                 .expect("bech32 guarantees valid program length for witness");
 

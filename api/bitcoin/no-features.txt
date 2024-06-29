@@ -1650,7 +1650,6 @@ impl core::convert::From<bitcoin::blockdata::script::witness_version::TryFromErr
 impl core::convert::From<bitcoin::blockdata::script::witness_version::TryFromError> for bitcoin::address::error::ParseError
 impl core::convert::From<bitcoin::blockdata::script::witness_version::TryFromError> for bitcoin::blockdata::script::witness_version::FromStrError
 impl core::convert::From<bitcoin::blockdata::script::witness_version::TryFromError> for bitcoin::blockdata::script::witness_version::TryFromInstructionError
-impl core::convert::From<bitcoin::blockdata::script::witness_version::WitnessVersion> for bech32::primitives::gf32::Fe32
 impl core::convert::From<bitcoin::blockdata::script::witness_version::WitnessVersion> for bitcoin::blockdata::opcodes::Opcode
 impl core::convert::From<bitcoin::blockdata::transaction::IndexOutOfBoundsError> for bitcoin::blockdata::transaction::InputsIndexError
 impl core::convert::From<bitcoin::blockdata::transaction::IndexOutOfBoundsError> for bitcoin::blockdata::transaction::OutputsIndexError
@@ -1792,7 +1791,6 @@ impl core::convert::TryFrom<&bitcoin::blockdata::script::ScriptBuf> for bitcoin:
 impl core::convert::TryFrom<alloc::boxed::Box<[bitcoin::taproot::TapNodeHash]>> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::convert::TryFrom<alloc::vec::Vec<bitcoin::taproot::TapNodeHash>> for bitcoin::taproot::merkle_branch::TaprootMerkleBranch
 impl core::convert::TryFrom<alloc::vec::Vec<u8>> for bitcoin::blockdata::script::PushBytesBuf
-impl core::convert::TryFrom<bech32::primitives::gf32::Fe32> for bitcoin::blockdata::script::witness_version::WitnessVersion
 impl core::convert::TryFrom<bitcoin::PublicKey> for bitcoin::CompressedPublicKey
 impl core::convert::TryFrom<bitcoin::blockdata::constants::ChainHash> for bitcoin::network::Network
 impl core::convert::TryFrom<bitcoin::blockdata::opcodes::Opcode> for bitcoin::blockdata::script::witness_version::WitnessVersion
@@ -6110,7 +6108,6 @@ pub fn alloc::vec::Vec<u8>::consensus_decode_from_finite_reader<R: bitcoin_io::B
 pub fn alloc::vec::Vec<u8>::consensus_encode<W: bitcoin_io::Write + core::marker::Sized>(&self, w: &mut W) -> core::result::Result<usize, bitcoin_io::error::Error>
 pub fn alloc::vec::Vec<u8>::from(v: bitcoin::blockdata::script::ScriptBuf) -> Self
 pub fn alloc::vec::Vec<u8>::from(value: bitcoin::blockdata::script::PushBytesBuf) -> Self
-pub fn bech32::primitives::gf32::Fe32::from(version: bitcoin::blockdata::script::witness_version::WitnessVersion) -> Self
 pub fn bitcoin::CompressedPublicKey::clone(&self) -> bitcoin::CompressedPublicKey
 pub fn bitcoin::CompressedPublicKey::cmp(&self, other: &bitcoin::CompressedPublicKey) -> core::cmp::Ordering
 pub fn bitcoin::CompressedPublicKey::eq(&self, other: &bitcoin::CompressedPublicKey) -> bool
@@ -7348,12 +7345,10 @@ pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::fmt(&self, f
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::partial_cmp(&self, other: &bitcoin::blockdata::script::witness_version::WitnessVersion) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::to_fe(self) -> bech32::primitives::gf32::Fe32
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::to_num(self) -> u8
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::try_from(instruction: bitcoin::blockdata::script::Instruction<'_>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::try_from(no: u8) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::try_from(opcode: bitcoin::blockdata::opcodes::Opcode) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin::blockdata::script::witness_version::WitnessVersion::try_from(value: bech32::primitives::gf32::Fe32) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin::blockdata::script::write_scriptint(out: &mut [u8; 8], n: i64) -> usize
 pub fn bitcoin::blockdata::transaction::IndexOutOfBoundsError::clone(&self) -> bitcoin::blockdata::transaction::IndexOutOfBoundsError
 pub fn bitcoin::blockdata::transaction::IndexOutOfBoundsError::eq(&self, other: &bitcoin::blockdata::transaction::IndexOutOfBoundsError) -> bool

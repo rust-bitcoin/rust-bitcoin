@@ -10,7 +10,6 @@
 use core::fmt;
 use core::str::FromStr;
 
-use bech32::Fe32;
 use internals::write_err;
 use units::{parse, ParseIntError};
 
@@ -71,11 +70,6 @@ impl WitnessVersion {
     /// version in bitcoin script. Thus, there is no function to directly convert witness version
     /// into a byte since the conversion requires context (bitcoin script or just a version number).
     pub fn to_num(self) -> u8 { self as u8 }
-
-    /// Converts this witness version to a GF32 field element.
-    pub fn to_fe(self) -> Fe32 {
-        Fe32::try_from(self.to_num()).expect("0-16 are valid fe32 values")
-    }
 }
 
 /// Prints [`WitnessVersion`] number (from 0 to 16) as integer, without any prefix or suffix.
@@ -90,12 +84,6 @@ impl FromStr for WitnessVersion {
         let version: u8 = parse::int(s)?;
         Ok(WitnessVersion::try_from(version)?)
     }
-}
-
-impl TryFrom<bech32::Fe32> for WitnessVersion {
-    type Error = TryFromError;
-
-    fn try_from(value: Fe32) -> Result<Self, Self::Error> { Self::try_from(value.to_u8()) }
 }
 
 impl TryFrom<u8> for WitnessVersion {
@@ -150,10 +138,6 @@ impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
             Instruction::PushBytes(_) => Err(TryFromInstructionError::DataPush),
         }
     }
-}
-
-impl From<WitnessVersion> for Fe32 {
-    fn from(version: WitnessVersion) -> Self { version.to_fe() }
 }
 
 impl From<WitnessVersion> for Opcode {
