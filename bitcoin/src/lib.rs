@@ -42,12 +42,14 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
-// Disable 16-bit support at least for now as we can't guarantee it yet.
-#[cfg(target_pointer_width = "16")]
-compile_error!(
-    "rust-bitcoin currently only supports architectures with pointers wider than 16 bits, let us
-    know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
-);
+// We only support 32 and 64 bit machines.
+//
+// - We can't guarantee this lib works on architectures with less than 32 bit pointer width.
+// - 128 bit machines don't exist yet but Rust does not implement `Into<u64>` for `usize`,
+//   presumably to support 128 machines when they do exist. This makes conversion from `usize`
+//   fallible which is annoying so we explicitly do not support 128 bit architectures.
+#[cfg(all(not(target_pointer_width = "32"), not(target_pointer_width = "64")))]
+compile_error!("rust-bitcoin currently only supports 32 and 64 bit architectures.");
 
 #[cfg(bench)]
 extern crate test;
@@ -127,7 +129,6 @@ pub use crate::{
     blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut, Txid, Wtxid},
     blockdata::weight::Weight,
     blockdata::witness::{self, Witness},
-    consensus::encode::VarInt,
     consensus::params,
     crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
@@ -244,4 +245,26 @@ mod encode_impls {
 
     impl_encodable_for_u32_wrapper!(BlockHeight);
     impl_encodable_for_u32_wrapper!(BlockInterval);
+}
+
+/// A conversion trait for unsigned integer types smaller than or equal to 64-bits.
+///
+/// This trait exists because [`usize`] doesn't implement `Into<u64>`, however because we only
+/// support 32 and 64 bit architectures we can infallibly do the conversion.
+pub trait ToU64 {
+    /// Converts unsigned integer type to a [`u64`].
+    fn to_u64(self) -> u64;
+}
+
+macro_rules! impl_to_u64 {
+    ($($ty:ident),*) => {
+        $(
+            impl ToU64 for $ty { fn to_u64(self) -> u64 { self.into() } }
+        )*
+    }
+}
+impl_to_u64!(u8, u16, u32, u64);
+
+impl ToU64 for usize {
+    fn to_u64(self) -> u64 { self.try_into().expect("definitely fits in 64 bits") }
 }

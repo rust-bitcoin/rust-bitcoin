@@ -19,7 +19,7 @@ use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::transaction::{Transaction, Wtxid};
-use crate::{script, VarInt};
+use crate::script;
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
@@ -330,7 +330,7 @@ impl Block {
     fn base_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += encode::varint_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.base_size()).sum::<usize>();
 
         size
@@ -343,7 +343,7 @@ impl Block {
     pub fn total_size(&self) -> usize {
         let mut size = Header::SIZE;
 
-        size += VarInt::from(self.txdata.len()).size();
+        size += encode::varint_size(self.txdata.len());
         size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
 
         size
@@ -485,7 +485,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::Network;
+    use crate::{Network, ToU64};
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -542,7 +542,7 @@ mod tests {
         assert_eq!(real_decode.base_size(), some_block.len());
         assert_eq!(
             real_decode.weight(),
-            Weight::from_non_witness_data_size(some_block.len() as u64)
+            Weight::from_non_witness_data_size(some_block.len().to_u64())
         );
 
         // should be also ok for a non-witness block as commitment is optional in that case

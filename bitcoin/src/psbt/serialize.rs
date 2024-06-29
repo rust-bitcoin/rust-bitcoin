@@ -21,7 +21,7 @@ use crate::taproot::{
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-use crate::VarInt;
+
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -338,7 +338,7 @@ impl Serialize for TapTree {
         let capacity = self
             .script_leaves()
             .map(|l| {
-                l.script().len() + VarInt::from(l.script().len()).size() // script version
+                l.script().len() + encode::varint_size(l.script().len())
             + 1 // merkle branch
             + 1 // leaf version
             })

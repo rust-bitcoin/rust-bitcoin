@@ -10,7 +10,7 @@ use core::{fmt, iter};
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
+use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, WriteExt, ReadExt};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{
@@ -18,7 +18,7 @@ use crate::p2p::{
     Magic,
 };
 use crate::prelude::*;
-use crate::{block, transaction};
+use crate::{block, transaction, ToU64};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -336,7 +336,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += VarInt::from(self.0.len()).consensus_encode(w)?;
+        len += w.emit_varint(self.0.len())?;
         for header in self.0.iter() {
             len += header.consensus_encode(w)?;
             len += 0u8.consensus_encode(w)?;
@@ -409,7 +409,7 @@ impl Decodable for HeaderDeserializationWrapper {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        let len = VarInt::consensus_decode(r)?.0;
+        let len = r.read_varint()?;
         // should be above usual number of items to avoid
         // allocation
         let mut ret = Vec::with_capacity(core::cmp::min(1024 * 16, len as usize));
@@ -426,7 +426,7 @@ impl Decodable for HeaderDeserializationWrapper {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
@@ -531,7 +531,7 @@ impl Decodable for RawNetworkMessage {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 

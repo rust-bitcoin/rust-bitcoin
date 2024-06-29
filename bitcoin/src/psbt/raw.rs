@@ -11,10 +11,11 @@ use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
-    self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
+    self, deserialize, serialize, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
 };
 use crate::prelude::*;
 use crate::psbt::Error;
+use crate::ToU64;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
@@ -74,7 +75,7 @@ impl fmt::Display for Key {
 
 impl Key {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
+        let byte_size = r.read_varint()?;
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs);
@@ -82,7 +83,7 @@ impl Key {
 
         let key_byte_size: u64 = byte_size - 1;
 
-        if key_byte_size > MAX_VEC_SIZE as u64 {
+        if key_byte_size > MAX_VEC_SIZE.to_u64() {
             return Err(encode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
@@ -104,9 +105,7 @@ impl Key {
 impl Serialize for Key {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        VarInt::from(self.key.len() + 1)
-            .consensus_encode(&mut buf)
-            .expect("in-memory writers don't error");
+        buf.emit_varint(self.key.len() + 1).expect("in-memory writers don't error");
 
         self.type_value.consensus_encode(&mut buf).expect("in-memory writers don't error");
 
