@@ -14,12 +14,14 @@
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 #![no_std]
 
-// Disable 16-bit support at least for now as we can't guarantee it yet.
-#[cfg(target_pointer_width = "16")]
-compile_error!(
-    "rust-bitcoin currently only supports architectures with pointers wider than 16 bits, let us
-    know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
-);
+// We only support 32-bit and 64-bit targets.
+//
+// - We can't guarantee this library works on 16-bit targets.
+// - 128 bit machines don't exist yet but Rust does not implement `Into<u64>` for `usize`,
+//   presumably to support 128 machines when they do exist. This makes conversion from `usize`
+//   fallible which is annoying so we explicitly do not support 128 bit targets.
+#[cfg(all(not(target_pointer_width = "32"), not(target_pointer_width = "64")))]
+compile_error!("bitcoin-units currently only supports 32-bit and 64-bit targets");
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

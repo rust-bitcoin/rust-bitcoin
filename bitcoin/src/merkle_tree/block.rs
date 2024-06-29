@@ -19,7 +19,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
 use crate::prelude::*;
 use crate::transaction::{Transaction, Txid};
-use crate::Weight;
+use crate::{ToU64, Weight};
 
 /// Data structure that represents a block header paired to a partial merkle tree.
 ///
@@ -245,7 +245,7 @@ impl PartialMerkleTree {
             return Err(NoTransactions);
         };
         // check for excessively high numbers of transactions
-        if self.num_transactions as u64 > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
+        if self.num_transactions.to_u64() > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
             return Err(TooManyTransactions);
         }
         // there can never be more hashes provided than one for every txid

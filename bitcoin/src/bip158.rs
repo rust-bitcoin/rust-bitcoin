@@ -51,6 +51,7 @@ use crate::internal_macros::impl_hashencode;
 use crate::prelude::*;
 use crate::script::Script;
 use crate::transaction::OutPoint;
+use crate::ToU64;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -387,7 +388,7 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
 
     /// Writes the filter to the wrapped writer.
     pub fn finish(&mut self) -> Result<usize, io::Error> {
-        let nm = self.elements.len() as u64 * self.m;
+        let nm = self.elements.len().to_u64() * self.m;
 
         // map hashes to [0, n_elements * M)
         let mut mapped: Vec<_> = self
@@ -503,7 +504,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
             }
             let bits = cmp::min(8 - self.offset, nbits);
             data <<= bits;
-            data |= ((self.buffer[0] << self.offset) >> (8 - bits)) as u64;
+            data |= ((self.buffer[0] << self.offset) >> (8 - bits)).to_u64();
             self.offset += bits;
             nbits -= bits;
         }

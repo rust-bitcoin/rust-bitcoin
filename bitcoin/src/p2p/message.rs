@@ -18,7 +18,7 @@ use crate::p2p::{
     Magic,
 };
 use crate::prelude::*;
-use crate::{block, transaction};
+use crate::{block, transaction, ToU64};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -426,7 +426,7 @@ impl Decodable for HeaderDeserializationWrapper {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
@@ -531,7 +531,7 @@ impl Decodable for RawNetworkMessage {
 
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE as u64))
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
