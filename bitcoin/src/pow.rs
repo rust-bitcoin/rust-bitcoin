@@ -5,9 +5,8 @@
 //! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
 //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
 
-use core::cmp;
-use core::fmt;
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
+use core::{cmp, fmt};
 
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]

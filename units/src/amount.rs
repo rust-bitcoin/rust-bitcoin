@@ -98,8 +98,7 @@ impl Denomination {
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
-const CONFUSING_FORMS: [&str; 6] =
-    ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
+const CONFUSING_FORMS: [&str; 6] = ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_str()) }
@@ -2611,7 +2610,6 @@ mod tests {
             sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::MicroBitcoin),
             Err(OutOfRangeError::too_small().into())
         );
-
     }
 
     #[cfg(feature = "alloc")]

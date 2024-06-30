@@ -32,8 +32,8 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
-use bech32::primitives::hrp::Hrp;
 use bech32::primitives::gf32::Fe32;
+use bech32::primitives::hrp::Hrp;
 use hashes::{sha256, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
