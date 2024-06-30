@@ -17,7 +17,7 @@ use crate::p2p::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
     Magic,
 };
-use crate::prelude::*;
+use crate::prelude::{Box, Cow, String, ToOwned, Vec};
 use crate::{block, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.

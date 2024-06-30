@@ -17,7 +17,7 @@ use self::MerkleBlockError::*;
 use crate::block::{self, Block};
 use crate::consensus::encode::{self, Decodable, Encodable, MAX_VEC_SIZE};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
-use crate::prelude::*;
+use crate::prelude::Vec;
 use crate::transaction::{Transaction, Txid};
 use crate::Weight;
 
@@ -512,7 +512,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{test_hex_unwrap as hex, FromHex};
+    use crate::hex::{test_hex_unwrap as hex, FromHex, DisplayHex};
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {

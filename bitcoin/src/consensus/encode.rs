@@ -31,7 +31,7 @@ use crate::p2p::{
     address::{AddrV2Message, Address},
     message_blockdata::Inventory,
 };
-use crate::prelude::*;
+use crate::prelude::{Box, Cow, DisplayHex, rc, String, sync, Vec};
 use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
 

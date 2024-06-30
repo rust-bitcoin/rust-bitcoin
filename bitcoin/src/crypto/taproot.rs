@@ -9,7 +9,7 @@ use core::fmt;
 use internals::write_err;
 use io::Write;
 
-use crate::prelude::*;
+use crate::prelude::Vec;
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
 

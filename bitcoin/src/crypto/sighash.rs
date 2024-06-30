@@ -18,7 +18,7 @@ use internals::write_err;
 use io::Write;
 
 use crate::consensus::{encode, Encodable};
-use crate::prelude::*;
+use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::witness::Witness;
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};

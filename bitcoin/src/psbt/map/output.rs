@@ -3,7 +3,7 @@
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
-use crate::prelude::*;
+use crate::prelude::{BTreeMap, btree_map,  Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
 use crate::script::ScriptBuf;

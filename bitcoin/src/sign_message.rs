@@ -165,7 +165,7 @@ mod message_signing {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
 
         use super::*;
-        use crate::prelude::*;
+        use crate::prelude::String;
 
         impl MessageSignature {
             /// Convert a signature from base64 encoding.

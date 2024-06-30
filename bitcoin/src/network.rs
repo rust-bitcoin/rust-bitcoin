@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 use crate::consensus::Params;
 use crate::constants::ChainHash;
 use crate::p2p::Magic;
-use crate::prelude::*;
+use crate::prelude::{String, ToOwned};
 
 /// What kind of network we are on.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

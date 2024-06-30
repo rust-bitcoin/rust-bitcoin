@@ -102,7 +102,7 @@ impl<T: GeneralHash> Hkdf<T> {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use hex::prelude::*;
+    use hex::prelude::{FromHex, DisplayHex};
 
     use super::*;
     use crate::sha256;

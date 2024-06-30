@@ -11,7 +11,7 @@ use crate::key::{
 };
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
-use crate::prelude::*;
+use crate::prelude::{Box, Vec};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{

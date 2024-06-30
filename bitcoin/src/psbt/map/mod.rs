@@ -4,7 +4,7 @@ mod global;
 mod input;
 mod output;
 
-use crate::prelude::*;
+use crate::prelude::Vec;
 use crate::psbt::raw;
 use crate::psbt::serialize::Serialize;
 

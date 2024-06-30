@@ -11,7 +11,7 @@ use hex::FromHex;
 use internals::write_err;
 use io::Write;
 
-use crate::prelude::*;
+use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 

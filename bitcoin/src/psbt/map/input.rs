@@ -9,7 +9,7 @@ use secp256k1::XOnlyPublicKey;
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::prelude::*;
+use crate::prelude::{Borrow, Box, BTreeMap, btree_map, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};

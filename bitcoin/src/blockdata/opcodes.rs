@@ -12,7 +12,7 @@ use core::fmt;
 use internals::debug_from_display;
 
 #[cfg(feature = "serde")]
-use crate::prelude::*;
+use crate::prelude::ToString;
 
 /// A script Opcode.
 ///
