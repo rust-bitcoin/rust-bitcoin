@@ -1,6 +1,5 @@
 //! Contains extensions of `serde` and internal reexports.
 
-#[cfg(feature = "serde")]
 #[doc(hidden)]
 pub use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -8,7 +7,6 @@ pub use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 ///
 /// This is used in [`Deserialize`] implementations to convert specialized errors into serde
 /// errors.
-#[cfg(feature = "serde")]
 pub trait IntoDeError: Sized {
     /// Converts to deserializer error possibly outputting vague message.
     ///
@@ -28,7 +26,6 @@ pub trait IntoDeError: Sized {
     }
 }
 
-#[cfg(feature = "serde")]
 mod impls {
     use super::*;
 
@@ -62,3 +59,15 @@ mod impls {
         }
     }
 }
+
+/// Does round trip test to/from serde value.
+#[macro_export]
+macro_rules! serde_round_trip (
+    ($var:expr) => ({
+        use serde_json;
+
+        let encoded = serde_json::to_value(&$var).unwrap();
+        let decoded = serde_json::from_value(encoded).unwrap();
+        assert_eq!($var, decoded);
+    })
+);
