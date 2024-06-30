@@ -40,7 +40,9 @@ impl Error {
 
     /// Returns a reference to this error.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub fn get_ref(&self) -> Option<&(dyn fmt::Debug + Send + Sync + 'static)> { self.error.as_deref() }
+    pub fn get_ref(&self) -> Option<&(dyn fmt::Debug + Send + Sync + 'static)> {
+        self.error.as_deref()
+    }
 }
 
 impl From<ErrorKind> for Error {
@@ -196,7 +198,9 @@ mod sealed {
     }
 
     impl IntoBoxDynDebug for &str {
-        fn into(self) -> Box<dyn fmt::Debug + Send + Sync + 'static> { Box::new(String::from(self)) }
+        fn into(self) -> Box<dyn fmt::Debug + Send + Sync + 'static> {
+            Box::new(String::from(self))
+        }
     }
 
     impl IntoBoxDynDebug for String {

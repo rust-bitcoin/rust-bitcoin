@@ -133,41 +133,33 @@ pub use self::{
     hmac::{Hmac, HmacEngine},
 };
 
-/// SHA-1: Alias for the [`sha1::Hash`] hash type.
-#[doc(inline)]
-pub use sha1::Hash as Sha1;
-
-/// SHA-256: Alias for the [`sha256::Hash`] hash type.
-#[doc(inline)]
-pub use sha256::Hash as Sha256;
-
-/// SHA-384: Alias for the [`sha384::Hash`] hash type.
-#[doc(inline)]
-pub use sha384::Hash as Sha384;
-
-/// SHA-512: Alias for the [`sha512::Hash`] hash type.
-#[doc(inline)]
-pub use sha512::Hash as Sha512;
-
-/// SHA-512-256: Alias for the [`sha512_256::Hash`] hash type.
-#[doc(inline)]
-pub use sha512_256::Hash as Sha512_256;
-
-/// RIPEMD-160: Alias for the [`ripemd160::Hash`] hash type.
-#[doc(inline)]
-pub use ripemd160::Hash as Ripemd160;
-
-/// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
-#[doc(inline)]
-pub use siphash24::Hash as Siphash24;
-
 /// HASH-160: Alias for the [`hash160::Hash`] hash type.
 #[doc(inline)]
 pub use hash160::Hash as Hash160;
-
+/// RIPEMD-160: Alias for the [`ripemd160::Hash`] hash type.
+#[doc(inline)]
+pub use ripemd160::Hash as Ripemd160;
+/// SHA-1: Alias for the [`sha1::Hash`] hash type.
+#[doc(inline)]
+pub use sha1::Hash as Sha1;
+/// SHA-256: Alias for the [`sha256::Hash`] hash type.
+#[doc(inline)]
+pub use sha256::Hash as Sha256;
 /// Double SHA-256: Alias for the [`sha256d::Hash`] hash type.
 #[doc(inline)]
 pub use sha256d::Hash as Sha256d;
+/// SHA-384: Alias for the [`sha384::Hash`] hash type.
+#[doc(inline)]
+pub use sha384::Hash as Sha384;
+/// SHA-512: Alias for the [`sha512::Hash`] hash type.
+#[doc(inline)]
+pub use sha512::Hash as Sha512;
+/// SHA-512-256: Alias for the [`sha512_256::Hash`] hash type.
+#[doc(inline)]
+pub use sha512_256::Hash as Sha512_256;
+/// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
+#[doc(inline)]
+pub use siphash24::Hash as Siphash24;
 
 /// Tagged SHA-256: Type alias for the [`sha256t::Hash`] hash type.
 pub type Sha256t<T> = sha256t::Hash<T>;
