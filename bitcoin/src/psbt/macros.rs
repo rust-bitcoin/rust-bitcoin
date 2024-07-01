@@ -141,7 +141,7 @@ macro_rules! impl_psbt_get_pair {
         if let Some(ref $unkeyed_name) = $slf.$unkeyed_name {
             $rv.push($crate::psbt::raw::Pair {
                 key: $crate::psbt::raw::Key {
-                    type_value: $unkeyed_typeval,
+                    type_value: $unkeyed_typeval as u64,
                     key: vec![],
                 },
                 value: $crate::psbt::serialize::Serialize::serialize($unkeyed_name),
@@ -152,7 +152,7 @@ macro_rules! impl_psbt_get_pair {
         for (key, val) in &$slf.$keyed_name {
             $rv.push($crate::psbt::raw::Pair {
                 key: $crate::psbt::raw::Key {
-                    type_value: $keyed_typeval,
+                    type_value: $keyed_typeval as u64,
                     key: $crate::psbt::serialize::Serialize::serialize(key),
                 },
                 value: $crate::psbt::serialize::Serialize::serialize(val),

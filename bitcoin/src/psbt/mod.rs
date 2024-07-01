@@ -1437,7 +1437,7 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_psbtkvpair() {
         let expected = raw::Pair {
-            key: raw::Key { type_value: 0u8, key: vec![42u8, 69u8] },
+            key: raw::Key { type_value: 0u64, key: vec![42u8, 69u8] },
             value: vec![69u8, 42u8, 4u8],
         };
 
@@ -1849,7 +1849,7 @@ mod tests {
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
-            let key: raw::Key = raw::Key { type_value: 0x0fu8, key: hex!("010203040506070809") };
+            let key: raw::Key = raw::Key { type_value: 0x0fu64, key: hex!("010203040506070809") };
             let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
 
             unknown.insert(key, value);
