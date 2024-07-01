@@ -194,6 +194,14 @@ Use of `unsafe` code is prohibited unless there is a unanimous decision among
 library maintainers on the exclusion from this rule. In such cases there is a
 requirement to test unsafe code with sanitizers including Miri.
 
+### API changes
+
+All PRs that change the public API of `rust-bitcoin` will be checked on CI for
+semversioning compliance. This means that if the PR changes the public API in a
+way that is not backwards compatible, the PR will be flagged as a breaking change.
+Please check the [Rust workflow](.github/workflows/rust.yml).
+Under the hood we use [`cargo-semver-checks`](https://github.com/obi1kenobi/cargo-semver-checks).
+
 
 ### Policy
 
