@@ -172,7 +172,7 @@ pub enum TapSighashType {
     SinglePlusAnyoneCanPay = 0x83,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(TapSighashType, "a TapSighashType data");
+internals::serde_string_impl!(TapSighashType, "a TapSighashType data");
 
 impl fmt::Display for TapSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -360,7 +360,7 @@ pub enum EcdsaSighashType {
     SinglePlusAnyoneCanPay = 0x83,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
+internals::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
 impl fmt::Display for EcdsaSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
