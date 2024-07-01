@@ -2,9 +2,6 @@
 
 //! SHA384 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{sha512, FromSliceError};
 
 crate::internal_macros::hash_type! {

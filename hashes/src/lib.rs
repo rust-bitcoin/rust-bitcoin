@@ -107,6 +107,8 @@ mod internal_macros;
 #[macro_use]
 mod util;
 #[macro_use]
+mod macros;
+#[macro_use]
 pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
