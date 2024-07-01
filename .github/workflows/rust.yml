@@ -302,3 +302,24 @@ jobs:
         uses: model-checking/kani-github-action@v1.1
         with:
           args: "--only-codegen"
+
+  API:
+    needs: Prepare
+    name: API - nightly toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature-group: ["all-features", "default-features"]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          rust-toolchain: manual
+          feature-group: ${{ matrix.feature-group }}
