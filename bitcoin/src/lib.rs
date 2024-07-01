@@ -29,6 +29,8 @@
 //!                            happen the implementations diverge one day.
 //! * `ordered` - (dependency), adds implementations of `ArbitraryOrdOrd` to some structs.
 
+// IDK what to do about this.
+#![allow(macro_expanded_macro_exports_accessed_by_absolute_paths)]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -140,6 +142,9 @@ pub use crate::{
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
 pub use units::{BlockHeight, BlockInterval};
+
+#[doc(hidden)]
+pub use internals;
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

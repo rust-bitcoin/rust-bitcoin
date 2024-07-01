@@ -84,13 +84,29 @@ mod safety_boundary {
         /// # Panics
         ///
         /// If the length would increase past CAP.
+        #[track_caller]
         pub fn extend_from_slice(&mut self, slice: &[T]) {
             let new_len = self.len.checked_add(slice.len()).expect("integer/buffer overflow");
             assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
             let slice = unsafe { &*(slice as *const _ as *const [MaybeUninit<T>]) };
-            self.data[self.len..].copy_from_slice(slice);
+            self.data[self.len..new_len].copy_from_slice(slice);
             self.len = new_len;
+        }
+
+        /// Converts the array vec to array if it's full.
+        ///
+        /// # Panics
+        ///
+        /// If the length is not equal to capacity.
+        #[track_caller]
+        pub fn unwrap(self) -> [T; CAP] {
+            assert_eq!(self.len, CAP, "arrayvec length doesn't match capacity");
+            unsafe {
+                // SAFETY: len checked above, the lengths match, layout of elements is the same
+                // Note: `array_assume_init` is unstable so we have to use transmute.
+                core::mem::transmute_copy::<[MaybeUninit<T>; CAP], [T; CAP]>(&self.data)
+            }
         }
     }
 }
