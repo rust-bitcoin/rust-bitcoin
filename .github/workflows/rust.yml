@@ -302,3 +302,36 @@ jobs:
         uses: model-checking/kani-github-action@v1.1
         with:
           args: "--only-codegen"
+
+  API:
+    needs: Prepare
+    name: API - nightly toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # we need full history for cargo semver-checks
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: "Install cargo-binstall"
+        uses: cargo-bins/cargo-binstall@main
+      - name: "Binstall cargo-semver-checks"
+        run: cargo binstall cargo-semver-checks --no-confirm
+      - name: "Run semver checker script"
+        run: ./contrib/check-semver.sh
+      - name: "Add PR label to breaking changes"
+        uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ hashFiles('semver-break') != '' }}
+        with:
+          labels: "API break"
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        if: ${{ hashFiles('semver-break') != '' }}
+        with:
+          message: |
+            :rotating_light: **API BREAKING CHANGE DETECTED** :rotating_light:
