@@ -4,18 +4,12 @@
 use core::ops::Deref;
 
 use hex::FromHex;
-use secp256k1::{Secp256k1, Verification};
 
-use super::witness_program::WitnessProgram;
-use super::witness_version::WitnessVersion;
-use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash};
-use crate::key::{
-    PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
-};
+use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
+use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
-use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.
 ///
@@ -72,84 +66,6 @@ impl ScriptBuf {
 
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
-
-    /// Generates P2PK-type of scriptPubkey.
-    pub fn new_p2pk(pubkey: PublicKey) -> Self {
-        Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
-    }
-
-    /// Generates P2PKH-type of scriptPubkey.
-    pub fn new_p2pkh(pubkey_hash: PubkeyHash) -> Self {
-        Builder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(pubkey_hash)
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script()
-    }
-
-    /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2sh(script_hash: ScriptHash) -> Self {
-        Builder::new()
-            .push_opcode(OP_HASH160)
-            .push_slice(script_hash)
-            .push_opcode(OP_EQUAL)
-            .into_script()
-    }
-
-    /// Generates P2WPKH-type of scriptPubkey.
-    pub fn new_p2wpkh(pubkey_hash: WPubkeyHash) -> Self {
-        // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
-    }
-
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_p2wsh(script_hash: WScriptHash) -> Self {
-        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
-    }
-
-    /// Generates P2TR for script spending path using an internal public key and some optional
-    /// script tree Merkle root.
-    pub fn new_p2tr<C: Verification>(
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
-        // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
-    }
-
-    /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
-    pub fn new_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
-    }
-
-    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
-    pub fn new_witness_program(witness_program: &WitnessProgram) -> Self {
-        Builder::new()
-            .push_opcode(witness_program.version().into())
-            .push_slice(witness_program.program())
-            .into_script()
-    }
-
-    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
-    /// Does not do any checks on version or program length.
-    ///
-    /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
-    pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
-        version: WitnessVersion,
-        program: T,
-    ) -> Self {
-        let program = program.as_ref();
-        debug_assert!(program.len() >= 2 && program.len() <= 40);
-        // In segwit v0, the program must be 20 or 32 bytes long.
-        debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
-        Builder::new().push_opcode(version.into()).push_slice(program).into_script()
-    }
 
     /// Creates the script code used for spending a P2WPKH output.
     ///

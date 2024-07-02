@@ -1211,6 +1211,7 @@ mod tests {
     use secp256k1::{All, SecretKey};
 
     use super::*;
+    use crate::address::script_pubkey::ScriptExt as _;
     use crate::bip32::ChildNumber;
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
@@ -2249,6 +2250,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn sign_psbt() {
+        use crate::address::script_pubkey::ScriptBufExt as _;
         use crate::bip32::{DerivationPath, Fingerprint};
         use crate::witness_version::WitnessVersion;
         use crate::WitnessProgram;
