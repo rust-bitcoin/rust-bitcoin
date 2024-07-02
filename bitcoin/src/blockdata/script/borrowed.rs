@@ -349,13 +349,25 @@ impl Script {
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
     }
 
-    /// Check if this is an OP_RETURN output.
+    /// Check if this is a consensus-valid OP_RETURN output.
+    ///
+    /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
+    /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
     #[inline]
     pub fn is_op_return(&self) -> bool {
         match self.0.first() {
             Some(b) => *b == OP_RETURN.to_u8(),
             None => false,
         }
+    }
+
+    /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
+    ///
+    /// What this function considers to be standard may change without warning pending Bitcoin Core
+    /// changes.
+    #[inline]
+    pub fn is_standard_op_return(&self) -> bool {
+        self.is_op_return() && self.0.len() <= 80
     }
 
     /// Checks whether a script is trivially known to have no satisfying input.

@@ -407,6 +407,20 @@ fn op_return_test() {
 }
 
 #[test]
+fn standard_op_return_test() {
+    assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
+        .unwrap()
+        .is_standard_op_return());
+    assert!(ScriptBuf::from_hex("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e")
+        .unwrap()
+        .is_standard_op_return());
+
+    assert!(!ScriptBuf::from_hex("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e21")
+        .unwrap()
+        .is_standard_op_return());
+}
+
+#[test]
 fn multisig() {
     // First multisig? 1-of-2
     // In block 164467, txid 60a20bd93aa49ab4b28d514ec10b06e1829ce6818ec06cd3aabd013ebcdc4bb1

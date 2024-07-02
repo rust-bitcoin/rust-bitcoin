@@ -7182,6 +7182,7 @@ pub fn bitcoin::blockdata::script::Script::is_p2wpkh(&self) -> bool
 pub fn bitcoin::blockdata::script::Script::is_p2wsh(&self) -> bool
 pub fn bitcoin::blockdata::script::Script::is_provably_unspendable(&self) -> bool
 pub fn bitcoin::blockdata::script::Script::is_push_only(&self) -> bool
+pub fn bitcoin::blockdata::script::Script::is_standard_op_return(&self) -> bool
 pub fn bitcoin::blockdata::script::Script::is_witness_program(&self) -> bool
 pub fn bitcoin::blockdata::script::Script::len(&self) -> usize
 pub fn bitcoin::blockdata::script::Script::minimal_non_dust(&self) -> bitcoin_units::amount::Amount
