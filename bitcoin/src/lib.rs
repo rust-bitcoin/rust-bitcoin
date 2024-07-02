@@ -133,7 +133,7 @@ pub use crate::{
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::{MerkleBlock, TxMerkleNode, WitnessMerkleNode},
-    network::{Network, NetworkKind},
+    network::{Network, NetworkKind, TestnetVersion},
     pow::{CompactTarget, Target, Work},
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
