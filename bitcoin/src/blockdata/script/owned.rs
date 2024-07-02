@@ -113,7 +113,7 @@ impl ScriptBuf {
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
-    /// script tree merkle root.
+    /// script tree Merkle root.
     pub fn new_p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,

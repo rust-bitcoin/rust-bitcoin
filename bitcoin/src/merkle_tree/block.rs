@@ -21,7 +21,7 @@ use crate::prelude::Vec;
 use crate::transaction::{Transaction, Txid};
 use crate::Weight;
 
-/// Data structure that represents a block header paired to a partial merkle tree.
+/// Data structure that represents a block header paired to a partial Merkle tree.
 ///
 /// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
 /// it will hit an assertion.
@@ -29,7 +29,7 @@ use crate::Weight;
 pub struct MerkleBlock {
     /// The block header
     pub header: block::Header,
-    /// Transactions making up a partial merkle tree
+    /// Transactions making up a partial Merkle tree
     pub txn: PartialMerkleTree,
 }
 
@@ -37,7 +37,7 @@ impl MerkleBlock {
     /// Create a MerkleBlock from a block, that contains proofs for specific txids.
     ///
     /// The `block` is a full block containing the header and transactions and `match_txids` is a
-    /// function that returns true for the ids that should be included in the partial merkle tree.
+    /// function that returns true for the ids that should be included in the partial Merkle tree.
     ///
     /// # Examples
     ///
@@ -59,7 +59,7 @@ impl MerkleBlock {
     ///     5d35549d88ac00000000").unwrap();
     /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
     ///
-    /// // Create a merkle block containing a single transaction
+    /// // Create a Merkle block containing a single transaction
     /// let txid = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap();
     /// let match_txids: Vec<Txid> = vec![txid].into_iter().collect();
     /// let mb = MerkleBlock::from_block_with_predicate(&block, |t| match_txids.contains(t));
@@ -81,7 +81,7 @@ impl MerkleBlock {
     /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
-    /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
+    /// `match_txids` is a function that returns true for the ids that should be included in the partial Merkle tree.
     pub fn from_header_txids_with_predicate<F>(
         header: &block::Header,
         block_txids: &[Txid],
@@ -96,7 +96,7 @@ impl MerkleBlock {
         MerkleBlock { header: *header, txn: pmt }
     }
 
-    /// Extract the matching txid's represented by this partial merkle tree
+    /// Extract the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
     /// returns Ok(()) on success, or error in case of failure
     pub fn extract_matches(
@@ -130,16 +130,16 @@ impl Decodable for MerkleBlock {
     }
 }
 
-/// Data structure that represents a partial merkle tree.
+/// Data structure that represents a partial Merkle tree.
 ///
 /// It represents a subset of the txid's of a known block, in a way that
-/// allows recovery of the list of txid's and the merkle root, in an
+/// allows recovery of the list of txid's and the Merkle root, in an
 /// authenticated way.
 ///
 /// The encoding works as follows: we traverse the tree in depth-first order,
 /// storing a bit for each traversed node, signifying whether the node is the
 /// parent of at least one matched leaf txid (or a matched txid itself). In
-/// case we are at the leaf level, or this bit is 0, its merkle node hash is
+/// case we are at the leaf level, or this bit is 0, its Merkle node hash is
 /// stored, and its children are not explored further. Otherwise, no hash is
 /// stored, but we recurse into both (or the only) child branch. During
 /// decoding, the same depth-first traversal is performed, consuming bits and
@@ -178,13 +178,13 @@ impl PartialMerkleTree {
     /// Returns the total number of transactions in the block.
     pub fn num_transactions(&self) -> u32 { self.num_transactions }
 
-    /// Returns the node-is-parent-of-matched-txid bits of the partial merkle tree.
+    /// Returns the node-is-parent-of-matched-txid bits of the partial Merkle tree.
     pub fn bits(&self) -> &Vec<bool> { &self.bits }
 
-    /// Returns the transaction ids and internal hashes of the partial merkle tree.
+    /// Returns the transaction ids and internal hashes of the partial Merkle tree.
     pub fn hashes(&self) -> &Vec<TxMerkleNode> { &self.hashes }
 
-    /// Construct a partial merkle tree
+    /// Construct a partial Merkle tree
     /// The `txids` are the transaction hashes of the block and the `matches` is the contains flags
     /// wherever a tx hash should be included in the proof.
     ///
@@ -214,7 +214,7 @@ impl PartialMerkleTree {
     /// assert!(tree.extract_matches(&mut vec![], &mut vec![]).is_ok());
     /// ```
     pub fn from_txids(txids: &[Txid], matches: &[bool]) -> Self {
-        // We can never have zero txs in a merkle block, we always need the coinbase tx
+        // We can never have zero txs in a Merkle block, we always need the coinbase tx
         assert_ne!(txids.len(), 0);
         assert_eq!(txids.len(), matches.len());
 
@@ -230,9 +230,9 @@ impl PartialMerkleTree {
         pmt
     }
 
-    /// Extract the matching txid's represented by this partial merkle tree
+    /// Extract the matching txid's represented by this partial Merkle tree
     /// and their respective indices within the partial tree.
-    /// returns the merkle root, or error in case of failure
+    /// returns the Merkle root, or error in case of failure
     pub fn extract_matches(
         &self,
         matches: &mut Vec<Txid>,
@@ -286,13 +286,13 @@ impl PartialMerkleTree {
     }
 
     /// Helper function to efficiently calculate the number of nodes at given height
-    /// in the merkle tree
+    /// in the Merkle tree
     #[inline]
     fn calc_tree_width(&self, height: u32) -> u32 {
         (self.num_transactions + (1 << height) - 1) >> height
     }
 
-    /// Calculate the hash of a node in the merkle tree (at leaf level: the txid's themselves)
+    /// Calculate the hash of a node in the Merkle tree (at leaf level: the txid's themselves)
     fn calc_hash(&self, height: u32, pos: u32, txids: &[Txid]) -> TxMerkleNode {
         if height == 0 {
             // Hash at height 0 is the txid itself
@@ -443,13 +443,13 @@ impl Decodable for PartialMerkleTree {
     }
 }
 
-/// An error when verifying the merkle block.
+/// An error when verifying the Merkle block.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum MerkleBlockError {
-    /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
+    /// Merkle root in the header doesn't match to the root calculated from partial Merkle tree.
     MerkleRootMismatch,
-    /// Partial merkle tree contains no transactions.
+    /// Partial Merkle tree contains no transactions.
     NoTransactions,
     /// There are too many transactions.
     TooManyTransactions,
@@ -477,8 +477,8 @@ impl fmt::Display for MerkleBlockError {
         use MerkleBlockError::*;
 
         match *self {
-            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
-            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
+            MerkleRootMismatch => write!(f, "Merkle header root doesn't match to the root calculated from the partial Merkle tree"),
+            NoTransactions => write!(f, "partial Merkle tree contains no transactions"),
             TooManyTransactions => write!(f, "too many transactions"),
             TooManyHashes => write!(f, "proof contains more hashes than transactions"),
             NotEnoughBits => write!(f, "proof contains less bits than hashes"),
@@ -554,7 +554,7 @@ mod tests {
             .map(|i| format!("{:064x}", i).parse::<Txid>().unwrap())
             .collect::<Vec<_>>();
 
-        // Calculate the merkle root and height
+        // Calculate the Merkle root and height
         let hashes = tx_ids.iter().copied();
         let merkle_root_1 = TxMerkleNode::calculate_root(hashes).expect("hashes is not empty");
         let mut height = 1;
@@ -582,7 +582,7 @@ mod tests {
                 };
             }
 
-            // Build the partial merkle tree
+            // Build the partial Merkle tree
             let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
             let serialized = encode::serialize(&pmt1);
 
@@ -594,14 +594,14 @@ mod tests {
             let pmt2: PartialMerkleTree =
                 encode::deserialize(&serialized).expect("Could not deserialize own data");
 
-            // Extract merkle root and matched txids from copy
+            // Extract Merkle root and matched txids from copy
             let mut match_txid2: Vec<Txid> = vec![];
             let mut indexes = vec![];
             let merkle_root_2 = pmt2
                 .extract_matches(&mut match_txid2, &mut indexes)
                 .expect("Could not extract matches");
 
-            // Check that it has the same merkle root as the original, and a valid one
+            // Check that it has the same Merkle root as the original, and a valid one
             assert_eq!(merkle_root_1, merkle_root_2);
             assert_ne!(merkle_root_2, TxMerkleNode::from_byte_array([0; 32]));
 
@@ -787,7 +787,7 @@ mod tests {
 
     #[test]
     fn regression_2606() {
-        // Attempt to deserialize a partial merkle tree with a number of hashes that would
+        // Attempt to deserialize a partial Merkle tree with a number of hashes that would
         // overflow the maximum allowed size.
         let bytes = hex!(
             "000006000000000000000004ee00000004c7f1ccb1000000ffff000000010000\

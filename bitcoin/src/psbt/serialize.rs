@@ -117,7 +117,7 @@ impl_psbt_hash_de_serialize!(TapNodeHash);
 impl_psbt_hash_de_serialize!(hash160::Hash);
 impl_psbt_hash_de_serialize!(sha256d::Hash);
 
-// taproot
+// Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
 impl Serialize for ScriptBuf {
@@ -339,7 +339,7 @@ impl Serialize for TapTree {
             .script_leaves()
             .map(|l| {
                 l.script().len() + VarInt::from(l.script().len()).size() // script version
-            + 1 // merkle branch
+            + 1 // Merkle branch
             + 1 // leaf version
             })
             .sum::<usize>();

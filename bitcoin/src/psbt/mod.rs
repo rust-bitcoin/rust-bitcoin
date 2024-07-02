@@ -545,7 +545,7 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Tr => {
-                // This PSBT signing API is WIP, taproot to come shortly.
+                // This PSBT signing API is WIP, Taproot to come shortly.
                 Err(SignError::Unsupported)
             }
         }
@@ -899,7 +899,7 @@ pub enum OutputType {
     ShWsh,
     /// A pay-to-script-hash output excluding wrapped segwit (P2SH).
     Sh,
-    /// A taproot output (P2TR).
+    /// A Taproot output (P2TR).
     Tr,
 }
 
@@ -954,7 +954,7 @@ pub enum SignError {
     SegwitV0Sighash(transaction::InputsIndexError),
     /// Sighash computation error (p2wpkh input).
     P2wpkhSighash(sighash::P2wpkhError),
-    /// Sighash computation error (taproot input).
+    /// Sighash computation error (Taproot input).
     TaprootError(sighash::TaprootError),
     /// Unable to determine the output type.
     UnknownOutputType,
@@ -984,7 +984,7 @@ impl fmt::Display for SignError {
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
             SegwitV0Sighash(ref e) => write_err!(f, "segwit v0 sighash"; e),
             P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
-            TaprootError(ref e) => write_err!(f, "taproot sighash"; e),
+            TaprootError(ref e) => write_err!(f, "Taproot sighash"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
             WrongSigningAlgorithm =>
@@ -1867,11 +1867,11 @@ mod tests {
             assert_eq!(err.to_string(), "invalid xonly public key");
             let err = hex_psbt("70736274ff010071020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff02787c01000000000016001483a7e34bd99ff03a4962ef8a1a101bb295461ece606b042a010000001600147ac369df1b20e033d6116623957b0ac49f3c52e8000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a0757011342173bb3d36c074afb716fec6307a069a2e450b995f3c82785945ab8df0e24260dcd703b0cbf34de399184a9481ac2b3586db6601f026a77f7e4938481bc34751701aa000000").unwrap_err();
             #[cfg(feature = "std")]
-            assert_eq!(err.to_string(), "invalid taproot signature");
+            assert_eq!(err.to_string(), "invalid Taproot signature");
             #[cfg(not(feature = "std"))]
             assert_eq!(
                 err.to_string(),
-                "invalid taproot signature: invalid taproot signature size: 66"
+                "invalid Taproot signature: invalid Taproot signature size: 66"
             );
             let err = hex_psbt("70736274ff010071020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff02787c01000000000016001483a7e34bd99ff03a4962ef8a1a101bb295461ece606b042a010000001600147ac369df1b20e033d6116623957b0ac49f3c52e8000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a0757221602fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da75600008001000080000000800100000000000000000000").unwrap_err();
             assert_eq!(err.to_string(), "invalid xonly public key");
@@ -1889,19 +1889,19 @@ mod tests {
             );
             let err = hex_psbt("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b094289756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb01010000").unwrap_err();
             #[cfg(feature = "std")]
-            assert_eq!(err.to_string(), "invalid taproot signature");
+            assert_eq!(err.to_string(), "invalid Taproot signature");
             #[cfg(not(feature = "std"))]
             assert_eq!(
                 err.to_string(),
-                "invalid taproot signature: invalid taproot signature size: 66"
+                "invalid Taproot signature: invalid Taproot signature size: 66"
             );
             let err = hex_psbt("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b093989756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb0000").unwrap_err();
             #[cfg(feature = "std")]
-            assert_eq!(err.to_string(), "invalid taproot signature");
+            assert_eq!(err.to_string(), "invalid Taproot signature");
             #[cfg(not(feature = "std"))]
             assert_eq!(
                 err.to_string(),
-                "invalid taproot signature: invalid taproot signature size: 57"
+                "invalid Taproot signature: invalid Taproot signature size: 57"
             );
             let err = hex_psbt("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b6926315c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac06f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae970115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f80023202cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2acc00000").unwrap_err();
             assert_eq!(err.to_string(), "invalid control block");

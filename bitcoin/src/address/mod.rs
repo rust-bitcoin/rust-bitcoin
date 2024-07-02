@@ -465,7 +465,7 @@ impl Address {
         Ok(Address::p2sh_from_hash(script_hash, network))
     }
 
-    /// Creates a pay to taproot address from an untweaked key.
+    /// Creates a pay to Taproot address from an untweaked key.
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -476,7 +476,7 @@ impl Address {
         Address::from_witness_program(program, hrp)
     }
 
-    /// Creates a pay to taproot address from a pre-tweaked output key.
+    /// Creates a pay to Taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Address {
         let program = WitnessProgram::p2tr_tweaked(output_key);
         Address::from_witness_program(program, hrp)
@@ -642,7 +642,7 @@ impl Address {
     ///
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the segwit redeem hash generated from the
-    /// given key. For taproot addresses, the supplied key is assumed to be tweaked
+    /// given key. For Taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload_as_bytes();

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin merkle tree functions.
+//! Bitcoin Merkle tree functions.
 //!
 //! # Examples
 //!

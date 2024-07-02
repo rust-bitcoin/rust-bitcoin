@@ -10,7 +10,7 @@ use super::{
 };
 use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 
-/// The merkle proof for inclusion of a tree in a taptree hash.
+/// The Merkle proof for inclusion of a tree in a Taproot tree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -28,11 +28,11 @@ impl TaprootMerkleBranch {
     #[inline]
     pub fn as_slice(&self) -> &[TapNodeHash] { &self.0 }
 
-    /// Returns the number of nodes in this merkle proof.
+    /// Returns the number of nodes in this Merkle proof.
     #[inline]
     pub fn len(&self) -> usize { self.0.len() }
 
-    /// Checks if this merkle proof is empty.
+    /// Checks if this Merkle proof is empty.
     #[inline]
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
@@ -63,7 +63,7 @@ impl TaprootMerkleBranch {
         }
     }
 
-    /// Creates a merkle proof from list of hashes.
+    /// Creates a Merkle proof from list of hashes.
     ///
     /// # Errors
     ///
@@ -121,7 +121,7 @@ macro_rules! impl_try_from {
         impl TryFrom<$from> for TaprootMerkleBranch {
             type Error = InvalidMerkleTreeDepthError;
 
-            /// Creates a merkle proof from list of hashes.
+            /// Creates a Merkle proof from list of hashes.
             ///
             /// # Errors
             ///
@@ -223,7 +223,7 @@ impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranch {
     fn borrow_mut(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
 }
 
-/// Iterator over node hashes within Taproot merkle branch.
+/// Iterator over node hashes within Taproot Merkle branch.
 ///
 /// This is created by `into_iter` method on `TaprootMerkleBranch` (via `IntoIterator` trait).
 #[derive(Clone, Debug)]

@@ -78,7 +78,7 @@ pub struct Input {
     /// including P2SH embedded ones.
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
-    /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
+    /// pushed to the stack from a scriptSig or witness for a non-Taproot inputs.
     pub partial_sigs: BTreeMap<PublicKey, ecdsa::Signature>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
@@ -109,7 +109,7 @@ pub struct Input {
     /// HAS256 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
-    /// Serialized taproot signature with sighash type for key spend.
+    /// Serialized Taproot signature with sighash type for key spend.
     pub tap_key_sig: Option<taproot::Signature>,
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
@@ -132,7 +132,7 @@ pub struct Input {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-/// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
+/// A Signature hash type for the corresponding input. As of Taproot upgrade, the signature hash
 /// type can be either [`EcdsaSighashType`] or [`TapSighashType`] but it is not possible to know
 /// directly which signature hash type the user is dealing with. Therefore, the user is responsible
 /// for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
@@ -169,7 +169,7 @@ impl FromStr for PsbtSighashType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // We accept strings of form: "SIGHASH_ALL" etc.
         //
-        // NB: some of Taproot sighash types are non-standard for pre-taproot
+        // NB: some of Taproot sighash types are non-standard for pre-Taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
         if let Ok(ty) = TapSighashType::from_str(s) {

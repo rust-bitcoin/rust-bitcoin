@@ -27,7 +27,7 @@ smaller crates AKA crate smashing.
 - Use network when calculating difficulty [#2168](https://github.com/rust-bitcoin/rust-bitcoin/pull/2168)
 - Fix `InputWeightPrediction::P2WPKH_MAX` constant DER sig length [#2213](https://github.com/rust-bitcoin/rust-bitcoin/pull/2213)
 - Fix CJDNS marker byte check [#2546](https://github.com/rust-bitcoin/rust-bitcoin/pull/2546)
-- Add resource limit check during deserialization of merkle block [#2607](https://github.com/rust-bitcoin/rust-bitcoin/pull/2607)
+- Add resource limit check during deserialization of Merkle block [#2607](https://github.com/rust-bitcoin/rust-bitcoin/pull/2607)
 
 ## Changes to and involving the `Network` type
 
@@ -58,14 +58,14 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 - Add `Weight::from_vb_weight function` function (added in [#2206](https://github.com/rust-bitcoin/rust-bitcoin/pull/2206),
   renamed in [#2228](https://github.com/rust-bitcoin/rust-bitcoin/pull/2228)
 - Implement `LowerHex` and `UpperHex` for `CompactTarget` [#2221](https://github.com/rust-bitcoin/rust-bitcoin/pull/2221)
-- Add conversions from TXIDs to merkle nodes [#2227](https://github.com/rust-bitcoin/rust-bitcoin/pull/2227)
+- Add conversions from TXIDs to Merkle nodes [#2227](https://github.com/rust-bitcoin/rust-bitcoin/pull/2227)
 - Add `transaction::effective_value()` function [#2230](https://github.com/rust-bitcoin/rust-bitcoin/pull/2230)
 - Improve `LockTime`s and related types:
    - Improve relative locktime API [#2549](https://github.com/rust-bitcoin/rust-bitcoin/pull/2549)
    - Implement `ordered::ArbitraryOrd` for absolute and relative locktimes, introducing the "ordered" feature:
      - [#2581](https://github.com/rust-bitcoin/rust-bitcoin/pull/2581)
      - [#2248](https://github.com/rust-bitcoin/rust-bitcoin/pull/2248)
-- Add and use custom `ArrayVec` 
+- Add and use custom `ArrayVec`
    - [#2287](https://github.com/rust-bitcoin/rust-bitcoin/pull/2287)
    - [#2286](https://github.com/rust-bitcoin/rust-bitcoin/pull/2286)
    - [#2310](https://github.com/rust-bitcoin/rust-bitcoin/pull/2310)

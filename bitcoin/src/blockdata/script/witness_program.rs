@@ -65,7 +65,7 @@ impl WitnessProgram {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Creates a [`WitnessProgram`] from a 32 byte serialize taproot xonly pubkey.
+    /// Creates a [`WitnessProgram`] from a 32 byte serialize Taproot xonly pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
         WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
@@ -86,7 +86,7 @@ impl WitnessProgram {
         WitnessProgram::new_p2wsh(hash.to_byte_array())
     }
 
-    /// Creates a pay to taproot address from an untweaked key.
+    /// Creates a pay to Taproot address from an untweaked key.
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -97,7 +97,7 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    /// Creates a pay to taproot address from a pre-tweaked output key.
+    /// Creates a pay to Taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         let pubkey = output_key.to_inner().serialize();
         WitnessProgram::new_p2tr(pubkey)

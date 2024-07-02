@@ -738,7 +738,7 @@ pub trait TapTweak {
     /// Tweaked key type.
     type TweakedKey;
 
-    /// Tweaks an untweaked key with corresponding public key value and optional script tree merkle
+    /// Tweaks an untweaked key with corresponding public key value and optional script tree Merkle
     /// root. For the [`Keypair`] type this also tweaks the private key in the pair.
     ///
     /// This is done by using the equation Q = P + H(P|c)G, where
@@ -769,7 +769,7 @@ impl TapTweak for UntweakedPublicKey {
     type TweakedKey = TweakedPublicKey;
 
     /// Tweaks an untweaked public key with corresponding public key value and optional script tree
-    /// merkle root.
+    /// Merkle root.
     ///
     /// This is done by using the equation Q = P + H(P|c)G, where
     ///  * Q is the tweaked public key

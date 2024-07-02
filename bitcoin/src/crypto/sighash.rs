@@ -72,13 +72,13 @@ sha256t_hash_newtype! {
 
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
-    /// This hash type is used for computing taproot signature hash."
+    /// This hash type is used for computing Taproot signature hash."
     pub struct TapSighash(_);
 }
 
 impl_message_from_hash!(TapSighash);
 
-/// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
+/// Efficiently calculates signature hash message for legacy, segwit and Taproot inputs.
 #[derive(Debug)]
 pub struct SighashCache<T: Borrow<Transaction>> {
     /// Access to transaction required for transaction introspection. Moreover, type
@@ -86,17 +86,17 @@ pub struct SighashCache<T: Borrow<Transaction>> {
     /// the latter in particular is necessary for [`SighashCache::witness_mut`].
     tx: T,
 
-    /// Common cache for taproot and segwit inputs, `None` for legacy inputs.
+    /// Common cache for Taproot and segwit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
     /// Cache for segwit v0 inputs (the result of another round of sha256 on `common_cache`).
     segwit_cache: Option<SegwitCache>,
 
-    /// Cache for taproot v1 inputs.
+    /// Cache for Taproot v1 inputs.
     taproot_cache: Option<TaprootCache>,
 }
 
-/// Common values cached between segwit and taproot inputs.
+/// Common values cached between segwit and Taproot inputs.
 #[derive(Debug)]
 struct CommonCache {
     prevouts: sha256::Hash,
@@ -115,7 +115,7 @@ struct SegwitCache {
     outputs: sha256d::Hash,
 }
 
-/// Values cached for taproot inputs.
+/// Values cached for Taproot inputs.
 #[derive(Debug)]
 struct TaprootCache {
     amounts: sha256::Hash,
@@ -1166,7 +1166,7 @@ impl<'a> Encodable for Annex<'a> {
     }
 }
 
-/// Error computing a taproot sighash.
+/// Error computing a Taproot sighash.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum TaprootError {
@@ -1196,7 +1196,7 @@ impl fmt::Display for TaprootError {
             PrevoutsSize(ref e) => write_err!(f, "prevouts size"; e),
             PrevoutsIndex(ref e) => write_err!(f, "prevouts index"; e),
             PrevoutsKind(ref e) => write_err!(f, "prevouts kind"; e),
-            InvalidSighashType(hash_ty) => write!(f, "invalid taproot sighash type : {} ", hash_ty),
+            InvalidSighashType(hash_ty) => write!(f, "invalid Taproot sighash type : {} ", hash_ty),
         }
     }
 }

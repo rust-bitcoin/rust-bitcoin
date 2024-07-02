@@ -920,9 +920,9 @@ impl Transaction {
 
     /// Counts the total number of sigops.
     ///
-    /// This value is for pre-taproot transactions only.
+    /// This value is for pre-Taproot transactions only.
     ///
-    /// > In taproot, a different mechanism is used. Instead of having a global per-block limit,
+    /// > In Taproot, a different mechanism is used. Instead of having a global per-block limit,
     /// > there is a per-transaction-input limit, proportional to the size of that input.
     /// > ref: <https://bitcoin.stackexchange.com/questions/117356/what-is-sigop-signature-operation#117359>
     ///
@@ -983,7 +983,7 @@ impl Transaction {
         count
     }
 
-    /// Includes wrapped segwit (returns 0 for taproot spends).
+    /// Includes wrapped segwit (returns 0 for Taproot spends).
     fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
@@ -1523,14 +1523,14 @@ impl InputWeightPrediction {
     /// [`InputWeightPrediction::new`].
     pub const P2PKH_UNCOMPRESSED_MAX: Self = InputWeightPrediction::from_slice(139, &[]);
 
-    /// Input weight prediction corresponding to spending of taproot output using the key and
+    /// Input weight prediction corresponding to spending of Taproot output using the key and
     /// default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
     pub const P2TR_KEY_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[64]);
 
-    /// Input weight prediction corresponding to spending of taproot output using the key and
+    /// Input weight prediction corresponding to spending of Taproot output using the key and
     /// **non**-default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
