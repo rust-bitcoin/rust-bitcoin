@@ -803,7 +803,7 @@ impl Address<NetworkUnchecked> {
     }
 }
 
-impl From<Address> for script::ScriptBuf {
+impl From<Address> for ScriptBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 
