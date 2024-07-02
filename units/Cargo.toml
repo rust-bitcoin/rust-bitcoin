@@ -18,7 +18,7 @@ std = ["alloc", "internals/std"]
 alloc = ["internals/alloc"]
 
 [dependencies]
-internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
+internals = { package = "bitcoin-internals", version = "0.3.0" }
 
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
