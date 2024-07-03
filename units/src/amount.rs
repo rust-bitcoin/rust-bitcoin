@@ -8,8 +8,6 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
-#[cfg(feature = "alloc")]
-use core::fmt::Write as _;
 use core::str::FromStr;
 use core::{default, fmt, ops};
 
@@ -986,6 +984,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
+    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
@@ -995,19 +994,14 @@ impl Amount {
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        buf
+        self.display_in(denom).to_string()
     }
 
     /// Get a formatted string of this [Amount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        write!(buf, " {}", denom).unwrap();
-        buf
+        self.display_in(denom).show_denomination().to_string()
     }
 
     // Some arithmetic that doesn't fit in `core::ops` traits.
@@ -1348,6 +1342,7 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
+    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
@@ -1357,19 +1352,14 @@ impl SignedAmount {
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        buf
+        self.display_in(denom).to_string()
     }
 
     /// Get a formatted string of this [SignedAmount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        write!(buf, " {}", denom).unwrap();
-        buf
+        self.display_in(denom).show_denomination().to_string()
     }
 
     // Some arithmetic that doesn't fit in `core::ops` traits.
