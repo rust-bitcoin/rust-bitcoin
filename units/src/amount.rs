@@ -18,6 +18,19 @@ use internals::write_err;
 
 /// A set of denominations in which amounts can be expressed.
 ///
+/// # Accepted Denominations
+///
+/// All upper or lower case, excluding SI prefix (c, m, u) which must be lower case.
+/// - Singular: BTC, cBTC, mBTC, uBTC
+/// - Plural or singular: sat, satoshi, bit
+///
+/// # Note
+///
+/// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.  It is
+/// more important to protect users from incorrectly using a capital M to mean milli than to
+/// allow Megabitcoin which is not a realistic denomination, and Megasatoshi which is
+/// equivalent to cBTC which is allowed.
+///
 /// # Examples
 ///
 /// ```
@@ -107,13 +120,12 @@ impl FromStr for Denomination {
 
     /// Converts from a `str` to a `Denomination`.
     ///
-    /// # Accepted Denominations
+    /// # Errors
     ///
-    /// All upper or lower case, excluding SI prefix (c, m, u) which must be lower case.
-    /// - Singular: BTC, cBTC, mBTC, uBTC
-    /// - Plural or singular: sat, satoshi, bit
+    /// - If the denomination begins with a capital `M` a `PossiblyConfusingDenominationError` is
+    ///   returned.
     ///
-    /// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.
+    /// - If an unknown denomination is used, an `UnknownDenominationError` is returned.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseDenominationError::*;
 
@@ -946,7 +958,10 @@ impl Amount {
 
     /// Converts this [`Amount`] in floating-point notation with a given
     /// denomination.
-    /// Can return error if the amount is too big, too precise or negative.
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
     ///
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
@@ -1302,7 +1317,10 @@ impl SignedAmount {
 
     /// Convert this [`SignedAmount`] in floating-point notation with a given
     /// denomination.
-    /// Can return error if the amount is too big, too precise or negative.
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
     ///
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
