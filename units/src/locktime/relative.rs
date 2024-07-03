@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides `Height` and `Time` types used by the `rust-bitcoin` `relative::LockTime` type.
+//! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
 

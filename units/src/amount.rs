@@ -122,10 +122,10 @@ impl FromStr for Denomination {
     ///
     /// # Errors
     ///
-    /// - If the denomination begins with a capital `M` a `PossiblyConfusingDenominationError` is
+    /// - If the denomination begins with a capital `M` a [`PossiblyConfusingDenominationError`] is
     ///   returned.
     ///
-    /// - If an unknown denomination is used, an `UnknownDenominationError` is returned.
+    /// - If an unknown denomination is used, an [`UnknownDenominationError`] is returned.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseDenominationError::*;
 
@@ -525,7 +525,7 @@ fn is_too_precise(s: &str, precision: usize) -> Option<usize> {
 const INPUT_STRING_LEN_LIMIT: usize = 50;
 
 /// Parses a decimal string in the given denomination into a satoshi value and a
-/// `bool` indicator for a negative amount.
+/// [`bool`] indicator for a negative amount.
 fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
@@ -1017,7 +1017,7 @@ impl Amount {
         self.display_in(denom).show_denomination().to_string()
     }
 
-    // Some arithmetic that doesn't fit in `core::ops` traits.
+    // Some arithmetic that doesn't fit in [`core::ops`] traits.
 
     /// Checked addition.
     ///
@@ -1173,13 +1173,13 @@ impl core::iter::Sum for Amount {
 
 /// A helper/builder that displays amount with specified settings.
 ///
-/// This provides richer interface than `fmt::Formatter`:
+/// This provides richer interface than [`fmt::Formatter`]:
 ///
 /// * Ability to select denomination
 /// * Show or hide denomination
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
-/// However this can still be combined with `fmt::Formatter` options to precisely control zeros,
+/// However this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
 /// padding, alignment... The formatting works like floats from `core` but note that precision will
 /// **never** be lossy - that means no rounding.
 ///
@@ -1376,12 +1376,12 @@ impl SignedAmount {
         self.display_in(denom).show_denomination().to_string()
     }
 
-    // Some arithmetic that doesn't fit in `core::ops` traits.
+    // Some arithmetic that doesn't fit in [`core::ops`] traits.
 
     /// Get the absolute value of this [`SignedAmount`].
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
-    /// Get the absolute value of this [`SignedAmount`] returning `Amount`.
+    /// Get the absolute value of this [`SignedAmount`] returning [`Amount`].
     pub fn unsigned_abs(self) -> Amount { Amount(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [`SignedAmount`].
@@ -1593,7 +1593,7 @@ impl core::iter::Sum for SignedAmount {
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
-    /// happen it returns `None`.
+    /// happen it returns [`None`].
     fn checked_sum(self) -> Option<R>;
 }
 
