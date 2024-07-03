@@ -71,8 +71,7 @@ For more information please see `./CONTRIBUTING.md`.
 
 This library should always compile with any combination of features on **Rust 1.56.1**.
 
-To build with the MSRV you will likely need to pin a bunch of dependencies, see `./contrib/test.sh`
-for the current list.
+Use `Cargo-minimal.lock` to build the MSRV by copying to `Cargo.lock` and building.
 
 ## External dependencies
 
