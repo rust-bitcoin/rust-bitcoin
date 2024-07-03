@@ -5,6 +5,7 @@
 # files.
 
 set -euo pipefail
+set -x #remove me
 
 NIGHTLY=$(cat nightly-version)
 # Our docs have broken intra doc links if all features are not enabled.
@@ -37,6 +38,7 @@ main() {
 
 
     # switch to master
+    echo "Checking out master at $MASTER_COMMIT"
     git checkout "$MASTER_COMMIT"
 
     generate_json_files_all_features "bitcoin" "master"
@@ -79,7 +81,8 @@ run_cargo_semver_check() {
     local crate="$1"
     local variant="$2"
 
-    cargo +"$NIGHTLY" semver-checks -v --baseline-rustdoc "$crate-master-$variant.json" --current-rustdoc "$crate-current-$variant.json" > "$crate-$variant-semver.txt" 2>&1
+    echo "Running cargo semver-checks for $crate $variant"
+    cargo semver-checks -v --baseline-rustdoc "$crate-master-$variant.json" --current-rustdoc "$crate-current-$variant.json" > "$crate-$variant-semver.txt" 2>&1
 }
 
 # Uses cargo doc to generate JSON files that cargo semver-checks can use.
@@ -101,7 +104,7 @@ generate_json_files_all_features() {
     run_cargo_doc --all-features -p "$crate"
 
     # replace _ for - in crate name
-    mv "target/doc/${crate//-/_}.json" "$crate-$version-all-features.json"
+    mv -v "target/doc/${crate//-/_}.json" "$crate-$version-all-features.json"
 }
 generate_json_files_features_alloc() {
     local crate="$1"
@@ -111,12 +114,13 @@ generate_json_files_features_alloc() {
     run_cargo_doc --no-default-features --features alloc -p "$crate"
 
     # replace _ for - in crate name
-    mv "target/doc/${crate//-/_}.json" "$crate-$version-alloc.json"
+    mv -v "target/doc/${crate//-/_}.json" "$crate-$version-alloc.json"
 }
 
 # Check if there are breaking changes
 check_for_breaking_changes() {
     for file in *semver.txt; do
+        echo "Checking $file"
         if grep -q "FAIL" "$file"; then
             echo "You have introduced changes to the public API"
             echo "FAIL found in $file"
@@ -125,6 +129,9 @@ check_for_breaking_changes() {
             touch semver-break
         fi
     done
+    if ! [ -f semver-break ]; then
+       echo "No breaking changes found"
+    fi
 }
 
 need_nightly() {
