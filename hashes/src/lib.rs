@@ -108,6 +108,7 @@ mod internal_macros;
 mod util;
 #[macro_use]
 pub mod serde_macros;
+pub mod chacha20poly1305;
 pub mod cmp;
 pub mod hash160;
 pub mod hkdf;
