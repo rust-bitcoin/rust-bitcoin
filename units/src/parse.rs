@@ -377,7 +377,7 @@ impl From<ParseIntError> for UnprefixedHexError {
     fn from(e: ParseIntError) -> Self { Self::ParseInt(e) }
 }
 
-/// Error when hex string is missing a prefix (e.g. 0x).
+/// Error when hex string is missing a prefix (e.g. `0x`).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MissingPrefixError {
     hex: String,
@@ -397,7 +397,7 @@ impl fmt::Display for MissingPrefixError {
 #[cfg(feature = "std")]
 impl std::error::Error for MissingPrefixError {}
 
-/// Error when hex string contains a prefix (e.g. 0x).
+/// Error when hex string contains a prefix (e.g. `0x`).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ContainsPrefixError {
     hex: String,
