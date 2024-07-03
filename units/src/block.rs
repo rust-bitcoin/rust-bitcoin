@@ -155,7 +155,7 @@ impl TryFrom<BlockInterval> for relative::Height {
     }
 }
 
-/// The block interval is too big to be used as a relative lock time.
+/// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TooBigForRelativeBlockHeightError(u32);
 

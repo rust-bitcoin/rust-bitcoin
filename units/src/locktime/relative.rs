@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type `Height` and `Time` types used by the `rust-bitcoin` `relative::LockTime` type.
+//! Provides `Height` and `Time` types used by the `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
 
@@ -64,13 +64,13 @@ impl Time {
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
     pub const MAX: Self = Time(u16::MAX);
 
-    /// Create a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
+    /// Creates a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
     pub const fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
 
-    /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with
+    /// Creates a [`Time`] from seconds, converting the seconds into 512 second interval with
     /// truncating division.
     ///
     /// # Errors
@@ -87,8 +87,8 @@ impl Time {
         }
     }
 
-    /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with ceiling
-    /// division.
+    /// Creates a [`Time`] from seconds, converting the seconds into 512 second intervals with
+    /// ceiling division.
     ///
     /// # Errors
     ///

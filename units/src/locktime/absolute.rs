@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type `Height` and `Time` types used by the `rust-bitcoin` `absolute::LockTime` type.
+//! Provides `Height` and `Time` types used by the `rust-bitcoin` `absolute::LockTime` type.
 
 use core::fmt;
 
@@ -41,7 +41,7 @@ impl Height {
 
     /// Creates a `Height` from a hex string.
     ///
-    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
+    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
         parse_hex(s, Self::from_consensus)
     }
@@ -139,7 +139,7 @@ impl Time {
 
     /// Creates a `Time` from a hex string.
     ///
-    /// The input string is may or may not contain a typical hex prefix e.g., `0x`.
+    /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }
 
     /// Constructs a new block time.

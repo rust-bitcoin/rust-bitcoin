@@ -91,14 +91,14 @@ impl FeeRate {
         Some(Amount::from_sat(sats))
     }
 
-    /// Calculates fee by multiplying this fee rate by weight, in weight units, returning `None`
-    /// if overflow occurred.
+    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning `None`
+    /// if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
-    /// Calculates fee by multiplying this fee rate by weight, in virtual bytes, returning `None`
-    /// if overflow occurred.
+    /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning `None`
+    /// if an overflow occurred.
     ///
     /// This is equivalent to converting `vb` to `weight` using `Weight::from_vb` and then calling
     /// `Self::fee_wu(weight)`.
@@ -122,7 +122,7 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
-/// Computes ceiling so that fee computation is conservative.
+/// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
     type Output = Amount;
 
