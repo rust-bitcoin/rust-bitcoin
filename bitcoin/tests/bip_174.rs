@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
+use bitcoin::bip32::{DerivationPath, Fingerprint, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
@@ -277,7 +277,7 @@ fn bip32_derivation(
         let path = pk_path[i].1;
 
         let pk = PublicKey::from_str(pk).unwrap();
-        let path = path.into_derivation_path().unwrap();
+        let path = DerivationPath::from_str(path).expect("valid path as &str");
 
         tree.insert(pk.inner, (fingerprint, path));
     }
@@ -314,8 +314,8 @@ fn parse_and_verify_keys(
     for (secret_key, derivation_path) in sk_path.iter() {
         let wif_priv = PrivateKey::from_wif(secret_key).expect("failed to parse key");
 
-        let path =
-            derivation_path.into_derivation_path().expect("failed to convert derivation path");
+        let path = DerivationPath::from_str(derivation_path).expect("valid path as &str");
+
         let derived_priv = ext_priv.derive_priv(secp, &path).to_priv();
         assert_eq!(wif_priv, derived_priv);
         let derived_pub = derived_priv.public_key(secp);

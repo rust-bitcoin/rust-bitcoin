@@ -186,8 +186,8 @@ impl Serialize for KeySource {
 
         rv.append(&mut self.0.to_byte_array().to_vec());
 
-        for cnum in self.1.into_iter() {
-            rv.append(&mut serialize(&u32::from(*cnum)))
+        for cnum in (&self.1).into_iter() {
+            rv.append(&mut serialize(&u32::from(cnum)))
         }
 
         rv
@@ -378,7 +378,7 @@ impl Deserialize for TapTree {
 }
 
 // Helper function to compute key source len
-fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_ref().len() }
+fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).len() }
 
 #[cfg(test)]
 mod tests {
