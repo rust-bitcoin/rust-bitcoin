@@ -79,7 +79,7 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use bitcoin::address::script_pubkey::{BuilderExt as _, ScriptBufExt as _};
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
+use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, NormalDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -297,7 +297,7 @@ fn generate_bip86_key_spend_tx(
                 .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
                 .ok_or("missing Taproot key origin")?;
 
-            let secret_key = master_xpriv.derive_priv(secp, &derivation_path).to_priv().inner;
+            let secret_key = master_xpriv.derive_priv(secp, derivation_path).to_priv().inner;
             sign_psbt_taproot(
                 secret_key,
                 input.tap_internal_key.unwrap(),
@@ -383,18 +383,19 @@ impl BenefactorWallet {
         lock_time: absolute::LockTime,
         input_utxo: P2trUtxo,
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
-        if let ChildNumber::Normal { index } = self.next {
-            if index > 0 && self.current_spend_info.is_some() {
+        if let ChildNumber::Normal(index) = self.next {
+            if index.to_raw_number() > 0 && self.current_spend_info.is_some() {
                 return Err("transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
             }
         }
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
         // that we use an unhardened path so we can make use of xpubs.
         let derivation_path = DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
+
         let internal_keypair =
             self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_keypair(&self.secp);
         let beneficiary_key =
-            self.beneficiary_xpub.derive_pub(&self.secp, &derivation_path)?.to_x_only_pub();
+            self.beneficiary_xpub.try_derive_pub(&self.secp, &derivation_path)?.to_x_only_pub();
 
         // Build up the leaf script and combine with internal key into a Taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
@@ -479,13 +480,13 @@ impl BenefactorWallet {
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
             let new_derivation_path =
-                DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
+                format!("101/1/0/0/{}", self.next).parse::<NormalDerivationPath>()?;
             let new_internal_keypair = self
                 .master_xpriv
-                .derive_priv(&self.secp, &new_derivation_path)
+                .derive_priv(&self.secp, new_derivation_path.clone())
                 .to_keypair(&self.secp);
             let beneficiary_key =
-                self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
+                self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path).to_x_only_pub();
 
             // Build up the leaf script and combine with internal key into a Taproot commitment
             let lock_time = absolute::LockTime::from_height(
@@ -531,7 +532,7 @@ impl BenefactorWallet {
                     .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
                     .ok_or("missing Taproot key origin")?;
                 let secret_key =
-                    self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
+                    self.master_xpriv.derive_priv(&self.secp, derivation_path).to_priv().inner;
                 sign_psbt_taproot(
                     secret_key,
                     spend_info.internal_key(),
@@ -579,7 +580,10 @@ impl BenefactorWallet {
             let mut origins = BTreeMap::new();
             origins.insert(
                 beneficiary_key,
-                (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), new_derivation_path)),
+                (
+                    vec![leaf_hash],
+                    (self.beneficiary_xpub.fingerprint(), new_derivation_path.to_derivation_path()),
+                ),
             );
             let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
             let mut tap_scripts = BTreeMap::new();
@@ -652,7 +656,7 @@ impl BeneficiaryWallet {
             &psbt.inputs[0].tap_key_origins.clone()
         {
             let secret_key =
-                self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
+                self.master_xpriv.derive_priv(&self.secp, derivation_path).to_priv().inner;
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(

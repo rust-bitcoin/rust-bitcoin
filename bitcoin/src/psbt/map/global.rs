@@ -44,7 +44,7 @@ impl Map for Psbt {
                 value: {
                     let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
                     ret.extend(fingerprint.as_bytes());
-                    derivation.into_iter().for_each(|n| ret.extend(&u32::from(*n).to_le_bytes()));
+                    derivation.into_iter().for_each(|n| ret.extend(&u32::from(n).to_le_bytes()));
                     ret
                 },
             });
