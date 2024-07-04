@@ -40,7 +40,7 @@
 use core::cmp::{self, Ordering};
 use core::fmt;
 
-use hashes::{sha256d, siphash24};
+use hashes::{sha256d, siphash24, HashEngine as _};
 use internals::write_err;
 use io::{BufRead, Write};
 
@@ -115,10 +115,10 @@ pub struct BlockFilter {
 impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
     pub fn filter_header(&self, previous_filter_header: FilterHeader) -> FilterHeader {
-        let mut header_data = [0u8; 64];
-        header_data[0..32].copy_from_slice(&self[..]);
-        header_data[32..64].copy_from_slice(&previous_filter_header[..]);
-        FilterHeader(sha256d::Hash::hash(&header_data))
+        let mut engine = sha256d::Hash::engine();
+        engine.input(self.as_ref());
+        engine.input(previous_filter_header.as_ref());
+        FilterHeader(sha256d::Hash::from_engine(engine))
     }
 }
 
