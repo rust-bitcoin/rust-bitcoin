@@ -8,8 +8,6 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
-#[cfg(feature = "alloc")]
-use core::fmt::Write as _;
 use core::str::FromStr;
 use core::{default, fmt, ops};
 
@@ -710,7 +708,7 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
 
 /// Format the given satoshi amount in the given denomination.
 fn fmt_satoshi_in(
-    satoshi: u64,
+    mut satoshi: u64,
     negative: bool,
     f: &mut dyn fmt::Write,
     denom: Denomination,
@@ -735,6 +733,19 @@ fn fmt_satoshi_in(
         }
         Ordering::Less => {
             let precision = precision.unsigned_abs();
+            // round the number if needed
+            // rather than fiddling with chars, we just modify satoshi and let the simpler algorithm take over.
+            if let Some(format_precision) = options.precision {
+                if usize::from(precision) > format_precision {
+                    // precision is u8 so in this branch options.precision() < 255 which fits in u32
+                    let rounding_divisor = 10u64.pow(u32::from(precision) - format_precision as u32);
+                    let remainder = satoshi % rounding_divisor;
+                    satoshi -= remainder;
+                    if remainder / (rounding_divisor / 10) >= 5 {
+                        satoshi += rounding_divisor;
+                    }
+                }
+            }
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
             num_after_decimal_point = satoshi % divisor;
@@ -972,6 +983,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
+    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
@@ -981,19 +993,14 @@ impl Amount {
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        buf
+        self.display_in(denom).to_string()
     }
 
     /// Get a formatted string of this [Amount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        write!(buf, " {}", denom).unwrap();
-        buf
+        self.display_in(denom).show_denomination().to_string()
     }
 
     // Some arithmetic that doesn't fit in `core::ops` traits.
@@ -1069,15 +1076,7 @@ impl fmt::Debug for Amount {
 // Just using Bitcoin denominated string.
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let satoshis = self.to_sat();
-        let denomination = Denomination::Bitcoin;
-        let mut format_options = FormatOptions::from_formatter(f);
-
-        if f.precision().is_none() && satoshis.rem_euclid(Amount::ONE_BTC.to_sat()) != 0 {
-            format_options.precision = Some(8);
-        }
-
-        fmt_satoshi_in(satoshis, false, f, denomination, true, format_options)
+        fmt::Display::fmt(&self.display_in(Denomination::Bitcoin).show_denomination(), f)
     }
 }
 
@@ -1342,6 +1341,7 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
+    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
@@ -1351,19 +1351,14 @@ impl SignedAmount {
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        buf
+        self.display_in(denom).to_string()
     }
 
     /// Get a formatted string of this [SignedAmount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
-        let mut buf = String::new();
-        self.fmt_value_in(&mut buf, denom).unwrap();
-        write!(buf, " {}", denom).unwrap();
-        buf
+        self.display_in(denom).show_denomination().to_string()
     }
 
     // Some arithmetic that doesn't fit in `core::ops` traits.
@@ -1477,8 +1472,7 @@ impl fmt::Debug for SignedAmount {
 // Just using Bitcoin denominated string.
 impl fmt::Display for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        fmt::Display::fmt(&self.display_in(Denomination::Bitcoin).show_denomination(), f)
     }
 }
 
@@ -2399,10 +2393,10 @@ mod tests {
         btc_check_fmt_non_negative_6, 1, "{}", "0.00000001";
         btc_check_fmt_non_negative_7, 1, "{:2}", "0.00000001";
         btc_check_fmt_non_negative_8, 1, "{:02}", "0.00000001";
-        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.00000001";
+        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.0";
         btc_check_fmt_non_negative_10, 1, "{:11}", " 0.00000001";
-        btc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.00000001";
-        btc_check_fmt_non_negative_12, 1, "{:011.1}", "00.00000001";
+        btc_check_fmt_non_negative_11, 1, "{:11.1}", "        0.0";
+        btc_check_fmt_non_negative_12, 1, "{:011.1}", "000000000.0";
         btc_check_fmt_non_negative_13, 1, "{:.9}", "0.000000010";
         btc_check_fmt_non_negative_14, 1, "{:11.9}", "0.000000010";
         btc_check_fmt_non_negative_15, 1, "{:011.9}", "0.000000010";
@@ -2417,7 +2411,7 @@ mod tests {
         btc_check_fmt_non_negative_24, 110_000_000, "{}", "1.1";
         btc_check_fmt_non_negative_25, 100_000_001, "{}", "1.00000001";
         btc_check_fmt_non_negative_26, 100_000_001, "{:1}", "1.00000001";
-        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.00000001";
+        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.0";
         btc_check_fmt_non_negative_28, 100_000_001, "{:10}", "1.00000001";
         btc_check_fmt_non_negative_29, 100_000_001, "{:11}", " 1.00000001";
         btc_check_fmt_non_negative_30, 100_000_001, "{:011}", "01.00000001";
@@ -2449,7 +2443,7 @@ mod tests {
 
     check_format_non_negative_show_denom! {
         Bitcoin, " BTC";
-        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "       0.0";
         btc_check_fmt_non_negative_show_denom_1, 1, "{:14.8}", "0.00000001";
         btc_check_fmt_non_negative_show_denom_2, 1, "{:15}", " 0.00000001";
         btc_check_fmt_non_negative_show_denom_3, 1, "{:015}", "00.00000001";
@@ -2874,22 +2868,26 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn trailing_zeros_for_amount() {
+        assert_eq!(format!("{}", Amount::from_sat(1000000)), "0.01 BTC");
         assert_eq!(format!("{}", Amount::ONE_SAT), "0.00000001 BTC");
         assert_eq!(format!("{}", Amount::ONE_BTC), "1 BTC");
         assert_eq!(format!("{}", Amount::from_sat(1)), "0.00000001 BTC");
-        assert_eq!(format!("{}", Amount::from_sat(10)), "0.00000010 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.0000001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(100)), "0.000001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(1000)), "0.00001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(10_000)), "0.0001 BTC");
-        assert_eq!(format!("{:.2}", Amount::from_sat(100_000)), "0.001 BTC");
+        assert_eq!(format!("{}", Amount::from_sat(10)), "0.0000001 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.00 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(100)), "0.00 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(1000)), "0.00 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(10_000)), "0.00 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(100_000)), "0.00 BTC");
         assert_eq!(format!("{:.2}", Amount::from_sat(1_000_000)), "0.01 BTC");
         assert_eq!(format!("{:.2}", Amount::from_sat(10_000_000)), "0.10 BTC");
         assert_eq!(format!("{:.2}", Amount::from_sat(100_000_000)), "1.00 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(500_000)), "0.01 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(9_500_000)), "0.10 BTC");
+        assert_eq!(format!("{:.2}", Amount::from_sat(99_500_000)), "1.00 BTC");
         assert_eq!(format!("{}", Amount::from_sat(100_000_000)), "1 BTC");
         assert_eq!(format!("{}", Amount::from_sat(40_000_000_000)), "400 BTC");
         assert_eq!(format!("{:.10}", Amount::from_sat(100_000_000)), "1.0000000000 BTC");
-        assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.00000010 BTC");
+        assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.0000001 BTC");
         assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
     }
 }
