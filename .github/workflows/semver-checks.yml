@@ -1,0 +1,39 @@
+on:   # yamllint disable-line rule:truthy
+  pull_request:
+
+name: Check semver breaks
+
+jobs:
+  API:
+    name: API - nightly toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # we need full history for cargo semver-checks
+      - name: "Install Rustup"
+        uses: dtolnay/rust-toolchain@nightly
+      - name: "Select nightly-version"
+        run: |
+          rustup default $(cat nightly-version)
+      - name: "Install cargo-binstall"
+        uses: cargo-bins/cargo-binstall@main
+      - name: "Binstall cargo-semver-checks"
+        run: cargo binstall cargo-semver-checks --no-confirm
+      - name: "Run semver checker script"
+        run: ./contrib/check-semver.sh
+      - name: "Add PR label to breaking changes"
+        uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ hashFiles('semver-break') != '' }}
+        with:
+          labels: "API break"
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        if: ${{ hashFiles('semver-break') != '' }}
+        with:
+          message: |
+            :rotating_light: API BREAKING CHANGE DETECTED
+
