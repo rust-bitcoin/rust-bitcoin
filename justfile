@@ -21,6 +21,10 @@ fmt:
 format:
   cargo +$(cat ./nightly-version) fmt --all --check
 
+# Generate documentation.
+docsrs *flags:
+  RUSTDOCFLAGS="--cfg docsrs -D warnings -D rustdoc::broken-intra-doc-links" cargo +$(cat ./nightly-version) doc --all-features {{flags}}
+
 # Quick and dirty CI useful for pre-push checks.
 sane: lint
   cargo test --quiet --workspace --all-targets --no-default-features > /dev/null || exit 1
