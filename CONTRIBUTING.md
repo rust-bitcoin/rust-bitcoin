@@ -196,16 +196,12 @@ requirement to test unsafe code with sanitizers including Miri.
 
 ### API changes
 
-All PRs that change the public API of `rust-bitcoin` must include a patch to
-the `api/` text files. This should be a separate, final patch to the PR
-that is the diff created by running `./contrib/check-for-api-changes.sh`.
+All PRs that change the public API of `rust-bitcoin` will be checked on CI for
+semversioning compliance. This means that if the PR changes the public API in a
+way that is not backwards compatible, the PR will be flagged as a breaking change.
+Please check the [Rust workflow](.github/workflows/rust.yml).
+Under the hood we use [`cargo-semver-checks`](https://github.com/obi1kenobi/cargo-semver-checks).
 
-Or use `just`:
-
-```bash
-just check-api
-git commit -a -m 'api: Run just check-api'
-```
 
 ### Policy
 
