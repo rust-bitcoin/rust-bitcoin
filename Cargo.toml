@@ -25,3 +25,6 @@ path = "primitives"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
+
+[patch.crates-io.hex-conservative]
+path = "../../hex-conservative/07-03-ser-bytes-as-hex"

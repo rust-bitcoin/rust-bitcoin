@@ -4,18 +4,7 @@
 //!
 //! This module is for special serde serializations.
 
-pub(crate) struct SerializeBytesAsHex<'a>(pub(crate) &'a [u8]);
-
-impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use hex::DisplayHex;
-
-        serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
-    }
-}
+use hex::serde::SerializeBytesAsHex;
 
 pub mod btreemap_byte_values {
     //! Module for serialization of BTreeMaps with hex byte values.

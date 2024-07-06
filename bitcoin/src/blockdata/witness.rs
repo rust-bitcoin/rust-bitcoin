@@ -473,7 +473,7 @@ impl serde::Serialize for Witness {
 
         for elem in self.iter() {
             if human_readable {
-                seq.serialize_element(&crate::serde_utils::SerializeBytesAsHex(elem))?;
+                seq.serialize_element(&hex::serde::SerializeBytesAsHex(elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
