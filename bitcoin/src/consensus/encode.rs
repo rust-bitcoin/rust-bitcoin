@@ -434,7 +434,7 @@ impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
-#[allow(clippy::len_without_is_empty)] // VarInt has on concept of 'is_empty'.
+#[allow(clippy::len_without_is_empty)] // VarInt has no concept of 'is_empty'.
 impl VarInt {
     /// Returns the number of bytes this varint contributes to a transaction size.
     ///
