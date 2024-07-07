@@ -512,7 +512,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{test_hex_unwrap as hex, FromHex, DisplayHex};
+    use crate::hex::{test_hex_unwrap as hex, DisplayHex, FromHex};
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {

@@ -738,7 +738,8 @@ fn fmt_satoshi_in(
             if let Some(format_precision) = options.precision {
                 if usize::from(precision) > format_precision {
                     // precision is u8 so in this branch options.precision() < 255 which fits in u32
-                    let rounding_divisor = 10u64.pow(u32::from(precision) - format_precision as u32);
+                    let rounding_divisor =
+                        10u64.pow(u32::from(precision) - format_precision as u32);
                     let remainder = satoshi % rounding_divisor;
                     satoshi -= remainder;
                     if remainder / (rounding_divisor / 10) >= 5 {
@@ -992,9 +993,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
-    pub fn to_string_in(self, denom: Denomination) -> String {
-        self.display_in(denom).to_string()
-    }
+    pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
     /// Get a formatted string of this [Amount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
@@ -1350,9 +1349,7 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
-    pub fn to_string_in(self, denom: Denomination) -> String {
-        self.display_in(denom).to_string()
-    }
+    pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
     /// Get a formatted string of this [SignedAmount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
