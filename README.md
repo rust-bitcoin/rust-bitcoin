@@ -185,14 +185,8 @@ fixing `act` issues.
 
 ### Githooks
 
-To assist devs in catching errors _before_ running CI we provide some githooks. If you do not
-already have locally configured githooks you can use the ones in this repository by running, in the
-root directory of the repository:
-```
-git config --local core.hooksPath githooks/
-```
-
-Alternatively add symlinks in your `.git/hooks` directory to any of the githooks we provide.
+To assist devs in catching errors _before_ running CI we provide some githooks. Copy the hooks in `githooks/`
+to your githooks folder or run `just githooks-install` to copy them all.
 
 ## Policy on Altcoins/Altchains
 
