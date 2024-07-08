@@ -7,14 +7,15 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 use std::convert::TryFrom;
+use alloc::boxed::Box;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
-use rc::Rc;
-use sync::Arc;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
