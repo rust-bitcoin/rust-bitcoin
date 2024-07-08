@@ -158,7 +158,32 @@ pub struct HeaderAndShortIds {
     ///  which we expect a peer may be missing.
     pub prefilled_txs: Vec<PrefilledTransaction>,
 }
-impl_consensus_encoding!(HeaderAndShortIds, header, nonce, short_ids, prefilled_txs);
+
+impl Decodable for HeaderAndShortIds {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let header_short_ids = HeaderAndShortIds {
+            header: Decodable::consensus_decode(r)?,
+            nonce: Decodable::consensus_decode(r)?,
+            short_ids: Decodable::consensus_decode(r)?,
+            prefilled_txs: Decodable::consensus_decode(r)?
+        };
+        match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
+            Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
+            _ => Err(encode::Error::ParseFailed("indexes overflowed 16 bits")),
+        }
+    }
+}
+
+impl Encodable for HeaderAndShortIds {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.header.consensus_encode(w)?;
+        len += self.nonce.consensus_encode(w)?;
+        len += self.short_ids.consensus_encode(w)?;
+        len += self.prefilled_txs.consensus_encode(w)?;
+        Ok(len)
+    }
+}
 
 impl HeaderAndShortIds {
     /// Creates a new [`HeaderAndShortIds`] from a full block.
