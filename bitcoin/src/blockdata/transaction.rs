@@ -1633,6 +1633,8 @@ mod tests {
     use core::str::FromStr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
+    #[cfg(feature = "serde")]
+    use internals::serde_round_trip;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};

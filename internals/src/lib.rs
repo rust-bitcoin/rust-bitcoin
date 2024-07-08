@@ -21,10 +21,17 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(feature = "test-serde")]
+pub extern crate serde_json;
+
+#[cfg(feature = "test-serde")]
+pub extern crate bincode;
+
 pub mod array_vec;
 pub mod const_tools;
 pub mod error;
 pub mod macros;
 mod parse;
 #[cfg(feature = "serde")]
+#[macro_use]
 pub mod serde;

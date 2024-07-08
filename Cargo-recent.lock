@@ -85,7 +85,9 @@ dependencies = [
 name = "bitcoin-internals"
 version = "0.3.0"
 dependencies = [
+ "bincode",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
