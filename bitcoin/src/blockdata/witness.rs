@@ -565,9 +565,9 @@ mod test {
 
     use super::*;
     use crate::consensus::{deserialize, serialize};
+    use crate::hex::DisplayHex;
     use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
-    use crate::hex::DisplayHex;
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {
         for &num in n {

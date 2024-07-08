@@ -13,7 +13,7 @@ use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
-use crate::prelude::{Box, DisplayHex, sink, String, ToOwned, Vec};
+use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, Vec};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
@@ -366,9 +366,7 @@ impl Script {
     /// What this function considers to be standard may change without warning pending Bitcoin Core
     /// changes.
     #[inline]
-    pub fn is_standard_op_return(&self) -> bool {
-        self.is_op_return() && self.0.len() <= 80
-    }
+    pub fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
 
     /// Checks whether a script is trivially known to have no satisfying input.
     ///
