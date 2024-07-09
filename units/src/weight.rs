@@ -13,7 +13,7 @@ pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 /// Represents block weight - the weight of a transaction or block.
 ///
-/// This is an integer newtype representing weigth in `wu`. It provides protection against mixing
+/// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -43,21 +43,21 @@ impl Weight {
     /// The minimum transaction weight for a valid serialized transaction.
     pub const MIN_TRANSACTION: Weight = Weight(Self::WITNESS_SCALE_FACTOR * 60);
 
-    /// Directly constructs `Weight` from weight units.
+    /// Directly constructs [`Weight`] from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
-    /// Directly constructs `Weight` from usize weight units.
+    /// Directly constructs [`Weight`] from usize weight units.
     pub const fn from_wu_usize(wu: usize) -> Self { Weight(wu as u64) }
 
-    /// Constructs `Weight` from kilo weight units returning `None` if an overflow occurred.
+    /// Constructs [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
-    /// Constructs `Weight` from virtual bytes, returning `None` on overflow.
+    /// Constructs [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
     pub fn from_vb(vb: u64) -> Option<Self> {
         vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
     }
 
-    /// Constructs `Weight` from virtual bytes panicking on overflow.
+    /// Constructs [`Weight`] from virtual bytes panicking if an overflow occurred.
     ///
     /// # Panics
     ///
@@ -76,13 +76,13 @@ impl Weight {
         }
     }
 
-    /// Constructs `Weight` from virtual bytes without an overflow check.
+    /// Constructs [`Weight`] from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
-    /// Constructs `Weight` from witness size.
+    /// Constructs [`Weight`] from witness size.
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight(witness_size) }
 
-    /// Constructs `Weight` from non-witness size.
+    /// Constructs [`Weight`] from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
         Weight(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
@@ -105,22 +105,22 @@ impl Weight {
 
     /// Checked addition.
     ///
-    /// Computes `self + rhs` returning `None` if an overflow occurred.
+    /// Computes `self + rhs` returning [`None`] if an overflow occurred.
     pub fn checked_add(self, rhs: Self) -> Option<Self> { self.0.checked_add(rhs.0).map(Self) }
 
     /// Checked subtraction.
     ///
-    /// Computes `self - rhs` returning `None` if an overflow occurred.
+    /// Computes `self - rhs` returning [`None`] if an overflow occurred.
     pub fn checked_sub(self, rhs: Self) -> Option<Self> { self.0.checked_sub(rhs.0).map(Self) }
 
     /// Checked multiplication.
     ///
-    /// Computes `self * rhs` returning `None` if an overflow occurred.
+    /// Computes `self * rhs` returning [`None`] if an overflow occurred.
     pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
 
     /// Checked division.
     ///
-    /// Computes `self / rhs` returning `None` if `rhs == 0`.
+    /// Computes `self / rhs` returning [`None`] if `rhs == 0`.
     pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
 }
 

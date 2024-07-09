@@ -65,10 +65,10 @@ impl From<BlockHeight> for u32 {
 }
 
 impl From<absolute::Height> for BlockHeight {
-    /// Converts [`locktime::absolute::Height`] to a [`BlockHeight`].
+    /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
-    /// An absolute locktime block height has a maximum value of `absolute::LOCK_TIME_THRESHOLD`
-    /// (500,000,000) where as a `BlockHeight` is a thin wrapper around a `u32`, the two types are
+    /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
+    /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
     /// not interchangeable.
     fn from(h: absolute::Height) -> Self { Self::from_u32(h.to_consensus_u32()) }
 }
@@ -76,10 +76,10 @@ impl From<absolute::Height> for BlockHeight {
 impl TryFrom<BlockHeight> for absolute::Height {
     type Error = absolute::ConversionError;
 
-    /// Converts [`BlockHeight`] to a [`locktime::absolute::Height`].
+    /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
-    /// An absolute locktime block height has a maximum value of `absolute::LOCK_TIME_THRESHOLD`
-    /// (500,000,000) where as a `BlockHeight` is a thin wrapper around a `u32`, the two types are
+    /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
+    /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
     /// not interchangeable.
     fn try_from(h: BlockHeight) -> Result<Self, Self::Error> {
         absolute::Height::from_consensus(h.to_u32())
@@ -132,20 +132,20 @@ impl From<BlockInterval> for u32 {
 }
 
 impl From<relative::Height> for BlockInterval {
-    /// Converts [`locktime::relative::Height`] to a [`BlockInterval`].
+    /// Converts a [`locktime::relative::Height`] to a [`BlockInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// `BlockInterval` is a thin wrapper around a `u32`, the two types are not interchangeable.
+    /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn from(h: relative::Height) -> Self { Self::from_u32(h.value().into()) }
 }
 
 impl TryFrom<BlockInterval> for relative::Height {
     type Error = TooBigForRelativeBlockHeightError;
 
-    /// Converts [`BlockInterval`] to a [`locktime::relative::Height`].
+    /// Converts a [`BlockInterval`] to a [`locktime::relative::Height`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// `BlockInterval` is a thin wrapper around a `u32`, the two types are not interchangeable.
+    /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn try_from(h: BlockInterval) -> Result<Self, Self::Error> {
         let h = h.to_u32();
         if h > u16::MAX as u32 {
@@ -155,7 +155,7 @@ impl TryFrom<BlockInterval> for relative::Height {
     }
 }
 
-/// The block interval is too big to be used as a relative lock time.
+/// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TooBigForRelativeBlockHeightError(u32);
 
