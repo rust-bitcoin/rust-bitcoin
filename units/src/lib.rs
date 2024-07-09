@@ -59,13 +59,3 @@ pub use self::{
     parse::ParseIntError,
     weight::Weight
 };
-
-#[rustfmt::skip]
-#[allow(unused_imports)]
-mod prelude {
-    #[cfg(all(feature = "alloc", not(feature = "std")))]
-    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
-
-    #[cfg(feature = "std")]
-    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc};
-}
