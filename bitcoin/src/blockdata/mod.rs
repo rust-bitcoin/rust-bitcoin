@@ -7,7 +7,6 @@
 
 pub mod block;
 pub mod constants;
-pub mod locktime;
 pub mod script;
 pub mod transaction;
 pub mod witness;
@@ -44,6 +43,49 @@ pub mod fee_rate {
 
             assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
         }
+    }
+}
+
+/// Provides absolute and relative locktimes.
+pub mod locktime {
+    pub mod absolute {
+        //! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
+        //!
+        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! whether `LockTime < LOCKTIME_THRESHOLD`.
+
+        use io::{BufRead, Write};
+
+        pub use crate::consensus::encode::{self, Decodable, Encodable};
+
+        /// Re-export everything from the `primitives::locktime::absolute` module.
+        #[rustfmt::skip]        // Keep public re-exports separate.
+        pub use primitives::locktime::absolute::*;
+
+        impl Encodable for LockTime {
+            #[inline]
+            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+                let v = self.to_consensus_u32();
+                v.consensus_encode(w)
+            }
+        }
+
+        impl Decodable for LockTime {
+            #[inline]
+            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+                u32::consensus_decode(r).map(LockTime::from_consensus)
+            }
+        }
+    }
+
+    pub mod relative {
+        //! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
+        //!
+        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! whether bit 22 of the `u32` consensus value is set.
+
+        /// Re-export everything from the `primitives::locktime::relative` module.
+        pub use primitives::locktime::relative::*;
     }
 }
 

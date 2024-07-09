@@ -16,9 +16,9 @@ use crate::locktime::absolute;
 use crate::network::Network;
 use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
-use crate::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
+use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash};
+use crate::{script, Amount, BlockHash, Sequence};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;

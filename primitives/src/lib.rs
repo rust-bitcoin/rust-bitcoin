@@ -8,8 +8,6 @@
 //!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
 
-// NB: This crate is empty if `alloc` is not enabled.
-#![cfg(feature = "alloc")]
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -26,9 +24,22 @@ extern crate alloc;
 extern crate std;
 
 #[cfg(feature = "serde")]
+#[macro_use]
 extern crate actual_serde as serde;
 
+#[cfg(feature = "alloc")]
+pub mod locktime;
 pub mod opcodes;
+pub mod sequence;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+#[cfg(feature = "alloc")]
+pub use self::{
+    locktime::{absolute, relative},
+};
+#[doc(inline)]
+pub use self::sequence::Sequence;
 
 #[rustfmt::skip]
 #[allow(unused_imports)]

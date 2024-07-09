@@ -1217,8 +1217,9 @@ mod tests {
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::ScriptBuf;
-    use crate::transaction::{self, OutPoint, Sequence, TxIn};
+    use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
+    use crate::Sequence;
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
