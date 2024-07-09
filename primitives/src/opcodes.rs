@@ -424,7 +424,7 @@ impl Opcode {
     ///
     /// Returns `None` if `self` is not a PUSHNUM.
     #[inline]
-    pub(crate) const fn decode_pushnum(self) -> Option<u8> {
+    pub const fn decode_pushnum(self) -> Option<u8> {
         const START: u8 = OP_PUSHNUM_1.code;
         const END: u8 = OP_PUSHNUM_16.code;
         match self.code {

@@ -20,3 +20,18 @@ extern crate alloc;
 
 #[cfg(feature = "std")]
 extern crate std;
+
+#[cfg(feature = "serde")]
+extern crate actual_serde as serde;
+
+pub mod opcodes;
+
+#[rustfmt::skip]
+#[allow(unused_imports)]
+mod prelude {
+    #[cfg(all(not(feature = "std"), not(test)))]
+    pub use alloc::string::ToString;
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::string::ToString;
+}

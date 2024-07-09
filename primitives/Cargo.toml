@@ -16,9 +16,14 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = []
+std = ["internals/std"]
+serde = ["actual-serde", "internals/serde"]
 
 [dependencies]
+internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
+
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "alloc" ], optional = true }
 
 [dev-dependencies]
 
