@@ -59,12 +59,12 @@ impl_message_from_hash!(SegwitV0Sighash);
 // but outside of it, it should not be possible to construct these hash
 // types from arbitrary data (except by casting via to/from_byte_array).
 impl LegacySighash {
-    fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
-    fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+    fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
+    fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 }
 impl SegwitV0Sighash {
-    fn engine() -> sha256::HashEngine { sha256d::Hash::engine() }
-    fn from_engine(e: sha256::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
+    fn engine() -> sha256d::HashEngine { sha256d::Hash::engine() }
+    fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 }
 
 sha256t_hash_newtype! {

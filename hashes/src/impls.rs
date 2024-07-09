@@ -6,7 +6,7 @@
 
 use bitcoin_io::impl_write;
 
-use crate::{hmac, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
+use crate::{hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, HashEngine};
 
 impl_write!(
     sha1::HashEngine,
@@ -20,6 +20,15 @@ impl_write!(
 impl_write!(
     sha256::HashEngine,
     |us: &mut sha256::HashEngine, buf| {
+        us.input(buf);
+        Ok(buf.len())
+    },
+    |_us| { Ok(()) }
+);
+
+impl_write!(
+    sha256d::HashEngine,
+    |us: &mut sha256d::HashEngine, buf| {
         us.input(buf);
         Ok(buf.len())
     },
