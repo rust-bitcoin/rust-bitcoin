@@ -6,17 +6,15 @@ use core::ops::Deref;
 use hex::FromHex;
 use secp256k1::{Secp256k1, Verification};
 
+use super::witness_program::WitnessProgram;
+use super::witness_version::WitnessVersion;
+use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash};
 use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
-use crate::script::witness_program::WitnessProgram;
-use crate::script::witness_version::WitnessVersion;
-use crate::script::{
-    opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptHash, WScriptHash,
-};
 use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.
