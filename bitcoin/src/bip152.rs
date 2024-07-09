@@ -15,6 +15,7 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
 use crate::prelude::Vec;
+use crate::transaction::TxIdentifier;
 use crate::{block, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
@@ -116,7 +117,7 @@ impl ShortId {
     }
 
     /// Calculates the short ID with the given (w)txid and using the provided SipHash keys.
-    pub fn with_siphash_keys<T: AsRef<[u8]>>(txid: &T, siphash_keys: (u64, u64)) -> ShortId {
+    pub fn with_siphash_keys<T: TxIdentifier>(txid: &T, siphash_keys: (u64, u64)) -> ShortId {
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
         let hash = siphash24::Hash::hash_with_keys(siphash_keys.0, siphash_keys.1, txid.as_ref());
@@ -217,14 +218,11 @@ impl HeaderAndShortIds {
                     },
                 });
             } else {
-                short_ids.push(ShortId::with_siphash_keys(
-                    &match version {
-                        1 => tx.compute_txid().to_raw_hash(),
-                        2 => tx.compute_wtxid().to_raw_hash(),
-                        _ => unreachable!(),
-                    },
-                    siphash_keys,
-                ));
+                match version {
+                    1 => short_ids.push(ShortId::with_siphash_keys(&tx.compute_txid(), siphash_keys)),
+                    2 => short_ids.push(ShortId::with_siphash_keys(&tx.compute_wtxid(), siphash_keys)),
+                    _ => unreachable!(),
+                }
             }
         }
 
