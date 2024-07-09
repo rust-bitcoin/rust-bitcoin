@@ -33,11 +33,13 @@ fn from_engine(e: HashEngine) -> Hash {
 #[derive(Clone)]
 pub struct HashEngine(sha512::HashEngine);
 
+impl HashEngine {
+    /// Creates a new SHA512/256 hash engine.
+    pub const fn new() -> Self { Self(sha512::HashEngine::sha512_256()) }
+}
+
 impl Default for HashEngine {
-    #[rustfmt::skip]
-    fn default() -> Self {
-        HashEngine(sha512::HashEngine::sha512_256())
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl crate::HashEngine for HashEngine {

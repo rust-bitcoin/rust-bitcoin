@@ -43,14 +43,19 @@ pub struct HashEngine {
     length: usize,
 }
 
-impl Default for HashEngine {
-    fn default() -> Self {
-        HashEngine {
+impl HashEngine {
+    /// Creates a new SHA1 hash engine.
+    pub const fn new() -> Self {
+        Self {
             h: [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
             length: 0,
             buffer: [0; BLOCK_SIZE],
         }
     }
+}
+
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
 }
 
 impl crate::HashEngine for HashEngine {
