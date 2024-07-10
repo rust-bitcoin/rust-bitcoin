@@ -55,6 +55,7 @@ dependencies = [
  "bincode",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
@@ -98,6 +99,10 @@ version = "0.1.2"
 [[package]]
 name = "bitcoin-primitives"
 version = "0.100.0"
+dependencies = [
+ "bitcoin-internals",
+ "serde",
+]
 
 [[package]]
 name = "bitcoin-units"

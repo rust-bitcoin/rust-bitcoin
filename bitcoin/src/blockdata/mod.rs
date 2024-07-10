@@ -8,7 +8,6 @@
 pub mod block;
 pub mod constants;
 pub mod locktime;
-pub mod opcodes;
 pub mod script;
 pub mod transaction;
 pub mod witness;
@@ -46,6 +45,12 @@ pub mod fee_rate {
             assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
         }
     }
+}
+
+/// Bitcoin script opcodes.
+pub mod opcodes {
+    /// Re-export everything from the [`primitives::opcodes`] module.
+    pub use primitives::opcodes::*;
 }
 
 /// Implements `Weight` and associated features.
