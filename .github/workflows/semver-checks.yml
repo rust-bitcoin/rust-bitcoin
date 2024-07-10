@@ -4,8 +4,8 @@ on:   # yamllint disable-line rule:truthy
 name: Check semver breaks
 
 jobs:
-  API:
-    name: API - stable toolchain
+  PR:
+    name: PR Semver - nightly toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,7 +21,7 @@ jobs:
       - name: "Binstall cargo-semver-checks"
         run: cargo binstall cargo-semver-checks --no-confirm
       - name: "Run semver checker script"
-        run: ./contrib/check-semver.sh
+        run: ./contrib/check-semver-pr.sh
       - name: Save PR number
         if: ${{ hashFiles('semver-break') != '' }}
         env:
@@ -39,3 +39,21 @@ jobs:
         with:
           name: semver-break
           path: semver-break
+
+  Feature:
+    name: Non additive cargo features - stable toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Install Rustup"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Install cargo-binstall"
+        uses: cargo-bins/cargo-binstall@main
+      - name: "Binstall cargo-semver-checks"
+        run: cargo binstall cargo-semver-checks --no-confirm
+      - name: "Run semver checker script"
+        run: ./contrib/check-semver-feature.sh
+
