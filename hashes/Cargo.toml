@@ -25,9 +25,11 @@ small-hash = []
 [dependencies]
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 
-bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
 schemars = { version = "0.8.3", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
+
+# This is not indtended to be used directly, it is expected that users will enable `std` or `io`.
+bitcoin-io = { version = "0.1.1", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"
