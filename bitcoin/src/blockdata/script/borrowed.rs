@@ -7,24 +7,23 @@ use core::ops::{
 
 use secp256k1::{Secp256k1, Verification};
 
-use super::PushBytes;
+use super::witness_version::WitnessVersion;
+use super::{
+    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, PushBytes,
+    RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+};
 use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, Vec};
-use crate::script::witness_version::WitnessVersion;
-use crate::script::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
-    RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
-};
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 use crate::FeeRate;
 
 /// Bitcoin script slice.
 ///
-/// *[See also the `bitcoin::script` module](crate::script).*
+/// *[See also the `bitcoin::script` module](super).*
 ///
 /// `Script` is a script slice, the most primitive script type. It's usually seen in its borrowed
 /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
