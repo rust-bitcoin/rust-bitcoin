@@ -199,7 +199,7 @@ requirement to test unsafe code with sanitizers including Miri.
 All PRs that change the public API of `rust-bitcoin` will be checked on CI for
 semversioning compliance. This means that if the PR changes the public API in a
 way that is not backwards compatible, the PR will be flagged as a breaking change.
-Please check the [Rust workflow](.github/workflows/rust.yml).
+Please check the [`semver-checks` workflow](.github/workflows/semver-checks.yml).
 Under the hood we use [`cargo-semver-checks`](https://github.com/obi1kenobi/cargo-semver-checks).
 
 
