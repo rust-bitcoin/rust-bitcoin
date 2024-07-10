@@ -41,15 +41,18 @@ main() {
     generate_json_files_all_features "base58ck" "current"
     generate_json_files_no_default_features "base58ck" "current"
 
-    # 3. bitcoin_hashes: no-default-features and alloc feature.
+    # 3. bitcoin_hashes: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin_hashes" "current"
     generate_json_files_no_default_features "bitcoin_hashes" "current"
     generate_json_files_features_alloc "bitcoin_hashes" "current"
 
-    # 4. bitcoin-units: no-default-features and alloc feature.
+    # 4. bitcoin-units: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-units" "current"
     generate_json_files_no_default_features "bitcoin-units" "current"
     generate_json_files_features_alloc "bitcoin-units" "current"
 
-    # 5. bitcoin-io: no-default-features and alloc feature.
+    # 5. bitcoin-io: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-io" "current"
     generate_json_files_no_default_features "bitcoin-io" "current"
     generate_json_files_features_alloc "bitcoin-io" "current"
 
@@ -67,15 +70,18 @@ main() {
     generate_json_files_all_features "base58ck" "master"
     generate_json_files_no_default_features "base58ck" "master"
 
-    # 3. bitcoin_hashes: no-default-features and alloc feature.
+    # 3. bitcoin_hashes: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin_hashes" "master"
     generate_json_files_no_default_features "bitcoin_hashes" "master"
     generate_json_files_features_alloc "bitcoin_hashes" "master"
 
-    # 4. bitcoin-units: no-default-features and alloc feature.
+    # 4. bitcoin-units: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-units" "master"
     generate_json_files_no_default_features "bitcoin-units" "master"
     generate_json_files_features_alloc "bitcoin-units" "master"
 
-    # 5. bitcoin-io: no-default-features and alloc feature.
+    # 5. bitcoin-io: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-io" "master"
     generate_json_files_no_default_features "bitcoin-io" "master"
     generate_json_files_features_alloc "bitcoin-io" "master"
 
@@ -84,10 +90,13 @@ main() {
     run_cargo_semver_check "bitcoin" "no-default-features"
     run_cargo_semver_check "base58ck" "all-features"
     run_cargo_semver_check "base58ck" "no-default-features"
+    run_cargo_semver_check "bitcoin_hashes" "all-features"
     run_cargo_semver_check "bitcoin_hashes" "no-default-features"
     run_cargo_semver_check "bitcoin_hashes" "alloc"
+    run_cargo_semver_check "bitcoin-units" "all-features"
     run_cargo_semver_check "bitcoin-units" "no-default-features"
     run_cargo_semver_check "bitcoin-units" "alloc"
+    run_cargo_semver_check "bitcoin-io" "all-features"
     run_cargo_semver_check "bitcoin-io" "no-default-features"
     run_cargo_semver_check "bitcoin-io" "alloc"
 
