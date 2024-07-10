@@ -5,7 +5,7 @@ name: Check semver breaks
 
 jobs:
   API:
-    name: API - nightly toolchain
+    name: API - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -15,10 +15,7 @@ jobs:
         with:
           fetch-depth: 0 # we need full history for cargo semver-checks
       - name: "Install Rustup"
-        uses: dtolnay/rust-toolchain@nightly
-      - name: "Select nightly-version"
-        run: |
-          rustup default $(cat nightly-version)
+        uses: dtolnay/rust-toolchain@stable
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@main
       - name: "Binstall cargo-semver-checks"
