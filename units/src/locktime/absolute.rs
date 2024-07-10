@@ -2,6 +2,8 @@
 
 //! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
+#[cfg(feature = "alloc")]
+use alloc::{string::String, boxed::Box};
 use core::fmt;
 
 use internals::write_err;
@@ -9,8 +11,6 @@ use internals::write_err;
 #[cfg(feature = "alloc")]
 use crate::parse;
 use crate::parse::ParseIntError;
-#[cfg(feature = "alloc")]
-use crate::prelude::{Box, String};
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
