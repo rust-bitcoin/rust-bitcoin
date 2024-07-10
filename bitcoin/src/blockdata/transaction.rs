@@ -67,6 +67,18 @@ impl Wtxid {
     pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
 }
 
+/// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
+pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
+
+impl TxIdentifier for Txid {}
+impl TxIdentifier for Wtxid {}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Txid {}
+    impl Sealed for super::Wtxid {}
+}
+
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)

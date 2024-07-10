@@ -20,6 +20,7 @@ use hashes::{sha256d, HashEngine as _};
 
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::Vec;
+use crate::transaction::TxIdentifier;
 use crate::{Txid, Wtxid};
 
 #[rustfmt::skip]
@@ -46,7 +47,7 @@ impl_hashencode!(WitnessMerkleNode);
 /// do not use this algorithm and cannot use this trait.
 pub trait MerkleNode: Copy {
     /// The hash (TXID or WTXID) of a transaciton in the tree.
-    type Leaf;
+    type Leaf: TxIdentifier;
 
     /// Convert a hash to a leaf node of the tree.
     fn from_leaf(leaf: Self::Leaf) -> Self;
