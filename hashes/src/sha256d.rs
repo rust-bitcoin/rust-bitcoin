@@ -13,10 +13,30 @@ crate::internal_macros::hash_type! {
     "Output of the SHA256d hash function."
 }
 
-type HashEngine = sha256::HashEngine;
+/// Engine to compute SHA256d hash function.
+#[derive(Clone)]
+pub struct HashEngine(sha256::HashEngine);
 
-fn from_engine(e: sha256::HashEngine) -> Hash {
-    let sha2 = sha256::Hash::from_engine(e);
+impl HashEngine {
+    /// Creates a new SHA256d hash engine.
+    pub const fn new() -> Self { Self(sha256::HashEngine::new()) }
+}
+
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
+}
+
+impl crate::HashEngine for HashEngine {
+    type MidState = sha256::Midstate;
+    fn midstate(&self) -> Self::MidState { self.0.midstate() }
+
+    const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
+    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
+}
+
+fn from_engine(e: HashEngine) -> Hash {
+    let sha2 = sha256::Hash::from_engine(e.0);
     let sha2d = sha256::Hash::hash(&sha2[..]);
 
     let mut ret = [0; 32];
