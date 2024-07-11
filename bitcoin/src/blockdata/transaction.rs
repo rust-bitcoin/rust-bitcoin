@@ -29,6 +29,9 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount, VarInt};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
+
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
     ///
@@ -338,6 +341,7 @@ impl Default for TxIn {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct TxOut {
     /// The value of the output, in satoshis.
     pub value: Amount,
