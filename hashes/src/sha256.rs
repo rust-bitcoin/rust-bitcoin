@@ -6,9 +6,9 @@
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-use core::cmp;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, fmt};
 
 #[cfg(doc)]
 use crate::sha256t;
@@ -143,11 +143,6 @@ impl Midstate {
     /// Length of the midstate, in bytes.
     const LEN: usize = 32;
 
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = true;
-
     /// Construct a new [`Midstate`] from the inner value.
     pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
@@ -183,7 +178,26 @@ impl Midstate {
     }
 }
 
-crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
+impl fmt::LowerHex for Midstate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        hex::fmt_hex_exact!(f, 32, self.0.iter().rev(), hex::Case::Lower)
+    }
+}
+
+impl fmt::UpperHex for Midstate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        hex::fmt_hex_exact!(f, 32, self.0.iter().rev(), hex::Case::Upper)
+    }
+}
+
+impl fmt::Display for Midstate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self, f) }
+}
+
+impl fmt::Debug for Midstate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
+}
+
 serde_impl!(Midstate, 32);
 borrow_slice_impl!(Midstate);
 
