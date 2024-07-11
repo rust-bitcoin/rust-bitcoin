@@ -198,7 +198,6 @@ impl fmt::Debug for Midstate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
 }
 
-serde_impl!(Midstate, 32);
 borrow_slice_impl!(Midstate);
 
 impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
