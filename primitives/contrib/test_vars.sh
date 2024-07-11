@@ -5,10 +5,10 @@
 # shellcheck disable=SC2034
 
 # Test these features with "std" enabled.
-FEATURES_WITH_STD=""
+FEATURES_WITH_STD="serde"
 
 # Test these features without "std" enabled.
-FEATURES_WITHOUT_STD=""
+FEATURES_WITHOUT_STD="alloc serde"
 
 # Run these examples.
 EXAMPLES=""

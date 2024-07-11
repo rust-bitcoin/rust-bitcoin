@@ -25,13 +25,13 @@ secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 
 [dependencies]
-base58 = { package = "base58ck", version = "0.1.0", default-features = false }
+base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc", "io"] }
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
-primitives = { package = "bitcoin-primitives", version = "0.100.0", default-features = false }
+primitives = { package = "bitcoin-primitives", version = "0.100.0", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 

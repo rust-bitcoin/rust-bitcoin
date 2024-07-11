@@ -4,6 +4,8 @@
 //!
 //! This crate can be used in a no-std environment but requires an allocator.
 
+// NB: This crate is empty if `alloc` is not enabled.
+#![cfg(feature = "alloc")]
 #![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]

@@ -5,8 +5,12 @@
 //! Bitcoin addresses do not appear on chain; rather, they are conventions used by Bitcoin (wallet)
 //! software to communicate where coins should be sent and are based on the output type e.g., P2WPKH.
 //!
+//! This crate can be used in a no-std environment but requires an allocator.
+//!
 //! ref: <https://sprovoost.nl/2022/11/10/what-is-a-bitcoin-address/>
 
+// NB: This crate is empty if `alloc` is not enabled.
+#![cfg(feature = "alloc")]
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
