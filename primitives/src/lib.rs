@@ -4,8 +4,12 @@
 //!
 //! Primitive data types that are used throughout the [`rust-bitcoin`] ecosystem.
 //!
+//! This crate can be used in a no-std environment but requires an allocator.
+//!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
 
+// NB: This crate is empty if `alloc` is not enabled.
+#![cfg(feature = "alloc")]
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]

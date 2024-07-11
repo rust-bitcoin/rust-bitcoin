@@ -14,11 +14,12 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["hashes/std", "internals/std"]
+std = ["alloc", "hashes/std", "internals/std"]
+alloc = ["hashes/alloc", "internals/alloc"]
 
 [dependencies]
-hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["alloc"] }
-internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false }
+internals = { package = "bitcoin-internals", version = "0.3.0" }
 
 [dev-dependencies]
 hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = ["alloc"] }
