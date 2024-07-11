@@ -5,7 +5,7 @@ name: Check semver breaks
 
 jobs:
   PR:
-    name: PR Semver - nightly toolchain
+    name: PR Semver - stable toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -16,6 +16,9 @@ jobs:
           fetch-depth: 0 # we need full history for cargo semver-checks
       - name: "Install Rustup"
         uses: dtolnay/rust-toolchain@stable
+      - name: "Select stable-version"
+        run: |
+          rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@main
       - name: "Binstall cargo-semver-checks"
@@ -50,6 +53,9 @@ jobs:
         uses: actions/checkout@v4
       - name: "Install Rustup"
         uses: dtolnay/rust-toolchain@stable
+      - name: "Select stable-version"
+        run: |
+          rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@main
       - name: "Binstall cargo-semver-checks"
