@@ -123,22 +123,6 @@ impl Hash {
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 pub struct Midstate(pub [u8; 32]);
 
-crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
-serde_impl!(Midstate, 32);
-borrow_slice_impl!(Midstate);
-
-impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-impl core::str::FromStr for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
-}
-
 impl Midstate {
     /// Length of the midstate, in bytes.
     const LEN: usize = 32;
@@ -181,6 +165,22 @@ impl Midstate {
         }
         Self::const_hash(&buf, false)
     }
+}
+
+crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
+serde_impl!(Midstate, 32);
+borrow_slice_impl!(Midstate);
+
+impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
+}
+
+impl core::str::FromStr for Midstate {
+    type Err = hex::HexToArrayError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
 }
 
 impl hex::FromHex for Midstate {
