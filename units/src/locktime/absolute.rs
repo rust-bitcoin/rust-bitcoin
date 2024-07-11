@@ -3,7 +3,7 @@
 //! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
 #[cfg(feature = "alloc")]
-use alloc::{string::String, boxed::Box};
+use alloc::{boxed::Box, string::String};
 use core::fmt;
 
 use internals::write_err;
@@ -372,9 +372,10 @@ impl From<ConversionError> for ParseError {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
+
+    use super::*;
 
     #[test]
     fn time_from_str_hex_happy_path() {

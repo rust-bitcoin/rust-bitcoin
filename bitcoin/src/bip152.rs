@@ -166,7 +166,7 @@ impl Decodable for HeaderAndShortIds {
             header: Decodable::consensus_decode(r)?,
             nonce: Decodable::consensus_decode(r)?,
             short_ids: Decodable::consensus_decode(r)?,
-            prefilled_txs: Decodable::consensus_decode(r)?
+            prefilled_txs: Decodable::consensus_decode(r)?,
         };
         match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
             Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
@@ -244,8 +244,10 @@ impl HeaderAndShortIds {
                 });
             } else {
                 match version {
-                    1 => short_ids.push(ShortId::with_siphash_keys(&tx.compute_txid(), siphash_keys)),
-                    2 => short_ids.push(ShortId::with_siphash_keys(&tx.compute_wtxid(), siphash_keys)),
+                    1 =>
+                        short_ids.push(ShortId::with_siphash_keys(&tx.compute_txid(), siphash_keys)),
+                    2 => short_ids
+                        .push(ShortId::with_siphash_keys(&tx.compute_wtxid(), siphash_keys)),
                     _ => unreachable!(),
                 }
             }
