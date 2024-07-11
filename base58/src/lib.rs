@@ -31,9 +31,10 @@ pub mod error;
 
 #[cfg(not(feature = "std"))]
 pub use alloc::{string::String, vec::Vec};
-use core::{fmt, str};
+use core::fmt;
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
+use internals::array_vec::ArrayVec;
 
 use hashes::sha256d;
 
@@ -117,42 +118,98 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
+const SHORT_OPT_BUFFER_LEN: usize = 128;
+
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
-pub fn encode(data: &[u8]) -> String { encode_iter(data.iter().cloned()) }
+pub fn encode(data: &[u8]) -> String {
+    let reserve_len = encoded_reserve_len(data.len());
+    let mut res = String::with_capacity(reserve_len);
+    if reserve_len <= SHORT_OPT_BUFFER_LEN {
+        format_iter(&mut res, data.iter().copied(), &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
+    } else {
+        format_iter(&mut res, data.iter().copied(), &mut Vec::with_capacity(reserve_len))
+    }.expect("string doesn't error");
+    res
+}
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check(data: &[u8]) -> String {
-    let checksum = sha256d::Hash::hash(data);
-    encode_iter(data.iter().cloned().chain(checksum[0..4].iter().cloned()))
+    let mut res = String::with_capacity(encoded_check_reserve_len(data.len()));
+    encode_check_to_writer(&mut res, data).expect("string doesn't fail");
+    res
 }
 
 /// Encodes a slice as base58, including the checksum, into a formatter.
 ///
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
+    encode_check_to_writer(fmt, data)
+}
+
+fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter().cloned().chain(checksum[0..4].iter().cloned());
-    format_iter(fmt, iter)
+    let reserve_len = encoded_check_reserve_len(data.len());
+    if reserve_len <= SHORT_OPT_BUFFER_LEN {
+        format_iter(fmt, iter, &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
+    } else {
+        format_iter(fmt, iter, &mut Vec::with_capacity(reserve_len))
+    }
 }
 
-fn encode_iter<I>(data: I) -> String
-where
-    I: Iterator<Item = u8> + Clone,
-{
-    let mut ret = String::new();
-    format_iter(&mut ret, data).expect("writing into string shouldn't fail");
-    ret
+/// Returns the length to reserve when encoding base58 without checksum
+const fn encoded_reserve_len(unencoded_len: usize) -> usize {
+    // log2(256) / log2(58) ~ 1.37 = 137 / 100
+    unencoded_len * 137 / 100
 }
 
-fn format_iter<I, W>(writer: &mut W, data: I) -> Result<(), fmt::Error>
+/// Returns the length to reserve when encoding base58 with checksum
+const fn encoded_check_reserve_len(unencoded_len: usize) -> usize {
+    encoded_reserve_len(unencoded_len + 4)
+}
+
+trait Buffer: Sized {
+    fn push(&mut self, val: u8);
+    fn slice(&self) -> &[u8];
+    fn slice_mut(&mut self) -> &mut [u8];
+}
+
+impl Buffer for Vec<u8> {
+    fn push(&mut self, val: u8) {
+        Vec::push(self, val)
+    }
+
+    fn slice(&self) -> &[u8] {
+        self
+    }
+
+    fn slice_mut(&mut self) -> &mut [u8] {
+        self
+    }
+}
+
+impl<const N: usize> Buffer for ArrayVec<u8, N> {
+    fn push(&mut self, val: u8) {
+        ArrayVec::push(self, val)
+    }
+
+    fn slice(&self) -> &[u8] {
+        self.as_slice()
+    }
+
+    fn slice_mut(&mut self) -> &mut [u8] {
+        self.as_mut_slice()
+    }
+}
+
+
+fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> Result<(), fmt::Error>
 where
     I: Iterator<Item = u8> + Clone,
     W: fmt::Write,
 {
-    let mut ret = Vec::with_capacity(128);
-
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
     // Build string in little endian with 0-58 in place of characters...
@@ -164,21 +221,24 @@ where
             leading_zeroes = false;
         }
 
-        for ch in ret.iter_mut() {
+        for ch in buf.slice_mut() {
             let new_ch = *ch as usize * 256 + carry;
             *ch = (new_ch % 58) as u8;
             carry = new_ch / 58;
         }
+
         while carry > 0 {
-            ret.push((carry % 58) as u8);
+            buf.push((carry % 58) as u8);
             carry /= 58;
         }
     }
 
     // ... then reverse it and convert to chars
-    ret.resize(ret.len() + leading_zero_count, 0);
+    for _ in 0..leading_zero_count {
+        buf.push(0);
+    }
 
-    for ch in ret.iter().rev() {
+    for ch in buf.slice().iter().rev() {
         writer.write_char(BASE58_CHARS[*ch as usize] as char)?;
     }
 
@@ -203,7 +263,7 @@ mod tests {
         assert_eq!(&encode(&[0, 13, 36][..]), "1211");
         assert_eq!(&encode(&[0, 0, 0, 0, 13, 36][..]), "1111211");
 
-        // Long input (>100 bytes => has to use heap)
+        // Long input (>128 bytes => has to use heap)
         let res = encode(
             "BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
         coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin"
