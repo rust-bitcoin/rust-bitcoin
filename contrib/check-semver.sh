@@ -12,9 +12,6 @@
 
 set -euo pipefail
 
-# Our nightly version.
-NIGHTLY=$(cat nightly-version)
-
 # These are the hardcoded flags that cargo semver-checks uses
 # under the hood to invoke rustdoc.
 RUSTDOCFLAGS="-Z unstable-options --document-private-items --document-hidden-items --output-format=json --cap-lints=allow"
@@ -29,9 +26,6 @@ else
 fi
 
 main() {
-    # we need cargo nightly to generate the JSON files from cargo doc.
-    need_nightly
-
     # On current commit:
     # 1. bitcoin: all-features and no-default-features.
     generate_json_files_all_features "bitcoin" "current"
@@ -41,15 +35,18 @@ main() {
     generate_json_files_all_features "base58ck" "current"
     generate_json_files_no_default_features "base58ck" "current"
 
-    # 3. bitcoin_hashes: no-default-features and alloc feature.
+    # 3. bitcoin_hashes: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin_hashes" "current"
     generate_json_files_no_default_features "bitcoin_hashes" "current"
     generate_json_files_features_alloc "bitcoin_hashes" "current"
 
-    # 4. bitcoin-units: no-default-features and alloc feature.
+    # 4. bitcoin-units: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-units" "current"
     generate_json_files_no_default_features "bitcoin-units" "current"
     generate_json_files_features_alloc "bitcoin-units" "current"
 
-    # 5. bitcoin-io: no-default-features and alloc feature.
+    # 5. bitcoin-io: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-io" "current"
     generate_json_files_no_default_features "bitcoin-io" "current"
     generate_json_files_features_alloc "bitcoin-io" "current"
 
@@ -67,15 +64,18 @@ main() {
     generate_json_files_all_features "base58ck" "master"
     generate_json_files_no_default_features "base58ck" "master"
 
-    # 3. bitcoin_hashes: no-default-features and alloc feature.
+    # 3. bitcoin_hashes: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin_hashes" "master"
     generate_json_files_no_default_features "bitcoin_hashes" "master"
     generate_json_files_features_alloc "bitcoin_hashes" "master"
 
-    # 4. bitcoin-units: no-default-features and alloc feature.
+    # 4. bitcoin-units: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-units" "master"
     generate_json_files_no_default_features "bitcoin-units" "master"
     generate_json_files_features_alloc "bitcoin-units" "master"
 
-    # 5. bitcoin-io: no-default-features and alloc feature.
+    # 5. bitcoin-io: all-features, no-default-features and alloc feature.
+    generate_json_files_all_features "bitcoin-io" "master"
     generate_json_files_no_default_features "bitcoin-io" "master"
     generate_json_files_features_alloc "bitcoin-io" "master"
 
@@ -84,10 +84,13 @@ main() {
     run_cargo_semver_check "bitcoin" "no-default-features"
     run_cargo_semver_check "base58ck" "all-features"
     run_cargo_semver_check "base58ck" "no-default-features"
+    run_cargo_semver_check "bitcoin_hashes" "all-features"
     run_cargo_semver_check "bitcoin_hashes" "no-default-features"
     run_cargo_semver_check "bitcoin_hashes" "alloc"
+    run_cargo_semver_check "bitcoin-units" "all-features"
     run_cargo_semver_check "bitcoin-units" "no-default-features"
     run_cargo_semver_check "bitcoin-units" "alloc"
+    run_cargo_semver_check "bitcoin-io" "all-features"
     run_cargo_semver_check "bitcoin-io" "no-default-features"
     run_cargo_semver_check "bitcoin-io" "alloc"
 
@@ -99,7 +102,7 @@ main() {
 # Run cargo doc with the cargo semver-checks rustdoc flags.
 # We don't care about dependencies.
 run_cargo_doc() {
-    RUSTDOCFLAGS="$RUSTDOCFLAGS" cargo +"$NIGHTLY" doc --no-deps "$@"
+    RUSTDOCFLAGS="$RUSTDOCFLAGS" RUSTC_BOOTSTRAP=1 cargo doc --no-deps "$@"
 }
 
 # Run cargo semver-check
@@ -113,7 +116,7 @@ run_cargo_semver_check() {
     # semver check fails.
     # We check that manually later.
     set +e
-    cargo +"$NIGHTLY" semver-checks -v --baseline-rustdoc "$crate-master-$variant.json" --current-rustdoc "$crate-current-$variant.json" > "$crate-$variant-semver.txt" 2>&1
+    cargo semver-checks -v --baseline-rustdoc "$crate-master-$variant.json" --current-rustdoc "$crate-current-$variant.json" > "$crate-$variant-semver.txt" 2>&1
     set -e
 }
 
@@ -180,19 +183,6 @@ check_for_breaking_changes() {
     if ! [ -f semver-break ]; then
        echo "No breaking changes found"
     fi
-}
-
-# Safekeeping: check if we have a nightly compiler.
-need_nightly() {
-    cargo_ver=$(cargo +"$NIGHTLY" --version)
-    if echo "$cargo_ver" | grep -q -v nightly; then
-        err "Need a nightly compiler; have $cargo_ver"
-    fi
-}
-
-err() {
-    echo "$1" >&2
-    exit 1
 }
 
 #
