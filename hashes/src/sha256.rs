@@ -8,7 +8,7 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::{cmp, fmt};
+use core::{cmp, convert, fmt};
 
 #[cfg(doc)]
 use crate::sha256t;
@@ -198,7 +198,9 @@ impl fmt::Debug for Midstate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
 }
 
-borrow_slice_impl!(Midstate);
+impl convert::AsRef<[u8]> for Midstate {
+    fn as_ref(&self) -> &[u8] { &self.0 }
+}
 
 impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
     type Output = I::Output;
