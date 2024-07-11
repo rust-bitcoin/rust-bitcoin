@@ -27,9 +27,6 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
-    type MidState = sha256::Midstate;
-    fn midstate(&self) -> Self::MidState { self.0.midstate() }
-
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }

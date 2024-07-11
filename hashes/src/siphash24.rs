@@ -19,7 +19,7 @@ fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(
 
 #[cfg(hashes_fuzz)]
 fn from_engine(e: HashEngine) -> Hash {
-    let state = e.midstate();
+    let state = e.state.clone();
     Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
 }
 
@@ -133,10 +133,6 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
-    type MidState = State;
-
-    fn midstate(&self) -> State { self.state.clone() }
-
     const BLOCK_SIZE: usize = 8;
 
     #[inline]

@@ -60,14 +60,6 @@ impl HashEngine {
             buffer: [0; BLOCK_SIZE],
         }
     }
-}
-
-impl Default for HashEngine {
-    fn default() -> Self { Self::new() }
-}
-
-impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 20];
 
     #[cfg(not(hashes_fuzz))]
     fn midstate(&self) -> [u8; 20] {
@@ -84,7 +76,13 @@ impl crate::HashEngine for HashEngine {
         ret.copy_from_slice(&self.buffer[..20]);
         ret
     }
+}
 
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
+}
+
+impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> usize { self.length }

@@ -43,10 +43,6 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 64];
-
-    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
-
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }

@@ -71,17 +71,11 @@ impl HashEngine {
             buffer: [0; BLOCK_SIZE],
         }
     }
-}
 
-impl Default for HashEngine {
-    fn default() -> Self { Self::new() }
-}
-
-impl crate::HashEngine for HashEngine {
-    type MidState = Midstate;
-
+    /// Outputs the midstate of the hash engine. This function should not be
+    /// used directly unless you really know what you're doing.
     #[cfg(not(hashes_fuzz))]
-    fn midstate(&self) -> Midstate {
+    pub fn midstate(&self) -> Midstate {
         let mut ret = [0; 32];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes());
@@ -89,13 +83,21 @@ impl crate::HashEngine for HashEngine {
         Midstate(ret)
     }
 
+    /// Outputs the midstate of the hash engine. This function should not be
+    /// used directly unless you really know what you're doing.
     #[cfg(hashes_fuzz)]
-    fn midstate(&self) -> Midstate {
+    pub fn midstate(&self) -> Midstate {
         let mut ret = [0; 32];
         ret.copy_from_slice(&self.buffer[..32]);
         Midstate(ret)
     }
+}
 
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
+}
+
+impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> usize { self.length }
@@ -895,7 +897,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip]
-    fn midstate() {
+    pub(crate) fn midstate() {
         // Test vector obtained by doing an asset issuance on Elements
         let mut engine = sha256::Hash::engine();
         // sha256dhash of outpoint
@@ -1001,7 +1003,7 @@ mod tests {
     }
 
     #[test]
-    fn midstate_fmt_roundtrip() {
+    pub(crate) fn midstate_fmt_roundtrip() {
         let midstate = Midstate::hash_tag(b"ArbitraryTag");
         let hex = format!("{}", midstate);
         let rinsed = hex.parse::<Midstate>().expect("failed to parse hex");

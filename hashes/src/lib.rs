@@ -178,13 +178,6 @@ pub type HkdfSha512 = Hkdf<sha512::Hash>;
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone + Default {
-    /// Byte array representing the internal state of the hash engine.
-    type MidState;
-
-    /// Outputs the midstate of the hash engine. This function should not be
-    /// used directly unless you really know what you're doing.
-    fn midstate(&self) -> Self::MidState;
-
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 
