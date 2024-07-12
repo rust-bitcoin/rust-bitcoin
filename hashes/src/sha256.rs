@@ -74,6 +74,22 @@ impl HashEngine {
         }
     }
 
+    /// Create a new [`HashEngine`] from a [`Midstate`].
+    ///
+    /// # Panics
+    ///
+    /// If `length` is not a multiple of the block size.
+    pub fn from_midstate(midstate: Midstate, length: usize) -> HashEngine {
+        assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
+
+        let mut ret = [0; 8];
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate[..].chunks_exact(4)) {
+            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
+        }
+
+        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length }
+    }
+
     /// Outputs the midstate of the hash engine. This function should not be
     /// used directly unless you really know what you're doing.
     #[cfg(not(hashes_fuzz))]
@@ -433,22 +449,6 @@ impl Midstate {
 }
 
 impl HashEngine {
-    /// Create a new [`HashEngine`] from a [`Midstate`].
-    ///
-    /// # Panics
-    ///
-    /// If `length` is not a multiple of the block size.
-    pub fn from_midstate(midstate: Midstate, length: usize) -> HashEngine {
-        assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
-
-        let mut ret = [0; 8];
-        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate[..].chunks_exact(4)) {
-            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
-        }
-
-        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length }
-    }
-
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
