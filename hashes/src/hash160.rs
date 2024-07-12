@@ -10,7 +10,7 @@
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{ripemd160, sha256, FromSliceError};
+use crate::{ripemd160, sha256};
 
 crate::internal_macros::hash_type! {
     160,
