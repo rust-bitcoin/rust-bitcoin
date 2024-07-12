@@ -1,7 +1,11 @@
 on:   # yamllint disable-line rule:truthy
-  pull_request:
+  pull_request_target:
 
 name: Check semver breaks
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
   API:
