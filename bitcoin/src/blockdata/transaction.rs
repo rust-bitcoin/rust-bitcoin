@@ -2120,7 +2120,7 @@ mod tests {
 
         match error {
             TxVerifyError::ScriptVerification(_) => {}
-            _ => panic!("Wrong error type"),
+            _ => panic!("wrong error type"),
         }
     }
 

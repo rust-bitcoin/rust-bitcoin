@@ -592,14 +592,14 @@ mod tests {
 
             // Deserialize into a tester copy
             let pmt2: PartialMerkleTree =
-                encode::deserialize(&serialized).expect("Could not deserialize own data");
+                encode::deserialize(&serialized).expect("could not deserialize own data");
 
             // Extract Merkle root and matched txids from copy
             let mut match_txid2: Vec<Txid> = vec![];
             let mut indexes = vec![];
             let merkle_root_2 = pmt2
                 .extract_matches(&mut match_txid2, &mut indexes)
-                .expect("Could not extract matches");
+                .expect("could not extract matches");
 
             // Check that it has the same Merkle root as the original, and a valid one
             assert_eq!(merkle_root_1, merkle_root_2);

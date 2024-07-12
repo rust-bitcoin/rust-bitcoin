@@ -2044,7 +2044,7 @@ mod tests {
             for v in &["0", "000"] {
                 let s = format!("{} {}", v, denom);
                 match Amount::from_str(&s) {
-                    Err(e) => panic!("Failed to crate amount from {}: {:?}", s, e),
+                    Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
                     Ok(amount) => assert_eq!(amount, Amount::from_sat(0)),
                 }
             }
@@ -2055,10 +2055,10 @@ mod tests {
                     e,
                     ParseError::Amount(ParseAmountError::OutOfRange(OutOfRangeError::negative()))
                 ),
-                Ok(_) => panic!("Unsigned amount from {}", s),
+                Ok(_) => panic!("unsigned amount from {}", s),
             }
             match SignedAmount::from_str(&s) {
-                Err(e) => panic!("Failed to crate amount from {}: {:?}", s, e),
+                Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
                 Ok(amount) => assert_eq!(amount, SignedAmount::from_sat(0)),
             }
         }

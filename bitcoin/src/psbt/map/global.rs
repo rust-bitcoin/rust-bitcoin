@@ -114,12 +114,12 @@ impl Psbt {
                             if !pair.key.key.is_empty() {
                                 let xpub = Xpub::decode(&pair.key.key)
                                     .map_err(|_| Error::XPubKey(
-                                        "Can't deserialize ExtendedPublicKey from global XPUB key data"
+                                        "can't deserialize ExtendedPublicKey from global XPUB key data"
                                     ))?;
 
                                 if pair.value.is_empty() || pair.value.len() % 4 != 0 {
                                     return Err(Error::XPubKey(
-                                        "Incorrect length of global xpub derivation data",
+                                        "incorrect length of global xpub derivation data",
                                     ));
                                 }
 
@@ -127,7 +127,7 @@ impl Psbt {
                                 let mut decoder = Cursor::new(pair.value);
                                 let mut fingerprint = [0u8; 4];
                                 decoder.read_exact(&mut fingerprint[..]).map_err(|_| {
-                                    Error::XPubKey("Can't read global xpub fingerprint")
+                                    Error::XPubKey("can't read global xpub fingerprint")
                                 })?;
                                 let mut path = Vec::<ChildNumber>::with_capacity(child_count);
                                 while let Ok(index) = u32::consensus_decode(&mut decoder) {
@@ -139,7 +139,7 @@ impl Psbt {
                                     .insert(xpub, (Fingerprint::from(fingerprint), derivation))
                                     .is_some()
                                 {
-                                    return Err(Error::XPubKey("Repeated global xpub key"));
+                                    return Err(Error::XPubKey("repeated global xpub key"));
                                 }
                             } else {
                                 return Err(Error::XPubKey(

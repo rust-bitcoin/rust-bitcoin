@@ -310,7 +310,7 @@ impl Decodable for BlockTransactionsRequest {
                 // transactions that would be allowed in a vector.
                 let byte_size = (nb_indexes)
                     .checked_mul(mem::size_of::<Transaction>())
-                    .ok_or(encode::Error::ParseFailed("Invalid length"))?;
+                    .ok_or(encode::Error::ParseFailed("invalid length"))?;
                 if byte_size > encode::MAX_VEC_SIZE {
                     return Err(encode::Error::OversizedVectorAllocation {
                         requested: byte_size,

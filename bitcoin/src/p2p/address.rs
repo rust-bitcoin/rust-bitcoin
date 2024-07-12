@@ -174,14 +174,14 @@ impl Decodable for AddrV2 {
         Ok(match network_id {
             1 => {
                 if len != 4 {
-                    return Err(encode::Error::ParseFailed("Invalid IPv4 address"));
+                    return Err(encode::Error::ParseFailed("invalid IPv4 address"));
                 }
                 let addr: [u8; 4] = Decodable::consensus_decode(r)?;
                 AddrV2::Ipv4(Ipv4Addr::new(addr[0], addr[1], addr[2], addr[3]))
             }
             2 => {
                 if len != 16 {
-                    return Err(encode::Error::ParseFailed("Invalid IPv6 address"));
+                    return Err(encode::Error::ParseFailed("invalid IPv6 address"));
                 }
                 let addr: [u16; 8] = read_be_address(r)?;
                 if addr[0..3] == ONION {
@@ -200,33 +200,33 @@ impl Decodable for AddrV2 {
             }
             3 => {
                 if len != 10 {
-                    return Err(encode::Error::ParseFailed("Invalid TorV2 address"));
+                    return Err(encode::Error::ParseFailed("invalid TorV2 address"));
                 }
                 let id = Decodable::consensus_decode(r)?;
                 AddrV2::TorV2(id)
             }
             4 => {
                 if len != 32 {
-                    return Err(encode::Error::ParseFailed("Invalid TorV3 address"));
+                    return Err(encode::Error::ParseFailed("invalid TorV3 address"));
                 }
                 let pubkey = Decodable::consensus_decode(r)?;
                 AddrV2::TorV3(pubkey)
             }
             5 => {
                 if len != 32 {
-                    return Err(encode::Error::ParseFailed("Invalid I2P address"));
+                    return Err(encode::Error::ParseFailed("invalid I2P address"));
                 }
                 let hash = Decodable::consensus_decode(r)?;
                 AddrV2::I2p(hash)
             }
             6 => {
                 if len != 16 {
-                    return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
+                    return Err(encode::Error::ParseFailed("invalid CJDNS address"));
                 }
                 let addr: [u16; 8] = read_be_address(r)?;
                 // check the first byte for the CJDNS marker
                 if addr[0] >> 8 != 0xFC {
-                    return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
+                    return Err(encode::Error::ParseFailed("invalid CJDNS address"));
                 }
                 AddrV2::Cjdns(Ipv6Addr::new(
                     addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],

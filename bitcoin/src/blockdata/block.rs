@@ -608,7 +608,7 @@ mod tests {
     fn validate_pow_test() {
         let some_header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
         let some_header: Header =
-            deserialize(&some_header).expect("Can't deserialize correct block header");
+            deserialize(&some_header).expect("can't deserialize correct block header");
         assert_eq!(
             some_header.validate_pow(some_header.target()).unwrap(),
             some_header.block_hash()
@@ -634,7 +634,7 @@ mod tests {
         let some_header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
 
         let header: Header =
-            deserialize(&some_header).expect("Can't deserialize correct block header");
+            deserialize(&some_header).expect("can't deserialize correct block header");
 
         assert_eq!(header.bits, header.target().to_compact_lossy());
     }

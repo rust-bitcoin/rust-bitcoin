@@ -6,7 +6,7 @@ fn main() {
     let output = std::process::Command::new(rustc)
         .arg("--version")
         .output()
-        .unwrap_or_else(|error| panic!("Failed to run `{:?} --version`: {:?}", rustc, error));
+        .unwrap_or_else(|error| panic!("failed to run `{:?} --version`: {:?}", rustc, error));
     assert!(output.status.success(), "{:?} -- version returned non-zero exit code", rustc);
     let stdout = String::from_utf8(output.stdout).expect("rustc produced non-UTF-8 output");
     let version_prefix = "rustc ";
@@ -19,7 +19,7 @@ fn main() {
     let version = &version[..end];
     let mut version_components = version.split('.');
     let major = version_components.next().unwrap();
-    assert_eq!(major, "1", "Unexpected Rust major version");
+    assert_eq!(major, "1", "unexpected Rust major version");
     let minor = version_components
         .next()
         .unwrap_or("0")

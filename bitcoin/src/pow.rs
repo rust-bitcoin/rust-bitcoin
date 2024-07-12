@@ -911,7 +911,7 @@ impl Add for U256 {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_add(rhs);
-        debug_assert!(!overflow, "Addition of U256 values overflowed");
+        debug_assert!(!overflow, "addition of U256 values overflowed");
         res
     }
 }
@@ -920,7 +920,7 @@ impl Sub for U256 {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_sub(rhs);
-        debug_assert!(!overflow, "Subtraction of U256 values overflowed");
+        debug_assert!(!overflow, "subtraction of U256 values overflowed");
         res
     }
 }
@@ -929,7 +929,7 @@ impl Mul for U256 {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self {
         let (res, overflow) = self.overflowing_mul(rhs);
-        debug_assert!(!overflow, "Multiplication of U256 values overflowed");
+        debug_assert!(!overflow, "multiplication of U256 values overflowed");
         res
     }
 }

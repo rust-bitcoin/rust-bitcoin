@@ -21,7 +21,7 @@ fn main() {
     let str_address = &args[1];
 
     let address: SocketAddr = str_address.parse().unwrap_or_else(|error| {
-        eprintln!("Error parsing address: {:?}", error);
+        eprintln!("error parsing address: {:?}", error);
         process::exit(1);
     });
 
@@ -65,7 +65,7 @@ fn main() {
         }
         let _ = stream.shutdown(Shutdown::Both);
     } else {
-        eprintln!("Failed to open connection");
+        eprintln!("failed to open connection");
     }
 }
 

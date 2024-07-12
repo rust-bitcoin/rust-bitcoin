@@ -354,10 +354,10 @@ macro_rules! hash_newtype_get_direction {
 macro_rules! hash_newtype_forbid_direction {
     ($direction:ident, ) => {};
     ($direction:ident, #[hash_newtype(forward)] $(others:tt)*) => {
-        compile_error!(concat!("Cannot set display direction to forward: ", stringify!($direction), " was already specified"));
+        compile_error!(concat!("cannot set display direction to forward: ", stringify!($direction), " was already specified"));
     };
     ($direction:ident, #[hash_newtype(backward)] $(others:tt)*) => {
-        compile_error!(concat!("Cannot set display direction to backward: ", stringify!($direction), " was already specified"));
+        compile_error!(concat!("cannot set display direction to backward: ", stringify!($direction), " was already specified"));
     };
     ($direction:ident, #[$($ignore:tt)*] $(#[$others:tt])*) => {
         $crate::hash_newtype_forbid_direction!($direction, $(#[$others])*)
@@ -374,7 +374,7 @@ macro_rules! hash_newtype_forbid_direction {
 macro_rules! hash_newtype_known_attrs {
     (#[hash_newtype(forward)]) => {};
     (#[hash_newtype(backward)]) => {};
-    (#[hash_newtype($($unknown:tt)*)]) => { compile_error!(concat!("Unrecognized attribute ", stringify!($($unknown)*))); };
+    (#[hash_newtype($($unknown:tt)*)]) => { compile_error!(concat!("unrecognized attribute ", stringify!($($unknown)*))); };
     ($($ignore:tt)*) => {};
 }
 

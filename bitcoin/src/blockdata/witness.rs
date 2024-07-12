@@ -200,7 +200,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
     let start = start_of_indices + index * 4;
     let end = start + 4;
     bytes[start..end]
-        .copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("Larger than u32")));
+        .copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("larger than u32")));
 }
 
 #[inline]
@@ -471,7 +471,7 @@ impl Witness {
 impl Index<usize> for Witness {
     type Output = [u8];
 
-    fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("Out of Bounds") }
+    fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("out of bounds") }
 }
 
 impl<'a> Iterator for Iter<'a> {
