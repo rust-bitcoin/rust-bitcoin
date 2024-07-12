@@ -10,6 +10,8 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, convert, fmt};
 
+use hex::DisplayHex;
+
 #[cfg(doc)]
 use crate::sha256t;
 use crate::{sha256d, FromSliceError, HashEngine as _};
@@ -195,7 +197,7 @@ impl fmt::Display for Midstate {
 }
 
 impl fmt::Debug for Midstate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:#}", self) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "0x{}", self.0.as_hex()) }
 }
 
 impl convert::AsRef<[u8]> for Midstate {
@@ -1019,7 +1021,7 @@ mod tests {
 
     #[test]
     fn regression_midstate_debug_format() {
-        let want = "0xc9f0c6ddea3eb37d606e63476c93f3d389500fc3f2cab338396c117ce6e4e09c";
+        let want = "0x9ce0e4e67c116c3938b3caf2c30f5089d3f3936c47636e607db33eeaddc6f0c9";
         let got = format!("{:?}", TAP_LEAF_MIDSTATE);
         assert_eq!(got, want);
     }
