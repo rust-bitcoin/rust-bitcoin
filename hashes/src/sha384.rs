@@ -5,7 +5,7 @@
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{sha512, FromSliceError};
+use crate::sha512;
 
 crate::internal_macros::hash_type! {
     384,

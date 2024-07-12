@@ -113,7 +113,7 @@ macro_rules! hash_trait_impls {
             const LEN: usize = $bits / 8;
             const DISPLAY_BACKWARD: bool = $reverse;
 
-            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, FromSliceError> {
+            fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }
 
@@ -174,9 +174,9 @@ macro_rules! hash_type {
             /// Copies a byte slice into a hash object.
             pub fn from_slice(
                 sl: &[u8],
-            ) -> $crate::_export::_core::result::Result<Hash, FromSliceError> {
+            ) -> $crate::_export::_core::result::Result<Hash, $crate::FromSliceError> {
                 if sl.len() != $bits / 8 {
-                    Err(FromSliceError { expected: $bits / 8, got: sl.len() })
+                    Err($crate::FromSliceError { expected: $bits / 8, got: sl.len() })
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);

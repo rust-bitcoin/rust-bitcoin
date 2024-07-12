@@ -6,7 +6,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, mem, ptr};
 
-use crate::{FromSliceError, HashEngine as _};
+use crate::HashEngine as _;
 
 crate::internal_macros::hash_type! {
     64,
