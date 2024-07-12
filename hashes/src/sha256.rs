@@ -1008,15 +1008,20 @@ mod tests {
         }
     }
 
+    // The midstate of an empty hash engine tagged with "TapLeaf".
+    const TAP_LEAF_MIDSTATE: Midstate = Midstate([
+        156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
+        108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+    ]);
+
     #[test]
-    fn const_midstate() {
-        assert_eq!(
-            Midstate::hash_tag(b"TapLeaf"),
-            Midstate([
-                156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211,
-                243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
-            ])
-        )
+    fn const_midstate() { assert_eq!(Midstate::hash_tag(b"TapLeaf"), TAP_LEAF_MIDSTATE,) }
+
+    #[test]
+    fn regression_midstate_debug_format() {
+        let want = "0xc9f0c6ddea3eb37d606e63476c93f3d389500fc3f2cab338396c117ce6e4e09c";
+        let got = format!("{:?}", TAP_LEAF_MIDSTATE);
+        assert_eq!(got, want);
     }
 
     #[test]
