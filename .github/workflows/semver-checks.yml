@@ -22,15 +22,20 @@ jobs:
         run: cargo binstall cargo-semver-checks --no-confirm
       - name: "Run semver checker script"
         run: ./contrib/check-semver.sh
-      - name: "Add PR label to breaking changes"
-        uses: actions-ecosystem/action-add-labels@v1
+      - name: Save PR number
         if: ${{ hashFiles('semver-break') != '' }}
-        with:
-          labels: "API break"
-      - name: Comment PR
-        uses: thollander/actions-comment-pull-request@v2
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          # check if PR_NUMBER is a number
+          if ! [[ "$PR_NUMBER" =~ ^-?[0-9]+$ ]]; then
+              echo "$PR_NUMBER is not a number."
+              exit 1
+          fi
+          echo "$PR_NUMBER" > ./semver-break
+      - name: "Save breaking state"
         if: ${{ hashFiles('semver-break') != '' }}
+        uses: actions/upload-artifact@v4
         with:
-          message: |
-            :rotating_light: API BREAKING CHANGE DETECTED
-
+          name: semver-break
+          path: semver-break
