@@ -22,15 +22,24 @@ jobs:
         run: cargo binstall cargo-semver-checks --no-confirm
       - name: "Run semver checker script"
         run: ./contrib/check-semver.sh
-      - name: "Add PR label to breaking changes"
-        uses: actions-ecosystem/action-add-labels@v1
+      - name: "Add PR label/comment announcing breaking changes"
+        uses: actions/github-script@v7
         if: ${{ hashFiles('semver-break') != '' }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
-          labels: "API break"
-      - name: Comment PR
-        uses: thollander/actions-comment-pull-request@v2
-        if: ${{ hashFiles('semver-break') != '' }}
-        with:
-          message: |
-            :rotating_light: API BREAKING CHANGE DETECTED
+          github-token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ env.PR_NUMBER }},
+              body: ':rotating_light: API BREAKING CHANGE DETECTED'
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ env.PR_NUMBER }},
+              labels: ['API break']
+            });
 
