@@ -40,3 +40,11 @@ sane: lint
 # Update the recent and minimal lock files.
 update-lock-files:
   contrib/update-lock-files.sh
+
+# Install githooks
+githooks-install:
+  ./contrib/copy-githooks.sh
+
+# Remove githooks
+githooks-remove:
+  ./contrib/copy-githooks.sh -r
