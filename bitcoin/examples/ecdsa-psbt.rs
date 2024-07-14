@@ -32,6 +32,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
+use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::locktime::absolute;

@@ -27,6 +27,7 @@
 //! ```
 
 pub mod error;
+pub mod script_pubkey;
 
 use core::fmt;
 use core::marker::PhantomData;
@@ -37,6 +38,7 @@ use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
+use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::consensus::Params;
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
@@ -604,7 +606,7 @@ impl Address {
             Segwit { ref program, hrp: _ } => {
                 let prog = program.program();
                 let version = program.version();
-                ScriptBuf::new_witness_program_unchecked(version, prog)
+                script_pubkey::new_witness_program_unchecked(version, prog)
             }
         }
     }
@@ -803,7 +805,7 @@ impl Address<NetworkUnchecked> {
     }
 }
 
-impl From<Address> for script::ScriptBuf {
+impl From<Address> for ScriptBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
 

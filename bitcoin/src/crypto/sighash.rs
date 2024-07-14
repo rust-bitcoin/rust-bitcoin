@@ -17,6 +17,7 @@ use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
 use internals::write_err;
 use io::Write;
 
+use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};

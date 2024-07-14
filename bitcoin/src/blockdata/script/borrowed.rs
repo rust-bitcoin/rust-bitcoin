@@ -5,20 +5,17 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
-use secp256k1::{Secp256k1, Verification};
-
 use super::witness_version::WitnessVersion;
 use super::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, PushBytes,
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::Encodable;
-use crate::key::{PublicKey, UntweakedPublicKey, WPubkeyHash};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, Vec};
-use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
+use crate::taproot::{LeafVersion, TapLeafHash};
 use crate::FeeRate;
 
 /// Bitcoin script slice.
@@ -148,26 +145,6 @@ impl Script {
     #[inline]
     pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
-    /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-    /// script").
-    #[inline]
-    pub fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
-        self.wscript_hash().map(ScriptBuf::new_p2wsh)
-    }
-
-    /// Computes P2TR output with a given internal key and a single script spending path equal to
-    /// the current script, assuming that the script is a Tapscript.
-    #[inline]
-    pub fn to_p2tr<C: Verification>(
-        &self,
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-    ) -> ScriptBuf {
-        let leaf_hash = self.tapscript_leaf_hash();
-        let merkle_root = TapNodeHash::from(leaf_hash);
-        ScriptBuf::new_p2tr(secp, internal_key, Some(merkle_root))
-    }
-
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     ///
     /// # Returns
@@ -236,35 +213,6 @@ impl Script {
             }
         }
         true
-    }
-
-    /// Checks whether a script pubkey is a P2PK output.
-    ///
-    /// You can obtain the public key, if its valid,
-    /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
-    #[inline]
-    pub fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
-
-    /// Returns the public key if this script is P2PK with a **valid** public key.
-    ///
-    /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
-    /// This happens when the public key is invalid (e.g. the point not being on the curve).
-    /// In this situation the script is unspendable.
-    #[inline]
-    pub fn p2pk_public_key(&self) -> Option<PublicKey> {
-        PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
-    }
-
-    /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
-    #[inline]
-    pub(in crate::blockdata::script) fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
-        match self.len() {
-            67 if self.0[0] == OP_PUSHBYTES_65.to_u8() && self.0[66] == OP_CHECKSIG.to_u8() =>
-                Some(&self.0[1..66]),
-            35 if self.0[0] == OP_PUSHBYTES_33.to_u8() && self.0[34] == OP_CHECKSIG.to_u8() =>
-                Some(&self.0[1..34]),
-            _ => None,
-        }
     }
 
     /// Checks whether a script pubkey is a bare multisig output.
@@ -387,26 +335,6 @@ impl Script {
                 class == ReturnOp || class == IllegalOp
             }
             None => false,
-        }
-    }
-
-    /// Computes the P2SH output corresponding to this redeem script.
-    pub fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
-        self.script_hash().map(ScriptBuf::new_p2sh)
-    }
-
-    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
-    ///
-    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-    pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        if self.is_p2wpkh() {
-            // The `self` script is 0x00, 0x14, <pubkey_hash>
-            let bytes = &self.0[2..];
-            let wpkh = WPubkeyHash::from_slice(bytes).expect("length checked in is_p2wpkh()");
-            Some(ScriptBuf::p2wpkh_script_code(wpkh))
-        } else {
-            None
         }
     }
 
@@ -709,31 +637,3 @@ delegate_index!(
     RangeToInclusive<usize>,
     (Bound<usize>, Bound<usize>)
 );
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::script::witness_program::WitnessProgram;
-
-    #[test]
-    fn shortest_witness_program() {
-        let bytes = [0x00; 2]; // Arbitrary bytes, witprog must be between 2 and 40.
-        let version = WitnessVersion::V15; // Arbitrary version number, intentionally not 0 or 1.
-
-        let p = WitnessProgram::new(version, &bytes).expect("failed to create witness program");
-        let script = ScriptBuf::new_witness_program(&p);
-
-        assert_eq!(script.witness_version(), Some(version));
-    }
-
-    #[test]
-    fn longest_witness_program() {
-        let bytes = [0x00; 40]; // Arbitrary bytes, witprog must be between 2 and 40.
-        let version = WitnessVersion::V16; // Arbitrary version number, intentionally not 0 or 1.
-
-        let p = WitnessProgram::new(version, &bytes).expect("failed to create witness program");
-        let script = ScriptBuf::new_witness_program(&p);
-
-        assert_eq!(script.witness_version(), Some(version));
-    }
-}
