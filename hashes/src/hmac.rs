@@ -35,14 +35,6 @@ impl<T: GeneralHash + str::FromStr> str::FromStr for Hmac<T> {
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }
 }
 
-/// Pair of underlying hash midstates which represent the current state of an `HmacEngine`.
-pub struct HmacMidState<T: GeneralHash> {
-    /// Midstate of the inner hash engine
-    pub inner: <T::Engine as HashEngine>::MidState,
-    /// Midstate of the outer hash engine
-    pub outer: <T::Engine as HashEngine>::MidState,
-}
-
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Clone)]
 pub struct HmacEngine<T: GeneralHash> {
@@ -101,12 +93,6 @@ impl<T: GeneralHash> HmacEngine<T> {
 }
 
 impl<T: GeneralHash> HashEngine for HmacEngine<T> {
-    type MidState = HmacMidState<T>;
-
-    fn midstate(&self) -> Self::MidState {
-        HmacMidState { inner: self.iengine.midstate(), outer: self.oengine.midstate() }
-    }
-
     const BLOCK_SIZE: usize = T::Engine::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> usize { self.iengine.n_bytes_hashed() }

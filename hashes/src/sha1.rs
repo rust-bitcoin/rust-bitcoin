@@ -52,17 +52,9 @@ impl HashEngine {
             buffer: [0; BLOCK_SIZE],
         }
     }
-}
-
-impl Default for HashEngine {
-    fn default() -> Self { Self::new() }
-}
-
-impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 20];
 
     #[cfg(not(hashes_fuzz))]
-    fn midstate(&self) -> [u8; 20] {
+    pub(crate) fn midstate(&self) -> [u8; 20] {
         let mut ret = [0; 20];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes())
@@ -71,12 +63,18 @@ impl crate::HashEngine for HashEngine {
     }
 
     #[cfg(hashes_fuzz)]
-    fn midstate(&self) -> [u8; 20] {
+    pub(crate) fn midstate(&self) -> [u8; 20] {
         let mut ret = [0; 20];
         ret.copy_from_slice(&self.buffer[..20]);
         ret
     }
+}
 
+impl Default for HashEngine {
+    fn default() -> Self { Self::new() }
+}
+
+impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> usize { self.length }

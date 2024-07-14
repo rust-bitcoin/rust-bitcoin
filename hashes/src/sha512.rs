@@ -72,6 +72,22 @@ impl Default for HashEngine {
 }
 
 impl HashEngine {
+    #[cfg(not(hashes_fuzz))]
+    pub(crate) fn midstate(&self) -> [u8; 64] {
+        let mut ret = [0; 64];
+        for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(8)) {
+            ret_bytes.copy_from_slice(&val.to_be_bytes());
+        }
+        ret
+    }
+
+    #[cfg(hashes_fuzz)]
+    pub(crate) fn midstate(&self) -> [u8; 64] {
+        let mut ret = [0; 64];
+        ret.copy_from_slice(&self.buffer[..64]);
+        ret
+    }
+
     /// Constructs a hash engine suitable for use constructing a `sha512_256::HashEngine`.
     #[rustfmt::skip]
     pub(crate) const fn sha512_256() -> Self {
@@ -100,24 +116,6 @@ impl HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
-    type MidState = [u8; 64];
-
-    #[cfg(not(hashes_fuzz))]
-    fn midstate(&self) -> [u8; 64] {
-        let mut ret = [0; 64];
-        for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(8)) {
-            ret_bytes.copy_from_slice(&val.to_be_bytes());
-        }
-        ret
-    }
-
-    #[cfg(hashes_fuzz)]
-    fn midstate(&self) -> [u8; 64] {
-        let mut ret = [0; 64];
-        ret.copy_from_slice(&self.buffer[..64]);
-        ret
-    }
-
     const BLOCK_SIZE: usize = 128;
 
     fn n_bytes_hashed(&self) -> usize { self.length }
