@@ -168,11 +168,11 @@ impl LockTime {
     /// # use bitcoin::Sequence;
     /// # use bitcoin::locktime::relative::{LockTime, Height, Time};
     ///
-    /// # let height = 100;       // 100 blocks.
+    /// # let required_height = 100;       // 100 blocks.
     /// # let intervals = 70;     // Approx 10 hours.
-    /// # let current_height = || Height::from(height + 10);
+    /// # let current_height = || Height::from(required_height + 10);
     /// # let current_time = || Time::from_512_second_intervals(intervals + 10);
-    /// # let lock = Sequence::from_height(height).to_relative_lock_time().expect("valid height");
+    /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
     ///
     /// // Users that have chain data can get the current height and time to check against a lock.
     /// let height_and_time = (current_time(), current_height());  // tuple order does not matter.
@@ -208,9 +208,9 @@ impl LockTime {
     /// # use bitcoin::Sequence;
     /// # use bitcoin::locktime::relative::{LockTime, Height, Time};
     ///
-    /// # let height = 100;       // 100 blocks.
-    /// # let lock = Sequence::from_height(height).to_relative_lock_time().expect("valid height");
-    /// # let test_sequence = Sequence::from_height(height + 10);
+    /// # let required_height = 100;       // 100 blocks.
+    /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
+    /// # let test_sequence = Sequence::from_height(required_height + 10);
     ///
     /// let satisfied = match test_sequence.to_relative_lock_time() {
     ///     None => false, // Handle non-lock-time case.
@@ -256,9 +256,9 @@ impl LockTime {
     /// # use bitcoin::Sequence;
     /// # use bitcoin::locktime::relative::{LockTime, Height, Time};
     ///
-    /// let height: u16 = 100;
-    /// let lock = Sequence::from_height(height).to_relative_lock_time().expect("valid height");
-    /// assert!(lock.is_satisfied_by_height(Height::from(height+1)).expect("a height"));
+    /// let required_height: u16 = 100;
+    /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
+    /// assert!(lock.is_satisfied_by_height(Height::from(required_height + 1)).expect("a height"));
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
@@ -266,7 +266,7 @@ impl LockTime {
         use LockTime::*;
 
         match *self {
-            Blocks(ref h) => Ok(h.value() <= height.value()),
+            Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
             Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
