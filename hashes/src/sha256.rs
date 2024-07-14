@@ -76,7 +76,7 @@ impl HashEngine {
         }
     }
 
-    /// Create a new [`HashEngine`] from a [`Midstate`].
+    /// Creates a new [`HashEngine`] from a [`Midstate`].
     ///
     /// # Panics
     ///
