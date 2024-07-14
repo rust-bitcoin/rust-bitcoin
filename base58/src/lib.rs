@@ -36,9 +36,9 @@ pub use alloc::{string::String, vec::Vec};
 use core::fmt;
 #[cfg(feature = "std")]
 pub use std::{string::String, vec::Vec};
-use internals::array_vec::ArrayVec;
 
 use hashes::sha256d;
+use internals::array_vec::ArrayVec;
 
 use crate::error::{IncorrectChecksumError, TooShortError};
 
@@ -127,10 +127,15 @@ pub fn encode(data: &[u8]) -> String {
     let reserve_len = encoded_reserve_len(data.len());
     let mut res = String::with_capacity(reserve_len);
     if reserve_len <= SHORT_OPT_BUFFER_LEN {
-        format_iter(&mut res, data.iter().copied(), &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())
+        format_iter(
+            &mut res,
+            data.iter().copied(),
+            &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new(),
+        )
     } else {
         format_iter(&mut res, data.iter().copied(), &mut Vec::with_capacity(reserve_len))
-    }.expect("string doesn't error");
+    }
+    .expect("string doesn't error");
     res
 }
 
@@ -179,33 +184,20 @@ trait Buffer: Sized {
 }
 
 impl Buffer for Vec<u8> {
-    fn push(&mut self, val: u8) {
-        Vec::push(self, val)
-    }
+    fn push(&mut self, val: u8) { Vec::push(self, val) }
 
-    fn slice(&self) -> &[u8] {
-        self
-    }
+    fn slice(&self) -> &[u8] { self }
 
-    fn slice_mut(&mut self) -> &mut [u8] {
-        self
-    }
+    fn slice_mut(&mut self) -> &mut [u8] { self }
 }
 
 impl<const N: usize> Buffer for ArrayVec<u8, N> {
-    fn push(&mut self, val: u8) {
-        ArrayVec::push(self, val)
-    }
+    fn push(&mut self, val: u8) { ArrayVec::push(self, val) }
 
-    fn slice(&self) -> &[u8] {
-        self.as_slice()
-    }
+    fn slice(&self) -> &[u8] { self.as_slice() }
 
-    fn slice_mut(&mut self) -> &mut [u8] {
-        self.as_mut_slice()
-    }
+    fn slice_mut(&mut self) -> &mut [u8] { self.as_mut_slice() }
 }
-
 
 fn format_iter<I, W>(writer: &mut W, data: I, buf: &mut impl Buffer) -> Result<(), fmt::Error>
 where

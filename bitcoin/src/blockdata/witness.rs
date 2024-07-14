@@ -465,9 +465,7 @@ impl Witness {
     /// This does not guarantee that this represents a P2WS [`Witness`]. See
     /// [Script::is_p2wsh](crate::blockdata::script::Script::is_p2wsh) to
     /// check whether this is actually a P2WSH witness.
-    pub fn witness_script(&self) -> Option<&Script> {
-        self.last().map(Script::from_bytes)
-    }
+    pub fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
 }
 
 impl Index<usize> for Witness {
