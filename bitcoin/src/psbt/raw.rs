@@ -17,14 +17,15 @@ use crate::prelude::{DisplayHex, Vec};
 use crate::psbt::Error;
 
 /// A PSBT key in its raw byte form.
+///
+/// `<key> := <keylen> <keytype> <keydata>`
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
-    /// The key itself in raw byte form.
-    /// `<key> := <keylen> <keytype> <keydata>`
+    /// The key data itself in raw byte form.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key: Vec<u8>,
 }
