@@ -1099,8 +1099,12 @@ impl kani::Arbitrary for U256 {
 mod tests {
     use super::*;
 
-    impl<T: Into<u128>> From<T> for Target {
-        fn from(x: T) -> Self { Self(U256::from(x)) }
+    impl From<u64> for Target {
+        fn from(x: u64) -> Self { Self(U256::from(x)) }
+    }
+
+    impl From<u32> for Target {
+        fn from(x: u32) -> Self { Self(U256::from(x)) }
     }
 
     impl<T: Into<u128>> From<T> for Work {
