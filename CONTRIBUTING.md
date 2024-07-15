@@ -311,6 +311,7 @@ More specifically an error should
 - not have `Error` suffix on enum variants.
 - call `internals::impl_from_infallible!`.
 - implement `std::error::Error` if they are public (feature gated on "std").
+- have messages in lower case, except for proper nouns and variable names.
 
 ```rust
 /// Documentation for the `Error` type.
@@ -329,6 +330,50 @@ internals::impl_from_infallible!(Error);
 
 All errors that live in an `error` module (eg, `foo/error.rs`) and appear in a public function in
 `foo` module should be available from `foo` i.e., should be re-exported from `foo/mod.rs`.
+
+##### `expect` messages
+
+With respect to `expect` messages, they should follow the
+[Rust standard library guidelines](https://doc.rust-lang.org/std/option/enum.Option.html#recommended-message-style).
+More specifically, `expect` messages should be used to to describe the reason
+you expect the operation to succeed.
+For example, this `expect` message clearly states why the operation should succeed:
+
+```rust
+/// Serializes the public key to bytes.
+pub fn to_bytes(self) -> Vec<u8> {
+    let mut buf = Vec::new();
+    self.write_into(&mut buf).expect("vecs don't error");
+    buf
+}
+```
+
+Also note that `expect` messages, as with all error messages, should be lower
+case, except for proper nouns and variable names.
+
+<details>
+<summary>The details on why we chose this style</summary>
+
+According to the [Rust standard library](https://doc.rust-lang.org/std/error/index.html#common-message-styles),
+there are two common styles for how to write `expect` messages:
+
+- using the message to present information to users encountering a panic
+  ("expect as error message"); and
+- using the message to present information to developers debugging the panic
+  ("expect as precondition").
+
+We opted to use the "expect as precondition" since it clearly states why the
+operation should succeed.
+This may be better for communicating with developers, since they are the target
+audience for the error message and `rust-bitcoin`.
+
+If you want to know more about the decision error messages and expect messages,
+please check:
+
+- https://github.com/rust-bitcoin/rust-bitcoin/issues/2913
+- https://github.com/rust-bitcoin/rust-bitcoin/issues/3053
+- https://github.com/rust-bitcoin/rust-bitcoin/pull/3019
+</details>
 
 #### Rustdocs
 
