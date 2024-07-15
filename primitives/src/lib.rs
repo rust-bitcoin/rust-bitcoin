@@ -31,6 +31,7 @@ extern crate serde;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
+pub mod pow;
 pub mod sequence;
 
 #[doc(inline)]
@@ -40,7 +41,10 @@ pub use units::*;
 #[cfg(feature = "alloc")]
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
-pub use self::sequence::Sequence;
+pub use self::{
+    pow::CompactTarget,
+    sequence::Sequence,
+};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
