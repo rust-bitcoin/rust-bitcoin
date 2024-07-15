@@ -100,6 +100,10 @@ name = "bitcoin-primitives"
 version = "0.100.0"
 dependencies = [
  "bitcoin-internals",
+ "bitcoin-io",
+ "bitcoin-units",
+ "mutagen",
+ "ordered",
  "serde",
 ]
 
