@@ -15,6 +15,7 @@ use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::internal_macros::define_extension_trait;
 use crate::network::Params;
 
 /// Implement traits and methods shared by `Target` and `Work`.
@@ -355,18 +356,17 @@ impl CompactTarget {
     pub fn to_consensus(self) -> u32 { self.0 }
 }
 
-mod tmp {
-    use super::*;
-
-    impl CompactTarget {
+define_extension_trait! {
+    /// Extension functionality for the [`CompactTarget`] type.
+    pub trait CompactTargetExt impl for CompactTarget {
         /// Creates a `CompactTarget` from a prefixed hex string.
-        pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+        fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
             let target = parse::hex_u32_prefixed(s)?;
             Ok(Self::from_consensus(target))
         }
 
         /// Creates a `CompactTarget` from an unprefixed hex string.
-        pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+        fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
             let target = parse::hex_u32_unprefixed(s)?;
             Ok(Self::from_consensus(target))
         }
@@ -393,7 +393,7 @@ mod tmp {
         /// # Returns
         ///
         /// The expected [`CompactTarget`] recalculation.
-        pub fn from_next_work_required(
+        fn from_next_work_required(
             last: CompactTarget,
             timespan: u64,
             params: impl AsRef<Params>,
@@ -437,7 +437,7 @@ mod tmp {
         /// # Returns
         ///
         /// The expected [`CompactTarget`] recalculation.
-        pub fn from_header_difficulty_adjustment(
+        fn from_header_difficulty_adjustment(
             last_epoch_boundary: Header,
             current: Header,
             params: impl AsRef<Params>,
