@@ -218,7 +218,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident($slf:ident $(, $param_name:ident: $param_type:ty)*) $( -> $ret:ty )? $body:block
+            fn $fn:ident($slf:ident $(, $param_name:ident: $param_type:ty)* $(,)?) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
@@ -238,7 +238,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident(&$slf:ident $(, $param_name:ident: $param_type:ty)*) $( -> $ret:ty )? $body:block
+            fn $fn:ident(&$slf:ident $(, $param_name:ident: $param_type:ty)* $(,)?) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
@@ -258,7 +258,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?(&$slf:ident $(, $param_name:ident: $param_type:ty)*) $( -> $ret:ty )? $body:block
+            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?(&$slf:ident $(, $param_name:ident: $param_type:ty)* $(,)?) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
@@ -278,7 +278,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($param_name:ident: $param_type:ty),*) $( -> $ret:ty )? $body:block
+            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($param_name:ident: $param_type:ty),* $(,)?) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
@@ -298,7 +298,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident<T: AsRef<PushBytes>>($($param_name:ident: $param_type:ty),*) $( -> $ret:ty )? $body:block
+            fn $fn:ident<T: AsRef<PushBytes>>($($param_name:ident: $param_type:ty),* $(,)?) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
