@@ -52,8 +52,6 @@ mod builder;
 mod instruction;
 mod owned;
 mod push_bytes;
-#[cfg(test)]
-mod tests;
 pub mod witness_program;
 pub mod witness_version;
 
