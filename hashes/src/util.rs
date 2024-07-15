@@ -194,21 +194,6 @@ macro_rules! hash_newtype {
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
-            /// Creates this wrapper type from the inner hash type.
-            pub const fn from_raw_hash(inner: $hash) -> $newtype {
-                $newtype(inner)
-            }
-
-            /// Returns the inner hash (sha256, sh256d etc.).
-            pub const fn to_raw_hash(self) -> $hash {
-                self.0
-            }
-
-            /// Returns a reference to the inner hash (sha256, sh256d etc.).
-            pub const fn as_raw_hash(&self) -> &$hash {
-                &self.0
-            }
-
             /// Copies a byte slice into a hash object.
             pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
