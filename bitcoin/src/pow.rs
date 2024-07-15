@@ -164,7 +164,7 @@ impl Target {
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
     pub fn from_compact(c: CompactTarget) -> Target {
-        let bits = c.0;
+        let bits = c.to_consensus();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
@@ -204,7 +204,7 @@ impl Target {
             size += 1;
         }
 
-        CompactTarget(compact | (size << 24))
+        CompactTarget::from_consensus(compact | (size << 24))
     }
 
     /// Returns true if block hash is less than or equal to this [`Target`].
@@ -450,14 +450,14 @@ impl From<CompactTarget> for Target {
 impl Encodable for CompactTarget {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for CompactTarget {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget)
+        u32::consensus_decode(r).map(CompactTarget::from_consensus)
     }
 }
 
@@ -1725,25 +1725,25 @@ mod tests {
     #[test]
     fn compact_target_from_hex_lower() {
         let target = CompactTarget::from_hex("0x010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_hex_upper() {
         let target = CompactTarget::from_hex("0X010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_unprefixed_hex_lower() {
         let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_unprefixed_hex_upper() {
         let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
@@ -1755,8 +1755,8 @@ mod tests {
 
     #[test]
     fn compact_target_lower_hex_and_upper_hex() {
-        assert_eq!(format!("{:08x}", CompactTarget(0x01D0F456)), "01d0f456");
-        assert_eq!(format!("{:08X}", CompactTarget(0x01d0f456)), "01D0F456");
+        assert_eq!(format!("{:08x}", CompactTarget::from_consensus(0x01D0F456)), "01d0f456");
+        assert_eq!(format!("{:08X}", CompactTarget::from_consensus(0x01d0f456)), "01D0F456");
     }
 
     #[test]
