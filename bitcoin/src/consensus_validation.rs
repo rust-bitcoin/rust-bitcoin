@@ -10,14 +10,14 @@ use internals::write_err;
 
 use crate::amount::Amount;
 #[cfg(doc)]
-use crate::consensus;
+use crate::consensus_validation;
 use crate::consensus::encode;
 use crate::script::Script;
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
 /// Verifies spend of an input script.
 ///
-/// Shorthand for [`consensus::verify_script_with_flags`] with flag
+/// Shorthand for [`consensus_validation::verify_script_with_flags`] with flag
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
 ///
 /// # Parameters
@@ -72,7 +72,7 @@ pub fn verify_script_with_flags<F: Into<u32>>(
 
 /// Verifies that this transaction is able to spend its inputs.
 ///
-/// Shorthand for [`consensus::verify_transaction_with_flags`] with flag
+/// Shorthand for [`consensus_validation::verify_transaction_with_flags`] with flag
 /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
 ///
 /// The `spent` closure should not return the same [`TxOut`] twice!
