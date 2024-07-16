@@ -149,7 +149,7 @@ impl Hash {
     pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).bytes) }
 }
 
-/// Output of the SHA256 hash function.
+/// Unfinalized output of the SHA256 hash function.
 ///
 /// The `Midstate` type is obscure and specialized and should not be used unless you are sure of
 /// what you are doing.
