@@ -96,8 +96,8 @@ impl Time {
     #[inline]
     #[rustfmt::skip] // moves comments to unrelated code
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        let interval = (seconds + 511) / 512;
-        if interval <= u16::MAX as u32 { // infallible cast, needed by const code
+        if seconds <= u16::MAX as u32 * 512 {
+            let interval = (seconds + 511) / 512;
             Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
         } else {
             Err(TimeOverflowError { seconds })
@@ -152,3 +152,30 @@ impl fmt::Display for TimeOverflowError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TimeOverflowError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_seconds_ceil_success() {
+        let actual = Time::from_seconds_ceil(100).unwrap();
+        let expected = Time(1_u16);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_ceil_with_maximum_encodable_seconds_success() {
+        let maximum_encodable_seconds = u16::MAX as u32 * 512;
+        let actual = Time::from_seconds_ceil(maximum_encodable_seconds).unwrap();
+        let expected = Time(u16::MAX);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_ceil_causes_time_overflow_error() {
+        let maximum_encodable_seconds = u16::MAX as u32 * 512;
+        let result = Time::from_seconds_ceil(maximum_encodable_seconds + 1);
+        assert!(result.is_err());
+    }
+}
