@@ -61,7 +61,7 @@ fn bip174_psbt_workflow() {
     //
 
     // Strings from BIP 174 test vector.
-    let test_vector = vec![
+    let test_vector = [
         ("cP53pDbR5WtAD8dYAW9hhTjuvvTVaEiQBdrz9XPrgLBeRFiyCbQr", "0h/0h/0h"), // from_priv, into_derivation_path?
         ("cR6SXDoyfQrcp4piaiHE97Rsgta9mNhGTen9XeonVgwsh4iSgw6d", "0h/0h/2h"),
     ];
@@ -76,7 +76,7 @@ fn bip174_psbt_workflow() {
     //
 
     // Strings from BIP 174 test vector.
-    let test_vector = vec![
+    let test_vector = [
         ("cT7J9YpCwY3AVRFSjN6ukeEeWY6mhpbJPxRaDaP5QTdygQRxP9Au", "0h/0h/1h"),
         ("cNBc3SWUip9PPm1GjRoLEJT6T41iNzCYtD7qro84FMnM5zEqeJsE", "0h/0h/3h"),
     ];
@@ -220,7 +220,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
 
     // Public key and its derivation path (these are the child pubkeys for our `Xpriv`,
     // can be verified by deriving the key using this derivation path).
-    let pk_path = vec![
+    let pk_path = [
         ("029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f", "0h/0h/0h"),
         ("02dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7", "0h/0h/1h"),
         ("03089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc", "0h/0h/2h"),

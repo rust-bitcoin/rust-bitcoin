@@ -315,16 +315,16 @@ mod tests {
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: Vec<u8>,
+            output: [u8; 64],
             output_str: &'static str,
         }
 
         #[rustfmt::skip]
-        let tests = vec![
+        let tests = [
             // Test vectors computed with `sha512sum`
             Test {
                 input: "",
-                output: vec![
+                output: [
                     0xcf, 0x83, 0xe1, 0x35, 0x7e, 0xef, 0xb8, 0xbd,
                     0xf1, 0x54, 0x28, 0x50, 0xd6, 0x6d, 0x80, 0x07,
                     0xd6, 0x20, 0xe4, 0x05, 0x0b, 0x57, 0x15, 0xdc,
@@ -338,7 +338,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy dog",
-                output: vec![
+                output: [
                     0x07, 0xe5, 0x47, 0xd9, 0x58, 0x6f, 0x6a, 0x73,
                     0xf7, 0x3f, 0xba, 0xc0, 0x43, 0x5e, 0xd7, 0x69,
                     0x51, 0x21, 0x8f, 0xb7, 0xd0, 0xc8, 0xd7, 0x88,
@@ -352,7 +352,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy dog.",
-                output: vec![
+                output: [
                     0x91, 0xea, 0x12, 0x45, 0xf2, 0x0d, 0x46, 0xae,
                     0x9a, 0x03, 0x7a, 0x98, 0x9f, 0x54, 0xf1, 0xf7,
                     0x90, 0xf0, 0xa4, 0x76, 0x07, 0xee, 0xb8, 0xa1,

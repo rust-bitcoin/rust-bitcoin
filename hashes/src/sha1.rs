@@ -137,16 +137,16 @@ mod tests {
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: Vec<u8>,
+            output: [u8; 20],
             output_str: &'static str,
         }
 
         #[rustfmt::skip]
-        let tests = vec![
+        let tests = [
             // Examples from wikipedia
             Test {
                 input: "",
-                output: vec![
+                output: [
                     0xda, 0x39, 0xa3, 0xee,
                     0x5e, 0x6b, 0x4b, 0x0d,
                     0x32, 0x55, 0xbf, 0xef,
@@ -157,7 +157,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy dog",
-                output: vec![
+                output: [
                     0x2f, 0xd4, 0xe1, 0xc6,
                     0x7a, 0x2d, 0x28, 0xfc,
                     0xed, 0x84, 0x9e, 0xe1,
@@ -168,7 +168,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy cog",
-                output: vec![
+                output: [
                     0xde, 0x9f, 0x2c, 0x7f,
                     0xd2, 0x5e, 0x1b, 0x3a,
                     0xfa, 0xd3, 0xe8, 0x5a,

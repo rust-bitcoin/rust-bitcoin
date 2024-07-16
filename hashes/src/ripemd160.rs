@@ -413,23 +413,21 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use std::convert::TryFrom;
-
         use crate::{ripemd160, HashEngine};
 
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: Vec<u8>,
+            output: [u8; 20],
             output_str: &'static str,
         }
 
         #[rustfmt::skip]
-        let tests = vec![
+        let tests = [
             // Test messages from FIPS 180-1
             Test {
                 input: "abc",
-                output: vec![
+                output: [
                     0x8e, 0xb2, 0x08, 0xf7,
                     0xe0, 0x5d, 0x98, 0x7a,
                     0x9b, 0x04, 0x4a, 0x8e,
@@ -441,7 +439,7 @@ mod tests {
             Test {
                 input:
                      "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-                output: vec![
+                output: [
                     0x12, 0xa0, 0x53, 0x38,
                     0x4a, 0x9c, 0x0c, 0x88,
                     0xe4, 0x05, 0xa0, 0x6c,
@@ -453,7 +451,7 @@ mod tests {
             // Examples from wikipedia
             Test {
                 input: "The quick brown fox jumps over the lazy dog",
-                output: vec![
+                output: [
                     0x37, 0xf3, 0x32, 0xf6,
                     0x8d, 0xb7, 0x7b, 0xd9,
                     0xd7, 0xed, 0xd4, 0x96,
@@ -464,7 +462,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy cog",
-                output: vec![
+                output: [
                     0x13, 0x20, 0x72, 0xdf,
                     0x69, 0x09, 0x33, 0x83,
                     0x5e, 0xb8, 0xb6, 0xad,
@@ -481,18 +479,8 @@ mod tests {
             assert_eq!(hash, test.output_str.parse::<ripemd160::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
-            assert_eq!(
-                ripemd160::Hash::from_bytes_ref(
-                    <&[u8; 20]>::try_from(&*test.output).expect("known length")
-                ),
-                &hash
-            );
-            assert_eq!(
-                ripemd160::Hash::from_bytes_mut(
-                    <&mut [u8; 20]>::try_from(&mut *test.output).expect("known length")
-                ),
-                &hash
-            );
+            assert_eq!(ripemd160::Hash::from_bytes_ref(&test.output), &hash);
+            assert_eq!(ripemd160::Hash::from_bytes_mut(&mut test.output), &hash);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = ripemd160::Hash::engine();

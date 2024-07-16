@@ -386,7 +386,7 @@ mod tests {
     #[cfg(feature = "serde")]
     fn serde_roundtrip() {
         use Network::*;
-        let tests = vec![
+        let tests = [
             (Bitcoin, "bitcoin"),
             (Testnet, "testnet"),
             (Signet, "signet"),

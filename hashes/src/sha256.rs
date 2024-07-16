@@ -877,16 +877,16 @@ mod tests {
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: Vec<u8>,
+            output: [u8; 32],
             output_str: &'static str,
         }
 
         #[rustfmt::skip]
-        let tests = vec![
+        let tests = [
             // Examples from wikipedia
             Test {
                 input: "",
-                output: vec![
+                output: [
                     0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14,
                     0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24,
                     0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c,
@@ -896,7 +896,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy dog",
-                output: vec![
+                output: [
                     0xd7, 0xa8, 0xfb, 0xb3, 0x07, 0xd7, 0x80, 0x94,
                     0x69, 0xca, 0x9a, 0xbc, 0xb0, 0x08, 0x2e, 0x4f,
                     0x8d, 0x56, 0x51, 0xe4, 0x6d, 0x3c, 0xdb, 0x76,
@@ -906,7 +906,7 @@ mod tests {
             },
             Test {
                 input: "The quick brown fox jumps over the lazy dog.",
-                output: vec![
+                output: [
                     0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7,
                     0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6, 0x3d, 0x97,
                     0xaa, 0x63, 0x15, 0x64, 0xd5, 0xd7, 0x89, 0xc2,
@@ -987,15 +987,15 @@ mod tests {
 
         // Initializing an engine with midstate from another engine should result in
         // both engines producing the same hashes
-        let data_vec = vec![vec![3; 1], vec![4; 63], vec![5; 65], vec![6; 66]];
+        let data_vec: &[&[u8]] = &[&[3u8; 1], &[4u8; 63], &[5u8; 65], &[6u8; 66]];
         for data in data_vec {
             let mut engine = engine.clone();
             let mut midstate_engine =
                 sha256::HashEngine::from_midstate(engine.midstate_unchecked());
             assert_eq!(engine.h, midstate_engine.h);
             assert_eq!(engine.length, midstate_engine.length);
-            engine.input(&data);
-            midstate_engine.input(&data);
+            engine.input(data);
+            midstate_engine.input(data);
             assert_eq!(engine.h, midstate_engine.h);
             let hash1 = sha256::Hash::from_engine(engine);
             let hash2 = sha256::Hash::from_engine(midstate_engine);
