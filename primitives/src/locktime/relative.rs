@@ -175,7 +175,6 @@ impl LockTime {
     /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
     ///
     /// // Users that have chain data can get the current height and time to check against a lock.
-    /// let height_and_time = (current_time(), current_height());  // tuple order does not matter.
     /// assert!(lock.is_satisfied_by(current_height(), current_time()));
     /// ```
     #[inline]
