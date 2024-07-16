@@ -6,7 +6,6 @@
 //! conform to Bitcoin consensus.
 
 pub mod encode;
-pub mod params;
 #[cfg(feature = "serde")]
 pub mod serde;
 #[cfg(feature = "bitcoinconsensus")]
@@ -23,7 +22,6 @@ use crate::consensus;
 #[doc(inline)]
 pub use self::{
     encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
-    params::Params,
 };
 
 #[cfg(feature = "bitcoinconsensus")]

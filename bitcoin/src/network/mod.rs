@@ -18,6 +18,8 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
+pub mod params;
+
 use core::fmt;
 use core::str::FromStr;
 
@@ -25,10 +27,13 @@ use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::consensus::Params;
 use crate::constants::ChainHash;
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::params::Params;
 
 /// What kind of network we are on.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

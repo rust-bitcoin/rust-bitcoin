@@ -15,7 +15,7 @@ use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::consensus::Params;
+use crate::network::Params;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {

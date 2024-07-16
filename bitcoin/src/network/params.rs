@@ -11,7 +11,7 @@
 //! custom type that can be used is such places you might want to do the following:
 //!
 //! ```
-//! use bitcoin::consensus::Params;
+//! use bitcoin::network::Params;
 //! use bitcoin::{p2p, Script, ScriptBuf, Network, Target};
 //!
 //! const POW_TARGET_SPACING: u64 = 120; // Two minutes.
