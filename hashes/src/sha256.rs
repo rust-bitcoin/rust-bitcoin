@@ -499,6 +499,128 @@ impl HashEngine {
         state0 = _mm_alignr_epi8(tmp, state1, 8); // ABEF
         state1 = _mm_blend_epi16(state1, tmp, 0xF0); // CDGH
 
+        #[cfg(miri)]
+        mod miri_impl {
+            use super::*;
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            unsafe fn load128(x: __m128i) -> [u128; 1] {
+                let mut res = [0u128; 1];
+                _mm_storeu_si128(&mut res as *mut _ as *mut __m128i, x);
+                res
+            }
+
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            unsafe fn load64(x: __m128i) -> [u64; 2] {
+                let mut res = [0u64; 2];
+                _mm_storeu_si128(&mut res as *mut _ as *mut __m128i, x);
+                res
+            }
+
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            unsafe fn load32(x: __m128i) -> [u32; 4] {
+                let mut res = [0u32; 4];
+                _mm_storeu_si128(&mut res as *mut _ as *mut __m128i, x);
+                // Why this needs reverse and load64 doesn't? I have no idea.
+                res.reverse();
+                res
+            }
+
+            fn ch(x: u32, y: u32, z: u32) -> u32 {
+                (x & y) ^ (!x & z)
+            }
+
+            fn maj(x: u32, y: u32, z: u32) -> u32 {
+                (x & y) ^ (x & z) ^ (y & z)
+            }
+
+            fn sum0(x: u32) -> u32 {
+                x.rotate_right(2) ^ x.rotate_right(13) ^ x.rotate_right(22)
+            }
+
+            fn sum1(x: u32) -> u32 {
+                x.rotate_right(6) ^ x.rotate_right(11) ^ x.rotate_right(25)
+            }
+
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            #[allow(non_snake_case)]
+            pub(super) unsafe fn _mm_sha256rnds2_epu32(a: __m128i, b: __m128i, k: __m128i) -> __m128i {
+                // Translated from the Intel's documentation by Chat GPT.
+                // It works, don't ask why it looks horrible.
+                let a = load128(a);
+                let b = load128(b);
+                let k = load64(k);
+
+                let mut A: [u32; 3] = [0; 3];
+                let mut B: [u32; 3] = [0; 3];
+                let mut C: [u32; 3] = [0; 3];
+                let mut D: [u32; 3] = [0; 3];
+                let mut E: [u32; 3] = [0; 3];
+                let mut F: [u32; 3] = [0; 3];
+                let mut G: [u32; 3] = [0; 3];
+                let mut H: [u32; 3] = [0; 3];
+                let mut W_K: [u32; 2] = [0; 2];
+
+                A[0] = (b[0] >> 96) as u32;
+                B[0] = (b[0] >> 64) as u32 & 0xffffffff;
+                C[0] = (a[0] >> 96) as u32;
+                D[0] = (a[0] >> 64) as u32 & 0xffffffff;
+                E[0] = (b[0] >> 32) as u32 & 0xffffffff;
+                F[0] = b[0] as u32 & 0xffffffff;
+                G[0] = (a[0] >> 32) as u32 & 0xffffffff;
+                H[0] = a[0] as u32 & 0xffffffff;
+
+                W_K[0] = k[0] as u32 & 0xffffffff;
+                W_K[1] = (k[0] >> 32) as u32 & 0xffffffff;
+
+                for i in 0..2 {
+                    A[i + 1] = ch(E[i], F[i], G[i])
+                        .wrapping_add(sum1(E[i]))
+                        .wrapping_add(W_K[i])
+                        .wrapping_add(H[i])
+                        .wrapping_add(maj(A[i], B[i], C[i]))
+                        .wrapping_add(sum0(A[i]));
+
+                    B[i + 1] = A[i];
+                    C[i + 1] = B[i];
+                    D[i + 1] = C[i];
+
+                    E[i + 1] = ch(E[i], F[i], G[i])
+                        .wrapping_add(sum1(E[i]))
+                        .wrapping_add(W_K[i])
+                        .wrapping_add(H[i])
+                        .wrapping_add(D[i]);
+
+                    F[i + 1] = E[i];
+                    G[i + 1] = F[i];
+                    H[i + 1] = G[i];
+                }
+
+                _mm_set_epi32(A[2] as i32, B[2] as i32, E[2] as i32, F[2] as i32)
+            }
+
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            #[allow(non_snake_case)]
+            pub(super) unsafe fn _mm_sha256msg1_epu32(a: __m128i, b: __m128i) -> __m128i {
+                let W4 = load32(b)[3];
+                let [W3, W2, W1, W0] = load32(a);
+                _mm_set_epi32(W3.wrapping_add(sigma0(W4)) as i32, W2.wrapping_add(sigma0(W3)) as i32, W1.wrapping_add(sigma0(W2)) as i32, W0.wrapping_add(sigma0(W1)) as i32)
+            }
+
+            #[target_feature(enable = "sha,sse2,ssse3,sse4.1")]
+            #[allow(non_snake_case)]
+            pub(super) unsafe fn _mm_sha256msg2_epu32(a: __m128i, b: __m128i) -> __m128i {
+                let [W15, W14, _, _] = load32(b);
+                let [a3, a2, a1, a0] = load32(a);
+                let W16 = a0.wrapping_add(sigma1(W14));
+                let W17 = a1.wrapping_add(sigma1(W15));
+                let W18 = a2.wrapping_add(sigma1(W16));
+                let W19 = a3.wrapping_add(sigma1(W17));
+                _mm_set_epi32(W19 as i32, W18 as i32, W17 as i32, W16 as i32)
+            }
+        }
+        #[cfg(miri)]
+        use miri_impl::{_mm_sha256rnds2_epu32, _mm_sha256msg1_epu32, _mm_sha256msg2_epu32};
+
         // Process a single block
         {
             // Save current state
