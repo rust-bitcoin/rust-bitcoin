@@ -110,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .amount_in_sats
         .checked_sub(amount_to_send_in_sats)
         .and_then(|x| x.checked_sub(ABSOLUTE_FEES_IN_SATS))
-        .ok_or("Fees more than input amount!")?;
+        .ok_or("fees more than input amount!")?;
 
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
         &secp,
@@ -294,8 +294,8 @@ fn generate_bip86_key_spend_tx(
 
             let (_, (_, derivation_path)) = input
                 .tap_key_origins
-                .get(&input.tap_internal_key.ok_or("Internal key missing in PSBT")?)
-                .ok_or("Missing Taproot key origin")?;
+                .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
+                .ok_or("missing Taproot key origin")?;
 
             let secret_key = master_xpriv.derive_priv(secp, &derivation_path).to_priv().inner;
             sign_psbt_taproot(
@@ -385,7 +385,7 @@ impl BenefactorWallet {
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
         if let ChildNumber::Normal { index } = self.next {
             if index > 0 && self.current_spend_info.is_some() {
-                return Err("Transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
+                return Err("transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
             }
         }
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
@@ -403,7 +403,7 @@ impl BenefactorWallet {
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
             .finalize(&self.secp, internal_keypair.x_only_public_key().0)
-            .expect("Should be finalizable");
+            .expect("should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
         let script_pubkey = ScriptBuf::new_p2tr(
             &self.secp,
@@ -471,7 +471,7 @@ impl BenefactorWallet {
         lock_time_delta: u32,
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
         if let Some(ref spend_info) = self.current_spend_info.clone() {
-            let mut psbt = self.next_psbt.clone().expect("Should have next_psbt");
+            let mut psbt = self.next_psbt.clone().expect("should have next_psbt");
             let input = &mut psbt.inputs[0];
             let input_value = input.witness_utxo.as_ref().unwrap().value;
             let output_value = input_value - ABSOLUTE_FEES_IN_SATS;
@@ -498,7 +498,7 @@ impl BenefactorWallet {
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?
                 .finalize(&self.secp, new_internal_keypair.x_only_public_key().0)
-                .expect("Should be finalizable");
+                .expect("should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
             let output_script_pubkey = ScriptBuf::new_p2tr(
@@ -528,8 +528,8 @@ impl BenefactorWallet {
             {
                 let (_, (_, derivation_path)) = input
                     .tap_key_origins
-                    .get(&input.tap_internal_key.ok_or("Internal key missing in PSBT")?)
-                    .ok_or("Missing Taproot key origin")?;
+                    .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
+                    .ok_or("missing Taproot key origin")?;
                 let secret_key =
                     self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
                 sign_psbt_taproot(
@@ -611,7 +611,7 @@ impl BenefactorWallet {
             self.next.increment()?;
             Ok((tx, next_psbt))
         } else {
-            Err("No current_spend_info available. Create an inheritance tx first.".into())
+            Err("no current_spend_info available. Create an inheritance tx first.".into())
         }
     }
 }

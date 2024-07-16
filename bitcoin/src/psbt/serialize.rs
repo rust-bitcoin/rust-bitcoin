@@ -175,7 +175,7 @@ impl Deserialize for ecdsa::Signature {
             ecdsa::Error::EmptySignature => Error::InvalidEcdsaSignature(e),
             ecdsa::Error::SighashType(err) => Error::NonStandardSighashType(err.0),
             ecdsa::Error::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
-            ecdsa::Error::Hex(..) => unreachable!("Decoding from slice, not hex"),
+            ecdsa::Error::Hex(..) => unreachable!("decoding from slice, not hex"),
         })
     }
 }
@@ -362,7 +362,7 @@ impl Deserialize for TapTree {
         let mut builder = TaprootBuilder::new();
         let mut bytes_iter = bytes.iter();
         while let Some(depth) = bytes_iter.next() {
-            let version = bytes_iter.next().ok_or(Error::Taproot("Invalid Taproot Builder"))?;
+            let version = bytes_iter.next().ok_or(Error::Taproot("invalid Taproot Builder"))?;
             let (script, consumed) = deserialize_partial::<ScriptBuf>(bytes_iter.as_slice())?;
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);

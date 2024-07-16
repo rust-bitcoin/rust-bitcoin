@@ -334,7 +334,7 @@ mod test {
             Network::Testnet => {},
             Network::Signet => {},
             Network::Regtest => {},
-            _ => panic!("Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
+            _ => panic!("update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
         }
     }
 

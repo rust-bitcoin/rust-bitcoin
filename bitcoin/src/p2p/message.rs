@@ -790,7 +790,7 @@ mod test {
             assert_eq!(version_msg.start_height, 560275);
             assert!(version_msg.relay);
         } else {
-            panic!("Wrong message type");
+            panic!("wrong message type");
         }
     }
 
@@ -836,7 +836,7 @@ mod test {
             assert_eq!(version_msg.start_height, 560275);
             assert!(version_msg.relay);
         } else {
-            panic!("Wrong message type");
+            panic!("wrong message type");
         }
     }
 }

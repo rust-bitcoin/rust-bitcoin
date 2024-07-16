@@ -200,7 +200,7 @@ fn main() {
     // Now we'll start the PSBT workflow.
     // Step 1: Creator role; that creates,
     // and add inputs and outputs to the PSBT.
-    let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).expect("Could not create PSBT");
+    let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).expect("could not create PSBT");
 
     // Step 2:Updater role; that adds additional
     // information to the PSBT.

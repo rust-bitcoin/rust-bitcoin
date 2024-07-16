@@ -34,7 +34,7 @@ impl Signature {
                 Ok(Signature { signature, sighash_type: TapSighashType::Default })
             }
             65 => {
-                let (sighash_type, signature) = sl.split_last().expect("Slice len checked == 65");
+                let (sighash_type, signature) = sl.split_last().expect("slice len checked == 65");
                 let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
                 let signature = secp256k1::schnorr::Signature::from_slice(signature)?;
                 Ok(Signature { signature, sighash_type })

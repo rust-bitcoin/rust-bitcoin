@@ -1063,14 +1063,14 @@ impl fmt::Display for ExtractTxError {
 
         match *self {
             AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "An absurdly high fee rate of {}", fee_rate),
+                write!(f, "an absurdly high fee rate of {}", fee_rate),
             MissingInputValue { .. } => write!(
                 f,
-                "One of the inputs lacked value information (witness_utxo or non_witness_utxo)"
+                "one of the inputs lacked value information (witness_utxo or non_witness_utxo)"
             ),
             SendingTooMuch { .. } => write!(
                 f,
-                "Transaction would be invalid due to output value being greater than input value."
+                "transaction would be invalid due to output value being greater than input value."
             ),
         }
     }

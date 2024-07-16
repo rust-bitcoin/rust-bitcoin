@@ -111,13 +111,13 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     println!("witness {:?}", witness);
 
     //last element is called witnessScript according to BIP141. It supersedes scriptPubKey.
-    let witness_script_bytes: &[u8] = witness.last().expect("Out of Bounds");
+    let witness_script_bytes: &[u8] = witness.last().expect("out of bounds");
     let witness_script = Script::from_bytes(witness_script_bytes);
     let mut cache = sighash::SighashCache::new(&tx);
 
     //in an M of N multisig, the witness elements from 1 (0-based) to M-2 are signatures (with sighash flags as the last byte)
     for n in 1..=witness.len() - 2 {
-        let sig_bytes = witness.nth(n).expect("Out of Bounds");
+        let sig_bytes = witness.nth(n).expect("out of bounds");
         let sig = ecdsa::Signature::from_slice(sig_bytes).expect("failed to parse sig");
         let sig_len = sig_bytes.len() - 1; //last byte is EcdsaSighashType sighash flag
                                            //ECDSA signature in DER format lengths are between 70 and 72 bytes
