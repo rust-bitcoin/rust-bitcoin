@@ -39,13 +39,6 @@ impl SessionKey {
     pub fn new(key: [u8; 32]) -> Self {
         SessionKey(key)
     }
-
-    /// Return an iterator over 8 chunks of 4-byte arrays.
-    ///
-    /// This is the only way the key should ever be accessed.
-    fn chunks(&self) -> core::slice::ChunksExact<'_, u8> {
-        self.0.chunks_exact(4)
-    }
 }
 
 /// A 96 bit initialization vector (IV), or nonce.
@@ -57,12 +50,70 @@ impl Nonce {
     pub fn new(nonce: [u8; 12]) -> Self {
         Nonce(nonce)
     }
+}
 
-    /// Return an iterator over 3 chunks of 4-byte arrays.
-    ///
-    /// This is the only way the nonce should ever be accessed.
-    fn chunks(&self) -> core::slice::ChunksExact<'_, u8> {
-        self.0.chunks_exact(4)
+/// The cipher state can be visualized as a 4x4 matrix of 32-bit words.
+#[derive(Clone, Copy, Debug)]
+struct State([u32; 16]);
+
+impl State {
+    /// New prepared state.
+    fn new(key: SessionKey, nonce: Nonce, count: u32) -> Self {
+        let mut state: [u32; 16] = [0; 16];
+        state[0] = WORD_1;
+        state[1] = WORD_2;
+        state[2] = WORD_3;
+        state[3] = WORD_4;
+
+        for (state, word) in state[4..12].iter_mut().zip(key.0.chunks_exact(4)) {
+            *state =
+                u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
+        }
+
+        state[12] = count;
+
+        for (state, word) in state[13..16].iter_mut().zip(nonce.0.chunks_exact(4)) {
+            *state =
+                u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
+        }
+
+        State(state)
+    }
+
+    fn quarter_round(&mut self, a: usize, b: usize, c: usize, d: usize) {
+        self.0[a] = self.0[a].wrapping_add(self.0[b]);
+        self.0[d] = (self.0[d] ^ self.0[a]).rotate_left(16);
+        self.0[c] = self.0[c].wrapping_add(self.0[d]);
+        self.0[b] = (self.0[b] ^ self.0[c]).rotate_left(12);
+        self.0[a] = self.0[a].wrapping_add(self.0[b]);
+        self.0[d] = (self.0[d] ^ self.0[a]).rotate_left(8);
+        self.0[c] = self.0[c].wrapping_add(self.0[d]);
+        self.0[b] = (self.0[b] ^ self.0[c]).rotate_left(7);
+    }
+
+    fn double_round(&mut self) {
+        for (a, b, c, d) in CHACHA_ROUND_INDICIES {
+            self.quarter_round(a, b, c, d);
+        }
+    }
+
+    fn chacha_block(&mut self) {
+        let initial_state = self.0;
+        for _ in 0..10 {
+            self.double_round()
+        }
+        for (modified, initial) in self.0.iter_mut().zip(initial_state.iter()) {
+            *modified = modified.wrapping_add(*initial)
+        }
+    }
+
+    fn keystream(&self) -> [u8; 64] {
+        let mut keystream: [u8; 64] = [0; 64];
+        for (k, s) in keystream.chunks_exact_mut(4).zip(self.0) {
+            k.copy_from_slice(&s.to_le_bytes());
+        }
+
+        keystream
     }
 }
 
@@ -141,73 +192,17 @@ impl ChaCha20 {
     }
 }
 
-fn quarter_round(state: &mut [u32; 16], a: usize, b: usize, c: usize, d: usize) {
-    state[a] = state[a].wrapping_add(state[b]);
-    state[d] = (state[d] ^ state[a]).rotate_left(16);
-    state[c] = state[c].wrapping_add(state[d]);
-    state[b] = (state[b] ^ state[c]).rotate_left(12);
-    state[a] = state[a].wrapping_add(state[b]);
-    state[d] = (state[d] ^ state[a]).rotate_left(8);
-    state[c] = state[c].wrapping_add(state[d]);
-    state[b] = (state[b] ^ state[c]).rotate_left(7);
-}
-
-fn double_round(state: &mut [u32; 16]) {
-    for (a, b, c, d) in CHACHA_ROUND_INDICIES {
-        quarter_round(state, a, b, c, d);
-    }
-}
-
-fn chacha_block(state: &mut [u32; 16]) {
-    let initial_state = *state;
-    for _ in 0..10 {
-        double_round(state)
-    }
-    for (modified, initial) in state.iter_mut().zip(initial_state.iter()) {
-        *modified = modified.wrapping_add(*initial)
-    }
-}
-
-fn prepare_state(key: SessionKey, nonce: Nonce, count: u32) -> [u32; 16] {
-    let mut state: [u32; 16] = [0; 16];
-    state[0] = WORD_1;
-    state[1] = WORD_2;
-    state[2] = WORD_3;
-    state[3] = WORD_4;
-
-    for (state, word) in state[4..12].iter_mut().zip(key.chunks()) {
-        *state = u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
-    }
-
-    state[12] = count;
-
-    for (state, word) in state[13..16].iter_mut().zip(nonce.chunks()) {
-        *state = u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
-    }
-
-    state
-}
-
-fn keystream_from_state(state: &mut [u32; 16]) -> [u8; 64] {
-    let mut keystream: [u8; 64] = [0; 64];
-    for (k, s) in keystream.chunks_exact_mut(4).zip(state) {
-        k.copy_from_slice(&s.to_le_bytes());
-    }
-
-    keystream
-}
-
 fn keystream_at_slice(key: SessionKey, nonce: Nonce, count: u32, seek: usize) -> [u8; 64] {
     let mut keystream: [u8; 128] = [0; 128];
     let (first_half, second_half) = keystream.split_at_mut(64);
 
-    let mut state = prepare_state(key, nonce, count);
-    chacha_block(&mut state);
-    first_half.copy_from_slice(&keystream_from_state(&mut state));
+    let mut state = State::new(key, nonce, count);
+    state.chacha_block();
+    first_half.copy_from_slice(&state.keystream());
 
-    let mut state = prepare_state(key, nonce, count + 1);
-    chacha_block(&mut state);
-    second_half.copy_from_slice(&keystream_from_state(&mut state));
+    let mut state = State::new(key, nonce, count + 1);
+    state.chacha_block();
+    second_half.copy_from_slice(&state.keystream());
 
     let seeked_keystream: [u8; 64] = keystream[seek..seek + 64].try_into().expect("infallable");
     seeked_keystream
@@ -225,12 +220,12 @@ mod tests {
         let b: u32 = 0x01020304;
         let c: u32 = 0x9b8d6f43;
         let d: u32 = 0x01234567;
-        let mut state = [a, b, c, d, a, b, c, d, a, b, c, d, a, b, c, d];
-        quarter_round(&mut state, 0, 1, 2, 3);
-        assert_eq!(state[0].to_be_bytes().to_lower_hex_string(), "ea2a92f4");
-        assert_eq!(state[1].to_be_bytes().to_lower_hex_string(), "cb1cf8ce");
-        assert_eq!(state[2].to_be_bytes().to_lower_hex_string(), "4581472e");
-        assert_eq!(state[3].to_be_bytes().to_lower_hex_string(), "5881c4bb");
+        let mut state = State([a, b, c, d, a, b, c, d, a, b, c, d, a, b, c, d]);
+        state.quarter_round(0, 1, 2, 3);
+        assert_eq!(state.0[0].to_be_bytes().to_lower_hex_string(), "ea2a92f4");
+        assert_eq!(state.0[1].to_be_bytes().to_lower_hex_string(), "cb1cf8ce");
+        assert_eq!(state.0[2].to_be_bytes().to_lower_hex_string(), "4581472e");
+        assert_eq!(state.0[3].to_be_bytes().to_lower_hex_string(), "5881c4bb");
     }
 
     #[test]
@@ -252,9 +247,9 @@ mod tests {
         let n: u32 = 0x3d631689;
         let o: u32 = 0x2098d9d6;
         let p: u32 = 0x91dbd320;
-        let mut state = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p];
-        quarter_round(&mut state, 2, 7, 8, 13);
-        assert_eq!(state[2].to_be_bytes().to_lower_hex_string(), "bdb886dc");
+        let mut state = State([a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p]);
+        state.quarter_round(2, 7, 8, 13);
+        assert_eq!(state.0[2].to_be_bytes().to_lower_hex_string(), "bdb886dc");
     }
 
     #[test]
@@ -276,24 +271,24 @@ mod tests {
         let n: u32 = 0x09000000;
         let o: u32 = 0x4a000000;
         let p: u32 = 0x00000000;
-        let mut state = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p];
-        chacha_block(&mut state);
-        assert_eq!(state[0].to_be_bytes().to_lower_hex_string(), "e4e7f110");
-        assert_eq!(state[1].to_be_bytes().to_lower_hex_string(), "15593bd1");
-        assert_eq!(state[2].to_be_bytes().to_lower_hex_string(), "1fdd0f50");
-        assert_eq!(state[3].to_be_bytes().to_lower_hex_string(), "c47120a3");
-        assert_eq!(state[4].to_be_bytes().to_lower_hex_string(), "c7f4d1c7");
-        assert_eq!(state[5].to_be_bytes().to_lower_hex_string(), "0368c033");
-        assert_eq!(state[6].to_be_bytes().to_lower_hex_string(), "9aaa2204");
-        assert_eq!(state[7].to_be_bytes().to_lower_hex_string(), "4e6cd4c3");
-        assert_eq!(state[8].to_be_bytes().to_lower_hex_string(), "466482d2");
-        assert_eq!(state[9].to_be_bytes().to_lower_hex_string(), "09aa9f07");
-        assert_eq!(state[10].to_be_bytes().to_lower_hex_string(), "05d7c214");
-        assert_eq!(state[11].to_be_bytes().to_lower_hex_string(), "a2028bd9");
-        assert_eq!(state[12].to_be_bytes().to_lower_hex_string(), "d19c12b5");
-        assert_eq!(state[13].to_be_bytes().to_lower_hex_string(), "b94e16de");
-        assert_eq!(state[14].to_be_bytes().to_lower_hex_string(), "e883d0cb");
-        assert_eq!(state[15].to_be_bytes().to_lower_hex_string(), "4e3c50a2");
+        let mut state = State([a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p]);
+        state.chacha_block();
+        assert_eq!(state.0[0].to_be_bytes().to_lower_hex_string(), "e4e7f110");
+        assert_eq!(state.0[1].to_be_bytes().to_lower_hex_string(), "15593bd1");
+        assert_eq!(state.0[2].to_be_bytes().to_lower_hex_string(), "1fdd0f50");
+        assert_eq!(state.0[3].to_be_bytes().to_lower_hex_string(), "c47120a3");
+        assert_eq!(state.0[4].to_be_bytes().to_lower_hex_string(), "c7f4d1c7");
+        assert_eq!(state.0[5].to_be_bytes().to_lower_hex_string(), "0368c033");
+        assert_eq!(state.0[6].to_be_bytes().to_lower_hex_string(), "9aaa2204");
+        assert_eq!(state.0[7].to_be_bytes().to_lower_hex_string(), "4e6cd4c3");
+        assert_eq!(state.0[8].to_be_bytes().to_lower_hex_string(), "466482d2");
+        assert_eq!(state.0[9].to_be_bytes().to_lower_hex_string(), "09aa9f07");
+        assert_eq!(state.0[10].to_be_bytes().to_lower_hex_string(), "05d7c214");
+        assert_eq!(state.0[11].to_be_bytes().to_lower_hex_string(), "a2028bd9");
+        assert_eq!(state.0[12].to_be_bytes().to_lower_hex_string(), "d19c12b5");
+        assert_eq!(state.0[13].to_be_bytes().to_lower_hex_string(), "b94e16de");
+        assert_eq!(state.0[14].to_be_bytes().to_lower_hex_string(), "e883d0cb");
+        assert_eq!(state.0[15].to_be_bytes().to_lower_hex_string(), "4e3c50a2");
     }
 
     #[test]
@@ -315,9 +310,9 @@ mod tests {
         let n: u32 = 0x09000000;
         let o: u32 = 0x4a000000;
         let p: u32 = 0x00000000;
-        let mut state = [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p];
-        chacha_block(&mut state);
-        assert_eq!(state[7].to_le_bytes().to_lower_hex_string(), "c3d46c4e");
+        let mut state = State([a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p]);
+        state.chacha_block();
+        assert_eq!(state.0[7].to_le_bytes().to_lower_hex_string(), "c3d46c4e");
     }
 
     #[test]
@@ -330,12 +325,12 @@ mod tests {
         );
         let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
         let count = 1;
-        let state = prepare_state(key, nonce, count);
-        assert_eq!(state[4].to_be_bytes().to_lower_hex_string(), "03020100");
-        assert_eq!(state[10].to_be_bytes().to_lower_hex_string(), "1b1a1918");
-        assert_eq!(state[14].to_be_bytes().to_lower_hex_string(), "4a000000");
-        assert_eq!(state[15].to_be_bytes().to_lower_hex_string(), "00000000");
-        assert_eq!(state[12].to_be_bytes().to_lower_hex_string(), "00000001")
+        let state = State::new(key, nonce, count);
+        assert_eq!(state.0[4].to_be_bytes().to_lower_hex_string(), "03020100");
+        assert_eq!(state.0[10].to_be_bytes().to_lower_hex_string(), "1b1a1918");
+        assert_eq!(state.0[14].to_be_bytes().to_lower_hex_string(), "4a000000");
+        assert_eq!(state.0[15].to_be_bytes().to_lower_hex_string(), "00000000");
+        assert_eq!(state.0[12].to_be_bytes().to_lower_hex_string(), "00000001")
     }
 
     #[test]
