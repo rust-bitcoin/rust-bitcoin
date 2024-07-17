@@ -209,7 +209,7 @@ pub trait GeneralHash: Hash {
     }
 
     /// Hashes all the byte slices retrieved from the iterator together.
-    fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+    fn hash_chunks<B, I>(byte_slices: I) -> Self
     where
         B: AsRef<[u8]>,
         I: IntoIterator<Item = B>,

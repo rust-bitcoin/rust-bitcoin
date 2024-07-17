@@ -97,7 +97,7 @@ where
     }
 
     /// Hashes all the byte slices retrieved from the iterator together.
-    pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+    pub fn hash_chunks<B, I>(byte_slices: I) -> Self
     where
         B: AsRef<[u8]>,
         I: IntoIterator<Item = B>,
@@ -233,7 +233,7 @@ macro_rules! sha256t_hash_newtype {
 
             /// Hashes all the byte slices retrieved from the iterator together.
             #[allow(unused)] // the user of macro may not need this
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            pub fn hash_chunks<B, I>(byte_slices: I) -> Self
             where
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,

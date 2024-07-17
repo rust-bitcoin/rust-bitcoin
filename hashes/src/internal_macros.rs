@@ -195,7 +195,7 @@ macro_rules! hash_type {
             }
 
             /// Hashes all the byte slices retrieved from the iterator together.
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            pub fn hash_chunks<B, I>(byte_slices: I) -> Self
             where
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
