@@ -11,6 +11,8 @@ use poly1305::Poly1305;
 
 use core::fmt;
 
+pub use self::chacha20::{Nonce, SessionKey};
+
 /// Zero array for padding slices.
 const ZEROES: [u8; 16] = [0u8; 16];
 
@@ -41,13 +43,13 @@ impl std::error::Error for Error {
 /// Encrypt and decrypt content along with a authentication tag.
 #[derive(Debug)]
 pub struct ChaCha20Poly1305 {
-    key: [u8; 32],
-    nonce: [u8; 12],
+    key: SessionKey,
+    nonce: Nonce,
 }
 
 impl ChaCha20Poly1305 {
     /// Make a new instance of a ChaCha20Poly1305 AEAD.
-    pub fn new(key: [u8; 32], nonce: [u8; 12]) -> Self {
+    pub fn new(key: SessionKey, nonce: Nonce) -> Self {
         ChaCha20Poly1305 { key, nonce }
     }
 
@@ -149,14 +151,14 @@ mod tests {
     fn test_rfc7539() {
         let mut message = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         let aad = Vec::from_hex("50515253c0c1c2c3c4c5c6c7").unwrap();
-        let key: [u8; 32] =
+        let key = SessionKey::new(
             Vec::from_hex("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
                 .unwrap()
-                .as_slice()
                 .try_into()
-                .unwrap();
-        let nonce: [u8; 12] =
-            Vec::from_hex("070000004041424344454647").unwrap().as_slice().try_into().unwrap();
+                .unwrap(),
+        );
+        let nonce =
+            Nonce::new(Vec::from_hex("070000004041424344454647").unwrap().try_into().unwrap());
         let cipher = ChaCha20Poly1305::new(key, nonce);
         let tag = cipher.encrypt(&mut message, Some(&aad));
 

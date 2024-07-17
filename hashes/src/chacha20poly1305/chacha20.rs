@@ -30,16 +30,52 @@ const CHACHA_ROUND_INDICIES: [(usize, usize, usize, usize); 8] = [
 /// The cipher's block size is 64 bytes.
 const CHACHA_BLOCKSIZE: usize = 64;
 
+/// A 256 bit secret session key shared by the parties communicating.
+#[derive(Clone, Copy, Debug)]
+pub struct SessionKey([u8; 32]);
+
+impl SessionKey {
+    /// Create a new session key.
+    pub fn new(key: [u8; 32]) -> Self {
+        SessionKey(key)
+    }
+
+    /// Return an iterator over 8 chunks of 4-byte arrays.
+    ///
+    /// This is the only way the key should ever be accessed.
+    fn chunks(&self) -> core::slice::ChunksExact<'_, u8> {
+        self.0.chunks_exact(4)
+    }
+}
+
+/// A 96 bit initialization vector (IV), or nonce.
+#[derive(Clone, Copy, Debug)]
+pub struct Nonce([u8; 12]);
+
+impl Nonce {
+    /// Create a new nonce.
+    pub fn new(nonce: [u8; 12]) -> Self {
+        Nonce(nonce)
+    }
+
+    /// Return an iterator over 3 chunks of 4-byte arrays.
+    ///
+    /// This is the only way the nonce should ever be accessed.
+    fn chunks(&self) -> core::slice::ChunksExact<'_, u8> {
+        self.0.chunks_exact(4)
+    }
+}
+
 /// The ChaCha20 stream cipher from RFC8439.
 ///
 /// The 20-round IETF version uses a 96-bit nonce and 32-bit block counter. This is the
 /// variant used in the Bitcoin ecosystem including BIP324.
 #[derive(Debug)]
 pub struct ChaCha20 {
-    /// A 256 bit secret session key shared by the parties communitcating.
-    key: [u8; 32],
-    /// A 96 bit initialization vector (IV), or nonce. A key/nonce pair should only be used once.  
-    nonce: [u8; 12],
+    /// Secret session key shared by the parties communicating.
+    key: SessionKey,
+    /// A session key and nonce pair should only be used once.  
+    nonce: Nonce,
     /// Internal block index of keystream.
     block_count: u32,
     /// Interal byte offset index of the block_count.
@@ -48,14 +84,14 @@ pub struct ChaCha20 {
 
 impl ChaCha20 {
     /// Make a new instance of ChaCha20 from an index in the keystream.
-    pub fn new(key: [u8; 32], nonce: [u8; 12], seek: u32) -> Self {
+    pub fn new(key: SessionKey, nonce: Nonce, seek: u32) -> Self {
         let block_count = seek / 64;
         let seek_offset_bytes = (seek % 64) as usize;
         ChaCha20 { key, nonce, block_count, seek_offset_bytes }
     }
 
     /// Make a new instance of ChaCha20 from a block in the keystream.
-    pub fn new_from_block(key: [u8; 32], nonce: [u8; 12], block: u32) -> Self {
+    pub fn new_from_block(key: SessionKey, nonce: Nonce, block: u32) -> Self {
         ChaCha20 { key, nonce, block_count: block, seek_offset_bytes: 0 }
     }
 
@@ -132,20 +168,20 @@ fn chacha_block(state: &mut [u32; 16]) {
     }
 }
 
-fn prepare_state(key: [u8; 32], nonce: [u8; 12], count: u32) -> [u32; 16] {
+fn prepare_state(key: SessionKey, nonce: Nonce, count: u32) -> [u32; 16] {
     let mut state: [u32; 16] = [0; 16];
     state[0] = WORD_1;
     state[1] = WORD_2;
     state[2] = WORD_3;
     state[3] = WORD_4;
 
-    for (state, word) in state[4..12].iter_mut().zip(key.chunks_exact(4)) {
+    for (state, word) in state[4..12].iter_mut().zip(key.chunks()) {
         *state = u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
     }
 
     state[12] = count;
 
-    for (state, word) in state[13..16].iter_mut().zip(nonce.chunks_exact(4)) {
+    for (state, word) in state[13..16].iter_mut().zip(nonce.chunks()) {
         *state = u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
     }
 
@@ -161,7 +197,7 @@ fn keystream_from_state(state: &mut [u32; 16]) -> [u8; 64] {
     keystream
 }
 
-fn keystream_at_slice(key: [u8; 32], nonce: [u8; 12], count: u32, seek: usize) -> [u8; 64] {
+fn keystream_at_slice(key: SessionKey, nonce: Nonce, count: u32, seek: usize) -> [u8; 64] {
     let mut keystream: [u8; 128] = [0; 128];
     let (first_half, second_half) = keystream.split_at_mut(64);
 
@@ -286,11 +322,13 @@ mod tests {
 
     #[test]
     fn test_prepare_state() {
-        let key = Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-            .unwrap();
-        let key: [u8; 32] = key.try_into().unwrap();
-        let nonce = Vec::from_hex("000000090000004a00000000").unwrap();
-        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let key = SessionKey(
+            Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap()
+                .try_into()
+                .unwrap(),
+        );
+        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
         let count = 1;
         let state = prepare_state(key, nonce, count);
         assert_eq!(state[4].to_be_bytes().to_lower_hex_string(), "03020100");
@@ -302,11 +340,13 @@ mod tests {
 
     #[test]
     fn test_small_plaintext() {
-        let key = Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-            .unwrap();
-        let key: [u8; 32] = key.try_into().unwrap();
-        let nonce = Vec::from_hex("000000090000004a00000000").unwrap();
-        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let key = SessionKey(
+            Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap()
+                .try_into()
+                .unwrap(),
+        );
+        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
         let count = 1;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = [8; 3];
@@ -318,11 +358,13 @@ mod tests {
 
     #[test]
     fn test_modulo_64() {
-        let key = Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-            .unwrap();
-        let key: [u8; 32] = key.try_into().unwrap();
-        let nonce = Vec::from_hex("000000000000004a00000000").unwrap();
-        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let key = SessionKey(
+            Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap()
+                .try_into()
+                .unwrap(),
+        );
+        let nonce = Nonce(Vec::from_hex("000000090000004a00000000").unwrap().try_into().unwrap());
         let count = 1;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = [8; 64];
@@ -334,11 +376,13 @@ mod tests {
 
     #[test]
     fn test_rfc_standard() {
-        let key = Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-            .unwrap();
-        let key: [u8; 32] = key.try_into().unwrap();
-        let nonce = Vec::from_hex("000000000000004a00000000").unwrap();
-        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let key = SessionKey(
+            Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap()
+                .try_into()
+                .unwrap(),
+        );
+        let nonce = Nonce(Vec::from_hex("000000000000004a00000000").unwrap().try_into().unwrap());
         let count = 64;
         let mut chacha = ChaCha20::new(key, nonce, count);
         let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
@@ -353,11 +397,13 @@ mod tests {
 
     #[test]
     fn test_new_from_block() {
-        let key = Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-            .unwrap();
-        let key: [u8; 32] = key.try_into().unwrap();
-        let nonce = Vec::from_hex("000000000000004a00000000").unwrap();
-        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let key = SessionKey(
+            Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+                .unwrap()
+                .try_into()
+                .unwrap(),
+        );
+        let nonce = Nonce(Vec::from_hex("000000000000004a00000000").unwrap().try_into().unwrap());
         let block: u32 = 1;
         let mut chacha = ChaCha20::new_from_block(key, nonce, block);
         let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
