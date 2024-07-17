@@ -208,6 +208,11 @@ pub trait GeneralHash: Hash {
         Self::from_engine(engine)
     }
 
+    /// Hashes a string after converting it to bytes using [`str::as_bytes`].
+    ///
+    /// [`str::as_bytes`]: <https://doc.rust-lang.org/std/primitive.str.html#method.as_bytes>
+    fn hash_str(s: &str) -> Self { GeneralHash::hash(s.as_bytes()) }
+
     /// Hashes all the byte slices retrieved from the iterator together.
     fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
     where
@@ -286,7 +291,8 @@ impl std::error::Error for FromSliceError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::sha256d;
+    use super::*;
+    use crate::{sha256, sha256d};
 
     hash_newtype! {
         /// A test newtype
@@ -310,5 +316,13 @@ mod tests {
         let hex = format!("{}", orig);
         let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
         assert_eq!(rinsed, orig)
+    }
+
+    #[test]
+    fn hash_str() {
+        assert_eq!(
+            sha256::Hash::hash(b"boom"),
+            sha256::Hash::hash_str("boom"),
+        )
     }
 }

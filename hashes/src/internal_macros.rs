@@ -194,6 +194,11 @@ macro_rules! hash_type {
                 Self::from_engine(engine)
             }
 
+            /// Hashes a string after converting it to bytes using [`str::as_bytes`].
+            ///
+            /// [`str::as_bytes`]: <https://doc.rust-lang.org/std/primitive.str.html#method.as_bytes>
+            pub fn hash_str(s: &str) -> Self { Self::hash(s.as_bytes()) }
+
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
             where
