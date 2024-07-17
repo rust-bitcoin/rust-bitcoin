@@ -21,8 +21,8 @@ jobs:
           rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@main
-      - name: "Binstall cargo-semver-checks"
-        run: cargo binstall cargo-semver-checks --no-confirm
+      - name: "Binstall pinned cargo-semver-checks"
+        run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"
         run: ./contrib/check-semver-pr.sh
       - name: Save PR number
@@ -58,8 +58,8 @@ jobs:
           rustup default $(cat ./.github/workflows/stable-version)
       - name: "Install cargo-binstall"
         uses: cargo-bins/cargo-binstall@main
-      - name: "Binstall cargo-semver-checks"
-        run: cargo binstall cargo-semver-checks --no-confirm
+      - name: "Binstall pinned cargo-semver-checks"
+        run: cargo binstall cargo-semver-checks@$(cat ./.github/workflows/cargo-semver-checks-version) --no-confirm
       - name: "Run semver checker script"
         run: ./contrib/check-semver-feature.sh
 
