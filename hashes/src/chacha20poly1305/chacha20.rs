@@ -8,19 +8,14 @@ const WORD_2: u32 = 0x3320646e;
 const WORD_3: u32 = 0x79622d32;
 const WORD_4: u32 = 0x6b206574;
 
-/// Each quarter round of ChaCha scrambles 4 words (32-bit) of the state
-/// using some Addition (mod 2^32), Rotation, and XOR (a.k.a. ARX). 8 quarter
-/// rounds make up a round. A block is broken up into 16 32-bit words
-/// and each quarter round takes 4 words as input.
+/// The quarter round indexes of a ChaCha block function.
 const CHACHA_ROUND_INDICIES: [(usize, usize, usize, usize); 8] = [
-    // The first 4 rounds are rows of a 4x4 matrix
-    // of the block broken up into 32-bit words.
+    // The first 4 rounds are columns of the 4x4 matrix.
     (0, 4, 8, 12),
     (1, 5, 9, 13),
     (2, 6, 10, 14),
     (3, 7, 11, 15),
-    // The next 4 rounds are diagonals of a 4x4 matrix
-    // of the block broken up into 32-bit words.
+    // The next 4 rounds are diagonals of the 4x4 matrix.
     (0, 5, 10, 15),
     (1, 6, 11, 12),
     (2, 7, 8, 13),
@@ -30,7 +25,7 @@ const CHACHA_ROUND_INDICIES: [(usize, usize, usize, usize); 8] = [
 /// The cipher's block size is 64 bytes.
 const CHACHA_BLOCKSIZE: usize = 64;
 
-/// A 256 bit secret session key shared by the parties communicating.
+/// A 256-bit secret session key shared by the parties communicating.
 #[derive(Clone, Copy, Debug)]
 pub struct SessionKey([u8; 32]);
 
@@ -41,7 +36,7 @@ impl SessionKey {
     }
 }
 
-/// A 96 bit initialization vector (IV), or nonce.
+/// A 96-bit initialization vector (IV), or nonce.
 #[derive(Clone, Copy, Debug)]
 pub struct Nonce([u8; 12]);
 
@@ -52,7 +47,14 @@ impl Nonce {
     }
 }
 
-/// The cipher state can be visualized as a 4x4 matrix of 32-bit words.
+/// The 512-bit cipher state is chunk'd up into 16 32-bit words.
+///
+/// The 16 words can be visualized as a 4x4 matrix:
+///
+///   0   1   2   3
+///   4   5   6   7
+///   8   9  10  11
+///   12  13  14  15
 #[derive(Clone, Copy, Debug)]
 struct State([u32; 16]);
 
@@ -60,16 +62,19 @@ impl State {
     /// New prepared state.
     fn new(key: SessionKey, nonce: Nonce, count: u32) -> Self {
         let mut state: [u32; 16] = [0; 16];
+        // The frist row of the cipher state is constant.
         state[0] = WORD_1;
         state[1] = WORD_2;
         state[2] = WORD_3;
         state[3] = WORD_4;
 
+        // The next two rows are based on the session key.
         for (state, word) in state[4..12].iter_mut().zip(key.0.chunks_exact(4)) {
             *state =
                 u32::from_le_bytes(word.try_into().expect("chunks exact returns 4-byte slices"));
         }
 
+        // The final row is the count and the nonce.
         state[12] = count;
 
         for (state, word) in state[13..16].iter_mut().zip(nonce.0.chunks_exact(4)) {
@@ -80,6 +85,8 @@ impl State {
         State(state)
     }
 
+    /// Each "quarter" round of ChaCha scrambles 4 of the 16 words (where the quarter comes from)
+    /// that make up the state using some Addition (mod 2^32), Rotation, and XOR (a.k.a. ARX).
     fn quarter_round(&mut self, a: usize, b: usize, c: usize, d: usize) {
         self.0[a] = self.0[a].wrapping_add(self.0[b]);
         self.0[d] = (self.0[d] ^ self.0[a]).rotate_left(16);
@@ -97,6 +104,7 @@ impl State {
         }
     }
 
+    /// Transform the state by performing the ChaCha block function.
     fn chacha_block(&mut self) {
         let initial_state = self.0;
         for _ in 0..10 {
@@ -107,6 +115,7 @@ impl State {
         }
     }
 
+    /// Expose the 512-bit state as a byte stream.
     fn keystream(&self) -> [u8; 64] {
         let mut keystream: [u8; 64] = [0; 64];
         for (k, s) in keystream.chunks_exact_mut(4).zip(self.0) {
