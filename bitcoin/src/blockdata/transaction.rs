@@ -29,11 +29,6 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount, VarInt};
 
-#[rustfmt::skip]                // Keep public re-exports separate.
-#[cfg(feature = "bitcoinconsensus")]
-#[doc(inline)]
-pub use crate::consensus::validation::TxVerifyError;
-
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
     ///
@@ -1846,6 +1841,7 @@ mod tests {
     fn transaction_verify() {
         use std::collections::HashMap;
 
+        use crate::consensus::validation::TxVerifyError;
         use crate::witness::Witness;
 
         // a random recent segwit transaction from blockchain using both old and segwit inputs
