@@ -98,17 +98,13 @@ impl State {
         self.0[b] = (self.0[b] ^ self.0[c]).rotate_left(7);
     }
 
-    fn double_round(&mut self) {
-        for (a, b, c, d) in CHACHA_ROUND_INDICIES {
-            self.quarter_round(a, b, c, d);
-        }
-    }
-
     /// Transform the state by performing the ChaCha block function.
     fn chacha_block(&mut self) {
         let initial_state = self.0;
         for _ in 0..10 {
-            self.double_round()
+            for (a, b, c, d) in CHACHA_ROUND_INDICIES {
+                self.quarter_round(a, b, c, d);
+            }
         }
         for (modified, initial) in self.0.iter_mut().zip(initial_state.iter()) {
             *modified = modified.wrapping_add(*initial)
