@@ -399,9 +399,9 @@ impl Witness {
     ///
     /// This does not guarantee that this represents a P2TR [`Witness`]. It
     /// merely gets the second to last or third to last element depending on
-    /// the first byte of the last element being equal to 0x50. See
-    /// [Script::is_p2tr](crate::script::Script::is_p2tr) to
-    /// check whether this is actually a Taproot witness.
+    /// the first byte of the last element being equal to 0x50.
+    ///
+    /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
         self.last().and_then(|last| {
             // From BIP341:
@@ -422,9 +422,9 @@ impl Witness {
     ///
     /// This does not guarantee that this represents a P2TR [`Witness`]. It
     /// merely gets the last or second to last element depending on the first
-    /// byte of the last element being equal to 0x50. See
-    /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
-    /// check whether this is actually a Taproot witness.
+    /// byte of the last element being equal to 0x50.
+    ///
+    /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
     pub fn taproot_control_block(&self) -> Option<&[u8]> {
         self.last().and_then(|last| {
             // From BIP341:
@@ -443,9 +443,9 @@ impl Witness {
 
     /// Get the taproot annex following BIP341 rules.
     ///
-    /// This does not guarantee that this represents a P2TR [`Witness`]. See
-    /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
-    /// check whether this is actually a Taproot witness.
+    /// This does not guarantee that this represents a P2TR [`Witness`].
+    ///
+    /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
     pub fn taproot_annex(&self) -> Option<&[u8]> {
         self.last().and_then(|last| {
             // From BIP341:
@@ -462,9 +462,9 @@ impl Witness {
 
     /// Get the p2wsh witness script following BIP141 rules.
     ///
-    /// This does not guarantee that this represents a P2WS [`Witness`]. See
-    /// [Script::is_p2wsh](crate::blockdata::script::Script::is_p2wsh) to
-    /// check whether this is actually a P2WSH witness.
+    /// This does not guarantee that this represents a P2WS [`Witness`].
+    ///
+    /// See [`Script::is_p2wsh`] to check whether this is actually a P2WSH witness.
     pub fn witness_script(&self) -> Option<&Script> { self.last().map(Script::from_bytes) }
 }
 

@@ -40,7 +40,9 @@ hashes::hash_newtype! {
     /// For compatibility with the existing Bitcoin infrastructure and historical and current
     /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
     /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations. See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+    /// trait operations.
+    ///
+    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
     pub struct Txid(sha256d::Hash);
 
     /// A bitcoin witness transaction ID.
