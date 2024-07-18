@@ -157,6 +157,8 @@ impl std::error::Error for TimeOverflowError {}
 mod tests {
     use super::*;
 
+    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
+
     #[test]
     fn from_seconds_ceil_success() {
         let actual = Time::from_seconds_ceil(100).unwrap();
@@ -166,16 +168,41 @@ mod tests {
 
     #[test]
     fn from_seconds_ceil_with_maximum_encodable_seconds_success() {
-        let maximum_encodable_seconds = u16::MAX as u32 * 512;
-        let actual = Time::from_seconds_ceil(maximum_encodable_seconds).unwrap();
+        let actual = Time::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS).unwrap();
         let expected = Time(u16::MAX);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_ceil_causes_time_overflow_error() {
-        let maximum_encodable_seconds = u16::MAX as u32 * 512;
-        let result = Time::from_seconds_ceil(maximum_encodable_seconds + 1);
+        let result = Time::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn from_seconds_floor_success() {
+        let actual = Time::from_seconds_floor(100).unwrap();
+        let expected = Time(0_u16);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_floor_with_exact_interval() {
+        let actual = Time::from_seconds_floor(512).unwrap();
+        let expected = Time(1_u16);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_floor_with_maximum_encodable_seconds_success() {
+        let actual = Time::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
+        let expected = Time(u16::MAX);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_floor_causes_time_overflow_error() {
+        let result = Time::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512);
         assert!(result.is_err());
     }
 }
