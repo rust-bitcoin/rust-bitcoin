@@ -11,7 +11,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use internals::write_err;
-use units::{parse, ParseIntError};
+use units::parse::{self, ParseIntError};
 
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;

@@ -51,7 +51,5 @@ pub use self::amount::{Amount, SignedAmount};
 pub use self::{
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
-    // ParseIntError is used by other modules, so we re-export it.
-    parse::ParseIntError,
     weight::Weight
 };
