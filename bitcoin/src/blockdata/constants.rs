@@ -10,10 +10,9 @@ use hashes::sha256d;
 use internals::impl_array_newtype;
 
 use crate::block::{self, Block};
-use crate::consensus::Params;
 use crate::internal_macros::impl_array_newtype_stringify;
 use crate::locktime::absolute;
-use crate::network::Network;
+use crate::network::{Network, Params};
 use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
@@ -216,7 +215,7 @@ mod test {
 
     use super::*;
     use crate::consensus::encode::serialize;
-    use crate::consensus::params;
+    use crate::network::params;
     use crate::Txid;
 
     #[test]

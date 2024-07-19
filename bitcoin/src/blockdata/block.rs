@@ -13,9 +13,10 @@ use hashes::{sha256d, HashEngine};
 use io::{BufRead, Write};
 
 use super::Weight;
-use crate::consensus::{encode, Decodable, Encodable, Params};
+use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
+use crate::network::Params;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::Vec;
 use crate::transaction::{Transaction, Wtxid};

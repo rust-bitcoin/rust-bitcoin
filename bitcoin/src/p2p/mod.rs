@@ -28,9 +28,8 @@ use internals::{debug_from_display, write_err};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::consensus::Params;
+use crate::network::{Network, Params};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::Network;
 
 #[rustfmt::skip]
 #[doc(inline)]

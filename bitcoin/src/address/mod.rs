@@ -39,7 +39,6 @@ use hashes::{hash160, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::address::script_pubkey::ScriptBufExt as _;
-use crate::consensus::Params;
 use crate::constants::{
     PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_MAIN,
     SCRIPT_ADDRESS_PREFIX_TEST,
@@ -47,7 +46,7 @@ use crate::constants::{
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
 };
-use crate::network::{Network, NetworkKind};
+use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
@@ -892,7 +891,7 @@ mod tests {
     use hex_lit::hex;
 
     use super::*;
-    use crate::consensus::params;
+    use crate::network::params;
     use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address, network: Network) {
