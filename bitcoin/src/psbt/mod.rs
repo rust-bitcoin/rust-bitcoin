@@ -1851,7 +1851,8 @@ mod tests {
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
-            let key: raw::Key = raw::Key { type_value: 0x0fu8, key_data: hex!("010203040506070809") };
+            let key: raw::Key =
+                raw::Key { type_value: 0x0fu8, key_data: hex!("010203040506070809") };
             let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
 
             unknown.insert(key, value);
