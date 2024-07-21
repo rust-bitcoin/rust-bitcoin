@@ -186,13 +186,7 @@ macro_rules! hash_type {
 
             /// Hashes some bytes.
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                engine.input(data);
-                Self::from_engine(engine)
-            }
+            pub fn hash(data: &[u8]) -> Self { <Self as crate::GeneralHash>::hash(data) }
 
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
@@ -200,13 +194,7 @@ macro_rules! hash_type {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                for slice in byte_slices {
-                    engine.input(slice.as_ref());
-                }
-                Self::from_engine(engine)
+                <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
 
             /// Returns the underlying byte array.
