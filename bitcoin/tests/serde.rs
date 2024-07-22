@@ -244,7 +244,9 @@ fn serde_regression_psbt() {
         }],
     };
     let unknown: BTreeMap<raw::Key, Vec<u8>> =
-        vec![(raw::Key { type_value: 9, key_data: vec![0, 1] }, vec![3, 4, 5])].into_iter().collect();
+        vec![(raw::Key { type_value: 9, key_data: vec![0, 1] }, vec![3, 4, 5])]
+            .into_iter()
+            .collect();
     let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
     let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
         "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
