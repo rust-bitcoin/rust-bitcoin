@@ -9,7 +9,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-honggfuzz = { version = "0.5.55", default-features = false }
+honggfuzz = { version = "0.5.56", default-features = false }
 bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
