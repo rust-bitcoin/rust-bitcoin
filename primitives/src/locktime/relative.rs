@@ -18,7 +18,7 @@ use crate::Sequence;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::relative::{Height, Time, TimeOverflowError};
+pub use units::locktime::relative::*;
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
