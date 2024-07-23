@@ -146,12 +146,12 @@ impl Script {
     ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
     ///
     /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
-    pub fn verify_with_flags<F: Into<u32>>(
+    pub fn verify_with_flags(
         &self,
         index: usize,
         amount: crate::Amount,
         spending_tx: &[u8],
-        flags: F,
+        flags: impl Into<u32>,
     ) -> Result<(), BitcoinconsensusError> {
         verify_script_with_flags(self, index, amount, spending_tx, flags)
     }
