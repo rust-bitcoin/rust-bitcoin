@@ -7,7 +7,7 @@ use core::ops::{
 
 use super::witness_version::WitnessVersion;
 use super::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, PushBytes,
+    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::Encodable;
@@ -555,19 +555,6 @@ impl Script {
     pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<Opcode> {
         match self.instructions().last() {
             Some(Ok(Instruction::Op(op))) => Some(op),
-            _ => None,
-        }
-    }
-
-    /// Iterates the script to find the last pushdata.
-    ///
-    /// Returns `None` if the instruction is an opcode or if the script is empty.
-    pub(crate) fn last_pushdata(&self) -> Option<&PushBytes> {
-        match self.instructions().last() {
-            // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
-            Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
-            // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
-            // However we are only interested in the pushdata so we can ignore them.
             _ => None,
         }
     }

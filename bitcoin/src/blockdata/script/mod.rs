@@ -825,3 +825,16 @@ impl fmt::Display for WitnessScriptSizeError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for WitnessScriptSizeError {}
+
+/// Iterates the script to find the last pushdata.
+///
+/// Returns `None` if the instruction is an opcode or if the script is empty.
+pub(crate) fn last_pushdata(script: &Script) -> Option<&PushBytes> {
+    match script.instructions().last() {
+        // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
+        Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
+        // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
+        // However we are only interested in the pushdata so we can ignore them.
+        _ => None,
+    }
+}
