@@ -241,6 +241,7 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// Decodes an integer in script format without non-minimal error.
 ///
 /// The overflow error for slices over 4 bytes long is still there.
+///
 /// See [`push_bytes::PushBytes::read_scriptint`] for a description of some subtleties of
 /// this function.
 pub fn read_scriptint_non_minimal(v: &[u8]) -> Result<i64, Error> {
