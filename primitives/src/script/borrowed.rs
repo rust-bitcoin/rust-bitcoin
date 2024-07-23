@@ -7,16 +7,12 @@ use core::ops::{
 
 use super::witness_version::WitnessVersion;
 use super::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, PushBytes,
+    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions,
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
-use crate::consensus::Encodable;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
-use crate::policy::DUST_RELAY_TX_FEE;
-use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, Vec};
-use crate::taproot::{LeafVersion, TapLeafHash};
-use crate::FeeRate;
+use crate::prelude::{Box, DisplayHex, String, ToOwned, Vec};
 
 /// Bitcoin script slice.
 ///
@@ -65,7 +61,7 @@ use crate::FeeRate;
 ///
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct Script(pub(in crate::blockdata::script) [u8]);
+pub struct Script(pub(in crate::script) [u8]);
 
 impl ToOwned for Script {
     type Owned = ScriptBuf;
@@ -121,12 +117,6 @@ impl Script {
     #[inline]
     pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
         WScriptHash::from_script(self)
-    }
-
-    /// Computes leaf hash of tapscript.
-    #[inline]
-    pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
-        TapLeafHash::from_script(self, LeafVersion::TapScript)
     }
 
     /// Returns the length in bytes of the script.
@@ -357,62 +347,6 @@ impl Script {
         }
     }
 
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today’s Bitcoin network.
-    #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
-    pub fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
-
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today's Bitcoin network.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
-    ///
-    /// To use a custom value, use [`minimal_non_dust_custom`].
-    ///
-    /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-    pub fn minimal_non_dust(&self) -> crate::Amount {
-        self.minimal_non_dust_inner(DUST_RELAY_TX_FEE.into())
-    }
-
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today's Bitcoin network.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function lets you set the fee rate used in dust calculation.
-    ///
-    /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
-    ///
-    /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
-    ///
-    /// [`minimal_non_dust`]: Script::minimal_non_dust
-    pub fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
-        self.minimal_non_dust_inner(dust_relay_fee.to_sat_per_kwu() * 4)
-    }
-
-    fn minimal_non_dust_inner(&self, dust_relay_fee: u64) -> crate::Amount {
-        // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
-        // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-        let sats = dust_relay_fee
-            .checked_mul(if self.is_op_return() {
-                0
-            } else if self.is_witness_program() {
-                32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-            } else {
-                32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
-            })
-            .expect("dust_relay_fee or script length should not be absurdly large")
-            / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
-                    // Note: We ensure the division happens at the end, since Core performs the division at the end.
-                    //       This will make sure none of the implicit floor operations mess with the value.
-
-        crate::Amount::from_sat(sats)
-    }
-
     /// Counts the sigops for this Script using accurate counting.
     ///
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
@@ -552,22 +486,9 @@ impl Script {
     /// Iterates the script to find the last opcode.
     ///
     /// Returns `None` is the instruction is data push or if the script is empty.
-    pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<Opcode> {
+    pub(in crate::script) fn last_opcode(&self) -> Option<Opcode> {
         match self.instructions().last() {
             Some(Ok(Instruction::Op(op))) => Some(op),
-            _ => None,
-        }
-    }
-
-    /// Iterates the script to find the last pushdata.
-    ///
-    /// Returns `None` if the instruction is an opcode or if the script is empty.
-    pub(crate) fn last_pushdata(&self) -> Option<&PushBytes> {
-        match self.instructions().last() {
-            // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
-            Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
-            // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
-            // However we are only interested in the pushdata so we can ignore them.
             _ => None,
         }
     }

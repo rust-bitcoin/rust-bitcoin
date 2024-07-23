@@ -10,12 +10,9 @@
 use core::fmt;
 
 use internals::array_vec::ArrayVec;
-use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
-use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::taproot::TapNodeHash;
 
 /// The minimum byte size of a segregated witness program.
 pub const MIN_SIZE: usize = 2;
@@ -56,24 +53,18 @@ impl WitnessProgram {
     }
 
     /// Creates a [`WitnessProgram`] from a 20 byte pubkey hash.
-    fn new_p2wpkh(program: [u8; 20]) -> Self {
+    pub fn new_p2wpkh(program: [u8; 20]) -> WitnessProgram {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Creates a [`WitnessProgram`] from a 32 byte script hash.
-    fn new_p2wsh(program: [u8; 32]) -> Self {
+    pub fn new_p2wsh(program: [u8; 32]) -> Self {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
     /// Creates a [`WitnessProgram`] from a 32 byte serialize Taproot xonly pubkey.
-    fn new_p2tr(program: [u8; 32]) -> Self {
+    pub fn new_p2tr(program: [u8; 32]) -> WitnessProgram {
         WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
-    }
-
-    /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
-    pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
-        let hash = pk.wpubkey_hash();
-        WitnessProgram::new_p2wpkh(hash.to_byte_array())
     }
 
     /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
@@ -84,23 +75,6 @@ impl WitnessProgram {
     /// Creates a [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
         WitnessProgram::new_p2wsh(hash.to_byte_array())
-    }
-
-    /// Creates a pay to Taproot address from an untweaked key.
-    pub fn p2tr<C: Verification>(
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Self {
-        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-        let pubkey = output_key.to_inner().serialize();
-        WitnessProgram::new_p2tr(pubkey)
-    }
-
-    /// Creates a pay to Taproot address from a pre-tweaked output key.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        let pubkey = output_key.to_inner().serialize();
-        WitnessProgram::new_p2tr(pubkey)
     }
 
     /// Returns the witness program version.

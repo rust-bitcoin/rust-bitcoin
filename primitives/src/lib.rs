@@ -27,9 +27,13 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+mod internal_macros;
+
+pub mod constants;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
+pub mod script;
 pub mod sequence;
 
 #[doc(inline)]
@@ -39,14 +43,33 @@ pub use units::*;
 #[cfg(feature = "alloc")]
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
-pub use self::sequence::Sequence;
+pub use self::{
+    constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE},
+    script::{
+        witness_program::{self, WitnessProgram},
+        witness_version::{self, WitnessVersion},
+        Script, ScriptBuf, ScriptHash, WScriptHash,
+    },
+    sequence::Sequence,
+};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
-    pub use alloc::string::ToString;
+    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
+
+    #[cfg(all(not(feature = "std"), not(test), any(not(rust_v_1_60), target_has_atomic = "ptr")))]
+    pub use alloc::sync;
 
     #[cfg(any(feature = "std", test))]
-    pub use std::string::ToString;
+    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, rc, sync};
+
+    #[cfg(all(not(feature = "std"), not(test)))]
+    pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+
+    pub use hex::DisplayHex;
 }

@@ -16,17 +16,19 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std", "io/std", "units/std"]
-alloc = ["internals/alloc", "io/alloc", "units/alloc"]
+std = ["alloc", "hashes/std", "hex/std", "internals/std", "io/std", "units/std"]
+alloc = ["hashes/alloc", "hex/alloc", "internals/alloc", "io/alloc", "units/alloc"]
 serde = ["dep:serde", "internals/serde", "units/serde"]
 
 [dependencies]
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["io"] }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.3.0" }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false }
 
 ordered = { version = "0.2.0", optional = true }
-
+bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
@@ -39,4 +41,4 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(mutate)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(mutate)', 'cfg(rust_v_1_60)'] }

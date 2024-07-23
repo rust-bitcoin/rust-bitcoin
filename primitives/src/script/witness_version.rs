@@ -13,9 +13,9 @@ use core::str::FromStr;
 use internals::write_err;
 use units::parse::{self, ParseIntError};
 
+use super::Instruction;
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
-use crate::script::Instruction;
 
 /// Version of the segregated witness program.
 ///

@@ -47,7 +47,7 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack without optimization.
     ///
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
-    pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
+    pub fn push_int_non_minimal(self, data: i64) -> Builder {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
         self.push_slice(&<&PushBytes>::from(&buf)[..len])
