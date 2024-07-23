@@ -33,6 +33,9 @@ pub mod opcodes;
 pub mod sequence;
 
 #[doc(inline)]
+pub use units::*;
+
+#[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
