@@ -49,6 +49,7 @@
 
 mod borrowed;
 mod builder;
+mod ext;
 mod instruction;
 mod owned;
 mod push_bytes;
@@ -81,6 +82,7 @@ use crate::OutPoint;
 pub use self::{
     borrowed::*,
     builder::*,
+    ext::*,
     instruction::*,
     owned::*,
     push_bytes::*,

@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
+use super::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf, ScriptExt as _};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
@@ -119,7 +119,7 @@ impl Default for Builder {
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = ScriptBuf::from(v);
-        let last_op = script.last_opcode();
+        let last_op = super::last_opcode(&script);
         Builder(script, last_op)
     }
 }

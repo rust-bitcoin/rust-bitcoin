@@ -1,5 +1,6 @@
 use bitcoin::address::Address;
 use bitcoin::consensus::encode;
+use bitcoin::script::ScriptExt as _;
 use bitcoin::{script, Network};
 use honggfuzz::fuzz;
 
