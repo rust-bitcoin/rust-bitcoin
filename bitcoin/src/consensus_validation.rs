@@ -81,7 +81,7 @@ define_extension_trait! {
             amount: crate::Amount,
             spending_tx: &[u8],
         ) -> Result<(), BitcoinconsensusError> {
-            verify_script(self, index, amount, spending_tx)
+            primitives::consensus_validation::verify_script(self, index, amount, spending_tx)
         }
 
         /// Verifies spend of an input script.
@@ -101,7 +101,7 @@ define_extension_trait! {
             spending_tx: &[u8],
             flags: impl Into<u32>,
         ) -> Result<(), BitcoinconsensusError> {
-            verify_script_with_flags(self, index, amount, spending_tx, flags)
+            primitives::consensus_validation::verify_script_with_flags(self, index, amount, spending_tx, flags)
         }
     }
 }

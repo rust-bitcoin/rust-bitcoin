@@ -142,7 +142,7 @@ pub use crate::{
 #[cfg(feature = "bitcoinconsensus")]
 #[doc(inline)]
 pub use primitives::consensus_validation::{
-    self, verify_script, verify_script_with_flags, BitcoinconsensusError,
+    verify_script, verify_script_with_flags, BitcoinconsensusError,
 };
 #[doc(inline)]
 pub use primitives::Sequence;
