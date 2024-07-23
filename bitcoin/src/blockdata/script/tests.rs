@@ -682,6 +682,8 @@ fn script_ord() {
 #[test]
 #[cfg(feature = "bitcoinconsensus")]
 fn test_bitcoinconsensus() {
+    use crate::consensus_validation::ScriptExt as _;
+
     // a random segwit transaction from the blockchain using native segwit
     let spent_bytes = hex!("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d");
     let spent = Script::from_bytes(&spent_bytes);
