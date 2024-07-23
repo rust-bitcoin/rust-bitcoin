@@ -12,6 +12,7 @@ use crate::amount::Amount;
 #[cfg(doc)]
 use crate::consensus_validation;
 use crate::consensus::encode;
+use crate::internal_macros::define_extension_trait;
 use crate::script::Script;
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
@@ -115,45 +116,48 @@ where
     Ok(())
 }
 
-impl Script {
-    /// Verifies spend of an input script.
-    ///
-    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
-    ///
-    /// # Parameters
-    ///
-    ///  * `index` - The input index in spending which is spending this transaction.
-    ///  * `amount` - The amount this script guards.
-    ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-    ///
-    /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
-    pub fn verify(
-        &self,
-        index: usize,
-        amount: crate::Amount,
-        spending_tx: &[u8],
-    ) -> Result<(), BitcoinconsensusError> {
-        verify_script(self, index, amount, spending_tx)
-    }
+define_extension_trait! {
+    /// Extension functionality to add validation support to the [`Script`] type.
+    pub trait ScriptExt impl for Script {
+        /// Verifies spend of an input script.
+        ///
+        /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
+        ///
+        /// # Parameters
+        ///
+        ///  * `index` - The input index in spending which is spending this transaction.
+        ///  * `amount` - The amount this script guards.
+        ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
+        ///
+        /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
+        fn verify(
+            &self,
+            index: usize,
+            amount: crate::Amount,
+            spending_tx: &[u8],
+        ) -> Result<(), BitcoinconsensusError> {
+            verify_script(self, index, amount, spending_tx)
+        }
 
-    /// Verifies spend of an input script.
-    ///
-    /// # Parameters
-    ///
-    ///  * `index` - The input index in spending which is spending this transaction.
-    ///  * `amount` - The amount this script guards.
-    ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
-    ///
-    /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
-    pub fn verify_with_flags(
-        &self,
-        index: usize,
-        amount: crate::Amount,
-        spending_tx: &[u8],
-        flags: impl Into<u32>,
-    ) -> Result<(), BitcoinconsensusError> {
-        verify_script_with_flags(self, index, amount, spending_tx, flags)
+        /// Verifies spend of an input script.
+        ///
+        /// # Parameters
+        ///
+        ///  * `index` - The input index in spending which is spending this transaction.
+        ///  * `amount` - The amount this script guards.
+        ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
+        ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`] and similar.
+        ///
+        /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
+        fn verify_with_flags(
+            &self,
+            index: usize,
+            amount: crate::Amount,
+            spending_tx: &[u8],
+            flags: impl Into<u32>,
+        ) -> Result<(), BitcoinconsensusError> {
+            verify_script_with_flags(self, index, amount, spending_tx, flags)
+        }
     }
 }
 
