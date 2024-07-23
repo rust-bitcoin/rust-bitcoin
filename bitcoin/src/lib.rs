@@ -60,6 +60,9 @@ pub extern crate base64;
 /// Bitcoin base58 encoding and decoding.
 pub extern crate base58;
 
+#[cfg(feature = "bitcoinconsensus")]
+extern crate actual_bitcoinconsensus as bitcoinconsensus;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
@@ -135,6 +138,11 @@ pub use crate::{
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
+};
+#[cfg(feature = "bitcoinconsensus")]
+#[doc(inline)]
+pub use primitives::consensus_validation::{
+    self, verify_script, verify_script_with_flags, BitcoinconsensusError,
 };
 #[doc(inline)]
 pub use primitives::Sequence;

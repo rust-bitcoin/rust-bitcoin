@@ -52,8 +52,6 @@ mod builder;
 mod instruction;
 mod owned;
 mod push_bytes;
-#[cfg(test)]
-mod tests;
 pub mod witness_program;
 pub mod witness_version;
 
@@ -65,16 +63,12 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use io::{BufRead, Write};
 
-use crate::consensus::{encode, Decodable, Encodable};
 use crate::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
 use crate::internal_macros::impl_asref_push_bytes;
-use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Borrow, BorrowMut, Box, Cow, DisplayHex, ToOwned, Vec};
-use crate::OutPoint;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -85,6 +79,8 @@ pub use self::{
     owned::*,
     push_bytes::*,
 };
+#[doc(inline)]
+pub use self::{witness_program::WitnessProgram, witness_version::WitnessVersion};
 
 hashes::hash_newtype! {
     /// A hash of Bitcoin Script bytecode.
@@ -198,21 +194,6 @@ impl TryFrom<&Script> for WScriptHash {
     fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
-}
-
-/// Creates the script code used for spending a P2WPKH output.
-///
-/// The `scriptCode` is described in [BIP143].
-///
-/// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
-    Builder::new()
-        .push_opcode(OP_DUP)
-        .push_opcode(OP_HASH160)
-        .push_slice(wpkh)
-        .push_opcode(OP_EQUALVERIFY)
-        .push_opcode(OP_CHECKSIG)
-        .into_script()
 }
 
 /// Encodes an integer in script(minimal CScriptNum) format.
@@ -631,29 +612,6 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     }
 }
 
-impl Encodable for Script {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(&self.0, w)
-    }
-}
-
-impl Encodable for ScriptBuf {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
-impl Decodable for ScriptBuf {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
-    }
-}
-
 /// Writes the assembly decoding of the script bytes to the formatter.
 pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
     // This has to be a macro because it needs to break the loop
@@ -749,8 +707,6 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes.
     NumericOverflow,
-    /// Can not find the spent output.
-    UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction.
     Serialization,
 }
@@ -766,7 +722,6 @@ impl fmt::Display for Error {
             EarlyEndOfScript => f.write_str("unexpected end of script"),
             NumericOverflow =>
                 f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
-            UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
             Serialization =>
                 f.write_str("can not serialize the spending transaction in Transaction::verify()"),
         }
@@ -779,11 +734,7 @@ impl std::error::Error for Error {
         use Error::*;
 
         match *self {
-            NonMinimalPush
-            | EarlyEndOfScript
-            | NumericOverflow
-            | UnknownSpentOutput(_)
-            | Serialization => None,
+            NonMinimalPush | EarlyEndOfScript | NumericOverflow | Serialization => None,
         }
     }
 }

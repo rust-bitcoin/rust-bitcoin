@@ -19,6 +19,10 @@ use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
 use crate::{script, Amount, BlockHash, Sequence};
 
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use primitives::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
+
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
 /// How many blocks between diffchanges.
@@ -38,10 +42,6 @@ pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
 pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
 /// Test (tesnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
-/// The maximum allowed redeem script size for a P2SH output.
-pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
-/// The maximum allowed redeem script size of the witness script.
-pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 /// The maximum allowed size of any single witness stack element.
 pub const MAX_STACK_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.

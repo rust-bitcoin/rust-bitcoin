@@ -20,7 +20,7 @@ use crate::prelude::{Box, Vec};
 ///
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(pub(in crate::blockdata::script) Vec<u8>);
+pub struct ScriptBuf(pub(in crate::script) Vec<u8>);
 
 impl ScriptBuf {
     /// Creates a new empty script.
@@ -127,7 +127,7 @@ impl ScriptBuf {
     }
 
     /// Computes the sum of `len` and the length of an appropriate push opcode.
-    pub(in crate::blockdata::script) fn reserved_len_for_slice(len: usize) -> usize {
+    pub(in crate::script) fn reserved_len_for_slice(len: usize) -> usize {
         len + match len {
             0..=0x4b => 1,
             0x4c..=0xff => 2,
@@ -178,7 +178,7 @@ impl ScriptBuf {
     /// alternative.
     ///
     /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-    pub(in crate::blockdata::script) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
+    pub(in crate::script) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
         match opcode_to_verify(last_opcode) {
             Some(opcode) => {
                 self.0.pop();

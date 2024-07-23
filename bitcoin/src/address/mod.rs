@@ -48,7 +48,7 @@ use crate::crypto::key::{
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
-use crate::script::witness_program::WitnessProgram;
+use crate::script::witness_program::{self, WitnessProgram};
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
     self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
@@ -425,7 +425,7 @@ impl Address {
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
     pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
-        let program = WitnessProgram::p2wpkh(pk);
+        let program = witness_program::p2wpkh(pk);
         Address::from_witness_program(program, hrp)
     }
 
@@ -473,13 +473,13 @@ impl Address {
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
     ) -> Address {
-        let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
+        let program = witness_program::p2tr(secp, internal_key, merkle_root);
         Address::from_witness_program(program, hrp)
     }
 
     /// Creates a pay to Taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Address {
-        let program = WitnessProgram::p2tr_tweaked(output_key);
+        let program = witness_program::p2tr_tweaked(output_key);
         Address::from_witness_program(program, hrp)
     }
 
