@@ -36,22 +36,9 @@ impl<T: Tag> schemars::JsonSchema for Hash<T> {
     }
 }
 
-// This impl, and the trait bound `(T,): Tag` below, are hacks to allow defining
-// constfns on Hash<T> for a generic T. This trick was discovered by
-// https://github.com/rust-lang/rust/issues/90912
-//
-// When we drop rustc 1.56.1 we will be able to remove this, which will be a
-// technically breaking change but in practice probably fine to just drop.
-impl<T> Tag for (T,)
-where
-    T: Tag,
-{
-    fn engine() -> sha256::HashEngine { T::engine() }
-}
-
 impl<T> Hash<T>
 where
-    (T,): Tag,
+    T: Tag,
 {
     const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
 
@@ -70,7 +57,7 @@ where
     }
 
     /// Constructs a new engine.
-    pub fn engine() -> HashEngine { <(T,)>::engine() }
+    pub fn engine() -> HashEngine { T::engine() }
 
     /// Produces a hash from the current state of a given engine.
     pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
@@ -146,7 +133,7 @@ crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 fn from_engine<T>(e: sha256::HashEngine) -> Hash<T>
 where
-    (T,): Tag,
+    T: Tag,
 {
     Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
 }

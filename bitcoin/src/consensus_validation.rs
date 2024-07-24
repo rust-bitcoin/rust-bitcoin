@@ -200,14 +200,9 @@ impl fmt::Display for BitcoinconsensusError {
     }
 }
 
-#[cfg(all(feature = "std", feature = "bitcoinconsensus-std"))]
+#[cfg(all(feature = "std", feature = "bitcoinconsensus"))]
 impl std::error::Error for BitcoinconsensusError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
-}
-
-#[cfg(all(feature = "std", not(feature = "bitcoinconsensus-std")))]
-impl std::error::Error for BitcoinconsensusError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 /// An error during transaction validation.

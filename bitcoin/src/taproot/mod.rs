@@ -692,7 +692,6 @@ impl std::error::Error for HiddenNodesError {
 // for which we need a separate type.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(into = "NodeInfo"))]
 #[cfg_attr(feature = "serde", serde(try_from = "NodeInfo"))]
 pub struct TapTree(NodeInfo);
@@ -952,7 +951,6 @@ impl<'de> serde::Deserialize<'de> for NodeInfo {
 /// Leaf node in a Taproot tree. Can be either hidden or known.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub enum TapLeaf {
     /// A known script
     Script(ScriptBuf, LeafVersion),
@@ -1081,7 +1079,6 @@ impl<'leaf> ScriptLeaf<'leaf> {
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ControlBlock {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,

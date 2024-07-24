@@ -230,7 +230,6 @@ impl core::str::FromStr for OutPoint {
 /// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxIn {
     /// The reference to the previous output that is being used as an input.
     pub previous_output: OutPoint,
@@ -339,7 +338,6 @@ impl Default for TxIn {
 /// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxOut {
     /// The value of the output, in satoshis.
     pub value: Amount,
@@ -464,7 +462,6 @@ fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
 /// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
     pub version: Version,
@@ -924,7 +921,6 @@ impl std::error::Error for IndexOutOfBoundsError {
 /// [BIP-68]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Version(pub i32);
 
 impl Version {
