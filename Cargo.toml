@@ -25,6 +25,3 @@ path = "primitives"
 
 [patch.crates-io.bitcoin-units]
 path = "units"
-
-[patch.crates-io.push_decode]
-path = "../push_decode"
