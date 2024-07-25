@@ -32,12 +32,12 @@ pub mod locktime;
 pub mod opcodes;
 pub mod sequence;
 
-#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use units::*;
+
 #[doc(inline)]
 #[cfg(feature = "alloc")]
-pub use self::{
-    locktime::{absolute, relative},
-};
+pub use self::locktime::{absolute, relative};
 #[doc(inline)]
 pub use self::sequence::Sequence;
 
