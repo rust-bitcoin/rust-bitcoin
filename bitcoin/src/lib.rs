@@ -93,6 +93,8 @@ pub mod bip158;
 pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
+#[cfg(feature = "bitcoinconsensus")]
+pub mod consensus_validation;
 // Private until we either make this a crate or flatten it - still to be decided.
 pub(crate) mod crypto;
 pub mod hash_types;

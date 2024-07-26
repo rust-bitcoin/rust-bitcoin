@@ -8,8 +8,6 @@
 pub mod encode;
 #[cfg(feature = "serde")]
 pub mod serde;
-#[cfg(feature = "bitcoinconsensus")]
-pub mod validation;
 
 use core::fmt;
 
@@ -22,12 +20,6 @@ use crate::consensus;
 #[doc(inline)]
 pub use self::{
     encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
-};
-
-#[cfg(feature = "bitcoinconsensus")]
-#[doc(inline)]
-pub use self::validation::{
-    verify_script, verify_script_with_flags, verify_transaction, verify_transaction_with_flags,
 };
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
