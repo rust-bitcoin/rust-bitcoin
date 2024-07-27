@@ -6,7 +6,6 @@ use core::ops::Deref;
 use hex::FromHex;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
-use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
@@ -66,21 +65,6 @@ impl ScriptBuf {
 
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
-
-    /// Creates the script code used for spending a P2WPKH output.
-    ///
-    /// The `scriptCode` is described in [BIP143].
-    ///
-    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-    pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
-        Builder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(wpkh)
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script()
-    }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
     pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {

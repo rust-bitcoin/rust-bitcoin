@@ -13,7 +13,7 @@ use crate::opcodes::all::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash,
+    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash,
     WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
@@ -72,7 +72,7 @@ define_extension_trait! {
                 // The `self` script is 0x00, 0x14, <pubkey_hash>
                 let bytes = &self.as_bytes()[2..];
                 let wpkh = WPubkeyHash::from_slice(bytes).expect("length checked in is_p2wpkh()");
-                Some(ScriptBuf::p2wpkh_script_code(wpkh))
+                Some(script::p2wpkh_script_code(wpkh))
             } else {
                 None
             }

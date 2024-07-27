@@ -70,6 +70,7 @@ use io::{BufRead, Write};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE};
 use crate::internal_macros::impl_asref_push_bytes;
+use crate::key::WPubkeyHash;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Borrow, BorrowMut, Box, Cow, DisplayHex, ToOwned, Vec};
@@ -197,6 +198,21 @@ impl TryFrom<&Script> for WScriptHash {
     fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
+}
+
+/// Creates the script code used for spending a P2WPKH output.
+///
+/// The `scriptCode` is described in [BIP143].
+///
+/// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+pub fn p2wpkh_script_code(wpkh: WPubkeyHash) -> ScriptBuf {
+    Builder::new()
+        .push_opcode(OP_DUP)
+        .push_opcode(OP_HASH160)
+        .push_slice(wpkh)
+        .push_opcode(OP_EQUALVERIFY)
+        .push_opcode(OP_CHECKSIG)
+        .into_script()
 }
 
 /// Encodes an integer in script(minimal CScriptNum) format.

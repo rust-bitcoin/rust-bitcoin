@@ -19,7 +19,7 @@ use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
-use crate::script::ScriptBuf;
+use crate::script::{self, ScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -286,7 +286,7 @@ impl CompressedPublicKey {
 
     /// Returns the script code used to spend a P2WPKH input.
     pub fn p2wpkh_script_code(&self) -> ScriptBuf {
-        ScriptBuf::p2wpkh_script_code(self.wpubkey_hash())
+        script::p2wpkh_script_code(self.wpubkey_hash())
     }
 
     /// Writes the public key into a writer.
