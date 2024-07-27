@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# === RUST-BITCOIN GITHOOK ===
 #
 # Verify what is about to be committed. Called by "git commit" with no
 # arguments. The hook should exit with non-zero status after issuing an

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# === RUST-BITCOIN GITHOOK ===
+
+# Scan the githooks after merge. If the user is using any of the rust-bitcoin githooks and they have changed, let them know
+# to rerun the githooks setup.
+
+# We only care about this on master
+[[ "$(git branch --show-current)" = "master" ]] || exit
+
+# Get the local githooks directory, regardless of configuration.
+GIT_DIR=$(git rev-parse --git-common-dir)
+HOOKS_DIR=$(git config --get core.hooksPath || echo "$GIT_DIR/hooks")
+
+# Scan each of the hooks looking for the tag. If the tag is found, then the user is using a
+# rust-bitcoin githook. We should compare them to the repo's hooks to see if they have
+# changed in the latest git pull.
+for hook in "$HOOKS_DIR"/*
+do
+	if grep -q '=== RUST-BITCOIN GITHOOK ===' "$hook"; then
+		BN=$(basename "$hook")
+		if ! cmp --quiet "$hook" "githooks/$BN"; then
+			>&2 cat <<- EOF
+			==================================================
+			Project githooks have changed. Please inspect the
+			changes and re-reun \`just githooks-install\` if
+			they are legitimate.
+
+			Remove $HOOKS_DIR/post-merge to skip this warning
+			in the future.
+			==================================================
+			EOF
+			exit
+		fi
+	fi
+done
