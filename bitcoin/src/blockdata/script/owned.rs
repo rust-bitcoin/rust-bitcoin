@@ -11,6 +11,9 @@ use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
+
 /// An owned, growable script.
 ///
 /// `ScriptBuf` is the most common script type that has the ownership over the contents of the
@@ -21,6 +24,7 @@ use crate::prelude::{Box, Vec};
 ///
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ScriptBuf(pub(in crate::blockdata::script) Vec<u8>);
 
 impl ScriptBuf {
