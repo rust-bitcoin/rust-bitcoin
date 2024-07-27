@@ -38,8 +38,8 @@ pub struct RegHashTag;
 
 impl sha256t::Tag for RegHashTag {
     fn engine() -> sha256::HashEngine {
-        let midstate = sha256::Midstate::from_byte_array([0xab; 32]);
-        sha256::HashEngine::from_midstate(midstate, 64)
+        let midstate = sha256::Midstate::new([0xab; 32], 64);
+        sha256::HashEngine::from_midstate(midstate)
     }
 }
 

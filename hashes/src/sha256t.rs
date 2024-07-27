@@ -196,10 +196,8 @@ macro_rules! sha256t_hash_newtype {
         impl $crate::sha256t::Tag for $tag {
             #[inline]
             fn engine() -> $crate::sha256::HashEngine {
-                const MIDSTATE: ($crate::sha256::Midstate, usize) = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
-                #[allow(unused)]
-                const _LENGTH_CHECK: () = [(); 1][MIDSTATE.1 % 64];
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE.0, MIDSTATE.1)
+                const MIDSTATE: $crate::sha256::Midstate = $crate::sha256t_hash_newtype_tag_constructor!($constructor, $($tag_value)+);
+                $crate::sha256::HashEngine::from_midstate(MIDSTATE)
             }
         }
 
@@ -280,13 +278,13 @@ macro_rules! sha256t_hash_newtype_tag {
 #[macro_export]
 macro_rules! sha256t_hash_newtype_tag_constructor {
     (hash_str, $value:expr) => {
-        ($crate::sha256::Midstate::hash_tag($value.as_bytes()), 64)
+        $crate::sha256::Midstate::hash_tag($value.as_bytes())
     };
     (hash_bytes, $value:expr) => {
-        ($crate::sha256::Midstate::hash_tag($value), 64)
+        $crate::sha256::Midstate::hash_tag($value)
     };
     (raw, $bytes:expr, $len:expr) => {
-        ($crate::sha256::Midstate::from_byte_array($bytes), $len)
+        $crate::sha256::Midstate::new($bytes, $len)
     };
 }
 
@@ -314,8 +312,8 @@ mod tests {
     impl sha256t::Tag for TestHashTag {
         fn engine() -> sha256::HashEngine {
             // The TapRoot TapLeaf midstate.
-            let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-            sha256::HashEngine::from_midstate(midstate, 64)
+            let midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
+            sha256::HashEngine::from_midstate(midstate)
         }
     }
 

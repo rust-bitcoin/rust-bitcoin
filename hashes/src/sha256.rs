@@ -6,11 +6,15 @@
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-use core::cmp;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, convert, fmt};
 
-use crate::{sha256d, FromSliceError, HashEngine as _};
+use hex::DisplayHex;
+
+use crate::{sha256d, HashEngine as _};
+#[cfg(doc)]
+use crate::{sha256t, sha256t_hash_newtype};
 
 crate::internal_macros::hash_type! {
     256,
@@ -35,12 +39,12 @@ fn from_engine(mut e: HashEngine) -> Hash {
     e.input(&(8 * data_len).to_be_bytes());
     debug_assert_eq!(e.length % BLOCK_SIZE, 0);
 
-    Hash(e.midstate().to_byte_array())
+    Hash(e.midstate_unchecked().bytes)
 }
 
 #[cfg(hashes_fuzz)]
 fn from_engine(e: HashEngine) -> Hash {
-    let mut hash = e.midstate().to_byte_array();
+    let mut hash = e.midstate_unchecked().bytes;
     if hash == [0; 32] {
         // Assume sha256 is secure and never generate 0-hashes (which represent invalid
         // secp256k1 secret keys, causing downstream application breakage).
@@ -72,24 +76,52 @@ impl HashEngine {
         }
     }
 
-    /// Outputs the midstate of the hash engine. This function should not be
-    /// used directly unless you really know what you're doing.
+    /// Creates a new [`HashEngine`] from a [`Midstate`].
+    ///
+    /// Please see docs on [`Midstate`] before using this function.
+    pub fn from_midstate(midstate: Midstate) -> HashEngine {
+        let mut ret = [0; 8];
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().chunks_exact(4)) {
+            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
+        }
+
+        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length: midstate.length }
+    }
+
+    /// Returns `true` if the midstate can be extracted from this engine.
+    ///
+    /// The midstate can only be extracted if the number of bytes input into
+    /// the hash engine is a multiple of 64. See caveat on [`Self::midstate`].
+    ///
+    /// Please see docs on [`Midstate`] before using this function.
+    pub const fn can_extract_midstate(&self) -> bool { self.length % 64 == 0 }
+
+    /// Outputs the midstate of the hash engine.
+    ///
+    /// Please see docs on [`Midstate`] before using this function.
+    pub fn midstate(&self) -> Result<Midstate, MidstateError> {
+        if !self.can_extract_midstate() {
+            return Err(MidstateError { invalid_length: self.length });
+        }
+        Ok(self.midstate_unchecked())
+    }
+
+    // Does not check that `HashEngine::can_extract_midstate`.
     #[cfg(not(hashes_fuzz))]
-    pub fn midstate(&self) -> Midstate {
+    fn midstate_unchecked(&self) -> Midstate {
         let mut ret = [0; 32];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes());
         }
-        Midstate(ret)
+        Midstate { bytes: ret, length: self.length }
     }
 
-    /// Outputs the midstate of the hash engine. This function should not be
-    /// used directly unless you really know what you're doing.
+    // Does not check that `HashEngine::can_extract_midstate`.
     #[cfg(hashes_fuzz)]
-    pub fn midstate(&self) -> Midstate {
+    fn midstate_unchecked(&self) -> Midstate {
         let mut ret = [0; 32];
         ret.copy_from_slice(&self.buffer[..32]);
-        Midstate(ret)
+        Midstate { bytes: ret, length: self.length }
     }
 }
 
@@ -114,61 +146,62 @@ impl Hash {
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
-    pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).0) }
+    pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).bytes) }
 }
 
-/// Output of the SHA256 hash function.
-#[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
-pub struct Midstate(pub [u8; 32]);
-
-crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
-serde_impl!(Midstate, 32);
-borrow_slice_impl!(Midstate);
-
-impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-impl core::str::FromStr for Midstate {
-    type Err = hex::HexToArrayError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
+/// Unfinalized output of the SHA256 hash function.
+///
+/// The `Midstate` type is obscure and specialized and should not be used unless you are sure of
+/// what you are doing.
+///
+/// It represents "partially hashed data" but does not itself have properties of cryptographic
+/// hashes. For example, when (ab)used as hashes, midstates are vulnerable to trivial
+/// length-extension attacks. They are typically used to optimize the computation of full hashes.
+/// For example, when implementing BIP-340 tagged hashes, which always begin by hashing the same
+/// fixed 64-byte prefix, it makes sense to hash the prefix once, store the midstate as a constant,
+/// and hash any future data starting from the constant rather than from a fresh hash engine.
+///
+/// For BIP-340 support we provide the [`sha256t`] module, and the [`sha256t_hash_newtype`]
+/// macro which will create the midstate for you in const context and use it for tagged hashing.
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Midstate {
+    /// Raw bytes of the midstate i.e., the already-hashed contents of the hash engine.
+    bytes: [u8; 32],
+    /// Number of bytes hashed to achieve this midstate.
+    // INVARIANT must always be a multiple of 64.
+    length: usize,
 }
 
 impl Midstate {
-    /// Length of the midstate, in bytes.
-    const LEN: usize = 32;
-
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = true;
-
-    /// Construct a new [`Midstate`] from the inner value.
-    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
-
-    /// Copies a byte slice into the [`Midstate`] object.
-    pub fn from_slice(sl: &[u8]) -> Result<Midstate, FromSliceError> {
-        if sl.len() != Self::LEN {
-            Err(FromSliceError { expected: Self::LEN, got: sl.len() })
-        } else {
-            let mut ret = [0; 32];
-            ret.copy_from_slice(sl);
-            Ok(Midstate(ret))
+    /// Construct a new [`Midstate`] from the `state` and the `bytes_hashed` to get to that state.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `bytes_hashed` is not a multiple of 64.
+    pub const fn new(state: [u8; 32], bytes_hashed: usize) -> Self {
+        if bytes_hashed % 64 != 0 {
+            // When MSRV is 1.57+ we can use `panic!()`.
+            #[allow(unconditional_panic)]
+            #[allow(clippy::let_unit_value)]
+            #[allow(clippy::out_of_bounds_indexing)]
+            let _panic = [(); 0][1];
         }
+
+        Midstate { bytes: state, length: bytes_hashed }
     }
 
-    /// Unwraps the [`Midstate`] and returns the underlying byte array.
-    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+    /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
+    pub const fn as_parts(&self) -> (&[u8; 32], usize) { (&self.bytes, self.length) }
+
+    /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
+    pub const fn into_parts(self) -> ([u8; 32], usize) { (self.bytes, self.length) }
 
     /// Creates midstate for tagged hashes.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     ///
-    /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in
-    /// [`sha256t`](super::sha256t). It's provided for use with [`sha256t`](crate::sha256t).
+    /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in [`sha256t`]. It's
+    /// provided for use with [`sha256t`].
     pub const fn hash_tag(tag: &[u8]) -> Self {
         let hash = Hash::const_hash(tag);
         let mut buf = [0u8; 64];
@@ -181,16 +214,38 @@ impl Midstate {
     }
 }
 
-impl hex::FromHex for Midstate {
-    type Error = hex::HexToArrayError;
-
-    fn from_hex(s: &str) -> Result<Self, Self::Error> {
-        // DISPLAY_BACKWARD is true
-        let mut bytes = <[u8; 32]>::from_hex(s)?;
-        bytes.reverse();
-        Ok(Midstate(bytes))
+impl fmt::Debug for Midstate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Midstate")
+            .field("bytes", &self.bytes.as_hex())
+            .field("length", &self.length)
+            .finish()
     }
 }
+
+impl convert::AsRef<[u8]> for Midstate {
+    fn as_ref(&self) -> &[u8] { &self.bytes }
+}
+
+/// `Midstate` invariant violated (not a multiple of 64).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MidstateError {
+    /// The invalid number of bytes hashed.
+    invalid_length: usize,
+}
+
+impl fmt::Display for MidstateError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "invalid number of bytes hashed {} (should have been a multiple of 64)",
+            self.invalid_length
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for MidstateError {}
 
 #[allow(non_snake_case)]
 const fn Ch(x: u32, y: u32, z: u32) -> u32 { z ^ (x & (y ^ z)) }
@@ -426,27 +481,11 @@ impl Midstate {
             output[i * 4 + 3] = (state[i + 0] >> 0) as u8;
             i += 1;
         }
-        Midstate(output)
+        Midstate { bytes: output, length: bytes.len() }
     }
 }
 
 impl HashEngine {
-    /// Create a new [`HashEngine`] from a [`Midstate`].
-    ///
-    /// # Panics
-    ///
-    /// If `length` is not a multiple of the block size.
-    pub fn from_midstate(midstate: Midstate, length: usize) -> HashEngine {
-        assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
-
-        let mut ret = [0; 8];
-        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate[..].chunks_exact(4)) {
-            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
-        }
-
-        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length }
-    }
-
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
@@ -910,22 +949,25 @@ mod tests {
         ]);
         // 32 bytes of zeroes representing "new asset"
         engine.input(&[0; 32]);
+
+        // RPC output
+        static WANT: Midstate = sha256::Midstate::new([
+            0x0b, 0xcf, 0xe0, 0xe5, 0x4e, 0x6c, 0xc7, 0xd3,
+            0x4f, 0x4f, 0x7c, 0x1d, 0xf0, 0xb0, 0xf5, 0x03,
+            0xf2, 0xf7, 0x12, 0x91, 0x2a, 0x06, 0x05, 0xb4,
+            0x14, 0xed, 0x33, 0x7f, 0x7f, 0x03, 0x2e, 0x03,
+        ], 64);
+
         assert_eq!(
-            engine.midstate(),
-            // RPC output
-            sha256::Midstate::from_byte_array([
-                0x0b, 0xcf, 0xe0, 0xe5, 0x4e, 0x6c, 0xc7, 0xd3,
-                0x4f, 0x4f, 0x7c, 0x1d, 0xf0, 0xb0, 0xf5, 0x03,
-                0xf2, 0xf7, 0x12, 0x91, 0x2a, 0x06, 0x05, 0xb4,
-                0x14, 0xed, 0x33, 0x7f, 0x7f, 0x03, 0x2e, 0x03,
-            ])
+            engine.midstate().expect("total_bytes_hashed is valid"),
+            WANT,
         );
     }
 
     #[test]
     fn engine_with_state() {
         let mut engine = sha256::Hash::engine();
-        let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate(), 0);
+        let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate_unchecked());
         // Fresh engine and engine initialized with fresh state should have same state
         assert_eq!(engine.h, midstate_engine.h);
 
@@ -941,7 +983,7 @@ mod tests {
         for data in data_vec {
             let mut engine = engine.clone();
             let mut midstate_engine =
-                sha256::HashEngine::from_midstate(engine.midstate(), engine.length);
+                sha256::HashEngine::from_midstate(engine.midstate_unchecked());
             assert_eq!(engine.h, midstate_engine.h);
             assert_eq!(engine.length, midstate_engine.length);
             engine.input(&data);
@@ -970,7 +1012,7 @@ mod tests {
             0x8f, 0xf1, 0xf7, 0xa9, 0xd5, 0x69, 0x09, 0x59,
         ];
         let midstate_engine =
-            sha256::HashEngine::from_midstate(sha256::Midstate::from_byte_array(MIDSTATE), 64);
+            sha256::HashEngine::from_midstate(sha256::Midstate::new(MIDSTATE, 64));
         let hash = sha256::Hash::from_engine(midstate_engine);
         assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
     }
@@ -991,23 +1033,23 @@ mod tests {
         }
     }
 
-    #[test]
-    fn const_midstate() {
-        assert_eq!(
-            Midstate::hash_tag(b"TapLeaf"),
-            Midstate([
-                156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211,
-                243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
-            ])
-        )
-    }
+    // The midstate of an empty hash engine tagged with "TapLeaf".
+    const TAP_LEAF_MIDSTATE: Midstate = Midstate::new(
+        [
+            156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243,
+            147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+        ],
+        64,
+    );
 
     #[test]
-    pub(crate) fn midstate_fmt_roundtrip() {
-        let midstate = Midstate::hash_tag(b"ArbitraryTag");
-        let hex = format!("{}", midstate);
-        let rinsed = hex.parse::<Midstate>().expect("failed to parse hex");
-        assert_eq!(rinsed, midstate)
+    fn const_midstate() { assert_eq!(Midstate::hash_tag(b"TapLeaf"), TAP_LEAF_MIDSTATE,) }
+
+    #[test]
+    fn regression_midstate_debug_format() {
+        let want = "Midstate { bytes: 9ce0e4e67c116c3938b3caf2c30f5089d3f3936c47636e607db33eeaddc6f0c9, length: 64 }";
+        let got = format!("{:?}", TAP_LEAF_MIDSTATE);
+        assert_eq!(got, want);
     }
 
     #[cfg(feature = "serde")]
