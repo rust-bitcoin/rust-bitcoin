@@ -48,7 +48,7 @@ pub use units::*;
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
 pub use self::{
-    block::{BlockHash, WitnessCommitment},
+    block::{BlockHash, WitnessCommitment, Version},
     constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE},
     script::{
         witness_program::{self, WitnessProgram},
