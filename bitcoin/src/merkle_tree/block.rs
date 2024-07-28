@@ -510,6 +510,7 @@ mod tests {
     use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
+    use crate::block::HeaderExt;
     use crate::consensus::encode;
     use crate::hash_types::Txid;
     use crate::hex::{test_hex_unwrap as hex, DisplayHex, FromHex};

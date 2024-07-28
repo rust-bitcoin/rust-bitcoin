@@ -214,6 +214,7 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::*;
+    use crate::block::HeaderExt;
     use crate::consensus::encode::serialize;
     use crate::network::params;
     use crate::Txid;

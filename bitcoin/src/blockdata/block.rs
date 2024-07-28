@@ -14,7 +14,7 @@ use io::{BufRead, Write};
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::{impl_consensus_encoding, impl_hashencode, define_extension_trait};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{CompactTarget, Target, Work};
@@ -57,50 +57,55 @@ pub struct Header {
 
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
+define_extension_trait! {
+    /// Extension functionality for the [`Header`] type.
+    pub trait HeaderExt impl for Header {
+        /// Returns the block hash.
+        fn block_hash(&self) -> BlockHash {
+            let mut engine = sha256d::Hash::engine();
+            self.consensus_encode(&mut engine).expect("engines don't error");
+            BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+        }
+
+        /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
+        fn target(&self) -> Target { self.bits.into() }
+
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// Difficulty represents how difficult the current target makes it to find a block, relative to
+        /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
+        fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+            self.target().difficulty(params)
+        }
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+            self.target().difficulty_float(params)
+        }
+
+        /// Checks that the proof-of-work for the block is valid, returning the block hash.
+        fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
+            let target = self.target();
+            if target != required_target {
+                return Err(ValidationError::BadTarget);
+            }
+            let block_hash = self.block_hash();
+            if target.is_met_by(block_hash) {
+                Ok(block_hash)
+            } else {
+                Err(ValidationError::BadProofOfWork)
+            }
+        }
+
+        /// Returns the total work of the block.
+        fn work(&self) -> Work { self.target().to_work() }
+    }
+}
+
 impl Header {
     /// The number of bytes that the block header contributes to the size of a block.
     // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
     pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
-
-    /// Returns the block hash.
-    pub fn block_hash(&self) -> BlockHash {
-        let mut engine = sha256d::Hash::engine();
-        self.consensus_encode(&mut engine).expect("engines don't error");
-        BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
-    }
-
-    /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
-    pub fn target(&self) -> Target { self.bits.into() }
-
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// Difficulty represents how difficult the current target makes it to find a block, relative to
-    /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        self.target().difficulty(params)
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        self.target().difficulty_float(params)
-    }
-
-    /// Checks that the proof-of-work for the block is valid, returning the block hash.
-    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
-        let target = self.target();
-        if target != required_target {
-            return Err(ValidationError::BadTarget);
-        }
-        let block_hash = self.block_hash();
-        if target.is_met_by(block_hash) {
-            Ok(block_hash)
-        } else {
-            Err(ValidationError::BadProofOfWork)
-        }
-    }
-
-    /// Returns the total work of the block.
-    pub fn work(&self) -> Work { self.target().to_work() }
 }
 
 impl fmt::Debug for Header {
