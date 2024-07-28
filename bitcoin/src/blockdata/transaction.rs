@@ -1431,6 +1431,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus_validation::TransactionExt;
     use crate::constants::WITNESS_SCALE_FACTOR;
     use crate::sighash::EcdsaSighashType;
 
