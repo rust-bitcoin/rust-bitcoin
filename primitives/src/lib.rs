@@ -32,10 +32,12 @@ mod internal_macros;
 pub mod constants;
 #[cfg(feature = "alloc")]
 pub mod locktime;
+pub mod merkle_tree;
 pub mod opcodes;
 pub mod pow;
 pub mod script;
 pub mod sequence;
+pub mod transaction;
 
 #[doc(inline)]
 pub use units::*;
@@ -52,6 +54,7 @@ pub use self::{
         Script, ScriptBuf, ScriptHash, WScriptHash,
     },
     sequence::Sequence,
+    transaction::{Txid, Wtxid},
 };
 
 #[rustfmt::skip]
