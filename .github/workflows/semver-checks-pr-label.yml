@@ -50,7 +50,7 @@ jobs:
             fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/semver-break.zip`, Buffer.from(download.data));
       - name: "Unzip artifact"
         if: ${{ hashFiles('semver-break.zip') != '' }}
-        run: unzip semver-break.zip
+        run: unzip -n semver-break.zip
       - name: "Comment and add label on PR - Semver break"
         uses: actions/github-script@v7
         if: ${{ hashFiles('semver-break') != '' }}

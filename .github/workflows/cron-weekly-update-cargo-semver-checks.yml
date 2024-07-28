@@ -1,0 +1,40 @@
+name: Update cargo-semver-checks
+on:
+  schedule:
+    - cron: "0 0 * * 6" # runs every Saturday at 00:00
+  workflow_dispatch: # allows manual triggering
+jobs:
+  format:
+    name: Update cargo-semver-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update semver-checks to use latest crates.io published version
+        run: |
+          set -x
+          # Grab the latest version of cargo semver-checks from crates.io
+          # that is not yanked.
+          LATEST_VERSION=$(curl --proto '=https' --tlsv1.3 -sSf https://crates.io/api/v1/crates/cargo-semver-checks/versions | jq -r 'first( .versions[] | select(.yanked =- false) ) | .num')
+          # Update the latest version in the reference file.
+          echo "${LATEST_VERSION}" > ./.github/workflows/cargo-semver-checks-version
+          echo "cargo_semver_checks_version=${LATEST_VERSION}" >> $GITHUB_ENV
+          # If somehow the latest version has not changed. In this case don't make an empty PR.
+          if ! git diff --exit-code > /dev/null; then
+              echo "Updated cargo-semver-checks. Opening PR."
+              echo "changes_made=true" >> $GITHUB_ENV
+          else
+              echo "Attempted to update cargo-semver-checks but the crates.io version did not change. Not opening any PR."
+              echo "changes_made=false" >> $GITHUB_ENV
+          fi
+      - name: Create Pull Request
+        if: env.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          author: Update cargo-semver-checks Bot <bot@example.com>
+          committer: Update cargo-semver-checks Bot <bot@example.com>
+          title: Automated weekly update to cargo-semver-checks (to ${{ env.cargo_semver_checks_version }})
+          body: |
+           Automated update to Github CI workflow `semver-checks.yml` by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+          commit-message: Automated update to Github CI to cargo-semver-checks version-${{ env.cargo_semver_checks_version }}
+          branch: create-pull-request/weekly-cargo-semver-checks-update

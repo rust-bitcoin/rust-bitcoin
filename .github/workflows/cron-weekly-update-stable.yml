@@ -1,0 +1,40 @@
+name: Update Stable rustc
+on:
+  schedule:
+    - cron: "0 0 * * 5" # runs every Friday at 00:00 (generally rust releases on Thursday)
+  workflow_dispatch: # allows manual triggering
+jobs:
+  format:
+    name: Update stable rustc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Update semver-checks.yml to use latest stable
+        run: |
+          set -x
+          # Extract the version of the compiler dtolnay/rust-toolchain gives us.
+          STABLE_VERSION=$(rustc --version | sed -ne 's/^rustc //p' | cut -d ' ' -f1)
+          # Update the stable version in the reference file.
+          echo "${STABLE_VERSION}" > ./.github/workflows/stable-version
+          echo "stable_version=${STABLE_VERSION}" >> $GITHUB_ENV
+          # If somehow the stable version has not changed. In this case don't make an empty PR.
+          if ! git diff --exit-code > /dev/null; then
+              echo "Updated stable. Opening PR."
+              echo "changes_made=true" >> $GITHUB_ENV
+          else
+              echo "Attempted to update stable but the latest-stable date did not change. Not opening any PR."
+              echo "changes_made=false" >> $GITHUB_ENV
+          fi
+      - name: Create Pull Request
+        if: env.changes_made == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
+          author: Update Stable Rustc Bot <bot@example.com>
+          committer: Update Stable Rustc Bot <bot@example.com>
+          title: Automated weekly update to rustc stable (to ${{ env.stable_version }})
+          body: |
+           Automated update to Github CI workflow `semver-checks.yml` by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+          commit-message: Automated update to Github CI to rustc stable-${{ env.stable_version }}
+          branch: create-pull-request/weekly-stable-update

@@ -6,6 +6,10 @@ use core::fmt;
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind,
+    /// Indicates that the `struct` can pretend to own a mutable static reference
+    /// and an [`UnsafeCell`](core::cell::UnsafeCell), which are not unwind safe.
+    /// This is so that it does not introduce non-additive cargo features.
+    _not_unwind_safe: core::marker::PhantomData<(&'static mut (), core::cell::UnsafeCell<()>)>,
 
     #[cfg(feature = "std")]
     error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
@@ -20,13 +24,13 @@ impl Error {
     where
         E: Into<Box<dyn std::error::Error + Send + Sync + 'static>>,
     {
-        Self { kind, error: Some(error.into()) }
+        Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }
     }
 
     /// Creates a new I/O error.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
-        Self { kind, error: Some(error.into()) }
+        Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }
     }
 
     /// Returns the error kind for this error.
@@ -49,6 +53,7 @@ impl From<ErrorKind> for Error {
     fn from(kind: ErrorKind) -> Error {
         Self {
             kind,
+            _not_unwind_safe: core::marker::PhantomData,
             #[cfg(any(feature = "std", feature = "alloc"))]
             error: None,
         }
@@ -89,7 +94,11 @@ impl std::error::Error for Error {
 #[cfg(feature = "std")]
 impl From<std::io::Error> for Error {
     fn from(o: std::io::Error) -> Error {
-        Self { kind: ErrorKind::from_std(o.kind()), error: o.into_inner() }
+        Self {
+            kind: ErrorKind::from_std(o.kind()),
+            _not_unwind_safe: core::marker::PhantomData,
+            error: o.into_inner(),
+        }
     }
 }
 
