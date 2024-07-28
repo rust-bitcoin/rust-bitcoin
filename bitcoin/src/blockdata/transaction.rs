@@ -16,7 +16,6 @@ use hashes::sha256d;
 use internals::write_err;
 use io::{BufRead, Write};
 use primitives::Sequence;
-use units::parse;
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -40,144 +39,6 @@ impl_hashencode!(Wtxid);
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
 const SEGWIT_FLAG: u8 = 0x01;
-
-/// A reference to a transaction output.
-///
-/// ### Bitcoin Core References
-///
-/// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
-pub struct OutPoint {
-    /// The referenced transaction's txid.
-    pub txid: Txid,
-    /// The index of the referenced output in its transaction's vout.
-    pub vout: u32,
-}
-#[cfg(feature = "serde")]
-internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
-
-impl OutPoint {
-    /// The number of bytes that an outpoint contributes to the size of a transaction.
-    const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
-
-    /// Creates a new [`OutPoint`].
-    #[inline]
-    pub const fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
-
-    /// Creates a "null" `OutPoint`.
-    ///
-    /// This value is used for coinbase transactions because they don't have any previous outputs.
-    #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
-
-    /// Checks if an `OutPoint` is "null".
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use bitcoin::constants::genesis_block;
-    /// use bitcoin::{params, Network};
-    ///
-    /// let block = genesis_block(&params::MAINNET);
-    /// let tx = &block.txdata[0];
-    ///
-    /// // Coinbase transactions don't have any previous output.
-    /// assert!(tx.input[0].previous_output.is_null());
-    /// ```
-    #[inline]
-    pub fn is_null(&self) -> bool { *self == OutPoint::null() }
-}
-
-impl Default for OutPoint {
-    fn default() -> Self { OutPoint::null() }
-}
-
-impl fmt::Display for OutPoint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.txid, self.vout)
-    }
-}
-
-/// An error in parsing an OutPoint.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum ParseOutPointError {
-    /// Error in TXID part.
-    Txid(hex::HexToArrayError),
-    /// Error in vout part.
-    Vout(parse::ParseIntError),
-    /// Error in general format.
-    Format,
-    /// Size exceeds max.
-    TooLong,
-    /// Vout part is not strictly numeric without leading zeroes.
-    VoutNotCanonical,
-}
-
-internals::impl_from_infallible!(ParseOutPointError);
-
-impl fmt::Display for ParseOutPointError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseOutPointError::*;
-
-        match *self {
-            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
-            Vout(ref e) => write_err!(f, "error parsing vout"; e),
-            Format => write!(f, "OutPoint not in <txid>:<vout> format"),
-            TooLong => write!(f, "vout should be at most 10 digits"),
-            VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ParseOutPointError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseOutPointError::*;
-
-        match self {
-            Txid(e) => Some(e),
-            Vout(e) => Some(e),
-            Format | TooLong | VoutNotCanonical => None,
-        }
-    }
-}
-
-/// Parses a string-encoded transaction index (vout).
-///
-/// Does not permit leading zeroes or non-digit characters.
-fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
-    if s.len() > 1 {
-        let first = s.chars().next().unwrap();
-        if first == '0' || first == '+' {
-            return Err(ParseOutPointError::VoutNotCanonical);
-        }
-    }
-    parse::int(s).map_err(ParseOutPointError::Vout)
-}
-
-impl core::str::FromStr for OutPoint {
-    type Err = ParseOutPointError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() > 75 {
-            // 64 + 1 + 10
-            return Err(ParseOutPointError::TooLong);
-        }
-        let find = s.find(':');
-        if find.is_none() || find != s.rfind(':') {
-            return Err(ParseOutPointError::Format);
-        }
-        let colon = find.unwrap();
-        if colon == 0 || colon == s.len() - 1 {
-            return Err(ParseOutPointError::Format);
-        }
-        Ok(OutPoint {
-            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
-            vout: parse_vout(&s[colon + 1..])?,
-        })
-    }
-}
 
 /// Bitcoin transaction input.
 ///
@@ -1384,6 +1245,7 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
+    use units::parse;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
