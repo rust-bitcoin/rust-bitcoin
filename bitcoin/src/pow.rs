@@ -17,6 +17,10 @@ use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::network::Params;
 
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use primitives::pow::CompactTarget;
+
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
     ($ty:ident) => {
@@ -164,7 +168,7 @@ impl Target {
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
     pub fn from_compact(c: CompactTarget) -> Target {
-        let bits = c.0;
+        let bits = c.to_consensus();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
@@ -204,7 +208,7 @@ impl Target {
             size += 1;
         }
 
-        CompactTarget(compact | (size << 24))
+        CompactTarget::from_consensus(compact | (size << 24))
     }
 
     /// Returns true if block hash is less than or equal to this [`Target`].
@@ -329,43 +333,6 @@ impl Target {
 }
 do_impl!(Target);
 
-/// Encoding of 256-bit target as 32-bit float.
-///
-/// This is used to encode a target into the block header. Satoshi made this part of consensus code
-/// in the original version of Bitcoin, likely copying an idea from OpenSSL.
-///
-/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in bitcoin, which
-/// is exactly this format.
-///
-/// # Note on order/equality
-///
-/// Usage of the ordering and equality traits for this type may be surprising. Converting between
-/// `CompactTarget` and `Target` is lossy *in both directions* (there are multiple `CompactTarget`
-/// values that map to the same `Target` value). Ordering and equality for this type are defined in
-/// terms of the underlying `u32`.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct CompactTarget(u32);
-
-impl CompactTarget {
-    /// Creates a `CompactTarget` from a prefixed hex string.
-    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let target = parse::hex_u32_prefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-
-    /// Creates a `CompactTarget` from an unprefixed hex string.
-    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let target = parse::hex_u32_unprefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
-    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
-
-    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
-    pub fn to_consensus(self) -> u32 { self.0 }
-}
-
 /// Provides some additional [`CompactTarget`] constructors.
 pub mod compact_target {
     use super::*;
@@ -454,25 +421,15 @@ impl From<CompactTarget> for Target {
 impl Encodable for CompactTarget {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for CompactTarget {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget)
+        u32::consensus_decode(r).map(CompactTarget::from_consensus)
     }
-}
-
-impl fmt::LowerHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 /// Big-endian 256 bit integer type.
@@ -1103,8 +1060,12 @@ impl kani::Arbitrary for U256 {
 mod tests {
     use super::*;
 
-    impl<T: Into<u128>> From<T> for Target {
-        fn from(x: T) -> Self { Self(U256::from(x)) }
+    impl From<u64> for Target {
+        fn from(x: u64) -> Self { Self(U256::from(x)) }
+    }
+
+    impl From<u32> for Target {
+        fn from(x: u32) -> Self { Self(U256::from(x)) }
     }
 
     impl<T: Into<u128>> From<T> for Work {
@@ -1720,43 +1681,6 @@ mod tests {
 
         let u = u128::MAX;
         assert!(((U256::from(u) << 128) + U256::from(u)).is_max());
-    }
-
-    #[test]
-    fn compact_target_from_hex_lower() {
-        let target = CompactTarget::from_hex("0x010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_upper() {
-        let target = CompactTarget::from_hex("0X010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_lower() {
-        let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_unprefixed_hex_upper() {
-        let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
-    }
-
-    #[test]
-    fn compact_target_from_hex_invalid_hex_should_err() {
-        let hex = "0xzbf9";
-        let result = CompactTarget::from_hex(hex);
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn compact_target_lower_hex_and_upper_hex() {
-        assert_eq!(format!("{:08x}", CompactTarget(0x01D0F456)), "01d0f456");
-        assert_eq!(format!("{:08X}", CompactTarget(0x01d0f456)), "01D0F456");
     }
 
     #[test]

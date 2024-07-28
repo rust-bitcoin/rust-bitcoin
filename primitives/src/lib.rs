@@ -33,6 +33,7 @@ pub mod constants;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
+pub mod pow;
 pub mod script;
 pub mod sequence;
 
