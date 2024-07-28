@@ -359,6 +359,16 @@ impl CompactTarget {
         let target = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(target))
     }
+    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
+    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
+
+    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    pub fn to_consensus(self) -> u32 { self.0 }
+}
+
+/// Provides some additional [`CompactTarget`] constructors.
+pub mod compact_target {
+    use super::*;
 
     /// Computes the [`CompactTarget`] from a difficulty adjustment.
     ///
@@ -433,14 +443,8 @@ impl CompactTarget {
     ) -> CompactTarget {
         let timespan = current.time - last_epoch_boundary.time;
         let bits = current.bits;
-        CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        from_next_work_required(bits, timespan.into(), params)
     }
-
-    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
-    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
-
-    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
-    pub fn to_consensus(self) -> u32 { self.0 }
 }
 
 impl From<CompactTarget> for Target {
@@ -1762,7 +1766,7 @@ mod tests {
         let start_time: u64 = 1598918400; // Genesis block unix time
         let end_time: u64 = 1599332177; // Block 2015 unix time
         let timespan = end_time - start_time; // Faster than expected
-        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let adjustment = compact_target::from_next_work_required(starting_bits, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -1774,7 +1778,7 @@ mod tests {
         let start_time: u64 = 1599332844; // Block 2016 unix time
         let end_time: u64 = 1600591200; // Block 4031 unix time
         let timespan = end_time - start_time; // Slower than expected
-        let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let adjustment = compact_target::from_next_work_required(starting_bits, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -1797,7 +1801,7 @@ mod tests {
             nonce: epoch_start.nonce,
         };
         let adjustment =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+            compact_target::from_header_difficulty_adjustment(epoch_start, current, params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -1829,7 +1833,7 @@ mod tests {
             nonce: 0,
         };
         let adjustment =
-            CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+            compact_target::from_header_difficulty_adjustment(epoch_start, current, params);
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
         assert_eq!(adjustment, adjustment_bits);
     }
@@ -1839,7 +1843,7 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503403001);
         let timespan = (0.2 * params.pow_target_timespan as f64) as u64;
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
+        let got = compact_target::from_next_work_required(starting_bits, timespan, params);
         let want =
             Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
         assert_eq!(got, want);
@@ -1850,7 +1854,7 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let got = compact_target::from_next_work_required(starting_bits, timespan, &params);
         let want =
             Target::from_compact(starting_bits).max_transition_threshold(params).to_compact_lossy();
         assert_eq!(got, want);
@@ -1861,7 +1865,7 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let got = compact_target::from_next_work_required(starting_bits, timespan, &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
     }
