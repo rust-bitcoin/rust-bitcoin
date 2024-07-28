@@ -2,7 +2,12 @@
 
 //! Bitcoin blocks.
 
+use core::fmt;
+
 use hashes::sha256d;
+
+use crate::merkle_tree::TxMerkleNode;
+use crate::pow::CompactTarget;
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
@@ -17,6 +22,54 @@ impl BlockHash {
     /// This is not the hash of a real block. It is used as the previous blockhash
     /// of the genesis block and in other placeholder contexts.
     pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+}
+
+/// Bitcoin block header.
+///
+/// Contains all the block's information except the actual transactions, but
+/// including a root of a [Merkle tree] committing to all transactions in the block.
+///
+/// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
+///
+/// ### Bitcoin Core References
+///
+/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
+#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Header {
+    /// Block version, now repurposed for soft fork signalling.
+    pub version: Version,
+    /// Reference to the previous block in the chain.
+    pub prev_blockhash: BlockHash,
+    /// The root hash of the Merkle tree of transactions in the block.
+    pub merkle_root: TxMerkleNode,
+    /// The timestamp of the block, as claimed by the miner.
+    pub time: u32,
+    /// The target value below which the blockhash must lie.
+    pub bits: CompactTarget,
+    /// The nonce, selected to obtain a low enough blockhash.
+    pub nonce: u32,
+}
+
+impl Header {
+    /// The number of bytes that the block header contributes to the size of a block.
+    // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
+    pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
+}
+
+impl fmt::Debug for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Header")
+            // FIXME: Solve this.
+            // .field("block_hash", &self.block_hash())
+            .field("version", &self.version)
+            .field("prev_blockhash", &self.prev_blockhash)
+            .field("merkle_root", &self.merkle_root)
+            .field("time", &self.time)
+            .field("bits", &self.bits)
+            .field("nonce", &self.nonce)
+            .finish()
+    }
 }
 
 /// Bitcoin block version number.

@@ -17,7 +17,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode, define_extension_trait};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
-use crate::pow::{CompactTarget, Target, Work};
+use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::transaction::{Transaction, Wtxid};
 use crate::{script, VarInt};
@@ -27,34 +27,6 @@ use crate::{script, VarInt};
 pub use primitives::block::*;
 
 impl_hashencode!(BlockHash);
-
-/// Bitcoin block header.
-///
-/// Contains all the block's information except the actual transactions, but
-/// including a root of a [Merkle tree] committing to all transactions in the block.
-///
-/// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
-///
-/// ### Bitcoin Core References
-///
-/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
-#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Header {
-    /// Block version, now repurposed for soft fork signalling.
-    pub version: Version,
-    /// Reference to the previous block in the chain.
-    pub prev_blockhash: BlockHash,
-    /// The root hash of the Merkle tree of transactions in the block.
-    pub merkle_root: TxMerkleNode,
-    /// The timestamp of the block, as claimed by the miner.
-    pub time: u32,
-    /// The target value below which the blockhash must lie.
-    pub bits: CompactTarget,
-    /// The nonce, selected to obtain a low enough blockhash.
-    pub nonce: u32,
-}
-
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 define_extension_trait! {
@@ -99,26 +71,6 @@ define_extension_trait! {
 
         /// Returns the total work of the block.
         fn work(&self) -> Work { self.target().to_work() }
-    }
-}
-
-impl Header {
-    /// The number of bytes that the block header contributes to the size of a block.
-    // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
-    pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
-}
-
-impl fmt::Debug for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Header")
-            .field("block_hash", &self.block_hash())
-            .field("version", &self.version)
-            .field("prev_blockhash", &self.prev_blockhash)
-            .field("merkle_root", &self.merkle_root)
-            .field("time", &self.time)
-            .field("bits", &self.bits)
-            .field("nonce", &self.nonce)
-            .finish()
     }
 }
 
@@ -311,13 +263,14 @@ impl Block {
     }
 }
 
-impl From<Header> for BlockHash {
-    fn from(header: Header) -> BlockHash { header.block_hash() }
-}
+// FIXME: Resolve this, orphan rule.
+// impl From<Header> for BlockHash {
+//     fn from(header: Header) -> BlockHash { header.block_hash() }
+// }
 
-impl From<&Header> for BlockHash {
-    fn from(header: &Header) -> BlockHash { header.block_hash() }
-}
+// impl From<&Header> for BlockHash {
+//     fn from(header: &Header) -> BlockHash { header.block_hash() }
+// }
 
 impl From<Block> for BlockHash {
     fn from(block: Block) -> BlockHash { block.block_hash() }
@@ -409,6 +362,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::pow::CompactTarget;
     use crate::Network;
 
     #[test]
