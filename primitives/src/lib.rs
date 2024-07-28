@@ -29,6 +29,7 @@ extern crate serde;
 
 mod internal_macros;
 
+pub mod block;
 pub mod constants;
 #[cfg(feature = "alloc")]
 pub mod locktime;
@@ -47,6 +48,7 @@ pub use units::*;
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
 pub use self::{
+    block::{BlockHash, WitnessCommitment},
     constants::{MAX_REDEEM_SCRIPT_SIZE, MAX_WITNESS_SCRIPT_SIZE},
     script::{
         witness_program::{self, WitnessProgram},

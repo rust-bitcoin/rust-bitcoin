@@ -22,20 +22,11 @@ use crate::prelude::Vec;
 use crate::transaction::{Transaction, Wtxid};
 use crate::{script, VarInt};
 
-hashes::hash_newtype! {
-    /// A bitcoin block hash.
-    pub struct BlockHash(sha256d::Hash);
-    /// A hash corresponding to the witness structure commitment in the coinbase transaction.
-    pub struct WitnessCommitment(sha256d::Hash);
-}
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use primitives::block::*;
+
 impl_hashencode!(BlockHash);
-impl BlockHash {
-    /// The "all zeros" blockhash.
-    ///
-    /// This is not the hash of a real block. It is used as the previous blockhash
-    /// of the genesis block and in other placeholder contexts.
-    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
-}
 
 /// Bitcoin block header.
 ///
@@ -75,7 +66,7 @@ impl Header {
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = sha256d::Hash::engine();
         self.consensus_encode(&mut engine).expect("engines don't error");
-        BlockHash(sha256d::Hash::from_engine(engine))
+        BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
     }
 
     /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
@@ -296,7 +287,7 @@ impl Block {
         let mut encoder = sha256d::Hash::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
-        WitnessCommitment(sha256d::Hash::from_engine(encoder))
+        WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 
     /// Computes the Merkle root of transactions hashed for witness.
