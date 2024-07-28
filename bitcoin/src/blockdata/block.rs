@@ -49,7 +49,6 @@ impl BlockHash {
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
     pub version: Version,
@@ -142,7 +141,6 @@ impl fmt::Debug for Header {
 /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Version(i32);
 
 impl Version {
@@ -223,7 +221,6 @@ impl Decodable for Version {
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Block {
     /// The block header
     pub header: Header,

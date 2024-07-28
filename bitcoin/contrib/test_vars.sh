@@ -5,7 +5,7 @@
 # shellcheck disable=SC2034
 
 # Test all these features with "std" enabled.
-FEATURES_WITH_STD="rand-std serde secp-recovery bitcoinconsensus-std base64 ordered"
+FEATURES_WITH_STD="rand-std serde secp-recovery bitcoinconsensus base64 ordered"
 
 # Test all these features without "std" or "alloc" enabled.
 FEATURES_WITHOUT_STD="rand serde secp-recovery bitcoinconsensus base64 ordered"

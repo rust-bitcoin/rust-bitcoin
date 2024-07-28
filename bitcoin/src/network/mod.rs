@@ -65,7 +65,6 @@ impl From<Network> for NetworkKind {
 /// The cryptocurrency network to act on.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 #[non_exhaustive]
 pub enum Network {
@@ -425,7 +424,6 @@ mod tests {
     #[test]
     fn serde_as_core_arg() {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
-        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(with = "crate::network::as_core_arg")]
             pub network: Network,

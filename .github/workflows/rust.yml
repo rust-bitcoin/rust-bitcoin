@@ -70,7 +70,7 @@ jobs:
         run: ./maintainer-tools/ci/run_task.sh nightly
 
   MSRV:                         # 2 jobs, one per manifest.
-    name: Test - 1.56.1 toolchain
+    name: Test - MSRV toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -88,7 +88,7 @@ jobs:
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: "1.56.1"
+          toolchain: "1.63.0"
       - name: "Set dependencies"
         run: cp Cargo-${{ matrix.dep }}.lock Cargo.lock
       - name: "Run test script"

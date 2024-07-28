@@ -405,12 +405,11 @@ where
 /// To (de)serialize a field using consensus encoding you can write e.g.:
 ///
 /// ```
-/// # use actual_serde::{Serialize, Deserialize};
+/// # use serde::{Serialize, Deserialize};
 /// use bitcoin::Transaction;
 /// use bitcoin::consensus;
 ///
 /// #[derive(Serialize, Deserialize)]
-/// # #[serde(crate = "actual_serde")]
 /// pub struct MyStruct {
 ///     #[serde(with = "consensus::serde::With::<consensus::serde::Hex>")]
 ///     tx: Transaction,

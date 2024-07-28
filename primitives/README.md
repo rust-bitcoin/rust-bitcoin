@@ -5,7 +5,7 @@ This crate provides primitive data types that are used throughout the
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should always compile with any combination of features on **Rust 1.56.1**.
+This library should always compile with any combination of features on **Rust 1.63.0**.
 
 ## Licensing
 

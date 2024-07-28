@@ -21,7 +21,6 @@ use crate::psbt::Error;
 /// `<key> := <keylen> <keytype> <keydata>`
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
@@ -34,7 +33,6 @@ pub struct Key {
 /// `<keypair> := <key> <value>`
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Pair {
     /// The key of this key-value pair.
     pub key: Key,
@@ -51,7 +49,6 @@ pub type ProprietaryType = u8;
 /// structure according to BIP 174.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ProprietaryKey<Subtype = ProprietaryType>
 where
     Subtype: Copy + From<u8> + Into<u8>,

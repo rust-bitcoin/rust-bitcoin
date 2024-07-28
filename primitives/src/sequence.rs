@@ -30,7 +30,6 @@ use crate::locktime::relative;
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
 
 impl Sequence {
