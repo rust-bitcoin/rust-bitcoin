@@ -9,9 +9,9 @@ use core::fmt;
 use internals::write_err;
 
 use crate::amount::Amount;
+use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
-use crate::consensus::encode;
 use crate::script::Script;
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
