@@ -25,7 +25,7 @@ extern crate std;
 
 #[cfg(feature = "serde")]
 #[macro_use]
-extern crate actual_serde as serde;
+extern crate serde;
 
 #[cfg(feature = "alloc")]
 pub mod locktime;

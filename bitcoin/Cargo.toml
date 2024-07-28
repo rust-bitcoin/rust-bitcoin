@@ -10,19 +10,18 @@ categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.56.1"
+rust-version = "1.63.0"
 exclude = ["tests", "contrib"]
 
 # If you change features or optional dependencies in any way please update the "# Cargo features" section in lib.rs as well.
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std"]
+std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std", "bitcoinconsensus?/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 
 [dependencies]
 base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
@@ -37,11 +36,9 @@ units = { package = "bitcoin-units", version = "0.1.0", default-features = false
 
 base64 = { version = "0.22.0", optional = true }
 ordered = { version = "0.2.0", optional = true }
-# Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
 bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
 
-# Do NOT use this as a feature! Use the `serde` feature instead.
-actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["test-serde"] }

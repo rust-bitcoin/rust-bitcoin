@@ -39,7 +39,6 @@ pub use self::{
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Psbt {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
     pub unsigned_tx: Transaction,

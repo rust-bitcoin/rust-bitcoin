@@ -13,7 +13,6 @@ use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 /// The Merkle proof for inclusion of a tree in a Taproot tree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(into = "Vec<TapNodeHash>"))]
 #[cfg_attr(feature = "serde", serde(try_from = "Vec<TapNodeHash>"))]
 pub struct TaprootMerkleBranch(Vec<TapNodeHash>);
