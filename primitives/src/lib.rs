@@ -39,6 +39,7 @@ pub mod pow;
 pub mod script;
 pub mod sequence;
 pub mod transaction;
+pub mod witness;
 
 #[doc(inline)]
 pub use units::*;
@@ -57,6 +58,7 @@ pub use self::{
     },
     sequence::Sequence,
     transaction::{Txid, Wtxid},
+    witness::Witness,
 };
 
 #[rustfmt::skip]
