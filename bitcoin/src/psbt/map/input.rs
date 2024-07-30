@@ -95,6 +95,7 @@ pub struct Input {
     pub final_script_sig: Option<ScriptBuf>,
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::witness_opt"))]
     pub final_script_witness: Option<Witness>,
     /// RIPEMD160 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]

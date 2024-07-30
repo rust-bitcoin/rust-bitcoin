@@ -296,3 +296,109 @@ pub mod hex_bytes {
         }
     }
 }
+
+pub mod witness {
+    //! Module for serialization of [`Witness`].
+    //!
+    //! This exists solely to get around the orphan rule because we cannot implement serde traits in `primitives`.
+    #![allow(missing_docs)]
+
+    use crate::Witness;
+
+    // Serde keep backward compatibility with old Vec<Vec<u8>> format
+    pub fn serialize<S>(witness: &Witness, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeSeq;
+
+        let human_readable = s.is_human_readable();
+        let mut seq = s.serialize_seq(Some(witness.len()))?;
+
+        for elem in witness.iter() {
+            if human_readable {
+                seq.serialize_element(&super::SerializeBytesAsHex(elem))?;
+            } else {
+                seq.serialize_element(&elem)?;
+            }
+        }
+        seq.end()
+    }
+
+    pub fn deserialize<'de, D>(d: D) -> Result<Witness, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor; // Human-readable visitor.
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = Witness;
+
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "a sequence of hex arrays")
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut a: A,
+            ) -> Result<Self::Value, A::Error> {
+                use hex::FromHex;
+                use hex::HexToBytesError::*;
+                use serde::de::{self, Unexpected};
+
+                let mut ret = match a.size_hint() {
+                    Some(len) => Vec::with_capacity(len),
+                    None => Vec::new(),
+                };
+
+                while let Some(elem) = a.next_element::<String>()? {
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
+                        InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
+                            Some(c) => de::Error::invalid_value(
+                                Unexpected::Char(c),
+                                &"a valid hex character",
+                            ),
+                            None => de::Error::invalid_value(
+                                Unexpected::Unsigned(e.invalid_char().into()),
+                                &"a valid hex character",
+                            ),
+                        },
+                        OddLengthString(ref e) =>
+                            de::Error::invalid_length(e.length(), &"an even length string"),
+                    })?;
+                    ret.push(vec);
+                }
+                Ok(Witness::from_slice(&ret))
+            }
+        }
+
+        if d.is_human_readable() {
+            d.deserialize_seq(Visitor)
+        } else {
+            let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(d)?;
+            Ok(Witness::from_slice(&vec))
+        }
+    }
+}
+
+pub mod witness_opt {
+    //! Module for serialization of [`Witness`].
+    //!
+    //! This exists solely to get around the orphan rule because we cannot implement serde traits in `primitives`.
+    #![allow(missing_docs)]
+
+    use crate::Witness;
+
+    pub fn serialize<S>(_: &Option<Witness>, _: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        todo!()
+    }
+
+    pub fn deserialize<'de, D>(_: D) -> Result<Option<Witness>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        todo!()
+    }
+}

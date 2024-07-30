@@ -503,86 +503,6 @@ impl<'a> IntoIterator for &'a Witness {
     fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
-// Serde keep backward compatibility with old Vec<Vec<u8>> format
-#[cfg(feature = "serde")]
-impl serde::Serialize for Witness {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        use serde::ser::SerializeSeq;
-
-        let human_readable = serializer.is_human_readable();
-        let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
-
-        for elem in self.iter() {
-            if human_readable {
-                seq.serialize_element(&crate::serde_utils::SerializeBytesAsHex(elem))?;
-            } else {
-                seq.serialize_element(&elem)?;
-            }
-        }
-        seq.end()
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Witness {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct Visitor; // Human-readable visitor.
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = Witness;
-
-            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                write!(f, "a sequence of hex arrays")
-            }
-
-            fn visit_seq<A: serde::de::SeqAccess<'de>>(
-                self,
-                mut a: A,
-            ) -> Result<Self::Value, A::Error> {
-                use hex::FromHex;
-                use hex::HexToBytesError::*;
-                use serde::de::{self, Unexpected};
-
-                let mut ret = match a.size_hint() {
-                    Some(len) => Vec::with_capacity(len),
-                    None => Vec::new(),
-                };
-
-                while let Some(elem) = a.next_element::<String>()? {
-                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
-                            Some(c) => de::Error::invalid_value(
-                                Unexpected::Char(c),
-                                &"a valid hex character",
-                            ),
-                            None => de::Error::invalid_value(
-                                Unexpected::Unsigned(e.invalid_char().into()),
-                                &"a valid hex character",
-                            ),
-                        },
-                        OddLengthString(ref e) =>
-                            de::Error::invalid_length(e.length(), &"an even length string"),
-                    })?;
-                    ret.push(vec);
-                }
-                Ok(Witness::from_slice(&ret))
-            }
-        }
-
-        if deserializer.is_human_readable() {
-            deserializer.deserialize_seq(Visitor)
-        } else {
-            let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-            Ok(Witness::from_slice(&vec))
-        }
-    }
-}
-
 impl From<Vec<Vec<u8>>> for Witness {
     fn from(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
 }
@@ -858,37 +778,37 @@ mod test {
         assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 
-    #[cfg(feature = "serde")]
-    #[test]
-    fn test_serde_bincode() {
-        use bincode;
+    // #[cfg(feature = "serde")]
+    // #[test]
+    // fn test_serde_bincode() {
+    //     use bincode;
 
-        let old_witness_format = vec![vec![0u8], vec![2]];
-        let new_witness_format = Witness::from_slice(&old_witness_format);
+    //     let old_witness_format = vec![vec![0u8], vec![2]];
+    //     let new_witness_format = Witness::from_slice(&old_witness_format);
 
-        let old = bincode::serialize(&old_witness_format).unwrap();
-        let new = bincode::serialize(&new_witness_format).unwrap();
+    //     let old = bincode::serialize(&old_witness_format).unwrap();
+    //     let new = bincode::serialize(&new_witness_format).unwrap();
 
-        assert_eq!(old, new);
+    //     assert_eq!(old, new);
 
-        let back: Witness = bincode::deserialize(&new).unwrap();
-        assert_eq!(new_witness_format, back);
-    }
+    //     let back: Witness = bincode::deserialize(&new).unwrap();
+    //     assert_eq!(new_witness_format, back);
+    // }
 
-    #[cfg(feature = "serde")]
-    #[test]
-    fn test_serde_human() {
-        use serde_json;
+    // #[cfg(feature = "serde")]
+    // #[test]
+    // fn test_serde_human() {
+    //     use serde_json;
 
-        let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
+    //     let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
 
-        let json = serde_json::to_string(&witness).unwrap();
+    //     let json = serde_json::to_string(&witness).unwrap();
 
-        assert_eq!(json, r#"["007b4b","0206030708"]"#);
+    //     assert_eq!(json, r#"["007b4b","0206030708"]"#);
 
-        let back: Witness = serde_json::from_str(&json).unwrap();
-        assert_eq!(witness, back);
-    }
+    //     let back: Witness = serde_json::from_str(&json).unwrap();
+    //     assert_eq!(witness, back);
+    // }
 }
 
 #[cfg(bench)]

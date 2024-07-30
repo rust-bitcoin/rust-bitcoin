@@ -67,6 +67,7 @@ pub struct TxIn {
     /// Encodable/Decodable, as it is (de)serialized at the end of the full
     /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
     /// (de)serialization routines.
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::witness"))]
     pub witness: Witness,
 }
 
