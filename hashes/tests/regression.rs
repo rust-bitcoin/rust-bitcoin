@@ -30,7 +30,6 @@ impl_regression_test! {
     regression_sha384, sha384, "f545bd83d297978d47a7f26b858a54188499dfb4d7d570a6a2362c765031d57a29d7e002df5e34d184e70b65a4f47153";
     regression_sha512, sha512, "057d0a37e9e0ac9a93acde0752748da059a27bcf946c7af00692ac1a95db8d21f965f40af22efc4710f100f8d3e43f79f77b1f48e1e400a95b7344b7bc0dfd10";
     regression_sha512_256, sha512_256, "e204244c429b5bca037a2a8a6e7ed8a42b808ceaff182560840bb8c5c8e9a2ec";
-    regression_siphash24, siphash24, "e823ed82311d601a";
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
@@ -88,5 +87,16 @@ fn regression_hmac_sha512_with_key() {
 
     let got = format!("{}", hash);
     let want = "8511773748f89ba22c07fb3a2981a12c1823695119de41f4a62aead6b848bd34939acf16475c35ed7956114fead3e794cc162ecd35e447a4dabc3227d55f757b";
+    assert_eq!(got, want);
+}
+
+#[test]
+fn regression_siphash24_with_key() {
+    let mut engine = siphash24::HashEngine::with_keys(0, 0);
+    engine.input(DATA.as_bytes());
+    let hash = siphash24::Hash::from_engine(engine);
+
+    let got = format!("{}", hash);
+    let want = "e823ed82311d601a";
     assert_eq!(got, want);
 }

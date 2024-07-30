@@ -42,7 +42,10 @@ pub struct HmacEngine<T: GeneralHash> {
     oengine: T::Engine,
 }
 
-impl<T: GeneralHash> Default for HmacEngine<T> {
+impl<T: GeneralHash> Default for HmacEngine<T>
+where
+    <T as GeneralHash>::Engine: Default,
+{
     fn default() -> Self { HmacEngine::new(&[]) }
 }
 
@@ -54,7 +57,10 @@ impl<T: GeneralHash> HmacEngine<T> {
     /// # Panics
     ///
     /// Larger hashes will result in a panic.
-    pub fn new(key: &[u8]) -> HmacEngine<T> {
+    pub fn new(key: &[u8]) -> HmacEngine<T>
+    where
+        <T as GeneralHash>::Engine: Default,
+    {
         debug_assert!(T::Engine::BLOCK_SIZE <= 128);
 
         let mut ipad = [0x36u8; 128];

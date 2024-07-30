@@ -6,13 +6,13 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, mem, ptr};
 
+use crate::internal_macros::arr_newtype_fmt_impl;
 use crate::HashEngine as _;
 
-crate::internal_macros::hash_type! {
-    64,
-    false,
-    "Output of the SipHash24 hash function."
-}
+#[doc = "Output of the SipHash24 hash function."]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
+pub struct Hash([u8; 8]);
 
 #[cfg(not(hashes_fuzz))]
 fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
@@ -106,10 +106,6 @@ impl HashEngine {
         }
     }
 
-    /// Creates a new SipHash24 engine.
-    #[inline]
-    pub const fn new() -> HashEngine { HashEngine::with_keys(0, 0) }
-
     /// Retrieves the keys of this engine.
     pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
 
@@ -126,10 +122,6 @@ impl HashEngine {
         compress!(state);
         compress!(state);
     }
-}
-
-impl Default for HashEngine {
-    fn default() -> Self { HashEngine::new() }
 }
 
 impl crate::HashEngine for HashEngine {
@@ -186,6 +178,9 @@ impl Hash {
         Hash::from_engine(engine)
     }
 
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+
     /// Hashes the given data directly to u64 with an engine with the provided keys.
     pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
         let mut engine = HashEngine::with_keys(k0, k1);
@@ -215,7 +210,38 @@ impl Hash {
 
     /// Creates a hash from its (little endian) 64-bit integer representation.
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
+
+    fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> {
+        let mut ret = [0; 8];
+        ret.copy_from_slice(sl);
+        Ok(Hash(ret))
+    }
 }
+
+impl crate::Hash for Hash {
+    type Bytes = [u8; 8];
+
+    const LEN: usize = 8;
+    const DISPLAY_BACKWARD: bool = false;
+
+    fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> { Self::from_slice(sl) }
+
+    fn to_byte_array(self) -> Self::Bytes { self.0 }
+
+    fn as_byte_array(&self) -> &Self::Bytes { &self.0 }
+
+    fn from_byte_array(bytes: Self::Bytes) -> Self { Hash(bytes) }
+}
+
+impl<I: SliceIndex<[u8]>> Index<I> for Hash {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
+}
+
+arr_newtype_fmt_impl!(Hash, 8);
+borrow_slice_impl!(Hash);
 
 /// Load an u64 using up to 7 bytes of a byte slice.
 ///
@@ -341,7 +367,7 @@ mod benches {
 
     #[bench]
     pub fn siphash24_1ki(bh: &mut Bencher) {
-        let mut engine = siphash24::Hash::engine();
+        let mut engine = siphash24::HashEngine::with_keys(0, 0);
         let bytes = [1u8; 1024];
         bh.iter(|| {
             engine.input(&bytes);
@@ -351,7 +377,7 @@ mod benches {
 
     #[bench]
     pub fn siphash24_64ki(bh: &mut Bencher) {
-        let mut engine = siphash24::Hash::engine();
+        let mut engine = siphash24::HashEngine::with_keys(0, 0);
         let bytes = [1u8; 65536];
         bh.iter(|| {
             engine.input(&bytes);
