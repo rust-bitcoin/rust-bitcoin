@@ -1,4 +1,4 @@
-# 0.1.2 - 2024-07-01
+## 0.1.2 - 2024-07-01
 
 * Remove enable of `alloc` feature in the `internals` dependency.
 
@@ -9,12 +9,12 @@ was incorrect because we have an `alloc` feature that enables
 
 `v0.1.1` will be yanked for this reason.
 
-# 0.1.1 - 2024-04-04
+## 0.1.1 - 2024-04-04
 
 * Enable "alloc" feature for `internals` dependency - enables caching
   of parsed input strings in a couple of `amount` error types.
 
-# 0.1.0 - Initial Release - 2024-04-03
+## 0.1.0 - Initial Release - 2024-04-03
 
 Initial release of the `bitcoin-units` crate. These unit types are
 integer wrapper types used by the `rust-bitcoin` ecosystem. Note
@@ -28,6 +28,6 @@ The main types are:
 - `FeeRate`
 - `Weight`
 
-# 0.0.0 - Placeholder release
+## 0.0.0 - Placeholder release
 
 Empty crate to reserve the name on crates.io
