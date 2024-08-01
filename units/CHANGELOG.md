@@ -1,3 +1,10 @@
+# 0.2.0 - 2024-08-01
+
+* Bump MSRV to 1.63.0 [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)
+* Remove re-export of `ParseIntError` [#3069](https://github.com/rust-bitcoin/rust-bitcoin/pull/3069)
+* Improve docs [#2957](https://github.com/rust-bitcoin/rust-bitcoin/pull/2957)
+* Fix `Amount` decimals handling [#2951](https://github.com/rust-bitcoin/rust-bitcoin/pull/2951)
+
 ## 0.1.2 - 2024-07-01
 
 * Remove enable of `alloc` feature in the `internals` dependency.
