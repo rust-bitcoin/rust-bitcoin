@@ -153,8 +153,6 @@ mod tests {
         "a9608c952c8dbcc20c53803d2ca5ad31d64d9313",
     );
 
-    write_test!(siphash24, "d70077739d4b921e", "3a3ccefde9b5b1e3", "ce456e4e4ecbc5bf",);
-
     #[test]
     fn hmac() {
         let mut engine = hmac::HmacEngine::<sha256::Hash>::new(&[0xde, 0xad, 0xbe, 0xef]);
@@ -177,5 +175,20 @@ mod tests {
             format!("{}", hmac::Hmac::from_engine(engine)),
             "30df499717415a395379a1eaabe50038036e4abb5afc94aa55c952f4aa57be08"
         );
+    }
+
+    #[test]
+    fn siphash24() {
+        let mut engine = siphash24::HashEngine::with_keys(0, 0);
+        engine.write_all(&[]).unwrap();
+        assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "d70077739d4b921e");
+
+        let mut engine = siphash24::HashEngine::with_keys(0, 0);
+        engine.write_all(&[1; 256]).unwrap();
+        assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "3a3ccefde9b5b1e3");
+
+        let mut engine = siphash24::HashEngine::with_keys(0, 0);
+        engine.write_all(&[99; 64000]).unwrap();
+        assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "ce456e4e4ecbc5bf");
     }
 }

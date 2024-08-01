@@ -37,7 +37,10 @@ pub struct Hkdf<T: GeneralHash> {
     prk: Hmac<T>,
 }
 
-impl<T: GeneralHash> Hkdf<T> {
+impl<T: GeneralHash> Hkdf<T>
+where
+    <T as GeneralHash>::Engine: Default,
+{
     /// Initialize a HKDF by performing the extract step.
     pub fn new(salt: &[u8], ikm: &[u8]) -> Self {
         let mut hmac_engine: HmacEngine<T> = HmacEngine::new(salt);
