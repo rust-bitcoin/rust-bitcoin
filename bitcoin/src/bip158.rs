@@ -362,7 +362,7 @@ impl GcsFilterReader {
 }
 
 /// Fast reduction of hash to [0, nm) range.
-fn map_to_range(hash: u64, nm: u64) -> u64 { ((hash as u128 * nm as u128) >> 64) as u64 }
+fn map_to_range(hash: u64, nm: u64) -> u64 { ((u128::from(hash) * u128::from(nm)) >> 64) as u64 }
 
 /// Golomb-Rice encoded filter writer.
 pub struct GcsFilterWriter<'a, W> {
