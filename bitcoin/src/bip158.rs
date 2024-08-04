@@ -400,7 +400,7 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         // write number of elements as varint
         let mut wrote = VarInt::from(mapped.len()).consensus_encode(self.writer)?;
 
-        // write out deltas of sorted values into a Golonb-Rice coded bit stream
+        // write out deltas of sorted values into a Golomb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
         let mut last = 0;
         for data in mapped {
