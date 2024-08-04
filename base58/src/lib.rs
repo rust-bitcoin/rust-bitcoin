@@ -73,11 +73,11 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
-        if d58 as usize >= BASE58_DIGITS.len() {
+        if usize::from(d58) >= BASE58_DIGITS.len() {
             return Err(InvalidCharacterError { invalid: d58 });
         }
-        let mut carry = match BASE58_DIGITS[d58 as usize] {
-            Some(d58) => d58 as u32,
+        let mut carry = match BASE58_DIGITS[usize::from(d58)] {
+            Some(d58) => u32::from(d58),
             None => {
                 return Err(InvalidCharacterError { invalid: d58 });
             }
