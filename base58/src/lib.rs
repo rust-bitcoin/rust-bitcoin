@@ -83,8 +83,8 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
             }
         };
         for d256 in scratch.iter_mut().rev() {
-            carry += *d256 as u32 * 58;
-            *d256 = carry as u8;
+            carry += u32::from(*d256) * 58;
+            *d256 = carry as u8; // cast loses data intentionally
             carry /= 256;
         }
         assert_eq!(carry, 0);
@@ -208,7 +208,7 @@ where
     let mut leading_zeroes = true;
     // Build string in little endian with 0-58 in place of characters...
     for d256 in data {
-        let mut carry = d256 as usize;
+        let mut carry = usize::from(d256);
         if leading_zeroes && carry == 0 {
             leading_zero_count += 1;
         } else {
@@ -216,13 +216,13 @@ where
         }
 
         for ch in buf.slice_mut() {
-            let new_ch = *ch as usize * 256 + carry;
-            *ch = (new_ch % 58) as u8;
+            let new_ch = usize::from(*ch) * 256 + carry;
+            *ch = (new_ch % 58) as u8; // cast loses data intentionally
             carry = new_ch / 58;
         }
 
         while carry > 0 {
-            buf.push((carry % 58) as u8);
+            buf.push((carry % 58) as u8); // cast loses data intentionally
             carry /= 58;
         }
     }
@@ -233,7 +233,7 @@ where
     }
 
     for ch in buf.slice().iter().rev() {
-        writer.write_char(BASE58_CHARS[*ch as usize] as char)?;
+        writer.write_char(char::from(BASE58_CHARS[usize::from(*ch)]))?;
     }
 
     Ok(())
