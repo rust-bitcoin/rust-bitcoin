@@ -435,9 +435,9 @@ impl GcsFilter {
         let mut wrote = 0;
         let mut q = n >> self.p;
         while q > 0 {
-            let nbits = cmp::min(q, 64);
-            wrote += writer.write(!0u64, nbits as u8)?;
-            q -= nbits;
+            let nbits = cmp::min(q, 64) as u8; // cast ok, 64 fits into a `u8`
+            wrote += writer.write(!0u64, nbits)?;
+            q -= u64::from(nbits);
         }
         wrote += writer.write(0, 1)?;
         wrote += writer.write(n, self.p)?;
