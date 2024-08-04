@@ -372,7 +372,7 @@ impl Script {
     ///
     /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
     pub fn minimal_non_dust(&self) -> crate::Amount {
-        self.minimal_non_dust_inner(DUST_RELAY_TX_FEE.into())
+        self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
     }
 
     /// Returns the minimum value an output with this script should have in order to be
@@ -387,10 +387,10 @@ impl Script {
     ///
     /// [`minimal_non_dust`]: Script::minimal_non_dust
     pub fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
-        self.minimal_non_dust_inner(dust_relay_fee.to_sat_per_kwu() * 4)
+        self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
     }
 
-    fn minimal_non_dust_inner(&self, dust_relay_fee: u64) -> crate::Amount {
+    fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
         let sats = dust_relay_fee

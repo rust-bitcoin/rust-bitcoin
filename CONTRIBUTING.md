@@ -175,6 +175,7 @@ in Bitcoin Core, with the following exceptions:
 - the case should follow Rust standards (i.e. PascalCase for types and
   snake_case for fields and variants);
 - omit `C`-prefixes.
+- if function `foo` needs a private helper function, use `foo_internal`.
 
 ### Upgrading dependencies
 
