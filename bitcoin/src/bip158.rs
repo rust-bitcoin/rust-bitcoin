@@ -362,7 +362,7 @@ impl GcsFilterReader {
 }
 
 /// Fast reduction of hash to [0, nm) range.
-fn map_to_range(hash: u64, nm: u64) -> u64 { ((hash as u128 * nm as u128) >> 64) as u64 }
+fn map_to_range(hash: u64, nm: u64) -> u64 { ((u128::from(hash) * u128::from(nm)) >> 64) as u64 }
 
 /// Golomb-Rice encoded filter writer.
 pub struct GcsFilterWriter<'a, W> {
@@ -400,7 +400,7 @@ impl<'a, W: Write> GcsFilterWriter<'a, W> {
         // write number of elements as varint
         let mut wrote = VarInt::from(mapped.len()).consensus_encode(self.writer)?;
 
-        // write out deltas of sorted values into a Golonb-Rice coded bit stream
+        // write out deltas of sorted values into a Golomb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
         let mut last = 0;
         for data in mapped {
@@ -435,9 +435,9 @@ impl GcsFilter {
         let mut wrote = 0;
         let mut q = n >> self.p;
         while q > 0 {
-            let nbits = cmp::min(q, 64);
-            wrote += writer.write(!0u64, nbits as u8)?;
-            q -= nbits;
+            let nbits = cmp::min(q, 64) as u8; // cast ok, 64 fits into a `u8`
+            wrote += writer.write(!0u64, nbits)?;
+            q -= u64::from(nbits);
         }
         wrote += writer.write(0, 1)?;
         wrote += writer.write(n, self.p)?;
