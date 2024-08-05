@@ -113,14 +113,13 @@ impl ScriptBuf {
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
             }
-            n if n < 0x100000000 => {
+            n => {              // `PushBytes` enforces len < 0x100000000
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push(((n / 0x100) % 0x100) as u8);
                 self.0.push(((n / 0x10000) % 0x100) as u8);
                 self.0.push((n / 0x1000000) as u8);
             }
-            _ => panic!("tried to put a 4bn+ sized object into a script!"),
         }
         // Then push the raw bytes
         self.0.extend_from_slice(data.as_bytes());
