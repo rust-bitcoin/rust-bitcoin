@@ -172,9 +172,9 @@ Library reflects Bitcoin Core approach whenever possible.
 
 Naming of data structures/enums and their fields/variants must follow names used
 in Bitcoin Core, with the following exceptions:
-- the case should follow Rust standards (i.e. PascalCase for types and
-  snake_case for fields and variants);
-- omit `C`-prefixes.
+- The case should follow Rust standards (i.e. PascalCase for types and snake_case for fields and variants).
+- Omit `C`-prefixes.
+- If function `foo` needs a private helper function, use `foo_internal`.
 
 ### Upgrading dependencies
 
