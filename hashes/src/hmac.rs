@@ -106,6 +106,14 @@ impl<T: GeneralHash> HashEngine for HmacEngine<T> {
     fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
 }
 
+impl<T: GeneralHash, B: core::borrow::Borrow<u8>> Extend<B> for HmacEngine<T> {
+    fn extend<I: IntoIterator<Item = B>>(&mut self, iter: I) {
+        for byte in iter {
+            self.input(core::slice::from_ref(byte.borrow()))
+        }
+    }
+}
+
 impl<T: GeneralHash> fmt::Debug for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }

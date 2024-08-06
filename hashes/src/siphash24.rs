@@ -233,6 +233,14 @@ impl crate::Hash for Hash {
     fn from_byte_array(bytes: Self::Bytes) -> Self { Hash(bytes) }
 }
 
+impl<B: AsRef<[u8]>> Extend<B> for HashEngine {
+    fn extend<I: IntoIterator<Item = B>>(&mut self, iter: I) {
+        for bytes in iter {
+            self.input(bytes.as_ref())
+        }
+    }
+}
+
 impl<I: SliceIndex<[u8]>> Index<I> for Hash {
     type Output = I::Output;
 

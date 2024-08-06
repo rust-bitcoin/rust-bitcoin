@@ -223,6 +223,20 @@ pub trait GeneralHash: Hash {
     }
 
     /// Hashes all the byte slices retrieved from the iterator together.
+    ///
+    /// **This method is going to be removed because of semantic ambiguity.**
+    ///
+    /// **Danger:** if the slices are semantically meaningful then this allows collisions - moving
+    /// bytes from an end of one slice to the beginning of the next one. If this could be a problem
+    /// for your application you need to insert some kind of separators (e.g. length prefixes).
+    ///
+    /// If this is not a problem, just an implementation detail and your slices are smaller than
+    /// `BLOCK_SIZE` you can usually call `.flatten().collect()` or
+    /// `.flat_map(AsRef::as_ref).collect()` on the iterator instead depending on the ownership/trait
+    /// impl properties. (Generally, the former for owned types like arrays and vecs, the latter for
+    /// borrowed types like slices.) If the slices are longer then it's better to just call `input`
+    /// in a loop.
+    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "this may be vulnerable to collisions - check the docs for migration details")]
     fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
     where
         B: AsRef<[u8]>,
