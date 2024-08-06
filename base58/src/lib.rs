@@ -208,7 +208,7 @@ where
     let mut leading_zeroes = true;
     // Build string in little endian with 0-58 in place of characters...
     for d256 in data {
-        let mut carry = usize::from(d256);
+        let mut carry = u32::from(d256);
         if leading_zeroes && carry == 0 {
             leading_zero_count += 1;
         } else {
@@ -216,7 +216,7 @@ where
         }
 
         for ch in buf.slice_mut() {
-            let new_ch = usize::from(*ch) * 256 + carry;
+            let new_ch = u32::from(*ch) * 256 + carry;
             *ch = (new_ch % 58) as u8; // cast loses data intentionally
             carry = new_ch / 58;
         }
