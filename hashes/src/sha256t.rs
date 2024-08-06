@@ -227,11 +227,7 @@ macro_rules! sha256t_hash_newtype {
             /// Hashes some bytes.
             #[allow(unused)] // the user of macro may not need this
             pub fn hash(data: &[u8]) -> Self {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                engine.input(data);
-                Self::from_engine(engine)
+                <$hash_name as $crate::GeneralHash>::hash(data)
             }
 
             /// Hashes all the byte slices retrieved from the iterator together.
@@ -241,13 +237,7 @@ macro_rules! sha256t_hash_newtype {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                use $crate::HashEngine;
-
-                let mut engine = Self::engine();
-                for slice in byte_slices {
-                    engine.input(slice.as_ref());
-                }
-                Self::from_engine(engine)
+                <$hash_name as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
 
             /// Hashes the entire contents of the `reader`.
