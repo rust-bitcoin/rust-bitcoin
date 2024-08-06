@@ -146,7 +146,15 @@ impl Hash {
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
-    pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).bytes) }
+    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use Self::hash_unoptimized")]
+    pub const fn const_hash(bytes: &[u8]) -> Self { Hash::hash_unoptimized(bytes) }
+
+    /// Computes hash from `bytes` in `const` context.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context.
+    pub const fn hash_unoptimized(bytes: &[u8]) -> Self {
+        Hash(Midstate::compute_midstate_unoptimized(bytes, true).bytes)
+    }
 }
 
 /// Unfinalized output of the SHA256 hash function.
@@ -203,14 +211,14 @@ impl Midstate {
     /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in [`sha256t`]. It's
     /// provided for use with [`sha256t`].
     pub const fn hash_tag(tag: &[u8]) -> Self {
-        let hash = Hash::const_hash(tag);
+        let hash = Hash::hash_unoptimized(tag);
         let mut buf = [0u8; 64];
         let mut i = 0usize;
         while i < buf.len() {
             buf[i] = hash.0[i % hash.0.len()];
             i += 1;
         }
-        Self::const_hash(&buf, false)
+        Self::compute_midstate_unoptimized(&buf, false)
     }
 }
 
@@ -336,7 +344,7 @@ impl Midstate {
         w
     }
 
-    const fn const_hash(bytes: &[u8], finalize: bool) -> Self {
+    const fn compute_midstate_unoptimized(bytes: &[u8], finalize: bool) -> Self {
         let mut state = [
             0x6a09e667u32,
             0xbb67ae85,
@@ -1018,15 +1026,15 @@ mod tests {
     }
 
     #[test]
-    fn const_hash() {
-        assert_eq!(Hash::hash(&[]), Hash::const_hash(&[]));
+    fn hash_unoptimized() {
+        assert_eq!(Hash::hash(&[]), Hash::hash_unoptimized(&[]));
 
         let mut bytes = Vec::new();
         for i in 0..256 {
             bytes.push(i as u8);
             assert_eq!(
                 Hash::hash(&bytes),
-                Hash::const_hash(&bytes),
+                Hash::hash_unoptimized(&bytes),
                 "hashes don't match for length {}",
                 i + 1
             );
