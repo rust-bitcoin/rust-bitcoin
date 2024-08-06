@@ -96,6 +96,24 @@ where
         Self::from_engine(engine)
     }
 
+    /// Hashes the entire contents of the `reader`.
+    #[cfg(feature = "bitcoin-io")]
+    pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
+        let mut engine = Self::engine();
+        loop {
+            let bytes = reader.fill_buf()?;
+
+            let read = bytes.len();
+            if read == 0 {      // Empty slice means EOF.
+                break
+            }
+
+            engine.input(bytes);
+            reader.consume(read);
+        }
+        Ok(Self::from_engine(engine))
+    }
+
     /// Returns the underlying byte array.
     pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
@@ -230,6 +248,13 @@ macro_rules! sha256t_hash_newtype {
                     engine.input(slice.as_ref());
                 }
                 Self::from_engine(engine)
+            }
+
+            /// Hashes the entire contents of the `reader`.
+            #[cfg(feature = "bitcoin-io")]
+            #[allow(unused)] // the user of macro may not need this
+            fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
+                <$hash_name as $crate::GeneralHash>::hash_reader(reader)
             }
         }
 

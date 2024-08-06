@@ -209,6 +209,13 @@ macro_rules! hash_type {
                 Self::from_engine(engine)
             }
 
+
+            /// Hashes the entire contents of the `reader`.
+            #[cfg(feature = "bitcoin-io")]
+            pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
+                <Self as crate::GeneralHash>::hash_reader(reader)
+            }
+
             /// Returns the underlying byte array.
             pub const fn to_byte_array(self) -> [u8; $bits / 8] { self.0 }
 
