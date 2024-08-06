@@ -1,0 +1,25 @@
+[package]
+name = "bitcoin-consensus-encoding"
+version = "0.0.1-preview"
+authors = ["Martin Habovstiak <martin.habovstiak@gmail.com>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+description = "Traits and tools for consensus-encoding/decoding Bitcoin types"
+categories = ["cryptography::cryptocurrencies"]
+keywords = [ "bitcoin", "consensus", "encoding", "decoding" ]
+readme = "../README.md"
+edition = "2021"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc", "push_decode/std"]
+alloc = ["push_decode/alloc"]
+primitives = ["actual_primitives", "units"]
+
+[dependencies]
+actual_primitives = { package = "bitcoin-primitives", version = "0.100.0", optional = true }
+push_decode = { version = "0.4.2", default-features = false }
+hashes = { package = "bitcoin_hashes", version = "0.14", optional = true, default-features = false }
+internals = { package = "bitcoin-internals", version = "0.3.0", default-features = false }
+units = { package = "bitcoin-units", version = "0.1", optional = true, default-features = false }

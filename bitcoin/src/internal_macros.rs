@@ -177,17 +177,8 @@ pub(crate) use impl_array_newtype_stringify;
 #[rustfmt::skip]
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {
-        impl $crate::consensus::Encodable for $hashtype {
-            fn consensus_encode<W: $crate::io::Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, $crate::io::Error> {
-                self.0.consensus_encode(w)
-            }
-        }
-
-        impl $crate::consensus::Decodable for $hashtype {
-            fn consensus_decode<R: $crate::io::BufRead + ?Sized>(r: &mut R) -> core::result::Result<Self, $crate::consensus::encode::Error> {
-                Ok(Self::from_byte_array(<<$hashtype as $crate::hashes::Hash>::Bytes>::consensus_decode(r)?))
-            }
-        }
+        crate::impl_encodable_using_encode!($hashtype);
+        crate::impl_decodable_using_decode!($hashtype);
     };
 }
 pub(crate) use impl_hashencode;

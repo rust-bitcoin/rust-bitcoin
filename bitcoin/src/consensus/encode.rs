@@ -18,6 +18,35 @@ use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, GeneralHash, Hash};
 use hex::error::{InvalidCharError, OddLengthStringError};
+
+macro_rules! impl_decodable_using_decode {
+    ($type:ty) => {
+        impl crate::consensus::encode::Decodable for $type {
+            #[inline]
+            fn consensus_decode_from_finite_reader<R: crate::io::BufRead + ?Sized>(
+                reader: &mut R,
+            ) -> core::result::Result<Self, crate::consensus::encode::Error> {
+                crate::consensus::encode::decode_sync::<<$type as consensus_encoding::Decode>::Decoder, _>(reader).map_err(Into::into)
+            }
+        }
+    }
+}
+pub(crate) use impl_decodable_using_decode;
+
+macro_rules! impl_encodable_using_encode {
+    ($type:ty) => {
+        impl crate::consensus::encode::Encodable for $type {
+            fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> core::result::Result<usize, io::Error> {
+                crate::consensus::encode::encode_sync(self, writer)
+            }
+        }
+    }
+}
+
+pub(crate) use impl_encodable_using_encode;
+
+use consensus_encoding::{ReadError, Decoder};
+pub use consensus_encoding::{VarIntDecoder, VarIntDecodeError};
 use internals::write_err;
 use io::{BufRead, Cursor, Read, Write};
 
@@ -34,6 +63,42 @@ use crate::p2p::{
 use crate::prelude::{rc, sync, Box, Cow, DisplayHex, String, Vec};
 use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
+
+// Copied from push_decode to support `bitcoin-io`
+pub(crate) fn decode_sync<D: Decoder + Default, R: io::BufRead + ?Sized>(reader: &mut R) -> Result<D::Value, ReadError<D::Error, io::Error>> {
+    let mut decoder = D::default();
+    loop {
+        let buf = match reader.fill_buf() {
+            Ok(buf) => buf,
+            Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(ReadError::Read(error)),
+        };
+        if buf.is_empty() {
+            break decoder.end().map_err(ReadError::Decode);
+        }
+        let num = decoder.bytes_received(buf).map_err(ReadError::Decode)?;
+        let buf_len = buf.len();
+        reader.consume(num);
+        if num < buf_len {
+            break decoder.end().map_err(ReadError::Decode);
+        }
+    }
+}
+
+pub(crate) fn encode_sync<T: consensus_encoding::Encode + ?Sized, W: Write + ?Sized>(value: &T, writer: &mut W) -> io::Result<usize> {
+    use consensus_encoding::Encoder;
+
+    let mut encoder = value.encoder();
+    let mut total = 0;
+    while !encoder.encoded_chunk().is_empty() {
+        writer.write_all(encoder.encoded_chunk())?;
+        total += encoder.encoded_chunk().len();
+        if !encoder.next() {
+            break;
+        }
+    }
+    Ok(total)
+}
 
 /// Encoding error.
 #[derive(Debug)]
@@ -120,6 +185,15 @@ impl fmt::Display for FromHexError {
             OddLengthString(ref e) =>
                 write_err!(f, "odd length, failed to create bytes from hex"; e),
             Decode(ref e) => write_err!(f, "decoding error"; e),
+        }
+    }
+}
+
+impl<E: fmt::Debug> From<ReadError<E, io::Error>> for Error {
+    fn from(value: ReadError<E, io::Error>) -> Self {
+        match value {
+            ReadError::Read(error) => Error::Io(error),
+            ReadError::Decode(error) => Error::Io(io::Error::new(io::ErrorKind::InvalidData, format!("{:?}", error))),
         }
     }
 }
@@ -880,18 +954,6 @@ impl Encodable for sha256::Hash {
 }
 
 impl Decodable for sha256::Hash {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
-    }
-}
-
-impl Encodable for TapLeafHash {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.as_byte_array().consensus_encode(w)
-    }
-}
-
-impl Decodable for TapLeafHash {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }

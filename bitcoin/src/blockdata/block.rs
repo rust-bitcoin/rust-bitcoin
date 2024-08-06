@@ -37,6 +37,14 @@ impl BlockHash {
     pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
 }
 
+consensus_encoding::hash_decoder! {
+    BlockHash => pub BlockHashDecoder;
+}
+
+consensus_encoding::hash_encoder! {
+    BlockHash;
+}
+
 /// Bitcoin block header.
 ///
 /// Contains all the block's information except the actual transactions, but

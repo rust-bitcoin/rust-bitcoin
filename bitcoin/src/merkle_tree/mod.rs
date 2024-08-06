@@ -36,6 +36,16 @@ hashes::hash_newtype! {
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
+consensus_encoding::hash_decoder! {
+    TxMerkleNode => pub TxMerkleNodeDecoder;
+    WitnessMerkleNode => pub WitnessMerkleNodeDecoder;
+}
+
+consensus_encoding::hash_encoder! {
+    TxMerkleNode;
+    WitnessMerkleNode;
+}
+
 /// A node in a Merkle tree of transactions or witness data within a block.
 ///
 /// This trait is used to compute the transaction Merkle root contained in

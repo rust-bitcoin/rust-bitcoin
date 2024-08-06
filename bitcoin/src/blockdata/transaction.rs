@@ -10,24 +10,26 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
+use core::ops::ControlFlow;
 use core::{cmp, fmt, str};
 
 use hashes::sha256d;
 use internals::write_err;
-use io::{BufRead, Write};
 use primitives::Sequence;
 use units::parse;
 
+use consensus_encoding::{Decoder, VecDecoder, VecDecodeError, SliceEncoder, UnprefixedIterEncoder, impl_struct_decode, impl_struct_encode, mapped_decoder, encoder_newtype};
+use consensus_encoding::push_decode::decoders::U8Decoder;
 use super::Weight;
-use crate::consensus::{encode, Decodable, Encodable};
-use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
+use crate::internal_macros::impl_hashencode;
 use crate::locktime::absolute::{self, Height, Time};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
-use crate::witness::Witness;
+use crate::witness::{Witness, WitnessDecoder, WitnessDecodeError};
 use crate::{Amount, FeeRate, SignedAmount, VarInt};
+use crate::{impl_encodable_using_encode, impl_decodable_using_decode};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -45,6 +47,15 @@ hashes::hash_newtype! {
 }
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
+consensus_encoding::hash_decoder! {
+    Txid => pub TxidDecoder;
+    Wtxid => pub WtxidDecoder;
+}
+
+consensus_encoding::hash_encoder! {
+    Txid;
+    Wtxid;
+}
 
 impl Txid {
     /// The "all zeros" TXID.
@@ -544,12 +555,9 @@ impl Transaction {
     /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
-        let mut enc = sha256d::Hash::engine();
-        self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
-        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid(sha256d::Hash::from_engine(enc))
+        use consensus_encoding::EncoderExt;
+
+        Txid(TransactionEncoder::custom(self, false).hash())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -568,9 +576,9 @@ impl Transaction {
     /// this will be equal to [`Transaction::txid()`].
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
-        let mut enc = sha256d::Hash::engine();
-        self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid(sha256d::Hash::from_engine(enc))
+        use consensus_encoding::Encode;
+
+        Wtxid(self.hash_consensus_encoded())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
@@ -937,137 +945,476 @@ impl Version {
     pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
 }
 
-impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
+impl_decodable_using_decode!(Version);
+impl_encodable_using_encode!(Version);
+
+mapped_decoder! {
+    Version => #[derive(Default)] pub struct VersionDecoder(<i32 as consensus_encoding::Decode>::Decoder) using Version;
 }
 
-impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version)
-    }
+encoder_newtype! {
+    Version => pub struct VersionEncoder(consensus_encoding::IntEncoder<i32>) map i32 as |version: &Version| version.0;
 }
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl_consensus_encoding!(TxOut, value, script_pubkey);
-
-impl Encodable for OutPoint {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(w)?;
-        Ok(len + self.vout.consensus_encode(w)?)
-    }
-}
-impl Decodable for OutPoint {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(OutPoint {
-            txid: Decodable::consensus_decode(r)?,
-            vout: Decodable::consensus_decode(r)?,
-        })
+impl_struct_decode! {
+    (TxOut, TxOutDecodeError) => pub struct TxOutDecoder {
+        /// Error returned when parsing `Amount` fails.
+        Value { value: Amount },
+        /// Error returned when parsing `ScriptBuf` fails.
+        ScriptPubkey { script_pubkey: ScriptBuf },
     }
 }
 
-impl Encodable for TxIn {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.previous_output.consensus_encode(w)?;
-        len += self.script_sig.consensus_encode(w)?;
-        len += self.sequence.consensus_encode(w)?;
-        Ok(len)
-    }
-}
-impl Decodable for TxIn {
-    #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(TxIn {
-            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
-            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
-            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
-            witness: Witness::default(),
-        })
+impl fmt::Display for TxOutDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Value(error) => write_err!(f, "failed to decode value (amount)"; error),
+            Self::ScriptPubkey(error) => write_err!(f, "failed to decode script pubkey"; error),
+        }
     }
 }
 
-impl Encodable for Sequence {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+impl_struct_encode! {
+    TxOut => pub struct TxOutEncoder {
+        Value { value: Amount },
+        ScriptPubkey { script_pubkey: ScriptBuf },
+    }
+
+    enum TxOutEncoderState<'_> { ... }
+}
+
+impl_decodable_using_decode!(TxOut);
+impl_encodable_using_encode!(TxOut);
+
+impl_decodable_using_decode!(OutPoint);
+impl_encodable_using_encode!(OutPoint);
+
+impl_struct_decode! {
+    (OutPoint, OutPointDecodeError) => pub struct OutPointDecoder {
+        /// Failed to decode transaction ID.
+        Txid { txid: Txid },
+        /// Failed to decode output index
+        VOut { vout: u32 },
     }
 }
 
-impl Decodable for Sequence {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Sequence)
+impl_struct_encode! {
+    OutPoint => pub struct OutPointEncoder {
+        Txid { txid: Txid },
+        VOut { vout: u32 },
+    }
+
+    enum OutPointEncoderState<'_> { ... }
+}
+
+impl fmt::Display for OutPointDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Txid(error) => write_err!(f, "failed to decode transaction ID"; error),
+            Self::VOut(error) => write_err!(f, "failed to decode index of previous output"; error),
+        }
     }
 }
 
-impl Encodable for Transaction {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.version.consensus_encode(w)?;
+impl_decodable_using_decode!(TxIn);
+impl_encodable_using_encode!(TxIn);
 
-        // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.uses_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-        } else {
-            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-            for input in &self.input {
-                len += input.witness.consensus_encode(w)?;
+mapped_decoder! {
+    TxIn => #[derive(Default)] pub struct TxInDecoder(NonWitnessTxInDecoder)
+    using |txin| {
+        TxIn {
+            previous_output:
+                txin.previous_output,
+                script_sig: txin.script_sig,
+                sequence: txin.sequence,
+                witness: Default::default()
+        }
+    };
+}
+
+impl_struct_encode! {
+    TxIn => pub struct TxInEncoder {
+        PreviousOutput { previous_output: OutPoint },
+        ScriptSig { script_sig: ScriptBuf },
+        Sequence { sequence: Sequence },
+    }
+
+    enum TxInEncoderState<'_> { ... }
+}
+
+pub use non_witness_txin::TxInDecodeError;
+use non_witness_txin::NonWitnessTxInDecoder;
+
+// hack to make the error public but not the other types
+mod non_witness_txin {
+    use super::{OutPoint, ScriptBuf, Sequence};
+
+    #[derive(Debug)]
+    pub struct NonWitnessTxIn {
+        pub(crate) previous_output: OutPoint,
+        pub(crate) script_sig: ScriptBuf,
+        pub(crate) sequence: Sequence,
+    }
+
+    consensus_encoding::impl_struct_decode! {
+        (NonWitnessTxIn, TxInDecodeError) => pub struct NonWitnessTxInDecoder {
+            /// Decoding of the previous output failed.
+            PreviousOutput { previous_output: OutPoint },
+            /// Decoding of script_sig failed.
+            ScriptSig { script_sig: ScriptBuf },
+            /// Decoding of sequence number failed.
+            Sequence { sequence: Sequence },
+        }
+    }
+
+}
+
+impl fmt::Display for TxInDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::PreviousOutput(error) => write_err!(f, "failed to decode previous output"; error),
+            Self::ScriptSig(error) => write_err!(f, "failed to decode signing script"; error),
+            Self::Sequence(error) => write_err!(f, "failed to decode sequence"; error),
+        }
+    }
+}
+
+impl_decodable_using_decode!(Sequence);
+impl_encodable_using_encode!(Sequence);
+
+consensus_encoding::gat_like! {
+    impl Encode for Transaction {
+        type Encoder<'a> = TransactionEncoder<'a>;
+
+        const MIN_ENCODED_LEN: usize = 4 + 1 + 1 + 4;
+        const IS_KNOWN_LEN: bool = false;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            TransactionEncoder::custom(self, self.uses_segwit_serialization())
+        }
+
+        fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+            let (mut total_len, max_steps) = SliceEncoder::dyn_len(&self.input, max_steps);
+            if max_steps == 0 {
+                return (total_len, max_steps);
+            }
+            let (len, max_steps) = SliceEncoder::dyn_len(&self.output, max_steps - 1);
+            total_len += len;
+            if max_steps == 0 {
+                return (total_len, max_steps);
+            }
+            if self.uses_segwit_serialization() {
+                total_len += 2;
+                let (len, max_steps) = UnprefixedIterEncoder::dyn_len(self.input.iter().map(|txin| &txin.witness), max_steps - 1);
+                total_len += len;
+                (total_len, max_steps)
+            } else {
+                (total_len, max_steps)
             }
         }
-        len += self.lock_time.consensus_encode(w)?;
-        Ok(len)
     }
 }
 
-impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let version = Version::consensus_decode_from_finite_reader(r)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-        // segwit
-        if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
-            match segwit_flag {
-                // BIP144 input witnesses
-                1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
-                    for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
-                    }
-                    if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
+/// Encoder of [`Transaction`].
+///
+/// For more information about encoders check the [`Encoder`](consensus_encoding::Encoder) trait
+pub struct TransactionEncoder<'a> {
+    tx: &'a Transaction,
+    segwit: bool,
+    state: TransactionEncoderState<'a>,
+}
+
+impl<'a> TransactionEncoder<'a> {
+    fn custom(tx: &'a Transaction, segwit: bool) -> Self {
+        use consensus_encoding::Encode;
+
+        TransactionEncoder {
+            tx,
+            segwit,
+            state: TransactionEncoderState::Version(tx.version.encoder()),
+        }
+    }
+}
+
+type WitnessesEncoder<'a> = UnprefixedIterEncoder<'a, Witness, core::iter::Map<core::slice::Iter<'a, TxIn>, for<'b> fn(&'b TxIn) -> &'b Witness>>;
+
+enum TransactionEncoderState<'a> {
+    Version(VersionEncoder),
+    SegWitMarker,
+    Inputs(SliceEncoder<'a, TxIn>),
+    Outputs(SliceEncoder<'a, TxOut>),
+    Witnesses(WitnessesEncoder<'a>),
+    LockTime(consensus_encoding::LockTimeEncoder),
+}
+
+impl<'a> consensus_encoding::Encoder for TransactionEncoder<'a> {
+    fn encoded_chunk(&self) -> &[u8] {
+        match &self.state {
+            TransactionEncoderState::Version(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::SegWitMarker => &[SEGWIT_MARKER, SEGWIT_FLAG],
+            TransactionEncoderState::Inputs(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::Outputs(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::Witnesses(encoder) => encoder.encoded_chunk(),
+            TransactionEncoderState::LockTime(encoder) => encoder.encoded_chunk(),
+        }
+    }
+
+    fn next(&mut self) -> bool {
+        use consensus_encoding::Encode;
+
+        fn extract_witness(txin: &TxIn) -> &Witness {
+            &txin.witness
+        }
+
+        match &mut self.state {
+            TransactionEncoderState::Version(encoder) => {
+                if !encoder.next() {
+                    if self.segwit {
+                        self.state = TransactionEncoderState::SegWitMarker;
                     } else {
-                        Ok(Transaction {
-                            version,
-                            input,
-                            output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-                        })
+                        self.state = TransactionEncoderState::Inputs(SliceEncoder::new(&self.tx.input));
                     }
                 }
-                // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
             }
-        // non-segwit
+            TransactionEncoderState::SegWitMarker => {
+                self.state = TransactionEncoderState::Inputs(SliceEncoder::new(&self.tx.input));
+            }
+            TransactionEncoderState::Inputs(encoder) => {
+                if !encoder.next() {
+                    self.state = TransactionEncoderState::Outputs(SliceEncoder::new(&self.tx.output));
+                }
+            },
+            TransactionEncoderState::Outputs(encoder) => {
+                if !encoder.next() {
+                    if self.segwit {
+                        let encoder = UnprefixedIterEncoder::new(self.tx.input.iter().map(extract_witness as fn(&TxIn) -> &Witness));
+                        // witnesses can be empty when serializing 0-input transaction
+                        if encoder.encoded_chunk().is_empty() {
+                            self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                        } else {
+                            self.state = TransactionEncoderState::Witnesses(encoder);
+                        }
+                    } else {
+                        self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                    }
+                }
+            },
+            TransactionEncoderState::Witnesses(encoder) => {
+                if !encoder.next() {
+                    self.state = TransactionEncoderState::LockTime(self.tx.lock_time.encoder())
+                }
+            },
+            TransactionEncoderState::LockTime(encoder) => {
+                return encoder.next();
+            },
+        }
+        true
+    }
+}
+
+impl consensus_encoding::Decode for Transaction {
+    type Decoder = TransactionDecoder;
+}
+
+/// Decodes the transaction.
+///
+/// For more information about decoder see the documentation of the [`Decoder`] trait.
+#[derive(Debug)]
+pub struct TransactionDecoder(TxDecoderState);
+
+impl Default for TransactionDecoder {
+    fn default() -> Self {
+        TransactionDecoder(TxDecoderState::Version(Default::default()))
+    }
+}
+
+#[derive(Debug)]
+enum TxDecoderState {
+    Version(VersionDecoder),
+    Inputs { version: Version, inputs: VecDecoder<TxIn> },
+    SegWitFlag { version: Version, segwit_flag: U8Decoder },
+    SegWitInputs { version: Version, inputs: VecDecoder<TxIn> },
+    Witnesses { version: Version, inputs: Vec<TxIn>, outputs: Vec<TxOut>, witness_index: usize, current_witness: WitnessDecoder },
+    Outputs { version: Version, inputs: Vec<TxIn>, outputs: VecDecoder<TxOut>, is_segwit: bool },
+    LockTime { version: Version, inputs: Vec<TxIn>, outputs: Vec<TxOut>, lock_time: consensus_encoding::LockTimeDecoder },
+}
+
+impl Decoder for TransactionDecoder {
+    type Value = Transaction;
+    type Error = TransactionDecodeError;
+
+    fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        Self::wrap_sub_decode(|| {
+            // ifs because of intentional fallthrough
+            if let TxDecoderState::Version(decoder) = &mut self.0 {
+                let version = decoder.sub_decode(bytes, TransactionDecodeError::Version)?;
+                self.0 = TxDecoderState::Inputs {
+                    version,
+                    inputs: Default::default(),
+                };
+            }
+            if let TxDecoderState::Inputs { version, inputs } = &mut self.0 {
+                let inputs = inputs.sub_decode(bytes, TransactionDecodeError::Inputs)?;
+                if inputs.is_empty() {
+                    self.0 = TxDecoderState::SegWitFlag {
+                        version: *version,
+                        segwit_flag: Default::default(),
+                    };
+                } else {
+                    self.0 = TxDecoderState::Outputs {
+                        version: *version,
+                        inputs,
+                        outputs: Default::default(),
+                        is_segwit: false,
+                    };
+                }
+            }
+            if let TxDecoderState::SegWitFlag { version, segwit_flag } = &mut self.0 {
+                let segwit_flag = segwit_flag.sub_decode(bytes, TransactionDecodeError::SegWitFlag)?;
+                match segwit_flag {
+                    // BIP144 input witnesses
+                    1 => {
+                        self.0 = TxDecoderState::SegWitInputs {
+                            version: *version,
+                            inputs: Default::default(),
+                        };
+                    }
+                    // We don't support anything else
+                    x => return ControlFlow::Break(Err(TransactionDecodeError::UnsupportedSegWitFlag(x))),
+                }
+            }
+            if let TxDecoderState::SegWitInputs { version, inputs } = &mut self.0 {
+                let inputs = inputs.sub_decode(bytes, TransactionDecodeError::SegWitInputs)?;
+                self.0 = TxDecoderState::Outputs {
+                    version: *version,
+                    inputs,
+                    outputs: Default::default(),
+                    is_segwit: true,
+                };
+            }
+            if let TxDecoderState::Outputs { version, inputs, outputs, is_segwit } = &mut self.0 {
+                let outputs = outputs.sub_decode(bytes, TransactionDecodeError::Outputs)?;
+                if *is_segwit {
+                    self.0 = TxDecoderState::Witnesses {
+                        version: *version,
+                        inputs: core::mem::take(inputs),
+                        outputs,
+                        witness_index: 0,
+                        current_witness: Default::default(),
+                    };
+                } else {
+                    self.0 = TxDecoderState::LockTime {
+                        version: *version,
+                        inputs: core::mem::take(inputs),
+                        outputs,
+                        lock_time: Default::default(),
+                    };
+                }
+            }
+            if let TxDecoderState::Witnesses { version, inputs, outputs, witness_index, current_witness } = &mut self.0 {
+                while *witness_index < inputs.len() {
+                    let witness = current_witness.sub_decode(bytes, TransactionDecodeError::Witness)?;
+                    inputs[*witness_index].witness = witness;
+                    *witness_index += 1;
+                }
+                if !inputs.is_empty() && inputs.iter().all(|input| input.witness.is_empty()) {
+                    return ControlFlow::Break(Err(TransactionDecodeError::EmptyWitnesses { input_len: inputs.len() }))
+                }
+                // TODO: check witnesses
+                self.0 = TxDecoderState::LockTime {
+                    version: *version,
+                    inputs: core::mem::take(inputs),
+                    outputs: core::mem::take(outputs),
+                    lock_time: Default::default(),
+                };
+            }
+            if let TxDecoderState::LockTime { version: _, inputs: _, outputs: _, lock_time } = &mut self.0 {
+                let result = lock_time.decode_chunk(bytes).map_err(TransactionDecodeError::LockTime);
+                return ControlFlow::Break(result);
+            }
+            unreachable!();
+        })
+    }
+
+    fn end(self) -> Result<Self::Value, Self::Error> {
+        if let TxDecoderState::LockTime { version, inputs, outputs, lock_time } = self.0 {
+            let lock_time = lock_time.end().map_err(TransactionDecodeError::LockTime)?;
+            Ok(Transaction { version, input: inputs, output: outputs, lock_time })
         } else {
-            Ok(Transaction {
-                version,
-                input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-            })
+            Err(TransactionDecodeError::UnexpectedEnd)
+        }
+    }
+}
+
+impl_decodable_using_decode!(Transaction);
+impl_encodable_using_encode!(Transaction);
+
+/// Returned when decoding of a transaction fails.
+#[derive(Debug)]
+pub enum TransactionDecodeError {
+    /// Decoding of version failed.
+    Version(consensus_encoding::push_decode::error::UnexpectedEnd),
+    /// Decoding of inputs failed.
+    Inputs(VecDecodeError<TxInDecodeError>),
+    /// Decoding of SegWitFlag failed.
+    SegWitFlag(consensus_encoding::push_decode::error::UnexpectedEnd),
+    /// The segwit flag is not supported.
+    UnsupportedSegWitFlag(u8),
+    /// Decoding of segwit inputs failed.
+    SegWitInputs(VecDecodeError<TxInDecodeError>),
+    /// Decoding of outputs failed.
+    Outputs(VecDecodeError<TxOutDecodeError>),
+    /// Decoding of witness failed.
+    Witness(WitnessDecodeError),
+    /// The segwit flag was set however no witness is present.
+    EmptyWitnesses {
+        /// How many inputs were in the transaction.
+        ///
+        /// This is mainly  used to report that it wasn't zero.
+        input_len: usize
+    },
+    /// Decoding of lock time failed.
+    LockTime(consensus_encoding::push_decode::error::UnexpectedEnd),
+    /// The input reached end (EOF) unexpectedly.
+    UnexpectedEnd,
+}
+
+impl fmt::Display for TransactionDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Version(error) => write_err!(f, "failed to decode version"; error),
+            Self::Inputs(error) => write_err!(f, "failed to decode inputs"; error),
+            Self::SegWitFlag(error) => write_err!(f, "failed to decode SegWit flag"; error),
+            Self::UnsupportedSegWitFlag(flag) => write!(f, "unsupported SegWit flag {}", flag),
+            Self::SegWitInputs(error) => write_err!(f, "failed to parse inputs (SegWit transaction)"; error),
+            Self::Outputs(error) => write_err!(f, "failed to parse outputs"; error),
+            Self::Witness(error) => write_err!(f, "failed to parse a witness"; error),
+            Self::EmptyWitnesses { input_len: 1 } => write!(f, "transaction has SegWit flag, one input but no witnesses"),
+            Self::EmptyWitnesses { input_len } => write!(f, "transaction has SegWit flag, {} inputs but no witnesses", input_len),
+            Self::LockTime(error) => write_err!(f, "failed to parse lock time"; error),
+            Self::UnexpectedEnd => write!(f, "the input reached end (EOF) unexpectedly"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TransactionDecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Version(error) => Some(error),
+            Self::Inputs(error) => Some(error),
+            Self::SegWitFlag(error) => Some(error),
+            Self::UnsupportedSegWitFlag(_) => None,
+            Self::SegWitInputs(error) => Some(error),
+            Self::Outputs(error) => Some(error),
+            Self::Witness(error) => Some(error),
+            Self::EmptyWitnesses { input_len: _ } => None,
+            Self::LockTime(error) => Some(error),
+            Self::UnexpectedEnd => None,
         }
     }
 }
@@ -1426,8 +1773,10 @@ mod tests {
     use internals::serde_round_trip;
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
-    use crate::constants::WITNESS_SCALE_FACTOR;
+    use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+    use crate::blockdata::locktime::absolute;
+    use crate::blockdata::script::ScriptBuf;
+    use crate::consensus::encode::{Decodable, Encodable, deserialize, serialize};
     use crate::sighash::EcdsaSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
@@ -1526,6 +1875,16 @@ mod tests {
     }
 
     #[test]
+    fn txout() {
+        use consensus_encoding::Encode;
+        let expected = hex!("2a000000000000000115");
+        let txout: TxOut = deserialize(&expected).unwrap();
+        assert_eq!(txout.value.to_sat(), 42);
+        assert_eq!(txout.script_pubkey.as_bytes(), &[21]);
+        assert_eq!(txout.consensus_encode_to_vec(), expected);
+    }
+
+    #[test]
     fn txin_default() {
         let txin = TxIn::default();
         assert_eq!(txin.previous_output, OutPoint::default());
@@ -1583,10 +1942,12 @@ mod tests {
 
     #[test]
     fn segwit_invalid_transaction() {
+        use consensus_encoding::Decode;
+
         let tx_bytes = hex!("0000fd000001021921212121212121212121f8b372b0239cc1dff600000000004f4f4f4f4f4f4f4f000000000000000000000000000000333732343133380d000000000000000000000000000000ff000000000009000dff000000000000000800000000000000000d");
-        let tx: Result<Transaction, _> = deserialize(&tx_bytes);
+        let tx = Transaction::consensus_decode_slice(&tx_bytes);
         assert!(tx.is_err());
-        assert!(tx.unwrap_err().to_string().contains("witness flag set but no witnesses present"));
+        assert!(matches!(tx.unwrap_err(), TransactionDecodeError::EmptyWitnesses { input_len: _ }));
     }
 
     #[test]
@@ -1599,7 +1960,7 @@ mod tests {
             55d3bcb8627d085e94553e62f057dcc00000000"
         );
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
-        assert!(tx.is_ok());
+        //assert!(tx.is_ok());
         let realtx = tx.unwrap();
         // All these tests aren't really needed because if they fail, the hash check at the end
         // will also fail. But these will show you where the failure is so I'll leave them in.

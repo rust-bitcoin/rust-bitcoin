@@ -5,6 +5,7 @@
 //! This module defines structures, functions, and traits that are needed to
 //! conform to Bitcoin consensus.
 
+#[macro_use]
 pub mod encode;
 #[cfg(feature = "serde")]
 pub mod serde;

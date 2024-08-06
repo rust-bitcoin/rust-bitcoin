@@ -1,5 +1,5 @@
 [workspace]
-members = ["addresses", "base58", "bitcoin", "fuzz", "hashes", "internals", "io", "primitives", "units"]
+members = ["addresses", "base58", "bitcoin", "consensus-encoding", "fuzz", "hashes", "internals", "io", "primitives", "units"]
 resolver = "2"
 
 [patch.crates-io.bitcoin-addresses]

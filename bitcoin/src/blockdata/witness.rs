@@ -7,14 +7,20 @@
 use core::fmt;
 use core::ops::Index;
 
-use io::{BufRead, Write};
+use internals::write_err;
+use consensus_encoding::push_decode::decoders::combinators::ThenTryFnPtr;
+use consensus_encoding::{Decode, Decoder, EncodeTc, Encoder, VarIntEncoder, encoder_newtype};
 
-use crate::consensus::encode::{Error, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::encode::{VarIntDecoder, VarIntDecodeError, MAX_VEC_SIZE};
+use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
+use crate::io;
 use crate::prelude::Vec;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
+
+// This is used in two places, so redefined as a separate constant to keep them in sync.
+const MAX_WITNESS_ELEMENTS: u64 = MAX_VEC_SIZE as u64;
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
@@ -128,70 +134,235 @@ pub struct Iter<'a> {
     current_index: usize,
 }
 
-impl Decodable for Witness {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
-        // Minimum size of witness element is 1 byte, so if the count is
-        // greater than MAX_VEC_SIZE we must return an error.
-        if witness_elements > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation {
-                requested: witness_elements,
-                max: MAX_VEC_SIZE,
-            });
+crate::impl_decodable_using_decode!(Witness);
+crate::impl_encodable_using_encode!(Witness);
+
+impl Decode for Witness {
+    type Decoder = WitnessDecoder;
+}
+
+type WitnessInnerDecoder = ThenTryFnPtr<WitnessDecodeError, VarIntDecoder, WitnessDataDecoder>;
+
+/// A decoder used to decode [`Witness`].
+#[derive(Debug)]
+pub struct WitnessDecoder(WitnessInnerDecoder);
+
+impl Decoder for WitnessDecoder {
+    type Value = Witness;
+    type Error = WitnessDecodeError;
+
+    fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        self.0.decode_chunk(bytes).map_err(Into::into)
+    }
+
+    fn end(self) -> Result<Self::Value, Self::Error> {
+        self.0.end().map_err(Into::into)
+    }
+}
+
+impl Default for WitnessDecoder {
+    fn default() -> Self {
+        WitnessDecoder(VarIntDecoder::default().then_try(WitnessDataDecoder::new))
+    }
+}
+
+#[derive(Debug)]
+struct WitnessDataDecoder {
+    witness_elements: usize,
+    buf: Vec<u8>,
+    elements_received: usize,
+    cur_elem_len: CurrentElemLen,
+}
+
+#[derive(Debug)]
+enum CurrentElemLen {
+    Receiving { decoder: VarIntDecoder, start: usize },
+    Received { len: usize, pos: usize },
+}
+
+impl WitnessDataDecoder {
+    fn new(witness_elements: u64) -> Result<Self, WitnessDecodeError> {
+        // This is still quite big but at least we don't pre-allocate crazy-big stuff.
+        if witness_elements > MAX_WITNESS_ELEMENTS {
+            return Err(DataSizeError { witness_elements }.into())
         }
-        if witness_elements == 0 {
-            Ok(Witness::default())
-        } else {
-            // Leave space at the head for element positions.
-            // We will rotate them to the end of the Vec later.
-            let witness_index_space = witness_elements * 4;
-            let mut cursor = witness_index_space;
+        let witness_elements = witness_elements as usize;
+        // this number should be determined as high enough to cover most witness, and low enough
+        // to avoid wasting space without reallocating
+        let capacity = witness_elements * 5 + 128;
+        let mut buf = Vec::with_capacity(capacity);
+        // just to fill the beginning with zeroes, we still have more reserved
+        buf.resize(witness_elements * 4, 0);
 
-            // this number should be determined as high enough to cover most witness, and low enough
-            // to avoid wasting space without reallocating
-            let mut content = vec![0u8; cursor + 128];
+        Ok(WitnessDataDecoder {
+            witness_elements,
+            buf,
+            elements_received: 0,
+            cur_elem_len: CurrentElemLen::Receiving { decoder: Default::default(), start: 0 },
+        })
+    }
+}
 
-            for i in 0..witness_elements {
-                let element_size_varint = VarInt::consensus_decode(r)?;
-                let element_size_varint_len = element_size_varint.size();
-                let element_size = element_size_varint.0 as usize;
-                let required_len = cursor
-                    .checked_add(element_size)
-                    .ok_or(self::Error::OversizedVectorAllocation {
-                        requested: usize::MAX,
-                        max: MAX_VEC_SIZE,
-                    })?
-                    .checked_add(element_size_varint_len)
-                    .ok_or(self::Error::OversizedVectorAllocation {
-                        requested: usize::MAX,
-                        max: MAX_VEC_SIZE,
-                    })?;
+impl Decoder for WitnessDataDecoder {
+    type Value = Witness;
+    type Error = WitnessDecodeError;
 
-                if required_len > MAX_VEC_SIZE + witness_index_space {
-                    return Err(self::Error::OversizedVectorAllocation {
-                        requested: required_len,
-                        max: MAX_VEC_SIZE,
-                    });
+    fn decode_chunk(&mut self, bytes: &mut &[u8]) -> Result<(), Self::Error> {
+        while self.elements_received < self.witness_elements {
+            // not match because of intentional fallthrough
+            if let CurrentElemLen::Receiving { decoder, start } = &mut self.cur_elem_len {
+                let len = decoder.bytes_received(bytes)?;
+                self.buf.extend_from_slice(&bytes[..len]);
+                *bytes = &bytes[len..];
+                if !bytes.is_empty() {
+                    let elem_len = decoder.clone().end()? as usize;
+                    encode_cursor(&mut self.buf, 0, self.elements_received, *start);
+                    self.cur_elem_len = CurrentElemLen::Received { len: elem_len, pos: 0 };
+                } else {
+                    return Ok(());
                 }
-
-                // We will do content.rotate_left(witness_index_space) later.
-                // Encode the position's value AFTER we rotate left.
-                encode_cursor(&mut content, 0, i, cursor - witness_index_space);
-
-                resize_if_needed(&mut content, required_len);
-                element_size_varint.consensus_encode(
-                    &mut &mut content[cursor..cursor + element_size_varint_len],
-                )?;
-                cursor += element_size_varint_len;
-                r.read_exact(&mut content[cursor..cursor + element_size])?;
-                cursor += element_size;
             }
-            content.truncate(cursor);
-            // Index space is now at the end of the Vec
-            content.rotate_left(witness_index_space);
-            Ok(Witness { content, witness_elements, indices_start: cursor - witness_index_space })
+            if let CurrentElemLen::Received { len, pos } = &mut self.cur_elem_len {
+                let to_copy = bytes.len().min(*len - *pos);
+                self.buf.extend_from_slice(&bytes[..to_copy]);
+                *pos += to_copy;
+                *bytes = &bytes[to_copy..];
+                if *pos == *len {
+                    self.elements_received += 1;
+                    self.cur_elem_len = CurrentElemLen::Receiving { decoder: Default::default(), start: self.buf.len() - self.witness_elements * 4 };
+                } else {
+                    return Ok(());
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn end(mut self) -> Result<Self::Value, Self::Error> {
+        if self.elements_received < self.witness_elements {
+            let error = WitnessUnexpectedEndError {
+                required_elements: self.witness_elements,
+                received_elements: self.elements_received,
+                last_element_len: self.cur_elem_len,
+            };
+            return Err(WitnessDecodeError::UnexpectedEnd(error));
+        }
+
+        self.buf.rotate_left(self.witness_elements * 4);
+        let indices_start = self.buf.len() - self.witness_elements * 4;
+
+        let witness = Witness {
+            content: self.buf,
+            witness_elements: self.witness_elements,
+            indices_start,
+        };
+        Ok(witness)
+    }
+}
+
+/// Error returned when decoding Witness fails.
+#[derive(Debug)]
+pub enum WitnessDecodeError {
+    /// The input reached end (EOF) too soon.
+    UnexpectedEnd(WitnessUnexpectedEndError),
+    /// Failed to decode a varint.
+    VarInt(VarIntDecodeError),
+    /// Witness has too many elements.
+    TooLarge(DataSizeError),
+}
+
+impl fmt::Display for WitnessDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::UnexpectedEnd(error) => write_err!(f, "input ended unexpectedly"; error),
+            Self::VarInt(error) => write_err!(f,"failed to decode varint"; error),
+            Self::TooLarge(error) => write_err!(f, "witness data is too large"; error),
         }
     }
+}
+
+
+#[cfg(feature = "std")]
+impl std::error::Error for WitnessDecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            WitnessDecodeError::UnexpectedEnd(error) => Some(error),
+            WitnessDecodeError::VarInt(error) => Some(error),
+            WitnessDecodeError::TooLarge(error) => Some(error),
+        }
+    }
+}
+
+impl From<VarIntDecodeError> for WitnessDecodeError {
+    fn from(value: VarIntDecodeError) -> Self {
+        WitnessDecodeError::VarInt(value)
+    }
+}
+
+impl From<DataSizeError> for WitnessDecodeError {
+    fn from(value: DataSizeError) -> Self {
+        WitnessDecodeError::TooLarge(value)
+    }
+}
+
+/// Error returned when the encoded witness is too large.
+#[derive(Debug)]
+pub struct DataSizeError {
+    witness_elements: u64,
+}
+
+impl fmt::Display for DataSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "witness has {} elements but we allow at most {}", self.witness_elements, MAX_WITNESS_ELEMENTS)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DataSizeError {}
+
+/// Error returned when too few data is supplied to the Witness during decoding.
+#[derive(Debug)]
+pub struct WitnessUnexpectedEndError {
+    required_elements: usize,
+    received_elements: usize,
+    // This one is actually useful for debugging but not much for the user
+    #[allow(unused)]
+    last_element_len: CurrentElemLen,
+}
+
+impl fmt::Display for WitnessUnexpectedEndError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "input ended after {} witness elements, {} elements required", self.received_elements, self.required_elements)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for WitnessUnexpectedEndError {}
+
+impl consensus_encoding::Encode for Witness {
+    const MIN_ENCODED_LEN: usize = 1;
+    const IS_KNOWN_LEN: bool = false;
+
+    fn encoder(&self) -> <Self as EncodeTc<'_>>::Encoder {
+        let first = consensus_encoding::VarIntEncoder::new(self.len() as u64);
+        let second = consensus_encoding::push_decode::encoders::BytesEncoder::new(&self.content[..self.indices_start]);
+
+        WitnessEncoder(first.chain(second))
+    }
+
+    fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+        let (len, max_steps) = VarIntEncoder::dyn_encoded_len(self.len() as u64, max_steps);
+
+        // The indices start after all data
+        (self.indices_start + len, max_steps)
+    }
+}
+
+encoder_newtype! {
+    /// Encoder of [`Witness`].
+    ///
+    /// For more information about encoders check the [`Encoder`](consensus_encoding::Encoder) trait.
+    Witness => pub struct WitnessEncoder<'a>(consensus_encoding::push_decode::encoders::combinators::Chain<consensus_encoding::VarIntEncoder, consensus_encoding::push_decode::encoders::BytesEncoder<&'a [u8]>>);
 }
 
 /// Correctness Requirements: value must always fit within u32
@@ -211,28 +382,6 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
         None
     } else {
         Some(u32::from_ne_bytes(bytes[start..end].try_into().expect("is u32 size")) as usize)
-    }
-}
-
-fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
-    if required_len >= vec.len() {
-        let mut new_len = vec.len().max(1);
-        while new_len <= required_len {
-            new_len *= 2;
-        }
-        vec.resize(new_len, 0);
-    }
-}
-
-impl Encodable for Witness {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = VarInt::from(self.witness_elements);
-        len.consensus_encode(w)?;
-        let content_with_indices_len = self.content.len();
-        let indices_size = self.witness_elements * 4;
-        let content_len = content_with_indices_len - indices_size;
-        w.emit_slice(&self.content[..content_len])?;
-        Ok(content_len + len.size())
     }
 }
 
@@ -272,17 +421,17 @@ impl Witness {
             .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).size())
             .sum();
 
-        let mut content = vec![0u8; content_size + index_size];
-        let mut cursor = 0usize;
-        for (i, elem) in slice.iter().enumerate() {
-            encode_cursor(&mut content, content_size, i, cursor);
-            let elem_len_varint = VarInt::from(elem.as_ref().len());
-            elem_len_varint
-                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.size()])
-                .expect("writers on vec don't errors, space granted by content_size");
-            cursor += elem_len_varint.size();
-            content[cursor..cursor + elem.as_ref().len()].copy_from_slice(elem.as_ref());
-            cursor += elem.as_ref().len();
+        let mut content = Vec::with_capacity(content_size + index_size);
+        for elem in slice {
+            let elem = elem.as_ref();
+            VarIntEncoder::new(elem.len() as u64).write_to_vec(&mut content);
+            content.extend_from_slice(elem);
+        }
+        let mut cursor = 0u32;
+        for elem in slice {
+            let len = elem.as_ref().len();
+            content.extend_from_slice(&cursor.to_ne_bytes());
+            cursor += u32::try_from(VarIntEncoder::len(len as u64) + len).expect("Larger than u32");
         }
 
         Witness { witness_elements, content, indices_start: content_size }

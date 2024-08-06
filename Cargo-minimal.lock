@@ -53,6 +53,7 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
+ "bitcoin-consensus-encoding",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-primitives",
@@ -72,6 +73,17 @@ dependencies = [
 [[package]]
 name = "bitcoin-addresses"
 version = "0.0.0"
+
+[[package]]
+name = "bitcoin-consensus-encoding"
+version = "0.0.1-preview"
+dependencies = [
+ "bitcoin-internals",
+ "bitcoin-primitives",
+ "bitcoin-units",
+ "bitcoin_hashes",
+ "push_decode",
+]
 
 [[package]]
 name = "bitcoin-fuzz"
@@ -162,6 +174,12 @@ name = "dyn-clone"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0da518043f6481364cd454be81dfe096cfd3f82daa1466f4946d24ea325b0941"
+
+[[package]]
+name = "either"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
 
 [[package]]
 name = "getrandom"
@@ -285,6 +303,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b368fba921b0dce7e60f5e04ec15e565b3303972b42bcfde1d0713b881959eb"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "push_decode"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b30cfb887a809c4bef7edf4826e0dd33f9cabb08cdcc236ed2b1f6eeb4197b6"
+dependencies = [
+ "either",
 ]
 
 [[package]]

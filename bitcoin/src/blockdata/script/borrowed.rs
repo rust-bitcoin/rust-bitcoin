@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use consensus_encoding::VarIntEncoder;
 use core::fmt;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
@@ -582,6 +583,47 @@ impl Script {
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
+    }
+}
+
+consensus_encoding::gat_like! {
+    impl Encode for Script {
+        type Encoder<'a> = ScriptEncoder<'a>;
+
+        const MIN_ENCODED_LEN: usize = 1;
+        const IS_KNOWN_LEN: bool = false;
+
+        fn encoder(&self) -> Self::Encoder<'_> {
+            ScriptEncoder {
+                len: Some(VarIntEncoder::new(self.len() as u64)),
+                script: self,
+            }
+        }
+
+        fn dyn_encoded_len(&self, max_steps: usize) -> (usize, usize) {
+            if max_steps == 0 { return (0, 0); }
+            let (len, max_steps) = VarIntEncoder::dyn_encoded_len(self.len() as u64, max_steps - 1);
+            (len + self.len(), max_steps)
+        }
+    }
+}
+
+/// Encoder of [`Script`]
+pub struct ScriptEncoder<'a> {
+    len: Option<VarIntEncoder>,
+    script: &'a Script,
+}
+
+impl consensus_encoding::Encoder for ScriptEncoder<'_> {
+    fn encoded_chunk(&self) -> &[u8] {
+        match &self.len {
+            Some(len) => len.encoded_chunk(),
+            None => self.script.as_bytes(),
+        }
+    }
+
+    fn next(&mut self) -> bool {
+        self.len.take().is_some() && !self.script.is_empty()
     }
 }
 

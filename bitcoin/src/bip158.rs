@@ -66,6 +66,16 @@ hashes::hash_newtype! {
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
 
+consensus_encoding::hash_decoder! {
+    FilterHash => pub FilterHashDecoder;
+    FilterHeader => pub FilterHeaderDecoder;
+}
+
+consensus_encoding::hash_encoder! {
+    FilterHash;
+    FilterHeader;
+}
+
 /// Errors for blockfilter.
 #[derive(Debug)]
 #[non_exhaustive]
