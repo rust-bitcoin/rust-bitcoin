@@ -3,12 +3,11 @@ extern crate bitcoin;
 use std::str::FromStr;
 use std::{env, process};
 
-use bitcoin::address::{Address, KnownHrp};
-use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
+use bitcoin::bip32::{DerivationPath, NormalDerivationPath, Xpriv, Xpub};
 use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::{CompressedPublicKey, NetworkKind};
+use bitcoin::{Address, CompressedPublicKey, KnownHrp, NetworkKind};
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -47,9 +46,9 @@ fn main() {
     println!("Public key at {}: {}", path, xpub);
 
     // generate first receiving address at m/0/0
-    // manually creating indexes this time
-    let zero = ChildNumber::ZERO_NORMAL;
-    let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
+    let zero_path = "0/0".parse::<NormalDerivationPath>().unwrap();
+    // While using only Normal Child Numbers, you can use NormalDerivationPath instead of DerivationPath
+    let public_key = xpub.derive_pub(&secp, &zero_path).public_key;
     let address = Address::p2wpkh(CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {}", address);
 }

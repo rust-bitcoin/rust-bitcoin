@@ -1367,7 +1367,7 @@ mod tests {
             ChildNumber::from_normal_idx(31337).unwrap(),
         ];
 
-        sk = sk.derive_priv(secp, &dpath);
+        sk = sk.derive_priv(secp, dpath.clone());
 
         let pk = Xpub::from_priv(secp, &sk);
 
@@ -2279,7 +2279,7 @@ mod tests {
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
-        map.insert(pk.inner, (Fingerprint::default(), DerivationPath::default()));
+        map.insert(pk.inner, (Fingerprint::default(), DerivationPath::MASTER));
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.

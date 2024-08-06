@@ -194,7 +194,7 @@ fn serde_regression_control_block() {
 
 #[test]
 fn serde_regression_child_number() {
-    let num = ChildNumber::Normal { index: 0xDEADBEEF };
+    let num = ChildNumber::from(0xDEADBEEF);
     let got = serialize(&num).unwrap();
     let want = include_bytes!("data/serde/child_number_bincode") as &[_];
     assert_eq!(got, want)
