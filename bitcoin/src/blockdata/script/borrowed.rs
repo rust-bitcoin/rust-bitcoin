@@ -142,20 +142,20 @@ define_extension_trait! {
     pub trait ScriptExt impl for Script {
         /// Returns an iterator over script bytes.
         fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
+
+        /// Returns 160-bit hash of the script for P2SH outputs.
+        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+            ScriptHash::from_script(self)
+        }
+
+        /// Returns 256-bit hash of the script for P2WSH outputs.
+        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+            WScriptHash::from_script(self)
+        }
     }
 }
 
 impl Script {
-    /// Returns 160-bit hash of the script for P2SH outputs.
-    pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
-        ScriptHash::from_script(self)
-    }
-
-    /// Returns 256-bit hash of the script for P2WSH outputs.
-    pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
-        WScriptHash::from_script(self)
-    }
-
     /// Computes leaf hash of tapscript.
     pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
         TapLeafHash::from_script(self, LeafVersion::TapScript)
