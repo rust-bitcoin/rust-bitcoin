@@ -157,40 +157,40 @@ define_extension_trait! {
         fn tapscript_leaf_hash(&self) -> TapLeafHash {
             TapLeafHash::from_script(self, LeafVersion::TapScript)
         }
+
+        /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
+        ///
+        /// # Returns
+        ///
+        /// The witness version if this script is found to conform to the SegWit rules:
+        ///
+        /// > A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
+        /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
+        /// > special meaning. The value of the first push is called the "version byte". The following
+        /// > byte vector pushed is called the "witness program".
+        fn witness_version(&self) -> Option<WitnessVersion> {
+            let script_len = self.0.len();
+            if !(4..=42).contains(&script_len) {
+                return None;
+            }
+
+            let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+            let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
+
+            if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
+                return None;
+            }
+            // Check that the rest of the script has the correct size
+            if script_len - 2 != push_opbyte as usize {
+                return None;
+            }
+
+            WitnessVersion::try_from(ver_opcode).ok()
+        }
     }
 }
 
 impl Script {
-    /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
-    ///
-    /// # Returns
-    ///
-    /// The witness version if this script is found to conform to the SegWit rules:
-    ///
-    /// > A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
-    /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
-    /// > special meaning. The value of the first push is called the "version byte". The following
-    /// > byte vector pushed is called the "witness program".
-    pub fn witness_version(&self) -> Option<WitnessVersion> {
-        let script_len = self.0.len();
-        if !(4..=42).contains(&script_len) {
-            return None;
-        }
-
-        let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-        let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
-
-        if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
-            return None;
-        }
-        // Check that the rest of the script has the correct size
-        if script_len - 2 != push_opbyte as usize {
-            return None;
-        }
-
-        WitnessVersion::try_from(ver_opcode).ok()
-    }
-
     /// Checks whether a script pubkey is a P2SH output.
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23
