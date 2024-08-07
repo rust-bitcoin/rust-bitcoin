@@ -223,62 +223,62 @@ define_extension_trait! {
             }
             true
         }
+
+        /// Checks whether a script pubkey is a bare multisig output.
+        ///
+        /// In a bare multisig pubkey script the keys are not hashed, the script
+        /// is of the form:
+        ///
+        ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
+        fn is_multisig(&self) -> bool {
+            let required_sigs;
+
+            let mut instructions = self.instructions();
+            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
+                if let Some(pushnum) = op.decode_pushnum() {
+                    required_sigs = pushnum;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            let mut num_pubkeys: u8 = 0;
+            while let Some(Ok(instruction)) = instructions.next() {
+                match instruction {
+                    Instruction::PushBytes(_) => {
+                        num_pubkeys += 1;
+                    }
+                    Instruction::Op(op) => {
+                        if let Some(pushnum) = op.decode_pushnum() {
+                            if pushnum != num_pubkeys {
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if required_sigs > num_pubkeys {
+                return false;
+            }
+
+            if let Some(Ok(Instruction::Op(op))) = instructions.next() {
+                if op != OP_CHECKMULTISIG {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            instructions.next().is_none()
+        }
     }
 }
 
 impl Script {
-    /// Checks whether a script pubkey is a bare multisig output.
-    ///
-    /// In a bare multisig pubkey script the keys are not hashed, the script
-    /// is of the form:
-    ///
-    ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
-    pub fn is_multisig(&self) -> bool {
-        let required_sigs;
-
-        let mut instructions = self.instructions();
-        if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-            if let Some(pushnum) = op.decode_pushnum() {
-                required_sigs = pushnum;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-
-        let mut num_pubkeys: u8 = 0;
-        while let Some(Ok(instruction)) = instructions.next() {
-            match instruction {
-                Instruction::PushBytes(_) => {
-                    num_pubkeys += 1;
-                }
-                Instruction::Op(op) => {
-                    if let Some(pushnum) = op.decode_pushnum() {
-                        if pushnum != num_pubkeys {
-                            return false;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
-        if required_sigs > num_pubkeys {
-            return false;
-        }
-
-        if let Some(Ok(Instruction::Op(op))) = instructions.next() {
-            if op != OP_CHECKMULTISIG {
-                return false;
-            }
-        } else {
-            return false;
-        }
-
-        instructions.next().is_none()
-    }
-
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
     pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
