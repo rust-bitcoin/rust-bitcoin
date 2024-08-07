@@ -27,7 +27,7 @@ use crate::script::{Script, ScriptBuf};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount, VarInt};
+use crate::{script, Amount, FeeRate, SignedAmount, VarInt};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -756,7 +756,7 @@ impl Transaction {
         fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
             let mut count: usize = 0;
             if prevout.script_pubkey.is_p2sh() {
-                if let Some(redeem) = input.script_sig.last_pushdata() {
+                if let Some(redeem) = script::last_pushdata(&input.script_sig) {
                     count =
                         count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
                 }
@@ -802,7 +802,7 @@ impl Transaction {
             } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
                 // If prevout is P2SH and scriptSig is push only
                 // then we wrap the last push (redeemScript) in a Script
-                if let Some(push_bytes) = script_sig.last_pushdata() {
+                if let Some(push_bytes) = script::last_pushdata(script_sig) {
                     Script::from_bytes(push_bytes.as_bytes())
                 } else {
                     return 0;

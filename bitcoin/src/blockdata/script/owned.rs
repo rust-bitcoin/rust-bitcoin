@@ -9,6 +9,7 @@ use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
+use crate::script;
 
 /// An owned, growable script.
 ///
@@ -172,7 +173,7 @@ impl ScriptBuf {
     /// This function needs to iterate over the script to find the last instruction. Prefer
     /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
     /// multiple times.
-    pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+    pub fn scan_and_push_verify(&mut self) { self.push_verify(script::last_opcode(self)); }
 
     /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
     /// alternative.

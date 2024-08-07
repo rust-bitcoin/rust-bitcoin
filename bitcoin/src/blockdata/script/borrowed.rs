@@ -479,29 +479,6 @@ impl Script {
     pub fn first_opcode(&self) -> Option<Opcode> {
         self.as_bytes().first().copied().map(From::from)
     }
-
-    /// Iterates the script to find the last opcode.
-    ///
-    /// Returns `None` is the instruction is data push or if the script is empty.
-    pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<Opcode> {
-        match self.instructions().last() {
-            Some(Ok(Instruction::Op(op))) => Some(op),
-            _ => None,
-        }
-    }
-
-    /// Iterates the script to find the last pushdata.
-    ///
-    /// Returns `None` if the instruction is an opcode or if the script is empty.
-    pub(crate) fn last_pushdata(&self) -> Option<&PushBytes> {
-        match self.instructions().last() {
-            // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
-            Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
-            // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
-            // However we are only interested in the pushdata so we can ignore them.
-            _ => None,
-        }
-    }
 }
 
 fn minimal_non_dust_internal(script: &Script, dust_relay_fee: u64) -> crate::Amount {
@@ -565,6 +542,29 @@ fn count_sigops_internal(script: &Script, accurate: bool) -> usize {
     }
 
     n
+}
+
+/// Iterates the script to find the last opcode.
+///
+/// Returns `None` is the instruction is data push or if the script is empty.
+pub(in crate::blockdata::script) fn last_opcode(script: &Script) -> Option<Opcode> {
+    match script.instructions().last() {
+        Some(Ok(Instruction::Op(op))) => Some(op),
+        _ => None,
+    }
+}
+
+/// Iterates the script to find the last pushdata.
+///
+/// Returns `None` if the instruction is an opcode or if the script is empty.
+pub(crate) fn last_pushdata(script: &Script) -> Option<&PushBytes> {
+    match script.instructions().last() {
+        // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
+        Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
+        // OP_16 (0x60) and lower are considered "pushes" by Bitcoin Core (excl. OP_RESERVED).
+        // However we are only interested in the pushdata so we can ignore them.
+        _ => None,
+    }
 }
 
 /// Iterator over bytes of a script
