@@ -390,40 +390,40 @@ define_extension_trait! {
         fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
             minimal_non_dust_internal(self, dust_relay_fee.to_sat_per_kwu() * 4)
         }
+
+        /// Counts the sigops for this Script using accurate counting.
+        ///
+        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+        /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
+        /// verify variant count for N sigops where N is the number of pubkeys used in the
+        /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceded by an
+        /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
+        ///
+        /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
+        /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
+        ///
+        /// (Note: Taproot scripts don't count toward the sigop count of the block,
+        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
+        fn count_sigops(&self) -> usize { count_sigops_internal(self, true) }
+
+        /// Counts the sigops for this Script using legacy counting.
+        ///
+        /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+        /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
+        /// verify variant count for 20 sigops.
+        ///
+        /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
+        /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
+        ///
+        /// (Note: Taproot scripts don't count toward the sigop count of the block,
+        /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+        /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
+        fn count_sigops_legacy(&self) -> usize { count_sigops_internal(self, false) }
     }
 }
 
 impl Script {
-    /// Counts the sigops for this Script using accurate counting.
-    ///
-    /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
-    /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
-    /// verify variant count for N sigops where N is the number of pubkeys used in the
-    /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceded by an
-    /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
-    ///
-    /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
-    /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
-    ///
-    /// (Note: Taproot scripts don't count toward the sigop count of the block,
-    /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-    /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-    pub fn count_sigops(&self) -> usize { count_sigops_internal(self, true) }
-
-    /// Counts the sigops for this Script using legacy counting.
-    ///
-    /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
-    /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
-    /// verify variant count for 20 sigops.
-    ///
-    /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
-    /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
-    ///
-    /// (Note: Taproot scripts don't count toward the sigop count of the block,
-    /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
-    /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-    pub fn count_sigops_legacy(&self) -> usize { count_sigops_internal(self, false) }
-
     /// Iterates over the script instructions.
     ///
     /// Each returned item is a nested enum covering opcodes, datapushes and errors.
