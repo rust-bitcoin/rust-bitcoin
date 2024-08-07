@@ -357,43 +357,43 @@ define_extension_trait! {
                 None
             }
         }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today’s Bitcoin network.
+        #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
+        fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today's Bitcoin network.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
+        ///
+        /// To use a custom value, use [`minimal_non_dust_custom`].
+        ///
+        /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
+        fn minimal_non_dust(&self) -> crate::Amount {
+            minimal_non_dust_internal(self, DUST_RELAY_TX_FEE.into())
+        }
+
+        /// Returns the minimum value an output with this script should have in order to be
+        /// broadcastable on today's Bitcoin network.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function lets you set the fee rate used in dust calculation.
+        ///
+        /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
+        ///
+        /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
+        ///
+        /// [`minimal_non_dust`]: Script::minimal_non_dust
+        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
+            minimal_non_dust_internal(self, dust_relay_fee.to_sat_per_kwu() * 4)
+        }
     }
 }
 
 impl Script {
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today’s Bitcoin network.
-    #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
-    pub fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
-
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today's Bitcoin network.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
-    ///
-    /// To use a custom value, use [`minimal_non_dust_custom`].
-    ///
-    /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-    pub fn minimal_non_dust(&self) -> crate::Amount {
-        minimal_non_dust_internal(self, DUST_RELAY_TX_FEE.into())
-    }
-
-    /// Returns the minimum value an output with this script should have in order to be
-    /// broadcastable on today's Bitcoin network.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function lets you set the fee rate used in dust calculation.
-    ///
-    /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
-    ///
-    /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
-    ///
-    /// [`minimal_non_dust`]: Script::minimal_non_dust
-    pub fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
-        minimal_non_dust_internal(self, dust_relay_fee.to_sat_per_kwu() * 4)
-    }
-
     /// Counts the sigops for this Script using accurate counting.
     ///
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
