@@ -51,7 +51,8 @@ use crate::prelude::{String, ToOwned};
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    self, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash, WScriptHash,
+    WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 

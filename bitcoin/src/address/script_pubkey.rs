@@ -13,8 +13,8 @@ use crate::opcodes::all::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash,
-    WitnessScriptSizeError,
+    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
+    WScriptHash, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
