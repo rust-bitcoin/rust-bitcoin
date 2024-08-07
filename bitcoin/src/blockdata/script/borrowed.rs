@@ -187,28 +187,28 @@ define_extension_trait! {
 
             WitnessVersion::try_from(ver_opcode).ok()
         }
+
+        /// Checks whether a script pubkey is a P2SH output.
+        fn is_p2sh(&self) -> bool {
+            self.0.len() == 23
+                && self.0[0] == OP_HASH160.to_u8()
+                && self.0[1] == OP_PUSHBYTES_20.to_u8()
+                && self.0[22] == OP_EQUAL.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2PKH output.
+        fn is_p2pkh(&self) -> bool {
+            self.0.len() == 25
+                && self.0[0] == OP_DUP.to_u8()
+                && self.0[1] == OP_HASH160.to_u8()
+                && self.0[2] == OP_PUSHBYTES_20.to_u8()
+                && self.0[23] == OP_EQUALVERIFY.to_u8()
+                && self.0[24] == OP_CHECKSIG.to_u8()
+        }
     }
 }
 
 impl Script {
-    /// Checks whether a script pubkey is a P2SH output.
-    pub fn is_p2sh(&self) -> bool {
-        self.0.len() == 23
-            && self.0[0] == OP_HASH160.to_u8()
-            && self.0[1] == OP_PUSHBYTES_20.to_u8()
-            && self.0[22] == OP_EQUAL.to_u8()
-    }
-
-    /// Checks whether a script pubkey is a P2PKH output.
-    pub fn is_p2pkh(&self) -> bool {
-        self.0.len() == 25
-            && self.0[0] == OP_DUP.to_u8()
-            && self.0[1] == OP_HASH160.to_u8()
-            && self.0[2] == OP_PUSHBYTES_20.to_u8()
-            && self.0[23] == OP_EQUALVERIFY.to_u8()
-            && self.0[24] == OP_CHECKSIG.to_u8()
-    }
-
     /// Checks whether a script is push only.
     ///
     /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
