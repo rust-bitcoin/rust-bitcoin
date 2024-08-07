@@ -298,49 +298,50 @@ define_extension_trait! {
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.0[1] == OP_PUSHBYTES_32.to_u8()
         }
+
+        /// Check if this is a consensus-valid OP_RETURN output.
+        ///
+        /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
+        /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
+        fn is_op_return(&self) -> bool {
+            match self.0.first() {
+                Some(b) => *b == OP_RETURN.to_u8(),
+                None => false,
+            }
+        }
+
+        /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
+        ///
+        /// What this function considers to be standard may change without warning pending Bitcoin Core
+        /// changes.
+        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
+
+
+        /// Checks whether a script is trivially known to have no satisfying input.
+        ///
+        /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
+        /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
+        #[deprecated(
+            since = "0.32.0",
+            note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
+        )]
+        fn is_provably_unspendable(&self) -> bool {
+            use crate::opcodes::Class::{IllegalOp, ReturnOp};
+
+            match self.0.first() {
+                Some(b) => {
+                    let first = Opcode::from(*b);
+                    let class = first.classify(opcodes::ClassifyContext::Legacy);
+
+                    class == ReturnOp || class == IllegalOp
+                }
+                None => false,
+            }
+        }
     }
 }
 
 impl Script {
-    /// Check if this is a consensus-valid OP_RETURN output.
-    ///
-    /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
-    /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
-    pub fn is_op_return(&self) -> bool {
-        match self.0.first() {
-            Some(b) => *b == OP_RETURN.to_u8(),
-            None => false,
-        }
-    }
-
-    /// Check if this is an OP_RETURN that obeys Bitcoin Core standardness policy.
-    ///
-    /// What this function considers to be standard may change without warning pending Bitcoin Core
-    /// changes.
-    pub fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
-
-    /// Checks whether a script is trivially known to have no satisfying input.
-    ///
-    /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
-    /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
-    #[deprecated(
-        since = "0.32.0",
-        note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
-    )]
-    pub fn is_provably_unspendable(&self) -> bool {
-        use crate::opcodes::Class::{IllegalOp, ReturnOp};
-
-        match self.0.first() {
-            Some(b) => {
-                let first = Opcode::from(*b);
-                let class = first.classify(opcodes::ClassifyContext::Legacy);
-
-                class == ReturnOp || class == IllegalOp
-            }
-            None => false,
-        }
-    }
-
     /// Get redeemScript following BIP16 rules regarding P2SH spending.
     ///
     /// This does not guarantee that this represents a P2SH input [`Script`].
