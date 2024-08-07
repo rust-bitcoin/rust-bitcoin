@@ -402,7 +402,7 @@ impl Script {
     /// (Note: Taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-    pub fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
+    pub fn count_sigops(&self) -> usize { count_sigops_internal(self, true) }
 
     /// Counts the sigops for this Script using legacy counting.
     ///
@@ -416,47 +416,7 @@ impl Script {
     /// (Note: Taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-    pub fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
-
-    fn count_sigops_internal(&self, accurate: bool) -> usize {
-        let mut n = 0;
-        let mut pushnum_cache = None;
-        for inst in self.instructions() {
-            match inst {
-                Ok(Instruction::Op(opcode)) => {
-                    match opcode {
-                        // p2pk, p2pkh
-                        OP_CHECKSIG | OP_CHECKSIGVERIFY => {
-                            n += 1;
-                        }
-                        OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
-                            match (accurate, pushnum_cache) {
-                                (true, Some(pushnum)) => {
-                                    // Add the number of pubkeys in the multisig as sigop count
-                                    n += usize::from(pushnum);
-                                }
-                                _ => {
-                                    // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
-                                    // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
-                                    n += 20;
-                                }
-                            }
-                        }
-                        _ => {
-                            pushnum_cache = opcode.decode_pushnum();
-                        }
-                    }
-                }
-                Ok(Instruction::PushBytes(_)) => {
-                    pushnum_cache = None;
-                }
-                // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
-                Err(_) => break,
-            }
-        }
-
-        n
-    }
+    pub fn count_sigops_legacy(&self) -> usize { count_sigops_internal(self, false) }
 
     /// Iterates over the script instructions.
     ///
@@ -565,6 +525,46 @@ fn minimal_non_dust_internal(script: &Script, dust_relay_fee: u64) -> crate::Amo
                 //       This will make sure none of the implicit floor operations mess with the value.
 
     crate::Amount::from_sat(sats)
+}
+
+fn count_sigops_internal(script: &Script, accurate: bool) -> usize {
+    let mut n = 0;
+    let mut pushnum_cache = None;
+    for inst in script.instructions() {
+        match inst {
+            Ok(Instruction::Op(opcode)) => {
+                match opcode {
+                    // p2pk, p2pkh
+                    OP_CHECKSIG | OP_CHECKSIGVERIFY => {
+                        n += 1;
+                    }
+                    OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
+                        match (accurate, pushnum_cache) {
+                            (true, Some(pushnum)) => {
+                                // Add the number of pubkeys in the multisig as sigop count
+                                n += usize::from(pushnum);
+                            }
+                            _ => {
+                                // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
+                                // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
+                                n += 20;
+                            }
+                        }
+                    }
+                    _ => {
+                        pushnum_cache = opcode.decode_pushnum();
+                    }
+                }
+            }
+            Ok(Instruction::PushBytes(_)) => {
+                pushnum_cache = None;
+            }
+            // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
+            Err(_) => break,
+        }
+    }
+
+    n
 }
 
 /// Iterator over bytes of a script
