@@ -470,20 +470,18 @@ define_extension_trait! {
             self.fmt_asm(&mut buf).unwrap();
             buf
         }
-    }
-}
 
-impl Script {
-    /// Formats the script as lower-case hex.
-    ///
-    /// This is a more convenient and performant way to write `format!("{:x}", script)`.
-    /// For better performance you should generally prefer displaying the script but if `String` is
-    /// required (this is common in tests) this method can be used.
-    pub fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
+        /// Formats the script as lower-case hex.
+        ///
+        /// This is a more convenient and performant way to write `format!("{:x}", script)`.
+        /// For better performance you should generally prefer displaying the script but if `String` is
+        /// required (this is common in tests) this method can be used.
+        fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
 
-    /// Returns the first opcode of the script (if there is any).
-    pub fn first_opcode(&self) -> Option<Opcode> {
-        self.as_bytes().first().copied().map(From::from)
+        /// Returns the first opcode of the script (if there is any).
+        fn first_opcode(&self) -> Option<Opcode> {
+            self.as_bytes().first().copied().map(From::from)
+        }
     }
 }
 
