@@ -420,48 +420,48 @@ define_extension_trait! {
         /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
         /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
         fn count_sigops_legacy(&self) -> usize { count_sigops_internal(self, false) }
+
+        /// Iterates over the script instructions.
+        ///
+        /// Each returned item is a nested enum covering opcodes, datapushes and errors.
+        /// At most one error will be returned and then the iterator will end. To instead iterate over
+        /// the script as sequence of bytes call the [`bytes`](Self::bytes) method.
+        ///
+        /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
+        fn instructions(&self) -> Instructions {
+            Instructions { data: self.0.iter(), enforce_minimal: false }
+        }
+
+        /// Iterates over the script instructions while enforcing minimal pushes.
+        ///
+        /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
+        /// is not minimal.
+        fn instructions_minimal(&self) -> Instructions {
+            Instructions { data: self.0.iter(), enforce_minimal: true }
+        }
+
+        /// Iterates over the script instructions and their indices.
+        ///
+        /// Unless the script contains an error, the returned item consists of an index pointing to the
+        /// position in the script where the instruction begins and the decoded instruction - either an
+        /// opcode or data push.
+        ///
+        /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
+        fn instruction_indices(&self) -> InstructionIndices {
+            InstructionIndices::from_instructions(self.instructions())
+        }
+
+        /// Iterates over the script instructions and their indices while enforcing minimal pushes.
+        ///
+        /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
+        /// returned if a push is not minimal.
+        fn instruction_indices_minimal(&self) -> InstructionIndices {
+            InstructionIndices::from_instructions(self.instructions_minimal())
+        }
     }
 }
 
 impl Script {
-    /// Iterates over the script instructions.
-    ///
-    /// Each returned item is a nested enum covering opcodes, datapushes and errors.
-    /// At most one error will be returned and then the iterator will end. To instead iterate over
-    /// the script as sequence of bytes call the [`bytes`](Self::bytes) method.
-    ///
-    /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
-    pub fn instructions(&self) -> Instructions {
-        Instructions { data: self.0.iter(), enforce_minimal: false }
-    }
-
-    /// Iterates over the script instructions while enforcing minimal pushes.
-    ///
-    /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
-    /// is not minimal.
-    pub fn instructions_minimal(&self) -> Instructions {
-        Instructions { data: self.0.iter(), enforce_minimal: true }
-    }
-
-    /// Iterates over the script instructions and their indices.
-    ///
-    /// Unless the script contains an error, the returned item consists of an index pointing to the
-    /// position in the script where the instruction begins and the decoded instruction - either an
-    /// opcode or data push.
-    ///
-    /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
-    pub fn instruction_indices(&self) -> InstructionIndices {
-        InstructionIndices::from_instructions(self.instructions())
-    }
-
-    /// Iterates over the script instructions and their indices while enforcing minimal pushes.
-    ///
-    /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
-    /// returned if a push is not minimal.
-    pub fn instruction_indices_minimal(&self) -> InstructionIndices {
-        InstructionIndices::from_instructions(self.instructions_minimal())
-    }
-
     /// Writes the human-readable assembly representation of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         bytes_to_asm_fmt(self.as_ref(), f)
