@@ -275,13 +275,12 @@ define_extension_trait! {
 
             instructions.next().is_none()
         }
+        /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
+        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
     }
 }
 
 impl Script {
-    /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
-    pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
-
     /// Checks whether a script pubkey is a P2WSH output.
     pub fn is_p2wsh(&self) -> bool {
         self.0.len() == 34
