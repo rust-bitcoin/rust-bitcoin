@@ -11,6 +11,7 @@ use super::{
     RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::Encodable;
+use crate::internal_macros::define_extension_trait;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
@@ -136,10 +137,15 @@ impl Script {
 /// Creates a new script builder
 pub fn builder() -> Builder { Builder::new() }
 
-impl Script {
-    /// Returns an iterator over script bytes.
-    pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
+define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt impl for Script {
+        /// Returns an iterator over script bytes.
+        fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
+    }
+}
 
+impl Script {
     /// Returns 160-bit hash of the script for P2SH outputs.
     pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
         ScriptHash::from_script(self)
