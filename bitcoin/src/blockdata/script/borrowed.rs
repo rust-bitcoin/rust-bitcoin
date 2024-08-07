@@ -135,26 +135,22 @@ impl Script {
 
 impl Script {
     /// Returns an iterator over script bytes.
-    #[inline]
     pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
 
     /// Returns 160-bit hash of the script for P2SH outputs.
-    #[inline]
     pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
         ScriptHash::from_script(self)
     }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
-    #[inline]
     pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
         WScriptHash::from_script(self)
     }
 
     /// Computes leaf hash of tapscript.
-    #[inline]
     pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
         TapLeafHash::from_script(self, LeafVersion::TapScript)
     }
@@ -169,7 +165,6 @@ impl Script {
     /// > push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
     /// > special meaning. The value of the first push is called the "version byte". The following
     /// > byte vector pushed is called the "witness program".
-    #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
         let script_len = self.0.len();
         if !(4..=42).contains(&script_len) {
@@ -191,7 +186,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2SH output.
-    #[inline]
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23
             && self.0[0] == OP_HASH160.to_u8()
@@ -200,7 +194,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2PKH output.
-    #[inline]
     pub fn is_p2pkh(&self) -> bool {
         self.0.len() == 25
             && self.0[0] == OP_DUP.to_u8()
@@ -214,7 +207,6 @@ impl Script {
     ///
     /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
     /// are considered push operations.
-    #[inline]
     pub fn is_push_only(&self) -> bool {
         for inst in self.instructions() {
             match inst {
@@ -235,7 +227,6 @@ impl Script {
     /// is of the form:
     ///
     ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
-    #[inline]
     pub fn is_multisig(&self) -> bool {
         let required_sigs;
 
@@ -283,11 +274,9 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
-    #[inline]
     pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
     /// Checks whether a script pubkey is a P2WSH output.
-    #[inline]
     pub fn is_p2wsh(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V0)
@@ -295,7 +284,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2WPKH output.
-    #[inline]
     pub fn is_p2wpkh(&self) -> bool {
         self.0.len() == 22
             && self.witness_version() == Some(WitnessVersion::V0)
@@ -303,7 +291,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2TR output.
-    #[inline]
     pub fn is_p2tr(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V1)
@@ -314,7 +301,6 @@ impl Script {
     ///
     /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
     /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
-    #[inline]
     pub fn is_op_return(&self) -> bool {
         match self.0.first() {
             Some(b) => *b == OP_RETURN.to_u8(),
@@ -326,7 +312,6 @@ impl Script {
     ///
     /// What this function considers to be standard may change without warning pending Bitcoin Core
     /// changes.
-    #[inline]
     pub fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
 
     /// Checks whether a script is trivially known to have no satisfying input.
@@ -337,7 +322,6 @@ impl Script {
         since = "0.32.0",
         note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
     )]
-    #[inline]
     pub fn is_provably_unspendable(&self) -> bool {
         use crate::opcodes::Class::{IllegalOp, ReturnOp};
 
@@ -504,7 +488,6 @@ impl Script {
     /// the script as sequence of bytes call the [`bytes`](Self::bytes) method.
     ///
     /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
-    #[inline]
     pub fn instructions(&self) -> Instructions {
         Instructions { data: self.0.iter(), enforce_minimal: false }
     }
@@ -513,7 +496,6 @@ impl Script {
     ///
     /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
     /// is not minimal.
-    #[inline]
     pub fn instructions_minimal(&self) -> Instructions {
         Instructions { data: self.0.iter(), enforce_minimal: true }
     }
@@ -525,7 +507,6 @@ impl Script {
     /// opcode or data push.
     ///
     /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
-    #[inline]
     pub fn instruction_indices(&self) -> InstructionIndices {
         InstructionIndices::from_instructions(self.instructions())
     }
@@ -534,7 +515,6 @@ impl Script {
     ///
     /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
     /// returned if a push is not minimal.
-    #[inline]
     pub fn instruction_indices_minimal(&self) -> InstructionIndices {
         InstructionIndices::from_instructions(self.instructions_minimal())
     }
