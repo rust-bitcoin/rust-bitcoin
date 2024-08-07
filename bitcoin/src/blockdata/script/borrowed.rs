@@ -152,15 +152,15 @@ define_extension_trait! {
         fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }
+
+        /// Computes leaf hash of tapscript.
+        fn tapscript_leaf_hash(&self) -> TapLeafHash {
+            TapLeafHash::from_script(self, LeafVersion::TapScript)
+        }
     }
 }
 
 impl Script {
-    /// Computes leaf hash of tapscript.
-    pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
-        TapLeafHash::from_script(self, LeafVersion::TapScript)
-    }
-
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     ///
     /// # Returns
