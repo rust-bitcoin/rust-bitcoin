@@ -149,21 +149,7 @@ impl ScriptBuf {
     /// This function needs to iterate over the script to find the last instruction. Prefer
     /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
     /// multiple times.
-    pub fn scan_and_push_verify(&mut self) { self.push_verify(script::last_opcode(self)); }
-
-    /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
-    /// alternative.
-    ///
-    /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-    pub(in crate::blockdata::script) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
-        match opcode_to_verify(last_opcode) {
-            Some(opcode) => {
-                self.0.pop();
-                self.push_opcode(opcode);
-            }
-            None => self.push_opcode(OP_VERIFY),
-        }
-    }
+    pub fn scan_and_push_verify(&mut self) { push_verify(self, script::last_opcode(self)); }
 }
 
 /// Pushes the slice without reserving
@@ -203,6 +189,20 @@ pub(in crate::blockdata::script) fn reserved_script_buf_len_for_slice(len: usize
         0x100..=0xffff => 3,
         // we don't care about oversized, the other fn will panic anyway
         _ => 5,
+    }
+}
+
+/// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
+/// alternative.
+///
+/// See the public fn [`Self::scan_and_push_verify`] to learn more.
+fn push_verify(script: &mut ScriptBuf, last_opcode: Option<Opcode>) {
+    match opcode_to_verify(last_opcode) {
+        Some(opcode) => {
+            script.0.pop();
+            script.push_opcode(opcode);
+        }
+        None => script.push_opcode(OP_VERIFY),
     }
 }
 
