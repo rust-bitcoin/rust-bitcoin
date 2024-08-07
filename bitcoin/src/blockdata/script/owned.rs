@@ -110,19 +110,8 @@ impl ScriptBuf {
     /// Adds instructions to push some arbitrary data onto the stack.
     pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
         let data = data.as_ref();
-        self.reserve(Self::reserved_len_for_slice(data.len()));
+        self.reserve(reserved_script_buf_len_for_slice(data.len()));
         push_slice_no_opt(self, data);
-    }
-
-    /// Computes the sum of `len` and the length of an appropriate push opcode.
-    pub(in crate::blockdata::script) fn reserved_len_for_slice(len: usize) -> usize {
-        len + match len {
-            0..=0x4b => 1,
-            0x4c..=0xff => 2,
-            0x100..=0xffff => 3,
-            // we don't care about oversized, the other fn will panic anyway
-            _ => 5,
-        }
     }
 
     /// Add a single instruction to the script.
@@ -204,6 +193,17 @@ fn push_slice_no_opt(script: &mut ScriptBuf, data: &PushBytes) {
     }
     // Then push the raw bytes
     script.0.extend_from_slice(data.as_bytes());
+}
+
+/// Computes the sum of `len` and the length of an appropriate push opcode.
+pub(in crate::blockdata::script) fn reserved_script_buf_len_for_slice(len: usize) -> usize {
+    len + match len {
+        0..=0x4b => 1,
+        0x4c..=0xff => 2,
+        0x100..=0xffff => 3,
+        // we don't care about oversized, the other fn will panic anyway
+        _ => 5,
+    }
 }
 
 impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {

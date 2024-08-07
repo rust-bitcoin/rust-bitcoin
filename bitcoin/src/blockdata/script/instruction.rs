@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use super::{read_uint_iter, Error, PushBytes, Script, ScriptBuf, UintError};
+use super::{read_uint_iter, Error, PushBytes, Script, UintError};
 use crate::opcodes::{self, Opcode};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
@@ -58,7 +58,7 @@ impl<'a> Instruction<'a> {
     pub(super) fn script_serialized_len(&self) -> usize {
         match self {
             Instruction::Op(_) => 1,
-            Instruction::PushBytes(bytes) => ScriptBuf::reserved_len_for_slice(bytes.len()),
+            Instruction::PushBytes(bytes) => super::reserved_script_buf_len_for_slice(bytes.len()),
         }
     }
 
