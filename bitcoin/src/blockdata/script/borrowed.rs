@@ -277,31 +277,31 @@ define_extension_trait! {
         }
         /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
         fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
+
+        /// Checks whether a script pubkey is a P2WSH output.
+        fn is_p2wsh(&self) -> bool {
+            self.0.len() == 34
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2WPKH output.
+        fn is_p2wpkh(&self) -> bool {
+            self.0.len() == 22
+                && self.witness_version() == Some(WitnessVersion::V0)
+                && self.0[1] == OP_PUSHBYTES_20.to_u8()
+        }
+
+        /// Checks whether a script pubkey is a P2TR output.
+        fn is_p2tr(&self) -> bool {
+            self.0.len() == 34
+                && self.witness_version() == Some(WitnessVersion::V1)
+                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+        }
     }
 }
 
 impl Script {
-    /// Checks whether a script pubkey is a P2WSH output.
-    pub fn is_p2wsh(&self) -> bool {
-        self.0.len() == 34
-            && self.witness_version() == Some(WitnessVersion::V0)
-            && self.0[1] == OP_PUSHBYTES_32.to_u8()
-    }
-
-    /// Checks whether a script pubkey is a P2WPKH output.
-    pub fn is_p2wpkh(&self) -> bool {
-        self.0.len() == 22
-            && self.witness_version() == Some(WitnessVersion::V0)
-            && self.0[1] == OP_PUSHBYTES_20.to_u8()
-    }
-
-    /// Checks whether a script pubkey is a P2TR output.
-    pub fn is_p2tr(&self) -> bool {
-        self.0.len() == 34
-            && self.witness_version() == Some(WitnessVersion::V1)
-            && self.0[1] == OP_PUSHBYTES_32.to_u8()
-    }
-
     /// Check if this is a consensus-valid OP_RETURN output.
     ///
     /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
