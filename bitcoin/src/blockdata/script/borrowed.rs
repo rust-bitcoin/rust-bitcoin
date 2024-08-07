@@ -205,28 +205,28 @@ define_extension_trait! {
                 && self.0[23] == OP_EQUALVERIFY.to_u8()
                 && self.0[24] == OP_CHECKSIG.to_u8()
         }
+
+        /// Checks whether a script is push only.
+        ///
+        /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
+        /// are considered push operations.
+        fn is_push_only(&self) -> bool {
+            for inst in self.instructions() {
+                match inst {
+                    Err(_) => return false,
+                    Ok(Instruction::PushBytes(_)) => {}
+                    Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
+                    // From Bitcoin Core
+                    // if (opcode > OP_PUSHNUM_16 (0x60)) return false
+                    Ok(Instruction::Op(_)) => return false,
+                }
+            }
+            true
+        }
     }
 }
 
 impl Script {
-    /// Checks whether a script is push only.
-    ///
-    /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
-    /// are considered push operations.
-    pub fn is_push_only(&self) -> bool {
-        for inst in self.instructions() {
-            match inst {
-                Err(_) => return false,
-                Ok(Instruction::PushBytes(_)) => {}
-                Ok(Instruction::Op(op)) if op.to_u8() <= 0x60 => {}
-                // From Bitcoin Core
-                // if (opcode > OP_PUSHNUM_16 (0x60)) return false
-                Ok(Instruction::Op(_)) => return false,
-            }
-        }
-        true
-    }
-
     /// Checks whether a script pubkey is a bare multisig output.
     ///
     /// In a bare multisig pubkey script the keys are not hashed, the script
