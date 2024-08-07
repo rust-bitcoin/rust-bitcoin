@@ -197,7 +197,6 @@ macro_rules! hash_type {
                 <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
 
-
             /// Hashes the entire contents of the `reader`.
             #[cfg(feature = "bitcoin-io")]
             pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
