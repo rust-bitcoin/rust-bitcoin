@@ -7,7 +7,7 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::Sequence;
+use crate::{script, Sequence};
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
@@ -119,7 +119,7 @@ impl Default for Builder {
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = ScriptBuf::from(v);
-        let last_op = script.last_opcode();
+        let last_op = script::last_opcode(&script);
         Builder(script, last_op)
     }
 }
