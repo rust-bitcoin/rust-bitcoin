@@ -108,6 +108,36 @@ impl Script {
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
 
+    /// Returns the length in bytes of the script.
+    #[inline]
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Returns whether the script is the empty script.
+    #[inline]
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
+    /// Returns a copy of the script data.
+    #[inline]
+    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_owned() }
+
+    /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
+    #[must_use = "`self` will be dropped if the result is not used"]
+    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
+        let rw = Box::into_raw(self) as *mut [u8];
+        // SAFETY: copied from `std`
+        // The pointer was just created from a box without deallocating
+        // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
+        // layout).
+        let inner = unsafe { Box::from_raw(rw) };
+        ScriptBuf(Vec::from(inner))
+    }
+}
+
+impl Script {
+    /// Returns an iterator over script bytes.
+    #[inline]
+    pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
+
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
 
@@ -128,22 +158,6 @@ impl Script {
     pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
         TapLeafHash::from_script(self, LeafVersion::TapScript)
     }
-
-    /// Returns the length in bytes of the script.
-    #[inline]
-    pub fn len(&self) -> usize { self.0.len() }
-
-    /// Returns whether the script is the empty script.
-    #[inline]
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
-
-    /// Returns a copy of the script data.
-    #[inline]
-    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_owned() }
-
-    /// Returns an iterator over script bytes.
-    #[inline]
-    pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     ///
@@ -570,18 +584,6 @@ impl Script {
             // However we are only interested in the pushdata so we can ignore them.
             _ => None,
         }
-    }
-
-    /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
-    #[must_use = "`self` will be dropped if the result is not used"]
-    pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
-        let rw = Box::into_raw(self) as *mut [u8];
-        // SAFETY: copied from `std`
-        // The pointer was just created from a box without deallocating
-        // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
-        // layout).
-        let inner = unsafe { Box::from_raw(rw) };
-        ScriptBuf(Vec::from(inner))
     }
 }
 
