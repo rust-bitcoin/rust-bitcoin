@@ -458,22 +458,22 @@ define_extension_trait! {
         fn instruction_indices_minimal(&self) -> InstructionIndices {
             InstructionIndices::from_instructions(self.instructions_minimal())
         }
+
+        /// Writes the human-readable assembly representation of the script to the formatter.
+        fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+            bytes_to_asm_fmt(self.as_ref(), f)
+        }
+
+        /// Returns the human-readable assembly representation of the script.
+        fn to_asm_string(&self) -> String {
+            let mut buf = String::new();
+            self.fmt_asm(&mut buf).unwrap();
+            buf
+        }
     }
 }
 
 impl Script {
-    /// Writes the human-readable assembly representation of the script to the formatter.
-    pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        bytes_to_asm_fmt(self.as_ref(), f)
-    }
-
-    /// Returns the human-readable assembly representation of the script.
-    pub fn to_asm_string(&self) -> String {
-        let mut buf = String::new();
-        self.fmt_asm(&mut buf).unwrap();
-        buf
-    }
-
     /// Formats the script as lower-case hex.
     ///
     /// This is a more convenient and performant way to write `format!("{:x}", script)`.

@@ -7,7 +7,8 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::{script, Sequence};
+use crate::script::{self, ScriptExt as _};
+use crate::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
