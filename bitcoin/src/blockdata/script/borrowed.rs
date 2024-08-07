@@ -133,12 +133,12 @@ impl Script {
     }
 }
 
+/// Creates a new script builder
+pub fn builder() -> Builder { Builder::new() }
+
 impl Script {
     /// Returns an iterator over script bytes.
     pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
-
-    /// Creates a new script builder
-    pub fn builder() -> Builder { Builder::new() }
 
     /// Returns 160-bit hash of the script for P2SH outputs.
     pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
