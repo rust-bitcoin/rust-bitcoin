@@ -480,6 +480,7 @@ impl std::error::Error for ValidationError {
 #[cfg(test)]
 mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
+    use internals::ToU64 as _;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
@@ -540,7 +541,7 @@ mod tests {
         assert_eq!(real_decode.base_size(), some_block.len());
         assert_eq!(
             real_decode.weight(),
-            Weight::from_non_witness_data_size(some_block.len() as u64)
+            Weight::from_non_witness_data_size(some_block.len().to_u64())
         );
 
         // should be also ok for a non-witness block as commitment is optional in that case
