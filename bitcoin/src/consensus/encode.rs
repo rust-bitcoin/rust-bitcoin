@@ -820,7 +820,7 @@ impl<T: Encodable> Encodable for rc::Rc<T> {
 }
 
 /// Note: This will fail to compile on old Rust for targets that don't support atomics
-#[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
+#[cfg(target_has_atomic = "ptr")]
 impl<T: Encodable> Encodable for sync::Arc<T> {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)

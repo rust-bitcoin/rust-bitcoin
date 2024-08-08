@@ -34,4 +34,4 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [lints.rust]
-unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_64)', 'cfg(rust_v_1_61)'] }
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_64)'] }
