@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use super::{read_uint_iter, Error, PushBytes, Script, UintError};
+use internals::UintError;
+
+use super::{Error, PushBytes, Script};
 use crate::opcodes::{self, Opcode};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
@@ -127,7 +129,7 @@ impl<'a> Instructions<'a> {
         len: PushDataLenLen,
         min_push_len: usize,
     ) -> Option<Result<Instruction<'a>, Error>> {
-        let n = match read_uint_iter(&mut self.data, len as usize) {
+        let n = match internals::read_uint_iter(&mut self.data, len as usize) {
             Ok(n) => n,
             // We do exhaustive matching to not forget to handle new variants if we extend
             // `UintError` type.

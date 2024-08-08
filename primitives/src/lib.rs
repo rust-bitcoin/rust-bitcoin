@@ -31,6 +31,7 @@ extern crate serde;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
+pub mod script;
 pub mod sequence;
 
 #[doc(inline)]

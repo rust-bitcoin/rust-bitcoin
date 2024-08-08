@@ -3,6 +3,7 @@
 use core::str::FromStr;
 
 use hex_lit::hex;
+use primitives::opcodes;
 
 use super::*;
 use crate::address::script_pubkey::{
