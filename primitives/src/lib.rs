@@ -46,5 +46,8 @@ pub use self::sequence::Sequence;
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(feature = "alloc")]
-    pub use alloc::string::ToString;
+    pub use alloc::{borrow::{Borrow, BorrowMut, Cow, ToOwned}, boxed::Box, rc::Rc, string::{String, ToString}, vec::Vec};
+
+    #[cfg(target_has_atomic = "ptr")]
+    pub use alloc::sync::Arc;
 }
