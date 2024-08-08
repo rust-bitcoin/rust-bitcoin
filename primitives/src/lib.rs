@@ -18,6 +18,7 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[cfg(feature = "std")]
@@ -44,9 +45,6 @@ pub use self::sequence::Sequence;
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
-    #[cfg(all(not(feature = "std"), not(test)))]
+    #[cfg(feature = "alloc")]
     pub use alloc::string::ToString;
-
-    #[cfg(any(feature = "std", test))]
-    pub use std::string::ToString;
 }
