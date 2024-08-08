@@ -6,6 +6,7 @@ use core::ops::Deref;
 use hex::FromHex;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
+use crate::internal_macros::define_extension_trait;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
@@ -95,61 +96,64 @@ impl ScriptBuf {
     }
 }
 
-impl ScriptBuf {
-    /// Creates a new script builder
-    pub fn builder() -> Builder { Builder::new() }
+define_extension_trait! {
+    /// Extension functionality for the [`ScriptBuf`] type.
+    pub trait ScriptBufExt impl for ScriptBuf {
+        /// Creates a new script builder
+        fn builder() -> Builder { Builder::new() }
 
-    /// Generates OP_RETURN-type of scriptPubkey for the given data.
-    pub fn new_op_return(data: impl AsRef<PushBytes>) -> Self {
-        Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
-    }
-
-    /// Adds a single opcode to the script.
-    pub fn push_opcode(&mut self, data: Opcode) { self.0.push(data.to_u8()); }
-
-    /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice(&mut self, data: impl AsRef<PushBytes>) {
-        let data = data.as_ref();
-        self.reserve(reserved_script_buf_len_for_slice(data.len()));
-        push_slice_no_opt(self, data);
-    }
-
-    /// Add a single instruction to the script.
-    ///
-    /// # Panics
-    ///
-    /// The method panics if the instruction is a data push with length greater or equal to
-    /// 0x100000000.
-    pub fn push_instruction(&mut self, instruction: Instruction<'_>) {
-        match instruction {
-            Instruction::Op(opcode) => self.push_opcode(opcode),
-            Instruction::PushBytes(bytes) => self.push_slice(bytes),
+        /// Generates OP_RETURN-type of scriptPubkey for the given data.
+        fn new_op_return(data: impl AsRef<PushBytes>) -> Self {
+            Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
         }
-    }
 
-    /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
-    pub fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
-        match instruction {
-            Instruction::Op(opcode) => self.push_opcode(opcode),
-            Instruction::PushBytes(bytes) => push_slice_no_opt(self, bytes),
+        /// Adds a single opcode to the script.
+        fn push_opcode(self: &mut Self, data: Opcode) { self.0.push(data.to_u8()); }
+
+        /// Adds instructions to push some arbitrary data onto the stack.
+        fn push_slice(self: &mut Self, data: impl AsRef<PushBytes>) {
+            let data = data.as_ref();
+            self.reserve(reserved_script_buf_len_for_slice(data.len()));
+            push_slice_no_opt(self, data);
         }
-    }
 
-    /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
-    ///
-    /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
-    /// in the script right after. To save space this function appends `VERIFY` only if
-    /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
-    /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
-    ///
-    /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
-    /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
-    /// semantics.
-    ///
-    /// This function needs to iterate over the script to find the last instruction. Prefer
-    /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
-    /// multiple times.
-    pub fn scan_and_push_verify(&mut self) { push_verify(self, script::last_opcode(self)); }
+        /// Add a single instruction to the script.
+        ///
+        /// # Panics
+        ///
+        /// The method panics if the instruction is a data push with length greater or equal to
+        /// 0x100000000.
+        fn push_instruction(self: &mut Self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => self.push_slice(bytes),
+            }
+        }
+
+        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
+        fn push_instruction_no_opt(self: &mut Self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => push_slice_no_opt(self, bytes),
+            }
+        }
+
+        /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
+        ///
+        /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
+        /// in the script right after. To save space this function appends `VERIFY` only if
+        /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
+        /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+        ///
+        /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
+        /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
+        /// semantics.
+        ///
+        /// This function needs to iterate over the script to find the last instruction. Prefer
+        /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
+        /// multiple times.
+        fn scan_and_push_verify(self: &mut Self) { push_verify(self, script::last_opcode(self)); }
+    }
 }
 
 /// Pushes the slice without reserving
