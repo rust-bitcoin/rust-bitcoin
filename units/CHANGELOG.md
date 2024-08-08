@@ -1,9 +1,27 @@
-# 0.1.1 - 2024-04-04
+# 0.2.0 - 2024-08-01
+
+* Bump MSRV to 1.63.0 [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)
+* Remove re-export of `ParseIntError` [#3069](https://github.com/rust-bitcoin/rust-bitcoin/pull/3069)
+* Improve docs [#2957](https://github.com/rust-bitcoin/rust-bitcoin/pull/2957)
+* Fix `Amount` decimals handling [#2951](https://github.com/rust-bitcoin/rust-bitcoin/pull/2951)
+
+## 0.1.2 - 2024-07-01
+
+* Remove enable of `alloc` feature in the `internals` dependency.
+
+Note, the bug fixed by this release was introduced in
+[#2655](https://github.com/rust-bitcoin/rust-bitcoin/pull/2655) and
+was incorrect because we have an `alloc` feature that enables
+`internals/alloc`.
+
+`v0.1.1` will be yanked for this reason.
+
+## 0.1.1 - 2024-04-04
 
 * Enable "alloc" feature for `internals` dependency - enables caching
   of parsed input strings in a couple of `amount` error types.
 
-# 0.1.0 - Initial Release - 2024-04-03
+## 0.1.0 - Initial Release - 2024-04-03
 
 Initial release of the `bitcoin-units` crate. These unit types are
 integer wrapper types used by the `rust-bitcoin` ecosystem. Note
@@ -17,6 +35,6 @@ The main types are:
 - `FeeRate`
 - `Weight`
 
-# 0.0.0 - Placeholder release
+## 0.0.0 - Placeholder release
 
 Empty crate to reserve the name on crates.io
