@@ -18,6 +18,7 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[cfg(feature = "std")]
@@ -30,6 +31,7 @@ extern crate serde;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
+pub mod script;
 pub mod sequence;
 
 #[doc(inline)]
@@ -44,9 +46,9 @@ pub use self::sequence::Sequence;
 #[rustfmt::skip]
 #[allow(unused_imports)]
 mod prelude {
-    #[cfg(all(not(feature = "std"), not(test)))]
-    pub use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    pub use alloc::{borrow::{Borrow, BorrowMut, Cow, ToOwned}, boxed::Box, rc::Rc, string::{String, ToString}, vec::Vec};
 
-    #[cfg(any(feature = "std", test))]
-    pub use std::string::ToString;
+    #[cfg(target_has_atomic = "ptr")]
+    pub use alloc::sync::Arc;
 }

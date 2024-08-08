@@ -104,8 +104,9 @@ where
             let bytes = reader.fill_buf()?;
 
             let read = bytes.len();
-            if read == 0 {      // Empty slice means EOF.
-                break
+            // Empty slice means EOF.
+            if read == 0 {
+                break;
             }
 
             engine.input(bytes);

@@ -1,6 +1,7 @@
 use bitcoin::address::Address;
 use bitcoin::consensus::encode;
-use bitcoin::{script, Network};
+use bitcoin::script::{self, ScriptExt as _};
+use bitcoin::Network;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

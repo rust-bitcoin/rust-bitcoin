@@ -131,7 +131,7 @@ define_extension_trait! {
         ///
         /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
         fn verify(
-            &self,
+            self: &Self,
             index: usize,
             amount: crate::Amount,
             spending_tx: &[u8],
@@ -150,7 +150,7 @@ define_extension_trait! {
         ///
         /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
         fn verify_with_flags(
-            &self,
+            self: &Self,
             index: usize,
             amount: crate::Amount,
             spending_tx: &[u8],

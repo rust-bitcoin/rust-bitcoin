@@ -15,6 +15,7 @@ use secp256k1::{Secp256k1, Verification};
 use super::witness_version::WitnessVersion;
 use super::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
 use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::script::ScriptExt as _;
 use crate::taproot::TapNodeHash;
 
 /// The minimum byte size of a segregated witness program.

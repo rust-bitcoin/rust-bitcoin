@@ -247,8 +247,9 @@ pub trait GeneralHash: Hash {
             let bytes = reader.fill_buf()?;
 
             let read = bytes.len();
-            if read == 0 {      // Empty slice means EOF.
-                break
+            // Empty slice means EOF.
+            if read == 0 {
+                break;
             }
 
             engine.input(bytes);
@@ -352,9 +353,6 @@ mod tests {
     #[test]
     fn hash_reader() {
         let mut reader: &[u8] = b"hello";
-        assert_eq!(
-            sha256::Hash::hash_reader(&mut reader).unwrap(),
-            sha256::Hash::hash(b"hello"),
-        )
+        assert_eq!(sha256::Hash::hash_reader(&mut reader).unwrap(), sha256::Hash::hash(b"hello"),)
     }
 }

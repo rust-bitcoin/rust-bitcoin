@@ -7,6 +7,7 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
+use crate::script::{self, ScriptBufExt as _};
 use crate::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.
@@ -81,7 +82,7 @@ impl Builder {
         // "duplicated code" because we need to update `1` field
         match opcode_to_verify(self.1) {
             Some(opcode) => {
-                (self.0).0.pop();
+                (self.0).pop();
                 self.push_opcode(opcode)
             }
             None => self.push_opcode(OP_VERIFY),
@@ -119,7 +120,7 @@ impl Default for Builder {
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = ScriptBuf::from(v);
-        let last_op = script.last_opcode();
+        let last_op = script::last_opcode(&script);
         Builder(script, last_op)
     }
 }
