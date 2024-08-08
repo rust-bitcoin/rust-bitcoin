@@ -100,7 +100,7 @@ impl ScriptBuf {
     pub fn builder() -> Builder { Builder::new() }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
-    pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
+    pub fn new_op_return(data: impl AsRef<PushBytes>) -> Self {
         Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
 
@@ -108,7 +108,7 @@ impl ScriptBuf {
     pub fn push_opcode(&mut self, data: Opcode) { self.0.push(data.to_u8()); }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+    pub fn push_slice(&mut self, data: impl AsRef<PushBytes>) {
         let data = data.as_ref();
         self.reserve(reserved_script_buf_len_for_slice(data.len()));
         push_slice_no_opt(self, data);
