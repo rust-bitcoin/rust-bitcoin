@@ -169,13 +169,13 @@ define_extension_trait! {
         /// > special meaning. The value of the first push is called the "version byte". The following
         /// > byte vector pushed is called the "witness program".
         fn witness_version(self: &Self) -> Option<WitnessVersion> {
-            let script_len = self.0.len();
+            let script_len = self.len();
             if !(4..=42).contains(&script_len) {
                 return None;
             }
 
-            let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-            let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
+            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
 
             if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
                 return None;
@@ -190,20 +190,20 @@ define_extension_trait! {
 
         /// Checks whether a script pubkey is a P2SH output.
         fn is_p2sh(self: &Self) -> bool {
-            self.0.len() == 23
-                && self.0[0] == OP_HASH160.to_u8()
-                && self.0[1] == OP_PUSHBYTES_20.to_u8()
-                && self.0[22] == OP_EQUAL.to_u8()
+            self.len() == 23
+                && self.as_bytes()[0] == OP_HASH160.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[22] == OP_EQUAL.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2PKH output.
         fn is_p2pkh(self: &Self) -> bool {
-            self.0.len() == 25
-                && self.0[0] == OP_DUP.to_u8()
-                && self.0[1] == OP_HASH160.to_u8()
-                && self.0[2] == OP_PUSHBYTES_20.to_u8()
-                && self.0[23] == OP_EQUALVERIFY.to_u8()
-                && self.0[24] == OP_CHECKSIG.to_u8()
+            self.len() == 25
+                && self.as_bytes()[0] == OP_DUP.to_u8()
+                && self.as_bytes()[1] == OP_HASH160.to_u8()
+                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
+                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
         }
 
         /// Checks whether a script is push only.
@@ -280,23 +280,23 @@ define_extension_trait! {
 
         /// Checks whether a script pubkey is a P2WSH output.
         fn is_p2wsh(self: &Self) -> bool {
-            self.0.len() == 34
+            self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V0)
-                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2WPKH output.
         fn is_p2wpkh(self: &Self) -> bool {
-            self.0.len() == 22
+            self.len() == 22
                 && self.witness_version() == Some(WitnessVersion::V0)
-                && self.0[1] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2TR output.
         fn is_p2tr(self: &Self) -> bool {
-            self.0.len() == 34
+            self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
-                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
         }
 
         /// Check if this is a consensus-valid OP_RETURN output.
@@ -304,7 +304,7 @@ define_extension_trait! {
         /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
         /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
         fn is_op_return(self: &Self) -> bool {
-            match self.0.first() {
+            match self.as_bytes().first() {
                 Some(b) => *b == OP_RETURN.to_u8(),
                 None => false,
             }
@@ -314,7 +314,7 @@ define_extension_trait! {
         ///
         /// What this function considers to be standard may change without warning pending Bitcoin Core
         /// changes.
-        fn is_standard_op_return(self: &Self) -> bool { self.is_op_return() && self.0.len() <= 80 }
+        fn is_standard_op_return(self: &Self) -> bool { self.is_op_return() && self.len() <= 80 }
 
 
         /// Checks whether a script is trivially known to have no satisfying input.
@@ -328,7 +328,7 @@ define_extension_trait! {
         fn is_provably_unspendable(self: &Self) -> bool {
             use crate::opcodes::Class::{IllegalOp, ReturnOp};
 
-            match self.0.first() {
+            match self.as_bytes().first() {
                 Some(b) => {
                     let first = Opcode::from(*b);
                     let class = first.classify(opcodes::ClassifyContext::Legacy);
@@ -429,7 +429,7 @@ define_extension_trait! {
         ///
         /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
         fn instructions(self: &Self) -> Instructions {
-            Instructions { data: self.0.iter(), enforce_minimal: false }
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: false }
         }
 
         /// Iterates over the script instructions while enforcing minimal pushes.
@@ -437,7 +437,7 @@ define_extension_trait! {
         /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
         /// is not minimal.
         fn instructions_minimal(self: &Self) -> Instructions {
-            Instructions { data: self.0.iter(), enforce_minimal: true }
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: true }
         }
 
         /// Iterates over the script instructions and their indices.
