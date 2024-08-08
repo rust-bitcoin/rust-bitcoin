@@ -188,16 +188,6 @@ macro_rules! hash_type {
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
             pub fn hash(data: &[u8]) -> Self { <Self as crate::GeneralHash>::hash(data) }
 
-            /// Hashes all the byte slices retrieved from the iterator together.
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-            where
-                B: AsRef<[u8]>,
-                I: IntoIterator<Item = B>,
-            {
-                <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
-            }
-
-
             /// Hashes the entire contents of the `reader`.
             #[cfg(feature = "bitcoin-io")]
             pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
@@ -213,6 +203,24 @@ macro_rules! hash_type {
             /// Constructs a hash from the underlying byte array.
             pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
                 Self::internal_new(bytes)
+            }
+        }
+
+        impl<B: core::borrow::Borrow<u8>> core::iter::FromIterator<B> for Hash {
+            fn from_iter<I: IntoIterator<Item = B>>(iter: I) -> Self {
+                let mut engine = Self::engine();
+                engine.extend(iter);
+                Self::from_engine(engine)
+            }
+        }
+
+        impl<B: core::borrow::Borrow<u8>> Extend<B> for HashEngine {
+            fn extend<I: IntoIterator<Item = B>>(&mut self, iter: I) {
+                use $crate::HashEngine;
+
+                for byte in iter {
+                    self.input(core::slice::from_ref(byte.borrow()))
+                }
             }
         }
 

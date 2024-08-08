@@ -222,6 +222,19 @@ impl Midstate {
     }
 }
 
+/// Infallibly constructs the [`Midstate`] from 64-byte chunks.
+impl<B: AsRef<[u8; 64]>> FromIterator<B> for Midstate {
+    fn from_iter<I: IntoIterator<Item=B>>(iter: I) -> Self {
+        let mut engine = HashEngine::new();
+        // Can't use `extend` because of borrowing issues.
+        for chunk in iter {
+            engine.input(chunk.as_ref());
+        }
+        // The trait is implemented for 64-byte chunks only, so it's definitely a multiple of 64
+        engine.midstate_unchecked()
+    }
+}
+
 impl fmt::Debug for Midstate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Midstate")

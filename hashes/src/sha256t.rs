@@ -83,19 +83,6 @@ where
         Self::from_engine(engine)
     }
 
-    /// Hashes all the byte slices retrieved from the iterator together.
-    pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-    where
-        B: AsRef<[u8]>,
-        I: IntoIterator<Item = B>,
-    {
-        let mut engine = Self::engine();
-        for slice in byte_slices {
-            engine.input(slice.as_ref());
-        }
-        Self::from_engine(engine)
-    }
-
     /// Hashes the entire contents of the `reader`.
     #[cfg(feature = "bitcoin-io")]
     pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
@@ -122,6 +109,14 @@ where
 
     /// Constructs a hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+}
+
+impl<T: Tag, B: core::borrow::Borrow<u8>> core::iter::FromIterator<B> for Hash<T> {
+    fn from_iter<I: IntoIterator<Item = B>>(iter: I) -> Self {
+        let mut engine = Self::engine();
+        engine.extend(iter);
+        Self::from_engine(engine)
+    }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
@@ -228,16 +223,6 @@ macro_rules! sha256t_hash_newtype {
             #[allow(unused)] // the user of macro may not need this
             pub fn hash(data: &[u8]) -> Self {
                 <$hash_name as $crate::GeneralHash>::hash(data)
-            }
-
-            /// Hashes all the byte slices retrieved from the iterator together.
-            #[allow(unused)] // the user of macro may not need this
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-            where
-                B: AsRef<[u8]>,
-                I: IntoIterator<Item = B>,
-            {
-                <$hash_name as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
 
             /// Hashes the entire contents of the `reader`.
