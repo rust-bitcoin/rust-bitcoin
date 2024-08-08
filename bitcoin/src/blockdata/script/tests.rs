@@ -10,7 +10,7 @@ use crate::address::script_pubkey::{
 };
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
-use crate::FeeRate;
+use crate::{script, FeeRate};
 
 #[test]
 #[rustfmt::skip]
@@ -53,7 +53,7 @@ fn script() {
 fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk = script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_bytes());
 }
@@ -62,20 +62,20 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
 fn p2pk_pubkey_bytes_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let no_checksig = Script::builder().push_key(key).into_script();
+    let no_checksig = script::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_pubkey_bytes(), None);
 }
 
 #[test]
 fn p2pk_pubkey_bytes_emptry_script_returns_none() {
-    let empty_script = Script::builder().into_script();
+    let empty_script = script::builder().into_script();
     assert!(empty_script.p2pk_pubkey_bytes().is_none());
 }
 
 #[test]
 fn p2pk_pubkey_bytes_no_key_returns_none() {
     // scripts with no key should return None
-    let no_push_bytes = Script::builder().push_opcode(OP_CHECKSIG).into_script();
+    let no_push_bytes = script::builder().push_opcode(OP_CHECKSIG).into_script();
     assert!(no_push_bytes.p2pk_pubkey_bytes().is_none());
 }
 
@@ -83,7 +83,7 @@ fn p2pk_pubkey_bytes_no_key_returns_none() {
 fn p2pk_pubkey_bytes_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
+    let different_op_code = script::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_pubkey_bytes().is_none());
 }
 
@@ -92,7 +92,7 @@ fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
     // 63 byte key
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
     let invalid_p2pk_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+        script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
     assert!(invalid_p2pk_script.p2pk_pubkey_bytes().is_none());
 }
 
@@ -100,7 +100,7 @@ fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
 fn p2pk_pubkey_bytes_invalid_key_returns_some() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
     let invalid_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+        script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
     assert!(invalid_key_script.p2pk_pubkey_bytes().is_some());
 }
 
@@ -108,7 +108,7 @@ fn p2pk_pubkey_bytes_invalid_key_returns_some() {
 fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
     let key = PublicKey::from_str(compressed_key_str).unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk = script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_bytes());
 }
@@ -117,7 +117,7 @@ fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
 fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk = script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
 }
@@ -126,19 +126,19 @@ fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
 fn p2pk_public_key_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let no_checksig = Script::builder().push_key(key).into_script();
+    let no_checksig = script::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_public_key(), None);
 }
 
 #[test]
 fn p2pk_public_key_empty_script_returns_none() {
-    let empty_script = Script::builder().into_script();
+    let empty_script = script::builder().into_script();
     assert!(empty_script.p2pk_public_key().is_none());
 }
 
 #[test]
 fn p2pk_public_key_no_key_returns_none() {
-    let no_push_bytes = Script::builder().push_opcode(OP_CHECKSIG).into_script();
+    let no_push_bytes = script::builder().push_opcode(OP_CHECKSIG).into_script();
     assert!(no_push_bytes.p2pk_public_key().is_none());
 }
 
@@ -146,7 +146,7 @@ fn p2pk_public_key_no_key_returns_none() {
 fn p2pk_public_key_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
-    let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
+    let different_op_code = script::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_public_key().is_none());
 }
 
@@ -154,7 +154,7 @@ fn p2pk_public_key_different_op_code_returns_none() {
 fn p2pk_public_key_incorrect_size_returns_none() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
     let malformed_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+        script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
     assert!(malformed_key_script.p2pk_public_key().is_none());
 }
 
@@ -162,7 +162,7 @@ fn p2pk_public_key_incorrect_size_returns_none() {
 fn p2pk_public_key_invalid_key_returns_none() {
     let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
     let invalid_key_script =
-        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+        script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
     assert!(invalid_key_script.p2pk_public_key().is_none());
 }
 
@@ -170,7 +170,7 @@ fn p2pk_public_key_invalid_key_returns_none() {
 fn p2pk_public_key_compressed_key_returns_some() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
     let key = PublicKey::from_str(compressed_key_str).unwrap();
-    let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
+    let p2pk = script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
 }

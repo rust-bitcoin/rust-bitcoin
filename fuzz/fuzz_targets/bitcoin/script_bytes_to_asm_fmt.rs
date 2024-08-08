@@ -1,5 +1,6 @@
 use std::fmt;
 
+use bitcoin::script::ScriptExt as _;
 use honggfuzz::fuzz;
 
 // faster than String, we don't need to actually produce the value, just check absence of panics

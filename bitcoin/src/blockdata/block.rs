@@ -19,8 +19,9 @@ use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::Vec;
+use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, Wtxid};
-use crate::{script, VarInt};
+use crate::VarInt;
 
 hashes::hash_newtype! {
     /// A bitcoin block hash.
