@@ -10,7 +10,7 @@
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::sha512;
+use crate::{sha512, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -49,6 +49,8 @@ impl crate::HashEngine for HashEngine {
 
     fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
 }
+
+crate::internal_macros::write_for_hash_engine_impl!();
 
 #[cfg(test)]
 mod tests {

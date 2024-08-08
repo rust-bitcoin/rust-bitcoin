@@ -235,3 +235,19 @@ macro_rules! hash_type {
     };
 }
 pub(crate) use hash_type;
+
+/// Requires `HashEngine` trait to be in scope.
+macro_rules! write_for_hash_engine_impl {
+    () => {
+        #[cfg(feature = "bitcoin-io")]
+        bitcoin_io::impl_write!(
+            HashEngine,
+            |us: &mut HashEngine, buf| {
+                us.input(buf);
+                Ok(buf.len())
+            },
+            |_us| { Ok(()) }
+        );
+    }
+}
+pub(crate) use write_for_hash_engine_impl;

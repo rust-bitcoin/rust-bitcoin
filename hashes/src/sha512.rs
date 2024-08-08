@@ -123,6 +123,8 @@ impl crate::HashEngine for HashEngine {
     engine_input_impl!();
 }
 
+crate::internal_macros::write_for_hash_engine_impl!();
+
 #[allow(non_snake_case)]
 fn Ch(x: u64, y: u64, z: u64) -> u64 { z ^ (x & (y ^ z)) }
 #[allow(non_snake_case)]
