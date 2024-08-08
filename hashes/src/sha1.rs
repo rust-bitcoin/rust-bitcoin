@@ -82,6 +82,8 @@ impl crate::HashEngine for HashEngine {
     engine_input_impl!();
 }
 
+crate::internal_macros::write_for_hash_engine_impl!();
+
 impl HashEngine {
     // Basic unoptimized algorithm from Wikipedia
     fn process_block(&mut self) {

@@ -137,6 +137,8 @@ impl crate::HashEngine for HashEngine {
     engine_input_impl!();
 }
 
+crate::internal_macros::write_for_hash_engine_impl!();
+
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     pub fn hash_again(&self) -> sha256d::Hash {

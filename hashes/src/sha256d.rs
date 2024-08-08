@@ -5,7 +5,7 @@
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::sha256;
+use crate::{sha256, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -31,6 +31,8 @@ impl crate::HashEngine for HashEngine {
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
 }
+
+crate::internal_macros::write_for_hash_engine_impl!();
 
 fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
