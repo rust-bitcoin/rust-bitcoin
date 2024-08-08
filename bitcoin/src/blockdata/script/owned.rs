@@ -113,7 +113,8 @@ impl ScriptBuf {
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
             }
-            n => {              // `PushBytes` enforces len < 0x100000000
+            // `PushBytes` enforces len < 0x100000000
+            n => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push(((n / 0x100) % 0x100) as u8);
