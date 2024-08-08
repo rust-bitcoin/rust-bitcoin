@@ -22,14 +22,12 @@ exec 1>&2
 # Cross platform projects tend to avoid non-ASCII filenames; prevent
 # them from being added to the repository. We exploit the fact that the
 # printable range starts at the space character and ends with tilde.
-# disable the check to quoting the $(...) command
-# shellcheck disable=SC2046
 if [ "$allownonascii" != "true" ] &&
 	# Note that the use of brackets around a tr range is ok here, (it's
 	# even required, for portability to Solaris 10's /usr/bin/tr), since
 	# the square bracket bytes happen to fall in the designated range.
-	test $(git diff --cached --name-only --diff-filter=A -z "$against" |
-	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+	test "$(git diff --cached --name-only --diff-filter=A -z "$against" |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c)" != 0
 then
 	cat <<\EOF
 Error: Attempt to add a non-ASCII file name.
@@ -49,6 +47,4 @@ fi
 git diff-index --check --cached "$against" -- || exit 1
 
 # Check that code lints cleanly.
-# disable the check to quoting the $(...) command
-# shellcheck disable=SC2046
-cargo +$(cat ./nightly-version) clippy --workspace --all-targets --all-features -- --deny warnings || exit 1
+cargo +"$(cat ./nightly-version)" clippy --workspace --all-targets --all-features -- --deny warnings || exit 1
