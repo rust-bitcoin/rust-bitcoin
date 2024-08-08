@@ -66,7 +66,7 @@ use crate::FeeRate;
 ///
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct Script(pub(in crate::blockdata::script) [u8]);
+pub struct Script(pub(in super) [u8]);
 
 impl ToOwned for Script {
     type Owned = ScriptBuf;
@@ -551,7 +551,7 @@ fn count_sigops_internal(script: &Script, accurate: bool) -> usize {
 /// Iterates the script to find the last opcode.
 ///
 /// Returns `None` is the instruction is data push or if the script is empty.
-pub(in crate::blockdata::script) fn last_opcode(script: &Script) -> Option<Opcode> {
+pub(in super) fn last_opcode(script: &Script) -> Option<Opcode> {
     match script.instructions().last() {
         Some(Ok(Instruction::Op(op))) => Some(op),
         _ => None,
