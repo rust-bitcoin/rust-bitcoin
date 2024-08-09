@@ -14,6 +14,21 @@ use crate::HashEngine as _;
 #[repr(transparent)]
 pub struct Hash([u8; 8]);
 
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Hash {
+    fn schema_name() -> String { "Hash".to_owned() }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(8 * 2),
+            min_length: Some(8 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
+    }
+}
+
 #[cfg(not(hashes_fuzz))]
 fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
 
