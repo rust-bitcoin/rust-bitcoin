@@ -226,6 +226,15 @@ impl Hash {
     /// Creates a hash from its (little endian) 64-bit integer representation.
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 
+    /// Returns the underlying byte array.
+    pub const fn to_byte_array(self) -> [u8; 8] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 8] { &self.0 }
+
+    /// Constructs a hash from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 8]) -> Self { Self(bytes) }
+
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> {
         let mut ret = [0; 8];
         ret.copy_from_slice(sl);
@@ -241,11 +250,11 @@ impl crate::Hash for Hash {
 
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> { Self::from_slice(sl) }
 
-    fn to_byte_array(self) -> Self::Bytes { self.0 }
+    fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
-    fn as_byte_array(&self) -> &Self::Bytes { &self.0 }
+    fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
-    fn from_byte_array(bytes: Self::Bytes) -> Self { Hash(bytes) }
+    fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 }
 
 impl<I: SliceIndex<[u8]>> Index<I> for Hash {
