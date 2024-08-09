@@ -14,13 +14,6 @@
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 #![no_std]
 
-// Disable 16-bit support at least for now as we can't guarantee it yet.
-#[cfg(target_pointer_width = "16")]
-compile_error!(
-    "rust-bitcoin currently only supports architectures with pointers wider than 16 bits, let us
-    know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
-);
-
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
