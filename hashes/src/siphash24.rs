@@ -2,11 +2,8 @@
 
 //! SipHash 2-4 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
 use core::{cmp, mem, ptr};
 
-use crate::internal_macros::arr_newtype_fmt_impl;
 use crate::HashEngine as _;
 
 #[doc = "Output of the SipHash24 hash function."]
@@ -242,15 +239,7 @@ impl crate::Hash for Hash {
     fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 }
 
-impl<I: SliceIndex<[u8]>> Index<I> for Hash {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-arr_newtype_fmt_impl!(Hash, 8);
-borrow_slice_impl!(Hash);
+crate::impl_bytelike_traits!(Hash, 8, false);
 
 /// Load an u64 using up to 7 bytes of a byte slice.
 ///
