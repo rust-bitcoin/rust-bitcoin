@@ -1,13 +1,10 @@
 use std::fs;
 
 pub fn parse_msrv_minor() -> u64 {
-    let f = "Cargo.toml";
-    let key = "rust-version";
-
-    let cargo_toml = fs::read_to_string(f).expect("manifest exists");
+    let cargo_toml = fs::read_to_string("Cargo.toml").expect("manifest exists");
 
     for line in cargo_toml.lines() {
-        if line.starts_with(key) {
+        if line.starts_with("rust-version") {
             let mut bits = line.split("=");
             bits.next();        // Skip "rust-version" string.
             let semver = bits.next().unwrap();
@@ -19,7 +16,7 @@ pub fn parse_msrv_minor() -> u64 {
         }
     }
 
-    panic!("unable to read {} field from {}", key, f)
+    panic!("unable to read rust-version field from manifest")
 }
 
 fn main() {
