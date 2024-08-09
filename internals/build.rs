@@ -1,4 +1,23 @@
-const MSRV_MINOR: u64 = 63;
+use std::fs;
+
+pub fn parse_msrv_minor() -> u64 {
+    let cargo_toml = fs::read_to_string("Cargo.toml").expect("manifest exists");
+
+    for line in cargo_toml.lines() {
+        if line.starts_with("rust-version") {
+            let mut bits = line.split("=");
+            bits.next();        // Skip "rust-version" string.
+            let semver = bits.next().unwrap();
+
+            let mut nums = semver.split(".");
+            nums.next();        // Skip major version number.
+            let minor = nums.next().unwrap();
+            return minor.parse::<u64>().unwrap();
+        }
+    }
+
+    panic!("unable to read rust-version field from manifest")
+}
 
 fn main() {
     let rustc = std::env::var_os("RUSTC");
@@ -27,7 +46,7 @@ fn main() {
         .expect("invalid Rust minor version");
 
     // print cfg for all interesting versions less than or equal to minor
-    for version in MSRV_MINOR..=minor {
+    for version in parse_msrv_minor()..=minor {
         println!("cargo:rustc-cfg=rust_v_1_{}", version);
     }
 }
