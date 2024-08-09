@@ -4,8 +4,6 @@
 
 use core::cmp;
 use core::marker::PhantomData;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{sha256, FromSliceError, HashEngine as _};
 
@@ -244,7 +242,7 @@ macro_rules! sha256t_hash_newtype {
             /// Hashes the entire contents of the `reader`.
             #[cfg(feature = "bitcoin-io")]
             #[allow(unused)] // the user of macro may not need this
-            fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
+            fn hash_reader<R: $crate::io::BufRead>(reader: &mut R) -> Result<Self, $crate::io::Error> {
                 <$hash_name as $crate::GeneralHash>::hash_reader(reader)
             }
         }

@@ -81,7 +81,7 @@ extern crate alloc;
 extern crate core;
 
 #[cfg(feature = "bitcoin-io")]
-extern crate bitcoin_io as io;
+pub extern crate bitcoin_io as io;
 
 #[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.
@@ -109,6 +109,8 @@ extern crate schemars;
 mod internal_macros;
 #[macro_use]
 mod util;
+#[macro_use]
+mod macros;
 #[macro_use]
 pub mod serde_macros;
 pub mod cmp;
@@ -324,7 +326,7 @@ impl std::error::Error for FromSliceError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{sha256, sha256d};
+    use crate::sha256d;
 
     hash_newtype! {
         /// A test newtype
@@ -351,7 +353,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "bitcoin-io")]
     fn hash_reader() {
+        use crate::sha256;
+
         let mut reader: &[u8] = b"hello";
         assert_eq!(sha256::Hash::hash_reader(&mut reader).unwrap(), sha256::Hash::hash(b"hello"),)
     }

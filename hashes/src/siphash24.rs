@@ -2,11 +2,8 @@
 
 //! SipHash 2-4 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
 use core::{cmp, mem, ptr};
 
-use crate::internal_macros::arr_newtype_fmt_impl;
 use crate::HashEngine as _;
 
 #[doc = "Output of the SipHash24 hash function."]
@@ -211,6 +208,15 @@ impl Hash {
     /// Creates a hash from its (little endian) 64-bit integer representation.
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 
+    /// Returns the underlying byte array.
+    pub const fn to_byte_array(self) -> [u8; 8] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 8] { &self.0 }
+
+    /// Constructs a hash from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 8]) -> Self { Self(bytes) }
+
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> {
         let mut ret = [0; 8];
         ret.copy_from_slice(sl);
@@ -226,22 +232,14 @@ impl crate::Hash for Hash {
 
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> { Self::from_slice(sl) }
 
-    fn to_byte_array(self) -> Self::Bytes { self.0 }
+    fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
-    fn as_byte_array(&self) -> &Self::Bytes { &self.0 }
+    fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
-    fn from_byte_array(bytes: Self::Bytes) -> Self { Hash(bytes) }
+    fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 }
 
-impl<I: SliceIndex<[u8]>> Index<I> for Hash {
-    type Output = I::Output;
-
-    #[inline]
-    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
-}
-
-arr_newtype_fmt_impl!(Hash, 8);
-borrow_slice_impl!(Hash);
+crate::impl_bytelike_traits!(Hash, 8, false);
 
 /// Load an u64 using up to 7 bytes of a byte slice.
 ///
