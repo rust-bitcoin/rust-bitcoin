@@ -2,6 +2,7 @@ fn main() {}
 #[cfg(test)]
 mod tests {
     use bitcoin_hashes::*;
+    use bitcoin_hashes::sha256::Midstate;
 
     #[test]
     fn hash160() {
@@ -117,6 +118,9 @@ mod tests {
             147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
         ];
 
+        // The midstate of an empty hash engine tagged with "TapLeaf".
+        const TAP_LEAF_MIDSTATE: Midstate = Midstate::new(TEST_MIDSTATE, 64);
+
         #[derive(
             Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Default, Hash, schemars::JsonSchema,
         )]
@@ -124,9 +128,7 @@ mod tests {
 
         impl sha256t::Tag for TestHashTag {
             fn engine() -> sha256::HashEngine {
-                // The TapRoot TapLeaf midstate.
-                let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
-                sha256::HashEngine::from_midstate(midstate, 64)
+                sha256::HashEngine::from_midstate(TAP_LEAF_MIDSTATE)
             }
         }
 
