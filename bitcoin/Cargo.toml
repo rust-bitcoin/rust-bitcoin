@@ -17,7 +17,7 @@ exclude = ["tests", "contrib"]
 [features]
 default = [ "std", "secp-recovery" ]
 std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std", "bitcoinconsensus?/std"]
-rand-std = ["secp256k1/rand-std", "std"]
+rand-std = ["secp256k1/std", "secp256k1/rand", "std"]
 rand = ["secp256k1/rand"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
@@ -31,7 +31,7 @@ hex = { package = "hex-conservative", version = "0.2.0", default-features = fals
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
 primitives = { package = "bitcoin-primitives", version = "0.100.0", default-features = false, features = ["alloc"] }
-secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
+secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1.git", rev = "refs/pull/716/head", default-features = false, features = ["alloc", "hashes", "rand", "std"] }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 
 base64 = { version = "0.22.0", optional = true }
