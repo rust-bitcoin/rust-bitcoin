@@ -154,7 +154,14 @@ pub mod hex {
     }
 }
 
-struct DisplayWrapper<'a, T: 'a + Encodable, E>(&'a T, PhantomData<E>);
+pub(crate) struct DisplayWrapper<'a, T: 'a + Encodable, E>(&'a T, PhantomData<E>);
+
+impl<'a, T, E> DisplayWrapper<'a, T, E>
+where
+    T: 'a + Encodable
+{
+    pub fn new(t: &'a T) -> Self { DisplayWrapper(t, PhantomData) }
+}
 
 impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
