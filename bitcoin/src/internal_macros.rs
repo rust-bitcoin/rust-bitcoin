@@ -251,7 +251,7 @@ macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($param_name:ident: $param_type:ty),* $(,)?) $( -> $ret:ty )? $body:block
+            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
@@ -259,7 +259,7 @@ macro_rules! define_extension_trait {
                 $crate::internal_macros::only_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
-                        fn $fn$(<$($gen: $gent),*>)?($($param_name: $param_type),*) $( -> $ret )?;
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )?;
                     }
                 }
             )*
@@ -270,7 +270,7 @@ macro_rules! define_extension_trait {
                 $crate::internal_macros::only_non_doc_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
-                        fn $fn$(<$($gen: $gent),*>)?($($param_name: $param_type),*) $( -> $ret )? $body
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )? $body
                     }
                 }
             )*
