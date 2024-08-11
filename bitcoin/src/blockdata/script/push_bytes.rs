@@ -15,7 +15,8 @@ pub use self::primitive::*;
 /// break invariants. Therefore auditing this module should be sufficient.
 mod primitive {
     use core::ops::{
-        Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+        Bound, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+        RangeToInclusive,
     };
 
     use super::PushBytesError;
@@ -95,6 +96,17 @@ mod primitive {
                         }
                     }
                 }
+
+                impl IndexMut<$type> for PushBytes {
+                    #[inline]
+                    #[track_caller]
+                    fn index_mut(&mut self, index: $type) -> &mut Self::Output {
+                        // SAFETY: Slicing can not make slices longer.
+                        unsafe {
+                            Self::from_mut_slice_unchecked(&mut self.0[index])
+                        }
+                    }
+                }
             )*
         }
     }
@@ -115,6 +127,12 @@ mod primitive {
         #[inline]
         #[track_caller]
         fn index(&self, index: usize) -> &Self::Output { &self.0[index] }
+    }
+
+    impl IndexMut<usize> for PushBytes {
+        #[inline]
+        #[track_caller]
+        fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut self.0[index] }
     }
 
     impl<'a> TryFrom<&'a [u8]> for &'a PushBytes {
