@@ -135,31 +135,31 @@ impl Script {
     }
 }
 
-mod tmp_pub {
-    use super::*;
-    impl Script {
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Script`] type.
+    pub trait ScriptExt impl for Script {
         /// Returns an iterator over script bytes.
         #[inline]
-        pub fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
+        fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
         /// Creates a new script builder
-        pub fn builder() -> Builder { Builder::new() }
+        fn builder() -> Builder { Builder::new() }
 
         /// Returns 160-bit hash of the script for P2SH outputs.
         #[inline]
-        pub fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
+        fn script_hash(&self) -> Result<ScriptHash, RedeemScriptSizeError> {
             ScriptHash::from_script(self)
         }
 
         /// Returns 256-bit hash of the script for P2WSH outputs.
         #[inline]
-        pub fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
+        fn wscript_hash(&self) -> Result<WScriptHash, WitnessScriptSizeError> {
             WScriptHash::from_script(self)
         }
 
         /// Computes leaf hash of tapscript.
         #[inline]
-        pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
+        fn tapscript_leaf_hash(&self) -> TapLeafHash {
             TapLeafHash::from_script(self, LeafVersion::TapScript)
         }
 
@@ -174,7 +174,7 @@ mod tmp_pub {
         /// > special meaning. The value of the first push is called the "version byte". The following
         /// > byte vector pushed is called the "witness program".
         #[inline]
-        pub fn witness_version(&self) -> Option<WitnessVersion> {
+        fn witness_version(&self) -> Option<WitnessVersion> {
             let script_len = self.0.len();
             if !(4..=42).contains(&script_len) {
                 return None;
@@ -196,7 +196,7 @@ mod tmp_pub {
 
         /// Checks whether a script pubkey is a P2SH output.
         #[inline]
-        pub fn is_p2sh(&self) -> bool {
+        fn is_p2sh(&self) -> bool {
             self.0.len() == 23
                 && self.0[0] == OP_HASH160.to_u8()
                 && self.0[1] == OP_PUSHBYTES_20.to_u8()
@@ -205,7 +205,7 @@ mod tmp_pub {
 
         /// Checks whether a script pubkey is a P2PKH output.
         #[inline]
-        pub fn is_p2pkh(&self) -> bool {
+        fn is_p2pkh(&self) -> bool {
             self.0.len() == 25
                 && self.0[0] == OP_DUP.to_u8()
                 && self.0[1] == OP_HASH160.to_u8()
@@ -219,7 +219,7 @@ mod tmp_pub {
         /// Note: `OP_RESERVED` (`0x50`) and all the OP_PUSHNUM operations
         /// are considered push operations.
         #[inline]
-        pub fn is_push_only(&self) -> bool {
+        fn is_push_only(&self) -> bool {
             for inst in self.instructions() {
                 match inst {
                     Err(_) => return false,
@@ -240,7 +240,7 @@ mod tmp_pub {
         ///
         ///    `2 <pubkey1> <pubkey2> <pubkey3> 3 OP_CHECKMULTISIG`
         #[inline]
-        pub fn is_multisig(&self) -> bool {
+        fn is_multisig(&self) -> bool {
             let required_sigs;
 
             let mut instructions = self.instructions();
@@ -288,11 +288,11 @@ mod tmp_pub {
 
         /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
         #[inline]
-        pub fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
+        fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
         /// Checks whether a script pubkey is a P2WSH output.
         #[inline]
-        pub fn is_p2wsh(&self) -> bool {
+        fn is_p2wsh(&self) -> bool {
             self.0.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.0[1] == OP_PUSHBYTES_32.to_u8()
@@ -300,7 +300,7 @@ mod tmp_pub {
 
         /// Checks whether a script pubkey is a P2WPKH output.
         #[inline]
-        pub fn is_p2wpkh(&self) -> bool {
+        fn is_p2wpkh(&self) -> bool {
             self.0.len() == 22
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.0[1] == OP_PUSHBYTES_20.to_u8()
@@ -308,7 +308,7 @@ mod tmp_pub {
 
         /// Checks whether a script pubkey is a P2TR output.
         #[inline]
-        pub fn is_p2tr(&self) -> bool {
+        fn is_p2tr(&self) -> bool {
             self.0.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.0[1] == OP_PUSHBYTES_32.to_u8()
@@ -319,7 +319,7 @@ mod tmp_pub {
         /// To validate if the OP_RETURN obeys Bitcoin Core's current standardness policy, use
         /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
         #[inline]
-        pub fn is_op_return(&self) -> bool {
+        fn is_op_return(&self) -> bool {
             match self.0.first() {
                 Some(b) => *b == OP_RETURN.to_u8(),
                 None => false,
@@ -331,7 +331,7 @@ mod tmp_pub {
         /// What this function considers to be standard may change without warning pending Bitcoin Core
         /// changes.
         #[inline]
-        pub fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
+        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
 
         /// Checks whether a script is trivially known to have no satisfying input.
         ///
@@ -342,7 +342,7 @@ mod tmp_pub {
             note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
         )]
         #[inline]
-        pub fn is_provably_unspendable(&self) -> bool {
+        fn is_provably_unspendable(&self) -> bool {
             use crate::opcodes::Class::{IllegalOp, ReturnOp};
 
             match self.0.first() {
@@ -362,7 +362,7 @@ mod tmp_pub {
         /// It merely gets the last push of the script.
         ///
         /// Use [`Script::is_p2sh`] on the scriptPubKey to check whether it is actually a P2SH script.
-        pub fn redeem_script(&self) -> Option<&Script> {
+        fn redeem_script(&self) -> Option<&Script> {
             // Script must consist entirely of pushes.
             if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
                 return None;
@@ -378,7 +378,7 @@ mod tmp_pub {
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today’s Bitcoin network.
         #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
-        pub fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
+        fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
 
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today's Bitcoin network.
@@ -389,7 +389,7 @@ mod tmp_pub {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-        pub fn minimal_non_dust(&self) -> crate::Amount {
+        fn minimal_non_dust(&self) -> crate::Amount {
             self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
         }
 
@@ -404,7 +404,7 @@ mod tmp_pub {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
-        pub fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
+        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
             self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
         }
 
@@ -422,7 +422,7 @@ mod tmp_pub {
         /// (Note: Taproot scripts don't count toward the sigop count of the block,
         /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
         /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-        pub fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
+        fn count_sigops(&self) -> usize { self.count_sigops_internal(true) }
 
         /// Counts the sigops for this Script using legacy counting.
         ///
@@ -436,7 +436,7 @@ mod tmp_pub {
         /// (Note: Taproot scripts don't count toward the sigop count of the block,
         /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
         /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
-        pub fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
+        fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
 
         /// Iterates over the script instructions.
         ///
@@ -446,7 +446,7 @@ mod tmp_pub {
         ///
         /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
         #[inline]
-        pub fn instructions(&self) -> Instructions {
+        fn instructions(&self) -> Instructions {
             Instructions { data: self.0.iter(), enforce_minimal: false }
         }
 
@@ -455,7 +455,7 @@ mod tmp_pub {
         /// This is similar to [`instructions`](Self::instructions) but an error is returned if a push
         /// is not minimal.
         #[inline]
-        pub fn instructions_minimal(&self) -> Instructions {
+        fn instructions_minimal(&self) -> Instructions {
             Instructions { data: self.0.iter(), enforce_minimal: true }
         }
 
@@ -467,7 +467,7 @@ mod tmp_pub {
         ///
         /// To force minimal pushes, use [`Self::instruction_indices_minimal`].
         #[inline]
-        pub fn instruction_indices(&self) -> InstructionIndices {
+        fn instruction_indices(&self) -> InstructionIndices {
             InstructionIndices::from_instructions(self.instructions())
         }
 
@@ -476,17 +476,17 @@ mod tmp_pub {
         /// This is similar to [`instruction_indices`](Self::instruction_indices) but an error is
         /// returned if a push is not minimal.
         #[inline]
-        pub fn instruction_indices_minimal(&self) -> InstructionIndices {
+        fn instruction_indices_minimal(&self) -> InstructionIndices {
             InstructionIndices::from_instructions(self.instructions_minimal())
         }
 
         /// Writes the human-readable assembly representation of the script to the formatter.
-        pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
             bytes_to_asm_fmt(self.as_ref(), f)
         }
 
         /// Returns the human-readable assembly representation of the script.
-        pub fn to_asm_string(&self) -> String {
+        fn to_asm_string(&self) -> String {
             let mut buf = String::new();
             self.fmt_asm(&mut buf).unwrap();
             buf
@@ -497,19 +497,18 @@ mod tmp_pub {
         /// This is a more convenient and performant way to write `format!("{:x}", script)`.
         /// For better performance you should generally prefer displaying the script but if `String` is
         /// required (this is common in tests) this method can be used.
-        pub fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
+        fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
 
         /// Returns the first opcode of the script (if there is any).
-        pub fn first_opcode(&self) -> Option<Opcode> {
+        fn first_opcode(&self) -> Option<Opcode> {
             self.as_bytes().first().copied().map(From::from)
         }
     }
 }
 
-mod tmp_priv {
-    use super::*;
-    impl Script {
-        pub(crate) fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
+crate::internal_macros::define_extension_trait! {
+    pub(crate) trait ScriptExtPriv impl for Script {
+        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
             let sats = dust_relay_fee
@@ -532,7 +531,7 @@ mod tmp_priv {
             crate::Amount::from_sat(sats)
         }
 
-        pub(crate) fn count_sigops_internal(&self, accurate: bool) -> usize {
+        fn count_sigops_internal(&self, accurate: bool) -> usize {
             let mut n = 0;
             let mut pushnum_cache = None;
             for inst in self.instructions() {
@@ -575,7 +574,7 @@ mod tmp_priv {
         /// Iterates the script to find the last opcode.
         ///
         /// Returns `None` is the instruction is data push or if the script is empty.
-        pub(in crate::blockdata::script) fn last_opcode(&self) -> Option<Opcode> {
+        fn last_opcode(&self) -> Option<Opcode> {
             match self.instructions().last() {
                 Some(Ok(Instruction::Op(op))) => Some(op),
                 _ => None,
@@ -585,7 +584,7 @@ mod tmp_priv {
         /// Iterates the script to find the last pushdata.
         ///
         /// Returns `None` if the instruction is an opcode or if the script is empty.
-        pub(crate) fn last_pushdata(&self) -> Option<&PushBytes> {
+        fn last_pushdata(&self) -> Option<&PushBytes> {
             match self.instructions().last() {
                 // Handles op codes up to (but excluding) OP_PUSHNUM_NEG.
                 Some(Ok(Instruction::PushBytes(bytes))) => Some(bytes),
