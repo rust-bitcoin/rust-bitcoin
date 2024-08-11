@@ -406,29 +406,6 @@ impl Script {
         self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
     }
 
-    fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
-        // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
-        // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-        let sats = dust_relay_fee
-            .checked_mul(if self.is_op_return() {
-                0
-            } else if self.is_witness_program() {
-                32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
-            } else {
-                32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
-                    8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
-            })
-            .expect("dust_relay_fee or script length should not be absurdly large")
-            / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
-                    // Note: We ensure the division happens at the end, since Core performs the division at the end.
-                    //       This will make sure none of the implicit floor operations mess with the value.
-
-        crate::Amount::from_sat(sats)
-    }
-
     /// Counts the sigops for this Script using accurate counting.
     ///
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
@@ -458,46 +435,6 @@ impl Script {
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a Taproot script goes over the sigop budget.)
     pub fn count_sigops_legacy(&self) -> usize { self.count_sigops_internal(false) }
-
-    fn count_sigops_internal(&self, accurate: bool) -> usize {
-        let mut n = 0;
-        let mut pushnum_cache = None;
-        for inst in self.instructions() {
-            match inst {
-                Ok(Instruction::Op(opcode)) => {
-                    match opcode {
-                        // p2pk, p2pkh
-                        OP_CHECKSIG | OP_CHECKSIGVERIFY => {
-                            n += 1;
-                        }
-                        OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
-                            match (accurate, pushnum_cache) {
-                                (true, Some(pushnum)) => {
-                                    // Add the number of pubkeys in the multisig as sigop count
-                                    n += usize::from(pushnum);
-                                }
-                                _ => {
-                                    // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
-                                    // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
-                                    n += 20;
-                                }
-                            }
-                        }
-                        _ => {
-                            pushnum_cache = opcode.decode_pushnum();
-                        }
-                    }
-                }
-                Ok(Instruction::PushBytes(_)) => {
-                    pushnum_cache = None;
-                }
-                // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
-                Err(_) => break,
-            }
-        }
-
-        n
-    }
 
     /// Iterates over the script instructions.
     ///
@@ -563,6 +500,71 @@ impl Script {
     /// Returns the first opcode of the script (if there is any).
     pub fn first_opcode(&self) -> Option<Opcode> {
         self.as_bytes().first().copied().map(From::from)
+    }
+}
+
+impl Script {
+    fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
+        // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
+        // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
+        let sats = dust_relay_fee
+            .checked_mul(if self.is_op_return() {
+                0
+            } else if self.is_witness_program() {
+                32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+            } else {
+                32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
+                    8 + // The serialized size of the TxOut's amount field
+                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+            })
+            .expect("dust_relay_fee or script length should not be absurdly large")
+            / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
+                    // Note: We ensure the division happens at the end, since Core performs the division at the end.
+                    //       This will make sure none of the implicit floor operations mess with the value.
+
+        crate::Amount::from_sat(sats)
+    }
+
+    fn count_sigops_internal(&self, accurate: bool) -> usize {
+        let mut n = 0;
+        let mut pushnum_cache = None;
+        for inst in self.instructions() {
+            match inst {
+                Ok(Instruction::Op(opcode)) => {
+                    match opcode {
+                        // p2pk, p2pkh
+                        OP_CHECKSIG | OP_CHECKSIGVERIFY => {
+                            n += 1;
+                        }
+                        OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
+                            match (accurate, pushnum_cache) {
+                                (true, Some(pushnum)) => {
+                                    // Add the number of pubkeys in the multisig as sigop count
+                                    n += usize::from(pushnum);
+                                }
+                                _ => {
+                                    // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
+                                    // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
+                                    n += 20;
+                                }
+                            }
+                        }
+                        _ => {
+                            pushnum_cache = opcode.decode_pushnum();
+                        }
+                    }
+                }
+                Ok(Instruction::PushBytes(_)) => {
+                    pushnum_cache = None;
+                }
+                // In Bitcoin Core it does `if (!GetOp(pc, opcode)) break;`
+                Err(_) => break,
+            }
+        }
+
+        n
     }
 
     /// Iterates the script to find the last opcode.
