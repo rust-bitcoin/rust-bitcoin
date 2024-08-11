@@ -135,6 +135,8 @@ impl Script {
     }
 }
 
+mod tmp_pub {
+    use super::*;
 impl Script {
     /// Returns an iterator over script bytes.
     #[inline]
@@ -502,9 +504,12 @@ impl Script {
         self.as_bytes().first().copied().map(From::from)
     }
 }
+}
 
+mod tmp_priv {
+    use super::*;
 impl Script {
-    fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
+    pub(crate) fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
         let sats = dust_relay_fee
@@ -527,7 +532,7 @@ impl Script {
         crate::Amount::from_sat(sats)
     }
 
-    fn count_sigops_internal(&self, accurate: bool) -> usize {
+    pub(crate) fn count_sigops_internal(&self, accurate: bool) -> usize {
         let mut n = 0;
         let mut pushnum_cache = None;
         for inst in self.instructions() {
@@ -589,6 +594,7 @@ impl Script {
             _ => None,
         }
     }
+}
 }
 
 /// Iterator over bytes of a script
