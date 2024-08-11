@@ -536,6 +536,12 @@ impl Decodable for RawNetworkMessage {
     }
 }
 
+impl From<RawNetworkMessage> for NetworkMessage {
+    fn from(value: RawNetworkMessage) -> Self {
+        value.payload
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::net::Ipv4Addr;
