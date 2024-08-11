@@ -1,5 +1,3 @@
-const MSRV_MINOR: u64 = 63;
-
 fn main() {
     let rustc = std::env::var_os("RUSTC");
     let rustc = rustc.as_ref().map(std::path::Path::new).unwrap_or_else(|| "rustc".as_ref());
@@ -26,8 +24,14 @@ fn main() {
         .parse::<u64>()
         .expect("invalid Rust minor version");
 
+    let msrv = std::env::var("CARGO_PKG_RUST_VERSION").unwrap();
+    let mut msrv = msrv.split(".");
+    let msrv_major = msrv.next().unwrap();
+    assert_eq!(msrv_major, "1", "unexpected Rust major version");
+    let msrv_minor = msrv.next().unwrap().parse::<u64>().unwrap();
+
     // print cfg for all interesting versions less than or equal to minor
-    for version in MSRV_MINOR..=minor {
+    for version in msrv_minor..=minor {
         println!("cargo:rustc-cfg=rust_v_1_{}", version);
     }
 }
