@@ -355,6 +355,9 @@ impl CompactTarget {
     pub fn to_consensus(self) -> u32 { self.0 }
 }
 
+mod tmp {
+    use super::*;
+
 impl CompactTarget {
     /// Creates a `CompactTarget` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
@@ -443,6 +446,7 @@ impl CompactTarget {
         let bits = current.bits;
         CompactTarget::from_next_work_required(bits, timespan.into(), params)
     }
+}
 }
 
 impl From<CompactTarget> for Target {
