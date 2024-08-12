@@ -348,6 +348,14 @@ do_impl!(Target);
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
+    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
+    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
+
+    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    pub fn to_consensus(self) -> u32 { self.0 }
+}
+
+impl CompactTarget {
     /// Creates a `CompactTarget` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let target = parse::hex_u32_prefixed(s)?;
@@ -435,12 +443,6 @@ impl CompactTarget {
         let bits = current.bits;
         CompactTarget::from_next_work_required(bits, timespan.into(), params)
     }
-
-    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
-    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
-
-    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
-    pub fn to_consensus(self) -> u32 { self.0 }
 }
 
 impl From<CompactTarget> for Target {
