@@ -48,16 +48,8 @@ pub trait Read {
 
     /// Reads bytes from source until `buf` is full.
     #[inline]
-    fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
-        while !buf.is_empty() {
-            match self.read(buf) {
-                Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
-                Ok(len) => buf = &mut buf[len..],
-                Err(e) if e.kind() == ErrorKind::Interrupted => {}
-                Err(e) => return Err(e),
-            }
-        }
-        Ok(())
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        default_read_exact(self, buf)
     }
 
     /// Creates an adapter which will read at most `limit` bytes.
@@ -84,6 +76,19 @@ pub trait Read {
     fn by_ref(&mut self) -> ByRef<'_, Self> {
         ByRef(self)
     }
+}
+
+#[inline]
+fn default_read_exact(reader: &mut (impl Read + ?Sized), mut buf: &mut [u8]) -> Result<()> {
+    while !buf.is_empty() {
+        match reader.read(buf) {
+            Ok(0) => return Err(ErrorKind::UnexpectedEof.into()),
+            Ok(len) => buf = &mut buf[len..],
+            Err(e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
 }
 
 /// A trait describing an input stream that uses an internal buffer when reading.
@@ -329,6 +334,124 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     }
 }
 
+/// A [`Read`]er which keeps an internal buffer to avoid hitting the underlying stream directly for
+/// every read, implementing [`BufRead`].
+///
+/// Note: if `R` implements [`std::io::Read`] you might want to use [`std::io::BufReader`] rather
+/// than this one for better performance.
+pub struct BufReader<R: Read + ?Sized, const LEN: usize = 4096> {
+    buf: [u8; LEN],
+    pos: usize,
+    limit: usize,
+    inner: R,
+}
+
+impl<const LEN: usize, R: Read + ?Sized> BufReader<R, LEN> {
+    /// Creates a [`BufReader`] which will read from the given `inner`.
+    pub fn new(inner: R) -> Self where R: Sized {
+        BufReader {
+            inner,
+            buf: [0; LEN],
+            pos: 0,
+            limit: 0,
+        }
+    }
+
+    /// Returns a reference to the reader `R`.
+    pub fn get_ref(&self) -> &R {
+        &self.inner
+    }
+
+    /// Returns a mutable reference to the reader `R`.
+    ///
+    /// Warning: reading from the returned reader may cause data corruption.
+    pub fn get_mut(&mut self) -> &mut R {
+        &mut self.inner
+    }
+
+    /// Returns the reader `R`.
+    ///
+    /// Warning: this loses the internal buffer and thus it may cause data loss.
+    pub fn into_inner(self) -> R where R: Sized {
+        self.inner
+    }
+}
+
+impl<const LEN: usize, R: Read + ?Sized> Read for BufReader<R, LEN> {
+    #[inline]
+    fn read(&mut self, output: &mut [u8]) -> Result<usize> {
+        // Fake buffer doesn't provide any speedup so we try to pass the request to the inner
+        // reader.
+        if LEN == 1 {
+            if output.is_empty() {
+                return Ok(0);
+            }
+            if self.pos < self.limit {
+                debug_assert_eq!(self.pos, 0);
+                debug_assert_eq!(self.limit, 1);
+                output[0] = self.buf[0];
+                self.pos = 1;
+                Ok(1)
+            } else {
+                self.inner.read(output)
+            }
+        } else {
+            let input = self.fill_buf()?;
+            let count = cmp::min(input.len(), output.len());
+            output[..count].copy_from_slice(&input[..count]);
+            self.consume(count);
+            Ok(count)
+        }
+    }
+
+    #[inline]
+    fn read_exact(&mut self, output: &mut [u8]) -> Result<()> {
+        // Fake buffer doesn't provide any speedup so we try to pass the request to the inner
+        // reader.
+        if LEN == 1 {
+            if output.is_empty() {
+                return Ok(());
+            }
+            if self.pos < self.limit {
+                debug_assert_eq!(self.pos, 0);
+                debug_assert_eq!(self.limit, 1);
+                output[0] = self.buf[0];
+                self.pos = 1;
+                if output.len() > 1 {
+                    self.inner.read_exact(&mut output[1..])
+                } else {
+                    Ok(())
+                }
+            } else {
+                self.inner.read_exact(output)
+            }
+        } else {
+            default_read_exact(self, output)
+        }
+    }
+}
+
+impl<const LEN: usize, R: Read + ?Sized> BufRead for BufReader<R, LEN> {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        if self.pos < self.limit {
+            Ok(&self.buf[self.pos..self.limit])
+        } else {
+            let count = self.inner.read(&mut self.buf)?;
+            assert!(count <= self.buf.len(), "read gave us a garbage length");
+            self.pos = 0;
+            self.limit = count;
+            Ok(&self.buf[..self.limit])
+        }
+    }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) {
+        assert!(self.pos.saturating_add(amount) <= self.limit, "Cannot consume more than was provided");
+        self.pos += amount;
+    }
+}
+
 /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
 pub trait Write {
     /// Writes `buf` into this writer, returning how many bytes were written.
@@ -476,5 +599,55 @@ mod tests {
         let read = reader.read_to_limit(&mut buf, 2).expect("failed to read to limit");
         assert_eq!(read, 2);
         assert_eq!(&buf, "16".as_bytes())
+    }
+
+    /// A reader that provides an unlimited number of bytes but always returns a limited number of
+    /// bytes in response to each call to `read`. The bytes themselves count how many times `read`
+    /// was called.
+    struct FixedBytesReader(u8, usize);
+    impl Read for FixedBytesReader {
+        fn read(&mut self, output: &mut [u8]) -> Result<usize> {
+            if output.is_empty() { return Ok(0); }
+            self.0 = self.0.wrapping_add(1);
+            let len = cmp::min(self.1, output.len());
+            for out_byte in output.iter_mut().take(self.1) {
+                *out_byte = self.0;
+            }
+            Ok(len)
+        }
+    }
+
+    #[test]
+    fn test_single_bufreader() {
+        let single_byte_generator = FixedBytesReader(0, 1);
+        let mut buf = BufReader::<_, 4096>::new(single_byte_generator);
+        let mut some_bytes = [0; 10];
+        buf.read_exact(&mut some_bytes).unwrap();
+        assert_eq!(some_bytes, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    }
+
+    #[test]
+    fn test_two_bufreader() {
+        let two_byte_generator = FixedBytesReader(0, 2);
+        let mut buf = BufReader::<_, 4096>::new(two_byte_generator);
+        let mut one_byte = [0; 1];
+        buf.read_exact(&mut one_byte).unwrap();
+        assert_eq!(one_byte, [1]);
+
+        let mut some_bytes = [0; 5];
+        buf.read_exact(&mut some_bytes).unwrap();
+        assert_eq!(some_bytes, [1, 2, 2, 3, 3]);
+    }
+
+    #[test]
+    fn test_overread_bufreader() {
+        let two_byte_generator = FixedBytesReader(0, 2);
+        let mut buf = BufReader::<_, 4096>::new(two_byte_generator);
+        assert_eq!(buf.fill_buf().unwrap(), [1, 1]);
+        assert_eq!(buf.fill_buf().unwrap(), [1, 1]);
+        buf.consume(1);
+        assert_eq!(buf.fill_buf().unwrap(), [1]);
+        buf.consume(1);
+        assert_eq!(buf.fill_buf().unwrap(), [2, 2]);
     }
 }
