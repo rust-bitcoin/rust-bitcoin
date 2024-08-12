@@ -358,95 +358,95 @@ impl CompactTarget {
 mod tmp {
     use super::*;
 
-impl CompactTarget {
-    /// Creates a `CompactTarget` from a prefixed hex string.
-    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let target = parse::hex_u32_prefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-
-    /// Creates a `CompactTarget` from an unprefixed hex string.
-    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let target = parse::hex_u32_unprefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-
-    /// Computes the [`CompactTarget`] from a difficulty adjustment.
-    ///
-    /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
-    ///
-    /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
-    /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
-    /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
-    /// a factor of 4, or adjust beyond the maximum threshold for the network.
-    ///
-    /// # Note
-    ///
-    /// Under the consensus rules, the difference in the number of blocks between the headers does
-    /// not equate to the `difficulty_adjustment_interval` of [`Params`]. This is due to an off-by-one
-    /// error, and, the expected number of blocks in between headers is `difficulty_adjustment_interval - 1`
-    /// when calculating the difficulty adjustment.
-    ///
-    /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
-    /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
-    ///
-    /// # Returns
-    ///
-    /// The expected [`CompactTarget`] recalculation.
-    pub fn from_next_work_required(
-        last: CompactTarget,
-        timespan: u64,
-        params: impl AsRef<Params>,
-    ) -> CompactTarget {
-        let params = params.as_ref();
-        if params.no_pow_retargeting {
-            return last;
+    impl CompactTarget {
+        /// Creates a `CompactTarget` from a prefixed hex string.
+        pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
+            let target = parse::hex_u32_prefixed(s)?;
+            Ok(Self::from_consensus(target))
         }
-        // Comments relate to the `pow.cpp` file from Core.
-        // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
-        let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
-        let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
-        let actual_timespan = timespan.clamp(min_timespan, max_timespan);
-        let prev_target: Target = last.into();
-        let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-        let retarget = prev_target.0; // bnNew
-        let retarget = retarget.mul(actual_timespan.into());
-        let retarget = retarget.div(params.pow_target_timespan.into());
-        let retarget = Target(retarget);
-        if retarget.ge(&maximum_retarget) {
-            return maximum_retarget.to_compact_lossy();
-        }
-        retarget.to_compact_lossy()
-    }
 
-    /// Computes the [`CompactTarget`] from a difficulty adjustment,
-    /// assuming these are the relevant block headers.
-    ///
-    /// Given two headers, representing the start and end of a difficulty adjustment epoch,
-    /// compute the [`CompactTarget`] based on the net time between them and the current
-    /// [`CompactTarget`].
-    ///
-    /// # Note
-    ///
-    /// See [`CompactTarget::from_next_work_required`]
-    ///
-    /// For example, to successfully compute the first difficulty adjustment on the Bitcoin network,
-    /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
-    /// `last_epoch_boundary`.
-    ///
-    /// # Returns
-    ///
-    /// The expected [`CompactTarget`] recalculation.
-    pub fn from_header_difficulty_adjustment(
-        last_epoch_boundary: Header,
-        current: Header,
-        params: impl AsRef<Params>,
-    ) -> CompactTarget {
-        let timespan = current.time - last_epoch_boundary.time;
-        let bits = current.bits;
-        CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        /// Creates a `CompactTarget` from an unprefixed hex string.
+        pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
+            let target = parse::hex_u32_unprefixed(s)?;
+            Ok(Self::from_consensus(target))
+        }
+
+        /// Computes the [`CompactTarget`] from a difficulty adjustment.
+        ///
+        /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+        ///
+        /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
+        /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
+        /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
+        /// a factor of 4, or adjust beyond the maximum threshold for the network.
+        ///
+        /// # Note
+        ///
+        /// Under the consensus rules, the difference in the number of blocks between the headers does
+        /// not equate to the `difficulty_adjustment_interval` of [`Params`]. This is due to an off-by-one
+        /// error, and, the expected number of blocks in between headers is `difficulty_adjustment_interval - 1`
+        /// when calculating the difficulty adjustment.
+        ///
+        /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
+        /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
+        ///
+        /// # Returns
+        ///
+        /// The expected [`CompactTarget`] recalculation.
+        pub fn from_next_work_required(
+            last: CompactTarget,
+            timespan: u64,
+            params: impl AsRef<Params>,
+        ) -> CompactTarget {
+            let params = params.as_ref();
+            if params.no_pow_retargeting {
+                return last;
+            }
+            // Comments relate to the `pow.cpp` file from Core.
+            // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+            let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
+            let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
+            let actual_timespan = timespan.clamp(min_timespan, max_timespan);
+            let prev_target: Target = last.into();
+            let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
+            let retarget = prev_target.0; // bnNew
+            let retarget = retarget.mul(actual_timespan.into());
+            let retarget = retarget.div(params.pow_target_timespan.into());
+            let retarget = Target(retarget);
+            if retarget.ge(&maximum_retarget) {
+                return maximum_retarget.to_compact_lossy();
+            }
+            retarget.to_compact_lossy()
+        }
+
+        /// Computes the [`CompactTarget`] from a difficulty adjustment,
+        /// assuming these are the relevant block headers.
+        ///
+        /// Given two headers, representing the start and end of a difficulty adjustment epoch,
+        /// compute the [`CompactTarget`] based on the net time between them and the current
+        /// [`CompactTarget`].
+        ///
+        /// # Note
+        ///
+        /// See [`CompactTarget::from_next_work_required`]
+        ///
+        /// For example, to successfully compute the first difficulty adjustment on the Bitcoin network,
+        /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
+        /// `last_epoch_boundary`.
+        ///
+        /// # Returns
+        ///
+        /// The expected [`CompactTarget`] recalculation.
+        pub fn from_header_difficulty_adjustment(
+            last_epoch_boundary: Header,
+            current: Header,
+            params: impl AsRef<Params>,
+        ) -> CompactTarget {
+            let timespan = current.time - last_epoch_boundary.time;
+            let bits = current.bits;
+            CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        }
     }
-}
 }
 
 impl From<CompactTarget> for Target {
