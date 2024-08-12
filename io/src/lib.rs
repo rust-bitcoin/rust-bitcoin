@@ -240,6 +240,59 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     }
 }
 
+/// A [`Read`]er which keeps an internal buffer to avoid hitting the underlying stream directly for
+/// every read, implementing [`BufRead`].
+pub struct BufReader<'a, R: Read> {
+    inner: &'a mut R,
+    buf: [u8; 4096],
+    pos: usize,
+    limit: usize,
+}
+
+impl<'a, R: Read> BufReader<'a, R> {
+    /// Creates a [`BufReader`] which will read from the given `inner`.
+    pub fn new(inner: &'a mut R) -> Self {
+        BufReader {
+            inner,
+            buf: [0; 4096],
+            pos: 0,
+            limit: 0,
+        }
+    }
+}
+
+impl<'a, R: Read> Read for BufReader<'a, R> {
+    #[inline]
+    fn read(&mut self, output: &mut [u8]) -> Result<usize> {
+        let input = self.fill_buf()?;
+        let count = cmp::min(input.len(), output.len());
+        output[..count].copy_from_slice(&input[..count]);
+        self.consume(count);
+        Ok(count)
+    }
+}
+
+impl<'a, R: Read> BufRead for BufReader<'a, R> {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        if self.pos < self.limit {
+            Ok(&self.buf[self.pos..self.limit])
+        } else {
+            let count = self.inner.read(&mut self.buf)?;
+            assert!(count <= self.buf.len(), "read gave us a garbage length");
+            self.pos = 0;
+            self.limit = count;
+            Ok(&self.buf[..self.limit])
+        }
+    }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) {
+        assert!(self.pos.saturating_add(amount) <= self.limit, "Cannot consume more than was provided");
+        self.pos += amount;
+    }
+}
+
 /// A generic trait describing an output stream. See [`std::io::Write`] for more info.
 pub trait Write {
     /// Writes `buf` into this writer, returning how many bytes were written.
@@ -379,5 +432,55 @@ mod tests {
         let read = reader.read_to_limit(&mut buf, 2).expect("failed to read to limit");
         assert_eq!(read, 2);
         assert_eq!(&buf, "16".as_bytes())
+    }
+
+    /// A reader that provides an unlimited number of bytes but always returns a limited number of
+    /// bytes in response to each call to `read`. The bytes themselves count how many times `read`
+    /// was called.
+    struct FixedBytesReader(u8, usize);
+    impl Read for FixedBytesReader {
+        fn read(&mut self, output: &mut [u8]) -> Result<usize> {
+            if output.is_empty() { return Ok(0); }
+            self.0 = self.0.wrapping_add(1);
+            let len = cmp::min(self.1, output.len());
+            for out_byte in output.iter_mut().take(self.1) {
+                *out_byte = self.0;
+            }
+            Ok(len)
+        }
+    }
+
+    #[test]
+    fn test_single_bufreader() {
+        let mut single_byte_generator = FixedBytesReader(0, 1);
+        let mut buf = BufReader::new(&mut single_byte_generator);
+        let mut some_bytes = [0; 10];
+        buf.read_exact(&mut some_bytes).unwrap();
+        assert_eq!(some_bytes, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    }
+
+    #[test]
+    fn test_two_bufreader() {
+        let mut two_byte_generator = FixedBytesReader(0, 2);
+        let mut buf = BufReader::new(&mut two_byte_generator);
+        let mut one_byte = [0; 1];
+        buf.read_exact(&mut one_byte).unwrap();
+        assert_eq!(one_byte, [1]);
+
+        let mut some_bytes = [0; 5];
+        buf.read_exact(&mut some_bytes).unwrap();
+        assert_eq!(some_bytes, [1, 2, 2, 3, 3]);
+    }
+
+    #[test]
+    fn test_overread_bufreader() {
+        let mut two_byte_generator = FixedBytesReader(0, 2);
+        let mut buf = BufReader::new(&mut two_byte_generator);
+        assert_eq!(buf.fill_buf().unwrap(), [1, 1]);
+        assert_eq!(buf.fill_buf().unwrap(), [1, 1]);
+        buf.consume(1);
+        assert_eq!(buf.fill_buf().unwrap(), [1]);
+        buf.consume(1);
+        assert_eq!(buf.fill_buf().unwrap(), [2, 2]);
     }
 }
