@@ -64,6 +64,32 @@ impl ScriptBuf {
     /// Returns a mutable reference to unsized script.
     pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
 
+    /// Converts byte vector into script.
+    ///
+    /// This method doesn't (re)allocate.
+    pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
+
+    /// Converts the script into a byte vector.
+    ///
+    /// This method doesn't (re)allocate.
+    pub fn into_bytes(self) -> Vec<u8> { self.0 }
+
+    /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
+    ///
+    /// This method reallocates if the capacity is greater than length of the script but should not
+    /// when they are equal. If you know beforehand that you need to create a script of exact size
+    /// use [`reserve_exact`](Self::reserve_exact) before adding data to the script so that the
+    /// reallocation can be avoided.
+    #[must_use = "`self` will be dropped if the result is not used"]
+    #[inline]
+    pub fn into_boxed_script(self) -> Box<Script> {
+        // Copied from PathBuf::into_boxed_path
+        let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
+        unsafe { Box::from_raw(rw) }
+    }
+}
+
+impl ScriptBuf {
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
 
@@ -77,16 +103,6 @@ impl ScriptBuf {
         let v = Vec::from_hex(s)?;
         Ok(ScriptBuf::from_bytes(v))
     }
-
-    /// Converts byte vector into script.
-    ///
-    /// This method doesn't (re)allocate.
-    pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
-
-    /// Converts the script into a byte vector.
-    ///
-    /// This method doesn't (re)allocate.
-    pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Adds a single opcode to the script.
     pub fn push_opcode(&mut self, data: Opcode) { self.0.push(data.to_u8()); }
@@ -187,20 +203,6 @@ impl ScriptBuf {
             }
             None => self.push_opcode(OP_VERIFY),
         }
-    }
-
-    /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
-    ///
-    /// This method reallocates if the capacity is greater than length of the script but should not
-    /// when they are equal. If you know beforehand that you need to create a script of exact size
-    /// use [`reserve_exact`](Self::reserve_exact) before adding data to the script so that the
-    /// reallocation can be avoided.
-    #[must_use = "`self` will be dropped if the result is not used"]
-    #[inline]
-    pub fn into_boxed_script(self) -> Box<Script> {
-        // Copied from PathBuf::into_boxed_path
-        let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
-        unsafe { Box::from_raw(rw) }
     }
 }
 
