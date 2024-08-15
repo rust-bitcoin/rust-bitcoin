@@ -7,6 +7,7 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
+use crate::script::{ScriptExt as _, ScriptExtPriv as _};
 use crate::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.

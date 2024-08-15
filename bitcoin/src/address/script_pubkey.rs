@@ -13,8 +13,8 @@ use crate::opcodes::all::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
 use crate::script::{
-    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptHash, WScriptHash,
-    WitnessScriptSizeError,
+    self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
+    WScriptHash, WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
 
@@ -22,7 +22,7 @@ define_extension_trait! {
     /// Extension functionality to add scriptPubkey support to the [`Builder`] type.
     pub trait BuilderExt impl for Builder {
         /// Adds instructions to push a public key onto the stack.
-        fn push_key(self: Self, key: PublicKey) -> Builder {
+        fn push_key(self, key: PublicKey) -> Builder {
             if key.compressed {
                 self.push_slice(key.inner.serialize())
             } else {
@@ -31,7 +31,7 @@ define_extension_trait! {
         }
 
         /// Adds instructions to push an XOnly public key onto the stack.
-        fn push_x_only_key(self: Self, x_only_key: XOnlyPublicKey) -> Builder {
+        fn push_x_only_key(self, x_only_key: XOnlyPublicKey) -> Builder {
             self.push_slice(x_only_key.serialize())
         }
     }
@@ -42,14 +42,14 @@ define_extension_trait! {
     pub trait ScriptExt impl for Script {
         /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
         /// script").
-        fn to_p2wsh(self: &Self) -> Result<ScriptBuf, WitnessScriptSizeError> {
+        fn to_p2wsh(&self) -> Result<ScriptBuf, WitnessScriptSizeError> {
             self.wscript_hash().map(ScriptBuf::new_p2wsh)
         }
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
         fn to_p2tr<C: Verification>(
-            self: &Self,
+            &self,
             secp: &Secp256k1<C>,
             internal_key: UntweakedPublicKey,
         ) -> ScriptBuf {
@@ -59,7 +59,7 @@ define_extension_trait! {
         }
 
         /// Computes the P2SH output corresponding to this redeem script.
-        fn to_p2sh(self: &Self) -> Result<ScriptBuf, RedeemScriptSizeError> {
+        fn to_p2sh(&self) -> Result<ScriptBuf, RedeemScriptSizeError> {
             self.script_hash().map(ScriptBuf::new_p2sh)
         }
 
@@ -67,7 +67,7 @@ define_extension_trait! {
         /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
         ///
         /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-        fn p2wpkh_script_code(self: &Self) -> Option<ScriptBuf> {
+        fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
             if self.is_p2wpkh() {
                 // The `self` script is 0x00, 0x14, <pubkey_hash>
                 let bytes = &self.as_bytes()[2..];
@@ -82,14 +82,14 @@ define_extension_trait! {
         ///
         /// You can obtain the public key, if its valid,
         /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
-        fn is_p2pk(self: &Self) -> bool { self.p2pk_pubkey_bytes().is_some() }
+        fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
 
         /// Returns the public key if this script is P2PK with a **valid** public key.
         ///
         /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
         /// This happens when the public key is invalid (e.g. the point not being on the curve).
         /// In this situation the script is unspendable.
-        fn p2pk_public_key(self: &Self) -> Option<PublicKey> {
+        fn p2pk_public_key(&self) -> Option<PublicKey> {
             PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
     }
@@ -98,7 +98,7 @@ define_extension_trait! {
 define_extension_trait! {
     pub(crate) trait ScriptExtPrivate impl for Script {
         /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
-        fn p2pk_pubkey_bytes(self: &Self) -> Option<&[u8]> {
+        fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
             match self.len() {
                 67 if self.as_bytes()[0] == OP_PUSHBYTES_65.to_u8()
                     && self.as_bytes()[66] == OP_CHECKSIG.to_u8() =>

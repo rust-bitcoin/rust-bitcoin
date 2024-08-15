@@ -6,7 +6,7 @@ use core::ops::Deref;
 use hex::FromHex;
 use internals::ToU64 as _;
 
-use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
+use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptExtPriv as _};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};

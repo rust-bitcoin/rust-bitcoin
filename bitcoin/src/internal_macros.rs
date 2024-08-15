@@ -214,24 +214,65 @@ macro_rules! impl_asref_push_bytes {
 }
 pub(crate) use impl_asref_push_bytes;
 
+macro_rules! only_doc_attrs {
+    ({}, {$($fun:tt)*}) => {
+        $($fun)*
+    };
+    ({#[doc = $($doc:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
+    };
+    ({#[doc($($doc:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc($($doc)*)] $($fun)* });
+    };
+    ({#[$($other:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { $($fun)* });
+    };
+}
+pub(crate) use only_doc_attrs;
+
+macro_rules! only_non_doc_attrs {
+    ({}, {$($fun:tt)*}) => {
+        $($fun)*
+    };
+    ({#[doc = $($doc:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
+    };
+    ({#[doc($($doc:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { $($fun)* });
+    };
+    ({#[$($other:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[$(other)*] $($fun)* });
+    };
+}
+pub(crate) use only_non_doc_attrs;
+
 /// Defines an trait `$trait_name` and implements it for `ty`, used to define extension traits.
 macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(
             $(#[$($fn_attrs:tt)*])*
-            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($param_name:ident: $param_type:ty),* $(,)?) $( -> $ret:ty )? $body:block
+            fn $fn:ident$(<$($gen:ident: $gent:ident),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
         )*
     }) => {
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
             $(
-                $(#[$($fn_attrs)*])*
-                fn $fn$(<$($gen: $gent),*>)?($($param_name: $param_type),*) $( -> $ret )?;
+                $crate::internal_macros::only_doc_attrs! {
+                    { $(#[$($fn_attrs)*])* },
+                    {
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )?;
+                    }
+                }
             )*
         }
 
         impl $trait_name for $ty {
             $(
-                fn $fn$(<$($gen: $gent),*>)?($($param_name: $param_type),*) $( -> $ret )? $body
+                $crate::internal_macros::only_non_doc_attrs! {
+                    { $(#[$($fn_attrs)*])* },
+                    {
+                        fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )? $body
+                    }
+                }
             )*
         }
     };
