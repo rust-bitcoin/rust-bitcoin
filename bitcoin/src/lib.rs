@@ -171,7 +171,7 @@ pub mod amount {
     //! We refer to the documentation on the types for more information.
 
     use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
+    use crate::io::{Read, Write};
 
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
@@ -183,7 +183,7 @@ pub mod amount {
 
     impl Decodable for Amount {
         #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
             Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
         }
     }
