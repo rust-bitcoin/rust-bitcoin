@@ -202,11 +202,28 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     #[inline]
     pub fn position(&self) -> u64 { self.pos }
 
+    /// Sets the internal position.
+    ///
+    /// This method allows seeking within the wrapped memory by setting the position.
+    ///
+    /// Note that setting a position that is larger than the buffer length will cause reads to
+    /// return no bytes (EOF).
+    #[inline]
+    pub fn set_position(&mut self, position: u64) {
+        self.pos = position;
+    }
+
     /// Returns the inner buffer.
     ///
     /// This is the whole wrapped buffer, including the bytes already read.
     #[inline]
     pub fn into_inner(self) -> T { self.inner }
+
+    /// Returns a reference to the inner buffer.
+    ///
+    /// This is the whole wrapped buffer, including the bytes already read.
+    #[inline]
+    pub fn inner(&self) -> &T { &self.inner }
 }
 
 impl<T: AsRef<[u8]>> Read for Cursor<T> {
