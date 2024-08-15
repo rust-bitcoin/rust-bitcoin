@@ -25,6 +25,11 @@ extern crate alloc;
 
 mod error;
 mod macros;
+#[cfg(feature = "std")]
+mod bridge;
+
+#[cfg(feature = "std")]
+pub use bridge::FromStd;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
@@ -322,6 +327,24 @@ impl std::io::Write for Sink {
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
 #[inline]
 pub fn sink() -> Sink { Sink }
+
+/// Wraps a `std` IO type to implement the traits from this crate.
+///
+/// All methods are passed through converting the errors.
+#[cfg(feature = "std")]
+#[inline]
+pub const fn from_std<T>(std_io: T) -> FromStd<T> {
+    FromStd::new(std_io)
+}
+
+/// Wraps a mutable reference to `std` IO type to implement the traits from this crate.
+///
+/// All methods are passed through converting the errors.
+#[cfg(feature = "std")]
+#[inline]
+pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> {
+    FromStd::new_mut(std_io)
+}
 
 #[cfg(test)]
 mod tests {
