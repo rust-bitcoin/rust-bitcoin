@@ -29,7 +29,7 @@ mod macros;
 mod bridge;
 
 #[cfg(feature = "std")]
-pub use bridge::FromStd;
+pub use bridge::{FromStd, ToStd};
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
