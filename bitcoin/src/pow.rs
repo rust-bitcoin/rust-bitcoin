@@ -15,7 +15,12 @@ use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::block::{BlockHash, Header};
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::internal_macros::define_extension_trait;
 use crate::network::Params;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use primitives::CompactTarget;
 
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
@@ -164,7 +169,7 @@ impl Target {
     ///
     /// ref: <https://developer.bitcoin.org/reference/block_chain.html#target-nbits>
     pub fn from_compact(c: CompactTarget) -> Target {
-        let bits = c.0;
+        let bits = c.to_consensus();
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
@@ -204,7 +209,7 @@ impl Target {
             size += 1;
         }
 
-        CompactTarget(compact | (size << 24))
+        CompactTarget::from_consensus(compact | (size << 24))
     }
 
     /// Returns true if block hash is less than or equal to this [`Target`].
@@ -329,118 +334,97 @@ impl Target {
 }
 do_impl!(Target);
 
-/// Encoding of 256-bit target as 32-bit float.
-///
-/// This is used to encode a target into the block header. Satoshi made this part of consensus code
-/// in the original version of Bitcoin, likely copying an idea from OpenSSL.
-///
-/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in bitcoin, which
-/// is exactly this format.
-///
-/// # Note on order/equality
-///
-/// Usage of the ordering and equality traits for this type may be surprising. Converting between
-/// `CompactTarget` and `Target` is lossy *in both directions* (there are multiple `CompactTarget`
-/// values that map to the same `Target` value). Ordering and equality for this type are defined in
-/// terms of the underlying `u32`.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct CompactTarget(u32);
-
-impl CompactTarget {
-    /// Creates a `CompactTarget` from a prefixed hex string.
-    pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
-        let target = parse::hex_u32_prefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-
-    /// Creates a `CompactTarget` from an unprefixed hex string.
-    pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
-        let target = parse::hex_u32_unprefixed(s)?;
-        Ok(Self::from_consensus(target))
-    }
-
-    /// Computes the [`CompactTarget`] from a difficulty adjustment.
-    ///
-    /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
-    ///
-    /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
-    /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
-    /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
-    /// a factor of 4, or adjust beyond the maximum threshold for the network.
-    ///
-    /// # Note
-    ///
-    /// Under the consensus rules, the difference in the number of blocks between the headers does
-    /// not equate to the `difficulty_adjustment_interval` of [`Params`]. This is due to an off-by-one
-    /// error, and, the expected number of blocks in between headers is `difficulty_adjustment_interval - 1`
-    /// when calculating the difficulty adjustment.
-    ///
-    /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
-    /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
-    ///
-    /// # Returns
-    ///
-    /// The expected [`CompactTarget`] recalculation.
-    pub fn from_next_work_required(
-        last: CompactTarget,
-        timespan: u64,
-        params: impl AsRef<Params>,
-    ) -> CompactTarget {
-        let params = params.as_ref();
-        if params.no_pow_retargeting {
-            return last;
+define_extension_trait! {
+    /// Extension functionality for the [`CompactTarget`] type.
+    pub trait CompactTargetExt impl for CompactTarget {
+        /// Creates a `CompactTarget` from a prefixed hex string.
+        fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
+            let target = parse::hex_u32_prefixed(s)?;
+            Ok(Self::from_consensus(target))
         }
-        // Comments relate to the `pow.cpp` file from Core.
-        // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
-        let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
-        let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
-        let actual_timespan = timespan.clamp(min_timespan, max_timespan);
-        let prev_target: Target = last.into();
-        let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
-        let retarget = prev_target.0; // bnNew
-        let retarget = retarget.mul(actual_timespan.into());
-        let retarget = retarget.div(params.pow_target_timespan.into());
-        let retarget = Target(retarget);
-        if retarget.ge(&maximum_retarget) {
-            return maximum_retarget.to_compact_lossy();
+
+        /// Creates a `CompactTarget` from an unprefixed hex string.
+        fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
+            let target = parse::hex_u32_unprefixed(s)?;
+            Ok(Self::from_consensus(target))
         }
-        retarget.to_compact_lossy()
+
+        /// Computes the [`CompactTarget`] from a difficulty adjustment.
+        ///
+        /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+        ///
+        /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
+        /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
+        /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
+        /// a factor of 4, or adjust beyond the maximum threshold for the network.
+        ///
+        /// # Note
+        ///
+        /// Under the consensus rules, the difference in the number of blocks between the headers does
+        /// not equate to the `difficulty_adjustment_interval` of [`Params`]. This is due to an off-by-one
+        /// error, and, the expected number of blocks in between headers is `difficulty_adjustment_interval - 1`
+        /// when calculating the difficulty adjustment.
+        ///
+        /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
+        /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
+        ///
+        /// # Returns
+        ///
+        /// The expected [`CompactTarget`] recalculation.
+        fn from_next_work_required(
+            last: CompactTarget,
+            timespan: u64,
+            params: impl AsRef<Params>,
+        ) -> CompactTarget {
+            let params = params.as_ref();
+            if params.no_pow_retargeting {
+                return last;
+            }
+            // Comments relate to the `pow.cpp` file from Core.
+            // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
+            let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
+            let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
+            let actual_timespan = timespan.clamp(min_timespan, max_timespan);
+            let prev_target: Target = last.into();
+            let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
+            let retarget = prev_target.0; // bnNew
+            let retarget = retarget.mul(actual_timespan.into());
+            let retarget = retarget.div(params.pow_target_timespan.into());
+            let retarget = Target(retarget);
+            if retarget.ge(&maximum_retarget) {
+                return maximum_retarget.to_compact_lossy();
+            }
+            retarget.to_compact_lossy()
+        }
+
+        /// Computes the [`CompactTarget`] from a difficulty adjustment,
+        /// assuming these are the relevant block headers.
+        ///
+        /// Given two headers, representing the start and end of a difficulty adjustment epoch,
+        /// compute the [`CompactTarget`] based on the net time between them and the current
+        /// [`CompactTarget`].
+        ///
+        /// # Note
+        ///
+        /// See [`CompactTarget::from_next_work_required`]
+        ///
+        /// For example, to successfully compute the first difficulty adjustment on the Bitcoin network,
+        /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
+        /// `last_epoch_boundary`.
+        ///
+        /// # Returns
+        ///
+        /// The expected [`CompactTarget`] recalculation.
+        fn from_header_difficulty_adjustment(
+            last_epoch_boundary: Header,
+            current: Header,
+            params: impl AsRef<Params>,
+        ) -> CompactTarget {
+            let timespan = current.time - last_epoch_boundary.time;
+            let bits = current.bits;
+            CompactTarget::from_next_work_required(bits, timespan.into(), params)
+        }
     }
-
-    /// Computes the [`CompactTarget`] from a difficulty adjustment,
-    /// assuming these are the relevant block headers.
-    ///
-    /// Given two headers, representing the start and end of a difficulty adjustment epoch,
-    /// compute the [`CompactTarget`] based on the net time between them and the current
-    /// [`CompactTarget`].
-    ///
-    /// # Note
-    ///
-    /// See [`CompactTarget::from_next_work_required`]
-    ///
-    /// For example, to successfully compute the first difficulty adjustment on the Bitcoin network,
-    /// one would pass the header for Block 2015 as `current` and the header for Block 0 as
-    /// `last_epoch_boundary`.
-    ///
-    /// # Returns
-    ///
-    /// The expected [`CompactTarget`] recalculation.
-    pub fn from_header_difficulty_adjustment(
-        last_epoch_boundary: Header,
-        current: Header,
-        params: impl AsRef<Params>,
-    ) -> CompactTarget {
-        let timespan = current.time - last_epoch_boundary.time;
-        let bits = current.bits;
-        CompactTarget::from_next_work_required(bits, timespan.into(), params)
-    }
-
-    /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
-    pub fn from_consensus(bits: u32) -> Self { Self(bits) }
-
-    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
-    pub fn to_consensus(self) -> u32 { self.0 }
 }
 
 impl From<CompactTarget> for Target {
@@ -450,25 +434,15 @@ impl From<CompactTarget> for Target {
 impl Encodable for CompactTarget {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for CompactTarget {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget)
+        u32::consensus_decode(r).map(CompactTarget::from_consensus)
     }
-}
-
-impl fmt::LowerHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for CompactTarget {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 /// Big-endian 256 bit integer type.
@@ -1099,8 +1073,12 @@ impl kani::Arbitrary for U256 {
 mod tests {
     use super::*;
 
-    impl<T: Into<u128>> From<T> for Target {
-        fn from(x: T) -> Self { Self(U256::from(x)) }
+    impl From<u64> for Target {
+        fn from(x: u64) -> Self { Self(U256::from(x)) }
+    }
+
+    impl From<u32> for Target {
+        fn from(x: u32) -> Self { Self(U256::from(x)) }
     }
 
     impl<T: Into<u128>> From<T> for Work {
@@ -1721,25 +1699,25 @@ mod tests {
     #[test]
     fn compact_target_from_hex_lower() {
         let target = CompactTarget::from_hex("0x010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_hex_upper() {
         let target = CompactTarget::from_hex("0X010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_unprefixed_hex_lower() {
         let target = CompactTarget::from_unprefixed_hex("010034ab").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
     fn compact_target_from_unprefixed_hex_upper() {
         let target = CompactTarget::from_unprefixed_hex("010034AB").unwrap();
-        assert_eq!(target, CompactTarget(0x010034ab));
+        assert_eq!(target, CompactTarget::from_consensus(0x010034ab));
     }
 
     #[test]
@@ -1751,8 +1729,8 @@ mod tests {
 
     #[test]
     fn compact_target_lower_hex_and_upper_hex() {
-        assert_eq!(format!("{:08x}", CompactTarget(0x01D0F456)), "01d0f456");
-        assert_eq!(format!("{:08X}", CompactTarget(0x01d0f456)), "01D0F456");
+        assert_eq!(format!("{:08x}", CompactTarget::from_consensus(0x01D0F456)), "01d0f456");
+        assert_eq!(format!("{:08X}", CompactTarget::from_consensus(0x01d0f456)), "01D0F456");
     }
 
     #[test]
