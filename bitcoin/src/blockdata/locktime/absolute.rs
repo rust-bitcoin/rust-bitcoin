@@ -9,7 +9,7 @@
 use core::cmp::Ordering;
 use core::fmt;
 
-use io::{BufRead, Write};
+use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 use units::parse;
@@ -348,7 +348,7 @@ impl Encodable for LockTime {
 
 impl Decodable for LockTime {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         u32::consensus_decode(r).map(LockTime::from_consensus)
     }
 }

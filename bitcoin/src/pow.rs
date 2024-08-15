@@ -10,7 +10,7 @@ use core::cmp;
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
-use io::{BufRead, Write};
+use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 use units::parse;
@@ -384,7 +384,7 @@ impl Encodable for CompactTarget {
 
 impl Decodable for CompactTarget {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         u32::consensus_decode(r).map(CompactTarget)
     }
 }

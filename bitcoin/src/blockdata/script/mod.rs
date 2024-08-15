@@ -65,7 +65,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
@@ -591,7 +591,7 @@ impl Encodable for ScriptBuf {
 
 impl Decodable for ScriptBuf {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
