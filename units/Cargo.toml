@@ -20,6 +20,7 @@ alloc = ["internals/alloc"]
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.3.0" }
 
+proptest = { version = "=1.2", optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]

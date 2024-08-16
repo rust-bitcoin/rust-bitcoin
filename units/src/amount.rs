@@ -16,6 +16,12 @@ use ::serde::{Deserialize, Serialize};
 use internals::error::InputString;
 use internals::write_err;
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+
+#[cfg(feature = "proptest")]
+use proptest::strategy::Map;
+
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Accepted Denominations
@@ -1075,6 +1081,16 @@ impl Amount {
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl Arbitrary for Amount {
+    type Parameters = <u64 as Arbitrary>::Parameters;
+    type Strategy = Map<<u64 as Arbitrary>::Strategy, fn(u64) -> Amount>;
+
+    fn arbitrary_with(p: Self::Parameters) -> Self::Strategy {
+        any_with::<u64> (p).prop_map(|a| Amount { 0: a })
     }
 }
 
