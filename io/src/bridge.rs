@@ -254,3 +254,35 @@ impl<T: super::Write> super::Write for ToStd<T> {
         self.0.write_all(buf)
     }
 }
+
+impl<R: std::io::Read> super::Read for std::io::BufReader<R> {
+    #[inline]
+    fn read(&mut self, buf: &mut [u8]) -> super::Result<usize> { Ok(std::io::Read::read(self, buf)?) }
+}
+
+impl<R: std::io::Read> super::BufRead for std::io::BufReader<R> {
+    #[inline]
+    fn fill_buf(&mut self) -> super::Result<&[u8]> { Ok(std::io::BufRead::fill_buf(self)?) }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
+}
+
+impl std::io::Write for super::Sink {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> { Ok(buf.len()) }
+
+    #[inline]
+    fn write_all(&mut self, _: &[u8]) -> std::io::Result<()> { Ok(()) }
+
+    #[inline]
+    fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
+}
+
+impl<W: std::io::Write> super::Write for std::io::BufWriter<W> {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> super::Result<usize> { Ok(std::io::Write::write(self, buf)?) }
+
+    #[inline]
+    fn flush(&mut self) -> super::Result<()> { Ok(std::io::Write::flush(self)?) }
+}

@@ -163,12 +163,6 @@ impl Read for &[u8] {
     }
 }
 
-#[cfg(feature = "std")]
-impl<R: std::io::Read> Read for std::io::BufReader<R> {
-    #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> { Ok(std::io::Read::read(self, buf)?) }
-}
-
 impl BufRead for &[u8] {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> { Ok(self) }
@@ -176,15 +170,6 @@ impl BufRead for &[u8] {
     // This panics if amount is out of bounds, same as the std version.
     #[inline]
     fn consume(&mut self, amount: usize) { *self = &self[amount..] }
-}
-
-#[cfg(feature = "std")]
-impl<R: std::io::Read> BufRead for std::io::BufReader<R> {
-    #[inline]
-    fn fill_buf(&mut self) -> Result<&[u8]> { Ok(std::io::BufRead::fill_buf(self)?) }
-
-    #[inline]
-    fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
 }
 
 /// Wraps an in memory reader providing the `position` function.
@@ -301,15 +286,6 @@ impl<'a> Write for &'a mut [u8] {
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
-#[cfg(feature = "std")]
-impl<W: std::io::Write> Write for std::io::BufWriter<W> {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> Result<usize> { Ok(std::io::Write::write(self, buf)?) }
-
-    #[inline]
-    fn flush(&mut self) -> Result<()> { Ok(std::io::Write::flush(self)?) }
-}
-
 /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
 ///
 /// Created using `io::sink()`.
@@ -324,18 +300,6 @@ impl Write for Sink {
 
     #[inline]
     fn flush(&mut self) -> Result<()> { Ok(()) }
-}
-
-#[cfg(feature = "std")]
-impl std::io::Write for Sink {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> { Ok(buf.len()) }
-
-    #[inline]
-    fn write_all(&mut self, _: &[u8]) -> std::io::Result<()> { Ok(()) }
-
-    #[inline]
-    fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
 }
 
 /// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
