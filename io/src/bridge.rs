@@ -344,3 +344,198 @@ impl_our! {
 impl_our! {
     impl<W: std::io::Write> Write for std::io::BufWriter<W>
 }
+
+#[cfg(rust_v_1_72)]
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::LineWriter<W> where W: ?Sized
+}
+
+#[cfg(not(rust_v_1_72))]
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::LineWriter<W>
+}
+
+impl_our! {
+    impl<R: std::io::Read> Read for std::io::Take<R>
+}
+
+impl_our! {
+    impl<R: std::io::BufRead> BufRead for std::io::Take<R>
+}
+
+impl_our! {
+    impl<R1: std::io::Read, R2: std::io::Read> Read for std::io::Chain<R1, R2>
+}
+
+impl_our! {
+    impl<R1: std::io::BufRead, R2: std::io::BufRead> BufRead for std::io::Chain<R1, R2>
+}
+
+impl_our! {
+    impl<T: AsRef<[u8]>> Read for std::io::Cursor<T>
+}
+
+impl_our! {
+    impl<T: AsRef<[u8]>> BufRead for std::io::Cursor<T>
+}
+
+impl_our! {
+    impl Write for std::io::Cursor<std::vec::Vec<u8>>
+}
+
+impl_our! {
+    impl Write for std::io::Cursor<&'_ mut std::vec::Vec<u8>>
+}
+
+impl_our! {
+    impl Write for std::io::Cursor<std::boxed::Box<[u8]>>
+}
+
+impl_our! {
+    impl Read for std::io::Empty
+}
+
+impl_our! {
+    impl BufRead for std::io::Empty
+}
+
+#[cfg(rust_v_1_73)]
+impl_our! {
+    impl Write for std::io::Empty
+}
+
+// No idea why &Empty impls Write but not Read + BufRead
+#[cfg(rust_v_1_73)]
+impl_our! {
+    impl Write for &'_ std::io::Empty
+}
+
+impl_our! {
+    impl Read for std::io::Repeat
+}
+
+impl_our! {
+    impl Read for std::io::Stdin
+}
+
+#[cfg(rust_v_1_78)]
+impl_our! {
+    impl Read for &'_ std::io::Stdin
+}
+
+impl_our! {
+    impl Write for std::io::Stdout
+}
+
+impl_our! {
+    impl Write for &'_ std::io::Stdout
+}
+
+impl_our! {
+    impl Write for std::io::Stderr
+}
+
+impl_our! {
+    impl Write for &'_ std::io::Stderr
+}
+
+impl_our! {
+    impl Read for std::io::StdinLock<'_>
+}
+
+impl_our! {
+    impl BufRead for std::io::StdinLock<'_>
+}
+
+impl_our! {
+    impl Read for std::fs::File
+}
+
+impl_our! {
+    impl Write for std::fs::File
+}
+
+impl_our! {
+    impl Read for &'_ std::fs::File
+}
+
+impl_our! {
+    impl Write for &'_ std::fs::File
+}
+
+#[cfg(rust_v_1_73)]
+impl_our! {
+    impl Read for std::sync::Arc<std::fs::File>
+}
+
+#[cfg(rust_v_1_73)]
+impl_our! {
+    impl Write for std::sync::Arc<std::fs::File>
+}
+
+impl_our! {
+    impl Read for std::net::TcpStream
+}
+
+impl_our! {
+    impl Write for std::net::TcpStream
+}
+
+impl_our! {
+    impl Read for &'_ std::net::TcpStream
+}
+
+impl_our! {
+    impl Write for &'_ std::net::TcpStream
+}
+
+#[cfg(target_family = "unix")]
+impl_our! {
+    impl Read for std::os::unix::net::UnixStream
+}
+
+#[cfg(target_family = "unix")]
+impl_our! {
+    impl Write for std::os::unix::net::UnixStream
+}
+
+#[cfg(target_family = "unix")]
+impl_our! {
+    impl Read for &'_ std::os::unix::net::UnixStream
+}
+
+#[cfg(target_family = "unix")]
+impl_our! {
+    impl Write for &'_ std::os::unix::net::UnixStream
+}
+
+impl_our! {
+    impl Read for std::process::ChildStderr
+}
+
+impl_our! {
+    impl Read for std::process::ChildStdout
+}
+
+impl_our! {
+    impl Write for std::process::ChildStdin
+}
+
+// No ide why other &ChildStd* are not implemented
+impl_our! {
+    impl Write for &'_ std::process::ChildStdin
+}
+
+#[cfg(rust_v_1_75)]
+impl_our! {
+    impl Read for std::collections::VecDeque<u8>
+}
+
+#[cfg(rust_v_1_75)]
+impl_our! {
+    impl BufRead for std::collections::VecDeque<u8>
+}
+
+impl_our! {
+    impl Write for std::collections::VecDeque<u8>
+}
