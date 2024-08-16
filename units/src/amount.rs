@@ -1089,6 +1089,7 @@ impl Arbitrary for Amount {
     type Parameters = <u64 as Arbitrary>::Parameters;
     type Strategy = Map<<u64 as Arbitrary>::Strategy, fn(u64) -> Amount>;
 
+    #[inline(always)]
     fn arbitrary_with(p: Self::Parameters) -> Self::Strategy {
         any_with::<u64> (p).prop_map(Amount)
     }
