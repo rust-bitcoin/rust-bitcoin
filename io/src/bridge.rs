@@ -255,17 +255,73 @@ impl<T: super::Write> super::Write for ToStd<T> {
     }
 }
 
-impl<R: std::io::Read> super::Read for std::io::BufReader<R> {
-    #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> super::Result<usize> { Ok(std::io::Read::read(self, buf)?) }
+macro_rules! impl_our {
+    (impl$(<$($gen:ident $(: $gent:path)?),*>)? Read for $std_type:ty $(where $($where:tt)*)?) => {
+        impl$(<$($gen$(: $gent)?),*>)? super::Read for $std_type $(where $($where)*)? {
+            #[inline]
+            fn read(&mut self, buf: &mut [u8]) -> super::Result<usize> {
+                std::io::Read::read(self, buf).map_err(Into::into)
+            }
+
+            #[inline]
+            fn read_exact(&mut self, buf: &mut [u8]) -> super::Result<()> {
+                std::io::Read::read_exact(self, buf).map_err(Into::into)
+            }
+        }
+    };
+
+    (impl$(<$($gen:ident $(: $gent:path)?),*>)? BufRead for $std_type:ty $(where $($where:tt)*)?) => {
+        impl$(<$($gen$(: $gent)?),*>)? super::BufRead for $std_type $(where $($where)*)? {
+            #[inline]
+            fn fill_buf(&mut self) -> super::Result<&[u8]> {
+                std::io::BufRead::fill_buf(self).map_err(Into::into)
+            }
+
+            #[inline]
+            fn consume(&mut self, amount: usize) {
+                std::io::BufRead::consume(self, amount)
+            }
+        }
+    };
+
+    (impl$(<$($gen:ident $(: $gent:path)?),*>)? Write for $std_type:ty $(where $($where:tt)*)?) => {
+        impl$(<$($gen$(: $gent)?),*>)? super::Write for $std_type $(where $($where)*)? {
+            #[inline]
+            fn write(&mut self, buf: &[u8]) -> super::Result<usize> {
+                std::io::Write::write(self, buf).map_err(Into::into)
+            }
+
+            #[inline]
+            fn flush(&mut self) -> super::Result<()> {
+                std::io::Write::flush(self).map_err(Into::into)
+            }
+
+            #[inline]
+            fn write_all(&mut self, buf: &[u8]) -> super::Result<()> {
+                std::io::Write::write_all(self, buf).map_err(Into::into)
+            }
+        }
+    };
 }
 
-impl<R: std::io::Read> super::BufRead for std::io::BufReader<R> {
-    #[inline]
-    fn fill_buf(&mut self) -> super::Result<&[u8]> { Ok(std::io::BufRead::fill_buf(self)?) }
+#[cfg(rust_v_1_72)]
+impl_our! {
+    impl<R: std::io::Read> Read for std::io::BufReader<R> where R: ?Sized
+}
 
-    #[inline]
-    fn consume(&mut self, amount: usize) { std::io::BufRead::consume(self, amount) }
+#[cfg(not(rust_v_1_72))]
+impl_our! {
+    impl<R: std::io::Read> Read for std::io::BufReader<R>
+}
+
+#[cfg(rust_v_1_72)]
+impl_our! {
+    impl<R: std::io::Read> BufRead for std::io::BufReader<R> where R: ?Sized
+}
+
+#[cfg(not(rust_v_1_72))]
+impl_our! {
+    impl<R: std::io::Read> BufRead for std::io::BufReader<R>
 }
 
 impl std::io::Write for super::Sink {
@@ -279,10 +335,12 @@ impl std::io::Write for super::Sink {
     fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
 }
 
-impl<W: std::io::Write> super::Write for std::io::BufWriter<W> {
-    #[inline]
-    fn write(&mut self, buf: &[u8]) -> super::Result<usize> { Ok(std::io::Write::write(self, buf)?) }
+#[cfg(rust_v_1_72)]
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::BufWriter<W> where W: ?Sized
+}
 
-    #[inline]
-    fn flush(&mut self) -> super::Result<()> { Ok(std::io::Write::flush(self)?) }
+#[cfg(not(rust_v_1_72))]
+impl_our! {
+    impl<W: std::io::Write> Write for std::io::BufWriter<W>
 }
