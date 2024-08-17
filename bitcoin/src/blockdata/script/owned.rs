@@ -89,6 +89,8 @@ impl ScriptBuf {
     }
 }
 
+mod tmp_pub {
+    use super::*;
 impl ScriptBuf {
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
@@ -151,7 +153,10 @@ impl ScriptBuf {
     /// multiple times.
     pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 }
+}
 
+mod tmp_priv {
+    use super::*;
 impl ScriptBuf {
     /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
     ///
@@ -215,6 +220,7 @@ impl ScriptBuf {
             None => self.push_opcode(OP_VERIFY),
         }
     }
+}
 }
 
 impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
