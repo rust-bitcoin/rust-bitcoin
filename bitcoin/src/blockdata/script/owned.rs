@@ -144,7 +144,7 @@ impl ScriptBuf {
     }
 
     /// Computes the sum of `len` and the length of an appropriate push opcode.
-    pub(in crate::blockdata::script) fn reserved_len_for_slice(len: usize) -> usize {
+    pub(crate) fn reserved_len_for_slice(len: usize) -> usize {
         len + match len {
             0..=0x4b => 1,
             0x4c..=0xff => 2,
@@ -195,7 +195,7 @@ impl ScriptBuf {
     /// alternative.
     ///
     /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-    pub(in crate::blockdata::script) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
+    pub(crate) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
         match opcode_to_verify(last_opcode) {
             Some(opcode) => {
                 self.0.pop();
