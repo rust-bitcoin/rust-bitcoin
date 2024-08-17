@@ -91,136 +91,136 @@ impl ScriptBuf {
 
 mod tmp_pub {
     use super::*;
-impl ScriptBuf {
-    /// Creates a new script builder
-    pub fn builder() -> Builder { Builder::new() }
+    impl ScriptBuf {
+        /// Creates a new script builder
+        pub fn builder() -> Builder { Builder::new() }
 
-    /// Generates OP_RETURN-type of scriptPubkey for the given data.
-    pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
-        Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
-    }
-
-    /// Creates a [`ScriptBuf`] from a hex string.
-    pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
-        let v = Vec::from_hex(s)?;
-        Ok(ScriptBuf::from_bytes(v))
-    }
-
-    /// Adds a single opcode to the script.
-    pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
-
-    /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
-        let data = data.as_ref();
-        self.reserve(Self::reserved_len_for_slice(data.len()));
-        self.push_slice_no_opt(data);
-    }
-
-    /// Add a single instruction to the script.
-    ///
-    /// # Panics
-    ///
-    /// The method panics if the instruction is a data push with length greater or equal to
-    /// 0x100000000.
-    pub fn push_instruction(&mut self, instruction: Instruction<'_>) {
-        match instruction {
-            Instruction::Op(opcode) => self.push_opcode(opcode),
-            Instruction::PushBytes(bytes) => self.push_slice(bytes),
+        /// Generates OP_RETURN-type of scriptPubkey for the given data.
+        pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
+            Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
         }
-    }
 
-    /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
-    pub fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
-        match instruction {
-            Instruction::Op(opcode) => self.push_opcode(opcode),
-            Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
+        /// Creates a [`ScriptBuf`] from a hex string.
+        pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
+            let v = Vec::from_hex(s)?;
+            Ok(ScriptBuf::from_bytes(v))
         }
-    }
 
-    /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
-    ///
-    /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
-    /// in the script right after. To save space this function appends `VERIFY` only if
-    /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
-    /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
-    ///
-    /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
-    /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
-    /// semantics.
-    ///
-    /// This function needs to iterate over the script to find the last instruction. Prefer
-    /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
-    /// multiple times.
-    pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
-}
+        /// Adds a single opcode to the script.
+        pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+
+        /// Adds instructions to push some arbitrary data onto the stack.
+        pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+            let data = data.as_ref();
+            self.reserve(Self::reserved_len_for_slice(data.len()));
+            self.push_slice_no_opt(data);
+        }
+
+        /// Add a single instruction to the script.
+        ///
+        /// # Panics
+        ///
+        /// The method panics if the instruction is a data push with length greater or equal to
+        /// 0x100000000.
+        pub fn push_instruction(&mut self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => self.push_slice(bytes),
+            }
+        }
+
+        /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
+        pub fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
+            match instruction {
+                Instruction::Op(opcode) => self.push_opcode(opcode),
+                Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
+            }
+        }
+
+        /// Adds an `OP_VERIFY` to the script or replaces the last opcode with VERIFY form.
+        ///
+        /// Some opcodes such as `OP_CHECKSIG` have a verify variant that works as if `VERIFY` was
+        /// in the script right after. To save space this function appends `VERIFY` only if
+        /// the most-recently-added opcode *does not* have an alternate `VERIFY` form. If it does
+        /// the last opcode is replaced. E.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+        ///
+        /// Note that existing `OP_*VERIFY` opcodes do not lead to the instruction being ignored
+        /// because `OP_VERIFY` consumes an item from the stack so ignoring them would change the
+        /// semantics.
+        ///
+        /// This function needs to iterate over the script to find the last instruction. Prefer
+        /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
+        /// multiple times.
+        pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+    }
 }
 
 mod tmp_priv {
     use super::*;
-impl ScriptBuf {
-    /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
-    ///
-    /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
-    pub(crate) fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
-        let vec = core::mem::take(self).into_bytes();
-        ScriptBufAsVec(self, vec)
-    }
+    impl ScriptBuf {
+        /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
+        ///
+        /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
+        pub(crate) fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
+            let vec = core::mem::take(self).into_bytes();
+            ScriptBufAsVec(self, vec)
+        }
 
-    /// Pushes the slice without reserving
-    pub(crate) fn push_slice_no_opt(&mut self, data: &PushBytes) {
-        let mut this = self.as_byte_vec();
-        // Start with a PUSH opcode
-        match data.len().to_u64() {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
-                this.push(n as u8);
+        /// Pushes the slice without reserving
+        pub(crate) fn push_slice_no_opt(&mut self, data: &PushBytes) {
+            let mut this = self.as_byte_vec();
+            // Start with a PUSH opcode
+            match data.len().to_u64() {
+                n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
+                    this.push(n as u8);
+                }
+                n if n < 0x100 => {
+                    this.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
+                    this.push(n as u8);
+                }
+                n if n < 0x10000 => {
+                    this.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
+                    this.push((n % 0x100) as u8);
+                    this.push((n / 0x100) as u8);
+                }
+                // `PushBytes` enforces len < 0x100000000
+                n => {
+                    this.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
+                    this.push((n % 0x100) as u8);
+                    this.push(((n / 0x100) % 0x100) as u8);
+                    this.push(((n / 0x10000) % 0x100) as u8);
+                    this.push((n / 0x1000000) as u8);
+                }
             }
-            n if n < 0x100 => {
-                this.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
-                this.push(n as u8);
-            }
-            n if n < 0x10000 => {
-                this.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
-                this.push((n % 0x100) as u8);
-                this.push((n / 0x100) as u8);
-            }
-            // `PushBytes` enforces len < 0x100000000
-            n => {
-                this.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
-                this.push((n % 0x100) as u8);
-                this.push(((n / 0x100) % 0x100) as u8);
-                this.push(((n / 0x10000) % 0x100) as u8);
-                this.push((n / 0x1000000) as u8);
+            // Then push the raw bytes
+            this.extend_from_slice(data.as_bytes());
+        }
+
+        /// Computes the sum of `len` and the length of an appropriate push opcode.
+        pub(crate) fn reserved_len_for_slice(len: usize) -> usize {
+            len + match len {
+                0..=0x4b => 1,
+                0x4c..=0xff => 2,
+                0x100..=0xffff => 3,
+                // we don't care about oversized, the other fn will panic anyway
+                _ => 5,
             }
         }
-        // Then push the raw bytes
-        this.extend_from_slice(data.as_bytes());
-    }
 
-    /// Computes the sum of `len` and the length of an appropriate push opcode.
-    pub(crate) fn reserved_len_for_slice(len: usize) -> usize {
-        len + match len {
-            0..=0x4b => 1,
-            0x4c..=0xff => 2,
-            0x100..=0xffff => 3,
-            // we don't care about oversized, the other fn will panic anyway
-            _ => 5,
-        }
-    }
-
-    /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
-    /// alternative.
-    ///
-    /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-    pub(crate) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
-        match opcode_to_verify(last_opcode) {
-            Some(opcode) => {
-                self.as_byte_vec().pop();
-                self.push_opcode(opcode);
+        /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
+        /// alternative.
+        ///
+        /// See the public fn [`Self::scan_and_push_verify`] to learn more.
+        pub(crate) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
+            match opcode_to_verify(last_opcode) {
+                Some(opcode) => {
+                    self.as_byte_vec().pop();
+                    self.push_opcode(opcode);
+                }
+                None => self.push_opcode(OP_VERIFY),
             }
-            None => self.push_opcode(OP_VERIFY),
         }
     }
-}
 }
 
 impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
@@ -280,15 +280,11 @@ pub(crate) struct ScriptBufAsVec<'a>(&'a mut ScriptBuf, Vec<u8>);
 impl<'a> core::ops::Deref for ScriptBufAsVec<'a> {
     type Target = Vec<u8>;
 
-    fn deref(&self) -> &Self::Target {
-        &self.1
-    }
+    fn deref(&self) -> &Self::Target { &self.1 }
 }
 
 impl<'a> core::ops::DerefMut for ScriptBufAsVec<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.1
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
 }
 
 impl<'a> Drop for ScriptBufAsVec<'a> {
