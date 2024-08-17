@@ -154,7 +154,7 @@ impl ScriptBuf {
 
 impl ScriptBuf {
     /// Pushes the slice without reserving
-    fn push_slice_no_opt(&mut self, data: &PushBytes) {
+    pub(crate) fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
         match data.len().to_u64() {
             n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
