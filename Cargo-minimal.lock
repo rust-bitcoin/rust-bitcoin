@@ -95,6 +95,9 @@ dependencies = [
 [[package]]
 name = "bitcoin-io"
 version = "0.1.2"
+dependencies = [
+ "bitcoin-internals",
+]
 
 [[package]]
 name = "bitcoin-primitives"

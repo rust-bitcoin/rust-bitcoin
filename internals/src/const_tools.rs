@@ -56,36 +56,34 @@ pub use concat_bytes_to_arr;
 #[macro_export]
 /// Enables const fn in specified Rust version
 macro_rules! cond_const {
-    ($($(#[$attr:meta])* $vis:vis const(in $ver:ident $(= $human_ver:literal)?) fn $name:ident$(<$($gen:tt)*>)?($($args:tt)*) $(-> $ret:ty)? $body:block)+ ) => {
+    ($($(#[$attr:meta])* $vis:vis const(in $version:tt) fn $name:ident$(<$($gen:tt)*>)?($($args:tt)*) $(-> $ret:ty)? $body:block)+ ) => {
         $(
-            #[cfg($ver)]
-            $(#[$attr])*
-            $(
-                #[doc = "\nNote: the function is only `const` in Rust "]
-                #[doc = $human_ver]
-                #[doc = "."]
-            )?
-            $vis const fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
-
-            #[cfg(not($ver))]
-            $(#[$attr])*
-            $vis fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+            $crate::rust_version::rust_version! {
+                if >= $version {
+                    $(#[$attr])*
+                    #[doc = concat!("\nNote: the function is only `const` in Rust ", stringify!($version), ".")]
+                    $vis const fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+                } else {
+                    $(#[$attr])*
+                    #[doc = concat!("\nNote: the function is `const` in Rust ", stringify!($version), ".")]
+                    $vis fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+                }
+            }
         )+
     };
-    ($($(#[$attr:meta])* $vis:vis const(in $ver:ident $(= $human_ver:literal)?) unsafe fn $name:ident$(<$($gen:tt)*>)?($($args:tt)*) $(-> $ret:ty)? $body:block)+ ) => {
+    ($($(#[$attr:meta])* $vis:vis const(in $version:tt) unsafe fn $name:ident$(<$($gen:tt)*>)?($($args:tt)*) $(-> $ret:ty)? $body:block)+ ) => {
         $(
-            #[cfg($ver)]
-            $(#[$attr])*
-            $(
-                #[doc = "\nNote: the function is only `const` in Rust "]
-                #[doc = $human_ver]
-                #[doc = " and newer."]
-            )?
-            $vis const unsafe fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
-
-            #[cfg(not($ver))]
-            $(#[$attr])*
-            $vis unsafe fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+            $crate::rust_version::rust_version! {
+                if >= $version {
+                    $(#[$attr])*
+                    #[doc = concat!("\nNote: the function is only `const` in Rust ", stringify!($version), ".")]
+                    $vis const unsafe fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+                } else {
+                    $(#[$attr])*
+                    #[doc = concat!("\nNote: the function is `const` in Rust ", stringify!($version), ".")]
+                    $vis unsafe fn $name$(<$($gen)*>)?($($args)*) $(-> $ret)? $body
+                }
+            }
         )+
     };
 }
