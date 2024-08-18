@@ -21,17 +21,17 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod error;
-mod macros;
 #[cfg(feature = "std")]
 mod bridge;
-
-#[cfg(feature = "std")]
-pub use bridge::{FromStd, ToStd};
+mod error;
+mod macros;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::vec::Vec;
 use core::cmp;
+
+#[cfg(feature = "std")]
+pub use bridge::{FromStd, ToStd};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
@@ -194,9 +194,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     /// Note that setting a position that is larger than the buffer length will cause reads to
     /// return no bytes (EOF).
     #[inline]
-    pub fn set_position(&mut self, position: u64) {
-        self.pos = position;
-    }
+    pub fn set_position(&mut self, position: u64) { self.pos = position; }
 
     /// Returns the inner buffer.
     ///
@@ -311,18 +309,14 @@ pub fn sink() -> Sink { Sink }
 /// All methods are passed through converting the errors.
 #[cfg(feature = "std")]
 #[inline]
-pub const fn from_std<T>(std_io: T) -> FromStd<T> {
-    FromStd::new(std_io)
-}
+pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 
 /// Wraps a mutable reference to `std` IO type to implement the traits from this crate.
 ///
 /// All methods are passed through converting the errors.
 #[cfg(feature = "std")]
 #[inline]
-pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> {
-    FromStd::new_mut(std_io)
-}
+pub fn from_std_mut<T>(std_io: &mut T) -> &mut FromStd<T> { FromStd::new_mut(std_io) }
 
 #[cfg(test)]
 mod tests {
