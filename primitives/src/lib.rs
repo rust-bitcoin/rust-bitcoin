@@ -41,10 +41,7 @@ pub use units::*;
 #[cfg(feature = "alloc")]
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
-pub use self::{
-    pow::CompactTarget,
-    sequence::Sequence,
-};
+pub use self::{pow::CompactTarget, sequence::Sequence};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
