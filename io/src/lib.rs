@@ -349,8 +349,7 @@ mod tests {
 
         // checks we can attempt to read from a now-empty reader.
         let fill = BufRead::fill_buf(&mut slice).unwrap();
-        assert_eq!(fill.len(), 0);
-        assert_eq!(fill, &[]);
+        assert!(fill.is_empty());
     }
 
     #[test]
