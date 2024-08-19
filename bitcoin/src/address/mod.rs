@@ -275,41 +275,41 @@ impl From<Network> for KnownHrp {
 ///
 /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
 ///
-/// ```
-/// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
-///                .unwrap().assume_checked();
-/// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
+///    ```
+///    # use std::str::FromStr;
+///    # use bitcoin::address::{Address, NetworkChecked};
+///    let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
+///                   .unwrap().assume_checked();
+///    assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+///    ```
 ///
-/// ```ignore
-/// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
-///                .unwrap();
-/// let s = address.to_string(); // does not compile
-/// ```
+///    ```ignore
+///    # use std::str::FromStr;
+///    # use bitcoin::address::{Address, NetworkChecked};
+///    let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
+///                   .unwrap();
+///    let s = address.to_string(); // does not compile
+///    ```
 ///
 /// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
-/// an indicator that its network has not been checked. This is to encourage programmer to properly
-/// check the network and use `Display` in user-facing context.
+///     an indicator that its network has not been checked. This is to encourage programmer to properly
+///     check the network and use `Display` in user-facing context.
 ///
-/// ```
-/// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkUnchecked};
-/// let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
-///                .unwrap();
-/// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
-/// ```
+///     ```
+///     # use std::str::FromStr;
+///     # use bitcoin::address::{Address, NetworkUnchecked};
+///     let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
+///                    .unwrap();
+///     assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
+///     ```
 ///
-/// ```
-/// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
-///                .unwrap().assume_checked();
-/// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
+///     ```
+///     # use std::str::FromStr;
+///     # use bitcoin::address::{Address, NetworkChecked};
+///     let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
+///                    .unwrap().assume_checked();
+///     assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+///     ```
 ///
 /// ### Relevant BIPs
 ///

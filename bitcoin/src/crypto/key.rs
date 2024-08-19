@@ -1442,12 +1442,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(not(feature = "std"), feature = "no-std"))]
+    #[cfg(not(feature = "std"))]
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         // Why is this not shortened? In rust-secp256k1/src/secret it is printed with "#{:016x}"?
-        let want = "PrivateKey { compressed: true, network: Testnet, inner: SecretKey(#7217ac58fbad8880a91032107b82cb6c5422544b426c350ee005cf509f3dbf7b) }";
+        let want = "PrivateKey { compressed: true, network: Test, inner: SecretKey(#7217ac58fbad8880a91032107b82cb6c5422544b426c350ee005cf509f3dbf7b) }";
         let got = format!("{:?}", sk);
         assert_eq!(got, want)
     }
