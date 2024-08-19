@@ -1705,7 +1705,7 @@ mod test {
         )
         .unwrap();
 
-        let script_weights = vec![
+        let script_weights = [
             (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
             (20, ScriptBuf::from_hex("52").unwrap()),
             (20, ScriptBuf::from_hex("53").unwrap()),

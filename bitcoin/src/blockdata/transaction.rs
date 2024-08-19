@@ -1795,7 +1795,7 @@ mod tests {
 
     #[test]
     fn sighashtype_fromstr_display() {
-        let sighashtypes = vec![
+        let sighashtypes = [
             ("SIGHASH_ALL", EcdsaSighashType::All),
             ("SIGHASH_NONE", EcdsaSighashType::None),
             ("SIGHASH_SINGLE", EcdsaSighashType::Single),
@@ -1807,7 +1807,7 @@ mod tests {
             assert_eq!(sht.to_string(), s);
             assert_eq!(EcdsaSighashType::from_str(s).unwrap(), sht);
         }
-        let sht_mistakes = vec![
+        let sht_mistakes = [
             "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
             "SIGHASH_NONE |SIGHASH_ANYONECANPAY",
             "SIGHASH_SINGLE| SIGHASH_ANYONECANPAY",

@@ -53,16 +53,16 @@ mod tests {
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: Vec<u8>,
+            output: [u8; 32],
             output_str: &'static str,
         }
 
         #[rustfmt::skip]
-        let tests = vec![
+        let tests = [
             // Test vector copied out of rust-bitcoin
             Test {
                 input: "",
-                output: vec![
+                output: [
                     0x5d, 0xf6, 0xe0, 0xe2, 0x76, 0x13, 0x59, 0xd3,
                     0x0a, 0x82, 0x75, 0x05, 0x8e, 0x29, 0x9f, 0xcc,
                     0x03, 0x81, 0x53, 0x45, 0x45, 0xf5, 0x5c, 0xf4,

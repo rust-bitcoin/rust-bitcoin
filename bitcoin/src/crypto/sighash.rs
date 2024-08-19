@@ -1682,7 +1682,7 @@ mod tests {
             c.taproot_signature_hash(0, &empty_prevouts, None, None, TapSighashType::All),
             Err(TaprootError::PrevoutsSize(PrevoutsSizeError))
         );
-        let two = vec![TxOut::NULL, TxOut::NULL];
+        let two = [TxOut::NULL, TxOut::NULL];
         let too_many_prevouts = Prevouts::All(&two);
         assert_eq!(
             c.taproot_signature_hash(0, &too_many_prevouts, None, None, TapSighashType::All),
@@ -1967,7 +1967,7 @@ mod tests {
 
     #[test]
     fn sighashtype_fromstr_display() {
-        let sighashtypes = vec![
+        let sighashtypes = [
             ("SIGHASH_DEFAULT", TapSighashType::Default),
             ("SIGHASH_ALL", TapSighashType::All),
             ("SIGHASH_NONE", TapSighashType::None),
@@ -1980,7 +1980,7 @@ mod tests {
             assert_eq!(sht.to_string(), s);
             assert_eq!(TapSighashType::from_str(s).unwrap(), sht);
         }
-        let sht_mistakes = vec![
+        let sht_mistakes = [
             "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
             "SIGHASH_NONE |SIGHASH_ANYONECANPAY",
             "SIGHASH_SINGLE| SIGHASH_ANYONECANPAY",

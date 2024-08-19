@@ -1682,7 +1682,7 @@ mod tests {
 
     #[test]
     fn u256_is_max_correct_negative() {
-        let tc = vec![U256::ZERO, U256::ONE, U256::from(u128::MAX)];
+        let tc = [U256::ZERO, U256::ONE, U256::from(u128::MAX)];
         for t in tc {
             assert!(!t.is_max())
         }
@@ -1847,7 +1847,7 @@ mod tests {
     #[test]
     fn target_from_compact() {
         // (nBits, target)
-        let tests = vec![
+        let tests = [
             (0x0100_3456_u32, 0x00_u64), // High bit set.
             (0x0112_3456_u32, 0x12_u64),
             (0x0200_8000_u32, 0x80_u64),
@@ -1930,7 +1930,7 @@ mod tests {
     #[test]
     fn work_log2() {
         // Compare work log2 to historical Bitcoin Core values found in Core logs.
-        let tests: Vec<(u128, f64)> = vec![
+        let tests: [(u128, f64); 5] = [
             // (chainwork, core log2)                // height
             (0x200020002, 33.000022),                // 1
             (0xa97d67041c5e51596ee7, 79.405055),     // 308004

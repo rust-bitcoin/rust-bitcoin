@@ -906,65 +906,62 @@ mod tests {
     #[test]
     fn serialize_int_test() {
         // bool
-        assert_eq!(serialize(&false), vec![0u8]);
-        assert_eq!(serialize(&true), vec![1u8]);
+        assert_eq!(serialize(&false), [0u8]);
+        assert_eq!(serialize(&true), [1u8]);
         // u8
-        assert_eq!(serialize(&1u8), vec![1u8]);
-        assert_eq!(serialize(&0u8), vec![0u8]);
-        assert_eq!(serialize(&255u8), vec![255u8]);
+        assert_eq!(serialize(&1u8), [1u8]);
+        assert_eq!(serialize(&0u8), [0u8]);
+        assert_eq!(serialize(&255u8), [255u8]);
         // u16
-        assert_eq!(serialize(&1u16), vec![1u8, 0]);
-        assert_eq!(serialize(&256u16), vec![0u8, 1]);
-        assert_eq!(serialize(&5000u16), vec![136u8, 19]);
+        assert_eq!(serialize(&1u16), [1u8, 0]);
+        assert_eq!(serialize(&256u16), [0u8, 1]);
+        assert_eq!(serialize(&5000u16), [136u8, 19]);
         // u32
-        assert_eq!(serialize(&1u32), vec![1u8, 0, 0, 0]);
-        assert_eq!(serialize(&256u32), vec![0u8, 1, 0, 0]);
-        assert_eq!(serialize(&5000u32), vec![136u8, 19, 0, 0]);
-        assert_eq!(serialize(&500000u32), vec![32u8, 161, 7, 0]);
-        assert_eq!(serialize(&168430090u32), vec![10u8, 10, 10, 10]);
+        assert_eq!(serialize(&1u32), [1u8, 0, 0, 0]);
+        assert_eq!(serialize(&256u32), [0u8, 1, 0, 0]);
+        assert_eq!(serialize(&5000u32), [136u8, 19, 0, 0]);
+        assert_eq!(serialize(&500000u32), [32u8, 161, 7, 0]);
+        assert_eq!(serialize(&168430090u32), [10u8, 10, 10, 10]);
         // i32
-        assert_eq!(serialize(&-1i32), vec![255u8, 255, 255, 255]);
-        assert_eq!(serialize(&-256i32), vec![0u8, 255, 255, 255]);
-        assert_eq!(serialize(&-5000i32), vec![120u8, 236, 255, 255]);
-        assert_eq!(serialize(&-500000i32), vec![224u8, 94, 248, 255]);
-        assert_eq!(serialize(&-168430090i32), vec![246u8, 245, 245, 245]);
-        assert_eq!(serialize(&1i32), vec![1u8, 0, 0, 0]);
-        assert_eq!(serialize(&256i32), vec![0u8, 1, 0, 0]);
-        assert_eq!(serialize(&5000i32), vec![136u8, 19, 0, 0]);
-        assert_eq!(serialize(&500000i32), vec![32u8, 161, 7, 0]);
-        assert_eq!(serialize(&168430090i32), vec![10u8, 10, 10, 10]);
+        assert_eq!(serialize(&-1i32), [255u8, 255, 255, 255]);
+        assert_eq!(serialize(&-256i32), [0u8, 255, 255, 255]);
+        assert_eq!(serialize(&-5000i32), [120u8, 236, 255, 255]);
+        assert_eq!(serialize(&-500000i32), [224u8, 94, 248, 255]);
+        assert_eq!(serialize(&-168430090i32), [246u8, 245, 245, 245]);
+        assert_eq!(serialize(&1i32), [1u8, 0, 0, 0]);
+        assert_eq!(serialize(&256i32), [0u8, 1, 0, 0]);
+        assert_eq!(serialize(&5000i32), [136u8, 19, 0, 0]);
+        assert_eq!(serialize(&500000i32), [32u8, 161, 7, 0]);
+        assert_eq!(serialize(&168430090i32), [10u8, 10, 10, 10]);
         // u64
-        assert_eq!(serialize(&1u64), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&256u64), vec![0u8, 1, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&5000u64), vec![136u8, 19, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&500000u64), vec![32u8, 161, 7, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&723401728380766730u64), vec![10u8, 10, 10, 10, 10, 10, 10, 10]);
+        assert_eq!(serialize(&1u64), [1u8, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&256u64), [0u8, 1, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&5000u64), [136u8, 19, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&500000u64), [32u8, 161, 7, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&723401728380766730u64), [10u8, 10, 10, 10, 10, 10, 10, 10]);
         // i64
-        assert_eq!(serialize(&-1i64), vec![255u8, 255, 255, 255, 255, 255, 255, 255]);
-        assert_eq!(serialize(&-256i64), vec![0u8, 255, 255, 255, 255, 255, 255, 255]);
-        assert_eq!(serialize(&-5000i64), vec![120u8, 236, 255, 255, 255, 255, 255, 255]);
-        assert_eq!(serialize(&-500000i64), vec![224u8, 94, 248, 255, 255, 255, 255, 255]);
-        assert_eq!(
-            serialize(&-723401728380766730i64),
-            vec![246u8, 245, 245, 245, 245, 245, 245, 245]
-        );
-        assert_eq!(serialize(&1i64), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&256i64), vec![0u8, 1, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&5000i64), vec![136u8, 19, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&500000i64), vec![32u8, 161, 7, 0, 0, 0, 0, 0]);
-        assert_eq!(serialize(&723401728380766730i64), vec![10u8, 10, 10, 10, 10, 10, 10, 10]);
+        assert_eq!(serialize(&-1i64), [255u8, 255, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-256i64), [0u8, 255, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-5000i64), [120u8, 236, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-500000i64), [224u8, 94, 248, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-723401728380766730i64), [246u8, 245, 245, 245, 245, 245, 245, 245]);
+        assert_eq!(serialize(&1i64), [1u8, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&256i64), [0u8, 1, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&5000i64), [136u8, 19, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&500000i64), [32u8, 161, 7, 0, 0, 0, 0, 0]);
+        assert_eq!(serialize(&723401728380766730i64), [10u8, 10, 10, 10, 10, 10, 10, 10]);
     }
 
     #[test]
     fn serialize_varint_test() {
-        assert_eq!(serialize(&VarInt(10)), vec![10u8]);
-        assert_eq!(serialize(&VarInt(0xFC)), vec![0xFCu8]);
-        assert_eq!(serialize(&VarInt(0xFD)), vec![0xFDu8, 0xFD, 0]);
-        assert_eq!(serialize(&VarInt(0xFFF)), vec![0xFDu8, 0xFF, 0xF]);
-        assert_eq!(serialize(&VarInt(0xF0F0F0F)), vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]);
+        assert_eq!(serialize(&VarInt(10)), [10u8]);
+        assert_eq!(serialize(&VarInt(0xFC)), [0xFCu8]);
+        assert_eq!(serialize(&VarInt(0xFD)), [0xFDu8, 0xFD, 0]);
+        assert_eq!(serialize(&VarInt(0xFFF)), [0xFDu8, 0xFF, 0xF]);
+        assert_eq!(serialize(&VarInt(0xF0F0F0F)), [0xFEu8, 0xF, 0xF, 0xF, 0xF]);
         assert_eq!(
             serialize(&VarInt(0xF0F0F0F0F0E0)),
-            vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]
+            [0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]
         );
         assert_eq!(
             test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(),
@@ -1066,17 +1063,17 @@ mod tests {
     #[test]
     fn serialize_checkeddata_test() {
         let cd = CheckedData::new(vec![1u8, 2, 3, 4, 5]);
-        assert_eq!(serialize(&cd), vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+        assert_eq!(serialize(&cd), [5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
     }
 
     #[test]
     fn serialize_vector_test() {
-        assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
+        assert_eq!(serialize(&vec![1u8, 2, 3]), [3u8, 1, 2, 3]);
     }
 
     #[test]
     fn serialize_strbuf_test() {
-        assert_eq!(serialize(&"Andrew".to_string()), vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
+        assert_eq!(serialize(&"Andrew".to_string()), [6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
     }
 
     #[test]

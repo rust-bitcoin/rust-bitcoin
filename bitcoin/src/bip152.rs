@@ -449,11 +449,11 @@ mod test {
 
         let compact = HeaderAndShortIds::from_block(&block, 42, 2, &[0, 1, 2]).unwrap();
         let idxs = compact.prefilled_txs.iter().map(|t| t.idx).collect::<Vec<_>>();
-        assert_eq!(idxs, vec![0, 0, 0]);
+        assert_eq!(idxs, [0, 0, 0]);
 
         let compact = HeaderAndShortIds::from_block(&block, 42, 2, &[2]).unwrap();
         let idxs = compact.prefilled_txs.iter().map(|t| t.idx).collect::<Vec<_>>();
-        assert_eq!(idxs, vec![0, 1]);
+        assert_eq!(idxs, [0, 1]);
     }
 
     #[test]

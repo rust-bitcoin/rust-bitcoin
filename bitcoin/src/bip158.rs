@@ -482,7 +482,7 @@ impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
     ///
     /// ```
     /// # use bitcoin::bip158::BitStreamReader;
-    /// # let data = vec![0xff];
+    /// # let data = [0xff];
     /// # let mut input = data.as_slice();
     /// let mut reader = BitStreamReader::new(&mut input); // input contains all 1's
     /// let res = reader.read(1).expect("read failed");

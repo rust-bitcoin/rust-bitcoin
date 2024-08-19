@@ -132,7 +132,7 @@ fn serde_regression_witness() {
     let w0 = Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")
         .unwrap();
     let w1 = Vec::from_hex("000000").unwrap();
-    let vec = vec![w0, w1];
+    let vec = [w0, w1];
     let witness = Witness::from_slice(&vec);
 
     let got = serialize(&witness).unwrap();
