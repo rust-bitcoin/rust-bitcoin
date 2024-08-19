@@ -15,7 +15,7 @@
 //! typically big-endian decimals, etc.)
 //!
 
-use core::{fmt, mem, u32};
+use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, Hash};
 use internals::write_err;

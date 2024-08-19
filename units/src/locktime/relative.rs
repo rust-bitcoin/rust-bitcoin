@@ -20,7 +20,7 @@ impl Height {
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum relative block height.
-    pub const MAX: Self = Height(u16::max_value());
+    pub const MAX: Self = Height(u16::MAX);
 
     /// Returns the inner `u16` value.
     #[inline]
@@ -53,7 +53,7 @@ impl Time {
     pub const MIN: Self = Time::ZERO;
 
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
-    pub const MAX: Self = Time(u16::max_value());
+    pub const MAX: Self = Time(u16::MAX);
 
     /// Create a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
     ///

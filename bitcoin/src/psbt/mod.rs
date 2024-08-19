@@ -409,7 +409,7 @@ impl Psbt {
     ///
     /// - Ok: A list of the public keys used in signing.
     /// - Err: Error encountered trying to calculate the sighash AND we had the signing key. Also panics
-    /// if input_index is out of bounds.
+    ///   if input_index is out of bounds.
     fn bip32_sign_schnorr<C, K, T>(
         &mut self,
         k: &K,

@@ -114,7 +114,7 @@ impl Time {
     pub const MIN: Self = Time(LOCK_TIME_THRESHOLD);
 
     /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
-    pub const MAX: Self = Time(u32::max_value());
+    pub const MAX: Self = Time(u32::MAX);
 
     /// Creates a `Time` from a hex string.
     ///
