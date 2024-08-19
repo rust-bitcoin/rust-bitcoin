@@ -13,6 +13,8 @@ use io::Write;
 
 use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
+#[cfg(doc)]
+use crate::script::ScriptBufExt as _;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;

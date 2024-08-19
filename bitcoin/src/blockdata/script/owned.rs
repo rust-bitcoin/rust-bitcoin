@@ -89,30 +89,30 @@ impl ScriptBuf {
     }
 }
 
-mod tmp_pub {
-    use super::*;
-    impl ScriptBuf {
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`ScriptBuf`] type.
+    pub trait ScriptBufExt impl for ScriptBuf {
         /// Creates a new script builder
-        pub fn builder() -> Builder { Builder::new() }
+        fn builder() -> Builder { Builder::new() }
 
         /// Generates OP_RETURN-type of scriptPubkey for the given data.
-        pub fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
+        fn new_op_return<T: AsRef<PushBytes>>(data: T) -> Self {
             Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
         }
 
         /// Creates a [`ScriptBuf`] from a hex string.
-        pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
+        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
             let v = Vec::from_hex(s)?;
             Ok(ScriptBuf::from_bytes(v))
         }
 
         /// Adds a single opcode to the script.
-        pub fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
+        fn push_opcode(&mut self, data: Opcode) { self.as_byte_vec().push(data.to_u8()); }
 
         /// Adds instructions to push some arbitrary data onto the stack.
-        pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+        fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
             let data = data.as_ref();
-            self.reserve(Self::reserved_len_for_slice(data.len()));
+            self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
             self.push_slice_no_opt(data);
         }
 
@@ -122,7 +122,7 @@ mod tmp_pub {
         ///
         /// The method panics if the instruction is a data push with length greater or equal to
         /// 0x100000000.
-        pub fn push_instruction(&mut self, instruction: Instruction<'_>) {
+        fn push_instruction(&mut self, instruction: Instruction<'_>) {
             match instruction {
                 Instruction::Op(opcode) => self.push_opcode(opcode),
                 Instruction::PushBytes(bytes) => self.push_slice(bytes),
@@ -130,7 +130,7 @@ mod tmp_pub {
         }
 
         /// Like push_instruction, but avoids calling `reserve` to not re-check the length.
-        pub fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
+        fn push_instruction_no_opt(&mut self, instruction: Instruction<'_>) {
             match instruction {
                 Instruction::Op(opcode) => self.push_opcode(opcode),
                 Instruction::PushBytes(bytes) => self.push_slice_no_opt(bytes),
@@ -151,23 +151,22 @@ mod tmp_pub {
         /// This function needs to iterate over the script to find the last instruction. Prefer
         /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
         /// multiple times.
-        pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+        fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
     }
 }
 
-mod tmp_priv {
-    use super::*;
-    impl ScriptBuf {
+crate::internal_macros::define_extension_trait! {
+    pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
         ///
         /// Note: if the returned value leaks the original `ScriptBuf` will become empty.
-        pub(crate) fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
+        fn as_byte_vec(&mut self) -> ScriptBufAsVec<'_> {
             let vec = core::mem::take(self).into_bytes();
             ScriptBufAsVec(self, vec)
         }
 
         /// Pushes the slice without reserving
-        pub(crate) fn push_slice_no_opt(&mut self, data: &PushBytes) {
+        fn push_slice_no_opt(&mut self, data: &PushBytes) {
             let mut this = self.as_byte_vec();
             // Start with a PUSH opcode
             match data.len().to_u64() {
@@ -197,7 +196,7 @@ mod tmp_priv {
         }
 
         /// Computes the sum of `len` and the length of an appropriate push opcode.
-        pub(crate) fn reserved_len_for_slice(len: usize) -> usize {
+        fn reserved_len_for_slice(len: usize) -> usize {
             len + match len {
                 0..=0x4b => 1,
                 0x4c..=0xff => 2,
@@ -211,7 +210,7 @@ mod tmp_priv {
         /// alternative.
         ///
         /// See the public fn [`Self::scan_and_push_verify`] to learn more.
-        pub(crate) fn push_verify(&mut self, last_opcode: Option<Opcode>) {
+        fn push_verify(&mut self, last_opcode: Option<Opcode>) {
             match opcode_to_verify(last_opcode) {
                 Some(opcode) => {
                     self.as_byte_vec().pop();
