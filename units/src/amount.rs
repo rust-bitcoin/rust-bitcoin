@@ -15,6 +15,8 @@ use core::{default, fmt, ops};
 
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 use internals::write_err;
 
@@ -1873,6 +1875,14 @@ pub mod serde {
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
             }
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Amount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = u64::arbitrary(u)?;
+        Ok(Amount(a))
     }
 }
 

@@ -5,6 +5,8 @@
 use core::fmt;
 use core::ops::{Div, Mul};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -144,6 +146,14 @@ impl Div<Weight> for Amount {
 }
 
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FeeRate {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let f = u64::arbitrary(u)?;
+        Ok(FeeRate(f))
+    }
+}
 
 #[cfg(test)]
 mod tests {
