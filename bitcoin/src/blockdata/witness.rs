@@ -8,10 +8,10 @@
 use core::fmt;
 use core::ops::Index;
 
-use io::{BufRead, Write};
+use io::{Read, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::{encode::Reader, Decodable, DecodableExt, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::prelude::*;
@@ -124,8 +124,9 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, Error> {
+        let r = &mut r.allow_unlimited();
+        let witness_elements = VarInt::consensus_decode_unbuffered(r)?.0 as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
         if witness_elements > MAX_VEC_SIZE {
@@ -147,7 +148,7 @@ impl Decodable for Witness {
             let mut content = vec![0u8; cursor + 128];
 
             for i in 0..witness_elements {
-                let element_size_varint = VarInt::consensus_decode(r)?;
+                let element_size_varint = VarInt::consensus_decode_unbuffered(r)?;
                 let element_size_varint_len = element_size_varint.size();
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor

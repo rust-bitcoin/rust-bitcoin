@@ -15,7 +15,7 @@ use core::{cmp, fmt, str};
 
 use hashes::{sha256d, Hash};
 use internals::write_err;
-use io::{BufRead, Write};
+use io::Write;
 use units::parse;
 
 use super::Weight;
@@ -24,7 +24,7 @@ use crate::blockdata::locktime::relative::{self, TimeOverflowError};
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::FeeRate;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{encode::{self, Reader}, Decodable, DecodableExt, Encodable};
 use crate::error::{PrefixedHexError, UnprefixedHexError, ContainsPrefixError, MissingPrefixError};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 #[cfg(doc)]
@@ -1156,8 +1156,9 @@ impl Encodable for Version {
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version)
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.allow_unlimited();
+        DecodableExt::consensus_decode_unbuffered(r).map(Version)
     }
 }
 
@@ -1174,10 +1175,11 @@ impl Encodable for OutPoint {
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.allow_unlimited();
         Ok(OutPoint {
-            txid: Decodable::consensus_decode(r)?,
-            vout: Decodable::consensus_decode(r)?,
+            txid: DecodableExt::consensus_decode_unbuffered(r)?,
+            vout: DecodableExt::consensus_decode_unbuffered(r)?,
         })
     }
 }
@@ -1193,13 +1195,12 @@ impl Encodable for TxIn {
 }
 impl Decodable for TxIn {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.require_finite();
         Ok(TxIn {
-            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
-            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
-            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
+            previous_output: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
+            script_sig: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
+            sequence: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
             witness: Witness::default(),
         })
     }
@@ -1212,8 +1213,9 @@ impl Encodable for Sequence {
 }
 
 impl Decodable for Sequence {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Sequence)
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.allow_unlimited();
+        DecodableExt::consensus_decode_unbuffered(r).map(Sequence)
     }
 }
 
@@ -1242,21 +1244,20 @@ impl Encodable for Transaction {
 }
 
 impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        let version = Version::consensus_decode_from_finite_reader(r)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.require_finite();
+        let version = Version::consensus_decode_unbuffered_from_finite_reader(r)?;
+        let input = Vec::<TxIn>::consensus_decode_unbuffered_from_finite_reader(r)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
+            let segwit_flag = u8::consensus_decode_unbuffered_from_finite_reader(r)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
+                    let mut input = Vec::<TxIn>::consensus_decode_unbuffered_from_finite_reader(r)?;
+                    let output = Vec::<TxOut>::consensus_decode_unbuffered_from_finite_reader(r)?;
                     for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
+                        txin.witness = DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
@@ -1265,7 +1266,7 @@ impl Decodable for Transaction {
                             version,
                             input,
                             output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+                            lock_time: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
                         })
                     }
                 }
@@ -1277,8 +1278,8 @@ impl Decodable for Transaction {
             Ok(Transaction {
                 version,
                 input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+                output: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
+                lock_time: DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?,
             })
         }
     }

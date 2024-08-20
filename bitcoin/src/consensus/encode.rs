@@ -19,7 +19,7 @@ use core::{fmt, mem};
 
 use hashes::{sha256, sha256d, Hash};
 use internals::write_err;
-use io::{Cursor, BufRead, Read, Write};
+use io::{Cursor, BufRead, Read, Write, ByRef};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
@@ -305,10 +305,32 @@ pub trait Decodable: Sized {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         reader: &mut R,
     ) -> Result<Self, Error> {
+        use sealed::ReaderKind;
+        struct ThisReader<'a, T: ?Sized>(&'a mut T);
+        impl<'a, T: BufRead + ?Sized> sealed::Sealed for ThisReader<'a, T> {}
+        impl<'a, T: BufRead + ?Sized> Reader<'a> for ThisReader<'a, T> {
+            type FiniteReader = io::ByRef<'a, T>;
+            type UnlimitedReader = io::ByRef<'a, T>;
+
+            fn require_finite(self) -> Self::FiniteReader {
+                self.0.by_ref()
+            }
+
+            fn allow_unlimited(self) -> Self::UnlimitedReader {
+                self.0.by_ref()
+            }
+
+            type Buffered = T;
+            type Unbuffered = sealed::Unbuffered;
+
+            fn dispatch_from_buffered(self, _token: sealed::Token) -> (Result<&'a mut Self::Buffered, &'a mut Self::Unbuffered>, ReaderKind) {
+                (Ok(self.0), ReaderKind::Finite)
+            }
+        }
         // This method is always strictly less general than, `consensus_decode`, so it's safe and
         // make sense to default to just calling it. This way most types, that don't care about
         // protecting against resource exhaustion due to malicious input, can just ignore it.
-        Self::consensus_decode(reader)
+        Self::consensus_decode_unbuffered_any(ThisReader(reader))
     }
 
     /// Decode an object with a well-defined format.
@@ -321,7 +343,177 @@ pub trait Decodable: Sized {
     /// instead.
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(&mut reader.take(MAX_VEC_SIZE as u64))
+        use sealed::ReaderKind;
+        struct ThisReader<'a, T: ?Sized>(&'a mut T);
+        impl<'a, T: BufRead + ?Sized> sealed::Sealed for ThisReader<'a, T> {}
+        impl<'a, T: BufRead + ?Sized> Reader<'a> for ThisReader<'a, T> {
+            type FiniteReader = io::Take<'a, T>;
+            type UnlimitedReader = ByRef<'a, T>;
+
+            fn require_finite(self) -> Self::FiniteReader {
+                self.0.take(MAX_VEC_SIZE as u64)
+            }
+
+            fn allow_unlimited(self) -> Self::UnlimitedReader {
+                self.0.by_ref()
+            }
+
+            type Buffered = T;
+            type Unbuffered = sealed::Unbuffered;
+
+            fn dispatch_from_buffered(self, _token: sealed::Token) -> (Result<&'a mut Self::Buffered, &'a mut Self::Unbuffered>, ReaderKind) {
+                (Ok(self.0), ReaderKind::Unlimited)
+            }
+        }
+        Self::consensus_decode_unbuffered_any(ThisReader(reader))
+    }
+
+    /// Decode an object with a well-defined format using a **slower** algorithm.
+    ///
+    /// Implementors may implement this instead of the other methods if they don't require buffered
+    /// reader. As opposed to the other methods, the implmentods need to call one of the
+    /// `reader.require_*` methods to obtain an appropirate reader which they can then use.
+    ///
+    /// This method cannot be called from the outside - use one of the methods on [`DecodableExt`]
+    /// instead.
+    #[inline]
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a> + 'a>(reader: R) -> Result<Self, Error> {
+        use sealed::ReaderKind;
+        use io::BufReader;
+
+        match reader.dispatch_from_buffered(sealed::Token) {
+            (Ok(buffered), ReaderKind::Unlimited) => Self::consensus_decode_from_finite_reader(&mut buffered.take(MAX_VEC_SIZE as u64)),
+            (Ok(buffered), ReaderKind::Finite) => Self::consensus_decode(buffered),
+            (Err(reader), ReaderKind::Unlimited) => Self::consensus_decode(&mut BufReader::<_, 1>::new(reader.by_ref())),
+            (Err(reader), ReaderKind::Finite) => Self::consensus_decode_from_finite_reader(&mut BufReader::<_, 1>::new(reader.by_ref())),
+        }
+    }
+}
+
+/// An extension trait providing unbuffered decoding.
+///
+/// For correctness the methods in this trait must not be overridable so this trait forces a
+/// specific implementation.
+pub trait DecodableExt: Decodable {
+    /// Decode an object with a well-defined format using a **slower** algorithm.
+    ///
+    /// This is equivalent to `consensus_decode` except the performance may be degraded if the
+    /// decoded type prefers `BufRead`. Use `consensus_decode` if possible.
+    #[inline]
+    fn consensus_decode_unbuffered<R: Read>(reader: &mut R) -> Result<Self, Error> {
+        use sealed::ReaderKind;
+        struct ThisReader<'a, T: ?Sized>(&'a mut T);
+        impl<'a, T: Read + ?Sized> sealed::Sealed for ThisReader<'a, T> {}
+        impl<'a, T: Read + ?Sized> Reader<'a> for ThisReader<'a, T> {
+            type FiniteReader = io::Take<'a, T>;
+            type UnlimitedReader = io::ByRef<'a, T>;
+
+            fn require_finite(self) -> Self::FiniteReader {
+                self.0.take(MAX_VEC_SIZE as u64)
+            }
+
+            fn allow_unlimited(self) -> Self::UnlimitedReader {
+                self.0.by_ref()
+            }
+
+            type Buffered = sealed::Unbuffered;
+            type Unbuffered = T;
+
+            fn dispatch_from_buffered(self, _token: sealed::Token) -> (Result<&'a mut Self::Buffered, &'a mut Self::Unbuffered>, ReaderKind) {
+                (Err(self.0), ReaderKind::Unlimited)
+            }
+        }
+        Self::consensus_decode_unbuffered_any(ThisReader(reader))
+    }
+
+    /// Decode an object with a well-defined format using a **slower** algorithm.
+    ///
+    /// This is equivalent to `consensus_decode_from_finite_reader` except the performance may be
+    /// degraded if the decoded type prefers `BufRead`. Use `consensus_decode_from_finite_reader`
+    /// if possible.
+    #[inline]
+    fn consensus_decode_unbuffered_from_finite_reader<R: Read>(reader: &mut R) -> Result<Self, Error> {
+        use sealed::ReaderKind;
+        struct ThisReader<'a, T: ?Sized>(&'a mut T);
+        impl<'a, T: Read + ?Sized> sealed::Sealed for ThisReader<'a, T> {}
+        impl<'a, T: Read + ?Sized> Reader<'a> for ThisReader<'a, T> {
+            type FiniteReader = io::ByRef<'a, T>;
+            type UnlimitedReader = io::ByRef<'a, T>;
+
+            fn require_finite(self) -> Self::FiniteReader {
+                self.0.by_ref()
+            }
+
+            fn allow_unlimited(self) -> Self::UnlimitedReader {
+                self.0.by_ref()
+            }
+
+            type Buffered = sealed::Unbuffered;
+            type Unbuffered = T;
+
+            fn dispatch_from_buffered(self, _token: sealed::Token) -> (Result<&'a mut Self::Buffered, &'a mut Self::Unbuffered>, ReaderKind) {
+                (Err(self.0), ReaderKind::Finite)
+            }
+        }
+        // This method is always strictly less general than, `consensus_decode`, so it's safe and
+        // make sense to default to just calling it. This way most types, that don't care about
+        // protecting against resource exhaustion due to malicious input, can just ignore it.
+        Self::consensus_decode_unbuffered_any(ThisReader(reader))
+    }
+}
+
+impl<T: Decodable> DecodableExt for T {}
+
+/// Abstracts various kinds of readers - finite or unlimited.
+pub trait Reader<'a>: Sized + sealed::Sealed {
+    /// Type of a finite reader converted from `Self`.
+    type FiniteReader: Read;
+    /// Type of an unlimited reader converted from `Self`.
+    type UnlimitedReader: Read;
+
+    /// Returns a finite reader.
+    ///
+    /// Implementations of `consensus_decode_unbuffered_any` that require a finite reader need to
+    /// call this method to obtain it.
+    fn require_finite(self) -> Self::FiniteReader;
+
+    /// Returns a finite reader.
+    ///
+    /// Implementations of `consensus_decode_unbuffered_any` that don't require a finite reader need
+    /// to call this method to obtain a reader.
+    fn allow_unlimited(self) -> Self::UnlimitedReader;
+
+    #[doc(hidden)]
+    type Buffered: BufRead + ?Sized;
+    #[doc(hidden)]
+    type Unbuffered: Read + ?Sized;
+
+    #[doc(hidden)]
+    fn dispatch_from_buffered(self, _token: sealed::Token /* prevents calling the method */) -> (Result<&'a mut Self::Buffered, &'a mut Self::Unbuffered>, sealed::ReaderKind);
+}
+
+mod sealed {
+    use io::{Read, BufRead};
+
+    #[doc(hidden)]
+    pub trait Sealed {}
+    #[doc(hidden)]
+    pub enum Unbuffered {}
+    #[doc(hidden)]
+    pub struct Token;
+    #[doc(hidden)]
+    pub enum ReaderKind {
+        Finite,
+        Unlimited,
+    }
+
+    impl Read for Unbuffered {
+        fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> { match *self {} }
+    }
+
+    impl BufRead for Unbuffered {
+        fn fill_buf(&mut self) -> io::Result<&[u8]> { match *self {} }
+        fn consume(&mut self, _amt: usize) { match *self {} }
     }
 }
 
