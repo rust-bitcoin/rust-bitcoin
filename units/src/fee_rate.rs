@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 use crate::amount::Amount;
 use crate::weight::Weight;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// Represents fee rate.
 ///
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against mixing
@@ -151,6 +154,14 @@ impl Div<Weight> for Amount {
 }
 
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FeeRate {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let f = u64::arbitrary(u)?;
+        Ok(FeeRate(f))
+    }
+}
 
 #[cfg(test)]
 mod tests {

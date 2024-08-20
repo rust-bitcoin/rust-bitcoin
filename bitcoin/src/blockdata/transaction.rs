@@ -38,6 +38,9 @@ use crate::{Amount, SignedAmount, VarInt};
 #[doc(inline)]
 pub use crate::consensus::validation::TxVerifyError;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
     ///
@@ -1642,6 +1645,16 @@ impl InputWeightPrediction {
     /// not counting potential witness flag bytes or the witness count varint.
     pub const fn weight(&self) -> Weight {
         Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxOut {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxOut {
+            value: Amount::arbitrary(u)?,
+            script_pubkey: ScriptBuf::arbitrary(u)?,
+        })
     }
 }
 

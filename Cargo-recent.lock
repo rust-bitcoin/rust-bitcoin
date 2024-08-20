@@ -9,6 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
+name = "arbitrary"
+version = "1.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d5a26814d8dcb93b0e5a0ff3c6d80a8843bafb21b39e8e18a6f05471870e110"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -48,6 +54,7 @@ dependencies = [
 name = "bitcoin"
 version = "0.32.7"
 dependencies = [
+ "arbitrary",
  "base58ck",
  "base64",
  "bech32",
@@ -93,6 +100,7 @@ version = "0.1.2"
 name = "bitcoin-units"
 version = "0.1.1"
 dependencies = [
+ "arbitrary",
  "bitcoin-internals",
  "serde",
  "serde_json",
