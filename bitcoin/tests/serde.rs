@@ -33,6 +33,7 @@ use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+use bitcoin::script::ScriptBufExt as _;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;

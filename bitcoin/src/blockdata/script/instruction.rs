@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use super::{read_uint_iter, Error, PushBytes, Script, ScriptBuf, UintError};
+use super::{
+    read_uint_iter, Error, PushBytes, Script, ScriptBuf, ScriptBufExtPriv as _, UintError,
+};
 use crate::opcodes::{self, Opcode};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.

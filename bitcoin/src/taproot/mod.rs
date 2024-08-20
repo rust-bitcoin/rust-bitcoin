@@ -1544,6 +1544,7 @@ mod test {
     use secp256k1::VerifyOnly;
 
     use super::*;
+    use crate::script::ScriptBufExt as _;
     use crate::sighash::{TapSighash, TapSighashTag};
     use crate::{Address, KnownHrp};
     extern crate serde_json;
