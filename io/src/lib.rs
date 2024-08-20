@@ -76,6 +76,14 @@ pub trait Read {
     fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
         self.take(limit).read_to_end(buf)
     }
+
+    /// Creates a “by reference” adaptor for this instance of `Read`.
+    ///
+    /// The returned adapter also implements `Read` and will simply borrow this current reader.
+    #[inline]
+    fn by_ref(&mut self) -> ByRef<'_, Self> {
+        ByRef(self)
+    }
 }
 
 /// A trait describing an input stream that uses an internal buffer when reading.
@@ -89,6 +97,87 @@ pub trait BufRead: Read {
     ///
     /// May panic if `amount` is greater than amount of data read by `fill_buf`.
     fn consume(&mut self, amount: usize);
+}
+
+/// A reference wrapper implementing IO traits.
+///
+/// We forgot to add the blanket impls for all `&mut T` implementing IO traits and adding them
+/// would be a breaking change, so instead we provide this wrapper that does implement them.
+///
+/// You can use this as you would use `&mut T` for IO and we will type alias this to `&mut T` in a
+/// next breaking version that will contain the blanket impls. Call `.by_ref` method on your IO to
+/// obtain this reference.
+pub struct ByRef<'a, T: ?Sized>(&'a mut T);
+
+impl<T: Read + ?Sized> Read for ByRef<'_, T> {
+    #[inline]
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        self.0.read(buf)
+    }
+
+    #[inline]
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        self.0.read_exact(buf)
+    }
+}
+
+impl<T: BufRead + ?Sized> BufRead for ByRef<'_, T> {
+    #[inline]
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        self.0.fill_buf()
+    }
+
+    #[inline]
+    fn consume(&mut self, amount: usize) {
+        self.0.consume(amount)
+    }
+}
+
+impl<T: Write + ?Sized> Write for ByRef<'_, T> {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        self.0.write(buf)
+    }
+
+    #[inline]
+    fn flush(&mut self) -> Result<()> {
+        self.0.flush()
+    }
+
+    #[inline]
+    fn write_all(&mut self, buf: &[u8]) -> Result<()> {
+        self.0.write_all(buf)
+    }
+}
+
+impl<T: ?Sized> core::ops::Deref for ByRef<'_, T> {
+    type Target = T;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
+impl<T: ?Sized> core::ops::DerefMut for ByRef<'_, T> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.0
+    }
+}
+
+impl<T: ?Sized> AsRef<T> for ByRef<'_, T> {
+    #[inline]
+    fn as_ref(&self) -> &T {
+        self.0
+    }
+}
+
+impl<T: ?Sized> AsMut<T> for ByRef<'_, T> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut T {
+        self.0
+    }
 }
 
 /// Reader adapter which limits the bytes read from an underlying reader.
@@ -261,6 +350,14 @@ pub trait Write {
             }
         }
         Ok(())
+    }
+
+    /// Creates a “by reference” adaptor for this instance of `Write`.
+    ///
+    /// The returned adapter also implements `Write` and will simply borrow this current reader.
+    #[inline]
+    fn by_ref(&mut self) -> ByRef<'_, Self> {
+        ByRef(self)
     }
 }
 
