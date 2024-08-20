@@ -19,6 +19,9 @@ use crate::key::{
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// An owned, growable script.
 ///
 /// `ScriptBuf` is the most common script type that has the ownership over the contents of the
@@ -355,5 +358,13 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
                 self.push_instruction(instr);
             }
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ScriptBuf {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = Vec::<u8>::arbitrary(u)?;
+        Ok(ScriptBuf(v))
     }
 }
