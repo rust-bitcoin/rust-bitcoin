@@ -13,14 +13,14 @@
 
 use core::{fmt, str};
 
-use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype};
+use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
 use internals::write_err;
 use io::Write;
 
 use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
-use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::witness::Witness;
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
@@ -68,13 +68,15 @@ impl SegwitV0Sighash {
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 }
 
-sha256t_hash_newtype! {
+sha256t_tag! {
     pub struct TapSighashTag = hash_str("TapSighash");
+}
 
+hash_newtype! {
     /// Taproot-tagged hash with tag \"TapSighash\".
     ///
     /// This hash type is used for computing Taproot signature hash."
-    pub struct TapSighash(_);
+    pub struct TapSighash(sha256t::Hash<TapSighashTag>);
 }
 
 impl_message_from_hash!(TapSighash);
@@ -322,7 +324,7 @@ impl<'s> ScriptPath<'s> {
     pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
-        let mut enc = TapLeafHash::engine();
+        let mut enc = sha256t::Hash::<TapLeafTag>::engine();
 
         self.leaf_version
             .to_consensus()
@@ -330,7 +332,8 @@ impl<'s> ScriptPath<'s> {
             .expect("writing to hash enging should never fail");
         self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
 
-        TapLeafHash::from_engine(enc)
+        let inner = sha256t::Hash::<TapLeafTag>::from_engine(enc);
+        TapLeafHash::from_byte_array(inner.to_byte_array())
     }
 }
 
@@ -588,9 +591,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Encodes the BIP341 signing data for any flag type into a given object implementing the
     /// [`io::Write`] trait.
     ///
-    /// In order to sign, the data written by this function must be hashed using a tagged hash. This
-    /// can be achieved by using the [`TapSighash::engine()`] function, writing to the engine, then
-    /// finalizing the hash with [`TapSighash::from_engine()`].
+    /// In order to sign, the data written by this function must be hashed using a tagged hash. For
+    /// example usage see [`Self::taproot_signature_hash`] and
+    /// [`Self::taproot_key_spend_signature_hash`].
     pub fn taproot_encode_signing_data_to<W: Write + ?Sized, T: Borrow<TxOut>>(
         &mut self,
         writer: &mut W,
@@ -719,7 +722,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -729,7 +732,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        let inner = sha256t::Hash::<TapSighashTag>::from_engine(enc);
+        Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
     /// Computes the BIP341 sighash for a key spend.
@@ -739,7 +743,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         prevouts: &Prevouts<T>,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -749,7 +753,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        let inner = sha256t::Hash::<TapSighashTag>::from_engine(enc);
+        Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
     /// Computes the BIP341 sighash for a script spend.
@@ -763,7 +768,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         leaf_hash: S,
         sighash_type: TapSighashType,
     ) -> Result<TapSighash, TaprootError> {
-        let mut enc = TapSighash::engine();
+        let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -773,7 +778,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             sighash_type,
         )
         .map_err(SigningDataError::unwrap_sighash)?;
-        Ok(TapSighash::from_engine(enc))
+        let inner = sha256t::Hash::<TapSighashTag>::from_engine(enc);
+        Ok(TapSighash::from_byte_array(inner.to_byte_array()))
     }
 
     /// Encodes the BIP143 signing data for any flag type into a given object implementing the
@@ -1540,9 +1546,9 @@ mod tests {
     fn test_tap_sighash_hash() {
         let bytes = hex!("00011b96877db45ffa23b307e9f0ac87b80ef9a80b4c5f0db3fbe734422453e83cc5576f3d542c5d4898fb2b696c15d43332534a7c1d1255fda38993545882df92c3e353ff6d36fbfadc4d168452afd8467f02fe53d71714fcea5dfe2ea759bd00185c4cb02bc76d42620393ca358a1a713f4997f9fc222911890afb3fe56c6a19b202df7bffdcfad08003821294279043746631b00e2dc5e52a111e213bbfe6ef09a19428d418dab0d50000000000");
         let expected = hex!("04e808aad07a40b3767a1442fead79af6ef7e7c9316d82dec409bb31e77699b0");
-        let mut enc = TapSighash::engine();
+        let mut enc = sha256t::Hash::<TapSighashTag>::engine();
         enc.input(&bytes);
-        let hash = TapSighash::from_engine(enc);
+        let hash = sha256t::Hash::<TapSighashTag>::from_engine(enc);
         assert_eq!(expected, hash.to_byte_array());
     }
 

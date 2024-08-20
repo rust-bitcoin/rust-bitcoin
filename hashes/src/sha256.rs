@@ -14,7 +14,7 @@ use hex::DisplayHex;
 
 use crate::{sha256d, HashEngine as _};
 #[cfg(doc)]
-use crate::{sha256t, sha256t_hash_newtype};
+use crate::{sha256t, sha256t_tag};
 
 crate::internal_macros::hash_type! {
     256,
@@ -169,8 +169,8 @@ impl Hash {
 /// fixed 64-byte prefix, it makes sense to hash the prefix once, store the midstate as a constant,
 /// and hash any future data starting from the constant rather than from a fresh hash engine.
 ///
-/// For BIP-340 support we provide the [`sha256t`] module, and the [`sha256t_hash_newtype`]
-/// macro which will create the midstate for you in const context and use it for tagged hashing.
+/// For BIP-340 support we provide the [`sha256t`] module, and the [`sha256t_tag`] macro which will
+/// create the midstate for you in const context.
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Midstate {
     /// Raw bytes of the midstate i.e., the already-hashed contents of the hash engine.
