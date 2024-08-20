@@ -16,6 +16,9 @@ use ::serde::{Deserialize, Serialize};
 use internals::error::InputString;
 use internals::write_err;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// A set of denominations in which amounts can be expressed.
 ///
 /// # Accepted Denominations
@@ -1068,6 +1071,14 @@ impl Amount {
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Amount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = u64::arbitrary(u)?;
+        Ok(Amount(a))
     }
 }
 

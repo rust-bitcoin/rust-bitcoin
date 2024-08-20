@@ -11,6 +11,9 @@ use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// An owned, growable script.
 ///
 /// `ScriptBuf` is the most common script type that has the ownership over the contents of the
@@ -152,6 +155,14 @@ crate::internal_macros::define_extension_trait! {
         /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
         /// multiple times.
         fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ScriptBuf {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = Vec::<u8>::arbitrary(u)?;
+        Ok(ScriptBuf(v))
     }
 }
 

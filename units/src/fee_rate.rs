@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 use crate::amount::Amount;
 use crate::weight::Weight;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 /// Represents fee rate.
 ///
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against mixing
@@ -104,6 +107,14 @@ impl FeeRate {
     /// `Self::fee_wu(weight)`.
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for FeeRate {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let f = u64::arbitrary(u)?;
+        Ok(FeeRate(f))
     }
 }
 
