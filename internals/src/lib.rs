@@ -27,6 +27,13 @@ pub extern crate serde_json;
 #[cfg(feature = "test-serde")]
 pub extern crate bincode;
 
+// The pub module is a workaround for strange error:
+// "macro-expanded `macro_export` macros from the current crate cannot be referred to by absolute paths"
+#[doc(hidden)]
+pub mod rust_version {
+    include!(concat!(env!("OUT_DIR"), "/rust_version.rs"));
+}
+
 pub mod array_vec;
 pub mod const_tools;
 pub mod error;

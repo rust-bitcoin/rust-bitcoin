@@ -1,3 +1,7 @@
+const MAX_USED_VERSION: u64 = 80;
+
+use std::io;
+
 fn main() {
     let rustc = std::env::var_os("RUSTC");
     let rustc = rustc.as_ref().map(std::path::Path::new).unwrap_or_else(|| "rustc".as_ref());
@@ -30,8 +34,45 @@ fn main() {
     assert_eq!(msrv_major, "1", "unexpected Rust major version");
     let msrv_minor = msrv.next().unwrap().parse::<u64>().unwrap();
 
-    // print cfg for all interesting versions less than or equal to minor
+    let out_dir = std::env::var_os("OUT_DIR").expect("missing OUT_DIR env var");
+    let out_dir = std::path::PathBuf::from(out_dir);
+    let macro_file = std::fs::File::create(out_dir.join("rust_version.rs")).expect("failed to create rust_version.rs");
+    let macro_file = io::BufWriter::new(macro_file);
+    write_macro(macro_file, msrv_minor, minor).expect("failed to write to rust_version.rs");
+}
+
+fn write_macro(mut macro_file: impl io::Write, msrv_minor: u64, minor: u64) -> io::Result<()> {
+    writeln!(macro_file, "/// Expands code based on Rust version this is compiled under.")?;
+    writeln!(macro_file, "///")?;
+    writeln!(macro_file, "/// Example:")?;
+    writeln!(macro_file, "/// ```")?;
+    writeln!(macro_file, "/// bitcoin_internals::rust_version! {{")?;
+    writeln!(macro_file, "///     if >= 1.70 {{")?;
+    writeln!(macro_file, "///         println!(\"This is Rust 1.70+\");")?;
+    writeln!(macro_file, "///     }} else {{")?;
+    writeln!(macro_file, "///         println!(\"This is Rust < 1.70\");")?;
+    writeln!(macro_file, "///     }}")?;
+    writeln!(macro_file, "/// }}")?;
+    writeln!(macro_file, "/// ```")?;
+    writeln!(macro_file, "///")?;
+    writeln!(macro_file, "/// The `else` branch is optional.")?;
+    writeln!(macro_file, "/// Currently only the `>=` operator is supported.")?;
+    writeln!(macro_file, "#[macro_export]")?;
+    writeln!(macro_file, "macro_rules! rust_version {{")?;
     for version in msrv_minor..=minor {
-        println!("cargo:rustc-cfg=rust_v_1_{}", version);
+        writeln!(macro_file, "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{", version)?;
+        writeln!(macro_file, "        $($if_yes)*")?;
+        writeln!(macro_file, "    }};")?;
     }
+    for version in (minor + 1)..(MAX_USED_VERSION + 1) {
+        writeln!(macro_file, "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{", version)?;
+        writeln!(macro_file, "        $($($if_no)*)?")?;
+        writeln!(macro_file, "    }};")?;
+    }
+    writeln!(macro_file, "    (if >= $unknown:tt $($rest:tt)*) => {{")?;
+    writeln!(macro_file, "        compile_error!(concat!(\"unknown Rust version \", stringify!($unknown)));")?;
+    writeln!(macro_file, "    }};")?;
+    writeln!(macro_file, "}}")?;
+    writeln!(macro_file, "pub use rust_version;")?;
+    macro_file.flush()
 }

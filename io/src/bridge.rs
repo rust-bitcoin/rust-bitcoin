@@ -1,5 +1,6 @@
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
+use internals::rust_version;
 
 /// A bridging wrapper providing the IO traits for types that already implement `std` IO traits.
 #[repr(transparent)]
@@ -252,24 +253,40 @@ macro_rules! impl_our {
     };
 }
 
-#[cfg(rust_v_1_72)]
-impl_our! {
-    impl<R: std::io::Read> Read for std::io::BufReader<R> where R: ?Sized
-}
+rust_version! {
+    if >= 1.72 {
+        impl_our! {
+            impl<R: std::io::Read> Read for std::io::BufReader<R> where R: ?Sized
+        }
 
-#[cfg(not(rust_v_1_72))]
-impl_our! {
-    impl<R: std::io::Read> Read for std::io::BufReader<R>
-}
+        impl_our! {
+            impl<R: std::io::Read> BufRead for std::io::BufReader<R> where R: ?Sized
+        }
 
-#[cfg(rust_v_1_72)]
-impl_our! {
-    impl<R: std::io::Read> BufRead for std::io::BufReader<R> where R: ?Sized
-}
+        impl_our! {
+            impl<W: std::io::Write> Write for std::io::BufWriter<W> where W: ?Sized
+        }
 
-#[cfg(not(rust_v_1_72))]
-impl_our! {
-    impl<R: std::io::Read> BufRead for std::io::BufReader<R>
+        impl_our! {
+            impl<W: std::io::Write> Write for std::io::LineWriter<W> where W: ?Sized
+        }
+    } else {
+        impl_our! {
+            impl<R: std::io::Read> Read for std::io::BufReader<R>
+        }
+
+        impl_our! {
+            impl<R: std::io::Read> BufRead for std::io::BufReader<R>
+        }
+
+        impl_our! {
+            impl<W: std::io::Write> Write for std::io::BufWriter<W>
+        }
+
+        impl_our! {
+            impl<W: std::io::Write> Write for std::io::LineWriter<W>
+        }
+    }
 }
 
 impl std::io::Write for super::Sink {
@@ -281,26 +298,6 @@ impl std::io::Write for super::Sink {
 
     #[inline]
     fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
-}
-
-#[cfg(rust_v_1_72)]
-impl_our! {
-    impl<W: std::io::Write> Write for std::io::BufWriter<W> where W: ?Sized
-}
-
-#[cfg(not(rust_v_1_72))]
-impl_our! {
-    impl<W: std::io::Write> Write for std::io::BufWriter<W>
-}
-
-#[cfg(rust_v_1_72)]
-impl_our! {
-    impl<W: std::io::Write> Write for std::io::LineWriter<W> where W: ?Sized
-}
-
-#[cfg(not(rust_v_1_72))]
-impl_our! {
-    impl<W: std::io::Write> Write for std::io::LineWriter<W>
 }
 
 impl_our! {
@@ -347,15 +344,25 @@ impl_our! {
     impl BufRead for std::io::Empty
 }
 
-#[cfg(rust_v_1_73)]
-impl_our! {
-    impl Write for std::io::Empty
-}
+rust_version! {
+    if >= 1.73 {
+        impl_our! {
+            impl Write for std::io::Empty
+        }
 
-// No idea why &Empty impls Write but not Read + BufRead
-#[cfg(rust_v_1_73)]
-impl_our! {
-    impl Write for &'_ std::io::Empty
+        // No idea why &Empty impls Write but not Read + BufRead
+        impl_our! {
+            impl Write for &'_ std::io::Empty
+        }
+
+        impl_our! {
+            impl Read for std::sync::Arc<std::fs::File>
+        }
+
+        impl_our! {
+            impl Write for std::sync::Arc<std::fs::File>
+        }
+    }
 }
 
 impl_our! {
@@ -366,9 +373,12 @@ impl_our! {
     impl Read for std::io::Stdin
 }
 
-#[cfg(rust_v_1_78)]
-impl_our! {
-    impl Read for &'_ std::io::Stdin
+rust_version! {
+    if >= 1.78 {
+        impl_our! {
+            impl Read for &'_ std::io::Stdin
+        }
+    }
 }
 
 impl_our! {
@@ -409,16 +419,6 @@ impl_our! {
 
 impl_our! {
     impl Write for &'_ std::fs::File
-}
-
-#[cfg(rust_v_1_73)]
-impl_our! {
-    impl Read for std::sync::Arc<std::fs::File>
-}
-
-#[cfg(rust_v_1_73)]
-impl_our! {
-    impl Write for std::sync::Arc<std::fs::File>
 }
 
 impl_our! {
@@ -474,14 +474,16 @@ impl_our! {
     impl Write for &'_ std::process::ChildStdin
 }
 
-#[cfg(rust_v_1_75)]
-impl_our! {
-    impl Read for std::collections::VecDeque<u8>
-}
+rust_version! {
+    if >= 1.75 {
+        impl_our! {
+            impl Read for std::collections::VecDeque<u8>
+        }
 
-#[cfg(rust_v_1_75)]
-impl_our! {
-    impl BufRead for std::collections::VecDeque<u8>
+        impl_our! {
+            impl BufRead for std::collections::VecDeque<u8>
+        }
+    }
 }
 
 impl_our! {
