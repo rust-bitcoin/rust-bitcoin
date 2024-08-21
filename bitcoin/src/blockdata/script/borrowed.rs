@@ -133,6 +133,11 @@ impl Script {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
     }
+
+    /// Writes the human-readable assembly representation of the script to the formatter.
+    pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        bytes_to_asm_fmt(self.as_ref(), f)
+    }
 }
 
 crate::internal_macros::define_extension_trait! {
@@ -478,11 +483,6 @@ crate::internal_macros::define_extension_trait! {
         #[inline]
         fn instruction_indices_minimal(&self) -> InstructionIndices {
             InstructionIndices::from_instructions(self.instructions_minimal())
-        }
-
-        /// Writes the human-readable assembly representation of the script to the formatter.
-        fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-            bytes_to_asm_fmt(self.as_ref(), f)
         }
 
         /// Returns the human-readable assembly representation of the script.
