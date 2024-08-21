@@ -8,7 +8,7 @@ use core::str::FromStr;
 use core::{fmt, iter};
 
 use hex::FromHex;
-use internals::write_err;
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
 use crate::prelude::{DisplayHex, Vec};
@@ -174,6 +174,7 @@ impl fmt::LowerHex for SerializedSignature {
         fmt::LowerHex::fmt(&(**self).as_hex(), f)
     }
 }
+impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len * 2);
 
 impl fmt::UpperHex for SerializedSignature {
     #[inline]
