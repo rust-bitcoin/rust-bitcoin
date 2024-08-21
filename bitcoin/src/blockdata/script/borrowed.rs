@@ -175,7 +175,7 @@ crate::internal_macros::define_extension_trait! {
         /// > byte vector pushed is called the "witness program".
         #[inline]
         fn witness_version(&self) -> Option<WitnessVersion> {
-            let script_len = self.0.len();
+            let script_len = self.len();
             if !(4..=42).contains(&script_len) {
                 return None;
             }
@@ -197,7 +197,7 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a P2SH output.
         #[inline]
         fn is_p2sh(&self) -> bool {
-            self.0.len() == 23
+            self.len() == 23
                 && self.0[0] == OP_HASH160.to_u8()
                 && self.0[1] == OP_PUSHBYTES_20.to_u8()
                 && self.0[22] == OP_EQUAL.to_u8()
@@ -206,7 +206,7 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a P2PKH output.
         #[inline]
         fn is_p2pkh(&self) -> bool {
-            self.0.len() == 25
+            self.len() == 25
                 && self.0[0] == OP_DUP.to_u8()
                 && self.0[1] == OP_HASH160.to_u8()
                 && self.0[2] == OP_PUSHBYTES_20.to_u8()
@@ -293,7 +293,7 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a P2WSH output.
         #[inline]
         fn is_p2wsh(&self) -> bool {
-            self.0.len() == 34
+            self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.0[1] == OP_PUSHBYTES_32.to_u8()
         }
@@ -301,7 +301,7 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a P2WPKH output.
         #[inline]
         fn is_p2wpkh(&self) -> bool {
-            self.0.len() == 22
+            self.len() == 22
                 && self.witness_version() == Some(WitnessVersion::V0)
                 && self.0[1] == OP_PUSHBYTES_20.to_u8()
         }
@@ -309,7 +309,7 @@ crate::internal_macros::define_extension_trait! {
         /// Checks whether a script pubkey is a P2TR output.
         #[inline]
         fn is_p2tr(&self) -> bool {
-            self.0.len() == 34
+            self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
                 && self.0[1] == OP_PUSHBYTES_32.to_u8()
         }
@@ -331,7 +331,7 @@ crate::internal_macros::define_extension_trait! {
         /// What this function considers to be standard may change without warning pending Bitcoin Core
         /// changes.
         #[inline]
-        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.0.len() <= 80 }
+        fn is_standard_op_return(&self) -> bool { self.is_op_return() && self.len() <= 80 }
 
         /// Checks whether a script is trivially known to have no satisfying input.
         ///
