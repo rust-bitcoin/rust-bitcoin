@@ -36,7 +36,8 @@ units = { package = "bitcoin-units", version = "0.1.0", default-features = false
 
 base64 = { version = "0.22.0", optional = true }
 ordered = { version = "0.2.0", optional = true }
-bitcoinconsensus = { version = "0.106.0+26", default-features = false, optional = true }
+# `bitcoinconsensus` version includes metadata which indicates the version of Core. Use `cargo tree` to see it.
+bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
 
 serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
