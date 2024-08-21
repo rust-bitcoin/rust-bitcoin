@@ -225,9 +225,6 @@ macro_rules! sha256t_tag {
 /// `#[hash_newtype(...)]`). The attributes suffer same compiler performance limitations as in
 /// [`hash_newtype`] macro.
 ///
-/// The macro accepts multiple inputs so you can define multiple hash newtypes in one macro call.
-/// Just make sure to enter the structs in order `Tag0`, `Hash0`, `Tag1`, `Hash1`...
-///
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
 #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use `sha256_tag!` combined with `hash_newtype!`")]
