@@ -30,8 +30,11 @@ extern crate serde;
 
 #[cfg(feature = "alloc")]
 pub mod locktime;
+#[cfg(feature = "alloc")]
 pub mod opcodes;
 pub mod pow;
+#[cfg(feature = "alloc")]
+pub mod script;
 pub mod sequence;
 
 #[doc(inline)]
@@ -39,7 +42,10 @@ pub use units::*;
 
 #[doc(inline)]
 #[cfg(feature = "alloc")]
-pub use self::locktime::{absolute, relative};
+pub use self::{
+    locktime::{absolute, relative},
+    script::{Script, ScriptBuf},
+};
 #[doc(inline)]
 pub use self::{pow::CompactTarget, sequence::Sequence};
 
@@ -47,5 +53,16 @@ pub use self::{pow::CompactTarget, sequence::Sequence};
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(feature = "alloc")]
-    pub use alloc::string::ToString;
+    pub use alloc::{
+        slice,
+        borrow::{Borrow, BorrowMut, Cow, ToOwned},
+        boxed::Box,
+        collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap},
+        rc::Rc,
+        string::{String, ToString},
+        vec::Vec,
+    };
+
+    #[cfg(feature = "hex")]
+    pub use hex::DisplayHex;
 }

@@ -8,7 +8,7 @@ use crate::address::script_pubkey::{
 };
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
-use crate::FeeRate;
+use crate::{opcodes, FeeRate};
 
 #[test]
 #[rustfmt::skip]
