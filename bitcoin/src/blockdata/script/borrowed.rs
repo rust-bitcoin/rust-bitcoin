@@ -185,8 +185,8 @@ crate::internal_macros::define_extension_trait! {
                 return None;
             }
 
-            let ver_opcode = Opcode::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
-            let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
+            let ver_opcode = Opcode::from(self.as_bytes()[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+            let push_opbyte = self.as_bytes()[1]; // Second byte push opcode 2-40 bytes
 
             if push_opbyte < OP_PUSHBYTES_2.to_u8() || push_opbyte > OP_PUSHBYTES_40.to_u8() {
                 return None;
@@ -203,20 +203,20 @@ crate::internal_macros::define_extension_trait! {
         #[inline]
         fn is_p2sh(&self) -> bool {
             self.len() == 23
-                && self.0[0] == OP_HASH160.to_u8()
-                && self.0[1] == OP_PUSHBYTES_20.to_u8()
-                && self.0[22] == OP_EQUAL.to_u8()
+                && self.as_bytes()[0] == OP_HASH160.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[22] == OP_EQUAL.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2PKH output.
         #[inline]
         fn is_p2pkh(&self) -> bool {
             self.len() == 25
-                && self.0[0] == OP_DUP.to_u8()
-                && self.0[1] == OP_HASH160.to_u8()
-                && self.0[2] == OP_PUSHBYTES_20.to_u8()
-                && self.0[23] == OP_EQUALVERIFY.to_u8()
-                && self.0[24] == OP_CHECKSIG.to_u8()
+                && self.as_bytes()[0] == OP_DUP.to_u8()
+                && self.as_bytes()[1] == OP_HASH160.to_u8()
+                && self.as_bytes()[2] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[23] == OP_EQUALVERIFY.to_u8()
+                && self.as_bytes()[24] == OP_CHECKSIG.to_u8()
         }
 
         /// Checks whether a script is push only.
@@ -300,7 +300,7 @@ crate::internal_macros::define_extension_trait! {
         fn is_p2wsh(&self) -> bool {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V0)
-                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2WPKH output.
@@ -308,7 +308,7 @@ crate::internal_macros::define_extension_trait! {
         fn is_p2wpkh(&self) -> bool {
             self.len() == 22
                 && self.witness_version() == Some(WitnessVersion::V0)
-                && self.0[1] == OP_PUSHBYTES_20.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_20.to_u8()
         }
 
         /// Checks whether a script pubkey is a P2TR output.
@@ -316,7 +316,7 @@ crate::internal_macros::define_extension_trait! {
         fn is_p2tr(&self) -> bool {
             self.len() == 34
                 && self.witness_version() == Some(WitnessVersion::V1)
-                && self.0[1] == OP_PUSHBYTES_32.to_u8()
+                && self.as_bytes()[1] == OP_PUSHBYTES_32.to_u8()
         }
 
         /// Check if this is a consensus-valid OP_RETURN output.
@@ -325,7 +325,7 @@ crate::internal_macros::define_extension_trait! {
         /// [`is_standard_op_return()`](Self::is_standard_op_return) instead.
         #[inline]
         fn is_op_return(&self) -> bool {
-            match self.0.first() {
+            match self.as_bytes().first() {
                 Some(b) => *b == OP_RETURN.to_u8(),
                 None => false,
             }
@@ -350,7 +350,7 @@ crate::internal_macros::define_extension_trait! {
         fn is_provably_unspendable(&self) -> bool {
             use crate::opcodes::Class::{IllegalOp, ReturnOp};
 
-            match self.0.first() {
+            match self.as_bytes().first() {
                 Some(b) => {
                     let first = Opcode::from(*b);
                     let class = first.classify(opcodes::ClassifyContext::Legacy);
@@ -452,7 +452,7 @@ crate::internal_macros::define_extension_trait! {
         /// To force minimal pushes, use [`instructions_minimal`](Self::instructions_minimal).
         #[inline]
         fn instructions(&self) -> Instructions {
-            Instructions { data: self.0.iter(), enforce_minimal: false }
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: false }
         }
 
         /// Iterates over the script instructions while enforcing minimal pushes.
@@ -461,7 +461,7 @@ crate::internal_macros::define_extension_trait! {
         /// is not minimal.
         #[inline]
         fn instructions_minimal(&self) -> Instructions {
-            Instructions { data: self.0.iter(), enforce_minimal: true }
+            Instructions { data: self.as_bytes().iter(), enforce_minimal: true }
         }
 
         /// Iterates over the script instructions and their indices.
