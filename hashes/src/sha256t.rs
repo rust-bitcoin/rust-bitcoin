@@ -240,13 +240,6 @@ macro_rules! sha256t_hash_newtype {
             {
                 <$hash_name as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
-
-            /// Hashes the entire contents of the `reader`.
-            #[cfg(feature = "bitcoin-io")]
-            #[allow(unused)] // the user of macro may not need this
-            fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
-                <$hash_name as $crate::GeneralHash>::hash_reader(reader)
-            }
         }
 
         impl $crate::GeneralHash for $hash_name {
