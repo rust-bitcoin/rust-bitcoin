@@ -4,7 +4,10 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::str::FromStr;
 use core::{cmp, mem, ptr};
+
+use hex::FromHex;
 
 use crate::internal_macros::arr_newtype_fmt_impl;
 use crate::HashEngine as _;
@@ -264,7 +267,16 @@ impl<I: SliceIndex<[u8]>> Index<I> for Hash {
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
+impl FromStr for Hash {
+    type Err = hex::HexToArrayError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = <[u8; 8]>::from_hex(s)?;
+        Ok(Self::from_byte_array(bytes))
+    }
+}
+
 arr_newtype_fmt_impl!(Hash, 8);
+serde_impl!(Hash, 8);
 borrow_slice_impl!(Hash);
 
 /// Load an u64 using up to 7 bytes of a byte slice.
