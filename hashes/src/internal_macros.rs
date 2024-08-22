@@ -102,8 +102,6 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
 
-            fn engine() -> HashEngine { Self::engine() }
-
             fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
         }
 
@@ -143,6 +141,37 @@ pub(crate) use hash_trait_impls;
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
+        $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
+
+        impl Hash {
+            /// Constructs a new engine.
+            pub fn engine() -> HashEngine { Default::default() }
+
+            /// Hashes some bytes.
+            #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
+            pub fn hash(data: &[u8]) -> Self { <Self as crate::GeneralHash>::hash(data) }
+
+            /// Hashes all the byte slices retrieved from the iterator together.
+            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
+            where
+                B: AsRef<[u8]>,
+                I: IntoIterator<Item = B>,
+            {
+                <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
+            }
+
+            /// Hashes the entire contents of the `reader`.
+            #[cfg(feature = "bitcoin-io")]
+            pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
+                <Self as crate::GeneralHash>::hash_reader(reader)
+            }
+        }
+    }
+}
+pub(crate) use hash_type;
+
+macro_rules! hash_type_no_default {
+    ($bits:expr, $reverse:expr, $doc:literal) => {
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[repr(transparent)]
@@ -165,9 +194,6 @@ macro_rules! hash_type {
                 unsafe { &mut *(bytes as *mut _ as *mut Self) }
             }
 
-            /// Constructs a new engine.
-            pub fn engine() -> HashEngine { Default::default() }
-
             /// Produces a hash from the current state of a given engine.
             pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
 
@@ -182,25 +208,6 @@ macro_rules! hash_type {
                     ret.copy_from_slice(sl);
                     Ok(Self::internal_new(ret))
                 }
-            }
-
-            /// Hashes some bytes.
-            #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self { <Self as crate::GeneralHash>::hash(data) }
-
-            /// Hashes all the byte slices retrieved from the iterator together.
-            pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-            where
-                B: AsRef<[u8]>,
-                I: IntoIterator<Item = B>,
-            {
-                <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
-            }
-
-            /// Hashes the entire contents of the `reader`.
-            #[cfg(feature = "bitcoin-io")]
-            pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
-                <Self as crate::GeneralHash>::hash_reader(reader)
             }
 
             /// Returns the underlying byte array.
@@ -234,4 +241,4 @@ macro_rules! hash_type {
         crate::internal_macros::hash_trait_impls!($bits, $reverse);
     };
 }
-pub(crate) use hash_type;
+pub(crate) use hash_type_no_default;
