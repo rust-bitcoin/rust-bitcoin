@@ -149,6 +149,12 @@ impl BlockFilter {
         FilterHash(sha256d::Hash::hash(&self.content)).filter_header(previous_filter_header)
     }
 
+    /// Computes the canonical hash for the given filter.
+    pub fn filter_hash(&self) -> FilterHash {
+        let hash = sha256d::Hash::hash(&self.content);
+        FilterHash(hash)
+    }
+
     /// Returns true if any query matches against this [`BlockFilter`].
     pub fn match_any<I>(&self, block_hash: BlockHash, query: I) -> Result<bool, Error>
     where
