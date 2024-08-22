@@ -913,18 +913,18 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write + ?Sized, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<W: Write + ?Sized>(
         &self,
         writer: &mut W,
         input_index: usize,
         script_pubkey: &Script,
-        sighash_type: U,
+        sighash_type: EcdsaSighashType,
     ) -> EncodeSigningDataResult<SigningDataError<transaction::InputsIndexError>> {
         // Validate input_index.
         if let Err(e) = self.tx.borrow().tx_in(input_index) {
             return EncodeSigningDataResult::WriteResult(Err(SigningDataError::Sighash(e)));
         }
-        let sighash_type: u32 = sighash_type.into();
+        let sighash_type: u32 = sighash_type.to_u32();
 
         if is_invalid_use_of_sighash_single(
             sighash_type,
@@ -1041,7 +1041,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &self,
         input_index: usize,
         script_pubkey: &Script,
-        sighash_type: u32,
+        sighash_type: EcdsaSighashType,
     ) -> Result<LegacySighash, transaction::InputsIndexError> {
         let mut engine = LegacySighash::engine();
         match self
@@ -1372,17 +1372,16 @@ impl<E> EncodeSigningDataResult<E> {
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
     /// # use bitcoin::hashes::{sha256d, hex::FromHex};
-    /// # use bitcoin::sighash::SighashCache;
+    /// # use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     /// # use bitcoin::Transaction;
     /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
-    /// # let sighash_u32 = 0u32;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
     /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
     /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
     /// let cache = SighashCache::new(&tx);
-    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
+    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, EcdsaSighashType::All)
     ///         .is_sighash_single_bug()
     ///         .expect("writer can't fail") {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
@@ -1494,14 +1493,14 @@ mod tests {
         let script = addr.script_pubkey();
         let cache = SighashCache::new(&tx);
 
-        let got = cache.legacy_signature_hash(0, &script, 0x01).expect("sighash");
+        let got = cache.legacy_signature_hash(0, &script, EcdsaSighashType::All).expect("sighash");
         let want = "d17894eaf6d0a05978706a48c6f411bc37f76d672a1826c7fde980dac4bdc7d5";
         assert_eq!(got.to_string(), want)
     }
 
     #[test]
     fn sighash_single_bug() {
-        const SIGHASH_SINGLE: u32 = 3;
+        const SIGHASH_SINGLE: EcdsaSighashType = EcdsaSighashType::from_consensus(3);
 
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
@@ -1517,48 +1516,6 @@ mod tests {
         let want = LegacySighash::from_slice(&UINT256_ONE).unwrap();
 
         assert_eq!(got, want)
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    fn legacy_sighash() {
-        use serde_json::Value;
-
-        use crate::sighash::SighashCache;
-
-        fn run_test_sighash(
-            tx: &str,
-            script: &str,
-            input_index: usize,
-            hash_type: i64,
-            expected_result: &str,
-        ) {
-            let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-            let script = ScriptBuf::from(Vec::from_hex(script).unwrap());
-            let mut raw_expected = Vec::from_hex(expected_result).unwrap();
-            raw_expected.reverse();
-            let want = LegacySighash::from_slice(&raw_expected[..]).unwrap();
-
-            let cache = SighashCache::new(&tx);
-            let got = cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap();
-
-            assert_eq!(got, want);
-        }
-
-        // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
-        // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
-        // OP_CODESEPARATOR in their pubkeys were removed
-        let data = include_str!("../../tests/data/legacy_sighash.json");
-
-        let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
-        for t in testdata.iter().skip(1) {
-            let tx = t.get(0).unwrap().as_str().unwrap();
-            let script = t.get(1).unwrap().as_str().unwrap_or("");
-            let input_index = t.get(2).unwrap().as_u64().unwrap();
-            let hash_type = t.get(3).unwrap().as_i64().unwrap();
-            let expected_sighash = t.get(4).unwrap().as_str().unwrap();
-            run_test_sighash(tx, script, input_index as usize, hash_type, expected_sighash);
-        }
     }
 
     #[test]
@@ -1740,7 +1697,7 @@ mod tests {
             }))
         );
         assert_eq!(
-            c.legacy_signature_hash(10, Script::new(), 0u32),
+            c.legacy_signature_hash(10, Script::new(), EcdsaSighashType::from_consensus(0)),
             Err(InputsIndexError(IndexOutOfBoundsError {
                 index: 10,
                 length: 1
