@@ -139,9 +139,15 @@ macro_rules! debug_from_display {
 /// Asserts a boolean expression at compile time.
 #[macro_export]
 macro_rules! const_assert {
-    ($x:expr) => {
-        const _: [(); 0 - !$x as usize] = [];
-    };
+    ($x:expr $(; $message:expr)?) => {
+        const _: bool = {
+            if !$x {
+                // We can't use formatting in const, only concating literals.
+                panic!(concat!("assertion ", stringify!($x), " failed" $(, ": ", $message)?))
+            }
+            $x
+        };
+    }
 }
 
 /// Derives `From<core::convert::Infallible>` for the given type.
