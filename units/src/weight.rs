@@ -65,14 +65,7 @@ impl Weight {
     pub const fn from_vb_unwrap(vb: u64) -> Weight {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Weight(weight),
-            None => {
-                // When MSRV is 1.57+ we can use `panic!()`.
-                #[allow(unconditional_panic)]
-                #[allow(clippy::let_unit_value)]
-                #[allow(clippy::out_of_bounds_indexing)]
-                let _int_overflow_scaling_weight = [(); 0][1];
-                Weight(0)
-            }
+            None => panic!("checked_mul overflowed"),
         }
     }
 
