@@ -4,7 +4,10 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::str::FromStr;
 use core::{cmp, mem, ptr};
+
+use hex::FromHex;
 
 use crate::internal_macros::arr_newtype_fmt_impl;
 use crate::HashEngine as _;
@@ -13,6 +16,21 @@ use crate::HashEngine as _;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Hash([u8; 8]);
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for Hash {
+    fn schema_name() -> String { "Hash".to_owned() }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(8 * 2),
+            min_length: Some(8 * 2),
+            pattern: Some("[0-9a-fA-F]+".to_owned()),
+        }));
+        schema.into()
+    }
+}
 
 #[cfg(not(hashes_fuzz))]
 fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
@@ -211,6 +229,15 @@ impl Hash {
     /// Creates a hash from its (little endian) 64-bit integer representation.
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 
+    /// Returns the underlying byte array.
+    pub const fn to_byte_array(self) -> [u8; 8] { self.0 }
+
+    /// Returns a reference to the underlying byte array.
+    pub const fn as_byte_array(&self) -> &[u8; 8] { &self.0 }
+
+    /// Constructs a hash from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 8]) -> Self { Self(bytes) }
+
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> {
         let mut ret = [0; 8];
         ret.copy_from_slice(sl);
@@ -226,11 +253,11 @@ impl crate::Hash for Hash {
 
     fn from_slice(sl: &[u8]) -> Result<Self, crate::FromSliceError> { Self::from_slice(sl) }
 
-    fn to_byte_array(self) -> Self::Bytes { self.0 }
+    fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
-    fn as_byte_array(&self) -> &Self::Bytes { &self.0 }
+    fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
-    fn from_byte_array(bytes: Self::Bytes) -> Self { Hash(bytes) }
+    fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 }
 
 impl<I: SliceIndex<[u8]>> Index<I> for Hash {
@@ -240,7 +267,16 @@ impl<I: SliceIndex<[u8]>> Index<I> for Hash {
     fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
+impl FromStr for Hash {
+    type Err = hex::HexToArrayError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = <[u8; 8]>::from_hex(s)?;
+        Ok(Self::from_byte_array(bytes))
+    }
+}
+
 arr_newtype_fmt_impl!(Hash, 8);
+serde_impl!(Hash, 8);
 borrow_slice_impl!(Hash);
 
 /// Load an u64 using up to 7 bytes of a byte slice.
