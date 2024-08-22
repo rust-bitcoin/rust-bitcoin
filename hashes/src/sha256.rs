@@ -188,11 +188,7 @@ impl Midstate {
     /// Panics if `bytes_hashed` is not a multiple of 64.
     pub const fn new(state: [u8; 32], bytes_hashed: usize) -> Self {
         if bytes_hashed % 64 != 0 {
-            // When MSRV is 1.57+ we can use `panic!()`.
-            #[allow(unconditional_panic)]
-            #[allow(clippy::let_unit_value)]
-            #[allow(clippy::out_of_bounds_indexing)]
-            let _panic = [(); 0][1];
+            panic!("bytes hashed is not a multiple of 64");
         }
 
         Midstate { bytes: state, length: bytes_hashed }
