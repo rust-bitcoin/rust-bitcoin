@@ -36,10 +36,11 @@ impl Signature {
     }
 
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
-    pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
-        let (sighash_type, sig) = sl.split_last().ok_or(Error::EmptySignature)?;
+    pub fn from_slice(sl: &[u8]) -> Result<Self, DecodeError> {
+        let (sighash_type, sig) = sl.split_last().ok_or(DecodeError::EmptySignature)?;
         let sighash_type = EcdsaSighashType::from_standard(*sighash_type as u32)?;
-        let signature = secp256k1::ecdsa::Signature::from_der(sig).map_err(Error::Secp256k1)?;
+        let signature =
+            secp256k1::ecdsa::Signature::from_der(sig).map_err(DecodeError::Secp256k1)?;
         Ok(Signature { signature, sighash_type })
     }
 
@@ -87,15 +88,11 @@ impl fmt::Display for Signature {
 }
 
 impl FromStr for Signature {
-    type Err = Error;
+    type Err = ParseSignatureError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = Vec::from_hex(s)?;
-        let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
-        Ok(Signature {
-            signature: secp256k1::ecdsa::Signature::from_der(signature)?,
-            sighash_type: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
-        })
+        Ok(Self::from_slice(&bytes)?)
     }
 }
 
@@ -204,12 +201,10 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     fn into_iter(self) -> Self::IntoIter { (*self).iter() }
 }
 
-/// An ECDSA signature-related error.
+/// Error encountered while parsing an ECDSA signature from a byte slice.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Error {
-    /// Hex decoding error.
-    Hex(hex::HexToBytesError),
+pub enum DecodeError {
     /// Non-standard sighash type.
     SighashType(NonStandardSighashTypeError),
     /// Signature was empty.
@@ -218,14 +213,13 @@ pub enum Error {
     Secp256k1(secp256k1::Error),
 }
 
-internals::impl_from_infallible!(Error);
+internals::impl_from_infallible!(DecodeError);
 
-impl fmt::Display for Error {
+impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use DecodeError::*;
 
         match *self {
-            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
             SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
             EmptySignature => write!(f, "empty ECDSA signature"),
             Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
@@ -234,12 +228,11 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for DecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+        use DecodeError::*;
 
         match *self {
-            Hex(ref e) => Some(e),
             Secp256k1(ref e) => Some(e),
             SighashType(ref e) => Some(e),
             EmptySignature => None,
@@ -247,16 +240,55 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<secp256k1::Error> for Error {
+impl From<secp256k1::Error> for DecodeError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<NonStandardSighashTypeError> for Error {
+impl From<NonStandardSighashTypeError> for DecodeError {
     fn from(e: NonStandardSighashTypeError) -> Self { Self::SighashType(e) }
 }
 
-impl From<hex::HexToBytesError> for Error {
+/// Error encountered while parsing an ECDSA signature from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseSignatureError {
+    /// Hex string decoding error.
+    Hex(hex::HexToBytesError),
+    /// Signature byte slice decoding error.
+    Decode(DecodeError),
+}
+
+internals::impl_from_infallible!(ParseSignatureError);
+
+impl fmt::Display for ParseSignatureError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ParseSignatureError::*;
+
+        match *self {
+            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSignatureError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseSignatureError::*;
+
+        match *self {
+            Hex(ref e) => Some(e),
+            Decode(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<hex::HexToBytesError> for ParseSignatureError {
     fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+}
+
+impl From<DecodeError> for ParseSignatureError {
+    fn from(e: DecodeError) -> Self { Self::Decode(e) }
 }
 
 #[cfg(test)]
