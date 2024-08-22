@@ -424,7 +424,7 @@ impl EcdsaSighashType {
     /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
     /// verifying signatures, the user should retain the `n` and use it compute the signature hash
     /// message.
-    pub fn from_consensus(n: u32) -> EcdsaSighashType {
+    pub const fn from_consensus(n: u32) -> EcdsaSighashType {
         use EcdsaSighashType::*;
 
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
@@ -451,7 +451,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
+    pub const fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
         use EcdsaSighashType::*;
 
         match n {
@@ -504,7 +504,7 @@ impl TapSighashType {
     }
 
     /// Constructs a [`TapSighashType`] from a raw `u8`.
-    pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
+    pub const fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
         use TapSighashType::*;
 
         Ok(match sighash_type {
@@ -515,7 +515,7 @@ impl TapSighashType {
             0x81 => AllPlusAnyoneCanPay,
             0x82 => NonePlusAnyoneCanPay,
             0x83 => SinglePlusAnyoneCanPay,
-            x => return Err(InvalidSighashTypeError(x.into())),
+            x => return Err(InvalidSighashTypeError(x as u32)), // Can't call `into` in `const`.
         })
     }
 }
