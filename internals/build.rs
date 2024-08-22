@@ -59,6 +59,9 @@ fn write_macro(mut macro_file: impl io::Write, msrv_minor: u64, minor: u64) -> i
     writeln!(macro_file, "/// Currently only the `>=` operator is supported.")?;
     writeln!(macro_file, "#[macro_export]")?;
     writeln!(macro_file, "macro_rules! rust_version {{")?;
+
+    // These two loops are the magic; we output the clause if_yes/if_no
+    // dependent on the current compiler version (`minor`).
     for version in msrv_minor..=minor {
         writeln!(macro_file, "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{", version)?;
         writeln!(macro_file, "        $($if_yes)*")?;
