@@ -227,7 +227,7 @@ macro_rules! sha256t_tag {
 ///
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
-#[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use `sha256_tag!` combined with `hash_newtype!`")]
+#[deprecated(since = "TBD", note = "use `sha256_tag!` combined with `hash_newtype!`")]
 macro_rules! sha256t_hash_newtype {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);) => {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
