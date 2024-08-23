@@ -473,8 +473,10 @@ pub struct Transaction {
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     pub lock_time: absolute::LockTime,
     /// List of transaction inputs.
+    #[deprecated(since = "TBD", note = "consider using `self.inputs()`")]
     pub input: Vec<TxIn>,
     /// List of transaction outputs.
+    #[deprecated(since = "TBD", note = "consider using `self.outputs()`")]
     pub output: Vec<TxOut>,
 }
 
@@ -495,6 +497,18 @@ impl Transaction {
     // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
     /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
+
+    /// Gets a reference to the list of transaction inputs.
+    pub fn inputs(&self) -> &[TxIn] { &self.input }
+
+    /// Gets a mutable reference to the list of transaction inputs.
+    pub fn inputs_mut(&mut self) -> &mut [TxIn] { &mut self.input }
+
+    /// Gets a reference to the list of transaction outputs.
+    pub fn outputs(&self) -> &[TxOut] { &self.output }
+
+    /// Gets a mutable reference to the list of transaction outputs.
+    pub fn outputs_mut(&mut self) -> &mut [TxOut] { &mut self.output }
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
