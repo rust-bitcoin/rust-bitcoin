@@ -12,7 +12,7 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::prelude::Vec;
+use crate::prelude::{Vec, String};
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};

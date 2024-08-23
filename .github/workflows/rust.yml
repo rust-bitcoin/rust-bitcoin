@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
@@ -83,7 +83,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
@@ -109,7 +109,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
@@ -136,7 +136,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@stable
@@ -160,7 +160,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
@@ -186,7 +186,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: rust-bitcoin/rust-bitcoin-maintainer-tools
-          rev: b2ac115
+          ref: b2ac11556708cd0fb82c8139ff38b1be8d4a62e1
           path: maintainer-tools
       - name: "Select toolchain"
         uses: dtolnay/rust-toolchain@v1
