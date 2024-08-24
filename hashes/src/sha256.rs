@@ -146,7 +146,7 @@ impl Hash {
     /// Computes hash from `bytes` in `const` context.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
-    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use Self::hash_unoptimized")]
+    #[deprecated(since = "TBD", note = "use Self::hash_unoptimized")]
     pub const fn const_hash(bytes: &[u8]) -> Self { Hash::hash_unoptimized(bytes) }
 
     /// Computes hash from `bytes` in `const` context.
