@@ -37,12 +37,19 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
-// Disable 16-bit support at least for now as we can't guarantee it yet.
-#[cfg(target_pointer_width = "16")]
-compile_error!(
-    "rust-bitcoin currently only supports architectures with pointers wider than 16 bits, let us
-    know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
-);
+use core::mem;
+
+// We only support machines with index size of 4 bytes or more.
+//
+// Bitcoin consensus code relies on being able to have containers with more than 65536 (2^16)
+// entries in them so we cannot support consensus logic on machines that only have 16-bit memory
+// addresses.
+//
+// We specifically do not use `target_pointer_width` because of the possibility that pointer width
+// does not equal index size.
+//
+// ref: https://github.com/rust-bitcoin/rust-bitcoin/pull/2929#discussion_r1661848565
+internals::const_assert!(mem::size_of::<usize>() >= 4);
 
 #[cfg(bench)]
 extern crate test;
