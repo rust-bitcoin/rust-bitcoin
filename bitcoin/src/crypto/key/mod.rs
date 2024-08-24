@@ -226,9 +226,13 @@ impl PublicKey {
 
         Ok(PublicKey { compressed, inner: bare::PublicKey::deserialize(data)? })
     }
+}
 
+#[cfg(feature = "secp256k1")]
+crate::internal_macros::define_extension_trait! {
+pub trait PublicKeyExt impl for PublicKey {
     /// Computes the public key as supposed to be used with this secret.
-    pub fn from_private_key<C: secp256k1::Signing>(
+    fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
         sk: PrivateKey,
     ) -> PublicKey {
@@ -236,7 +240,7 @@ impl PublicKey {
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
-    pub fn verify<C: secp256k1::Verification>(
+    fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
         msg: secp256k1::Message,
@@ -244,6 +248,7 @@ impl PublicKey {
     ) -> Result<(), secp256k1::Error> {
         secp.verify_ecdsa(&msg, &sig.signature, &self.inner.to_unstable())
     }
+}
 }
 
 impl From<bare::PublicKey> for PublicKey {
@@ -371,10 +376,14 @@ impl CompressedPublicKey {
     pub fn from_slice(data: &[u8]) -> Result<Self, bare::PublicKeyDeserError> {
         bare::PublicKey::deserialize(data).map(CompressedPublicKey)
     }
+}
 
+#[cfg(feature = "secp256k1")]
+crate::internal_macros::define_extension_trait! {
+pub trait CompressedPublicKeyExt: Sized impl for CompressedPublicKey {
     /// Computes the public key as supposed to be used with this secret.
     #[cfg(feature = "secp256k1")]
-    pub fn from_private_key<C: secp256k1::Signing>(
+    fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
         sk: PrivateKey,
     ) -> Result<Self, UncompressedPublicKeyError> {
@@ -383,7 +392,7 @@ impl CompressedPublicKey {
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
     #[cfg(feature = "secp256k1")]
-    pub fn verify<C: secp256k1::Verification>(
+    fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
         msg: secp256k1::Message,
@@ -391,6 +400,7 @@ impl CompressedPublicKey {
     ) -> Result<(), secp256k1::Error> {
         Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0.to_unstable())?)
     }
+}
 }
 
 #[cfg(feature = "secp256k1")]

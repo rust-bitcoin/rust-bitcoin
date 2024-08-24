@@ -257,13 +257,13 @@ pub(crate) use only_impl_attrs;
 
 /// Defines an trait `$trait_name` and implements it for `ty`, used to define extension traits.
 macro_rules! define_extension_trait {
-    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ty {
+    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident$(: $trait_bound:ident)? impl for $ty:ty {
         $(
             $(#[$($fn_attrs:tt)*])*
             fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
         )*
     }) => {
-        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
+        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name$(: $trait_bound)? {
             $(
                 $crate::internal_macros::only_decl_attrs! {
                     { $(#[$($fn_attrs)*])* },
