@@ -5,10 +5,12 @@
 use hashes::Hash;
 
 use super::{
-    InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash, TaprootError,
+    InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash,
     TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
 };
 use crate::prelude::{Borrow, BorrowMut, Box, Vec};
+use internals::write_err;
+use core::fmt;
 
 /// The Merkle proof for inclusion of a tree in a Taproot tree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -44,7 +46,7 @@ impl TaprootMerkleBranch {
     ///
     /// The function returns an error if the number of bytes is not an integer multiple of 32 or
     /// if the number of hashes exceeds 128.
-    pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
+    pub fn decode(sl: &[u8]) -> Result<Self, TaprootMerkleBranchDecodeError> {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
             Err(InvalidMerkleBranchSizeError(sl.len()).into())
         } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
@@ -113,6 +115,48 @@ impl TaprootMerkleBranch {
     /// Returns the list of hashes stored in a `Vec`.
     #[inline]
     pub fn into_vec(self) -> Vec<TapNodeHash> { self.0 }
+}
+
+/// Returned when decoding of Taproot merkle branch fails.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TaprootMerkleBranchDecodeError {
+    /// Proof size must be a multiple of 32.
+    InvalidMerkleBranchSize(InvalidMerkleBranchSizeError),
+    /// Merkle tree depth must not be more than 128.
+    InvalidMerkleTreeDepth(InvalidMerkleTreeDepthError),
+}
+
+internals::impl_from_infallible!(TaprootMerkleBranchDecodeError);
+
+impl fmt::Display for TaprootMerkleBranchDecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use TaprootMerkleBranchDecodeError::*;
+
+        match *self {
+            InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
+            InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for TaprootMerkleBranchDecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TaprootMerkleBranchDecodeError::*;
+
+        match self {
+            InvalidMerkleTreeDepth(ref e) => Some(e),
+            InvalidMerkleBranchSize(_) => None,
+        }
+    }
+}
+
+impl From<InvalidMerkleBranchSizeError> for TaprootMerkleBranchDecodeError {
+    fn from(e: InvalidMerkleBranchSizeError) -> Self { Self::InvalidMerkleBranchSize(e) }
+}
+
+impl From<InvalidMerkleTreeDepthError> for TaprootMerkleBranchDecodeError {
+    fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
 }
 
 macro_rules! impl_try_from {

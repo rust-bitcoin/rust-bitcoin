@@ -36,7 +36,8 @@ use core::str::FromStr;
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+#[cfg(feature = "secp256k1")]
+use secp256k1::{Secp256k1, Verification};
 
 use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::constants::{
@@ -44,7 +45,7 @@ use crate::constants::{
     SCRIPT_ADDRESS_PREFIX_TEST,
 };
 use crate::crypto::key::{
-    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+    CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey,
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
@@ -425,6 +426,7 @@ impl Address {
     /// Creates a witness pay to public key address from a public key.
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
+    #[cfg(feature = "secp256k1")]
     pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
         Address::from_witness_program(program, hrp)
@@ -433,6 +435,7 @@ impl Address {
     /// Creates a pay to script address that embeds a witness pay to public key.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
+    #[cfg(feature = "secp256k1")]
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
         let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
@@ -468,6 +471,7 @@ impl Address {
     }
 
     /// Creates a pay to Taproot address from an untweaked key.
+    #[cfg(feature = "secp256k1")]
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -645,6 +649,7 @@ impl Address {
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the segwit redeem hash generated from the
     /// given key. For Taproot addresses, the supplied key is assumed to be tweaked
+    #[cfg(feature = "secp256k1")]
     pub fn is_related_to_pubkey(&self, pubkey: PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload_as_bytes();

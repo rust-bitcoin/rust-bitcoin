@@ -6,12 +6,11 @@
 //! according to the BIP-174 specification.
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
-use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
+use crate::crypto::key::{bare, PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::psbt::{Error, Psbt};
@@ -142,13 +141,13 @@ impl Deserialize for PublicKey {
     }
 }
 
-impl Serialize for secp256k1::PublicKey {
-    fn serialize(&self) -> Vec<u8> { self.serialize().to_vec() }
+impl Serialize for bare::PublicKey {
+    fn serialize(&self) -> Vec<u8> { bare::PublicKey::serialize(*self).to_vec() }
 }
 
-impl Deserialize for secp256k1::PublicKey {
+impl Deserialize for bare::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        secp256k1::PublicKey::from_slice(bytes).map_err(Error::InvalidSecp256k1PublicKey)
+        bare::PublicKey::deserialize(bytes).map_err(Error::InvalidSecp256k1PublicKey)
     }
 }
 
@@ -236,12 +235,12 @@ impl Deserialize for PsbtSighashType {
 
 // Taproot related ser/deser
 impl Serialize for XOnlyPublicKey {
-    fn serialize(&self) -> Vec<u8> { XOnlyPublicKey::serialize(self).to_vec() }
+    fn serialize(&self) -> Vec<u8> { XOnlyPublicKey::serialize(*self).to_vec() }
 }
 
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        XOnlyPublicKey::from_slice(bytes).map_err(|_| Error::InvalidXOnlyPublicKey)
+        XOnlyPublicKey::deserialize(bytes).map_err(|_| Error::InvalidXOnlyPublicKey)
     }
 }
 

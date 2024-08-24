@@ -79,6 +79,7 @@ pub extern crate ordered;
 
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
+#[cfg(feature = "secp256k1")]
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
@@ -94,6 +95,7 @@ pub mod p2p;
 pub mod address;
 pub mod bip152;
 pub mod bip158;
+#[cfg(feature = "secp256k1")]
 pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
@@ -106,7 +108,9 @@ pub mod merkle_tree;
 pub mod network;
 pub mod policy;
 pub mod pow;
+#[cfg(feature = "secp256k1")]
 pub mod psbt;
+#[cfg(feature = "secp256k1")]
 pub mod sign_message;
 pub mod taproot;
 
@@ -116,7 +120,6 @@ pub use crate::{
     address::{Address, AddressType, KnownHrp},
     amount::{Amount, Denomination, SignedAmount},
     bip158::{FilterHash, FilterHeader},
-    bip32::XKeyIdentifier,
     blockdata::block::{self, Block, BlockHash, WitnessCommitment},
     blockdata::constants,
     blockdata::fee_rate::FeeRate,
@@ -129,17 +132,24 @@ pub use crate::{
     blockdata::weight::Weight,
     blockdata::witness::{self, Witness},
     consensus::encode::VarInt,
-    crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::{MerkleBlock, TxMerkleNode, WitnessMerkleNode},
     network::{Network, NetworkKind},
     network::params::{self, Params},
     pow::{CompactTarget, Target, Work},
-    psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+
+#[doc(inline)]
+#[cfg(feature = "secp256k1")]
+pub use crate::{
+    bip32::XKeyIdentifier,
+    crypto::ecdsa,
+    psbt::Psbt,
+};
+
 #[doc(inline)]
 pub use primitives::Sequence;
 pub use units::{BlockHeight, BlockInterval};

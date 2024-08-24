@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
+use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
@@ -36,7 +36,7 @@ pub struct Output {
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
-    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The internal pubkey.
     pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Output tree.
@@ -69,7 +69,7 @@ impl Output {
             }
             PSBT_OUT_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_OUT_PROPRIETARY => {

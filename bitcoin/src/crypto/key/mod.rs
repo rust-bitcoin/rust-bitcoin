@@ -5,8 +5,9 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
+pub mod bare;
+
 use core::fmt::{self, Write as _};
-use core::ops;
 use core::str::FromStr;
 
 use hashes::hash160;
@@ -15,6 +16,7 @@ use internals::array_vec::ArrayVec;
 use internals::write_err;
 use io::{Read, Write};
 
+#[cfg(feature = "secp256k1")]
 use crate::crypto::ecdsa;
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
@@ -23,10 +25,39 @@ use crate::script::{self, ScriptBuf};
 use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+#[cfg(feature = "secp256k1")]
+pub use secp256k1::{constants, Keypair, Secp256k1, Verification};
 
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
+
+/// Parity of a SECP256K1 public key Y coordinate.
+///
+/// For each valid value of the X coordinate there are two possible points with different parity.
+/// Distinguishing them is sometimes needed so we have this enum to represent the possible values.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum Parity {
+    /// Even parity.
+    ///
+    /// The least significant bit of the Y coordinate is 0.
+    Even = 0,
+
+    /// Odd parity.
+    ///
+    /// The least significant bit of the Y coordinate is 1.
+    Odd = 1,
+}
+
+impl Parity {
+    /// Converts the parity to its corresponding bit.
+    ///
+    /// Returns 0 for even parity and 1 for odd parity.
+    pub fn to_u8(self) -> u8 {
+        self as u8
+    }
+}
+
+pub use bare::XOnlyPublicKey;
 
 /// A Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -34,21 +65,24 @@ pub struct PublicKey {
     /// Whether this public key should be serialized as compressed.
     pub compressed: bool,
     /// The actual ECDSA key.
-    pub inner: secp256k1::PublicKey,
+    pub inner: bare::PublicKey,
 }
 
 impl PublicKey {
     /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key.
-    pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
+    pub fn new(key: impl Into<bare::PublicKey>) -> PublicKey {
         PublicKey { compressed: true, inner: key.into() }
     }
 
     /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
     /// public key.
-    pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
+    pub fn new_uncompressed(key: impl Into<bare::PublicKey>) -> PublicKey {
         PublicKey { compressed: false, inner: key.into() }
     }
+}
 
+#[cfg(feature = "secp256k1")]
+impl PublicKey {
     fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
         if self.compressed {
             f(&self.inner.serialize())
@@ -190,7 +224,7 @@ impl PublicKey {
             return Err(FromSliceError::InvalidKeyPrefix(data[0]));
         }
 
-        Ok(PublicKey { compressed, inner: secp256k1::PublicKey::from_slice(data)? })
+        Ok(PublicKey { compressed, inner: bare::PublicKey::deserialize(data)? })
     }
 
     /// Computes the public key as supposed to be used with this secret.
@@ -208,14 +242,15 @@ impl PublicKey {
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        secp.verify_ecdsa(&msg, &sig.signature, &self.inner)
+        secp.verify_ecdsa(&msg, &sig.signature, &self.inner.to_unstable())
     }
 }
 
-impl From<secp256k1::PublicKey> for PublicKey {
-    fn from(pk: secp256k1::PublicKey) -> PublicKey { PublicKey::new(pk) }
+impl From<bare::PublicKey> for PublicKey {
+    fn from(pk: bare::PublicKey) -> PublicKey { PublicKey::new(pk) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<PublicKey> for XOnlyPublicKey {
     fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
 }
@@ -224,12 +259,14 @@ impl From<PublicKey> for XOnlyPublicKey {
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(ArrayVec<u8, 65>);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.with_serialized(|bytes| fmt::Display::fmt(&bytes.as_hex(), f))
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
@@ -263,19 +300,27 @@ hashes::hash_newtype! {
 }
 impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
+#[cfg(feature = "secp256k1")]
 impl From<PublicKey> for PubkeyHash {
     fn from(key: PublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<&PublicKey> for PubkeyHash {
     fn from(key: &PublicKey) -> PubkeyHash { key.pubkey_hash() }
 }
 
 /// An always-compressed Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct CompressedPublicKey(pub secp256k1::PublicKey);
+pub struct CompressedPublicKey(pub bare::PublicKey);
 
+#[cfg(feature = "secp256k1")]
 impl CompressedPublicKey {
+    /// Serializes the public key to a byte array.
+    pub fn serialize(&self) -> [u8; 33] {
+        self.0.serialize()
+    }
+
     /// Returns bitcoin 160-bit hash of the public key.
     pub fn pubkey_hash(&self) -> PubkeyHash { PubkeyHash(hash160::Hash::hash(&self.to_bytes())) }
 
@@ -322,11 +367,13 @@ impl CompressedPublicKey {
     pub fn to_bytes(&self) -> [u8; 33] { self.0.serialize() }
 
     /// Deserializes a public key from a slice.
-    pub fn from_slice(data: &[u8]) -> Result<Self, secp256k1::Error> {
-        secp256k1::PublicKey::from_slice(data).map(CompressedPublicKey)
+    #[cfg(feature = "secp256k1")]
+    pub fn from_slice(data: &[u8]) -> Result<Self, bare::PublicKeyDeserError> {
+        bare::PublicKey::deserialize(data).map(CompressedPublicKey)
     }
 
     /// Computes the public key as supposed to be used with this secret.
+    #[cfg(feature = "secp256k1")]
     pub fn from_private_key<C: secp256k1::Signing>(
         secp: &Secp256k1<C>,
         sk: PrivateKey,
@@ -335,22 +382,25 @@ impl CompressedPublicKey {
     }
 
     /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
+    #[cfg(feature = "secp256k1")]
     pub fn verify<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
         msg: secp256k1::Message,
         sig: ecdsa::Signature,
     ) -> Result<(), secp256k1::Error> {
-        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0)?)
+        Ok(secp.verify_ecdsa(&msg, &sig.signature, &self.0.to_unstable())?)
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for CompressedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.to_bytes().as_hex(), f)
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
@@ -359,6 +409,7 @@ impl FromStr for CompressedPublicKey {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl TryFrom<PublicKey> for CompressedPublicKey {
     type Error = UncompressedPublicKeyError;
 
@@ -371,26 +422,32 @@ impl TryFrom<PublicKey> for CompressedPublicKey {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<CompressedPublicKey> for PublicKey {
     fn from(value: CompressedPublicKey) -> Self { PublicKey::new(value.0) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<CompressedPublicKey> for XOnlyPublicKey {
     fn from(pk: CompressedPublicKey) -> Self { pk.0.into() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<CompressedPublicKey> for PubkeyHash {
     fn from(key: CompressedPublicKey) -> Self { key.pubkey_hash() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<&CompressedPublicKey> for PubkeyHash {
     fn from(key: &CompressedPublicKey) -> Self { key.pubkey_hash() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<CompressedPublicKey> for WPubkeyHash {
     fn from(key: CompressedPublicKey) -> Self { key.wpubkey_hash() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<&CompressedPublicKey> for WPubkeyHash {
     fn from(key: &CompressedPublicKey) -> Self { key.wpubkey_hash() }
 }
@@ -403,7 +460,7 @@ pub struct PrivateKey {
     /// The network kind on which this key should be used.
     pub network: NetworkKind,
     /// The actual ECDSA key.
-    pub inner: secp256k1::SecretKey,
+    pub inner: bare::PrivateKey,
 }
 
 impl PrivateKey {
@@ -412,40 +469,46 @@ impl PrivateKey {
     #[cfg(feature = "rand-std")]
     pub fn generate(network: impl Into<NetworkKind>) -> PrivateKey {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
+        let secret_key = bare::PrivateKey::from_unstable(secret_key);
         PrivateKey::new(secret_key, network.into())
     }
     /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
     /// and the specified network.
-    pub fn new(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> PrivateKey {
+    pub fn new(key: bare::PrivateKey, network: impl Into<NetworkKind>) -> PrivateKey {
         PrivateKey { compressed: true, network: network.into(), inner: key }
     }
 
     /// Constructs uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
     /// private key and the specified network.
     pub fn new_uncompressed(
-        key: secp256k1::SecretKey,
+        key: bare::PrivateKey,
         network: impl Into<NetworkKind>,
     ) -> PrivateKey {
         PrivateKey { compressed: false, network: network.into(), inner: key }
     }
 
     /// Creates a public key from this private key.
+    #[cfg(feature = "secp256k1")]
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
+        let pubkey = secp256k1::PublicKey::from_secret_key(secp, &self.inner.to_unstable());
         PublicKey {
             compressed: self.compressed,
-            inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner),
+            inner: pubkey.to_stable(),
         }
     }
 
     /// Serializes the private key to bytes.
-    pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
+    pub fn to_bytes(self) -> Vec<u8> { self.inner.serialize().to_vec() }
 
     /// Deserializes a private key from a slice.
+    #[cfg(feature = "secp256k1")]
     pub fn from_slice(
         data: &[u8],
         network: impl Into<NetworkKind>,
-    ) -> Result<PrivateKey, secp256k1::Error> {
-        Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
+    ) -> Result<PrivateKey, bare::PrivateKeyDeserError> {
+        let data = data.try_into()
+            .map_err(|_| bare::PrivateKeyDeserError(secp256k1::Error::InvalidSecretKey))?;
+        Ok(PrivateKey::new(bare::PrivateKey::deserialize(data)?, network))
     }
 
     /// Formats the private key to WIF format.
@@ -454,7 +517,7 @@ impl PrivateKey {
         let mut ret = [0; 34];
         ret[0] = if self.network.is_mainnet() { 128 } else { 239 };
 
-        ret[1..33].copy_from_slice(&self.inner[..]);
+        ret[1..33].copy_from_slice(&self.inner.serialize());
         let privkey = if self.compressed {
             ret[33] = 1;
             base58::encode_check(&ret[..])
@@ -473,6 +536,7 @@ impl PrivateKey {
     }
 
     /// Parses the WIF encoded private key.
+    #[cfg(feature = "serde")]
     pub fn from_wif(wif: &str) -> Result<PrivateKey, FromWifError> {
         let data = base58::decode_check(wif)?;
 
@@ -495,7 +559,7 @@ impl PrivateKey {
         Ok(PrivateKey {
             compressed,
             network,
-            inner: secp256k1::SecretKey::from_slice(&data[1..33])?,
+            inner: bare::PrivateKey::from_slice(&data[1..33])?,
         })
     }
 }
@@ -504,14 +568,10 @@ impl fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_wif(f) }
 }
 
+#[cfg(feature = "serde")]
 impl FromStr for PrivateKey {
     type Err = FromWifError;
     fn from_str(s: &str) -> Result<PrivateKey, FromWifError> { PrivateKey::from_wif(s) }
-}
-
-impl ops::Index<ops::RangeFull> for PrivateKey {
-    type Output = [u8];
-    fn index(&self, _: ops::RangeFull) -> &[u8] { &self.inner[..] }
 }
 
 #[cfg(feature = "serde")]
@@ -557,6 +617,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
 }
 
 #[cfg(feature = "serde")]
+#[cfg(feature = "secp256k1")]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
 impl serde::Serialize for PublicKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -569,6 +630,7 @@ impl serde::Serialize for PublicKey {
 }
 
 #[cfg(feature = "serde")]
+#[cfg(feature = "secp256k1")]
 impl<'de> serde::Deserialize<'de> for PublicKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
         if d.is_human_readable() {
@@ -624,6 +686,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
 }
 
 #[cfg(feature = "serde")]
+#[cfg(feature = "secp256k1")]
 impl serde::Serialize for CompressedPublicKey {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
@@ -635,6 +698,7 @@ impl serde::Serialize for CompressedPublicKey {
 }
 
 #[cfg(feature = "serde")]
+#[cfg(feature = "secp256k1")]
 impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         if d.is_human_readable() {
@@ -706,6 +770,7 @@ impl fmt::Display for TweakedPublicKey {
 }
 
 /// Untweaked BIP-340 key pair.
+#[cfg(feature = "secp256k1")]
 pub type UntweakedKeypair = Keypair;
 
 /// Tweaked BIP-340 key pair.
@@ -727,9 +792,11 @@ pub type UntweakedKeypair = Keypair;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
+#[cfg(feature = "secp256k1")]
 pub struct TweakedKeypair(Keypair);
 
 /// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
+#[cfg(feature = "secp256k1")]
 pub trait TapTweak {
     /// Tweaked key type with optional auxiliary information.
     type TweakedAux;
@@ -762,6 +829,7 @@ pub trait TapTweak {
     fn dangerous_assume_tweaked(self) -> Self::TweakedKey;
 }
 
+#[cfg(feature = "secp256k1")]
 impl TapTweak for UntweakedPublicKey {
     type TweakedAux = (TweakedPublicKey, Parity);
     type TweakedKey = TweakedPublicKey;
@@ -785,15 +853,16 @@ impl TapTweak for UntweakedPublicKey {
         merkle_root: Option<TapNodeHash>,
     ) -> (TweakedPublicKey, Parity) {
         let tweak = TapTweakHash::from_key_and_tweak(self, merkle_root).to_scalar();
-        let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
+        let (output_key, parity) = self.to_unstable().add_tweak(secp, &tweak).expect("Tap tweak failed");
 
-        debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak));
-        (TweakedPublicKey(output_key), parity)
+        debug_assert!(self.to_unstable().tweak_add_check(secp, &output_key, parity, tweak));
+        (TweakedPublicKey(output_key.to_stable()), parity.to_stable())
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedPublicKey { TweakedPublicKey(self) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl TapTweak for UntweakedKeypair {
     type TweakedAux = TweakedKeypair;
     type TweakedKey = TweakedKeypair;
@@ -813,8 +882,8 @@ impl TapTweak for UntweakedKeypair {
         secp: &Secp256k1<C>,
         merkle_root: Option<TapNodeHash>,
     ) -> TweakedKeypair {
-        let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
-        let tweak = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).to_scalar();
+        let (pubkey, _parity) = secp256k1::XOnlyPublicKey::from_keypair(&self);
+        let tweak = TapTweakHash::from_key_and_tweak(pubkey.to_stable(), merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
         TweakedKeypair(tweaked)
     }
@@ -825,9 +894,10 @@ impl TapTweak for UntweakedKeypair {
 impl TweakedPublicKey {
     /// Returns the [`TweakedPublicKey`] for `keypair`.
     #[inline]
+    #[cfg(feature = "secp256k1")]
     pub fn from_keypair(keypair: TweakedKeypair) -> Self {
         let (xonly, _parity) = keypair.0.x_only_public_key();
-        TweakedPublicKey(xonly)
+        TweakedPublicKey(xonly.to_stable())
     }
 
     /// Creates a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
@@ -847,9 +917,10 @@ impl TweakedPublicKey {
     /// the y-coordinate is represented by only a single bit, as x determines
     /// it up to one bit.
     #[inline]
-    pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.0.serialize() }
+    pub fn serialize(&self) -> [u8; 32] { self.0.serialize() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl TweakedKeypair {
     /// Creates a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedKeypair`] instead of using this constructor.
@@ -865,9 +936,10 @@ impl TweakedKeypair {
 
     /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeypair`].
     #[inline]
+    #[cfg(feature = "secp256k1")]
     pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
         let (xonly, parity) = self.0.x_only_public_key();
-        (TweakedPublicKey(xonly), parity)
+        (TweakedPublicKey(xonly.to_stable()), parity.to_stable())
     }
 }
 
@@ -876,11 +948,13 @@ impl From<TweakedPublicKey> for XOnlyPublicKey {
     fn from(pair: TweakedPublicKey) -> Self { pair.0 }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<TweakedKeypair> for Keypair {
     #[inline]
     fn from(pair: TweakedKeypair) -> Self { pair.0 }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<TweakedKeypair> for TweakedPublicKey {
     #[inline]
     fn from(pair: TweakedKeypair) -> Self { TweakedPublicKey::from_keypair(pair) }
@@ -889,17 +963,20 @@ impl From<TweakedKeypair> for TweakedPublicKey {
 /// Error returned while generating key from slice.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
+#[cfg(feature = "secp256k1")]
 pub enum FromSliceError {
     /// Invalid key prefix error.
     InvalidKeyPrefix(u8),
     /// A Secp256k1 error.
-    Secp256k1(secp256k1::Error),
+    Secp256k1(bare::PublicKeyDeserError),
     /// Invalid Length of the slice.
     InvalidLength(usize),
 }
 
+#[cfg(feature = "secp256k1")]
 internals::impl_from_infallible!(FromSliceError);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromSliceError::*;
@@ -913,6 +990,7 @@ impl fmt::Display for FromSliceError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "secp256k1")]
 impl std::error::Error for FromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use FromSliceError::*;
@@ -924,13 +1002,15 @@ impl std::error::Error for FromSliceError {
     }
 }
 
-impl From<secp256k1::Error> for FromSliceError {
-    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+#[cfg(feature = "secp256k1")]
+impl From<bare::PublicKeyDeserError> for FromSliceError {
+    fn from(e: bare::PublicKeyDeserError) -> Self { Self::Secp256k1(e) }
 }
 
 /// Error generated from WIF key format.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
+#[cfg(feature = "secp256k1")]
 pub enum FromWifError {
     /// A base58 decoding error.
     Base58(base58::Error),
@@ -942,8 +1022,10 @@ pub enum FromWifError {
     Secp256k1(secp256k1::Error),
 }
 
+#[cfg(feature = "secp256k1")]
 internals::impl_from_infallible!(FromWifError);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for FromWifError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromWifError::*;
@@ -960,6 +1042,7 @@ impl fmt::Display for FromWifError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "secp256k1")]
 impl std::error::Error for FromWifError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use FromWifError::*;
@@ -973,26 +1056,31 @@ impl std::error::Error for FromWifError {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<base58::Error> for FromWifError {
     fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<secp256k1::Error> for FromWifError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<InvalidBase58PayloadLengthError> for FromWifError {
     fn from(e: InvalidBase58PayloadLengthError) -> FromWifError {
         Self::InvalidBase58PayloadLength(e)
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<InvalidAddressVersionError> for FromWifError {
     fn from(e: InvalidAddressVersionError) -> FromWifError { Self::InvalidAddressVersion(e) }
 }
 
 /// Error returned while constructing public key from string.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg(feature = "secp256k1")]
 pub enum ParsePublicKeyError {
     /// Error originated while parsing string.
     Encoding(FromSliceError),
@@ -1002,8 +1090,10 @@ pub enum ParsePublicKeyError {
     InvalidHexLength(usize),
 }
 
+#[cfg(feature = "secp256k1")]
 internals::impl_from_infallible!(ParsePublicKeyError);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParsePublicKeyError::*;
@@ -1017,6 +1107,7 @@ impl fmt::Display for ParsePublicKeyError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "secp256k1")]
 impl std::error::Error for ParsePublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParsePublicKeyError::*;
@@ -1028,21 +1119,30 @@ impl std::error::Error for ParsePublicKeyError {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<FromSliceError> for ParsePublicKeyError {
     fn from(e: FromSliceError) -> Self { Self::Encoding(e) }
 }
 
+#[cfg(feature = "secp256k1")]
+impl From<bare::PublicKeyDeserError> for ParsePublicKeyError {
+    fn from(e: bare::PublicKeyDeserError) -> Self { Self::Encoding(FromSliceError::Secp256k1(e)) }
+}
+
 /// Error returned when parsing a [`CompressedPublicKey`] from a string.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg(feature = "secp256k1")]
 pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
-    Secp256k1(secp256k1::Error),
+    Secp256k1(bare::PublicKeyDeserError),
     /// hex to array conversion error.
     Hex(hex::HexToArrayError),
 }
 
+#[cfg(feature = "secp256k1")]
 internals::impl_from_infallible!(ParseCompressedPublicKeyError);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseCompressedPublicKeyError::*;
@@ -1054,6 +1154,7 @@ impl fmt::Display for ParseCompressedPublicKeyError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "secp256k1")]
 impl std::error::Error for ParseCompressedPublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParseCompressedPublicKeyError::*;
@@ -1065,10 +1166,12 @@ impl std::error::Error for ParseCompressedPublicKeyError {
     }
 }
 
-impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
-    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+#[cfg(feature = "secp256k1")]
+impl From<bare::PublicKeyDeserError> for ParseCompressedPublicKeyError {
+    fn from(e: bare::PublicKeyDeserError) -> Self { Self::Secp256k1(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
     fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
 }
@@ -1130,6 +1233,127 @@ impl fmt::Display for InvalidAddressVersionError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidAddressVersionError {}
+
+/// A trait for converting stable types to unstable types from `secp256k1` crate.
+///
+/// This trait provides an ergonomic way to convert the types without disrupting the stability of
+/// the stable types. If a direct conversion is not possible it falls back to serializing and then
+/// deserializing the type.
+#[cfg(feature = "secp256k1")]
+pub trait ToUnstable {
+    /// The unstable type `Self` can be converted to.
+    type Unstable;
+
+    /// Performs the conversion.
+    fn to_unstable(self) -> Self::Unstable;
+}
+
+/// A trait for converting unstable types from `secp256k1` crate to stable types.
+///
+/// This trait provides an ergonomic way to convert the types without disrupting the stability of
+/// the stable types. If a direct conversion is not possible it falls back to serializing and then
+/// deserializing the type.
+#[cfg(feature = "secp256k1")]
+pub trait ToStable {
+    /// The stable type `Self` can be converted to.
+    type Stable;
+
+    /// Performs the conversion.
+    fn to_stable(self) -> Self::Stable;
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToUnstable for bare::PublicKey {
+    type Unstable = secp256k1::PublicKey;
+
+    fn to_unstable(self) -> Self::Unstable {
+        bare::UnstableConversions::to_unstable(self, |key| {
+            secp256k1::PublicKey::from_slice(&key)
+                .expect("validity guaranteed by the trait")
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToStable for secp256k1::PublicKey {
+    type Stable = bare::PublicKey;
+
+    fn to_stable(self) -> Self::Stable {
+        bare::UnstableConversions::from_unstable(self, |key| {
+            key.serialize_uncompressed()
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToUnstable for bare::XOnlyPublicKey {
+    type Unstable = secp256k1::XOnlyPublicKey;
+
+    fn to_unstable(self) -> Self::Unstable {
+        bare::UnstableConversions::to_unstable(self, |key| {
+            secp256k1::XOnlyPublicKey::from_slice(&key)
+                .expect("validity guaranteed by the trait")
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToStable for secp256k1::XOnlyPublicKey {
+    type Stable = bare::XOnlyPublicKey;
+
+    fn to_stable(self) -> Self::Stable {
+        bare::UnstableConversions::from_unstable(self, |key| {
+            key.serialize()
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToUnstable for bare::PrivateKey {
+    type Unstable = secp256k1::SecretKey;
+
+    fn to_unstable(self) -> Self::Unstable {
+        bare::UnstableConversions::to_unstable(self, |key| {
+            secp256k1::SecretKey::from_slice(&key)
+                .expect("validity guaranteed by the trait")
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToStable for secp256k1::SecretKey {
+    type Stable = bare::PrivateKey;
+
+    fn to_stable(self) -> Self::Stable {
+        bare::UnstableConversions::from_unstable(self, |key| {
+            key.secret_bytes()
+        })
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToUnstable for Parity {
+    type Unstable = secp256k1::Parity;
+
+    fn to_unstable(self) -> Self::Unstable {
+        match self {
+            Parity::Even => secp256k1::Parity::Even,
+            Parity::Odd => secp256k1::Parity::Odd,
+        }
+    }
+}
+
+#[cfg(feature = "secp256k1")]
+impl ToStable for secp256k1::Parity {
+    type Stable = Parity;
+
+    fn to_stable(self) -> Self::Stable {
+        match self {
+            secp256k1::Parity::Even => Parity::Even,
+            secp256k1::Parity::Odd => Parity::Odd,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

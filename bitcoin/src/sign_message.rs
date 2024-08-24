@@ -134,9 +134,10 @@ mod message_signing {
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash,
         ) -> Result<PublicKey, MessageSignatureError> {
+            use crate::crypto::key::ToStable;
             let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
-            Ok(PublicKey { inner: pubkey, compressed: self.compressed })
+            Ok(PublicKey { inner: pubkey.to_stable(), compressed: self.compressed })
         }
 
         /// Verify that the signature signs the message and was signed by the given address.

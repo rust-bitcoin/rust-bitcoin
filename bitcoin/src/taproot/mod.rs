@@ -5,6 +5,7 @@
 //! This module provides support for Taproot tagged hashes.
 
 pub mod merkle_branch;
+#[cfg(feature = "secp256k1")]
 pub mod serialized_signature;
 
 use core::cmp::Reverse;
@@ -14,16 +15,20 @@ use core::iter::FusedIterator;
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
 use internals::write_err;
 use io::Write;
+#[cfg(feature = "secp256k1")]
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
-use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::crypto::key::{TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+#[cfg(feature = "secp256k1")]
+use crate::crypto::key::TapTweak;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{Script, ScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
 #[doc(inline)]
+#[cfg(feature = "secp256k1")]
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
@@ -82,6 +87,7 @@ impl TapTweakHash {
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+    #[cfg(feature = "secp256k1")]
     pub fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
         Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
@@ -190,13 +196,14 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 /// Note: This library currently does not support
 /// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg(feature = "secp256k1")]
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
     /// The Merkle root of the script tree (None if there are no scripts).
     merkle_root: Option<TapNodeHash>,
     /// The sign final output pubkey as per BIP 341.
-    output_key_parity: secp256k1::Parity,
+    output_key_parity: crate::crypto::key::Parity,
     /// The tweaked output key.
     output_key: TweakedPublicKey,
     /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranch`]. More than one control
@@ -206,6 +213,7 @@ pub struct TaprootSpendInfo {
     script_map: ScriptMerkleProofMap,
 }
 
+#[cfg(feature = "secp256k1")]
 impl TaprootSpendInfo {
     /// Creates a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -266,7 +274,7 @@ impl TaprootSpendInfo {
     pub fn output_key(&self) -> TweakedPublicKey { self.output_key }
 
     /// Returns the parity of the output key. See also [`TaprootSpendInfo::output_key`].
-    pub fn output_key_parity(&self) -> secp256k1::Parity { self.output_key_parity }
+    pub fn output_key_parity(&self) -> crate::crypto::key::Parity { self.output_key_parity }
 
     /// Returns a reference to the internal script map.
     pub fn script_map(&self) -> &ScriptMerkleProofMap { &self.script_map }
@@ -330,10 +338,12 @@ impl TaprootSpendInfo {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<TaprootSpendInfo> for TapTweakHash {
     fn from(spend_info: TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<&TaprootSpendInfo> for TapTweakHash {
     fn from(spend_info: &TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
 }
@@ -531,6 +541,7 @@ impl TaprootBuilder {
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
+    #[cfg(feature = "secp256k1")]
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
@@ -1092,7 +1103,7 @@ pub struct ControlBlock {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
-    pub output_key_parity: secp256k1::Parity,
+    pub output_key_parity: crate::crypto::key::Parity,
     /// The internal key.
     pub internal_key: UntweakedPublicKey,
     /// The Merkle proof of a script associated with this leaf.
@@ -1112,6 +1123,7 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
+    #[cfg(feature = "secp256k1")]
     pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
@@ -1119,12 +1131,12 @@ impl ControlBlock {
             return Err(InvalidControlBlockSizeError(sl.len()).into());
         }
         let output_key_parity = match sl[0] & 1 {
-            0 => secp256k1::Parity::Even,
-            _ => secp256k1::Parity::Odd,
+            0 => crate::crypto::key::Parity::Even,
+            _ => crate::crypto::key::Parity::Odd,
         };
 
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
+        let internal_key = UntweakedPublicKey::deserialize(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
@@ -1142,8 +1154,7 @@ impl ControlBlock {
     ///
     /// The number of bytes written to the writer.
     pub fn encode<W: Write + ?Sized>(&self, writer: &mut W) -> io::Result<usize> {
-        let first_byte: u8 =
-            i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
+        let first_byte = self.output_key_parity.to_u8() | self.leaf_version.to_consensus();
         writer.write_all(&[first_byte])?;
         writer.write_all(&self.internal_key.serialize())?;
         self.merkle_branch.encode(writer)?;
@@ -1165,12 +1176,14 @@ impl ControlBlock {
     ///
     /// Only checks that script is contained inside the [`TapTree`] described by output key. Full
     /// verification must also execute the script with witness data.
+    #[cfg(feature = "secp256k1")]
     pub fn verify_taproot_commitment<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
         output_key: XOnlyPublicKey,
         script: &Script,
     ) -> bool {
+        use crate::key::ToUnstable;
         // compute the script hash
         // Initially the curr_hash is the leaf hash
         let mut curr_hash = TapNodeHash::from_script(script, self.leaf_version);
@@ -1182,7 +1195,7 @@ impl ControlBlock {
         // compute the taptweak
         let tweak =
             TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash)).to_scalar();
-        self.internal_key.tweak_add_check(secp, &output_key, self.output_key_parity, tweak)
+        self.internal_key.to_unstable().tweak_add_check(secp, &output_key.to_unstable(), self.output_key_parity.to_unstable(), tweak)
     }
 }
 
@@ -1389,6 +1402,7 @@ impl From<InvalidMerkleTreeDepthError> for TaprootBuilderError {
 /// Detailed error type for Taproot utilities.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
+#[cfg(feature = "secp256k1")]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
     InvalidMerkleBranchSize(InvalidMerkleBranchSizeError),
@@ -1399,13 +1413,15 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid Taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(crate::key::bare::XOnlyPublicKeyDeserError),
     /// Empty Taproot tree.
     EmptyTree,
 }
 
+#[cfg(feature = "secp256k1")]
 internals::impl_from_infallible!(TaprootError);
 
+#[cfg(feature = "secp256k1")]
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use TaprootError::*;
@@ -1422,6 +1438,7 @@ impl fmt::Display for TaprootError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "secp256k1")]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use TaprootError::*;
@@ -1435,18 +1452,32 @@ impl std::error::Error for TaprootError {
     }
 }
 
+#[cfg(feature = "secp256k1")]
+impl From<merkle_branch::TaprootMerkleBranchDecodeError> for TaprootError {
+    fn from(e: merkle_branch::TaprootMerkleBranchDecodeError) -> Self {
+        match e {
+            merkle_branch::TaprootMerkleBranchDecodeError::InvalidMerkleBranchSize(e) => e.into(),
+            merkle_branch::TaprootMerkleBranchDecodeError::InvalidMerkleTreeDepth(e) => e.into(),
+        }
+    }
+}
+
+#[cfg(feature = "secp256k1")]
 impl From<InvalidMerkleBranchSizeError> for TaprootError {
     fn from(e: InvalidMerkleBranchSizeError) -> Self { Self::InvalidMerkleBranchSize(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<InvalidMerkleTreeDepthError> for TaprootError {
     fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<InvalidTaprootLeafVersionError> for TaprootError {
     fn from(e: InvalidTaprootLeafVersionError) -> Self { Self::InvalidTaprootLeafVersion(e) }
 }
 
+#[cfg(feature = "secp256k1")]
 impl From<InvalidControlBlockSizeError> for TaprootError {
     fn from(e: InvalidControlBlockSizeError) -> Self { Self::InvalidControlBlockSize(e) }
 }

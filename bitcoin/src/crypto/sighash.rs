@@ -35,6 +35,7 @@ pub(crate) const UINT256_ONE: [u8; 32] = [
 
 macro_rules! impl_message_from_hash {
     ($ty:ident) => {
+        #[cfg(feature = "secp256k1")]
         impl From<$ty> for secp256k1::Message {
             fn from(hash: $ty) -> secp256k1::Message {
                 secp256k1::Message::from_digest(hash.to_byte_array())

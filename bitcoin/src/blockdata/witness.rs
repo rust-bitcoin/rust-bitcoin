@@ -11,6 +11,7 @@ use io::{BufRead, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
+#[cfg(feature = "secp256k1")]
 use crate::crypto::ecdsa;
 use crate::prelude::{String, Vec};
 #[cfg(doc)]
@@ -251,7 +252,8 @@ impl Witness {
     /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
     ///
     /// It is expected that `pubkey` is related to the secret key used to create `signature`.
-    pub fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
+    #[cfg(feature = "secp256k1")]
+    pub fn p2wpkh(signature: ecdsa::Signature, pubkey: crate::crypto::key::CompressedPublicKey) -> Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
         witness.push_slice(&pubkey.serialize());
@@ -259,6 +261,7 @@ impl Witness {
     }
 
     /// Creates a witness required to do a key path spend of a P2TR output.
+    #[cfg(feature = "secp256k1")]
     pub fn p2tr_key_spend(signature: &taproot::Signature) -> Witness {
         let mut witness = Witness::new();
         witness.push_slice(&signature.serialize());
@@ -363,6 +366,7 @@ impl Witness {
     /// Pushes, as a new element on the witness, an ECDSA signature.
     ///
     /// Pushes the DER encoded signature + sighash_type, requires an allocation.
+    #[cfg(feature = "secp256k1")]
     pub fn push_ecdsa_signature(&mut self, signature: ecdsa::Signature) {
         self.push_slice(&signature.serialize())
     }

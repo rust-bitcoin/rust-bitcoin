@@ -13,7 +13,7 @@ use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacE
 use internals::{impl_array_newtype, write_err};
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
-use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
+use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey, ToStable};
 use crate::internal_macros::impl_array_newtype_stringify;
 use crate::network::NetworkKind;
 use crate::prelude::{String, Vec};
@@ -595,7 +595,7 @@ impl Xpriv {
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
     pub fn to_priv(self) -> PrivateKey {
-        PrivateKey { compressed: true, network: self.network, inner: self.private_key }
+        PrivateKey { compressed: true, network: self.network, inner: self.private_key.to_stable() }
     }
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
@@ -724,7 +724,9 @@ impl Xpub {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
+    pub fn to_pub(self) -> CompressedPublicKey {
+        CompressedPublicKey(self.public_key.to_stable())
+    }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
