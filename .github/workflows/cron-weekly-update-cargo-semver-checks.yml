@@ -14,7 +14,7 @@ jobs:
           set -x
           # Grab the latest version of cargo semver-checks from crates.io
           # that is not yanked.
-          LATEST_VERSION=$(curl --proto '=https' --tlsv1.3 -sSf https://crates.io/api/v1/crates/cargo-semver-checks/versions | jq -r 'first( .versions[] | select(.yanked =- false) ) | .num')
+          LATEST_VERSION=$(curl --proto '=https' --tlsv1.3 -sSf https://crates.io/api/v1/crates/cargo-semver-checks/versions | jq -r 'first( .versions[] | select(.yanked == false) ) | .num')
           # Update the latest version in the reference file.
           echo "${LATEST_VERSION}" > ./.github/workflows/cargo-semver-checks-version
           echo "cargo_semver_checks_version=${LATEST_VERSION}" >> $GITHUB_ENV
