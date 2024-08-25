@@ -11,7 +11,7 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{hash_newtype, sha256t_tag, sha256t, HashEngine};
+use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
 use internals::write_err;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
