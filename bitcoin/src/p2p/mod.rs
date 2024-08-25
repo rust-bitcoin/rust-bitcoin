@@ -109,7 +109,9 @@ impl ServiceFlags {
     ///
     /// Returns itself.
     pub fn remove(&mut self, other: ServiceFlags) -> ServiceFlags {
-        self.0 &= !other.0;
+        if self.has(other) {
+            self.0 &= !other.0;
+        }
         *self
     }
 
