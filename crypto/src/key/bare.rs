@@ -15,10 +15,10 @@ use core::fmt;
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PublicKey(UncompressedStorage);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 type UncompressedStorage = secp256k1::PublicKey;
 
-#[cfg(not(feature = "secp256k1"))]
+#[cfg(not(feature = "basic-key-ops"))]
 type UncompressedStorage = [u8; 64];
 
 impl PublicKey {
@@ -34,11 +34,11 @@ impl PublicKey {
     /// The bytes must begin with `0x04` and encode a valid point on the secp256k1 curve.
     /// The point is always uncompressed. The encoding is always big endian.
     pub unsafe fn deserialize_uncompressed_assume_valid(bytes: [u8; 65]) -> Self {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             Self::deserialize(&bytes).expect("validity guaranteed by the caller")
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             debug_assert_eq!(bytes[0], 0x04);
             Self(bytes[1..65].try_into().unwrap())
@@ -50,11 +50,11 @@ impl PublicKey {
     /// This function always returns the bytes that were passed to
     /// `deserialize_uncompressed_assume_valid` (unless UB was triggered).
     pub fn serialize_uncompressed(self) -> [u8; 65] {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             self.0.serialize_uncompressed()
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             let mut buf = internals::array_vec::ArrayVec::<u8, 65>::new();
             buf.push(0x04); // one byte
@@ -64,7 +64,7 @@ impl PublicKey {
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl PublicKey {
     /// Serializes the public key as compressed.
     pub fn serialize(self) -> [u8; 33] {
@@ -88,31 +88,40 @@ impl PublicKey {
 
 impl fmt::Debug for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             fmt::Debug::fmt(&self.0, f)
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(feature = "hex")]
         {
             use hex::DisplayHex;
             fmt::Debug::fmt(&self.0.as_hex(), f)
+        }
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(not(feature = "hex"))]
+        {
+            for b in &self.0 {
+                write!(f, "{:02x}", b)?;
+            }
+            Ok(())
         }
     }
 }
 
 /// An error returned when deserializing a [`PublicKey`] from bytes fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 pub struct PublicKeyDeserError(secp256k1::Error);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl fmt::Display for PublicKeyDeserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }
 }
 
-#[cfg(all(feature = "secp256k1", feature = "std"))]
+#[cfg(all(feature = "basic-key-ops", feature = "std"))]
 impl std::error::Error for PublicKeyDeserError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.0.source()
@@ -126,12 +135,15 @@ impl std::error::Error for PublicKeyDeserError {
 /// so we skip encoding it in Taproot. We use this type to denote that the key only encodes the X
 /// coordinate.
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+// TODO: fix this, it's just to get the compiler to shut up.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct XOnlyPublicKey(XOnlyStorage);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 type XOnlyStorage = secp256k1::XOnlyPublicKey;
 
-#[cfg(not(feature = "secp256k1"))]
+#[cfg(not(feature = "basic-key-ops"))]
 type XOnlyStorage = [u8; 32];
 
 impl XOnlyPublicKey {
@@ -147,11 +159,11 @@ impl XOnlyPublicKey {
     /// The bytes must encode the X coordinate of a point on the SECP256K1 curve. The encoding is
     /// always big endian.
     pub unsafe fn deserialize_assume_valid(bytes: [u8; 32]) -> Self {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             Self::deserialize(&bytes).expect("validity guaranteed by the caller")
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             Self(bytes)
         }
@@ -162,18 +174,18 @@ impl XOnlyPublicKey {
     /// This function always returns the bytes that were passed to
     /// `deserialize_assume_valid` (unless UB was triggered).
     pub fn serialize(self) -> [u8; 32] {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             self.0.serialize()
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             self.0
         }
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl XOnlyPublicKey {
     /// Deserializes the key using its X coordinate.
     ///
@@ -187,25 +199,35 @@ impl XOnlyPublicKey {
 
 impl fmt::Debug for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             fmt::Debug::fmt(&self.0, f)
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(feature = "hex")]
         {
             use hex::DisplayHex;
             fmt::Debug::fmt(&self.0.as_hex(), f)
         }
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(not(feature = "hex"))]
+        {
+            for b in &self.0 {
+                write!(f, "{:02x}", b)?;
+            }
+            Ok(())
+        }
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             fmt::Display::fmt(&self.0, f)
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             use hex::DisplayHex;
             fmt::Display::fmt(&self.0.as_hex(), f)
@@ -213,20 +235,21 @@ impl fmt::Display for XOnlyPublicKey {
     }
 }
 
-#[cfg(all(feature = "secp256k1", feature = "std"))]
+#[cfg(all(feature = "basic-key-ops", feature = "std"))]
 impl std::error::Error for XOnlyPublicKeyDeserError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.0.source()
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for XOnlyPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             fmt::LowerHex::fmt(&self.0, f)
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             use hex::DisplayHex;
             fmt::LowerHex::fmt(&self.0.as_hex(), f)
@@ -236,10 +259,10 @@ impl fmt::LowerHex for XOnlyPublicKey {
 
 /// An error returned when deserializing a [`XOnlyPublicKey`] from bytes fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 pub struct XOnlyPublicKeyDeserError(secp256k1::Error);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl fmt::Display for XOnlyPublicKeyDeserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
@@ -253,10 +276,10 @@ impl fmt::Display for XOnlyPublicKeyDeserError {
 #[derive(Clone, Copy)]
 pub struct PrivateKey(PrivKeyStorage);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 type PrivKeyStorage = secp256k1::SecretKey;
 
-#[cfg(not(feature = "secp256k1"))]
+#[cfg(not(feature = "basic-key-ops"))]
 type PrivKeyStorage = [u8; 32];
 
 
@@ -273,11 +296,11 @@ impl PrivateKey {
     /// The bytes must encode a valid non-zero SECP256K1 scalar lower than the order of the curve.
     /// The encoding is always big endian.
     pub unsafe fn deserialize_assume_valid(bytes: [u8; 32]) -> Self {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
-            Self::deserialize(bytes).expect("validity guaranteed by the caller")
+            Self::deserialize(&bytes).expect("validity guaranteed by the caller")
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             Self(bytes)
         }
@@ -287,11 +310,11 @@ impl PrivateKey {
     ///
     /// This simply returns the secret bytes passed in.
     pub fn serialize(self) -> [u8; 32] {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             self.0.secret_bytes()
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
             self.0
         }
@@ -301,23 +324,40 @@ impl PrivateKey {
     ///
     /// This function always returns the bytes that were passed to
     /// `deserialize_assume_valid` (unless UB was triggered).
-    #[cfg(feature = "secp256k1")]
-    pub fn deserialize(bytes: [u8; 32]) -> Result<Self, PrivateKeyDeserError> {
+    #[cfg(feature = "basic-key-ops")]
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, PrivateKeyDeserError> {
         secp256k1::SecretKey::from_slice(&bytes).map(Self).map_err(PrivateKeyDeserError)
     }
 }
 
 impl fmt::Debug for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             fmt::Debug::fmt(&self.0, f)
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
+        // TODO: make hex imply hashes?/hex
+        #[cfg(feature = "hex")]
+        #[cfg(feature = "hashes")]
         {
-            use hex::DisplayHex;
             let hash = hashes::sha256::Hash::hash(&self.0);
             write!(f, "{:.16}", hash)
+        }
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(not(feature = "hex"))]
+        #[cfg(feature = "hashes")]
+        {
+            let hash = hashes::sha256::Hash::hash(&self.0);
+            for b in hash.to_byte_array() {
+                write!(f, "{:02x}", b)?;
+            }
+            Ok(())
+        }
+        #[cfg(not(feature = "basic-key-ops"))]
+        #[cfg(not(feature = "hashes"))]
+        {
+            write!(f, "<secret key; turn on the `hashes` feature on `bitcoin-crypto` to see fingerprint>")
         }
     }
 }
@@ -326,18 +366,18 @@ impl Eq for PrivateKey {}
 
 impl PartialEq for PrivateKey {
     fn eq(&self, other: &Self) -> bool {
-        #[cfg(feature = "secp256k1")]
+        #[cfg(feature = "basic-key-ops")]
         {
             self.0 == other.0
         }
-        #[cfg(not(feature = "secp256k1"))]
+        #[cfg(not(feature = "basic-key-ops"))]
         {
         todo!()
         }
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl From<PublicKey> for XOnlyPublicKey {
     fn from(key: PublicKey) -> Self {
         Self(key.0.into())
@@ -345,18 +385,18 @@ impl From<PublicKey> for XOnlyPublicKey {
 }
 
 /// An error returned when deserializing a [`PrivateKey`] from bytes fails.
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrivateKeyDeserError(pub(super) secp256k1::Error);
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl fmt::Display for PrivateKeyDeserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }
 }
 
-#[cfg(all(feature = "secp256k1", feature = "std"))]
+#[cfg(all(feature = "basic-key-ops", feature = "std"))]
 impl std::error::Error for PrivateKeyDeserError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.0.source()
@@ -378,7 +418,7 @@ impl std::error::Error for PrivateKeyDeserError {
 /// versions are different the conversion will happen by serializing and then deserializing the
 /// value.
 #[doc(hidden)]
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 pub trait UnstableConversions: Sized + sealed::Sealed {
     /// A byte array that can hold the serialized version of the key.
     type Bytes;
@@ -407,9 +447,9 @@ pub trait UnstableConversions: Sized + sealed::Sealed {
     fn from_unstable<T: 'static + Copy>(key: T, f: impl Fn(T) -> Self::Bytes) -> Self;
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl sealed::Sealed for PublicKey {}
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl UnstableConversions for PublicKey {
     type Bytes = [u8; 65];
 
@@ -432,9 +472,9 @@ impl UnstableConversions for PublicKey {
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl sealed::Sealed for XOnlyPublicKey {}
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl UnstableConversions for XOnlyPublicKey {
     type Bytes = [u8; 32];
 
@@ -457,9 +497,9 @@ impl UnstableConversions for XOnlyPublicKey {
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl sealed::Sealed for PrivateKey {}
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 impl UnstableConversions for PrivateKey {
     type Bytes = [u8; 32];
 
@@ -477,12 +517,12 @@ impl UnstableConversions for PrivateKey {
         use core::any::Any;
         match (&key as &dyn Any).downcast_ref() {
             Some(same) => Self(*same),
-            None => Self::deserialize(f(key)).unwrap(),
+            None => Self::deserialize(&f(key)).unwrap(),
         }
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(feature = "basic-key-ops")]
 mod sealed {
     #[doc(hidden)]
     pub trait Sealed {}
