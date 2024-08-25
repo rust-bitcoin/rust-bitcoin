@@ -386,12 +386,8 @@ mod tests {
     #[cfg(feature = "serde")]
     fn serde_roundtrip() {
         use Network::*;
-        let tests = [
-            (Bitcoin, "bitcoin"),
-            (Testnet, "testnet"),
-            (Signet, "signet"),
-            (Regtest, "regtest"),
-        ];
+        let tests =
+            [(Bitcoin, "bitcoin"), (Testnet, "testnet"), (Signet, "signet"), (Regtest, "regtest")];
 
         for tc in tests {
             let network = tc.0;

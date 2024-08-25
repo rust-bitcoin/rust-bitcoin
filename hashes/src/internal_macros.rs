@@ -166,7 +166,7 @@ macro_rules! hash_type {
                 <Self as crate::GeneralHash>::hash_reader(reader)
             }
         }
-    }
+    };
 }
 pub(crate) use hash_type;
 

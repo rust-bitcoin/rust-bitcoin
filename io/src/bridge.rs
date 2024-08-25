@@ -1,5 +1,6 @@
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
+
 use internals::rust_version;
 
 /// A bridging wrapper providing the IO traits for types that already implement `std` IO traits.

@@ -155,26 +155,18 @@ impl<'a, R: BufRead + ?Sized> BufRead for Take<'a, R> {
 
 impl<T: Read> Read for &'_ mut T {
     #[inline]
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        (**self).read(buf)
-    }
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> { (**self).read(buf) }
 
     #[inline]
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        (**self).read_exact(buf)
-    }
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> { (**self).read_exact(buf) }
 }
 
 impl<T: BufRead> BufRead for &'_ mut T {
     #[inline]
-    fn fill_buf(&mut self) -> Result<&[u8]> {
-        (**self).fill_buf()
-    }
+    fn fill_buf(&mut self) -> Result<&[u8]> { (**self).fill_buf() }
 
     #[inline]
-    fn consume(&mut self, amount: usize) {
-        (**self).consume(amount)
-    }
+    fn consume(&mut self, amount: usize) { (**self).consume(amount) }
 }
 
 impl Read for &[u8] {
@@ -285,19 +277,13 @@ pub trait Write {
 
 impl<T: Write> Write for &'_ mut T {
     #[inline]
-    fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        (**self).write(buf)
-    }
+    fn write(&mut self, buf: &[u8]) -> Result<usize> { (**self).write(buf) }
 
     #[inline]
-    fn write_all(&mut self, buf: &[u8]) -> Result<()> {
-        (**self).write_all(buf)
-    }
+    fn write_all(&mut self, buf: &[u8]) -> Result<()> { (**self).write_all(buf) }
 
     #[inline]
-    fn flush(&mut self) -> Result<()> {
-        (**self).flush()
-    }
+    fn flush(&mut self) -> Result<()> { (**self).flush() }
 }
 
 #[cfg(feature = "alloc")]

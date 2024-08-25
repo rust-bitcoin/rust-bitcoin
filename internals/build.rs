@@ -36,7 +36,8 @@ fn main() {
 
     let out_dir = std::env::var_os("OUT_DIR").expect("missing OUT_DIR env var");
     let out_dir = std::path::PathBuf::from(out_dir);
-    let macro_file = std::fs::File::create(out_dir.join("rust_version.rs")).expect("failed to create rust_version.rs");
+    let macro_file = std::fs::File::create(out_dir.join("rust_version.rs"))
+        .expect("failed to create rust_version.rs");
     let macro_file = io::BufWriter::new(macro_file);
     write_macro(macro_file, msrv_minor, minor).expect("failed to write to rust_version.rs");
 }
@@ -63,17 +64,28 @@ fn write_macro(mut macro_file: impl io::Write, msrv_minor: u64, minor: u64) -> i
     // These two loops are the magic; we output the clause if_yes/if_no
     // dependent on the current compiler version (`minor`).
     for version in msrv_minor..=minor {
-        writeln!(macro_file, "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{", version)?;
+        writeln!(
+            macro_file,
+            "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{",
+            version
+        )?;
         writeln!(macro_file, "        $($if_yes)*")?;
         writeln!(macro_file, "    }};")?;
     }
     for version in (minor + 1)..(MAX_USED_VERSION + 1) {
-        writeln!(macro_file, "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{", version)?;
+        writeln!(
+            macro_file,
+            "    (if >= 1.{} {{ $($if_yes:tt)* }} $(else {{ $($if_no:tt)* }})?) => {{",
+            version
+        )?;
         writeln!(macro_file, "        $($($if_no)*)?")?;
         writeln!(macro_file, "    }};")?;
     }
     writeln!(macro_file, "    (if >= $unknown:tt $($rest:tt)*) => {{")?;
-    writeln!(macro_file, "        compile_error!(concat!(\"unknown Rust version \", stringify!($unknown)));")?;
+    writeln!(
+        macro_file,
+        "        compile_error!(concat!(\"unknown Rust version \", stringify!($unknown)));"
+    )?;
     writeln!(macro_file, "    }};")?;
     writeln!(macro_file, "}}")?;
     writeln!(macro_file, "pub use rust_version;")?;
