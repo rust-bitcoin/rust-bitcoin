@@ -1,3 +1,14 @@
+# 1.0.0 - 2024-08-26
+
+There are no code changes between `v0.32.2` and `v1.0.0`.
+
+This release is an acknowledgement that:
+
+- We will support this version into the future.
+- We will backport security fixes and non-breaking changes.
+- We will provide a compat layer for the `primitives` release
+  so that you are not required to upgrade further if you do not wish to.
+
 # 0.32.2 - 2024-06-07
 
 - Fix a bug when parsing 256-bit numeric types [#2837](https://github.com/rust-bitcoin/rust-bitcoin/pull/2837)
