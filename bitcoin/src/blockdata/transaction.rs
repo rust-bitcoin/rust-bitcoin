@@ -29,6 +29,9 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount, VarInt};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
     ///
@@ -396,6 +399,16 @@ impl TxOut {
     /// [`minimal_non_dust`]: TxOut::minimal_non_dust
     pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
         TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxOut {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxOut {
+            value: Amount::arbitrary(u)?,
+            script_pubkey: ScriptBuf::arbitrary(u)?,
+        })
     }
 }
 

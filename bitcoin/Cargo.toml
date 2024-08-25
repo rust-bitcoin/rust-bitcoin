@@ -22,6 +22,7 @@ rand = ["secp256k1/rand"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
+arbitrary = ["dep:arbitrary", "units/arbitrary"]
 
 [dependencies]
 base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
@@ -40,6 +41,7 @@ ordered = { version = "0.2.0", optional = true }
 bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
 
 serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+arbitrary = { version = "1", optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["test-serde"] }
