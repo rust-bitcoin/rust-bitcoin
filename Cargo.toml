@@ -17,5 +17,13 @@ path = "internals"
 [patch.crates-io.bitcoin-io]
 path = "io"
 
+# TEMPORARY patches for branchesh that imitate next releases.
+
+[patch.crates-io.bitcoin-primitives]
+git = "https://github.com/tcharding/rust-bitcoin"
+branch = "WIP-primitives-0.101.0"
+
 [patch.crates-io.bitcoin-units]
-path = "units"
+git = "https://github.com/tcharding/rust-bitcoin"
+branch = "WIP-units-0.1.3"
+

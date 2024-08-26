@@ -83,6 +83,8 @@ pub extern crate secp256k1;
 #[macro_use]
 extern crate actual_serde as serde;
 
+#[cfg(feature = "primitives")]
+mod compat;
 #[cfg(test)]
 #[macro_use]
 mod test_macros;

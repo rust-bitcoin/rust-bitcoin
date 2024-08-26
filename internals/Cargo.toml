@@ -26,3 +26,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 serde = { version = "1.0.103", default-features = false, optional = true }
 
 [dev-dependencies]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(rust_v_1_61)', 'cfg(rust_v_1_64)'] }
+

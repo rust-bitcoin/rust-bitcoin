@@ -1521,7 +1521,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(not(feature = "std"), feature = "no-std"))]
+    #[cfg(not(feature = "std"))]
     fn private_key_debug_is_obfuscated() {
         let sk =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();

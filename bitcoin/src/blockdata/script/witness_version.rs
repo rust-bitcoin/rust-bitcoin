@@ -12,7 +12,7 @@ use core::str::FromStr;
 
 use bech32::Fe32;
 use internals::write_err;
-use units::{parse, ParseIntError};
+use units::parse::{self, ParseIntError};
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::Opcode;
