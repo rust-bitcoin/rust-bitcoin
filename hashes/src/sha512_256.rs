@@ -133,7 +133,7 @@ mod tests {
             }
             let manual_hash = sha512_256::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 }

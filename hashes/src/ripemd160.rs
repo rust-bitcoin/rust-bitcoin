@@ -489,7 +489,7 @@ mod tests {
             }
             let manual_hash = ripemd160::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.as_byte_array(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 
