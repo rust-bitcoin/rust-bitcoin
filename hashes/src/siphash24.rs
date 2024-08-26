@@ -318,7 +318,7 @@ mod tests {
 
         for i in 0..64 {
             vin[i] = i as u8;
-            let vec = Hash::from_slice(&vecs[i][..]).unwrap();
+            let vec = Hash::from_slice(&vecs[i]).unwrap();
             let out = Hash::hash_with_keys(k0, k1, &vin[0..i]);
             assert_eq!(vec, out, "vec #{}", i);
 
