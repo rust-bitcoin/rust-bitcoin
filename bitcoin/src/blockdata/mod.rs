@@ -41,8 +41,7 @@ pub mod fee_rate {
             let raw_tx = hex!(SOME_TX);
             let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
 
-            let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
-
+            let rate = FeeRate::from_sat_per_vb(1);
             assert_eq!(rate.fee_vb(tx.vsize().to_u64()), rate.fee_wu(tx.weight()));
         }
     }

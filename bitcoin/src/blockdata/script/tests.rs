@@ -699,7 +699,7 @@ fn defult_dust_value_tests() {
     assert!(script_p2wpkh.is_p2wpkh());
     assert_eq!(script_p2wpkh.minimal_non_dust(), crate::Amount::from_sat(294));
     assert_eq!(
-        script_p2wpkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
+        script_p2wpkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb(6)),
         crate::Amount::from_sat(588)
     );
 
@@ -713,7 +713,7 @@ fn defult_dust_value_tests() {
     assert!(script_p2pkh.is_p2pkh());
     assert_eq!(script_p2pkh.minimal_non_dust(), crate::Amount::from_sat(546));
     assert_eq!(
-        script_p2pkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
+        script_p2pkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb(6)),
         crate::Amount::from_sat(1092)
     );
 }

@@ -40,28 +40,21 @@ impl FeeRate {
     /// Minimum fee rate required to broadcast a transaction.
     ///
     /// The value matches the default Bitcoin Core policy at the time of library release.
-    pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb_unchecked(1);
+    pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb(1);
 
     /// Fee rate used to compute dust amount.
-    pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
+    pub const DUST: FeeRate = FeeRate::from_sat_per_vb(3);
 
     /// Constructs [`FeeRate`] from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
 
     /// Constructs [`FeeRate`] from satoshis per virtual bytes.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`None`] on arithmetic overflow.
-    pub fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
+    pub const fn from_sat_per_vb(sat_vb: u32) -> Self {
         // 1 vb == 4 wu
         // 1 sat/vb == 1/4 sat/wu
         // sat_vb sat/vb * 1000 / 4 == sat/kwu
-        Some(FeeRate(sat_vb.checked_mul(1000 / 4)?))
+        FeeRate(sat_vb as u64 * (1000 / 4))
     }
-
-    /// Constructs [`FeeRate`] from satoshis per virtual bytes without overflow check.
-    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate(sat_vb * (1000 / 4)) }
 
     /// Returns raw fee rate.
     ///
@@ -171,26 +164,11 @@ mod tests {
 
     #[test]
     fn fee_rate_from_sat_per_vb_test() {
-        let fee_rate = FeeRate::from_sat_per_vb(10).expect("expected feerate in sat/kwu");
+        let fee_rate = FeeRate::from_sat_per_vb(10);
         assert_eq!(FeeRate(2500), fee_rate);
+        // doesn't panic
+        let _ = FeeRate::from_sat_per_vb(u32::MAX);
     }
-
-    #[test]
-    fn fee_rate_from_sat_per_vb_overflow_test() {
-        let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
-        assert!(fee_rate.is_none());
-    }
-
-    #[test]
-    fn from_sat_per_vb_unchecked_test() {
-        let fee_rate = FeeRate::from_sat_per_vb_unchecked(10);
-        assert_eq!(FeeRate(2500), fee_rate);
-    }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic]
-    fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 
     #[test]
     fn raw_feerate_test() {
@@ -213,7 +191,6 @@ mod tests {
     fn checked_weight_mul_test() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
-            .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
         assert_eq!(Amount::from_sat(100), fee);
@@ -222,7 +199,7 @@ mod tests {
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();
-        let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
+        let fee_rate = FeeRate::from_sat_per_vb(3);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         assert_eq!(Amount::from_sat(9), fee);
     }
