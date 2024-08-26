@@ -164,7 +164,6 @@ impl<'de, T: GeneralHash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(feature = "alloc")]
     fn test() {
         use crate::{sha256, GeneralHash as _, Hash as _, HashEngine, Hmac, HmacEngine};
 

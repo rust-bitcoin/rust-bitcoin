@@ -55,7 +55,6 @@ mod tests {
         use crate::{hash160, HashEngine};
 
         #[derive(Clone)]
-        #[cfg(feature = "alloc")]
         struct Test {
             input: [u8; 65],
             output: [u8; 20],
