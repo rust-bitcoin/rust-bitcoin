@@ -88,8 +88,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = hash160::Hash::hash(&test.input[..]);
             assert_eq!(hash, test.output_str.parse::<hash160::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = hash160::Hash::engine();

@@ -183,8 +183,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha1::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha1::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = sha1::Hash::engine();
