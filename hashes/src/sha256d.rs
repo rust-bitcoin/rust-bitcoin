@@ -43,11 +43,14 @@ fn from_engine(e: HashEngine) -> Hash {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)] // whether this is used depends on features
     use crate::sha256d;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha256, HashEngine};
 
         #[derive(Clone)]
@@ -97,7 +100,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn fmt_roundtrips() {
+        use alloc::format;
+
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
         let rinsed = hex.parse::<sha256d::Hash>().expect("failed to parse hex");

@@ -51,6 +51,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use super::Hash;
         use crate::{hash160, HashEngine};
 

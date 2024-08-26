@@ -400,28 +400,40 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn display() {
+        use alloc::format;
+
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{}", TestHash::all_zeros());
         assert_eq!(got, want)
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn display_alternate() {
+        use alloc::format;
+
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#}", TestHash::all_zeros());
         assert_eq!(got, want)
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn lower_hex() {
+        use alloc::format;
+
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:x}", TestHash::all_zeros());
         assert_eq!(got, want)
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn lower_hex_alternate() {
+        use alloc::format;
+
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());
         assert_eq!(got, want)

@@ -132,6 +132,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha1, HashEngine};
 
         #[derive(Clone)]

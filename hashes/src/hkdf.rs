@@ -5,9 +5,9 @@
 //! Implementation based on RFC5869, but the interface is scoped
 //! to BIP324's requirements.
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 use alloc::vec;
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 use core::fmt;
 

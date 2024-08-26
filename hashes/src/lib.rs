@@ -62,7 +62,7 @@
 //! # fn main() {}
 //! ```
 
-#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
@@ -75,9 +75,9 @@
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 #![allow(clippy::needless_borrows_for_generic_args)] // https://github.com/rust-lang/rust-clippy/issues/12454
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
-#[cfg(any(test, feature = "std"))]
+
 extern crate core;
 
 #[cfg(feature = "bitcoin-io")]
@@ -334,16 +334,19 @@ mod tests {
         struct TestNewtype2(sha256d::Hash);
     }
 
-    #[rustfmt::skip]
-    const DUMMY: TestNewtype = TestNewtype::from_byte_array([
-        0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89,
-        0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, 0x8a,
-        0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, 0x8b,
-        0x15, 0x26, 0x37, 0x48, 0x59, 0x6a, 0x7b, 0x8c,
-    ]);
-
     #[test]
+    #[cfg(feature = "alloc")]
     fn newtype_fmt_roundtrip() {
+        use alloc::format;
+
+        #[rustfmt::skip]
+        const DUMMY: TestNewtype = TestNewtype::from_byte_array([
+            0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89,
+            0x13, 0x24, 0x35, 0x46, 0x57, 0x68, 0x79, 0x8a,
+            0x14, 0x25, 0x36, 0x47, 0x58, 0x69, 0x7a, 0x8b,
+            0x15, 0x26, 0x37, 0x48, 0x59, 0x6a, 0x7b, 0x8c,
+        ]);
+
         let orig = DUMMY;
         let hex = format!("{}", orig);
         let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");

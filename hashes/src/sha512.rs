@@ -310,6 +310,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha512, HashEngine};
 
         #[derive(Clone)]

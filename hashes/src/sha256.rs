@@ -864,12 +864,16 @@ impl HashEngine {
 
 #[cfg(test)]
 mod tests {
+    use core::array;
+
     use super::*;
     use crate::{sha256, HashEngine};
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         #[derive(Clone)]
         struct Test {
             input: &'static str,
@@ -931,7 +935,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn fmt_roundtrips() {
+        use alloc::format;
+
         let hash = sha256::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
         let rinsed = hex.parse::<sha256::Hash>().expect("failed to parse hex");
@@ -1023,14 +1030,13 @@ mod tests {
 
     #[test]
     fn hash_unoptimized() {
-        assert_eq!(Hash::hash(&[]), Hash::hash_unoptimized(&[]));
+        let bytes: [u8; 256] = array::from_fn(|i| i as u8);
 
-        let mut bytes = Vec::new();
-        for i in 0..256 {
-            bytes.push(i as u8);
+        for i in 0..=256 {
+            let bytes = &bytes[0..i];
             assert_eq!(
-                Hash::hash(&bytes),
-                Hash::hash_unoptimized(&bytes),
+                Hash::hash(bytes),
+                Hash::hash_unoptimized(bytes),
                 "hashes don't match for length {}",
                 i + 1
             );
@@ -1050,7 +1056,10 @@ mod tests {
     fn const_midstate() { assert_eq!(Midstate::hash_tag(b"TapLeaf"), TAP_LEAF_MIDSTATE,) }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn regression_midstate_debug_format() {
+        use alloc::format;
+
         let want = "Midstate { bytes: 9ce0e4e67c116c3938b3caf2c30f5089d3f3936c47636e607db33eeaddc6f0c9, length: 64 }";
         let got = format!("{:?}", TAP_LEAF_MIDSTATE);
         assert_eq!(got, want);

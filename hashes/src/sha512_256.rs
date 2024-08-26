@@ -55,6 +55,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha512_256, HashEngine};
 
         #[derive(Clone)]

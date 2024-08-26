@@ -413,6 +413,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{ripemd160, HashEngine};
 
         #[derive(Clone)]
