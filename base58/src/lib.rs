@@ -18,7 +18,6 @@
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
 
-#[macro_use]
 extern crate alloc;
 
 #[cfg(bench)]
@@ -69,7 +68,7 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 /// Decodes a base58-encoded string into a byte vector.
 pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // 11/15 is just over log_256(58)
-    let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
+    let mut scratch = Vec::with_capacity(1 + data.len() * 11 / 15);
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
@@ -82,10 +81,17 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
                 return Err(InvalidCharacterError { invalid: d58 });
             }
         };
-        for d256 in scratch.iter_mut().rev() {
-            carry += u32::from(*d256) * 58;
-            *d256 = carry as u8; // cast loses data intentionally
-            carry /= 256;
+        if scratch.is_empty() {
+            for _ in 0..scratch.capacity() {
+                scratch.push(carry as u8);
+                carry /= 256;
+            }
+        } else {
+            for d256 in scratch.iter_mut() {
+                carry += u32::from(*d256) * 58;
+                *d256 = carry as u8; // cast loses data intentionally
+                carry /= 256;
+            }
         }
         assert_eq!(carry, 0);
     }
@@ -93,7 +99,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     // Copy leading zeroes directly
     let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
-    ret.extend(scratch.into_iter().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().rev().skip_while(|&x| x == 0));
     Ok(ret)
 }
 
@@ -241,6 +247,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
     use hex::test_hex_unwrap as hex;
 
     use super::*;
