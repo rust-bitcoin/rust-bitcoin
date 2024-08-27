@@ -354,9 +354,9 @@ impl TxOut {
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 }
 
-mod tmp {
-    use super::*;
-    impl TxOut {
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TxOut`] type.
+    pub trait TxOutExt impl for TxOut {
         /// The weight of this output.
         ///
         /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
@@ -367,7 +367,7 @@ mod tmp {
         ///
         /// If output size * 4 overflows, this should never happen under normal conditions. Use
         /// `Weght::from_vb_checked(self.size().to_u64())` if you are concerned.
-        pub fn weight(&self) -> Weight {
+        fn weight(&self) -> Weight {
             // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
             Weight::from_vb(self.size().to_u64())
                 .expect("should never happen under normal conditions")
@@ -376,7 +376,7 @@ mod tmp {
         /// Returns the total number of bytes that this output contributes to a transaction.
         ///
         /// There is no difference between base size vs total size for outputs.
-        pub fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
+        fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
 
         /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
         /// per current Core policy.
@@ -387,7 +387,7 @@ mod tmp {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-        pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
+        fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
             TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
@@ -402,7 +402,7 @@ mod tmp {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-        pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
+        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
             TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
         }
     }
