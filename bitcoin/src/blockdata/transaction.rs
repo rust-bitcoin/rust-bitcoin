@@ -352,7 +352,9 @@ impl TxOut {
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+}
 
+impl TxOut {
     /// The weight of this output.
     ///
     /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
