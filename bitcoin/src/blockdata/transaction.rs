@@ -355,56 +355,57 @@ impl TxOut {
 }
 
 mod tmp {
-use super::*;
-impl TxOut {
-    /// The weight of this output.
-    ///
-    /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
-    /// transaction might increase more than `TxOut::weight`. This happens when the new output added
-    /// causes the output length `VarInt` to increase its encoding length.
-    ///
-    /// # Panics
-    ///
-    /// If output size * 4 overflows, this should never happen under normal conditions. Use
-    /// `Weght::from_vb_checked(self.size().to_u64())` if you are concerned.
-    pub fn weight(&self) -> Weight {
-        // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
-        Weight::from_vb(self.size().to_u64()).expect("should never happen under normal conditions")
-    }
+    use super::*;
+    impl TxOut {
+        /// The weight of this output.
+        ///
+        /// Keep in mind that when adding a [`TxOut`] to a [`Transaction`] the total weight of the
+        /// transaction might increase more than `TxOut::weight`. This happens when the new output added
+        /// causes the output length `VarInt` to increase its encoding length.
+        ///
+        /// # Panics
+        ///
+        /// If output size * 4 overflows, this should never happen under normal conditions. Use
+        /// `Weght::from_vb_checked(self.size().to_u64())` if you are concerned.
+        pub fn weight(&self) -> Weight {
+            // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
+            Weight::from_vb(self.size().to_u64())
+                .expect("should never happen under normal conditions")
+        }
 
-    /// Returns the total number of bytes that this output contributes to a transaction.
-    ///
-    /// There is no difference between base size vs total size for outputs.
-    pub fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
+        /// Returns the total number of bytes that this output contributes to a transaction.
+        ///
+        /// There is no difference between base size vs total size for outputs.
+        pub fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
 
-    /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
-    /// per current Core policy.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
-    ///
-    /// To use a custom value, use [`minimal_non_dust_custom`].
-    ///
-    /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-    pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
-        TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
-    }
+        /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
+        /// per current Core policy.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function uses the default value of 0.00003 BTC/kB (3 sat/vByte).
+        ///
+        /// To use a custom value, use [`minimal_non_dust_custom`].
+        ///
+        /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
+        pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
+            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
+        }
 
-    /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
-    /// per current Core policy.
-    ///
-    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
-    /// This function lets you set the fee rate used in dust calculation.
-    ///
-    /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
-    ///
-    /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
-    ///
-    /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-    pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
-        TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+        /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
+        /// per current Core policy.
+        ///
+        /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
+        /// This function lets you set the fee rate used in dust calculation.
+        ///
+        /// The current default value in Bitcoin Core (as of v26) is 3 sat/vByte.
+        ///
+        /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
+        ///
+        /// [`minimal_non_dust`]: TxOut::minimal_non_dust
+        pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
+            TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+        }
     }
-}
 }
 
 #[cfg(feature = "arbitrary")]
