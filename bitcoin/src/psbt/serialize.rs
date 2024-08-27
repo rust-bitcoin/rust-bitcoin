@@ -7,6 +7,7 @@
 //!
 
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use hex::DisplayHex;
 use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
@@ -17,7 +18,8 @@ use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::prelude::*;
+use crate::io::Write;
+use crate::prelude::{String, Vec};
 use crate::psbt::{Error, Psbt};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
@@ -43,40 +45,57 @@ impl Psbt {
     /// Serialize as raw binary data
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = Vec::new();
-
-        //  <magic>
-        buf.extend_from_slice(b"psbt");
-
-        buf.push(0xff_u8);
-
-        buf.extend(self.serialize_map());
-
-        for i in &self.inputs {
-            buf.extend(i.serialize_map());
-        }
-
-        for i in &self.outputs {
-            buf.extend(i.serialize_map());
-        }
-
+        self.serialize_to_writer(&mut buf).expect("Writing to Vec can't fail");
         buf
     }
 
+    /// Serialize the PSBT into a writer.
+    pub fn serialize_to_writer(&self, w: &mut impl Write) -> io::Result<usize> {
+        let mut written_len = 0;
+
+        fn write_all(w: &mut impl Write, data: &[u8]) -> io::Result<usize> {
+            w.write_all(data).map(|_| data.len())
+        }
+
+        // magic
+        written_len += write_all(w, b"psbt")?;
+        // separator
+        written_len += write_all(w, &[0xff])?;
+
+        written_len += write_all(w, &self.serialize_map())?;
+
+        for i in &self.inputs {
+            written_len += write_all(w, &i.serialize_map())?;
+        }
+
+        for i in &self.outputs {
+            written_len += write_all(w, &i.serialize_map())?;
+        }
+
+        Ok(written_len)
+    }
+
     /// Deserialize a value from raw binary data.
-    pub fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn deserialize(mut bytes: &[u8]) -> Result<Self, Error> {
+        Self::deserialize_from_reader(&mut bytes)
+    }
+
+    /// Deserialize a value from raw binary data read from a `BufRead` object.
+    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
         const MAGIC_BYTES: &[u8] = b"psbt";
-        if bytes.get(0..MAGIC_BYTES.len()) != Some(MAGIC_BYTES) {
+
+        let magic: [u8; 4] = Decodable::consensus_decode(r)?;
+        if magic != MAGIC_BYTES {
             return Err(Error::InvalidMagic);
         }
 
         const PSBT_SERPARATOR: u8 = 0xff_u8;
-        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SERPARATOR) {
+        let separator: u8 = Decodable::consensus_decode(r)?;
+        if separator != PSBT_SERPARATOR {
             return Err(Error::InvalidSeparator);
         }
 
-        let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
-
-        let mut global = Psbt::decode_global(&mut d)?;
+        let mut global = Psbt::decode_global(r)?;
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
@@ -85,7 +104,7 @@ impl Psbt {
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
             for _ in 0..inputs_len {
-                inputs.push(Input::decode(&mut d)?);
+                inputs.push(Input::decode(r)?);
             }
 
             inputs
@@ -97,7 +116,7 @@ impl Psbt {
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
             for _ in 0..outputs_len {
-                outputs.push(Output::decode(&mut d)?);
+                outputs.push(Output::decode(r)?);
             }
 
             outputs
