@@ -897,31 +897,15 @@ impl std::error::Error for IndexOutOfBoundsError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// The transaction version.
-///
-/// Currently, as specified by [BIP-68], only version 1 and 2 are considered standard.
-///
-/// Standardness of the inner `i32` is not an invariant because you are free to create transactions
-/// of any version, transactions with non-standard version numbers will not be relayed by the
-/// Bitcoin network.
-///
-/// [BIP-68]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
-#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Version(pub i32);
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Version`] type.
+    pub trait VersionExt impl for Version {
+        /// Creates a non-standard transaction version.
+        fn non_standard(version: i32) -> Version { Self(version) }
 
-impl Version {
-    /// The original Bitcoin transaction version (pre-BIP-68).
-    pub const ONE: Self = Self(1);
-
-    /// The second Bitcoin transaction version (post-BIP-68).
-    pub const TWO: Self = Self(2);
-
-    /// Creates a non-standard transaction version.
-    pub fn non_standard(version: i32) -> Version { Self(version) }
-
-    /// Returns true if this transaction version number is considered standard.
-    pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+        /// Returns true if this transaction version number is considered standard.
+        fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+    }
 }
 
 impl Encodable for Version {
@@ -934,10 +918,6 @@ impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version)
     }
-}
-
-impl fmt::Display for Version {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
