@@ -2,7 +2,6 @@
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#test-vectors>
 
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
@@ -118,7 +117,7 @@ fn build_extended_private_key() -> Xpriv {
     let extended_private_key = "tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSUUbTVeFszDE23Ki6TBB5nCefAdHkK8Fm3qMQR6sHwA56zqRmKmxnHk37JkiFzvncDqoKmPWubu7hDF";
     let seed = "cUkG8i1RFfWGWy5ziR11zJ5V4U4W3viSFCfyJmZnvQaUsd1xuF3T";
 
-    let xpriv = Xpriv::from_str(extended_private_key).unwrap();
+    let xpriv = extended_private_key.parse::<Xpriv>().unwrap();
 
     let sk = PrivateKey::from_wif(seed).unwrap();
     let seeded = Xpriv::new_master(NetworkKind::Test, &sk.inner.secret_bytes()).unwrap();
@@ -276,7 +275,7 @@ fn bip32_derivation(
         let pk = pk_path[i].0;
         let path = pk_path[i].1;
 
-        let pk = PublicKey::from_str(pk).unwrap();
+        let pk = pk.parse::<PublicKey>().unwrap();
         let path = path.into_derivation_path().unwrap();
 
         tree.insert(pk.inner, (fingerprint, path));
@@ -290,7 +289,7 @@ fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/update_2_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
-    let ty = PsbtSighashType::from_str("SIGHASH_ALL").unwrap();
+    let ty = "SIGHASH_ALL".parse::<PsbtSighashType>().unwrap();
 
     let mut input_0 = psbt.inputs[0].clone();
     input_0.sighash_type = Some(ty);

@@ -135,7 +135,6 @@ macro_rules! serde_struct_human_string_impl {
             {
                 if deserializer.is_human_readable() {
                     use core::fmt::Formatter;
-                    use core::str::FromStr;
 
                     struct Visitor;
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -149,7 +148,7 @@ macro_rules! serde_struct_human_string_impl {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            $name::from_str(v).map_err(E::custom)
+                            v.parse::<$name>().map_err(E::custom)
                         }
 
                     }

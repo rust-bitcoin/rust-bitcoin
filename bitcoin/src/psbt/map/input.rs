@@ -170,7 +170,7 @@ impl FromStr for PsbtSighashType {
         // NB: some of Taproot sighash types are non-standard for pre-Taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
-        if let Ok(ty) = TapSighashType::from_str(s) {
+        if let Ok(ty) = s.parse::<TapSighashType>() {
             return Ok(ty.into());
         }
 

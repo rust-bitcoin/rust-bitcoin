@@ -538,7 +538,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
                 E: serde::de::Error,
             {
                 if let Ok(s) = core::str::from_utf8(v) {
-                    PrivateKey::from_str(s).map_err(E::custom)
+                    s.parse::<PrivateKey>().map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                 }
@@ -548,7 +548,7 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
             where
                 E: serde::de::Error,
             {
-                PrivateKey::from_str(v).map_err(E::custom)
+                v.parse::<PrivateKey>().map_err(E::custom)
             }
         }
 
@@ -586,7 +586,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
                     E: serde::de::Error,
                 {
                     if let Ok(hex) = core::str::from_utf8(v) {
-                        PublicKey::from_str(hex).map_err(E::custom)
+                        hex.parse::<PublicKey>().map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                     }
@@ -596,7 +596,7 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
                 where
                     E: serde::de::Error,
                 {
-                    PublicKey::from_str(v).map_err(E::custom)
+                    v.parse::<PublicKey>().map_err(E::custom)
                 }
             }
             d.deserialize_str(HexVisitor)
@@ -652,7 +652,7 @@ impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
                     E: serde::de::Error,
                 {
                     if let Ok(hex) = core::str::from_utf8(v) {
-                        CompressedPublicKey::from_str(hex).map_err(E::custom)
+                        hex.parse::<CompressedPublicKey>().map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                     }
@@ -662,7 +662,7 @@ impl<'de> serde::Deserialize<'de> for CompressedPublicKey {
                 where
                     E: serde::de::Error,
                 {
-                    CompressedPublicKey::from_str(v).map_err(E::custom)
+                    v.parse::<CompressedPublicKey>().map_err(E::custom)
                 }
             }
             d.deserialize_str(HexVisitor)
