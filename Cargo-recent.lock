@@ -112,6 +112,7 @@ dependencies = [
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
+ "bitcoin_hashes",
  "mutagen",
  "ordered",
  "serde",

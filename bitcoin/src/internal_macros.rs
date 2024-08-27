@@ -181,7 +181,7 @@ macro_rules! impl_hashencode {
     ($hashtype:ident) => {
         impl $crate::consensus::Encodable for $hashtype {
             fn consensus_encode<W: $crate::io::Write + ?Sized>(&self, w: &mut W) -> core::result::Result<usize, $crate::io::Error> {
-                self.0.consensus_encode(w)
+                self.as_byte_array().consensus_encode(w)
             }
         }
 
