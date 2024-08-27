@@ -354,6 +354,8 @@ impl TxOut {
         TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 }
 
+mod tmp {
+use super::*;
 impl TxOut {
     /// The weight of this output.
     ///
@@ -402,6 +404,7 @@ impl TxOut {
     pub fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
         TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
     }
+}
 }
 
 #[cfg(feature = "arbitrary")]
