@@ -214,49 +214,58 @@ macro_rules! impl_asref_push_bytes {
 }
 pub(crate) use impl_asref_push_bytes;
 
-macro_rules! only_doc_attrs {
+macro_rules! only_decl_attrs {
     ({}, {$($fun:tt)*}) => {
         $($fun)*
     };
     ({#[doc = $($doc:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
+        $crate::internal_macros::only_decl_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
     };
     ({#[doc($($doc:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc($($doc)*)] $($fun)* });
+        $crate::internal_macros::only_decl_attrs!({ $($all_attrs)* }, { #[doc($($doc)*)] $($fun)* });
+    };
+    ({#[cfg($($cfg:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_decl_attrs!({ $($all_attrs)* }, { #[cfg($($cfg)*)] $($fun)* });
+    };
+    ({#[cfg_attr($($cfg:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_decl_attrs!({ $($all_attrs)* }, { #[cfg_attr($($cfg)*)] $($fun)* });
     };
     ({#[$($other:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { $($fun)* });
+        $crate::internal_macros::only_decl_attrs!({ $($all_attrs)* }, { $($fun)* });
     };
 }
-pub(crate) use only_doc_attrs;
+pub(crate) use only_decl_attrs;
 
-macro_rules! only_non_doc_attrs {
+macro_rules! only_impl_attrs {
     ({}, {$($fun:tt)*}) => {
         $($fun)*
     };
     ({#[doc = $($doc:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
+        $crate::internal_macros::only_impl_attrs!({ $($all_attrs)* }, { #[doc = $($doc)*] $($fun)* });
     };
     ({#[doc($($doc:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { $($fun)* });
+        $crate::internal_macros::only_impl_attrs!({ $($all_attrs)* }, { $($fun)* });
+    };
+    ({#[deprecated($($doc:tt)*)] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
+        $crate::internal_macros::only_impl_attrs!({ $($all_attrs)* }, { $($fun)* });
     };
     ({#[$($other:tt)*] $($all_attrs:tt)*}, {$($fun:tt)*}) => {
-        $crate::internal_macros::only_doc_attrs!({ $($all_attrs)* }, { #[$(other)*] $($fun)* });
+        $crate::internal_macros::only_impl_attrs!({ $($all_attrs)* }, { #[$($other)*] $($fun)* });
     };
 }
-pub(crate) use only_non_doc_attrs;
+pub(crate) use only_impl_attrs;
 
 /// Defines an trait `$trait_name` and implements it for `ty`, used to define extension traits.
 macro_rules! define_extension_trait {
-    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
+    ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident$(: $trait_bound:ident)? impl for $ty:ty {
         $(
             $(#[$($fn_attrs:tt)*])*
             fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
         )*
     }) => {
-        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name {
+        $(#[$($trait_attrs)*])* $trait_vis trait $trait_name$(: $trait_bound)? {
             $(
-                $crate::internal_macros::only_doc_attrs! {
+                $crate::internal_macros::only_decl_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
                         fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )?;
@@ -267,7 +276,7 @@ macro_rules! define_extension_trait {
 
         impl $trait_name for $ty {
             $(
-                $crate::internal_macros::only_non_doc_attrs! {
+                $crate::internal_macros::only_impl_attrs! {
                     { $(#[$($fn_attrs)*])* },
                     {
                         fn $fn$(<$($gen: $gent),*>)?($($params)*) $( -> $ret )? $body

@@ -2,13 +2,16 @@
 
 //! Bitcoin scriptPubkey script extensions.
 
+#[cfg(feature = "secp256k1")]
 use secp256k1::{Secp256k1, Verification};
 
 use crate::internal_macros::define_extension_trait;
 use crate::key::{
-    PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
+    PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
     XOnlyPublicKey,
 };
+#[cfg(feature = "secp256k1")]
+use crate::key::TapTweak;
 use crate::opcodes::all::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
@@ -16,12 +19,14 @@ use crate::script::{
     self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
     WScriptHash, WitnessScriptSizeError,
 };
+#[cfg(feature = "secp256k1")]
 use crate::taproot::TapNodeHash;
 
 define_extension_trait! {
     /// Extension functionality to add scriptPubkey support to the [`Builder`] type.
     pub trait BuilderExt impl for Builder {
         /// Adds instructions to push a public key onto the stack.
+        #[cfg(feature = "secp256k1")]
         fn push_key(self, key: PublicKey) -> Builder {
             if key.compressed {
                 self.push_slice(key.inner.serialize())
@@ -48,6 +53,7 @@ define_extension_trait! {
 
         /// Computes P2TR output with a given internal key and a single script spending path equal to
         /// the current script, assuming that the script is a Tapscript.
+        #[cfg(feature = "secp256k1")]
         fn to_p2tr<C: Verification>(
             &self,
             secp: &Secp256k1<C>,
@@ -89,6 +95,7 @@ define_extension_trait! {
         /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
         /// This happens when the public key is invalid (e.g. the point not being on the curve).
         /// In this situation the script is unspendable.
+        #[cfg(feature = "secp256k1")]
         fn p2pk_public_key(&self) -> Option<PublicKey> {
             PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
         }
@@ -116,6 +123,7 @@ define_extension_trait! {
     /// Extension functionality to add scriptPubkey support to the [`ScriptBuf`] type.
     pub trait ScriptBufExt impl for ScriptBuf {
         /// Generates P2PK-type of scriptPubkey.
+        #[cfg(feature = "secp256k1")]
         fn new_p2pk(pubkey: PublicKey) -> Self {
             Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
         }
@@ -154,6 +162,7 @@ define_extension_trait! {
 
         /// Generates P2TR for script spending path using an internal public key and some optional
         /// script tree Merkle root.
+        #[cfg(feature = "secp256k1")]
         fn new_p2tr<C: Verification>(
             secp: &Secp256k1<C>,
             internal_key: UntweakedPublicKey,

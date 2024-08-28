@@ -10,11 +10,14 @@
 use core::fmt;
 
 use internals::array_vec::ArrayVec;
+#[cfg(feature = "secp256k1")]
 use secp256k1::{Secp256k1, Verification};
 
 use super::witness_version::WitnessVersion;
 use super::{PushBytes, Script, WScriptHash, WitnessScriptSizeError};
-use crate::crypto::key::{CompressedPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{CompressedPublicKey, TweakedPublicKey, UntweakedPublicKey};
+#[cfg(feature = "secp256k1")]
+use crate::crypto::key::TapTweak;
 use crate::script::ScriptExt as _;
 use crate::taproot::TapNodeHash;
 
@@ -72,6 +75,7 @@ impl WitnessProgram {
     }
 
     /// Creates a [`WitnessProgram`] from `pk` for a P2WPKH output.
+    #[cfg(feature = "secp256k1")]
     pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
         let hash = pk.wpubkey_hash();
         WitnessProgram::new_p2wpkh(hash.to_byte_array())
@@ -88,6 +92,7 @@ impl WitnessProgram {
     }
 
     /// Creates a pay to Taproot address from an untweaked key.
+    #[cfg(feature = "secp256k1")]
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,

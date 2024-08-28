@@ -21,9 +21,11 @@ use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
-use crate::crypto::key::{PrivateKey, PublicKey};
+use crate::crypto::key::{PrivateKey, PublicKey, ToStable, ToUnstable};
 use crate::crypto::{ecdsa, taproot};
-use crate::key::{TapTweak, XOnlyPublicKey};
+use crate::key::XOnlyPublicKey;
+#[cfg(feature = "secp256k1")]
+use crate::key::TapTweak;
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
@@ -380,7 +382,7 @@ impl Psbt {
             };
 
             let sig = ecdsa::Signature {
-                signature: secp.sign_ecdsa(&msg, &sk.inner),
+                signature: secp.sign_ecdsa(&msg, &sk.inner.to_unstable()),
                 sighash_type: sighash_ty,
             };
 
@@ -439,7 +441,7 @@ impl Psbt {
                 // According to BIP 371, we also need to consider the condition leaf_hashes.is_empty() for a more accurate determination.
                 if internal_key == xonly && leaf_hashes.is_empty() && input.tap_key_sig.is_none() {
                     let (msg, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
-                    let key_pair = Keypair::from_secret_key(secp, &sk.inner)
+                    let key_pair = Keypair::from_secret_key(secp, &sk.inner.to_unstable())
                         .tap_tweak(secp, input.tap_merkle_root)
                         .to_inner();
 
@@ -464,7 +466,7 @@ impl Psbt {
                     .collect::<Vec<_>>();
 
                 if !leaf_hashes.is_empty() {
-                    let key_pair = Keypair::from_secret_key(secp, &sk.inner);
+                    let key_pair = Keypair::from_secret_key(secp, &sk.inner.to_unstable());
 
                     for lh in leaf_hashes {
                         let (msg, sighash_type) =
@@ -479,7 +481,7 @@ impl Psbt {
                         input.tap_script_sigs.insert((xonly, lh), signature);
                     }
 
-                    used.push(sk.public_key(secp).into());
+                    used.push(key_pair.x_only_public_key().0.to_stable());
                 }
             }
         }
@@ -1351,7 +1353,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
-        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<bare::PublicKey, KeySource> = Default::default();
 
         let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
 
@@ -1494,7 +1496,7 @@ mod tests {
                 .into_iter()
                 .collect();
         let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
-        let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<bare::PublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )]

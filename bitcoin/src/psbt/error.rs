@@ -78,7 +78,7 @@ pub enum Error {
     /// Parsing error indicating invalid public keys
     InvalidPublicKey(crate::crypto::key::FromSliceError),
     /// Parsing error indicating invalid secp256k1 public keys
-    InvalidSecp256k1PublicKey(secp256k1::Error),
+    InvalidSecp256k1PublicKey(crate::crypto::key::bare::PublicKeyDeserError),
     /// Parsing error indicating invalid xonly public keys
     InvalidXOnlyPublicKey,
     /// Parsing error indicating invalid ECDSA signatures

@@ -1,0 +1,21 @@
+[package]
+name = "bitcoin-crypto"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = [ "std", "basic-key-ops" ]
+std = ["alloc", "internals/std", "secp256k1?/std", "hex?/std", "base58?/std", "serde?/std"]
+alloc = ["internals/alloc", "secp256k1?/alloc", "hex?/alloc"]
+basic-key-ops = ["dep:secp256k1"]
+# Note that we intentionally force secp256k1 because serde::Deserialize can't be implemented without it.
+# We could make only Deserialize conditional but I'm too lazy for that.
+serde = ["dep:serde", "dep:secp256k1", "secp256k1?/serde"]
+
+[dependencies]
+base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"], optional = true }
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, optional = true }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false, optional = true }
+internals = { package = "bitcoin-internals", version = "0.3.0" }
+secp256k1 = { version = "0.29.0", default-features = false, optional = true }
+serde = { version = "1.0.103", default-features = false, features = [ "derive" ], optional = true }
