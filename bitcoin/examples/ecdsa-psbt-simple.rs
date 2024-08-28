@@ -184,13 +184,13 @@ fn main() {
     // information to the PSBT.
     let ty = EcdsaSighashType::All.into();
     let derivation_paths = [
-        DerivationPath::from_str("m/84'/0'/0'/0/0").expect("valid derivation path"),
-        DerivationPath::from_str("m/84'/0'/0'/1/0").expect("valid derivation path"),
+        "m/84'/0'/0'/0/0".parse::<DerivationPath>().expect("valid derivation path"),
+        "m/84'/0'/0'/1/0".parse::<DerivationPath>().expect("valid derivation path"),
     ];
     let mut bip32_derivations = Vec::new();
     for (idx, pk) in pk_inputs.iter().enumerate() {
         let mut map = BTreeMap::new();
-        let fingerprint = Fingerprint::from_str(MASTER_FINGERPRINT).expect("valid fingerprint");
+        let fingerprint = MASTER_FINGERPRINT.parse::<Fingerprint>().expect("valid fingerprint");
         map.insert(pk.0, (fingerprint, derivation_paths[idx].clone()));
         bip32_derivations.push(map);
     }

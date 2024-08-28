@@ -151,13 +151,13 @@ fn main() {
     // Map of tap root X-only keys to origin info and leaf hashes contained in it.
     let origin_input_1 = get_tap_key_origin(
         pk_input_1,
-        Fingerprint::from_str(MASTER_FINGERPRINT).unwrap(),
-        DerivationPath::from_str("m/86'/0'/0'/0/0").unwrap(),
+        MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
+        "m/86'/0'/0'/0/0".parse::<DerivationPath>().unwrap(),
     );
     let origin_input_2 = get_tap_key_origin(
         pk_input_2,
-        Fingerprint::from_str(MASTER_FINGERPRINT).unwrap(),
-        DerivationPath::from_str("m/86'/0'/0'/1/0").unwrap(),
+        MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
+        "m/86'/0'/0'/1/0".parse::<DerivationPath>().unwrap(),
     );
     let origins = [origin_input_1, origin_input_2];
 
