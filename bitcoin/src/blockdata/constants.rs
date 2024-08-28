@@ -209,8 +209,6 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
-    use core::str::FromStr;
-
     use hex::test_hex_unwrap as hex;
 
     use super::*;
@@ -233,7 +231,7 @@ mod test {
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
-        assert_eq!(gen.output[0].value, Amount::from_str("50 BTC").unwrap());
+        assert_eq!(gen.output[0].value, "50 BTC".parse::<Amount>().unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(

@@ -23,7 +23,6 @@
 #![cfg(feature = "serde")]
 
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
@@ -144,7 +143,7 @@ fn serde_regression_witness() {
 #[test]
 fn serde_regression_address() {
     let s = include_str!("data/serde/public_key_hex");
-    let pk = PublicKey::from_str(s.trim()).unwrap();
+    let pk = s.trim().parse::<PublicKey>().unwrap();
     let addr = Address::p2pkh(pk, NetworkKind::Main);
 
     let got = serialize(&addr).unwrap();
@@ -155,7 +154,7 @@ fn serde_regression_address() {
 #[test]
 fn serde_regression_extended_priv_key() {
     let s = include_str!("data/serde/extended_priv_key");
-    let key = Xpriv::from_str(s.trim()).unwrap();
+    let key = s.trim().parse::<Xpriv>().unwrap();
     let got = serialize(&key).unwrap();
     let want = include_bytes!("data/serde/extended_priv_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -164,7 +163,7 @@ fn serde_regression_extended_priv_key() {
 #[test]
 fn serde_regression_extended_pub_key() {
     let s = include_str!("data/serde/extended_pub_key");
-    let key = Xpub::from_str(s.trim()).unwrap();
+    let key = s.trim().parse::<Xpub>().unwrap();
     let got = serialize(&key).unwrap();
     let want = include_bytes!("data/serde/extended_pub_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -174,7 +173,7 @@ fn serde_regression_extended_pub_key() {
 fn serde_regression_ecdsa_sig() {
     let s = include_str!("data/serde/ecdsa_sig_hex");
     let sig = ecdsa::Signature {
-        signature: secp256k1::ecdsa::Signature::from_str(s.trim()).unwrap(),
+        signature: s.trim().parse::<secp256k1::ecdsa::Signature>().unwrap(),
         sighash_type: EcdsaSighashType::All,
     };
 
@@ -212,7 +211,7 @@ fn serde_regression_private_key() {
 #[test]
 fn serde_regression_public_key() {
     let s = include_str!("data/serde/public_key_hex");
-    let pk = PublicKey::from_str(s.trim()).unwrap();
+    let pk = s.trim().parse::<PublicKey>().unwrap();
     let got = serialize(&pk).unwrap();
     let want = include_bytes!("data/serde/public_key_bincode") as &[_];
     assert_eq!(got, want)
@@ -271,7 +270,7 @@ fn serde_regression_psbt() {
         version: 0,
         xpub: {
             let s = include_str!("data/serde/extended_pub_key");
-            let xpub = Xpub::from_str(s.trim()).unwrap();
+            let xpub = s.trim().parse::<Xpub>().unwrap();
             vec![(xpub, key_source)].into_iter().collect()
         },
         unsigned_tx: {
@@ -289,7 +288,7 @@ fn serde_regression_psbt() {
                 value: Amount::from_sat(190_303_501_938),
                 script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
-            sighash_type: Some(PsbtSighashType::from(EcdsaSighashType::from_str("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY").unwrap())),
+            sighash_type: Some(PsbtSighashType::from("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap())),
             redeem_script: Some(vec![0x51].into()),
             witness_script: None,
             partial_sigs: vec![(
@@ -350,7 +349,7 @@ fn serde_regression_proprietary_key() {
 fn serde_regression_taproot_sig() {
     let s = include_str!("data/serde/taproot_sig_hex");
     let sig = taproot::Signature {
-        signature: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
+        signature: s.trim().parse::<secp256k1::schnorr::Signature>().unwrap(),
         sighash_type: TapSighashType::All,
     };
 

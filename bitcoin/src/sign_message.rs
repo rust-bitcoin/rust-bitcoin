@@ -222,8 +222,6 @@ mod tests {
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
     fn test_message_signature() {
-        use core::str::FromStr;
-
         use secp256k1;
 
         use crate::{Address, AddressType, Network, NetworkKind};
@@ -237,7 +235,7 @@ mod tests {
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
         assert_eq!(signature.to_base64(), signature.to_string());
-        let signature2 = super::MessageSignature::from_str(&signature.to_string()).unwrap();
+        let signature2 = &signature.to_string().parse::<super::MessageSignature>().unwrap();
         let pubkey = signature2
             .recover_pubkey(&secp, msg_hash)
             .unwrap()

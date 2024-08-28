@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use bitcoin::consensus::encode;
 use bitcoin::transaction::OutPoint;
 use honggfuzz::fuzz;
@@ -21,7 +19,7 @@ fn do_test(data: &[u8]) {
         Err(_) => return,
         Ok(s) => s,
     };
-    match OutPoint::from_str(&data_str) {
+    match data_str.parse::<OutPoint>() {
         Ok(op) => {
             assert_eq!(op.to_string().as_bytes(), data_str.as_bytes());
         }
@@ -32,7 +30,7 @@ fn do_test(data: &[u8]) {
                 let ser = encode::serialize(&deser);
                 assert_eq!(ser, data);
                 let string = deser.to_string();
-                match OutPoint::from_str(&string) {
+                match string.parse::<OutPoint>() {
                     Ok(destring) => assert_eq!(destring, deser),
                     Err(_) => panic!(),
                 }

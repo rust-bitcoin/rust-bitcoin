@@ -30,7 +30,6 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::str::FromStr;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
@@ -112,7 +111,7 @@ impl ColdStorage {
     ///
     /// The newly created signer along with the data needed to configure a watch-only wallet.
     fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
-        let master_xpriv = Xpriv::from_str(xpriv)?;
+        let master_xpriv = xpriv.parse::<Xpriv>()?;
         let master_xpub = Xpub::from_priv(secp, &master_xpriv);
 
         // Hardened children require secret data to derive.
@@ -175,11 +174,11 @@ impl WatchOnly {
 
     /// Creates the PSBT, in BIP174 parlance this is the 'Creator'.
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
-        let to_address = Address::from_str(RECEIVE_ADDRESS)?.require_network(Network::Regtest)?;
-        let to_amount = Amount::from_str(OUTPUT_AMOUNT_BTC)?;
+        let to_address = RECEIVE_ADDRESS.parse::<Address<_>>()?.require_network(Network::Regtest)?;
+        let to_amount = OUTPUT_AMOUNT_BTC.parse::<Amount>()?;
 
         let (_, change_address, _) = self.change_address(secp)?;
-        let change_amount = Amount::from_str(CHANGE_AMOUNT_BTC)?;
+        let change_amount = CHANGE_AMOUNT_BTC.parse::<Amount>()?;
 
         let tx = Transaction {
             version: transaction::Version::TWO,
@@ -217,7 +216,7 @@ impl WatchOnly {
         map.insert(pk.0, (fingerprint, path));
         input.bip32_derivation = map;
 
-        let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
+        let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
         input.sighash_type = Some(ty);
 
         psbt.inputs = vec![input];
@@ -276,7 +275,7 @@ fn input_derivation_path() -> Result<DerivationPath> {
 fn previous_output() -> TxOut {
     let script_pubkey = ScriptBuf::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
-    let amount = Amount::from_str(INPUT_UTXO_VALUE).expect("failed to parse input utxo value");
+    let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
 
     TxOut { value: amount, script_pubkey }
 }

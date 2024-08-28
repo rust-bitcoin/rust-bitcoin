@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::str::FromStr;
-
 use hex_lit::hex;
 
 use super::*;
@@ -38,10 +36,10 @@ fn script() {
 
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
-    let key = PublicKey::from_str(&KEYSTR1[2..]).unwrap();
+    let key = KEYSTR1[2..].parse::<PublicKey>().unwrap();
     script = script.push_key(key); comp.extend_from_slice(&hex!(KEYSTR1)); assert_eq!(script.as_bytes(), &comp[..]);
     const KEYSTR2: &str = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
-    let key = PublicKey::from_str(&KEYSTR2[2..]).unwrap();
+    let key = KEYSTR2[2..].parse::<PublicKey>().unwrap();
     script = script.push_key(key); comp.extend_from_slice(&hex!(KEYSTR2)); assert_eq!(script.as_bytes(), &comp[..]);
 
     // opcodes
@@ -52,7 +50,7 @@ fn script() {
 #[test]
 fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_bytes());
@@ -61,7 +59,7 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
 #[test]
 fn p2pk_pubkey_bytes_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let no_checksig = Script::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_pubkey_bytes(), None);
 }
@@ -82,7 +80,7 @@ fn p2pk_pubkey_bytes_no_key_returns_none() {
 #[test]
 fn p2pk_pubkey_bytes_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_pubkey_bytes().is_none());
 }
@@ -107,7 +105,7 @@ fn p2pk_pubkey_bytes_invalid_key_returns_some() {
 #[test]
 fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
-    let key = PublicKey::from_str(compressed_key_str).unwrap();
+    let key = compressed_key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
     assert_eq!(actual.to_vec(), key.to_bytes());
@@ -116,7 +114,7 @@ fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
 #[test]
 fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
@@ -125,7 +123,7 @@ fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
 #[test]
 fn p2pk_public_key_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let no_checksig = Script::builder().push_key(key).into_script();
     assert_eq!(no_checksig.p2pk_public_key(), None);
 }
@@ -145,7 +143,7 @@ fn p2pk_public_key_no_key_returns_none() {
 #[test]
 fn p2pk_public_key_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
-    let key = PublicKey::from_str(key_str).unwrap();
+    let key = key_str.parse::<PublicKey>().unwrap();
     let different_op_code = Script::builder().push_key(key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_public_key().is_none());
 }
@@ -169,7 +167,7 @@ fn p2pk_public_key_invalid_key_returns_none() {
 #[test]
 fn p2pk_public_key_compressed_key_returns_some() {
     let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
-    let key = PublicKey::from_str(compressed_key_str).unwrap();
+    let key = compressed_key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
@@ -181,7 +179,7 @@ fn script_x_only_key() {
     // to our script in order to give a heads up to the script compiler that it should add the next 32 bytes to the stack.
     // From: https://github.com/bitcoin-core/btcdeb/blob/e8c2750c4a4702768c52d15640ed03bf744d2601/doc/tapscript-example.md?plain=1#L43
     const KEYSTR: &str = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
-    let x_only_key = XOnlyPublicKey::from_str(&KEYSTR[2..]).unwrap();
+    let x_only_key = KEYSTR[2..].parse::<XOnlyPublicKey>().unwrap();
     let script = Builder::new().push_x_only_key(x_only_key);
     assert_eq!(script.into_bytes(), &hex!(KEYSTR) as &[u8]);
 }
@@ -201,9 +199,9 @@ fn script_builder() {
 
 #[test]
 fn script_generators() {
-    let pubkey =
-        PublicKey::from_str("0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e")
-            .unwrap();
+    let pubkey = "0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e"
+        .parse::<PublicKey>()
+        .unwrap();
     assert!(ScriptBuf::new_p2pk(pubkey).is_p2pk());
 
     let pubkey_hash = pubkey.pubkey_hash();

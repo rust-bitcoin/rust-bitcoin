@@ -76,7 +76,6 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 };
 
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::address::script_pubkey::{BuilderExt as _, ScriptBufExt as _};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
@@ -101,10 +100,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Just some addresses for outputs from our wallets. Not really important.
     let to_address =
-        Address::from_str("bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc")?
+        "bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc".parse::<Address<_>>()?
             .require_network(Network::Regtest)?;
     let change_address =
-        Address::from_str("bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76")?
+        "bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76".parse::<Address<_>>()?
             .require_network(Network::Regtest)?;
     let amount_to_send_in_sats = Amount::ONE_BTC;
     let change_amount = UTXO_1
@@ -116,7 +115,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
         &secp,
         // The master extended private key from the descriptor in step 4
-        Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
+        BENEFACTOR_XPRIV_STR.parse::<Xpriv>()?,
         // Set these fields with valid data for the UTXO from step 5 above
         UTXO_1,
         vec![
@@ -135,10 +134,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("START EXAMPLE 2 - Script path spending of inheritance UTXO\n");
 
     {
-        let beneficiary = BeneficiaryWallet::new(Xpriv::from_str(BENEFICIARY_XPRIV_STR)?)?;
+        let beneficiary = BeneficiaryWallet::new(BENEFICIARY_XPRIV_STR.parse::<Xpriv>()?)?;
 
         let mut benefactor = BenefactorWallet::new(
-            Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
+            BENEFACTOR_XPRIV_STR.parse::<Xpriv>()?,
             beneficiary.master_xpub(),
         )?;
         let (tx, psbt) = benefactor.create_inheritance_funding_tx(
@@ -173,10 +172,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("START EXAMPLE 3 - Key path spending of inheritance UTXO\n");
 
     {
-        let beneficiary = BeneficiaryWallet::new(Xpriv::from_str(BENEFICIARY_XPRIV_STR)?)?;
+        let beneficiary = BeneficiaryWallet::new(BENEFICIARY_XPRIV_STR.parse::<Xpriv>()?)?;
 
         let mut benefactor = BenefactorWallet::new(
-            Xpriv::from_str(BENEFACTOR_XPRIV_STR)?,
+            BENEFACTOR_XPRIV_STR.parse::<Xpriv>()?,
             beneficiary.master_xpub(),
         )?;
         let (tx, _) = benefactor.create_inheritance_funding_tx(
@@ -227,7 +226,7 @@ fn generate_bip86_key_spend_tx(
     outputs: Vec<TxOut>,
 ) -> Result<Transaction, Box<dyn std::error::Error>> {
     let from_amount = input_utxo.amount_in_sats;
-    let input_pubkey = XOnlyPublicKey::from_str(input_utxo.pubkey)?;
+    let input_pubkey = input_utxo.pubkey.parse::<XOnlyPublicKey>()?;
 
     // CREATOR + UPDATER
     let tx1 = Transaction {
@@ -249,8 +248,8 @@ fn generate_bip86_key_spend_tx(
         (
             vec![],
             (
-                Fingerprint::from_str(input_utxo.master_fingerprint)?,
-                DerivationPath::from_str(input_utxo.derivation_path)?,
+                input_utxo.master_fingerprint.parse::<Fingerprint>()?,
+                input_utxo.derivation_path.parse::<DerivationPath>()?,
             ),
         ),
     );
@@ -264,7 +263,7 @@ fn generate_bip86_key_spend_tx(
         tap_key_origins: origins,
         ..Default::default()
     };
-    let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
+    let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
     input.sighash_type = Some(ty);
     input.tap_internal_key = Some(input_pubkey);
     psbt.inputs = vec![input];
@@ -391,7 +390,7 @@ impl BenefactorWallet {
         }
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
         // that we use an unhardened path so we can make use of xpubs.
-        let derivation_path = DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
+        let derivation_path = format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
         let internal_keypair =
             self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_keypair(&self.secp);
         let beneficiary_key =
@@ -443,7 +442,7 @@ impl BenefactorWallet {
             internal_keypair.x_only_public_key().0,
             (vec![], (self.master_xpriv.fingerprint(&self.secp), derivation_path)),
         );
-        let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
+        let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
         let mut tap_scripts = BTreeMap::new();
         tap_scripts.insert(
             taproot_spend_info.control_block(&(script.clone(), LeafVersion::TapScript)).unwrap(),
@@ -480,7 +479,7 @@ impl BenefactorWallet {
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
             let new_derivation_path =
-                DerivationPath::from_str(&format!("101/1/0/0/{}", self.next))?;
+                format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
             let new_internal_keypair = self
                 .master_xpriv
                 .derive_priv(&self.secp, &new_derivation_path)
@@ -582,7 +581,7 @@ impl BenefactorWallet {
                 beneficiary_key,
                 (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), new_derivation_path)),
             );
-            let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
+            let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
             let mut tap_scripts = BTreeMap::new();
             tap_scripts.insert(
                 taproot_spend_info

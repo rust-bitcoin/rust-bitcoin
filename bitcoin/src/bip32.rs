@@ -421,11 +421,10 @@ impl DerivationPath {
     ///
     /// ```
     /// use bitcoin::bip32::{DerivationPath, ChildNumber};
-    /// use std::str::FromStr;
     ///
-    /// let base = DerivationPath::from_str("m/42").unwrap();
+    /// let base = "m/42".parse::<DerivationPath>().unwrap();
     ///
-    /// let deriv_1 = base.extend(DerivationPath::from_str("0/1").unwrap());
+    /// let deriv_1 = base.extend("0/1".parse::<DerivationPath>().unwrap());
     /// let deriv_2 = base.extend(&[
     ///     ChildNumber::ZERO_NORMAL,
     ///     ChildNumber::ONE_NORMAL
@@ -447,7 +446,7 @@ impl DerivationPath {
     /// use bitcoin::bip32::DerivationPath;
     /// use std::str::FromStr;
     ///
-    /// let path = DerivationPath::from_str("m/84'/0'/0'/0/1").unwrap();
+    /// let path = "m/84'/0'/0'/0/1".parse::<DerivationPath>().unwrap();
     /// const HARDENED: u32 = 0x80000000;
     /// assert_eq!(path.to_u32_vec(), vec![84 + HARDENED, HARDENED, HARDENED, 0, 1]);
     /// ```
@@ -925,30 +924,30 @@ mod tests {
 
     #[test]
     fn test_parse_derivation_path() {
-        assert_eq!(DerivationPath::from_str("n/0'/0"), Err(Error::InvalidChildNumberFormat));
-        assert_eq!(DerivationPath::from_str("4/m/5"), Err(Error::InvalidChildNumberFormat));
-        assert_eq!(DerivationPath::from_str("//3/0'"), Err(Error::InvalidChildNumberFormat));
-        assert_eq!(DerivationPath::from_str("0h/0x"), Err(Error::InvalidChildNumberFormat));
+        assert_eq!("n/0'/0".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
+        assert_eq!("4/m/5".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
+        assert_eq!("//3/0'".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
+        assert_eq!("0h/0x".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
         assert_eq!(
-            DerivationPath::from_str("2147483648"),
+            "2147483648".parse::<DerivationPath>(),
             Err(Error::InvalidChildNumber(2147483648))
         );
 
-        assert_eq!(DerivationPath::master(), DerivationPath::from_str("").unwrap());
+        assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
         assert_eq!(DerivationPath::master(), DerivationPath::default());
 
         // Acceptable forms for a master path.
-        assert_eq!(DerivationPath::from_str("m").unwrap(), DerivationPath(vec![]));
-        assert_eq!(DerivationPath::from_str("m/").unwrap(), DerivationPath(vec![]));
-        assert_eq!(DerivationPath::from_str("").unwrap(), DerivationPath(vec![]));
+        assert_eq!("m".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
+        assert_eq!("m/".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
+        assert_eq!("".parse::<DerivationPath>().unwrap(), DerivationPath(vec![]));
 
-        assert_eq!(DerivationPath::from_str("0'"), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
+        assert_eq!("0'".parse::<DerivationPath>(), Ok(vec![ChildNumber::ZERO_HARDENED].into()));
         assert_eq!(
-            DerivationPath::from_str("0'/1"),
+            "0'/1".parse::<DerivationPath>(),
             Ok(vec![ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL].into())
         );
         assert_eq!(
-            DerivationPath::from_str("0h/1/2'"),
+            "0h/1/2'".parse::<DerivationPath>(),
             Ok(vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
@@ -957,7 +956,7 @@ mod tests {
             .into())
         );
         assert_eq!(
-            DerivationPath::from_str("0'/1/2h/2"),
+            "0'/1/2h/2".parse::<DerivationPath>(),
             Ok(vec![
                 ChildNumber::ZERO_HARDENED,
                 ChildNumber::ONE_NORMAL,
@@ -973,27 +972,27 @@ mod tests {
             ChildNumber::from_normal_idx(2).unwrap(),
             ChildNumber::from_normal_idx(1000000000).unwrap(),
         ]);
-        assert_eq!(DerivationPath::from_str("0'/1/2'/2/1000000000").unwrap(), want);
-        assert_eq!(DerivationPath::from_str("m/0'/1/2'/2/1000000000").unwrap(), want);
+        assert_eq!("0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
+        assert_eq!("m/0'/1/2'/2/1000000000".parse::<DerivationPath>().unwrap(), want);
 
         let s = "0'/50/3'/5/545456";
-        assert_eq!(DerivationPath::from_str(s), s.into_derivation_path());
-        assert_eq!(DerivationPath::from_str(s), s.to_string().into_derivation_path());
+        assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
+        assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
 
         let s = "m/0'/50/3'/5/545456";
-        assert_eq!(DerivationPath::from_str(s), s.into_derivation_path());
-        assert_eq!(DerivationPath::from_str(s), s.to_string().into_derivation_path());
+        assert_eq!(s.parse::<DerivationPath>(), s.into_derivation_path());
+        assert_eq!(s.parse::<DerivationPath>(), s.to_string().into_derivation_path());
     }
 
     #[test]
     fn test_derivation_path_conversion_index() {
-        let path = DerivationPath::from_str("0h/1/2'").unwrap();
+        let path = "0h/1/2'".parse::<DerivationPath>().unwrap();
         let numbers: Vec<ChildNumber> = path.clone().into();
         let path2: DerivationPath = numbers.into();
         assert_eq!(path, path2);
         assert_eq!(&path[..2], &[ChildNumber::ZERO_HARDENED, ChildNumber::ONE_NORMAL]);
         let indexed: DerivationPath = path[..2].into();
-        assert_eq!(indexed, DerivationPath::from_str("0h/1").unwrap());
+        assert_eq!(indexed, "0h/1".parse::<DerivationPath>().unwrap());
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
@@ -1039,8 +1038,8 @@ mod tests {
         assert_eq!(&sk.to_string()[..], expected_sk);
         assert_eq!(&pk.to_string()[..], expected_pk);
         // Check decoded base58 against result
-        let decoded_sk = Xpriv::from_str(expected_sk);
-        let decoded_pk = Xpub::from_str(expected_pk);
+        let decoded_sk = expected_sk.parse::<Xpriv>();
+        let decoded_pk = expected_pk.parse::<Xpub>();
         assert_eq!(Ok(sk), decoded_sk);
         assert_eq!(Ok(pk), decoded_pk);
     }
@@ -1060,29 +1059,29 @@ mod tests {
         assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
 
         let cn = ChildNumber::from_normal_idx(350).unwrap();
-        let path = DerivationPath::from_str("42'").unwrap();
+        let path = "42'".parse::<DerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/350".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/351".parse().unwrap()));
 
-        let path = DerivationPath::from_str("42'/350'").unwrap();
+        let path = "42'/350'".parse::<DerivationPath>().unwrap();
         let mut iter = path.normal_children();
         assert_eq!(iter.next(), Some("42'/350'/0".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/350'/1".parse().unwrap()));
 
-        let path = DerivationPath::from_str("42'/350'").unwrap();
+        let path = "42'/350'".parse::<DerivationPath>().unwrap();
         let mut iter = path.hardened_children();
         assert_eq!(iter.next(), Some("42'/350'/0'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/350'/1'".parse().unwrap()));
 
         let cn = ChildNumber::from_hardened_idx(42350).unwrap();
-        let path = DerivationPath::from_str("42'").unwrap();
+        let path = "42'".parse::<DerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert_eq!(iter.next(), Some("42'/42350'".parse().unwrap()));
         assert_eq!(iter.next(), Some("42'/42351'".parse().unwrap()));
 
         let cn = ChildNumber::from_hardened_idx(max).unwrap();
-        let path = DerivationPath::from_str("42'").unwrap();
+        let path = "42'".parse::<DerivationPath>().unwrap();
         let mut iter = path.children_from(cn);
         assert!(iter.next().is_some());
         assert!(iter.next().is_none());
@@ -1247,7 +1246,7 @@ mod tests {
 
         // Xpriv having secret key set to all zeros
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx";
-        Xpriv::from_str(xpriv_str).unwrap();
+        xpriv_str.parse::<Xpriv>().unwrap();
     }
 
     #[test]
@@ -1255,6 +1254,6 @@ mod tests {
     fn schnorr_broken_privkey_ffs() {
         // Xpriv having secret key set to all 0xFF's
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fENZ3QzxW";
-        Xpriv::from_str(xpriv_str).unwrap();
+        xpriv_str.parse::<Xpriv>().unwrap();
     }
 }

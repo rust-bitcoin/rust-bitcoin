@@ -1,7 +1,6 @@
 #![cfg(not(feature = "rand-std"))]
 
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::bip32::{DerivationPath, Fingerprint};
 use bitcoin::consensus::encode::serialize_hex;
@@ -77,7 +76,7 @@ fn psbt_sign_taproot() {
 
     // m/86'/1'/0'/0/7
     let to_address = "tb1pyfv094rr0vk28lf8v9yx3veaacdzg26ztqk4ga84zucqqhafnn5q9my9rz";
-    let to_address = Address::from_str(to_address).unwrap().assume_checked();
+    let to_address = to_address.parse::<Address<_>>().unwrap().assume_checked();
 
     // key path spend
     {
@@ -94,7 +93,7 @@ fn psbt_sign_taproot() {
         // Step 2: sign psbt.
         //
         let keystore = Keystore {
-            mfp: Fingerprint::from_str(mfp).unwrap(),
+            mfp: mfp.parse::<Fingerprint>().unwrap(),
             sk: PrivateKey::new(kp.secret_key(), Network::Testnet),
         };
         let _ = psbt_key_path_spend.sign(&keystore, secp);
@@ -124,7 +123,7 @@ fn psbt_sign_taproot() {
         let signing_key_path = sk_path[1].1;
 
         let keystore = Keystore {
-            mfp: Fingerprint::from_str(mfp).unwrap(),
+            mfp: mfp.parse::<Fingerprint>().unwrap(),
             sk: PrivateKey::new(kp.secret_key(), Network::Testnet),
         };
 
@@ -234,8 +233,8 @@ fn create_psbt_for_taproot_key_path_spend(
         (
             vec![],
             (
-                Fingerprint::from_str(mfp).unwrap(),
-                DerivationPath::from_str(internal_key_path).unwrap(),
+                mfp.parse::<Fingerprint>().unwrap(),
+                internal_key_path.parse::<DerivationPath>().unwrap(),
             ),
         ),
     );
@@ -249,7 +248,7 @@ fn create_psbt_for_taproot_key_path_spend(
         tap_key_origins: origins,
         ..Default::default()
     };
-    let ty = PsbtSighashType::from_str("SIGHASH_DEFAULT").unwrap();
+    let ty = "SIGHASH_DEFAULT".parse::<PsbtSighashType>().unwrap();
     input.sighash_type = Some(ty);
     input.tap_internal_key = Some(tree.internal_key());
     input.tap_merkle_root = tree.merkle_root();
@@ -308,8 +307,8 @@ fn create_psbt_for_taproot_script_path_spend(
         (
             vec![use_script.tapscript_leaf_hash()],
             (
-                Fingerprint::from_str(mfp).unwrap(),
-                DerivationPath::from_str(signing_key_path).unwrap(),
+                mfp.parse::<Fingerprint>().unwrap(),
+                signing_key_path.parse::<DerivationPath>().unwrap(),
             ),
         ),
     );
@@ -329,7 +328,7 @@ fn create_psbt_for_taproot_script_path_spend(
         tap_scripts,
         ..Default::default()
     };
-    let ty = PsbtSighashType::from_str("SIGHASH_ALL").unwrap();
+    let ty = "SIGHASH_ALL".parse::<PsbtSighashType>().unwrap();
     input.sighash_type = Some(ty);
     input.tap_internal_key = Some(tree.internal_key());
     input.tap_merkle_root = tree.merkle_root();

@@ -1,27 +1,25 @@
-use std::str::FromStr;
-
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let data_str = String::from_utf8_lossy(data);
 
     // signed
-    let samt = match bitcoin::amount::SignedAmount::from_str(&data_str) {
+    let samt = match data_str.parse::<bitcoin::amount::SignedAmount>() {
         Ok(amt) => amt,
         Err(_) => return,
     };
-    let samt_roundtrip = match bitcoin::amount::SignedAmount::from_str(&samt.to_string()) {
+    let samt_roundtrip = match samt.to_string().parse::<bitcoin::amount::SignedAmount>() {
         Ok(amt) => amt,
         Err(_) => return,
     };
     assert_eq!(samt, samt_roundtrip);
 
     // unsigned
-    let amt = match bitcoin::amount::Amount::from_str(&data_str) {
+    let amt = match data_str.parse::<bitcoin::amount::Amount>() {
         Ok(amt) => amt,
         Err(_) => return,
     };
-    let amt_roundtrip = match bitcoin::amount::Amount::from_str(&amt.to_string()) {
+    let amt_roundtrip = match amt.to_string().parse::<bitcoin::amount::Amount>() {
         Ok(amt) => amt,
         Err(_) => return,
     };

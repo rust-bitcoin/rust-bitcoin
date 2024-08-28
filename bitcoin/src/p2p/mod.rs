@@ -433,7 +433,7 @@ mod tests {
         ];
 
         for (magic_str, network) in &known_network_magic_strs {
-            let magic: Magic = Magic::from_str(magic_str).unwrap();
+            let magic: Magic = magic_str.parse::<Magic>().unwrap();
             assert_eq!(Network::try_from(magic).unwrap(), *network);
             assert_eq!(&magic.to_string(), magic_str);
         }

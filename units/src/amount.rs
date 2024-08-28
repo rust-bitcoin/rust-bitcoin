@@ -37,15 +37,14 @@ use arbitrary::{Arbitrary, Unstructured};
 /// # Examples
 ///
 /// ```
-/// # use core::str::FromStr;
 /// # use bitcoin_units::Amount;
 ///
-/// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
-/// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
-/// assert_eq!(Amount::from_str("1 mBTC").unwrap(), Amount::from_sat(100_000));
-/// assert_eq!(Amount::from_str("1 uBTC").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("1 bit").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("1 sat").unwrap(), Amount::from_sat(1));
+/// assert_eq!("1 BTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000_000));
+/// assert_eq!("1 cBTC".parse::<Amount>().unwrap(), Amount::from_sat(1_000_000));
+/// assert_eq!("1 mBTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000));
+/// assert_eq!("1 uBTC".parse::<Amount>().unwrap(), Amount::from_sat(100));
+/// assert_eq!("1 bit".parse::<Amount>().unwrap(), Amount::from_sat(100));
+/// assert_eq!("1 sat".parse::<Amount>().unwrap(), Amount::from_sat(1));
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
@@ -2047,21 +2046,21 @@ mod tests {
         for denom in denoms {
             for v in &["0", "000"] {
                 let s = format!("{} {}", v, denom);
-                match Amount::from_str(&s) {
+                match s.parse::<Amount>() {
                     Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
                     Ok(amount) => assert_eq!(amount, Amount::from_sat(0)),
                 }
             }
 
             let s = format!("-0 {}", denom);
-            match Amount::from_str(&s) {
+            match s.parse::<Amount>() {
                 Err(e) => assert_eq!(
                     e,
                     ParseError::Amount(ParseAmountError::OutOfRange(OutOfRangeError::negative()))
                 ),
                 Ok(_) => panic!("unsigned amount from {}", s),
             }
-            match SignedAmount::from_str(&s) {
+            match s.parse::<SignedAmount>() {
                 Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
                 Ok(amount) => assert_eq!(amount, SignedAmount::from_sat(0)),
             }
@@ -2515,50 +2514,50 @@ mod tests {
         use super::ParseAmountError as E;
 
         assert_eq!(
-            Amount::from_str("x BTC"),
+            "x BTC".parse::<Amount>(),
             Err(InvalidCharacterError { invalid_char: 'x', position: 0 }.into())
         );
         assert_eq!(
-            Amount::from_str("xBTC"),
+            "xBTC".parse::<Amount>(),
             Err(Unknown(UnknownDenominationError("xBTC".into())).into()),
         );
         assert_eq!(
-            Amount::from_str("5 BTC BTC"),
+            "5 BTC BTC".parse::<Amount>(),
             Err(Unknown(UnknownDenominationError("BTC BTC".into())).into()),
         );
         assert_eq!(
-            Amount::from_str("5BTC BTC"),
+            "5BTC BTC".parse::<Amount>(),
             Err(E::from(InvalidCharacterError { invalid_char: 'B', position: 1 }).into())
         );
         assert_eq!(
-            Amount::from_str("5 5 BTC"),
+            "5 5 BTC".parse::<Amount>(),
             Err(Unknown(UnknownDenominationError("5 BTC".into())).into()),
         );
 
         #[track_caller]
         fn ok_case(s: &str, expected: Amount) {
-            assert_eq!(Amount::from_str(s).unwrap(), expected);
-            assert_eq!(Amount::from_str(&s.replace(' ', "")).unwrap(), expected);
+            assert_eq!(s.parse::<Amount>().unwrap(), expected);
+            assert_eq!(s.replace(' ', "").parse::<Amount>().unwrap(), expected);
         }
 
         #[track_caller]
         fn case(s: &str, expected: Result<Amount, impl Into<ParseError>>) {
             let expected = expected.map_err(Into::into);
-            assert_eq!(Amount::from_str(s), expected);
-            assert_eq!(Amount::from_str(&s.replace(' ', "")), expected);
+            assert_eq!(s.parse::<Amount>(), expected);
+            assert_eq!(s.replace(' ', "").parse::<Amount>(), expected);
         }
 
         #[track_caller]
         fn ok_scase(s: &str, expected: SignedAmount) {
-            assert_eq!(SignedAmount::from_str(s).unwrap(), expected);
-            assert_eq!(SignedAmount::from_str(&s.replace(' ', "")).unwrap(), expected);
+            assert_eq!(s.parse::<SignedAmount>().unwrap(), expected);
+            assert_eq!(s.replace(' ', "").parse::<SignedAmount>().unwrap(), expected);
         }
 
         #[track_caller]
         fn scase(s: &str, expected: Result<SignedAmount, impl Into<ParseError>>) {
             let expected = expected.map_err(Into::into);
-            assert_eq!(SignedAmount::from_str(s), expected);
-            assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
+            assert_eq!(s.parse::<SignedAmount>(), expected);
+            assert_eq!(s.replace(' ', "").parse::<SignedAmount>(), expected);
         }
 
         case("5 BCH", Err(Unknown(UnknownDenominationError("BCH".into()))));
@@ -2648,18 +2647,18 @@ mod tests {
 
         let amt = Amount::from_sat(42);
         let denom = Amount::to_string_with_denomination;
-        assert_eq!(Amount::from_str(&denom(amt, D::Bitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MilliBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MicroBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Bit)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Satoshi)), Ok(amt));
+        assert_eq!(denom(amt, D::Bitcoin).parse::<Amount>(), Ok(amt));
+        assert_eq!(denom(amt, D::MilliBitcoin).parse::<Amount>(), Ok(amt));
+        assert_eq!(denom(amt, D::MicroBitcoin).parse::<Amount>(), Ok(amt));
+        assert_eq!(denom(amt, D::Bit).parse::<Amount>(), Ok(amt));
+        assert_eq!(denom(amt, D::Satoshi).parse::<Amount>(), Ok(amt));
 
         assert_eq!(
-            Amount::from_str("42 satoshi BTC"),
+            "42 satoshi BTC".parse::<Amount>(),
             Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
         );
         assert_eq!(
-            SignedAmount::from_str("-42 satoshi BTC"),
+            "-42 satoshi BTC".parse::<SignedAmount>(),
             Err(Unknown(UnknownDenominationError("satoshi BTC".into())).into()),
         );
     }
@@ -2869,7 +2868,7 @@ mod tests {
             "satoshis", "SAT", "sat", "SATS", "sats", "bit", "bits",
         ];
         for denom in valid.iter() {
-            assert!(Denomination::from_str(denom).is_ok());
+            assert!(denom.parse::<Denomination>().is_ok());
         }
     }
 
@@ -2877,7 +2876,7 @@ mod tests {
     fn disallow_confusing_forms() {
         let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
         for denom in confusing.iter() {
-            match Denomination::from_str(denom) {
+            match denom.parse::<Denomination>() {
                 Ok(_) => panic!("from_str should error for {}", denom),
                 Err(ParseDenominationError::PossiblyConfusing(_)) => {}
                 Err(e) => panic!("unexpected error: {}", e),
@@ -2890,7 +2889,7 @@ mod tests {
         // Non-exhaustive list of unknown forms.
         let unknown = ["NBTC", "ABC", "abc", "mSat", "msat"];
         for denom in unknown.iter() {
-            match Denomination::from_str(denom) {
+            match denom.parse::<Denomination>() {
                 Ok(_) => panic!("from_str should error for {}", denom),
                 Err(ParseDenominationError::Unknown(_)) => (),
                 Err(e) => panic!("unexpected error: {}", e),

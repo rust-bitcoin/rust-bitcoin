@@ -134,10 +134,9 @@ impl PublicKey {
     /// # Example: Using with `sort_unstable_by_key`
     ///
     /// ```rust
-    /// use std::str::FromStr;
     /// use bitcoin::PublicKey;
     ///
-    /// let pk = |s| PublicKey::from_str(s).unwrap();
+    /// let pk = |s: &str| s.parse::<PublicKey>().unwrap();
     ///
     /// let mut unsorted = [
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
@@ -1152,7 +1151,7 @@ mod tests {
         // test string conversion
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
-            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
         // mainnet uncompressed
@@ -1166,7 +1165,8 @@ mod tests {
         let mut pk = sk.public_key(&secp);
         assert!(!pk.compressed);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
-        assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
+        assert_eq!(pk, "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
+        .parse::<PublicKey>().unwrap());
         let addr = Address::p2pkh(pk, sk.network);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk.compressed = true;
@@ -1176,31 +1176,29 @@ mod tests {
         );
         assert_eq!(
             pk,
-            PublicKey::from_str(
-                "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
-            )
-            .unwrap()
+            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
+                .parse::<PublicKey>()
+                .unwrap()
         );
     }
 
     #[test]
     fn test_pubkey_hash() {
-        let pk = PublicKey::from_str(
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
-        )
-        .unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
+            .parse::<PublicKey>()
+            .unwrap();
+        let upk = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133"
+        .parse::<PublicKey>().unwrap();
         assert_eq!(pk.pubkey_hash().to_string(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
         assert_eq!(upk.pubkey_hash().to_string(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
     }
 
     #[test]
     fn test_wpubkey_hash() {
-        let pk = PublicKey::from_str(
-            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
-        )
-        .unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
+            .parse::<PublicKey>()
+            .unwrap();
+        let upk = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133".parse::<PublicKey>().unwrap();
         assert_eq!(
             pk.wpubkey_hash().unwrap().to_string(),
             "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4"
@@ -1242,7 +1240,7 @@ mod tests {
         ];
 
         let s = Secp256k1::new();
-        let sk = PrivateKey::from_str(KEY_WIF).unwrap();
+        let sk = KEY_WIF.parse::<PrivateKey>().unwrap();
         let pk = PublicKey::from_private_key(&s, sk);
         let pk_u = PublicKey { inner: pk.inner, compressed: false };
 
@@ -1304,10 +1302,9 @@ mod tests {
 
     #[test]
     fn pubkey_to_sort_key() {
-        let key1 = PublicKey::from_str(
-            "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
-        )
-        .unwrap();
+        let key1 = "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8"
+            .parse::<PublicKey>()
+            .unwrap();
         let key2 = PublicKey { inner: key1.inner, compressed: false };
         let arrayvec1 = ArrayVec::from_slice(
             &<[u8; 33]>::from_hex(
@@ -1330,8 +1327,9 @@ mod tests {
             input: Vec<PublicKey>,
             expect: Vec<PublicKey>,
         }
-        let fmt =
-            |v: Vec<_>| v.into_iter().map(|s| PublicKey::from_str(s).unwrap()).collect::<Vec<_>>();
+        let fmt = |v: Vec<_>| {
+            v.into_iter().map(|s: &str| s.parse::<PublicKey>().unwrap()).collect::<Vec<_>>()
+        };
         let vectors = vec![
             // Start BIP67 vectors
             // Vector 1
@@ -1450,15 +1448,15 @@ mod tests {
         // Sanity checks, we accept string length 130 digits.
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
-        assert!(PublicKey::from_str(s).is_ok());
+        assert!(s.parse::<PublicKey>().is_ok());
         // And 66 digits.
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
         assert_eq!(s.len(), 66);
-        assert!(PublicKey::from_str(s).is_ok());
+        assert!(s.parse::<PublicKey>().is_ok());
 
         let s = "aoeusthb";
         assert_eq!(s.len(), 8);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidHexLength(8));
     }
@@ -1468,7 +1466,7 @@ mod tests {
         // Ensuring test cases fail when PublicKey::from_str is used on invalid keys
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b142";
         assert_eq!(s.len(), 130);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
@@ -1479,7 +1477,7 @@ mod tests {
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd169";
         assert_eq!(s.len(), 66);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
@@ -1490,7 +1488,7 @@ mod tests {
 
         let s = "062e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         assert_eq!(s.len(), 130);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
@@ -1499,13 +1497,13 @@ mod tests {
 
         let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b13g";
         assert_eq!(s.len(), 130);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1ag";
         assert_eq!(s.len(), 66);
-        let res = PublicKey::from_str(s);
+        let res = s.parse::<PublicKey>();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
     }
@@ -1514,7 +1512,7 @@ mod tests {
     #[cfg(feature = "std")]
     fn private_key_debug_is_obfuscated() {
         let sk =
-            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         let want =
             "PrivateKey { compressed: true, network: Test, inner: SecretKey(#32014e414fdce702) }";
         let got = format!("{:?}", sk);
@@ -1525,7 +1523,7 @@ mod tests {
     #[cfg(not(feature = "std"))]
     fn private_key_debug_is_obfuscated() {
         let sk =
-            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy".parse::<PrivateKey>().unwrap();
         // Why is this not shortened? In rust-secp256k1/src/secret it is printed with "#{:016x}"?
         let want = "PrivateKey { compressed: true, network: Test, inner: SecretKey(#7217ac58fbad8880a91032107b82cb6c5422544b426c350ee005cf509f3dbf7b) }";
         let got = format!("{:?}", sk);
