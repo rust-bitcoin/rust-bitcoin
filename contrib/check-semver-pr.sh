@@ -175,6 +175,7 @@ check_for_breaking_changes() {
         if grep -q "FAIL" "$file"; then
             echo "You have introduced changes to the public API"
             echo "FAIL found in $file"
+            cat "$file"
             # flag it as a breaking change
             # Handle the case where FAIL is found
             touch semver-break

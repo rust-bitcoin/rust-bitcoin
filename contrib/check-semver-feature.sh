@@ -112,6 +112,7 @@ check_for_non_additive_cargo_features() {
         if grep -q "FAIL" "$file"; then
             echo "You have introduced non-additive cargo features"
             echo "FAIL found in $file"
+            cat "$file"
             # flag it as a breaking change
             # Handle the case where FAIL is found
             touch non-additive-cargo

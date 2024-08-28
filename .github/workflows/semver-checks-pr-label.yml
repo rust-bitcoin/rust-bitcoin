@@ -73,7 +73,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue_number,
-              body: ':rotating_light: API BREAKING CHANGE DETECTED'
+              body: ':rotating_light: API BREAKING CHANGE DETECTED\n\nTo see the changes click details on "Check semver breaks / PR Semver - stable toolchain" job then expand "Run semver checker script" and scroll to the end of the section.'
             });
 
             // add the label to the PR
