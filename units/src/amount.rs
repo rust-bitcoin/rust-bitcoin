@@ -935,7 +935,7 @@ impl Amount {
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
-        f64::from_str(&self.to_string_in(denom)).unwrap()
+        self.to_string_in(denom).parse::<f64>().unwrap()
     }
 
     /// Expresses this [`Amount`] as a floating-point value in Bitcoin.
@@ -1308,7 +1308,7 @@ impl SignedAmount {
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
-        f64::from_str(&self.to_string_in(denom)).unwrap()
+        self.to_string_in(denom).parse::<f64>().unwrap()
     }
 
     /// Express this [`SignedAmount`] as a floating-point value in Bitcoin.

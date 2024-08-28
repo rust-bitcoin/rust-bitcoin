@@ -29,7 +29,7 @@ pub mod serde_details {
             E: de::Error,
         {
             if let Ok(hex) = str::from_utf8(v) {
-                Self::Value::from_str(hex).map_err(E::custom)
+                hex.parse::<Self::Value>().map_err(E::custom)
             } else {
                 return Err(E::invalid_value(de::Unexpected::Bytes(v), &self));
             }
@@ -39,7 +39,7 @@ pub mod serde_details {
         where
             E: de::Error,
         {
-            Self::Value::from_str(v).map_err(E::custom)
+            v.parse::<Self::Value>().map_err(E::custom)
         }
     }
 

@@ -49,7 +49,7 @@ fn check_result(engine: sha256::HashEngine) {
     let hash = TestType(sha256::Hash::from_engine(engine));
 
     let hash_check =
-        TestType::from_str("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad".parse::<TestType>()
             .unwrap();
     hprintln!("hash:{} hash_check:{}", hash, hash_check).unwrap();
     if hash != hash_check {

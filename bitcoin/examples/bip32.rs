@@ -1,6 +1,5 @@
 extern crate bitcoin;
 
-use std::str::FromStr;
 use std::{env, process};
 
 use bitcoin::address::{Address, KnownHrp};
@@ -40,7 +39,7 @@ fn main() {
     println!("Root key: {}", root);
 
     // derive child xpub
-    let path = DerivationPath::from_str("84h/0h/0h").unwrap();
+    let path = "84h/0h/0h".parse::<DerivationPath>().unwrap();
     let child = root.derive_priv(&secp, &path);
     println!("Child at {}: {}", path, child);
     let xpub = Xpub::from_priv(&secp, &child);
