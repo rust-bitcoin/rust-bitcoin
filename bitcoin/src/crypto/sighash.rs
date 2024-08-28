@@ -1468,8 +1468,6 @@ impl<E: std::error::Error + 'static> std::error::Error for SigningDataError<E> {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use hashes::HashEngine;
     use hex::{test_hex_unwrap as hex, FromHex};
 
@@ -1927,14 +1925,11 @@ mod tests {
             let expected = inp.intermediary;
             let sig_str = inp.expected.witness.remove(0);
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
-                (
-                    secp256k1::schnorr::Signature::from_str(&sig_str).unwrap(),
-                    TapSighashType::Default,
-                )
+                (sig_str.parse::<secp256k1::schnorr::Signature>().unwrap(), TapSighashType::Default)
             } else {
                 let hash_ty = u8::from_str_radix(&sig_str[128..130], 16).unwrap();
                 let hash_ty = TapSighashType::from_consensus_u8(hash_ty).unwrap();
-                (secp256k1::schnorr::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
+                (sig_str[..128].parse::<secp256k1::schnorr::Signature>().unwrap(), hash_ty)
             };
 
             // tests
@@ -1985,7 +1980,7 @@ mod tests {
         ];
         for (s, sht) in sighashtypes {
             assert_eq!(sht.to_string(), s);
-            assert_eq!(TapSighashType::from_str(s).unwrap(), sht);
+            assert_eq!(s.parse::<TapSighashType>().unwrap(), sht);
         }
         let sht_mistakes = [
             "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
@@ -2003,7 +1998,7 @@ mod tests {
         ];
         for s in sht_mistakes {
             assert_eq!(
-                TapSighashType::from_str(s).unwrap_err().to_string(),
+                s.parse::<TapSighashType>().unwrap_err().to_string(),
                 format!("unrecognized SIGHASH string '{}'", s)
             );
         }

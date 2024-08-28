@@ -302,7 +302,6 @@ impl ToSocketAddrs for AddrV2Message {
 
 #[cfg(test)]
 mod test {
-    use core::str::FromStr;
     use std::net::IpAddr;
 
     use hex::{test_hex_unwrap as hex, FromHex};
@@ -384,7 +383,7 @@ mod test {
     #[test]
     fn onion_test() {
         let onionaddr = SocketAddr::new(
-            IpAddr::V6(Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()),
+            IpAddr::V6("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca".parse::<Ipv6Addr>().unwrap()),
             1111,
         );
         let addr = Address::new(&onionaddr, ServiceFlags::NONE);
@@ -399,7 +398,7 @@ mod test {
         assert_eq!(serialize(&ip), hex!("010401020304"));
 
         let ip =
-            AddrV2::Ipv6(Ipv6Addr::from_str("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b").unwrap());
+            AddrV2::Ipv6("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b".parse::<Ipv6Addr>().unwrap());
         assert_eq!(serialize(&ip), hex!("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b"));
 
         let ip = AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap());
@@ -423,7 +422,7 @@ mod test {
             hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
         );
 
-        let ip = AddrV2::Cjdns(Ipv6Addr::from_str("fc01:1:2:3:4:5:6:7").unwrap());
+        let ip = AddrV2::Cjdns("fc01:1:2:3:4:5:6:7".parse::<Ipv6Addr>().unwrap());
         assert_eq!(serialize(&ip), hex!("0610fc010001000200030004000500060007"));
 
         let ip = AddrV2::Unknown(170, hex!("01020304"));
@@ -451,7 +450,7 @@ mod test {
         let ip: AddrV2 = deserialize(&hex!("02100102030405060708090a0b0c0d0e0f10")).unwrap();
         assert_eq!(
             ip,
-            AddrV2::Ipv6(Ipv6Addr::from_str("102:304:506:708:90a:b0c:d0e:f10").unwrap())
+            AddrV2::Ipv6("102:304:506:708:90a:b0c:d0e:f10".parse::<Ipv6Addr>().unwrap())
         );
 
         // Invalid IPv6, with bogus length.
@@ -508,7 +507,7 @@ mod test {
 
         // Valid CJDNS.
         let ip: AddrV2 = deserialize(&hex!("0610fc000001000200030004000500060007")).unwrap();
-        assert_eq!(ip, AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap()));
+        assert_eq!(ip, AddrV2::Cjdns("fc00:1:2:3:4:5:6:7".parse::<Ipv6Addr>().unwrap()));
 
         // Invalid CJDNS, incorrect marker
         assert!(deserialize::<AddrV2>(&hex!("0610fd000001000200030004000500060007")).is_err());

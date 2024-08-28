@@ -1545,8 +1545,6 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 
 #[cfg(test)]
 mod test {
-    use core::str::FromStr;
-
     use hashes::sha256;
     use hashes::sha256t::Tag;
     use hex::{DisplayHex, FromHex};
@@ -1648,7 +1646,7 @@ mod test {
         script_hex: &str,
         control_block_hex: &str,
     ) {
-        let out_pk = XOnlyPublicKey::from_str(&out_spk_hex[4..]).unwrap();
+        let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = ScriptBuf::from_hex(script_hex).unwrap();
         let control_block =
@@ -1712,10 +1710,9 @@ mod test {
     #[test]
     fn build_huffman_tree() {
         let secp = Secp256k1::verification_only();
-        let internal_key = UntweakedPublicKey::from_str(
-            "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51",
-        )
-        .unwrap();
+        let internal_key = "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51"
+            .parse::<UntweakedPublicKey>()
+            .unwrap();
 
         let script_weights = [
             (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
@@ -1770,10 +1767,9 @@ mod test {
     #[test]
     fn taptree_builder() {
         let secp = Secp256k1::verification_only();
-        let internal_key = UntweakedPublicKey::from_str(
-            "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51",
-        )
-        .unwrap();
+        let internal_key = "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51"
+            .parse::<UntweakedPublicKey>()
+            .unwrap();
 
         let builder = TaprootBuilder::new();
         // Create a tree as shown below
@@ -1905,7 +1901,7 @@ mod test {
 
         for arr in data["scriptPubKey"].as_array().unwrap() {
             let internal_key =
-                XOnlyPublicKey::from_str(arr["given"]["internalPubkey"].as_str().unwrap()).unwrap();
+                arr["given"]["internalPubkey"].as_str().unwrap().parse::<XOnlyPublicKey>().unwrap();
             // process the tree
             let script_tree = &arr["given"]["scriptTree"];
             let mut merkle_root = None;
@@ -1913,7 +1909,10 @@ mod test {
                 assert!(arr["intermediary"]["merkleRoot"].is_null());
             } else {
                 merkle_root = Some(
-                    TapNodeHash::from_str(arr["intermediary"]["merkleRoot"].as_str().unwrap())
+                    arr["intermediary"]["merkleRoot"]
+                        .as_str()
+                        .unwrap()
+                        .parse::<TapNodeHash>()
                         .unwrap(),
                 );
                 let leaf_hashes = arr["intermediary"]["leafHashes"].as_array().unwrap();
@@ -1935,17 +1934,21 @@ mod test {
                     assert_eq!(ctrl_blk, expected_ctrl_blk);
                 }
             }
-            let expected_output_key =
-                XOnlyPublicKey::from_str(arr["intermediary"]["tweakedPubkey"].as_str().unwrap())
-                    .unwrap();
+            let expected_output_key = arr["intermediary"]["tweakedPubkey"]
+                .as_str()
+                .unwrap()
+                .parse::<XOnlyPublicKey>()
+                .unwrap();
             let expected_tweak =
-                TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
+                arr["intermediary"]["tweak"].as_str().unwrap().parse::<TapTweakHash>().unwrap();
             let expected_spk =
                 ScriptBuf::from_hex(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
-            let expected_addr =
-                Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap())
-                    .unwrap()
-                    .assume_checked();
+            let expected_addr = arr["expected"]["bip350Address"]
+                .as_str()
+                .unwrap()
+                .parse::<Address<_>>()
+                .unwrap()
+                .assume_checked();
 
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
             let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);

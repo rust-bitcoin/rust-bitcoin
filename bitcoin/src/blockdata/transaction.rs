@@ -1438,8 +1438,6 @@ impl InputWeightPrediction {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
@@ -1464,43 +1462,38 @@ mod tests {
 
     #[test]
     fn outpoint() {
-        assert_eq!(OutPoint::from_str("i don't care"), Err(ParseOutPointError::Format));
+        assert_eq!("i don't care".parse::<OutPoint>(), Err(ParseOutPointError::Format));
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:1:1"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:1:1"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::Format)
         );
         assert_eq!(
-            OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:"),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:".parse::<OutPoint>(),
             Err(ParseOutPointError::Format)
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:11111111111"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:11111111111"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::TooLong)
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:01"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:01"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::VoutNotCanonical)
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:+42"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:+42"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::VoutNotCanonical)
         );
         assert_eq!(
-            OutPoint::from_str("i don't care:1"),
+            "i don't care:1".parse::<OutPoint>(),
             Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err()))
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::Txid(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
                     .parse::<Txid>()
@@ -1508,16 +1501,14 @@ mod tests {
             ))
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
+                .parse::<OutPoint>(),
             Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
         );
 
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"
+                .parse::<OutPoint>(),
             Ok(OutPoint {
                 txid: "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456"
                     .parse()
@@ -1526,9 +1517,8 @@ mod tests {
             })
         );
         assert_eq!(
-            OutPoint::from_str(
-                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:0"
-            ),
+            "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:0"
+                .parse::<OutPoint>(),
             Ok(OutPoint {
                 txid: "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456"
                     .parse()
@@ -1824,7 +1814,7 @@ mod tests {
         ];
         for (s, sht) in sighashtypes {
             assert_eq!(sht.to_string(), s);
-            assert_eq!(EcdsaSighashType::from_str(s).unwrap(), sht);
+            assert_eq!(s.parse::<EcdsaSighashType>().unwrap(), sht);
         }
         let sht_mistakes = [
             "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
@@ -1840,7 +1830,7 @@ mod tests {
         ];
         for s in sht_mistakes {
             assert_eq!(
-                EcdsaSighashType::from_str(s).unwrap_err().to_string(),
+                s.parse::<EcdsaSighashType>().unwrap_err().to_string(),
                 format!("unrecognized SIGHASH string '{}'", s)
             );
         }
@@ -1975,13 +1965,13 @@ mod tests {
 
     #[test]
     fn effective_value_happy_path() {
-        let value = Amount::from_str("1 cBTC").unwrap();
+        let value = "1 cBTC".parse::<Amount>().unwrap();
         let fee_rate = FeeRate::from_sat_per_kwu(10);
         let satisfaction_weight = Weight::from_wu(204);
         let effective_value = effective_value(fee_rate, satisfaction_weight, value).unwrap();
 
         // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
-        let expected_fee = SignedAmount::from_str("4 sats").unwrap();
+        let expected_fee = "4 sats".parse::<SignedAmount>().unwrap();
         let expected_effective_value = value.to_signed().unwrap() - expected_fee;
         assert_eq!(effective_value, expected_effective_value);
     }

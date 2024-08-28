@@ -523,7 +523,7 @@ mod test {
         ] {
             let sighash = PsbtSighashType::from(*ecdsa);
             let s = format!("{}", sighash);
-            let back = PsbtSighashType::from_str(&s).unwrap();
+            let back = s.parse::<PsbtSighashType>().unwrap();
             assert_eq!(back, sighash);
             assert_eq!(back.ecdsa_hash_ty().unwrap(), *ecdsa);
         }
@@ -542,7 +542,7 @@ mod test {
         ] {
             let sighash = PsbtSighashType::from(*tap);
             let s = format!("{}", sighash);
-            let back = PsbtSighashType::from_str(&s).unwrap();
+            let back = s.parse::<PsbtSighashType>().unwrap();
             assert_eq!(back, sighash);
             assert_eq!(back.taproot_hash_ty().unwrap(), *tap);
         }
@@ -553,7 +553,7 @@ mod test {
         let nonstd = 0xdddddddd;
         let sighash = PsbtSighashType { inner: nonstd };
         let s = format!("{}", sighash);
-        let back = PsbtSighashType::from_str(&s).unwrap();
+        let back = s.parse::<PsbtSighashType>().unwrap();
 
         assert_eq!(back, sighash);
         assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashTypeError(nonstd)));

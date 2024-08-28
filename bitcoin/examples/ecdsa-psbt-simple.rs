@@ -84,7 +84,8 @@ fn get_internal_address_xpriv<C: Signing>(
 
 // The address to send to.
 fn receivers_address() -> Address {
-    "bc1q7cyrfmck2ffu2ud3rn5l5a8yv6f0chkp0zpemf".parse::<Address<_>>()
+    "bc1q7cyrfmck2ffu2ud3rn5l5a8yv6f0chkp0zpemf"
+        .parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")
@@ -92,7 +93,8 @@ fn receivers_address() -> Address {
 
 // The dummy unspent transaction outputs that we control.
 fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
-    let script_pubkey_1 = "bc1qrwuu3ydv0jfza4a0ehtfd03m9l4vw3fy0hfm50".parse::<Address<_>>()
+    let script_pubkey_1 = "bc1qrwuu3ydv0jfza4a0ehtfd03m9l4vw3fy0hfm50"
+        .parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")
@@ -105,7 +107,8 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
 
     let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
 
-    let script_pubkey_2 = "bc1qy7swwpejlw7a2rp774pa8rymh8tw3xvd2x2xkd".parse::<Address<_>>()
+    let script_pubkey_2 = "bc1qy7swwpejlw7a2rp774pa8rymh8tw3xvd2x2xkd"
+        .parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")
