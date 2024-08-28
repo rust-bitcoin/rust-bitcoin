@@ -30,7 +30,6 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
-use std::str::FromStr;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
@@ -175,7 +174,7 @@ impl WatchOnly {
 
     /// Creates the PSBT, in BIP174 parlance this is the 'Creator'.
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
-        let to_address = Address::from_str(RECEIVE_ADDRESS)?.require_network(Network::Regtest)?;
+        let to_address = RECEIVE_ADDRESS.parse::<Address<_>>()?.require_network(Network::Regtest)?;
         let to_amount = OUTPUT_AMOUNT_BTC.parse::<Amount>()?;
 
         let (_, change_address, _) = self.change_address(secp)?;

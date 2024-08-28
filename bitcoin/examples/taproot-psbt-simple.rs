@@ -21,7 +21,6 @@
 //!
 //! The miner's fee will be 10,000 satoshis.
 use std::collections::BTreeMap;
-use std::str::FromStr;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
@@ -95,7 +94,7 @@ fn get_tap_key_origin(
 
 // The address to send to.
 fn receivers_address() -> Address {
-    Address::from_str("bc1p0dq0tzg2r780hldthn5mrznmpxsxc0jux5f20fwj0z3wqxxk6fpqm7q0va")
+    "bc1p0dq0tzg2r780hldthn5mrznmpxsxc0jux5f20fwj0z3wqxxk6fpqm7q0va".parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")
@@ -104,7 +103,7 @@ fn receivers_address() -> Address {
 // The dummy unspent transaction outputs that we control.
 fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
     let script_pubkey_1 =
-        Address::from_str("bc1p80lanj0xee8q667aqcnn0xchlykllfsz3gu5skfv9vjsytaujmdqtv52vu")
+        "bc1p80lanj0xee8q667aqcnn0xchlykllfsz3gu5skfv9vjsytaujmdqtv52vu".parse::<Address<_>>()
             .unwrap()
             .require_network(Network::Bitcoin)
             .unwrap()
@@ -118,7 +117,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
     let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
 
     let script_pubkey_2 =
-        Address::from_str("bc1pfd0jmmdnp278vppcw68tkkmquxtq50xchy7f6wdmjtjm7fgsr8dszdcqce")
+        "bc1pfd0jmmdnp278vppcw68tkkmquxtq50xchy7f6wdmjtjm7fgsr8dszdcqce".parse::<Address<_>>()
             .unwrap()
             .require_network(Network::Bitcoin)
             .unwrap()
