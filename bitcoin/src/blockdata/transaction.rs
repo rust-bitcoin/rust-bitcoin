@@ -407,17 +407,17 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+/// Returns the total number of bytes that this script pubkey would contribute to a transaction.
+fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
+    let len = script_pubkey.len();
+    Amount::SIZE + VarInt::from(len).size() + len
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
-}
-
-/// Returns the total number of bytes that this script pubkey would contribute to a transaction.
-fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
-    let len = script_pubkey.len();
-    Amount::SIZE + VarInt::from(len).size() + len
 }
 
 /// Bitcoin transaction.
