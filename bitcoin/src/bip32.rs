@@ -421,11 +421,10 @@ impl DerivationPath {
     ///
     /// ```
     /// use bitcoin::bip32::{DerivationPath, ChildNumber};
-    /// use std::str::FromStr;
     ///
-    /// let base = DerivationPath::from_str("m/42").unwrap();
+    /// let base = "m/42".parse::<DerivationPath>().unwrap();
     ///
-    /// let deriv_1 = base.extend(DerivationPath::from_str("0/1").unwrap());
+    /// let deriv_1 = base.extend("0/1".parse::<DerivationPath>().unwrap());
     /// let deriv_2 = base.extend(&[
     ///     ChildNumber::ZERO_NORMAL,
     ///     ChildNumber::ONE_NORMAL
@@ -447,7 +446,7 @@ impl DerivationPath {
     /// use bitcoin::bip32::DerivationPath;
     /// use std::str::FromStr;
     ///
-    /// let path = DerivationPath::from_str("m/84'/0'/0'/0/1").unwrap();
+    /// let path = "m/84'/0'/0'/0/1".parse::<DerivationPath>().unwrap();
     /// const HARDENED: u32 = 0x80000000;
     /// assert_eq!(path.to_u32_vec(), vec![84 + HARDENED, HARDENED, HARDENED, 0, 1]);
     /// ```

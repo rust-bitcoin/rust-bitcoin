@@ -37,15 +37,14 @@ use arbitrary::{Arbitrary, Unstructured};
 /// # Examples
 ///
 /// ```
-/// # use core::str::FromStr;
 /// # use bitcoin_units::Amount;
 ///
-/// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
-/// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
-/// assert_eq!(Amount::from_str("1 mBTC").unwrap(), Amount::from_sat(100_000));
-/// assert_eq!(Amount::from_str("1 uBTC").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("1 bit").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("1 sat").unwrap(), Amount::from_sat(1));
+/// assert_eq!("1 BTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000_000));
+/// assert_eq!("1 cBTC".parse::<Amount>().unwrap(), Amount::from_sat(1_000_000));
+/// assert_eq!("1 mBTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000));
+/// assert_eq!("1 uBTC".parse::<Amount>().unwrap(), Amount::from_sat(100));
+/// assert_eq!("1 bit".parse::<Amount>().unwrap(), Amount::from_sat(100));
+/// assert_eq!("1 sat".parse::<Amount>().unwrap(), Amount::from_sat(1));
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]

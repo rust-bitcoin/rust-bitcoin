@@ -134,10 +134,9 @@ impl PublicKey {
     /// # Example: Using with `sort_unstable_by_key`
     ///
     /// ```rust
-    /// use std::str::FromStr;
     /// use bitcoin::PublicKey;
     ///
-    /// let pk = |s| PublicKey::from_str(s).unwrap();
+    /// let pk = |s: &str| s.parse::<PublicKey>().unwrap();
     ///
     /// let mut unsorted = [
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
