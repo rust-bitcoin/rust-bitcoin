@@ -12,7 +12,7 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
-use crate::prelude::{String, Vec};
+use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
@@ -534,6 +534,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
     where
         D: serde::Deserializer<'de>,
     {
+        use crate::prelude::String;
+
         struct Visitor; // Human-readable visitor.
         impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Witness;
