@@ -1476,8 +1476,28 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::ScriptBufExt as _;
+    use crate::{Address, PublicKey, NetworkKind};
 
     extern crate serde_json;
+
+    #[test]
+    fn legacy_sighash_regression() {
+        let tx = Transaction {
+            version: transaction::Version::ONE,
+            lock_time: absolute::LockTime::ZERO,
+            input: vec![TxIn::EMPTY_COINBASE],
+            output: vec![TxOut::NULL],
+        };
+
+        let pk = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133".parse::<PublicKey>().unwrap();
+        let addr = Address::p2pkh(pk, NetworkKind::Main);
+        let script = addr.script_pubkey();
+        let cache = SighashCache::new(&tx);
+
+        let got = cache.legacy_signature_hash(0, &script, 0x01).expect("sighash");
+        let want = "d17894eaf6d0a05978706a48c6f411bc37f76d672a1826c7fde980dac4bdc7d5";
+        assert_eq!(got.to_string(), want)
+    }
 
     #[test]
     fn sighash_single_bug() {
