@@ -55,6 +55,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha512_256, HashEngine};
 
         #[derive(Clone)]
@@ -123,8 +125,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha512_256::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha512_256::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = sha512_256::Hash::engine();
@@ -133,7 +135,7 @@ mod tests {
             }
             let manual_hash = sha512_256::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 }

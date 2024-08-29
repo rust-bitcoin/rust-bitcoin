@@ -23,9 +23,17 @@ pub struct Hash<T>([u8; 32], PhantomData<T>);
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
-    fn schema_name() -> String { "Hash".to_owned() }
+    fn schema_name() -> alloc::string::String {
+        use alloc::borrow::ToOwned;
+
+        "Hash".to_owned()
+    }
 
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        use alloc::borrow::ToOwned;
+        use alloc::boxed::Box;
+        use alloc::string::String;
+
         let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
         schema.string = Some(Box::new(schemars::schema::StringValidation {
             max_length: Some(32 * 2),
@@ -353,6 +361,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn manually_created_sha256t_hash_type() {
+        use alloc::string::ToString;
+
         assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 
@@ -370,6 +380,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn macro_created_sha256t_hash_type_backward() {
+        use alloc::string::ToString;
+
         let inner = sha256t::Hash::<NewTypeTagBackward>::hash(&[0]);
         let hash = NewTypeHashBackward::from_byte_array(inner.to_byte_array());
         assert_eq!(hash.to_string(), HASH_ZERO_BACKWARD);
@@ -391,6 +403,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn macro_created_sha256t_hash_type_prints_forward() {
+        use alloc::string::ToString;
+
         let inner = sha256t::Hash::<NewTypeTagForward>::hash(&[0]);
         let hash = NewTypeHashForward::from_byte_array(inner.to_byte_array());
         assert_eq!(hash.to_string(), HASH_ZERO_FORWARD);

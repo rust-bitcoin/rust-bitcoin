@@ -413,6 +413,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{ripemd160, HashEngine};
 
         #[derive(Clone)]
@@ -477,8 +479,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = ripemd160::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<ripemd160::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
             assert_eq!(ripemd160::Hash::from_bytes_ref(&test.output), &hash);
             assert_eq!(ripemd160::Hash::from_bytes_mut(&mut test.output), &hash);
 
@@ -489,7 +491,7 @@ mod tests {
             }
             let manual_hash = ripemd160::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.as_byte_array(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 

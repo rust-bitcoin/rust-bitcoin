@@ -81,8 +81,10 @@ impl_write!(
     T: crate::GeneralHash
 );
 
-#[cfg(test)]
+#[cfg(all(test, feature = "alloc"))] // right now every test here depends on `alloc`
 mod tests {
+    use alloc::format;
+
     use bitcoin_io::Write;
 
     use crate::{

@@ -51,11 +51,12 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use super::Hash;
         use crate::{hash160, HashEngine};
 
         #[derive(Clone)]
-        #[cfg(feature = "alloc")]
         struct Test {
             input: [u8; 65],
             output: [u8; 20],
@@ -89,8 +90,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = hash160::Hash::hash(&test.input[..]);
             assert_eq!(hash, test.output_str.parse::<hash160::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = hash160::Hash::engine();
@@ -99,7 +100,7 @@ mod tests {
             }
             let manual_hash = Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 

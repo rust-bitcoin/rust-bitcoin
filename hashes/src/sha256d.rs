@@ -43,11 +43,14 @@ fn from_engine(e: HashEngine) -> Hash {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)] // whether this is used depends on features
     use crate::sha256d;
 
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use alloc::string::ToString;
+
         use crate::{sha256, HashEngine};
 
         #[derive(Clone)]
@@ -76,8 +79,8 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha256d::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha256d::Hash>().expect("parse hex"));
-            assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = sha256d::Hash::engine();
@@ -92,12 +95,15 @@ mod tests {
             let sha2d_hash = sha2_hash.hash_again();
             assert_eq!(hash, sha2d_hash);
 
-            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array(), test.output);
         }
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn fmt_roundtrips() {
+        use alloc::format;
+
         let hash = sha256d::Hash::hash(b"some arbitrary bytes");
         let hex = format!("{}", hash);
         let rinsed = hex.parse::<sha256d::Hash>().expect("failed to parse hex");
