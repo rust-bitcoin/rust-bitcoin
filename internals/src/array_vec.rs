@@ -78,7 +78,7 @@ mod safety_boundary {
             assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
             let slice = unsafe { &*(slice as *const _ as *const [MaybeUninit<T>]) };
-            self.data[self.len..].copy_from_slice(slice);
+            self.data[self.len..new_len].copy_from_slice(slice);
             self.len = new_len;
         }
     }
