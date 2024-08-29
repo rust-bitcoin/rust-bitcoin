@@ -181,4 +181,10 @@ mod tests {
         let mut av = ArrayVec::<_, 0>::new();
         av.extend_from_slice(&[42]);
     }
+
+    #[test]
+    fn extend_from_slice() {
+        let mut av = ArrayVec::<u8, 8>::new();
+        av.extend_from_slice(b"abc");
+    }
 }
