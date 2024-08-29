@@ -36,6 +36,8 @@ pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
 pub mod sequence;
+#[cfg(feature = "alloc")]
+pub mod witness;
 
 #[doc(inline)]
 pub use units::*;
@@ -45,6 +47,7 @@ pub use units::*;
 pub use self::{
     locktime::{absolute, relative},
     script::{Script, ScriptBuf},
+    witness::Witness,
 };
 #[doc(inline)]
 pub use self::{pow::CompactTarget, sequence::Sequence};

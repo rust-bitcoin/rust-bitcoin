@@ -87,6 +87,7 @@ use bitcoin::script::{ScriptBufExt as _, ScriptExt as _};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
     absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
     TxIn, TxOut, Witness,

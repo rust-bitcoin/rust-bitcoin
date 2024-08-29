@@ -38,6 +38,7 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
+use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
     transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
