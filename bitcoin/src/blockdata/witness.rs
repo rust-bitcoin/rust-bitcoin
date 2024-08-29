@@ -7,6 +7,7 @@
 use core::fmt;
 use core::ops::Index;
 
+use internals::compact_size;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
@@ -40,8 +41,8 @@ pub struct Witness {
 
     /// The number of elements in the witness.
     ///
-    /// Stored separately (instead of as a VarInt in the initial part of content) so that methods
-    /// like [`Witness::push`] don't have to shift the entire array.
+    /// Stored separately (instead of as a compact size encoding in the initial part of content) so
+    /// that methods like [`Witness::push`] don't have to shift the entire array.
     witness_elements: usize,
 
     /// This is the valid index pointing to the beginning of the index area.
@@ -271,18 +272,19 @@ impl Witness {
         let index_size = witness_elements * 4;
         let content_size = slice
             .iter()
-            .map(|elem| elem.as_ref().len() + VarInt::from(elem.as_ref().len()).size())
+            .map(|elem| {
+                elem.as_ref().len() + compact_size::encoded_size(elem.as_ref().len())
+            })
             .sum();
 
         let mut content = vec![0u8; content_size + index_size];
         let mut cursor = 0usize;
         for (i, elem) in slice.iter().enumerate() {
             encode_cursor(&mut content, content_size, i, cursor);
-            let elem_len_varint = VarInt::from(elem.as_ref().len());
-            elem_len_varint
-                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.size()])
-                .expect("writers on vec don't errors, space granted by content_size");
-            cursor += elem_len_varint.size();
+            let encoded = compact_size::encode(elem.as_ref().len());
+            let encoded_size = encoded.as_slice().len();
+            content[cursor..cursor + encoded_size].copy_from_slice(encoded.as_slice());
+            cursor += encoded_size;
             content[cursor..cursor + elem.as_ref().len()].copy_from_slice(elem.as_ref());
             cursor += elem.as_ref().len();
         }
@@ -312,11 +314,12 @@ impl Witness {
     pub fn size(&self) -> usize {
         let mut size: usize = 0;
 
-        size += VarInt::from(self.witness_elements).size();
+        size += compact_size::encoded_size(self.witness_elements);
         size += self
             .iter()
             .map(|witness_element| {
-                VarInt::from(witness_element.len()).size() + witness_element.len()
+                let len = witness_element.len();
+                compact_size::encoded_size(len) + len
             })
             .sum::<usize>();
 
@@ -339,9 +342,10 @@ impl Witness {
     fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;
-        let element_len_varint = VarInt::from(new_element.len());
+        let encoded = compact_size::encode(new_element.len());
+        let encoded_size = encoded.as_slice().len();
         let current_content_len = self.content.len();
-        let new_item_total_len = element_len_varint.size() + new_element.len();
+        let new_item_total_len = encoded_size + new_element.len();
         self.content.resize(current_content_len + new_item_total_len + 4, 0);
 
         self.content[previous_content_end..].rotate_right(new_item_total_len);
@@ -353,11 +357,10 @@ impl Witness {
             previous_content_end,
         );
 
-        let end_varint = previous_content_end + element_len_varint.size();
-        element_len_varint
-            .consensus_encode(&mut &mut self.content[previous_content_end..end_varint])
-            .expect("writers on vec don't error, space granted through previous resize");
-        self.content[end_varint..end_varint + new_element.len()].copy_from_slice(new_element);
+        let end_compact_size = previous_content_end + encoded_size;
+        self.content[previous_content_end..end_compact_size].copy_from_slice(encoded.as_slice());
+        self.content[end_compact_size..end_compact_size + new_element.len()]
+            .copy_from_slice(new_element);
     }
 
     /// Pushes, as a new element on the witness, an ECDSA signature.
@@ -367,10 +370,15 @@ impl Witness {
         self.push_slice(&signature.serialize())
     }
 
+    /// Note `index` is the index into the `content` vector and should be the result of calling
+    /// `decode_cursor`, which returns a valid index.
     fn element_at(&self, index: usize) -> Option<&[u8]> {
-        let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
-        let start = index + varint.size();
-        Some(&self.content[start..start + varint.0 as usize])
+        let mut slice = &self.content[index..]; // Start of element.
+        let element_len = compact_size::decode_unchecked(&mut slice);
+        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
+        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
+        let end = element_len as usize;
+        Some(&slice[..end])
     }
 
     /// Returns the last element in the witness, if any.
@@ -481,12 +489,13 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let index = decode_cursor(self.inner, self.indices_start, self.current_index)?;
-        let varint = VarInt::consensus_decode(&mut &self.inner[index..]).ok()?;
-        let start = index + varint.size();
-        let end = start + varint.0 as usize;
-        let slice = &self.inner[start..end];
+        let mut slice = &self.inner[index..]; // Start of element.
+        let element_len = compact_size::decode_unchecked(&mut slice);
+        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
+        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
+        let end = element_len as usize;
         self.current_index += 1;
-        Some(slice)
+        Some(&slice[..end])
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

@@ -35,6 +35,7 @@ pub mod rust_version {
 }
 
 pub mod array_vec;
+pub mod compact_size;
 pub mod const_tools;
 pub mod error;
 pub mod macros;
