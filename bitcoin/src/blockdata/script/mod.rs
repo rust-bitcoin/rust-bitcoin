@@ -415,7 +415,7 @@ impl AsMut<[u8]> for ScriptBuf {
 impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
-        self.fmt_asm(f)?;
+        bytes_to_asm_fmt(self.as_ref(), f)?;
         f.write_str(")")
     }
 }
@@ -426,7 +426,7 @@ impl fmt::Debug for ScriptBuf {
 
 impl fmt::Display for Script {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_asm(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { bytes_to_asm_fmt(self.as_ref(), f) }
 }
 
 impl fmt::Display for ScriptBuf {

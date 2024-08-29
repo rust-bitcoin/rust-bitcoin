@@ -481,14 +481,16 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Writes the human-readable assembly representation of the script to the formatter.
+        #[deprecated(since = "TBD", note = "use the script's Display impl instead")]
         fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
             bytes_to_asm_fmt(self.as_ref(), f)
         }
 
         /// Returns the human-readable assembly representation of the script.
+        #[deprecated(since = "TBD", note = "use `to_string()` instead")]
         fn to_asm_string(&self) -> String {
             let mut buf = String::new();
-            self.fmt_asm(&mut buf).unwrap();
+            bytes_to_asm_fmt(self.as_ref(), &mut buf).expect("in-memory writers don't fail");
             buf
         }
 

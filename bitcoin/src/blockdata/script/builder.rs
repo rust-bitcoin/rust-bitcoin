@@ -7,7 +7,7 @@ use crate::locktime::absolute;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::script::{ScriptBufExt as _, ScriptExt as _, ScriptExtPriv as _};
+use crate::script::{ScriptBufExt as _, ScriptExtPriv as _};
 use crate::Sequence;
 
 /// An Object which can be used to construct a script piece by piece.
@@ -126,7 +126,7 @@ impl From<Vec<u8>> for Builder {
 }
 
 impl fmt::Display for Builder {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_asm(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 internals::debug_from_display!(Builder);
