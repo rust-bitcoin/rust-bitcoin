@@ -116,10 +116,11 @@ impl From<Error> for std::io::Error {
 macro_rules! define_errorkind {
     ($($(#[$($attr:tt)*])* $kind:ident),*) => {
         #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-        /// A minimal subset of [`std::io::ErrorKind`] which is used for [`Error`]. Note that, as with
-        /// [`std::io`], only [`Self::Interrupted`] has defined semantics in this crate, all other
-        /// variants are provided here only to provide higher-fidelity conversions to and from
-        /// [`std::io::Error`].
+        /// A minimal subset of [`std::io::ErrorKind`] which is used for [`Error`].
+        ///
+        /// Note that, as with [`std::io`], only [`Self::Interrupted`] has defined semantics in this
+        /// crate, all other variants are provided here only to provide higher-fidelity conversions
+        /// to and from [`std::io::Error`].
         pub enum ErrorKind {
             $(
                 $(#[$($attr)*])*
