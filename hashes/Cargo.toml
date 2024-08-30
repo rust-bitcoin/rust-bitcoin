@@ -17,7 +17,6 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "bitcoin-io?/std", "hex/std"]
 alloc = ["bitcoin-io?/alloc", "hex/alloc"]
-# If you want I/O you must enable either "std" or "io".
 io = ["bitcoin-io"]
 schemars = ["dep:schemars", "alloc"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
