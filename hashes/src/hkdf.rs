@@ -11,7 +11,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
-use crate::{GeneralHash, HashEngine, Hmac, HmacEngine};
+use crate::{GeneralHash, HashEngine, Hmac, HmacEngine, IsByteArray};
 
 /// Output keying material max length multiple.
 const MAX_OUTPUT_BLOCKS: usize = 255;
@@ -54,14 +54,14 @@ where
     /// but the info must be independent from the ikm for security.
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), MaxLengthError> {
         // Length of output keying material in bytes must be less than 255 * hash length.
-        if okm.len() > (MAX_OUTPUT_BLOCKS * T::LEN) {
-            return Err(MaxLengthError { max: MAX_OUTPUT_BLOCKS * T::LEN });
+        if okm.len() > (MAX_OUTPUT_BLOCKS * T::Bytes::LEN) {
+            return Err(MaxLengthError { max: MAX_OUTPUT_BLOCKS * T::Bytes::LEN });
         }
 
         // Counter starts at "1" based on RFC5869 spec and is committed to in the hash.
         let mut counter = 1u8;
         // Ceiling calculation for the total number of blocks (iterations) required for the expand.
-        let total_blocks = (okm.len() + T::LEN - 1) / T::LEN;
+        let total_blocks = (okm.len() + T::Bytes::LEN - 1) / T::Bytes::LEN;
 
         while counter <= total_blocks as u8 {
             let mut hmac_engine: HmacEngine<T> = HmacEngine::new(self.prk.as_ref());
@@ -69,18 +69,18 @@ where
             // First block does not have a previous block,
             // all other blocks include last block in the HMAC input.
             if counter != 1u8 {
-                let previous_start_index = (counter as usize - 2) * T::LEN;
-                let previous_end_index = (counter as usize - 1) * T::LEN;
+                let previous_start_index = (counter as usize - 2) * T::Bytes::LEN;
+                let previous_end_index = (counter as usize - 1) * T::Bytes::LEN;
                 hmac_engine.input(&okm[previous_start_index..previous_end_index]);
             }
             hmac_engine.input(info);
             hmac_engine.input(&[counter]);
 
             let t = Hmac::from_engine(hmac_engine);
-            let start_index = (counter as usize - 1) * T::LEN;
+            let start_index = (counter as usize - 1) * T::Bytes::LEN;
             // Last block might not take full hash length.
             let end_index =
-                if counter == (total_blocks as u8) { okm.len() } else { counter as usize * T::LEN };
+                if counter == (total_blocks as u8) { okm.len() } else { counter as usize * T::Bytes::LEN };
 
             okm[start_index..end_index].copy_from_slice(&t.as_ref()[0..(end_index - start_index)]);
 
