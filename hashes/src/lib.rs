@@ -274,10 +274,10 @@ pub trait Hash:
     + convert::AsRef<[u8]>
 {
     /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy;
+    type Bytes: hex::FromHex + Copy + IsByteArray /* <LEN={Self::LEN}> is still unsupported by Rust */;
 
     /// Length of the hash, in bytes.
-    const LEN: usize;
+    const LEN: usize = Self::Bytes::LEN;
 
     /// Copies a byte slice into a hash object.
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
@@ -295,6 +295,23 @@ pub trait Hash:
 
     /// Constructs a hash from the underlying byte array.
     fn from_byte_array(bytes: Self::Bytes) -> Self;
+}
+
+/// Ensures that a type is an array.
+pub trait IsByteArray: AsRef<[u8]> + sealed::IsByteArray {
+    /// The length of the array.
+    const LEN: usize;
+}
+
+impl<const N: usize> IsByteArray for [u8; N] {
+    const LEN: usize = N;
+}
+
+mod sealed {
+    #[doc(hidden)]
+    pub trait IsByteArray { }
+
+    impl<const N: usize> IsByteArray for [u8; N] { }
 }
 
 /// Attempted to create a hash from an invalid length slice.

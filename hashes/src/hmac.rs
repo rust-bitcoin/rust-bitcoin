@@ -135,7 +135,6 @@ impl<T: GeneralHash> GeneralHash for Hmac<T> {
 
 impl<T: GeneralHash> Hash for Hmac<T> {
     type Bytes = T::Bytes;
-    const LEN: usize = T::LEN;
 
     fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
 

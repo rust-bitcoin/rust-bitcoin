@@ -231,7 +231,6 @@ macro_rules! hash_newtype {
         impl $crate::Hash for $newtype {
             type Bytes = <$hash as $crate::Hash>::Bytes;
 
-            const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
             #[inline]
