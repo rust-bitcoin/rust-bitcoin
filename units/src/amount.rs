@@ -1593,6 +1593,14 @@ impl core::iter::Sum for SignedAmount {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for SignedAmount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = i64::arbitrary(u)?;
+        Ok(SignedAmount(s))
+    }
+}
+
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
