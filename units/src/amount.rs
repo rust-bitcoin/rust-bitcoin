@@ -1924,6 +1924,14 @@ impl<'a> Arbitrary<'a> for Amount {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for SignedAmount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = i64::arbitrary(u)?;
+        Ok(SignedAmount(s))
+    }
+}
+
 #[cfg(kani)]
 mod verification {
     use std::cmp;
