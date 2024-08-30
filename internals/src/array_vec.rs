@@ -78,7 +78,7 @@ mod safety_boundary {
             assert!(new_len <= CAP, "buffer overflow");
             // SAFETY: MaybeUninit<T> has the same layout as T
             let slice = unsafe { &*(slice as *const _ as *const [MaybeUninit<T>]) };
-            self.data[self.len..].copy_from_slice(slice);
+            self.data[self.len..new_len].copy_from_slice(slice);
             self.len = new_len;
         }
     }
@@ -180,5 +180,11 @@ mod tests {
     fn overflow_extend() {
         let mut av = ArrayVec::<_, 0>::new();
         av.extend_from_slice(&[42]);
+    }
+
+    #[test]
+    fn extend_from_slice() {
+        let mut av = ArrayVec::<u8, 8>::new();
+        av.extend_from_slice(b"abc");
     }
 }
