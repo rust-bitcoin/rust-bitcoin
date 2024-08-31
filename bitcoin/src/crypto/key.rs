@@ -271,7 +271,7 @@ impl From<&PublicKey> for PubkeyHash {
 }
 
 /// An always-compressed Bitcoin ECDSA public key.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CompressedPublicKey(pub secp256k1::PublicKey);
 
 impl CompressedPublicKey {
@@ -347,6 +347,12 @@ impl CompressedPublicKey {
 impl fmt::Display for CompressedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.to_bytes().as_hex(), f)
+    }
+}
+
+impl fmt::Debug for CompressedPublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!("CompressedPublicKey({})", self))
     }
 }
 
