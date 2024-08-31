@@ -63,7 +63,10 @@ impl_to_u64!(u8, u16, u32, u64);
 
 impl ToU64 for usize {
     fn to_u64(self) -> u64 {
-        crate::const_assert!(core::mem::size_of::<usize>() <= 8);
+        crate::const_assert!(
+            core::mem::size_of::<usize>() <= 8;
+            "platforms that have usize larger than 64 bits are not supported"
+        );
         self as u64
     }
 }
