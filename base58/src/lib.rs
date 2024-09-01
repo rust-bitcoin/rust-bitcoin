@@ -248,6 +248,7 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
+
     use hex::test_hex_unwrap as hex;
 
     use super::*;

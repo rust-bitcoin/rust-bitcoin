@@ -94,7 +94,8 @@ fn get_tap_key_origin(
 
 // The address to send to.
 fn receivers_address() -> Address {
-    "bc1p0dq0tzg2r780hldthn5mrznmpxsxc0jux5f20fwj0z3wqxxk6fpqm7q0va".parse::<Address<_>>()
+    "bc1p0dq0tzg2r780hldthn5mrznmpxsxc0jux5f20fwj0z3wqxxk6fpqm7q0va"
+        .parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")
@@ -102,12 +103,12 @@ fn receivers_address() -> Address {
 
 // The dummy unspent transaction outputs that we control.
 fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
-    let script_pubkey_1 =
-        "bc1p80lanj0xee8q667aqcnn0xchlykllfsz3gu5skfv9vjsytaujmdqtv52vu".parse::<Address<_>>()
-            .unwrap()
-            .require_network(Network::Bitcoin)
-            .unwrap()
-            .script_pubkey();
+    let script_pubkey_1 = "bc1p80lanj0xee8q667aqcnn0xchlykllfsz3gu5skfv9vjsytaujmdqtv52vu"
+        .parse::<Address<_>>()
+        .unwrap()
+        .require_network(Network::Bitcoin)
+        .unwrap()
+        .script_pubkey();
 
     let out_point_1 = OutPoint {
         txid: Txid::all_zeros(), // Obviously invalid.
@@ -116,12 +117,12 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
 
     let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
 
-    let script_pubkey_2 =
-        "bc1pfd0jmmdnp278vppcw68tkkmquxtq50xchy7f6wdmjtjm7fgsr8dszdcqce".parse::<Address<_>>()
-            .unwrap()
-            .require_network(Network::Bitcoin)
-            .unwrap()
-            .script_pubkey();
+    let script_pubkey_2 = "bc1pfd0jmmdnp278vppcw68tkkmquxtq50xchy7f6wdmjtjm7fgsr8dszdcqce"
+        .parse::<Address<_>>()
+        .unwrap()
+        .require_network(Network::Bitcoin)
+        .unwrap()
+        .script_pubkey();
 
     let out_point_2 = OutPoint {
         txid: Txid::all_zeros(), // Obviously invalid.

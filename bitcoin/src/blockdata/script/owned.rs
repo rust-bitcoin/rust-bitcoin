@@ -3,6 +3,8 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::ToU64 as _;
 
@@ -10,9 +12,6 @@ use super::{opcode_to_verify, Builder, Instruction, PushBytes, Script, ScriptExt
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::{Box, Vec};
-
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 /// An owned, growable script.
 ///

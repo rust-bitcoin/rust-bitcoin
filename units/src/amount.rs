@@ -13,11 +13,10 @@ use core::{default, fmt, ops};
 
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
-use internals::error::InputString;
-use internals::write_err;
-
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use internals::error::InputString;
+use internals::write_err;
 
 /// A set of denominations in which amounts can be expressed.
 ///

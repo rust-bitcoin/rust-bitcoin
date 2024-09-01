@@ -99,12 +99,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nSTART EXAMPLE 1 - P2TR with a BIP86 commitment, signed with internal key\n");
 
     // Just some addresses for outputs from our wallets. Not really important.
-    let to_address =
-        "bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc".parse::<Address<_>>()?
-            .require_network(Network::Regtest)?;
-    let change_address =
-        "bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76".parse::<Address<_>>()?
-            .require_network(Network::Regtest)?;
+    let to_address = "bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc"
+        .parse::<Address<_>>()?
+        .require_network(Network::Regtest)?;
+    let change_address = "bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76"
+        .parse::<Address<_>>()?
+        .require_network(Network::Regtest)?;
     let amount_to_send_in_sats = Amount::ONE_BTC;
     let change_amount = UTXO_1
         .amount_in_sats
