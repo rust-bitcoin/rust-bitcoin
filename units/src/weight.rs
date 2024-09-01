@@ -5,11 +5,10 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;

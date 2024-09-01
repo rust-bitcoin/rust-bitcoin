@@ -100,7 +100,8 @@ fn senders_keys<C: Signing>(secp: &Secp256k1<C>) -> (SecretKey, WPubkeyHash) {
 ///
 /// (FWIW this is a random mainnet address from block 80219.)
 fn receivers_address() -> Address {
-    "bc1q7cyrfmck2ffu2ud3rn5l5a8yv6f0chkp0zpemf".parse::<Address<_>>()
+    "bc1q7cyrfmck2ffu2ud3rn5l5a8yv6f0chkp0zpemf"
+        .parse::<Address<_>>()
         .expect("a valid address")
         .require_network(Network::Bitcoin)
         .expect("valid address for mainnet")

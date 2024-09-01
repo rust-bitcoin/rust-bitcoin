@@ -5,14 +5,13 @@
 use core::fmt;
 use core::ops::{Div, Mul};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::amount::Amount;
 use crate::weight::Weight;
-
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 /// Represents fee rate.
 ///

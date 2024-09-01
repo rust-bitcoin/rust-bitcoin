@@ -12,6 +12,8 @@
 
 use core::{cmp, fmt, str};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
@@ -28,9 +30,6 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount, VarInt};
-
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -411,10 +410,7 @@ crate::internal_macros::define_extension_trait! {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut {
-            value: Amount::arbitrary(u)?,
-            script_pubkey: ScriptBuf::arbitrary(u)?,
-        })
+        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 
