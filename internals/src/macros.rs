@@ -140,12 +140,11 @@ macro_rules! debug_from_display {
 #[macro_export]
 macro_rules! const_assert {
     ($x:expr $(; $message:expr)?) => {
-        const _: bool = {
+        const _: () = {
             if !$x {
                 // We can't use formatting in const, only concating literals.
                 panic!(concat!("assertion ", stringify!($x), " failed" $(, ": ", $message)?))
             }
-            $x
         };
     }
 }
