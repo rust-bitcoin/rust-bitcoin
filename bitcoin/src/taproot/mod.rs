@@ -12,7 +12,7 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
-use internals::write_err;
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
@@ -1221,6 +1221,7 @@ impl fmt::LowerHex for FutureLeafVersion {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
+impl_to_hex_from_lower_hex!(FutureLeafVersion, |_| 2);
 
 impl fmt::UpperHex for FutureLeafVersion {
     #[inline]
@@ -1277,6 +1278,7 @@ impl fmt::LowerHex for LeafVersion {
         fmt::LowerHex::fmt(&self.to_consensus(), f)
     }
 }
+impl_to_hex_from_lower_hex!(LeafVersion, |_| 2);
 
 impl fmt::UpperHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

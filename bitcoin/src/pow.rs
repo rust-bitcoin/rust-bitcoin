@@ -7,7 +7,7 @@
 
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
-
+use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -108,6 +108,7 @@ impl Work {
     pub fn log2(self) -> f64 { self.0.to_f64().log2() }
 }
 do_impl!(Work);
+impl_to_hex_from_lower_hex!(Work, |_| 64);
 
 impl Add for Work {
     type Output = Work;
@@ -333,6 +334,7 @@ impl Target {
     pub fn max_transition_threshold_unchecked(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
+impl_to_hex_from_lower_hex!(Target, |_| 64);
 
 define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.

@@ -47,5 +47,5 @@ pub use self::{pow::CompactTarget, sequence::Sequence};
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(feature = "alloc")]
-    pub use alloc::string::ToString;
+    pub use alloc::string::{String, ToString};
 }

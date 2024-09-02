@@ -204,3 +204,30 @@ macro_rules! impl_from_infallible {
         }
     }
 }
+
+/// Implements `to_hex` for functions that have implemented [`core::fmt::LowerHex`]
+#[macro_export]
+#[cfg(feature = "alloc")]
+macro_rules! impl_to_hex_from_lower_hex {
+    ($t:ident, $hex_len_fn:expr) => {
+        impl $t {
+            /// Gets the hex representation of this type
+            pub fn to_hex(&self) -> alloc::string::String {
+                use core::fmt::Write;
+
+                let mut hex_string = alloc::string::String::with_capacity($hex_len_fn(self));
+                write!(&mut hex_string, "{:x}", self).expect("writing to string shouldn't fail");
+
+                hex_string
+            }
+        }
+    };
+}
+
+#[macro_export]
+#[cfg(not(feature = "alloc"))]
+macro_rules! impl_to_hex_from_lower_hex {
+    ($t:ident, $hex_len_fn:expr) => {
+
+    };
+}

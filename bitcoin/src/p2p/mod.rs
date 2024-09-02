@@ -22,9 +22,8 @@ pub mod message_network;
 
 use core::str::FromStr;
 use core::{fmt, ops};
-
 use hex::FromHex;
-use internals::{debug_from_display, write_err};
+use internals::{debug_from_display, impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
@@ -123,6 +122,7 @@ impl ServiceFlags {
 impl fmt::LowerHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
+impl_to_hex_from_lower_hex!(ServiceFlags, |service_flags: &ServiceFlags| 16 - service_flags.0.leading_zeros() as usize / 4);
 
 impl fmt::UpperHex for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
@@ -290,6 +290,7 @@ impl fmt::LowerHex for Magic {
         Ok(())
     }
 }
+impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
