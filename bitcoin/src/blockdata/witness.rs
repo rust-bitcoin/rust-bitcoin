@@ -32,10 +32,12 @@ use crate::{Script, VarInt};
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization.
     ///
-    /// Does not include the initial varint indicating the number of elements, instead this is
-    /// stored stored in `witness_elements`. Concatenated onto the end of `content` is the index
-    /// area, this is a `4 * witness_elements` bytes area which stores the index of the start of
-    /// each witness item.
+    /// Does not include the initial varint indicating the number of elements. Each element however,
+    /// does include a varint indicating the element length. The number of elements is stored in
+    /// `witness_elements`.
+    ///
+    /// Concatenated onto the end of `content` is the index area. This is a `4 * witness_elements`
+    /// bytes area which stores the index of the start of each witness item.
     content: Vec<u8>,
 
     /// The number of elements in the witness.
@@ -227,6 +229,7 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 }
 
 impl Encodable for Witness {
+    // `self.content` includes the varints so encoding here includes them, as expected.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = VarInt::from(self.witness_elements);
         len.consensus_encode(w)?;
@@ -517,6 +520,7 @@ impl serde::Serialize for Witness {
         let human_readable = serializer.is_human_readable();
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
+        // Note that the `Iter` strips the varints out when iterating.
         for elem in self.iter() {
             if human_readable {
                 seq.serialize_element(&crate::serde_utils::SerializeBytesAsHex(elem))?;
