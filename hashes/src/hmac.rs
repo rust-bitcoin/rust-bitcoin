@@ -72,10 +72,11 @@ impl<T: GeneralHash> HmacEngine<T> {
 
         if key.len() > T::Engine::BLOCK_SIZE {
             let hash = <T as GeneralHash>::hash(key);
-            for (b_i, b_h) in ipad.iter_mut().zip(hash.as_ref()) {
+            let hash = hash.as_byte_array().as_ref();
+            for (b_i, b_h) in ipad.iter_mut().zip(hash) {
                 *b_i ^= *b_h;
             }
-            for (b_o, b_h) in opad.iter_mut().zip(hash.as_ref()) {
+            for (b_o, b_h) in opad.iter_mut().zip(hash) {
                 *b_o ^= *b_h;
             }
         } else {
@@ -119,7 +120,8 @@ impl<T: GeneralHash> fmt::LowerHex for Hmac<T> {
 }
 
 impl<T: GeneralHash> convert::AsRef<[u8]> for Hmac<T> {
-    fn as_ref(&self) -> &[u8] { self.0.as_ref() }
+    // Calling as_byte_array is more reliable
+    fn as_ref(&self) -> &[u8] { self.0.as_byte_array().as_ref() }
 }
 
 impl<T: GeneralHash> GeneralHash for Hmac<T> {
@@ -127,7 +129,7 @@ impl<T: GeneralHash> GeneralHash for Hmac<T> {
 
     fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
         let ihash = T::from_engine(e.iengine);
-        e.oengine.input(ihash.as_ref());
+        e.oengine.input(ihash.as_byte_array().as_ref());
         let ohash = T::from_engine(e.oengine);
         Hmac(ohash)
     }
@@ -135,7 +137,6 @@ impl<T: GeneralHash> GeneralHash for Hmac<T> {
 
 impl<T: GeneralHash> Hash for Hmac<T> {
     type Bytes = T::Bytes;
-    const LEN: usize = T::LEN;
 
     fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
 

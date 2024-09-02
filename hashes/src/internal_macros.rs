@@ -108,7 +108,6 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
             type Bytes = [u8; $bits / 8];
 
-            const LEN: usize = $bits / 8;
             const DISPLAY_BACKWARD: bool = $reverse;
 
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
