@@ -947,14 +947,14 @@ impl Version {
 }
 
 mod tmp {
-use super::*;
-impl Version {
-    /// Creates a non-standard transaction version.
-    pub fn non_standard(version: i32) -> Version { Self(version) }
+    use super::*;
+    impl Version {
+        /// Creates a non-standard transaction version.
+        pub fn non_standard(version: i32) -> Version { Self(version) }
 
-    /// Returns true if this transaction version number is considered standard.
-    pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
-}
+        /// Returns true if this transaction version number is considered standard.
+        pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+    }
 }
 
 impl Encodable for Version {
