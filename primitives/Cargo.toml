@@ -16,11 +16,12 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std", "io/std", "units/std"]
-alloc = ["internals/alloc", "io/alloc", "units/alloc"]
-serde = ["dep:serde", "internals/serde", "units/serde", "alloc"]
+std = ["alloc", "hashes/std", "internals/std", "io/std", "units/std"]
+alloc = ["hashes/alloc", "internals/alloc", "io/alloc", "units/alloc"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc"]
 
 [dependencies]
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["bitcoin-io"] }
 internals = { package = "bitcoin-internals", version = "0.3.0" }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false }

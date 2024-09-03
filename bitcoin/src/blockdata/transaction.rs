@@ -35,30 +35,8 @@ use crate::{Amount, FeeRate, SignedAmount, VarInt};
 #[doc(inline)]
 pub use primitives::transaction::*;
 
-hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
-    /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
-}
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
-
-impl Txid {
-    /// The `Txid` used in a coinbase prevout.
-    ///
-    /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
-    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
-    pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
-}
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
@@ -67,15 +45,6 @@ crate::internal_macros::define_extension_trait! {
         #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
         fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
     }
-}
-
-impl Wtxid {
-    /// The `Wtxid` of a coinbase transaction.
-    ///
-    /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
-    /// witness commitment tree) since the coinbase transaction contains a commitment to all
-    /// transactions' wTXIDs but naturally cannot commit to its own.
-    pub const COINBASE: Self = Self::from_byte_array([0; 32]);
 }
 
 crate::internal_macros::define_extension_trait! {
