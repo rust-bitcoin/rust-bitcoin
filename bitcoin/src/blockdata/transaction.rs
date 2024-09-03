@@ -582,7 +582,7 @@ impl Transaction {
         self.input.consensus_encode(&mut enc).expect("engines don't error");
         self.output.consensus_encode(&mut enc).expect("engines don't error");
         self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid(sha256d::Hash::from_engine(enc))
+        Txid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -603,7 +603,7 @@ impl Transaction {
     pub fn compute_wtxid(&self) -> Wtxid {
         let mut enc = sha256d::Hash::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid(sha256d::Hash::from_engine(enc))
+        Wtxid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
