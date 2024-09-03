@@ -944,7 +944,9 @@ impl Version {
 
     /// The second Bitcoin transaction version (post-BIP-68).
     pub const TWO: Self = Self(2);
+}
 
+impl Version {
     /// Creates a non-standard transaction version.
     pub fn non_standard(version: i32) -> Version { Self(version) }
 
