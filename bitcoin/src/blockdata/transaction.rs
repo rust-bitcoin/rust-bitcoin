@@ -946,14 +946,14 @@ impl Version {
     pub const TWO: Self = Self(2);
 }
 
-mod tmp {
-    use super::*;
-    impl Version {
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Version`] type.
+    pub trait VersionExt impl for Version {
         /// Creates a non-standard transaction version.
-        pub fn non_standard(version: i32) -> Version { Self(version) }
+        fn non_standard(version: i32) -> Version { Self(version) }
 
         /// Returns true if this transaction version number is considered standard.
-        pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+        fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
     }
 }
 
