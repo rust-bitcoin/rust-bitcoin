@@ -6,8 +6,6 @@
 use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
-use core::ops::Index;
-use core::slice::SliceIndex;
 use core::{cmp, convert, fmt};
 
 use hex::DisplayHex;
@@ -920,7 +918,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha256::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha256::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte

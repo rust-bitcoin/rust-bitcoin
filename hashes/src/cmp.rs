@@ -105,55 +105,55 @@ mod benches {
     fn bench_32b_constant_time_cmp_ne(bh: &mut Bencher) {
         let hash_a = sha256::Hash::hash(&[0; 1]);
         let hash_b = sha256::Hash::hash(&[1; 1]);
-        bh.iter(|| fixed_time_eq(&hash_a[..], &hash_b[..]))
+        bh.iter(|| fixed_time_eq(hash_a.as_byte_array(), hash_b.as_byte_array()))
     }
 
     #[bench]
     fn bench_32b_slice_cmp_ne(bh: &mut Bencher) {
         let hash_a = sha256::Hash::hash(&[0; 1]);
         let hash_b = sha256::Hash::hash(&[1; 1]);
-        bh.iter(|| &hash_a[..] == &hash_b[..])
+        bh.iter(|| hash_a.as_byte_array() == hash_b.as_byte_array())
     }
 
     #[bench]
     fn bench_32b_constant_time_cmp_eq(bh: &mut Bencher) {
         let hash_a = sha256::Hash::hash(&[0; 1]);
         let hash_b = sha256::Hash::hash(&[0; 1]);
-        bh.iter(|| fixed_time_eq(&hash_a[..], &hash_b[..]))
+        bh.iter(|| fixed_time_eq(hash_a.as_byte_array(), hash_b.as_byte_array()))
     }
 
     #[bench]
     fn bench_32b_slice_cmp_eq(bh: &mut Bencher) {
         let hash_a = sha256::Hash::hash(&[0; 1]);
         let hash_b = sha256::Hash::hash(&[0; 1]);
-        bh.iter(|| &hash_a[..] == &hash_b[..])
+        bh.iter(|| hash_a.as_byte_array() == hash_b.as_byte_array())
     }
 
     #[bench]
     fn bench_64b_constant_time_cmp_ne(bh: &mut Bencher) {
         let hash_a = sha512::Hash::hash(&[0; 1]);
         let hash_b = sha512::Hash::hash(&[1; 1]);
-        bh.iter(|| fixed_time_eq(&hash_a[..], &hash_b[..]))
+        bh.iter(|| fixed_time_eq(hash_a.as_byte_array(), hash_b.as_byte_array()))
     }
 
     #[bench]
     fn bench_64b_slice_cmp_ne(bh: &mut Bencher) {
         let hash_a = sha512::Hash::hash(&[0; 1]);
         let hash_b = sha512::Hash::hash(&[1; 1]);
-        bh.iter(|| &hash_a[..] == &hash_b[..])
+        bh.iter(|| hash_a.as_byte_array() == hash_b.as_byte_array())
     }
 
     #[bench]
     fn bench_64b_constant_time_cmp_eq(bh: &mut Bencher) {
         let hash_a = sha512::Hash::hash(&[0; 1]);
         let hash_b = sha512::Hash::hash(&[0; 1]);
-        bh.iter(|| fixed_time_eq(&hash_a[..], &hash_b[..]))
+        bh.iter(|| fixed_time_eq(hash_a.as_byte_array(), hash_b.as_byte_array()))
     }
 
     #[bench]
     fn bench_64b_slice_cmp_eq(bh: &mut Bencher) {
         let hash_a = sha512::Hash::hash(&[0; 1]);
         let hash_b = sha512::Hash::hash(&[0; 1]);
-        bh.iter(|| &hash_a[..] == &hash_b[..])
+        bh.iter(|| hash_a.as_byte_array() == hash_b.as_byte_array())
     }
 }

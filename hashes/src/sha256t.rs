@@ -4,8 +4,6 @@
 
 use core::cmp;
 use core::marker::PhantomData;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{sha256, FromSliceError, HashEngine as _};
 
