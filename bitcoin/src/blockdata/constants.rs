@@ -47,7 +47,10 @@ pub const MAX_STACK_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.
 pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
 /// Maximum allowed value for an integer in Script.
-#[deprecated(since = "TBD", note = "This constant has ambiguous semantics. Please carefully check your intended use-case and define a new constant reflecting that.")]
+#[deprecated(
+    since = "TBD",
+    note = "This constant has ambiguous semantics. Please carefully check your intended use-case and define a new constant reflecting that."
+)]
 pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;

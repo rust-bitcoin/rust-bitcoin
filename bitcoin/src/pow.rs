@@ -7,6 +7,7 @@
 
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use core::{cmp, fmt};
+
 use internals::impl_to_hex_from_lower_hex;
 use io::{BufRead, Write};
 #[cfg(all(test, mutate))]

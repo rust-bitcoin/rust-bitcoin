@@ -131,15 +131,15 @@ impl From<BlockInterval> for u32 {
     fn from(height: BlockInterval) -> Self { height.to_u32() }
 }
 
-impl From<relative::Height> for BlockInterval {
+impl From<relative::HeightSpan> for BlockInterval {
     /// Converts a [`locktime::relative::Height`] to a [`BlockInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn from(h: relative::Height) -> Self { Self::from_u32(h.value().into()) }
+    fn from(h: relative::HeightSpan) -> Self { Self::from_u32(h.value().into()) }
 }
 
-impl TryFrom<BlockInterval> for relative::Height {
+impl TryFrom<BlockInterval> for relative::HeightSpan {
     type Error = TooBigForRelativeBlockHeightError;
 
     /// Converts a [`BlockInterval`] to a [`locktime::relative::Height`].
@@ -151,7 +151,7 @@ impl TryFrom<BlockInterval> for relative::Height {
         if h > u16::MAX as u32 {
             return Err(TooBigForRelativeBlockHeightError(h));
         }
-        Ok(relative::Height::from(h as u16)) // Cast ok, value checked above
+        Ok(relative::HeightSpan::from(h as u16)) // Cast ok, value checked above
     }
 }
 
@@ -165,7 +165,7 @@ impl fmt::Display for TooBigForRelativeBlockHeightError {
             f,
             "block interval is too big to be used as a relative lock time: {} (max: {})",
             self.0,
-            relative::Height::MAX
+            relative::HeightSpan::MAX
         )
     }
 }

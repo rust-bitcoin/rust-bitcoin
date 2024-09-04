@@ -11,6 +11,7 @@ use core::{cmp, convert, fmt};
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
+use units::locktime::absolute::{Height, Time};
 
 #[cfg(doc)]
 use crate::relative;
@@ -39,15 +40,15 @@ pub use units::locktime::relative::*;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LockTime {
     /// A block height lock time value.
-    Blocks(Height),
-    /// A 512 second time interval value.
-    Time(Time),
+    Blocks(HeightSpan),
+    /// Intervals of 512 seconds.
+    Time(TimeSpan),
 }
 
 impl LockTime {
     /// A relative locktime of 0 is always valid, and is assumed valid for inputs that
     /// are not yet confirmed.
-    pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
+    pub const ZERO: LockTime = LockTime::Blocks(HeightSpan::ZERO);
 
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
@@ -99,11 +100,15 @@ impl LockTime {
 
     /// Encodes the locktime as a sequence number.
     #[inline]
-    pub fn to_sequence(&self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
+    pub fn to_sequence(&self) -> Sequence {
+        Sequence::from_consensus(self.to_consensus_u32())
+    }
 
     /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
-    pub const fn from_height(n: u16) -> Self { LockTime::Blocks(Height::from_height(n)) }
+    pub const fn from_height(n: u16) -> Self {
+        LockTime::Blocks(HeightSpan::from_height(n))
+    }
 
     /// Constructs a `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
     ///
@@ -111,7 +116,7 @@ impl LockTime {
     /// [`Self::from_seconds_floor`] or [`Self::from_seconds_ceil`].
     #[inline]
     pub const fn from_512_second_intervals(intervals: u16) -> Self {
-        LockTime::Time(Time::from_512_second_intervals(intervals))
+        LockTime::Time(TimeSpan::from_512_second_intervals(intervals))
     }
 
     /// Create a [`LockTime`] from seconds, converting the seconds into 512 second interval
@@ -122,7 +127,7 @@ impl LockTime {
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
     pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
-        match Time::from_seconds_floor(seconds) {
+        match TimeSpan::from_seconds_floor(seconds) {
             Ok(time) => Ok(LockTime::Time(time)),
             Err(e) => Err(e),
         }
@@ -136,7 +141,7 @@ impl LockTime {
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
-        match Time::from_seconds_ceil(seconds) {
+        match TimeSpan::from_seconds_ceil(seconds) {
             Ok(time) => Ok(LockTime::Time(time)),
             Err(e) => Err(e),
         }
@@ -153,37 +158,14 @@ impl LockTime {
 
     /// Returns true if this lock time value is in units of block height.
     #[inline]
-    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+    pub const fn is_block_height(&self) -> bool {
+        matches!(*self, LockTime::Blocks(_))
+    }
 
     /// Returns true if this lock time value is in units of time.
     #[inline]
-    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
-
-    /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
-    ///
-    /// # let required_height = 100;       // 100 blocks.
-    /// # let intervals = 70;     // Approx 10 hours.
-    /// # let current_height = || Height::from(required_height + 10);
-    /// # let current_time = || Time::from_512_second_intervals(intervals + 10);
-    /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    ///
-    /// // Users that have chain data can get the current height and time to check against a lock.
-    /// assert!(lock.is_satisfied_by(current_height(), current_time()));
-    /// ```
-    #[inline]
-    #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
-        if let Ok(true) = self.is_satisfied_by_height(h) {
-            true
-        } else {
-            matches!(self.is_satisfied_by_time(t), Ok(true))
-        }
+    pub const fn is_block_time(&self) -> bool {
+        !self.is_block_height()
     }
 
     /// Returns true if satisfaction of `other` lock time implies satisfaction of this
@@ -204,7 +186,7 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// # use bitcoin_primitives::locktime::relative::LockTime;
     ///
     /// # let required_height = 100;       // 100 blocks.
     /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
@@ -242,7 +224,15 @@ impl LockTime {
         }
     }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by [`Height`].
+    /// Returns true if this [`relative::LockTime`] is satisfied.
+    ///
+    /// > ... a relative block lock-time n can be included n blocks after the mining date of the
+    /// > output it is spending, or any block thereafter.
+    ///
+    /// # Parameters
+    ///
+    /// * `prevout_mining_date`: The height of the block that mined the output we want to spend.
+    /// * `last_block_height`: The height of the previous block (i.e. chain tip block height).
     ///
     /// # Errors
     ///
@@ -251,25 +241,59 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// use bitcoin_primitives::Sequence;
+    /// use units::locktime::absolute::Height;
     ///
-    /// let required_height: u16 = 100;
-    /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    /// assert!(lock.is_satisfied_by_height(Height::from(required_height + 1)).expect("a height"));
+    /// // The span of blocks that the output we want to spend has to wait
+    /// // before included in a block.
+    /// let span: u16 = 100;
+    ///
+    /// // The height that the output we want to spend was mined.
+    /// let prevout_mining_date = Height::from_consensus(100_000).expect("valid height");
+    ///
+    /// // The height of the tip of the chain.
+    /// let last_block_height = Height::from_consensus(100_000 + span as u32).expect("valid height");
+    ///
+    /// let lock = Sequence::from_height(span).to_relative_lock_time().expect("valid relative height");
+    /// assert!(lock.is_satisfied_by_height(prevout_mining_date, last_block_height).unwrap())
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_height(&self, height: Height) -> Result<bool, IncompatibleHeightError> {
+    pub fn is_satisfied_by_height(
+        &self,
+        prevout_mining_date: Height,
+        last_block_height: Height,
+    ) -> Result<bool, IncompatibleHeightError> {
         use LockTime::*;
-
         match *self {
-            Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
-            Time(time) => Err(IncompatibleHeightError { height, time }),
+            Blocks(ref height) => {
+                let required_height =
+                    prevout_mining_date.to_consensus_u32() + u32::from(height.value());
+                Ok(required_height <= last_block_height.to_consensus_u32())
+            }
+            Time(time) => Err(IncompatibleHeightError(time.value())),
         }
     }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by [`Time`].
+    ///
+    /// > The relative lock-time specifies a timespan in units of 512 seconds granularity. The
+    /// > timespan starts from the median-time-past of the output’s previous block, and ends at the
+    /// > MTP of the previous block.
+    /// >
+    /// > ... a relative time-based lock-time n can be included into any block produced 512 * n
+    /// > seconds after the mining date of the output it is spending, or any block thereafter. The
+    /// > mining date of the output is equal to the median-time-past of the previous block which
+    /// > mined it.
+    ///
+    /// > The block produced time is equal to the median-time-past of its previous block.
+    ///
+    /// # Parameters
+    ///
+    /// * `prevout_mining_date`: The mining date of the output (defined in quote above).
+    /// * `chain_mtp`: The MTP of the previous block (defined in quote above).
+    ///
+    /// Both parameters are UNIX timestamps.
     ///
     /// # Errors
     ///
@@ -278,33 +302,53 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// use bitcoin_primitives::Sequence;
+    /// use units::locktime::absolute::Time;
     ///
-    /// let intervals: u16 = 70; // approx 10 hours;
-    /// let lock = Sequence::from_512_second_intervals(intervals).to_relative_lock_time().expect("valid time");
-    /// assert!(lock.is_satisfied_by_time(Time::from_512_second_intervals(intervals + 10)).expect("a time"));
+    /// // Units of 512 seconds that the output we want to spend has to wait.
+    /// let span: u16 = 100;
+    ///
+    /// // Arbitrary UNIX timestamp representing the MTP of the block that created the prevout we want to spend.
+    /// let prevout_mining_date = Time::from_consensus(1_000_000_000).expect("valid time");
+    ///
+    /// // A unix timestamp 512 seconds after the timespan since the MTP of the prevout block.
+    /// let mtp_of_tip_of_chain = Time::from_consensus(1_000_000_000 + 512 * span as u32).expect("valid time");
+    ///
+    /// let lock = Sequence::from_512_second_intervals(span).to_relative_lock_time().expect("valid interval");
+    /// assert!(lock.is_satisfied_by_time(prevout_mining_date, mtp_of_tip_of_chain).unwrap());
     /// ```
     #[inline]
     #[cfg_attr(all(test, mutate), mutate)]
-    pub fn is_satisfied_by_time(&self, time: Time) -> Result<bool, IncompatibleTimeError> {
+    pub fn is_satisfied_by_time(
+        &self,
+        prevout_mining_date: Time,
+        chain_mtp: Time,
+    ) -> Result<bool, IncompatibleTimeError> {
         use LockTime::*;
 
         match *self {
-            Time(ref t) => Ok(t.value() <= time.value()),
-            Blocks(height) => Err(IncompatibleTimeError { time, height }),
+            Time(ref t) => {
+                let required_time =
+                    prevout_mining_date.to_consensus_u32() + u32::from(t.value() * 512);
+                Ok(required_time <= chain_mtp.to_consensus_u32())
+            }
+            Blocks(height) => Err(IncompatibleTimeError(height.value())),
         }
     }
 }
 
-impl From<Height> for LockTime {
+impl From<HeightSpan> for LockTime {
     #[inline]
-    fn from(h: Height) -> Self { LockTime::Blocks(h) }
+    fn from(h: HeightSpan) -> Self {
+        LockTime::Blocks(h)
+    }
 }
 
-impl From<Time> for LockTime {
+impl From<TimeSpan> for LockTime {
     #[inline]
-    fn from(t: Time) -> Self { LockTime::Time(t) }
+    fn from(t: TimeSpan) -> Self {
+        LockTime::Time(t)
+    }
 }
 
 impl PartialOrd for LockTime {
@@ -360,7 +404,9 @@ impl convert::TryFrom<Sequence> for LockTime {
 }
 
 impl From<LockTime> for Sequence {
-    fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
+    fn from(lt: LockTime) -> Sequence {
+        lt.to_sequence()
+    }
 }
 
 /// Error returned when a sequence number is parsed as a lock time, but its
@@ -371,7 +417,9 @@ pub struct DisabledLockTimeError(u32);
 impl DisabledLockTimeError {
     /// Accessor for the `u32` whose "disable" flag was set, preventing
     /// it from being parsed as a relative locktime.
-    pub fn disabled_locktime_value(&self) -> u32 { self.0 }
+    pub fn disabled_locktime_value(&self) -> u32 {
+        self.0
+    }
 }
 
 impl fmt::Display for DisabledLockTimeError {
@@ -386,20 +434,11 @@ impl std::error::Error for DisabledLockTimeError {}
 /// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct IncompatibleHeightError {
-    /// Attempted to satisfy a lock-by-blocktime lock with this height.
-    pub height: Height,
-    /// The inner time value of the lock-by-blocktime lock.
-    pub time: Time,
-}
+pub struct IncompatibleHeightError(pub u16);
 
 impl fmt::Display for IncompatibleHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "tried to satisfy a lock-by-blocktime lock {} with height: {}",
-            self.time, self.height
-        )
+        write!(f, "tried to satisfy a time-locked Timelock with height {}", self.0)
     }
 }
 
@@ -409,20 +448,10 @@ impl std::error::Error for IncompatibleHeightError {}
 /// Tried to satisfy a lock-by-blockheight lock using a time value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct IncompatibleTimeError {
-    /// Attempted to satisfy a lock-by-blockheight lock with this time.
-    pub time: Time,
-    /// The inner height value of the lock-by-blockheight lock.
-    pub height: Height,
-}
-
+pub struct IncompatibleTimeError(pub u16);
 impl fmt::Display for IncompatibleTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "tried to satisfy a lock-by-blockheight lock {} with time: {}",
-            self.height, self.time
-        )
+        write!(f, "tried to satisfy a lock-by-blockheight Timelock with time {}", self.0)
     }
 }
 
@@ -435,52 +464,68 @@ mod tests {
 
     #[test]
     fn satisfied_by_height() {
-        let height = Height::from(10);
-        let time = Time::from_512_second_intervals(70);
+        use units::locktime::absolute::Height;
 
-        let lock = LockTime::from(height);
+        // The span of blocks that the output we want to spend has to wait
+        // before included in a block.
+        let span: u16 = 100;
 
-        assert!(!lock.is_satisfied_by(Height::from(9), time));
-        assert!(lock.is_satisfied_by(Height::from(10), time));
-        assert!(lock.is_satisfied_by(Height::from(11), time));
+        // The height that the output we want to spend was mined.
+        let prevout_mining_date = Height::from_consensus(100_000).expect("valid height");
+
+        // The height of the tip of the chain.
+        let last_block_height =
+            Height::from_consensus(100_000 + span as u32).expect("valid height");
+
+        let lock =
+            Sequence::from_height(span).to_relative_lock_time().expect("valid relative height");
+        assert!(lock.is_satisfied_by_height(prevout_mining_date, last_block_height).unwrap())
     }
 
     #[test]
     fn satisfied_by_time() {
-        let height = Height::from(10);
-        let time = Time::from_512_second_intervals(70);
+        use units::locktime::absolute::Time;
 
-        let lock = LockTime::from(time);
+        // Units of 512 seconds that the output we want to spend has to wait.
+        let span: u16 = 100;
 
-        assert!(!lock.is_satisfied_by(height, Time::from_512_second_intervals(69)));
-        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(70)));
-        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(71)));
+        // Arbitrary UNIX timestamp representing the MTP of the block that created the prevout we want to spend.
+        let prevout_mining_date = Time::from_consensus(1_000_000_000).expect("valid time");
+
+        // A unix timestamp 512 seconds after the timespan since the MTP of the prevout block.
+        let mtp_of_tip_of_chain =
+            Time::from_consensus(1_000_000_000 + 512 * span as u32).expect("valid time");
+
+        let lock = Sequence::from_512_second_intervals(span)
+            .to_relative_lock_time()
+            .expect("valid interval");
+        assert!(lock.is_satisfied_by_time(prevout_mining_date, mtp_of_tip_of_chain).unwrap());
     }
 
     #[test]
     fn height_correctly_implies() {
-        let height = Height::from(10);
+        let height = HeightSpan::from(10);
         let lock = LockTime::from(height);
 
-        assert!(!lock.is_implied_by(LockTime::from(Height::from(9))));
-        assert!(lock.is_implied_by(LockTime::from(Height::from(10))));
-        assert!(lock.is_implied_by(LockTime::from(Height::from(11))));
+        assert!(!lock.is_implied_by(LockTime::from(HeightSpan::from(9))));
+        assert!(lock.is_implied_by(LockTime::from(HeightSpan::from(10))));
+        assert!(lock.is_implied_by(LockTime::from(HeightSpan::from(11))));
     }
 
     #[test]
     fn time_correctly_implies() {
-        let time = Time::from_512_second_intervals(70);
+        let time = TimeSpan::from_512_second_intervals(70);
         let lock = LockTime::from(time);
 
-        assert!(!lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(69))));
-        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(70))));
-        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(71))));
+        assert!(!lock.is_implied_by(LockTime::from(TimeSpan::from_512_second_intervals(69))));
+        assert!(lock.is_implied_by(LockTime::from(TimeSpan::from_512_second_intervals(70))));
+        assert!(lock.is_implied_by(LockTime::from(TimeSpan::from_512_second_intervals(71))));
     }
 
     #[test]
     fn incorrect_units_do_not_imply() {
-        let time = Time::from_512_second_intervals(70);
-        let height = Height::from(10);
+        let time = TimeSpan::from_512_second_intervals(70);
+        let height = HeightSpan::from(10);
 
         let lock = LockTime::from(time);
         assert!(!lock.is_implied_by(LockTime::from(height)));
