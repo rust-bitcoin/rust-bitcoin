@@ -12,7 +12,7 @@ use crate::amount::Amount;
 use crate::weight::Weight;
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary, ArbitraryInRange, Unstructured};
 
 /// Represents fee rate.
 ///
@@ -114,6 +114,19 @@ impl FeeRate {
 impl<'a> Arbitrary<'a> for FeeRate {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let f = u64::arbitrary(u)?;
+        Ok(FeeRate(f))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> ArbitraryInRange<'a> for FeeRate {
+    type Bound = u64;
+
+    fn arbitrary_in_range<R>(u: &mut Unstructured<'a>, range: &R) -> arbitrary::Result<Self>
+    where
+        R: core::ops::RangeBounds<Self::Bound>,
+    {
+        let f = u64::arbitrary_in_range(u, range)?;
         Ok(FeeRate(f))
     }
 }
