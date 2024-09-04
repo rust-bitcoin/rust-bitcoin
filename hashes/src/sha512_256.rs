@@ -45,7 +45,7 @@ impl Default for HashEngine {
 impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
-    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
+    fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
 
     fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
 }

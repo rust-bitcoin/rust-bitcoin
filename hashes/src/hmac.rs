@@ -102,7 +102,7 @@ impl<T: GeneralHash> HmacEngine<T> {
 impl<T: GeneralHash> HashEngine for HmacEngine<T> {
     const BLOCK_SIZE: usize = T::Engine::BLOCK_SIZE;
 
-    fn n_bytes_hashed(&self) -> usize { self.iengine.n_bytes_hashed() }
+    fn n_bytes_hashed(&self) -> u64 { self.iengine.n_bytes_hashed() }
 
     fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
 }

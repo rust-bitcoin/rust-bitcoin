@@ -12,7 +12,7 @@ use core::{cmp, convert, fmt};
 
 use hex::DisplayHex;
 
-use crate::{sha256d, HashEngine as _};
+use crate::{incomplete_block_len, sha256d, HashEngine as _};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
@@ -25,19 +25,19 @@ crate::internal_macros::hash_type! {
 #[cfg(not(hashes_fuzz))]
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let data_len = e.length as u64;
+    let n_bytes_hashed = e.bytes_hashed;
 
     let zeroes = [0; BLOCK_SIZE - 8];
     e.input(&[0x80]);
-    if e.length % BLOCK_SIZE > zeroes.len() {
+    if incomplete_block_len(&e) > zeroes.len() {
         e.input(&zeroes);
     }
-    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
+    let pad_length = zeroes.len() - incomplete_block_len(&e);
     e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
+    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
 
-    e.input(&(8 * data_len).to_be_bytes());
-    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
+    e.input(&(8 * n_bytes_hashed).to_be_bytes());
+    debug_assert_eq!(incomplete_block_len(&e), 0);
 
     Hash(e.midstate_unchecked().bytes)
 }
@@ -60,7 +60,7 @@ const BLOCK_SIZE: usize = 64;
 pub struct HashEngine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 8],
-    length: usize,
+    bytes_hashed: u64,
 }
 
 impl HashEngine {
@@ -71,7 +71,7 @@ impl HashEngine {
                 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
                 0x5be0cd19,
             ],
-            length: 0,
+            bytes_hashed: 0,
             buffer: [0; BLOCK_SIZE],
         }
     }
@@ -85,7 +85,7 @@ impl HashEngine {
             *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
         }
 
-        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, length: midstate.length }
+        HashEngine { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: midstate.bytes_hashed }
     }
 
     /// Returns `true` if the midstate can be extracted from this engine.
@@ -94,14 +94,14 @@ impl HashEngine {
     /// the hash engine is a multiple of 64. See caveat on [`Self::midstate`].
     ///
     /// Please see docs on [`Midstate`] before using this function.
-    pub const fn can_extract_midstate(&self) -> bool { self.length % 64 == 0 }
+    pub const fn can_extract_midstate(&self) -> bool { self.bytes_hashed % 64 == 0 }
 
     /// Outputs the midstate of the hash engine.
     ///
     /// Please see docs on [`Midstate`] before using this function.
     pub fn midstate(&self) -> Result<Midstate, MidstateError> {
         if !self.can_extract_midstate() {
-            return Err(MidstateError { invalid_length: self.length });
+            return Err(MidstateError { invalid_n_bytes_hashed: self.bytes_hashed });
         }
         Ok(self.midstate_unchecked())
     }
@@ -113,7 +113,7 @@ impl HashEngine {
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes());
         }
-        Midstate { bytes: ret, length: self.length }
+        Midstate { bytes: ret, bytes_hashed: self.bytes_hashed }
     }
 
     // Does not check that `HashEngine::can_extract_midstate`.
@@ -121,7 +121,7 @@ impl HashEngine {
     fn midstate_unchecked(&self) -> Midstate {
         let mut ret = [0; 32];
         ret.copy_from_slice(&self.buffer[..32]);
-        Midstate { bytes: ret, length: self.length }
+        Midstate { bytes: ret, bytes_hashed: self.bytes_hashed }
     }
 }
 
@@ -132,7 +132,7 @@ impl Default for HashEngine {
 impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
-    fn n_bytes_hashed(&self) -> usize { self.length }
+    fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
     engine_input_impl!();
 }
@@ -177,7 +177,7 @@ pub struct Midstate {
     bytes: [u8; 32],
     /// Number of bytes hashed to achieve this midstate.
     // INVARIANT must always be a multiple of 64.
-    length: usize,
+    bytes_hashed: u64,
 }
 
 impl Midstate {
@@ -186,19 +186,19 @@ impl Midstate {
     /// # Panics
     ///
     /// Panics if `bytes_hashed` is not a multiple of 64.
-    pub const fn new(state: [u8; 32], bytes_hashed: usize) -> Self {
+    pub const fn new(state: [u8; 32], bytes_hashed: u64) -> Self {
         if bytes_hashed % 64 != 0 {
             panic!("bytes hashed is not a multiple of 64");
         }
 
-        Midstate { bytes: state, length: bytes_hashed }
+        Midstate { bytes: state, bytes_hashed }
     }
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
-    pub const fn as_parts(&self) -> (&[u8; 32], usize) { (&self.bytes, self.length) }
+    pub const fn as_parts(&self) -> (&[u8; 32], u64) { (&self.bytes, self.bytes_hashed) }
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
-    pub const fn into_parts(self) -> ([u8; 32], usize) { (self.bytes, self.length) }
+    pub const fn into_parts(self) -> ([u8; 32], u64) { (self.bytes, self.bytes_hashed) }
 
     /// Creates midstate for tagged hashes.
     ///
@@ -222,7 +222,7 @@ impl fmt::Debug for Midstate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Midstate")
             .field("bytes", &self.bytes.as_hex())
-            .field("length", &self.length)
+            .field("length", &self.bytes_hashed)
             .finish()
     }
 }
@@ -235,7 +235,7 @@ impl convert::AsRef<[u8]> for Midstate {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidstateError {
     /// The invalid number of bytes hashed.
-    invalid_length: usize,
+    invalid_n_bytes_hashed: u64,
 }
 
 impl fmt::Display for MidstateError {
@@ -243,7 +243,7 @@ impl fmt::Display for MidstateError {
         write!(
             f,
             "invalid number of bytes hashed {} (should have been a multiple of 64)",
-            self.invalid_length
+            self.invalid_n_bytes_hashed
         )
     }
 }
@@ -485,7 +485,7 @@ impl Midstate {
             output[i * 4 + 3] = (state[i + 0] >> 0) as u8;
             i += 1;
         }
-        Midstate { bytes: output, length: bytes.len() }
+        Midstate { bytes: output, bytes_hashed: bytes.len() as u64 }
     }
 }
 
@@ -996,7 +996,7 @@ mod tests {
             let mut midstate_engine =
                 sha256::HashEngine::from_midstate(engine.midstate_unchecked());
             assert_eq!(engine.h, midstate_engine.h);
-            assert_eq!(engine.length, midstate_engine.length);
+            assert_eq!(engine.bytes_hashed, midstate_engine.bytes_hashed);
             engine.input(data);
             midstate_engine.input(data);
             assert_eq!(engine.h, midstate_engine.h);
@@ -1037,7 +1037,7 @@ mod tests {
             assert_eq!(
                 Hash::hash(bytes),
                 Hash::hash_unoptimized(bytes),
-                "hashes don't match for length {}",
+                "hashes don't match for n_bytes_hashed {}",
                 i + 1
             );
         }
