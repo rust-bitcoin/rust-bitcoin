@@ -95,15 +95,13 @@ pub mod _export {
 }
 
 mod internal_macros;
-#[macro_use]
-mod macros;
 
-#[macro_use]
-pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
 pub mod hkdf;
 pub mod hmac;
+#[macro_use]
+pub mod macros;
 pub mod ripemd160;
 pub mod sha1;
 pub mod sha256;
@@ -113,6 +111,17 @@ pub mod sha384;
 pub mod sha512;
 pub mod sha512_256;
 pub mod siphash24;
+
+#[deprecated(since = "TBD", note = "use crate::macros instead")]
+pub mod serde_macros {
+    //! Macros for serde trait implementations, and supporting code.
+
+    #[cfg(feature = "serde")]
+    pub mod serde_details {
+        //! Functions used by serde impls of all hashes.
+        pub use crate::macros::serde_details::*;
+    }
+}
 
 use core::{convert, fmt, hash};
 
