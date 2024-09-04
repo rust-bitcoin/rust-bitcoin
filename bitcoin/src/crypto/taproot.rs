@@ -4,12 +4,14 @@
 //!
 //! This module provides Taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 
+use core::str::FromStr;
 use core::fmt;
 
+use hex::FromHex;
 use internals::write_err;
 use io::Write;
 
-use crate::prelude::Vec;
+use crate::prelude::{DisplayHex, Vec};
 use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 use crate::taproot::serialized_signature::{self, SerializedSignature};
 
@@ -85,6 +87,22 @@ impl Signature {
     }
 }
 
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.signature.serialize().as_hex(), f)?;
+        fmt::LowerHex::fmt(&[self.sighash_type as u8].as_hex(), f)
+    }
+}
+
+impl FromStr for Signature {
+    type Err = ParseSignatureError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = Vec::from_hex(s)?;
+        Ok(Self::from_slice(&bytes)?)
+    }
+}
+
 /// An error constructing a [`taproot::Signature`] from a byte slice.
 ///
 /// [`taproot::Signature`]: crate::crypto::taproot::Signature
@@ -132,4 +150,71 @@ impl From<secp256k1::Error> for DecodeError {
 
 impl From<InvalidSighashTypeError> for DecodeError {
     fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
+}
+
+/// Error encountered while parsing a taproot signature from a string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseSignatureError {
+    /// Hex string decoding error.
+    Hex(hex::HexToBytesError),
+    /// Signature byte slice decoding error.
+    Decode(DecodeError),
+}
+
+internals::impl_from_infallible!(ParseSignatureError);
+
+impl fmt::Display for ParseSignatureError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ParseSignatureError::*;
+
+        match *self {
+            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            Decode(ref e) => write_err!(f, "signature byte slice decoding error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSignatureError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseSignatureError::*;
+
+        match *self {
+            Hex(ref e) => Some(e),
+            Decode(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<hex::HexToBytesError> for ParseSignatureError {
+    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+}
+
+impl From<DecodeError> for ParseSignatureError {
+    fn from(e: DecodeError) -> Self { Self::Decode(e) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn taproot_sig_roundtrip_hex() {
+        let taproot_sig_hex = "6470FD1303DDA4FDA717B9837153C24A6EAB377183FC438F939E0ED2B620E9EE5077C4A8B8DCA28963D772A94F5F0DDF598E1C47C137F91933274C7C3EDADCE8";
+        
+        let original_sig = Signature {
+            signature: taproot_sig_hex.trim().parse::<secp256k1::schnorr::Signature>().unwrap(),
+            sighash_type: TapSighashType::All,
+        };
+        let serialized_sig_hex = original_sig.signature.to_string();
+
+        let deserialized_sig = Signature {
+            signature: serialized_sig_hex.parse::<secp256k1::schnorr::Signature>().unwrap(),
+            sighash_type: TapSighashType::All,
+        };
+
+        assert_eq!(original_sig, deserialized_sig);
+        assert_eq!(serialized_sig_hex, taproot_sig_hex.trim().to_lowercase());
+    }
 }
