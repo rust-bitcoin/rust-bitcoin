@@ -205,7 +205,10 @@ macro_rules! impl_from_infallible {
     }
 }
 
-/// Implements `to_hex` for functions that have implemented [`core::fmt::LowerHex`]
+/// Adds an implementation of `pub fn to_hex(&self) -> String` if `alloc` feature is enabled.
+///
+/// The added function allocates a `String` then calls through to [`core::fmt::LowerHex`].
+/// Calling this macro without the `alloc` feature enabled is a noop.
 #[macro_export]
 #[cfg(feature = "alloc")]
 macro_rules! impl_to_hex_from_lower_hex {
@@ -224,6 +227,10 @@ macro_rules! impl_to_hex_from_lower_hex {
     };
 }
 
+/// Adds an implementation of `pub fn to_hex(&self) -> String` if `alloc` feature is enabled.
+///
+/// The added function allocates a `String` then calls through to [`core::fmt::LowerHex`].
+/// Calling this macro without the `alloc` feature enabled is a noop.
 #[macro_export]
 #[cfg(not(feature = "alloc"))]
 macro_rules! impl_to_hex_from_lower_hex {
