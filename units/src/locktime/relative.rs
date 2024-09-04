@@ -49,7 +49,7 @@ impl fmt::Display for Height {
 
 /// A relative lock time lock-by-blocktime value.
 ///
-/// For BIP 68 relative lock-by-blocktime locks, time is measure in 512 second intervals.
+/// For BIP 68 relative lock-by-blocktime locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Time(u16);
