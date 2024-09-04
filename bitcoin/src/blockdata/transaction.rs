@@ -57,7 +57,7 @@ impl Txid {
     ///
     /// This is used as the "txid" of the dummy input of a coinbase transaction. It is
     /// not a real TXID and should not be used in other contexts.
-    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+    pub const fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
 }
 
 impl Wtxid {
@@ -67,7 +67,7 @@ impl Wtxid {
     /// since the coinbase transaction contains a commitment to all transactions' wTXIDs
     /// but naturally cannot commit to its own. It is not a real wTXID and should not be
     /// used in other contexts.
-    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+    pub const fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
 }
 
 /// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
