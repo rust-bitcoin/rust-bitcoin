@@ -114,7 +114,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let check_start = ret.len() - 4;
 
     let hash_check =
-        sha256d::Hash::hash(&ret[..check_start])[..4].try_into().expect("4 byte slice");
+        sha256d::Hash::hash(&ret[..check_start]).as_byte_array()[..4].try_into().expect("4 byte slice");
     let data_check = ret[check_start..].try_into().expect("4 byte slice");
 
     let expected = u32::from_le_bytes(hash_check);
@@ -165,7 +165,7 @@ pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result
 
 fn encode_check_to_writer(fmt: &mut impl fmt::Write, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
-    let iter = data.iter().cloned().chain(checksum[0..4].iter().cloned());
+    let iter = data.iter().cloned().chain(checksum.as_byte_array()[0..4].iter().cloned());
     let reserve_len = encoded_check_reserve_len(data.len());
     if reserve_len <= SHORT_OPT_BUFFER_LEN {
         format_iter(fmt, iter, &mut ArrayVec::<u8, SHORT_OPT_BUFFER_LEN>::new())

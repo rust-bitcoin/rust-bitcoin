@@ -727,7 +727,7 @@ impl Xpriv {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        self.identifier(secp)[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier(secp).as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
     }
 }
 
@@ -886,7 +886,7 @@ impl Xpub {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint(&self) -> Fingerprint {
-        self.identifier()[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier().as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
     }
 }
 

@@ -7,9 +7,6 @@
 
 //! HASH160 (SHA256 then RIPEMD160) implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{ripemd160, sha256};
 
 crate::internal_macros::hash_type! {
@@ -39,10 +36,10 @@ impl crate::HashEngine for HashEngine {
 
 fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
-    let rmd = ripemd160::Hash::hash(&sha2[..]);
+    let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
 
     let mut ret = [0; 20];
-    ret.copy_from_slice(&rmd[..]);
+    ret.copy_from_slice(rmd.as_byte_array());
     Hash(ret)
 }
 
@@ -90,7 +87,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = hash160::Hash::hash(&test.input[..]);
             assert_eq!(hash, test.output_str.parse::<hash160::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte

@@ -3,8 +3,6 @@
 //! SHA512 implementation.
 
 use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{incomplete_block_len, HashEngine as _};
 
@@ -372,7 +370,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha512::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha512::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
