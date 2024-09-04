@@ -234,7 +234,7 @@ mod benches {
         bh.iter(|| {
             engine.input(&bytes);
         });
-        bh.bytes = bytes.len() as u64;
+        bh.bytes = bytes.len().into();
     }
 
     #[bench]
@@ -244,7 +244,7 @@ mod benches {
         bh.iter(|| {
             engine.input(&bytes);
         });
-        bh.bytes = bytes.len() as u64;
+        bh.bytes = bytes.len().into();
     }
 
     #[bench]
@@ -254,6 +254,6 @@ mod benches {
         bh.iter(|| {
             engine.input(&bytes);
         });
-        bh.bytes = bytes.len() as u64;
+        bh.bytes = bytes.len().into();
     }
 }
