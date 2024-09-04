@@ -171,6 +171,13 @@ impl Sequence {
         }
     }
 
+    /// Gets the u16 value of the last 16 bits of the sequence number.
+    /// Ideally the Block or Time lock.
+    ///
+    /// Note: Calling this on a sequence lower than [`MIN_NO_RBF`] will give you an undefined value.
+    #[inline]
+    pub const fn get_raw_value(&self) -> u16 { ((self.0 << 16) >> 16) as u16 }
+
     /// Creates a sequence from a u32 value.
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Sequence(n) }
