@@ -109,7 +109,7 @@ extern crate schemars;
 
 mod internal_macros;
 #[macro_use]
-mod util;
+mod macros;
 
 #[macro_use]
 pub mod serde_macros;
