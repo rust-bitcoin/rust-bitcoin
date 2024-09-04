@@ -33,6 +33,7 @@ pub mod locktime;
 pub mod opcodes;
 pub mod pow;
 pub mod sequence;
+pub mod transaction;
 
 #[doc(inline)]
 pub use units::*;
