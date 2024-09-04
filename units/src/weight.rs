@@ -9,7 +9,7 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary, ArbitraryInRange, Unstructured};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -211,6 +211,19 @@ crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
 impl<'a> Arbitrary<'a> for Weight {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let w = u64::arbitrary(u)?;
+        Ok(Weight(w))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> ArbitraryInRange<'a> for Weight {
+    type Bound = u64;
+
+    fn arbitrary_in_range<R>(u: &mut Unstructured<'a>, range: &R) -> arbitrary::Result<Self>
+    where
+        R: core::ops::RangeBounds<Self::Bound>,
+    {
+        let w = u64::arbitrary_in_range(u, range)?;
         Ok(Weight(w))
     }
 }
