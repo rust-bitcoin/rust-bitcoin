@@ -540,16 +540,15 @@ impl Ordinary {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
-
     use super::*;
 
+    #[cfg(feature = "std")]
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
             assert_eq!($op, Opcode::from($op.to_u8()));
 
-            let s1 = format!("{}", $op);
-            let s2 = format!("{:?}", $op);
+            let s1 = alloc::format!("{}", $op);
+            let s2 = alloc::format!("{:?}", $op);
             assert_eq!(s1, s2);
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
@@ -557,9 +556,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn formatting_works() {
         let op = all::OP_NOP;
-        let s = format!("{:>10}", op);
+        let s = alloc::format!("{:>10}", op);
         assert_eq!(s, "    OP_NOP");
     }
 
@@ -630,7 +630,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn str_roundtrip() {
+        use std::collections::HashSet;
+
         let mut unique = HashSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);
         roundtrip!(unique, OP_PUSHBYTES_1);

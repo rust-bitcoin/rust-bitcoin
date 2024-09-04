@@ -400,12 +400,13 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn display_and_alternate() {
         let n = LockTime::from_consensus(741521);
-        let s = format!("{}", n);
+        let s = alloc::format!("{}", n);
         assert_eq!(&s, "741521");
 
-        let got = format!("{:#}", n);
+        let got = alloc::format!("{:#}", n);
         assert_eq!(got, "block-height 741521");
     }
 
