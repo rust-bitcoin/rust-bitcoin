@@ -53,21 +53,29 @@ impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 
 impl Txid {
-    /// The "all zeros" TXID.
+    /// The `Txid` used in a coinbase prevout.
     ///
-    /// This is used as the "txid" of the dummy input of a coinbase transaction. It is
-    /// not a real TXID and should not be used in other contexts.
-    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+    /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
+    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
+    pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
+
+    /// The "all zeros" TXID.
+    #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
+    pub fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
 }
 
 impl Wtxid {
-    /// The "all zeros" wTXID.
+    /// The `Wtxid` of a coinbase transaction.
     ///
     /// This is used as the wTXID for the coinbase transaction when constructing blocks,
     /// since the coinbase transaction contains a commitment to all transactions' wTXIDs
     /// but naturally cannot commit to its own. It is not a real wTXID and should not be
     /// used in other contexts.
-    pub fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
+    pub const COINBASE: Self = Self::from_byte_array([0; 32]);
+
+    /// The "all zeros" wTXID.
+    #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
+    pub fn all_zeros() -> Self { Self::COINBASE }
 }
 
 /// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
@@ -106,15 +114,20 @@ impl OutPoint {
     /// The number of bytes that an outpoint contributes to the size of a transaction.
     const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
 
+    /// The `OutPoint` used in a coinbase prevout.
+    ///
+    /// This is used as the dummy input for coinbase transactions because they don't have any
+    /// previous outputs. This is not a real outpoint and should not be used in any other contexts.
+    pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+
     /// Creates a new [`OutPoint`].
     #[inline]
     pub const fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
 
     /// Creates a "null" `OutPoint`.
-    ///
-    /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Txid::all_zeros(), vout: u32::MAX } }
+    #[deprecated(since = "TBD", note = "use OutPoint::COINBASE_PREVOUT instead")]
+    pub fn null() -> OutPoint { Self::COINBASE_PREVOUT }
 
     /// Checks if an `OutPoint` is "null".
     ///
@@ -131,6 +144,7 @@ impl OutPoint {
     /// assert!(tx.input[0].previous_output.is_null());
     /// ```
     #[inline]
+    #[deprecated(since = "TBD", note = "use outpoint == OutPoint::COINBASE_PREVOUT instead")]
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
 }
 
