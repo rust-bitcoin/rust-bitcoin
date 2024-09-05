@@ -99,13 +99,13 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        impl<$($gen: $gent),*> crate::GeneralHash for Hash<$($gen),*> {
+        impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
 
             fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
         }
 
-        impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
+        impl<$($gen: $gent),*> $crate::Hash for Hash<$($gen),*> {
             type Bytes = [u8; $bits / 8];
 
             const DISPLAY_BACKWARD: bool = $reverse;
@@ -148,7 +148,7 @@ macro_rules! hash_type {
 
             /// Hashes some bytes.
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self { <Self as crate::GeneralHash>::hash(data) }
+            pub fn hash(data: &[u8]) -> Self { <Self as $crate::GeneralHash>::hash(data) }
 
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
@@ -156,13 +156,13 @@ macro_rules! hash_type {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                <Self as crate::GeneralHash>::hash_byte_chunks(byte_slices)
+                <Self as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
 
             /// Hashes the entire contents of the `reader`.
             #[cfg(feature = "bitcoin-io")]
             pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
-                <Self as crate::GeneralHash>::hash_reader(reader)
+                <Self as $crate::GeneralHash>::hash_reader(reader)
             }
         }
     };
@@ -245,7 +245,7 @@ macro_rules! hash_type_no_default {
             }
         }
 
-        crate::internal_macros::hash_trait_impls!($bits, $reverse);
+        $crate::internal_macros::hash_trait_impls!($bits, $reverse);
     };
 }
 pub(crate) use hash_type_no_default;
