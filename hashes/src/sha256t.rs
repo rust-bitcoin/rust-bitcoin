@@ -71,13 +71,14 @@ where
     pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
 
     /// Copies a byte slice into a hash object.
+    #[deprecated(since = "TBD", note = "Use `from_byte_array` instead.")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
         if sl.len() != 32 {
             Err(FromSliceError { expected: 32, got: sl.len() })
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);
-            Ok(Self::internal_new(ret))
+            Ok(Self::from_byte_array(ret))
         }
     }
 
