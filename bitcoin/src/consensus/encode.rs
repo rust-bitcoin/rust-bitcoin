@@ -902,6 +902,8 @@ mod tests {
     use core::mem::discriminant;
 
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn serialize_int_test() {

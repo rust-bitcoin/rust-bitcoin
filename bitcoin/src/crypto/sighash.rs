@@ -1472,9 +1472,12 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
-    use crate::consensus::deserialize;
+    #[cfg(feature = "serde")]
+    use crate::consensus::encode::deserialize;
     use crate::locktime::absolute;
     use crate::script::ScriptBufExt as _;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     extern crate serde_json;
 

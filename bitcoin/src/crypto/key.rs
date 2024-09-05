@@ -1142,6 +1142,8 @@ impl std::error::Error for InvalidAddressVersionError {}
 mod tests {
     use super::*;
     use crate::address::Address;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn test_key_derivation() {
@@ -1214,8 +1216,8 @@ mod tests {
         assert!(upk.wpubkey_hash().is_err());
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn test_key_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

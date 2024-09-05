@@ -486,6 +486,8 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::Network;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -665,6 +667,8 @@ mod benches {
 
     use super::Block;
     use crate::consensus::{deserialize, Decodable, Encodable};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[bench]
     pub fn bench_stream_reader(bh: &mut Bencher) {

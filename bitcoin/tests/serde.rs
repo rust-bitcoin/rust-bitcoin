@@ -20,7 +20,7 @@
 //  let mut file = File::create("/tmp/script_bincode").unwrap();
 //  file.write_all(&got).unwrap();
 
-#![cfg(feature = "serde")]
+#![cfg(all(feature = "serde", feature = "std"))]
 
 use std::collections::BTreeMap;
 

@@ -1556,6 +1556,9 @@ mod test {
     use crate::script::ScriptBufExt as _;
     use crate::sighash::TapSighashTag;
     use crate::{Address, KnownHrp};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
+
     extern crate serde_json;
 
     #[cfg(feature = "serde")]

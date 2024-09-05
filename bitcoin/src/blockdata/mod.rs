@@ -28,6 +28,8 @@ pub mod fee_rate {
         use internals::ToU64 as _;
 
         use super::*;
+        #[allow(unused_imports)] // Less maintenance to just import this in tests.
+        use crate::prelude::*;
 
         #[test]
         fn fee_convenience_functions_agree() {

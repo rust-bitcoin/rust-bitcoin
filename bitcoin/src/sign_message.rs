@@ -209,6 +209,8 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn test_signed_msg_hash() {

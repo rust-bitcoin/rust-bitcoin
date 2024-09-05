@@ -62,7 +62,7 @@
 //! # fn main() {}
 //! ```
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
@@ -79,6 +79,9 @@
 extern crate alloc;
 
 extern crate core;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "bitcoin-io")]
 extern crate bitcoin_io as io;
@@ -338,9 +341,11 @@ impl fmt::Display for FromSliceError {
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {}
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use super::*;
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
     use crate::sha256d;
 
     hash_newtype! {

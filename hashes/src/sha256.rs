@@ -493,6 +493,8 @@ impl HashEngine {
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
+            use std::is_x86_feature_detected;
+
             if is_x86_feature_detected!("sse4.1")
                 && is_x86_feature_detected!("sha")
                 && is_x86_feature_detected!("sse2")
@@ -867,7 +869,10 @@ mod tests {
     use core::array;
 
     use super::*;
-    use crate::{sha256, HashEngine};
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+    use crate::sha256;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -976,6 +981,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "alloc")]
     fn engine_with_state() {
         let mut engine = sha256::Hash::engine();
         let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate_unchecked());
@@ -1065,8 +1071,8 @@ mod tests {
         assert_eq!(got, want);
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha256_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

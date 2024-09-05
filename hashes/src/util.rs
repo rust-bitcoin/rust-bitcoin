@@ -364,6 +364,9 @@ macro_rules! hash_newtype_known_attrs {
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
     use crate::sha256;
 
     #[test]

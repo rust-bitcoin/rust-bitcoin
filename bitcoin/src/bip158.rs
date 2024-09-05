@@ -566,17 +566,20 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-
     use hex::test_hex_unwrap as hex;
-    use serde_json::Value;
 
     use super::*;
-    use crate::consensus::encode::deserialize;
-    use crate::ScriptBuf;
 
     #[test]
+    #[cfg(feature = "std")]
     fn test_blockfilters() {
+        use std::collections::HashMap;
+
+        use serde_json::Value;
+
+        use crate::consensus::encode::deserialize;
+        use crate::ScriptBuf;
+
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = include_str!("../tests/data/blockfilters.json");
 

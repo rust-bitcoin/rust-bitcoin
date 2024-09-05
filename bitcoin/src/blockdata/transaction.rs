@@ -1426,6 +1426,8 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::constants::WITNESS_SCALE_FACTOR;
     use crate::sighash::EcdsaSighashType;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
@@ -1628,8 +1630,8 @@ mod tests {
     }
 
     // We temporarily abuse `Transaction` for testing consensus serde adapter.
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn consensus_serde() {
         use crate::consensus::serde as con_serde;
         let json = "\"010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000\"";
@@ -1823,7 +1825,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg(all(feature = "bitcoinconsensus", feature = "std"))]
     fn transaction_verify() {
         use std::collections::HashMap;
 
@@ -2220,7 +2222,7 @@ mod tests {
     #[test]
     fn sequence_debug_output() {
         let seq = Sequence::from_seconds_floor(1000);
-        println!("{:?}", seq)
+        let _ = format!("{:?}", seq);
     }
 
     #[test]
@@ -2255,6 +2257,8 @@ mod benches {
 
     use super::Transaction;
     use crate::consensus::{deserialize, Encodable};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 

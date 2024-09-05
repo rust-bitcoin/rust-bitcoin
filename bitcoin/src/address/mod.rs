@@ -895,6 +895,8 @@ mod tests {
     use crate::network::params;
     use crate::network::Network::{Bitcoin, Testnet};
     use crate::script::ScriptBufExt as _;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(

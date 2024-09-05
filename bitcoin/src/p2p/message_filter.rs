@@ -9,6 +9,7 @@ use units::BlockHeight;
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::BlockHash;
 use crate::internal_macros::impl_consensus_encoding;
+use crate::prelude::*;
 
 /// getcfilters message
 #[derive(PartialEq, Eq, Clone, Debug)]

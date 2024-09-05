@@ -12,6 +12,7 @@ use io::{BufRead, Read, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
 use crate::p2p::ServiceFlags;
+use crate::prelude::*;
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -308,6 +309,8 @@ mod test {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn serialize_address_test() {

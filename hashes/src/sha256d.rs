@@ -43,7 +43,10 @@ fn from_engine(e: HashEngine) -> Hash {
 
 #[cfg(test)]
 mod tests {
-    #[allow(unused_imports)] // whether this is used depends on features
+    #[cfg(feature = "alloc")]
+    #[allow(unused_imports)] // Less maintenance if we just import these.
+    use crate::alloc::{format, string::ToString, vec, vec::Vec};
+    #[cfg(any(feature = "alloc", feature = "serde"))]
     use crate::sha256d;
 
     #[test]
@@ -110,8 +113,8 @@ mod tests {
         assert_eq!(rinsed, hash)
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn sha256_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

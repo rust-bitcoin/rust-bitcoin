@@ -921,6 +921,8 @@ mod tests {
 
     use super::ChildNumber::{Hardened, Normal};
     use super::*;
+    #[allow(unused_imports)] // Less maintenance to just import this in tests.
+    use crate::prelude::*;
 
     #[test]
     fn test_parse_derivation_path() {
