@@ -108,11 +108,10 @@ mod message_signing {
             serialized
         }
 
-        /// Create from a byte slice.
-        pub fn from_slice(bytes: &[u8]) -> Result<MessageSignature, MessageSignatureError> {
-            if bytes.len() != 65 {
-                return Err(MessageSignatureError::InvalidLength);
-            }
+        /// Creates a `MessageSignature` from a fixed-length array.
+        pub fn from_byte_array(
+            bytes: &[u8; 65],
+        ) -> Result<MessageSignature, MessageSignatureError> {
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
                 return Err(MessageSignatureError::InvalidEncoding(
@@ -124,6 +123,14 @@ mod message_signing {
                 signature: RecoverableSignature::from_compact(&bytes[1..], recid)?,
                 compressed: ((bytes[0] - 27) & 0x04) != 0,
             })
+        }
+
+        /// Create a `MessageSignature` from a byte slice.
+        #[deprecated(since = "TBD", note = "Use `from_byte_array` instead.")]
+        pub fn from_slice(bytes: &[u8]) -> Result<MessageSignature, MessageSignatureError> {
+            let byte_array: [u8; 65] =
+                bytes.try_into().map_err(|_| MessageSignatureError::InvalidLength)?;
+            Self::from_byte_array(&byte_array)
         }
 
         /// Attempt to recover a public key from the signature and the signed message.
@@ -170,9 +177,14 @@ mod message_signing {
         impl MessageSignature {
             /// Convert a signature from base64 encoding.
             pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
-                let bytes =
-                    BASE64_STANDARD.decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
-                MessageSignature::from_slice(&bytes)
+                if s.len() != 88 {
+                    return Err(MessageSignatureError::InvalidLength);
+                }
+                let mut byte_array = [0; 65];
+                BASE64_STANDARD
+                    .decode_slice_unchecked(s, &mut byte_array)
+                    .map_err(|_| MessageSignatureError::InvalidBase64)?;
+                MessageSignature::from_byte_array(&byte_array)
             }
 
             /// Convert to base64 encoding.
@@ -258,6 +270,10 @@ mod tests {
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
 
         assert_eq!(pubkey.0, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
+        let signature_base64 = signature.to_base64();
+        let signature_round_trip =
+            super::MessageSignature::from_base64(&signature_base64).expect("message signature");
+        assert_eq!(signature, signature_round_trip);
     }
 
     #[test]
