@@ -111,12 +111,10 @@ mod message_signing {
         /// Creates a `MessageSignature` from a fixed-length array.
         pub fn from_byte_array(
             bytes: &[u8; 65],
-        ) -> Result<MessageSignature, MessageSignatureError> {
+        ) -> Result<MessageSignature, secp256k1::Error> {
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
-                return Err(MessageSignatureError::InvalidEncoding(
-                    secp256k1::Error::InvalidRecoveryId,
-                ));
+                return Err(secp256k1::Error::InvalidRecoveryId);
             };
             let recid = RecoveryId::from_i32(((bytes[0] - 27) & 0x03) as i32)?;
             Ok(MessageSignature {
@@ -130,7 +128,7 @@ mod message_signing {
         pub fn from_slice(bytes: &[u8]) -> Result<MessageSignature, MessageSignatureError> {
             let byte_array: [u8; 65] =
                 bytes.try_into().map_err(|_| MessageSignatureError::InvalidLength)?;
-            Self::from_byte_array(&byte_array)
+            Self::from_byte_array(&byte_array).map_err(MessageSignatureError::from)
         }
 
         /// Attempt to recover a public key from the signature and the signed message.
@@ -184,7 +182,7 @@ mod message_signing {
                 BASE64_STANDARD
                     .decode_slice_unchecked(s, &mut byte_array)
                     .map_err(|_| MessageSignatureError::InvalidBase64)?;
-                MessageSignature::from_byte_array(&byte_array)
+                MessageSignature::from_byte_array(&byte_array).map_err(MessageSignatureError::from)
             }
 
             /// Convert to base64 encoding.
