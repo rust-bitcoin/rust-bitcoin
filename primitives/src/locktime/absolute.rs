@@ -41,16 +41,39 @@ pub use units::locktime::absolute::*;
 ///
 /// # Examples
 ///
+/// ### Boundary condition for locktimes
+///
 /// ```
-/// # use bitcoin_primitives::absolute::{LockTime, LockTime::*};
-/// # let n = LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
-/// # let lock_time = LockTime::from_consensus(741521);  // nLockTime
-/// // To compare absolute lock times there are various `is_satisfied_*` methods, you may also use:
+/// use bitcoin_primitives::absolute::{LockTime, Height, Time};
+///
+/// // Spending transaction locked to block height 741521.
+/// let lock_time = LockTime::from_consensus(741521);  // n OP_CHECKLOCKTIMEVERIFY
+///
+/// // We use a dummy `Time` because we are checking we a height-based lock.
+/// let not_used = Time::MIN;
+///
+/// // The transaction can be included in any block with height greater than or equal to the lock.
+/// assert!(!lock_time.is_satisfied_by(Height::from_consensus(741520).unwrap(), not_used));
+/// assert!(lock_time.is_satisfied_by(Height::from_consensus(741521).unwrap(), not_used));
+/// assert!(lock_time.is_satisfied_by(Height::from_consensus(741522).unwrap(), not_used));
+/// ```
+///
+/// ### Manually check lock satisfaction
+///
+/// If you do not want to use the `is_satisfied_by` function, you can
+/// also check locktimes manually using:
+///
+/// ```
+/// use bitcoin_primitives::absolute::{LockTime, LockTime::*};
+/// let lock_time = LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
+/// let n = LockTime::from_consensus(741521);  // nLockTime
+///
 /// let is_satisfied = match (n, lock_time) {
 ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
 ///     (Seconds(n), Seconds(lock_time)) => n <= lock_time,
 ///     _ => panic!("handle invalid comparison error"),
 /// };
+/// assert!(is_satisfied);
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LockTime {
