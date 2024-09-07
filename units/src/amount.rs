@@ -1181,9 +1181,13 @@ impl core::iter::Sum for Amount {
 /// * Show or hide denomination
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
-/// However this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
+/// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
 /// padding, alignment... The formatting works like floats from `core` but note that precision will
 /// **never** be lossy - that means no rounding.
+///
+/// Note: This implementation is currently **unstable**. The only thing that we can promise is that
+/// unless the precision is changed, this will display an accurate, human-readable number, and the
+/// default serialization (one with unmodified [`fmt::Formatter`] options) will round-trip with [`FromStr`]
 ///
 /// See [`Amount::display_in`] and [`Amount::display_dynamic`] on how to construct this.
 #[derive(Debug, Clone)]
