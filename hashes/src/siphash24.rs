@@ -4,7 +4,7 @@
 
 use core::ops::Index;
 use core::slice::SliceIndex;
-use core::{cmp, mem, ptr};
+use core::{cmp, mem};
 
 use crate::HashEngine as _;
 
@@ -53,13 +53,7 @@ macro_rules! compress {
 macro_rules! load_int_le {
     ($buf:expr, $i:expr, $int_ty:ident) => {{
         debug_assert!($i + mem::size_of::<$int_ty>() <= $buf.len());
-        let mut data = 0 as $int_ty;
-        ptr::copy_nonoverlapping(
-            $buf.get_unchecked($i),
-            &mut data as *mut _ as *mut u8,
-            mem::size_of::<$int_ty>(),
-        );
-        data.to_le()
+        $int_ty::from_le_bytes($buf.get_unchecked($i..($i + mem::size_of::<$int_ty>())).try_into().expect("len is correctly computed using size_of"))
     }};
 }
 
