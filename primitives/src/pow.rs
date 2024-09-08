@@ -3,6 +3,7 @@
 //! Proof-of-work related integer types.
 
 use core::fmt;
+
 use internals::impl_to_hex_from_lower_hex;
 
 /// Encoding of 256-bit target as 32-bit float.
@@ -35,7 +36,11 @@ impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| 8 - compact_target.0.leading_zeros() as usize / 4);
+impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| 8 - compact_target
+    .0
+    .leading_zeros()
+    as usize
+    / 4);
 
 impl fmt::UpperHex for CompactTarget {
     #[inline]

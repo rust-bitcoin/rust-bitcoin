@@ -274,7 +274,7 @@ pub trait Hash:
     + convert::AsRef<[u8]>
 {
     /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy + IsByteArray /* <LEN={Self::LEN}> is still unsupported by Rust */;
+    type Bytes: hex::FromHex + Copy + IsByteArray;
 
     /// Length of the hash, in bytes.
     const LEN: usize = Self::Bytes::LEN;
@@ -309,9 +309,9 @@ impl<const N: usize> IsByteArray for [u8; N] {
 
 mod sealed {
     #[doc(hidden)]
-    pub trait IsByteArray { }
+    pub trait IsByteArray {}
 
-    impl<const N: usize> IsByteArray for [u8; N] { }
+    impl<const N: usize> IsByteArray for [u8; N] {}
 }
 
 /// Attempted to create a hash from an invalid length slice.

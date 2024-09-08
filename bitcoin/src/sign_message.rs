@@ -109,9 +109,7 @@ mod message_signing {
         }
 
         /// Creates a `MessageSignature` from a fixed-length array.
-        pub fn from_byte_array(
-            bytes: &[u8; 65],
-        ) -> Result<MessageSignature, secp256k1::Error> {
+        pub fn from_byte_array(bytes: &[u8; 65]) -> Result<MessageSignature, secp256k1::Error> {
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
                 return Err(secp256k1::Error::InvalidRecoveryId);
