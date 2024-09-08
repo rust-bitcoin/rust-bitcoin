@@ -227,7 +227,5 @@ macro_rules! impl_to_hex_from_lower_hex {
 #[macro_export]
 #[cfg(not(feature = "alloc"))]
 macro_rules! impl_to_hex_from_lower_hex {
-    ($t:ident, $hex_len_fn:expr) => {
-
-    };
+    ($t:ident, $hex_len_fn:expr) => {};
 }

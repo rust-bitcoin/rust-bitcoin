@@ -174,7 +174,8 @@ impl fmt::LowerHex for SerializedSignature {
         fmt::LowerHex::fmt(&(**self).as_hex(), f)
     }
 }
-impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len * 2);
+impl_to_hex_from_lower_hex!(SerializedSignature, |signature: &SerializedSignature| signature.len
+    * 2);
 
 impl fmt::UpperHex for SerializedSignature {
     #[inline]

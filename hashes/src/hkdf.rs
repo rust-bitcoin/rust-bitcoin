@@ -79,8 +79,11 @@ where
             let t = Hmac::from_engine(hmac_engine);
             let start_index = (counter as usize - 1) * T::Bytes::LEN;
             // Last block might not take full hash length.
-            let end_index =
-                if counter == (total_blocks as u8) { okm.len() } else { counter as usize * T::Bytes::LEN };
+            let end_index = if counter == (total_blocks as u8) {
+                okm.len()
+            } else {
+                counter as usize * T::Bytes::LEN
+            };
 
             okm[start_index..end_index].copy_from_slice(&t.as_ref()[0..(end_index - start_index)]);
 
