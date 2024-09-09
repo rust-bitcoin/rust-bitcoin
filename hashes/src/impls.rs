@@ -4,92 +4,15 @@
 //!
 //! Implementations of traits defined in `std` / `io` and not in `core`.
 
-use bitcoin_io::impl_write;
-
-use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, HashEngine};
-
-impl_write!(
-    hash160::HashEngine,
-    |us: &mut hash160::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    sha1::HashEngine,
-    |us: &mut sha1::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    sha256::HashEngine,
-    |us: &mut sha256::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    sha256d::HashEngine,
-    |us: &mut sha256d::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    sha512::HashEngine,
-    |us: &mut sha512::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    ripemd160::HashEngine,
-    |us: &mut ripemd160::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    siphash24::HashEngine,
-    |us: &mut siphash24::HashEngine, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) }
-);
-
-impl_write!(
-    hmac::HmacEngine<T>,
-    |us: &mut hmac::HmacEngine<T>, buf| {
-        us.input(buf);
-        Ok(buf.len())
-    },
-    |_us| { Ok(()) },
-    T: crate::GeneralHash
-);
-
-#[cfg(all(test, feature = "alloc"))] // right now every test here depends on `alloc`
+#[cfg(test)]
+#[cfg(feature = "alloc")]
 mod tests {
     use alloc::format;
 
     use bitcoin_io::Write;
 
-    use crate::{
-        hash160, hmac, ripemd160, sha1, sha256, sha256d, sha512, siphash24, GeneralHash as _,
-    };
+    use crate::GeneralHash as _;
+    use crate::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha384, sha512, sha512_256, siphash24};
 
     macro_rules! write_test {
         ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {
@@ -132,6 +55,13 @@ mod tests {
     );
 
     write_test!(
+        sha384,
+        "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
+        "82135637ef6d6dd31a20e2bc9998681a3eecaf8f8c76d45e545214de38439d9a533848ec75f53e4b1a8805709c5124d0",
+        "fb7511d9a98c5686f9c2f55e242397815c9229d8759451e1710b8da6861e08d52f0357176f4b74f8cad9e23ab65411c7",
+    );
+
+    write_test!(
         sha512,
         "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce\
          47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
@@ -139,6 +69,13 @@ mod tests {
          45fc10c142cecdd3bb587a3dba598c072f6f78b31cc0a06a3da0105ee51f75d6",
         "dd28f78c53f3bc9bd0c2dca9642a1ad402a70412f985c1f6e54fadb98ce9c458\
          4761df8d04ed04bb734ba48dd2106bb9ea54524f1394cdd18e6da3166e71c3ee",
+    );
+
+    write_test!(
+        sha512_256,
+        "c672b8d1ef56ed28ab87c3622c5114069bdd3ad7b8f9737498d0c01ecef0967a",
+        "8d4bb96e7956cf5f08bf5c45f7982630c46b0b022f25cbaf722ae97c06a6e7a2",
+        "3367646f3e264653f7dd664ac2cb6d3b96329e86ffb7a29a1082e2a4ddc9ee7a",
     );
 
     write_test!(

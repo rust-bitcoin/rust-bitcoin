@@ -116,8 +116,6 @@ pub mod cmp;
 pub mod hash160;
 pub mod hkdf;
 pub mod hmac;
-#[cfg(feature = "bitcoin-io")]
-mod impls;
 pub mod ripemd160;
 pub mod sha1;
 pub mod sha256;

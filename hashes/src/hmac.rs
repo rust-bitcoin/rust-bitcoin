@@ -162,6 +162,16 @@ impl<'de, T: GeneralHash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     }
 }
 
+crate::internal_macros::impl_io_write!(
+    HmacEngine<T>,
+    |us: &mut HmacEngine<T>, buf| {
+        us.input(buf);
+        Ok(buf.len())
+    },
+    |_us| { Ok(()) },
+    T: crate::GeneralHash
+);
+
 #[cfg(test)]
 mod tests {
     #[test]

@@ -1,4 +1,6 @@
 //! Regression tests for each hash type.
+//!
+//! Note that if `bitcoin-io` is enabled then we get more regression-like testing from `./io.rs`.
 
 use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,

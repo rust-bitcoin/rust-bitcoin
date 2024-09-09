@@ -5,7 +5,7 @@
 set -euox pipefail
 
 # Run the sanitizer with these features.
-FEATURES="std io serde"
+FEATURES="std bitcoin-io serde"
 
 cargo clean
 CC='clang -fsanitize=address -fno-omit-frame-pointer'                                        \
