@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use internals::script::{self, PushDataLenLen};
+
 use super::{
-    read_uint_iter, Error, PushBytes, Script, ScriptBuf, ScriptBufExtPriv as _, UintError,
+    Error, PushBytes, Script, ScriptBuf, ScriptBufExtPriv as _,
 };
 use crate::opcodes::{self, Opcode};
 
@@ -129,13 +131,9 @@ impl<'a> Instructions<'a> {
         len: PushDataLenLen,
         min_push_len: usize,
     ) -> Option<Result<Instruction<'a>, Error>> {
-        let n = match read_uint_iter(&mut self.data, len as usize) {
+        let n = match script::read_push_data_len(&mut self.data, len) {
             Ok(n) => n,
-            // We do exhaustive matching to not forget to handle new variants if we extend
-            // `UintError` type.
-            // Overflow actually means early end of script (script is definitely shorter
-            // than `usize::MAX`)
-            Err(UintError::EarlyEndOfScript) | Err(UintError::NumericOverflow) => {
+            Err(_) => {
                 self.kill();
                 return Some(Err(Error::EarlyEndOfScript));
             }
@@ -151,15 +149,6 @@ impl<'a> Instructions<'a> {
             .map(Instruction::PushBytes);
         Some(result)
     }
-}
-
-/// Allowed length of push data length.
-///
-/// This makes it easier to prove correctness of `next_push_data_len`.
-pub(super) enum PushDataLenLen {
-    One = 1,
-    Two = 2,
-    Four = 4,
 }
 
 impl<'a> Iterator for Instructions<'a> {

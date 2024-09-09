@@ -39,6 +39,7 @@ pub mod const_tools;
 pub mod error;
 pub mod macros;
 mod parse;
+pub mod script;
 #[cfg(feature = "serde")]
 #[macro_use]
 pub mod serde;
