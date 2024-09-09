@@ -67,10 +67,9 @@ impl Txid {
 impl Wtxid {
     /// The `Wtxid` of a coinbase transaction.
     ///
-    /// This is used as the wTXID for the coinbase transaction when constructing blocks,
-    /// since the coinbase transaction contains a commitment to all transactions' wTXIDs
-    /// but naturally cannot commit to its own. It is not a real wTXID and should not be
-    /// used in other contexts.
+    /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
+    /// witness commitment tree) since the coinbase transaction contains a commitment to all
+    /// transactions' wTXIDs but naturally cannot commit to its own.
     pub const COINBASE: Self = Self::from_byte_array([0; 32]);
 
     /// The "all zeros" wTXID.
@@ -117,7 +116,7 @@ impl OutPoint {
     /// The `OutPoint` used in a coinbase prevout.
     ///
     /// This is used as the dummy input for coinbase transactions because they don't have any
-    /// previous outputs. This is not a real outpoint and should not be used in any other contexts.
+    /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 
     /// Creates a new [`OutPoint`].
