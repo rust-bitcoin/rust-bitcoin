@@ -89,7 +89,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
         .into_script();
     ret.input.push(TxIn {
-        previous_output: OutPoint::null(),
+        previous_output: OutPoint::COINBASE_PREVOUT,
         script_sig: in_script,
         sequence: Sequence::MAX,
         witness: Witness::default(),
