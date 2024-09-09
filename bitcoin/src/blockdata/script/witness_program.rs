@@ -164,3 +164,45 @@ impl std::error::Error for Error {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn witness_program_is_too_short() {
+        let arbitrary_bytes = [0x00; MIN_SIZE - 1];
+        assert!(WitnessProgram::new(WitnessVersion::V15, &arbitrary_bytes).is_err()); // Arbitrary version
+    }
+
+    #[test]
+    fn witness_program_is_too_long() {
+        let arbitrary_bytes = [0x00; MAX_SIZE + 1];
+        assert!(WitnessProgram::new(WitnessVersion::V15, &arbitrary_bytes).is_err()); // Arbitrary version
+    }
+
+    #[test]
+    fn valid_v0_witness_programs() {
+        let arbitrary_bytes = [0x00; MAX_SIZE];
+
+        for size in MIN_SIZE..=MAX_SIZE {
+            let program = WitnessProgram::new(WitnessVersion::V0, &arbitrary_bytes[..size]);
+
+            if size == 20 {
+                assert!(program.expect("valid witness program").is_p2wpkh());
+                continue
+            }
+            if size == 32 {
+                assert!(program.expect("valid witness program").is_p2wsh());
+                continue
+            }
+            assert!(program.is_err());
+        }
+    }
+
+    #[test]
+    fn valid_v1_witness_programs() {
+        let arbitrary_bytes = [0x00; 32];
+        assert!(WitnessProgram::new(WitnessVersion::V1, &arbitrary_bytes).expect("valid witness program").is_p2tr());
+    }
+}
