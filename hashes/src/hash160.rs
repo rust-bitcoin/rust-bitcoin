@@ -7,9 +7,6 @@
 
 //! HASH160 (SHA256 then RIPEMD160) implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::{ripemd160, sha256};
 
 crate::internal_macros::hash_type! {

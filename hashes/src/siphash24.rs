@@ -2,8 +2,6 @@
 
 //! SipHash 2-4 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
 use core::{cmp, mem, ptr};
 
 use crate::HashEngine as _;
