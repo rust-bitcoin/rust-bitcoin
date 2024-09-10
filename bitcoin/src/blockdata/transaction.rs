@@ -122,6 +122,7 @@ impl OutPoint {
 
     /// Creates a new [`OutPoint`].
     #[inline]
+    #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
     pub const fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
 
     /// Creates a "null" `OutPoint`.
