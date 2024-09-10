@@ -5,8 +5,6 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -206,11 +204,25 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
 
 crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Weight {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let w = u64::arbitrary(u)?;
-        Ok(Weight(w))
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::{Arbitrary, Unstructured};
+
+    use super::*;
+    use crate::testing_infrastructure::TestDummy;
+
+    #[cfg(feature = "arbitrary")]
+    impl<'a> Arbitrary<'a> for Weight {
+        fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+            let w = u64::arbitrary(u)?;
+            Ok(Weight(w))
+        }
+    }
+
+    impl TestDummy for Weight {
+        fn test_dummy() -> Weight { Weight::from_wu(450) }
     }
 }
 
@@ -323,5 +335,18 @@ mod tests {
 
         let result = Weight(2).checked_div(0);
         assert_eq!(None, result);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "test-infrastructure")]
+    fn from_str_display_roundtrips() {
+        use alloc::string::ToString;
+        use crate::testing_infrastructure::TestDummy;
+
+        let original = Weight::test_dummy();
+        let s = original.to_string();
+        let rinsed = s.parse::<Weight>().expect("failed to parse weight string");
+        assert_eq!(rinsed, original);
     }
 }

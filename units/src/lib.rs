@@ -42,3 +42,17 @@ pub use self::{
     fee_rate::FeeRate,
     weight::Weight
 };
+
+/// This module holds stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+#[allow(dead_code)]             // FIXME(tcharding): Not sure right now why this is needed.
+pub mod testing_infrastructure {
+    /// Trait for creating dummy test case data.
+    pub trait TestDummy {
+        /// Generates a "dummy" instance of the type suitable for use in unit tests.
+        ///
+        /// Useful when the exact data is not important and saves one from looking up docs to find a
+        /// constructor and writing `Foo::from_bar(b); // Arbitrary data.`
+        fn test_dummy() -> Self;
+    }
+}

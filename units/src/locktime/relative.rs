@@ -153,6 +153,21 @@ impl fmt::Display for TimeOverflowError {
 #[cfg(feature = "std")]
 impl std::error::Error for TimeOverflowError {}
 
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    use super::*;
+    use crate::testing_infrastructure::TestDummy;
+
+    impl TestDummy for Height {
+        fn test_dummy() -> Height { Height(6) }
+    }
+
+    impl TestDummy for Time {
+        fn test_dummy() -> Height { Time::from_seconds_floor(3600) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

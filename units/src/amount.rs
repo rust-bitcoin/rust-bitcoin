@@ -13,8 +13,6 @@ use core::{default, fmt, ops};
 
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 use internals::write_err;
 
@@ -1072,14 +1070,6 @@ impl Amount {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Amount {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = u64::arbitrary(u)?;
-        Ok(Amount(a))
-    }
-}
-
 impl default::Default for Amount {
     fn default() -> Self { Amount::ZERO }
 }
@@ -1596,14 +1586,6 @@ impl core::iter::Sum for SignedAmount {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for SignedAmount {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let s = i64::arbitrary(u)?;
-        Ok(SignedAmount(s))
-    }
-}
-
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
@@ -2039,6 +2021,40 @@ mod verification {
                 None
             },
         );
+    }
+}
+
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::{Arbitrary, Unstructured};
+
+    use super::*;
+    use crate::testing_infrastructure::TestDummy;
+
+    #[cfg(feature = "arbitrary")]
+    impl<'a> Arbitrary<'a> for Amount {
+        fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+            let a = u64::arbitrary(u)?;
+            Ok(Amount(a))
+        }
+    }
+
+    #[cfg(feature = "arbitrary")]
+    impl<'a> Arbitrary<'a> for SignedAmount {
+        fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+            let s = i64::arbitrary(u)?;
+            Ok(SignedAmount(s))
+        }
+    }
+
+    impl TestDummy for Amount {
+        fn test_dummy() -> Amount { Amount::from_sat(100_000) }
+    }
+
+    impl TestDummy for SignedAmount {
+        fn test_dummy() -> SignedAmount { SignedAmount::from_sat(-100_000) }
     }
 }
 
