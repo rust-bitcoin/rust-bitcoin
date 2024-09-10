@@ -1,0 +1,33 @@
+---   # rust-bitcoin CI: If you edit this file please update README.md
+on:   # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - master
+      - 'test-ci/**'
+  pull_request:
+
+name: Miri
+
+jobs:
+  Miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Read nightly version"
+        id: read_toolchain
+        run: echo "nightly_version=$(cat nightly-version)" >> $GITHUB_OUTPUT
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ steps.read_toolchain.outputs.nightly_version }}
+          components: miri
+      - name: "Setup miri"
+        run: cargo miri setup
+      - name: "Set dependencies"
+        run: cp Cargo-recent.lock Cargo.lock
+      - name: "Run test script"
+        run: ./contrib/test-miri.sh
