@@ -28,7 +28,7 @@ jobs:
           fi
       - name: Create Pull Request
         if: env.changes_made == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.APOELSTRA_CREATE_PR_TOKEN }}
           author: Update cargo-semver-checks Bot <bot@example.com>
