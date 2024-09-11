@@ -119,7 +119,7 @@ fn dummy_unspent_transaction_output(wpkh: WPubkeyHash) -> (OutPoint, TxOut) {
     let script_pubkey = ScriptBuf::new_p2wpkh(wpkh);
 
     let out_point = OutPoint {
-        txid: Txid::all_zeros(), // Obviously invalid.
+        txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.
         vout: 0,
     };
 

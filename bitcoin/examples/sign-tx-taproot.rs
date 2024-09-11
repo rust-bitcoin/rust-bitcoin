@@ -119,7 +119,7 @@ fn dummy_unspent_transaction_output<C: Verification>(
     let script_pubkey = ScriptBuf::new_p2tr(secp, internal_key, None);
 
     let out_point = OutPoint {
-        txid: Txid::all_zeros(), // Obviously invalid.
+        txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.
         vout: 0,
     };
 

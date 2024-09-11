@@ -101,7 +101,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         .script_pubkey();
 
     let out_point_1 = OutPoint {
-        txid: Txid::all_zeros(), // Obviously invalid.
+        txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.
         vout: 0,
     };
 
@@ -115,7 +115,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         .script_pubkey();
 
     let out_point_2 = OutPoint {
-        txid: Txid::all_zeros(), // Obviously invalid.
+        txid: Txid::from_byte_array([0xFF; 32]), // Arbitrary invalid dummy value.
         vout: 1,
     };
 
