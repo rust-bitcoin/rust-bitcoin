@@ -58,10 +58,15 @@ impl Txid {
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
     /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
     pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
+}
 
-    /// The "all zeros" TXID.
-    #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
-    pub fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Txid`] type.
+    pub trait TxidExt impl for Txid {
+        /// The "all zeros" TXID.
+        #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
+        fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
+    }
 }
 
 impl Wtxid {
@@ -71,10 +76,15 @@ impl Wtxid {
     /// witness commitment tree) since the coinbase transaction contains a commitment to all
     /// transactions' wTXIDs but naturally cannot commit to its own.
     pub const COINBASE: Self = Self::from_byte_array([0; 32]);
+}
 
-    /// The "all zeros" wTXID.
-    #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
-    pub fn all_zeros() -> Self { Self::COINBASE }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Wtxid`] type.
+    pub trait WtxidExt impl for Wtxid {
+        /// The "all zeros" wTXID.
+        #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
+        fn all_zeros() -> Self { Self::COINBASE }
+    }
 }
 
 /// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
