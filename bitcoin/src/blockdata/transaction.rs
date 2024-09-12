@@ -697,7 +697,7 @@ impl Transaction {
     /// all-zeros (creates satoshis "out of thin air").
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
-        self.input.len() == 1 && self.input[0].previous_output.is_null()
+        self.input.len() == 1 && self.input[0].previous_output == OutPoint::COINBASE_PREVOUT
     }
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
