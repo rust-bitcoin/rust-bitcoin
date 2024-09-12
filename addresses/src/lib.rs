@@ -16,6 +16,7 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc(test(attr(warn(unused))))]
 // Coding conventions.
+#![warn(deprecated_in_future)]
 #![warn(missing_docs)]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
