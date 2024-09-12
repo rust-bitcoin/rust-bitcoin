@@ -1,7 +1,7 @@
 name: Update Nightly rustc
 on:
   schedule:
-    - cron: "0 0 * * 1,4" # runs every Monday and Thursday at 00:00
+    - cron: "5 0 * * 1,4" # runs every Monday and Thursday at 00:05
   workflow_dispatch: # allows manual triggering
 jobs:
   format:
