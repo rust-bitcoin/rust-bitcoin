@@ -1157,7 +1157,22 @@ impl ops::DivAssign<u64> for Amount {
 impl FromStr for Amount {
     type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { Amount::from_str_with_denomination(s) }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let result = Amount::from_str_with_denomination(s);
+
+        match result {
+            Err(ParseError::MissingDenomination(_)) => {
+                let d = Amount::from_str_in(s, Denomination::Satoshi);
+
+                if d == Ok(Amount::ZERO) {
+                    Ok(Amount::ZERO)
+                } else {
+                   result
+                }
+            },
+            _ => result
+        }
+    }
 }
 
 impl TryFrom<SignedAmount> for Amount {
@@ -1580,7 +1595,22 @@ impl ops::Neg for SignedAmount {
 impl FromStr for SignedAmount {
     type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { SignedAmount::from_str_with_denomination(s) }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let result = SignedAmount::from_str_with_denomination(s);
+
+        match result {
+            Err(ParseError::MissingDenomination(_)) => {
+                let d = SignedAmount::from_str_in(s, Denomination::Satoshi);
+
+                if d == Ok(SignedAmount::ZERO) {
+                    Ok(SignedAmount::ZERO)
+                } else {
+                   result
+                }
+            },
+            _ => result
+        }
+    }
 }
 
 impl TryFrom<Amount> for SignedAmount {
@@ -2077,6 +2107,25 @@ mod tests {
                 Ok(amount) => assert_eq!(amount, SignedAmount::from_sat(0)),
             }
         }
+    }
+
+    #[test]
+    fn from_str_zero_without_denomination() {
+        let _a = Amount::from_str("0").unwrap();
+        let _a = Amount::from_str("0.0").unwrap();
+        let _a = Amount::from_str("00.0").unwrap();
+
+        assert!(Amount::from_str("-0").is_err());
+        assert!(Amount::from_str("-0.0").is_err());
+        assert!(Amount::from_str("-00.0").is_err());
+
+        let _a = SignedAmount::from_str("-0").unwrap();
+        let _a = SignedAmount::from_str("-0.0").unwrap();
+        let _a = SignedAmount::from_str("-00.0").unwrap();
+
+        let _a = SignedAmount::from_str("0").unwrap();
+        let _a = SignedAmount::from_str("0.0").unwrap();
+        let _a = SignedAmount::from_str("00.0").unwrap();
     }
 
     #[test]
