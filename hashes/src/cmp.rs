@@ -52,41 +52,46 @@ pub fn fixed_time_eq(a: &[u8], b: &[u8]) -> bool {
     unsafe { (::core::ptr::read_volatile(&r) & 1) == 0 }
 }
 
-#[test]
-fn eq_test() {
-    assert!(fixed_time_eq(&[0b00000000], &[0b00000000]));
-    assert!(fixed_time_eq(&[0b00000001], &[0b00000001]));
-    assert!(fixed_time_eq(&[0b00000010], &[0b00000010]));
-    assert!(fixed_time_eq(&[0b00000100], &[0b00000100]));
-    assert!(fixed_time_eq(&[0b00001000], &[0b00001000]));
-    assert!(fixed_time_eq(&[0b00010000], &[0b00010000]));
-    assert!(fixed_time_eq(&[0b00100000], &[0b00100000]));
-    assert!(fixed_time_eq(&[0b01000000], &[0b01000000]));
-    assert!(fixed_time_eq(&[0b10000000], &[0b10000000]));
-    assert!(fixed_time_eq(&[0b11111111], &[0b11111111]));
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    assert!(!fixed_time_eq(&[0b00000001], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000001], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b00000010], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000010], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b00000100], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000100], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b00001000], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00001000], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b00010000], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00010000], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b00100000], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b00100000], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b01000000], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b01000000], &[0b11111111]));
-    assert!(!fixed_time_eq(&[0b10000000], &[0b00000000]));
-    assert!(!fixed_time_eq(&[0b10000000], &[0b11111111]));
+    #[test]
+    fn eq_test() {
+        assert!(fixed_time_eq(&[0b00000000], &[0b00000000]));
+        assert!(fixed_time_eq(&[0b00000001], &[0b00000001]));
+        assert!(fixed_time_eq(&[0b00000010], &[0b00000010]));
+        assert!(fixed_time_eq(&[0b00000100], &[0b00000100]));
+        assert!(fixed_time_eq(&[0b00001000], &[0b00001000]));
+        assert!(fixed_time_eq(&[0b00010000], &[0b00010000]));
+        assert!(fixed_time_eq(&[0b00100000], &[0b00100000]));
+        assert!(fixed_time_eq(&[0b01000000], &[0b01000000]));
+        assert!(fixed_time_eq(&[0b10000000], &[0b10000000]));
+        assert!(fixed_time_eq(&[0b11111111], &[0b11111111]));
 
-    assert!(fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000000, 0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000001, 0b00000000], &[0b00000000, 0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000000, 0b00000001], &[0b00000000, 0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000001, 0b00000000]));
-    assert!(!fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000001, 0b00000001]));
+        assert!(!fixed_time_eq(&[0b00000001], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000001], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b00000010], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000010], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b00000100], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000100], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b00001000], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00001000], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b00010000], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00010000], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b00100000], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b00100000], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b01000000], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b01000000], &[0b11111111]));
+        assert!(!fixed_time_eq(&[0b10000000], &[0b00000000]));
+        assert!(!fixed_time_eq(&[0b10000000], &[0b11111111]));
+
+        assert!(fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000000, 0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000001, 0b00000000], &[0b00000000, 0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000000, 0b00000001], &[0b00000000, 0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000001, 0b00000000]));
+        assert!(!fixed_time_eq(&[0b00000000, 0b00000000], &[0b00000001, 0b00000001]));
+    }
 }
 
 #[cfg(bench)]
