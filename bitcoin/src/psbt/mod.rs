@@ -20,7 +20,7 @@ use std::collections::{HashMap, HashSet};
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
-use crate::bip32::{self, KeySource, Xpriv, Xpub};
+use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
@@ -762,6 +762,13 @@ impl GetKey for Xpriv {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == *fingerprint {
+                    let k = self.derive_priv(secp, &path);
+                    Some(k.to_priv())
+                } else if self.parent_fingerprint == *fingerprint
+                    && !path.is_empty()
+                    && path[0] == self.child_number
+                {
+                    let path = DerivationPath::from_iter(path.into_iter().skip(1).copied());
                     let k = self.derive_priv(secp, &path);
                     Some(k.to_priv())
                 } else {
