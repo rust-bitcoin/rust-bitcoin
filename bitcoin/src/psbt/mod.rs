@@ -365,9 +365,9 @@ impl Psbt {
         let mut used = vec![]; // List of pubkeys used to sign the input.
 
         for (pk, key_source) in input.bip32_derivation.iter() {
-            let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
+            let sk = if let Ok(Some(sk)) = k.get_key(&KeyRequest::Bip32(key_source.clone()), secp) {
                 sk
-            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+            } else if let Ok(Some(sk)) = k.get_key(&KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
                 sk
             } else {
                 continue;
@@ -419,7 +419,7 @@ impl Psbt {
 
         for (&xonly, (leaf_hashes, key_source)) in input.tap_key_origins.iter() {
             let sk = if let Ok(Some(secret_key)) =
-                k.get_key(KeyRequest::Bip32(key_source.clone()), secp)
+                k.get_key(&KeyRequest::Bip32(key_source.clone()), secp)
             {
                 secret_key
             } else {
@@ -745,7 +745,7 @@ pub trait GetKey {
     /// - `Err` if an error was encountered while looking for the key.
     fn get_key<C: Signing>(
         &self,
-        key_request: KeyRequest,
+        key_request: &KeyRequest,
         secp: &Secp256k1<C>,
     ) -> Result<Option<PrivateKey>, Self::Error>;
 }
@@ -755,13 +755,13 @@ impl GetKey for Xpriv {
 
     fn get_key<C: Signing>(
         &self,
-        key_request: KeyRequest,
+        key_request: &KeyRequest,
         secp: &Secp256k1<C>,
     ) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
-                let key = if self.fingerprint(secp) == fingerprint {
+                let key = if self.fingerprint(secp) == *fingerprint {
                     let k = self.derive_priv(secp, &path);
                     Some(k.to_priv())
                 } else {
@@ -800,13 +800,13 @@ impl GetKey for $set<Xpriv> {
 
     fn get_key<C: Signing>(
         &self,
-        key_request: KeyRequest,
+        key_request: &KeyRequest,
         secp: &Secp256k1<C>
     ) -> Result<Option<PrivateKey>, Self::Error> {
         // OK to stop at the first error because Xpriv::get_key() can only fail
         // if this isn't a KeyRequest::Bip32, which would fail for all Xprivs.
         self.iter()
-            .find_map(|xpriv| xpriv.get_key(key_request.clone(), secp).transpose())
+            .find_map(|xpriv| xpriv.get_key(key_request, secp).transpose())
             .transpose()
     }
 }}}
@@ -823,7 +823,7 @@ impl GetKey for $map<PublicKey, PrivateKey> {
 
     fn get_key<C: Signing>(
         &self,
-        key_request: KeyRequest,
+        key_request: &KeyRequest,
         _: &Secp256k1<C>,
     ) -> Result<Option<PrivateKey>, Self::Error> {
         match key_request {
@@ -2126,7 +2126,7 @@ mod tests {
         let mut key_map = BTreeMap::new();
         key_map.insert(pk, priv_key);
 
-        let got = key_map.get_key(KeyRequest::Pubkey(pk), &secp).expect("failed to get key");
+        let got = key_map.get_key(&KeyRequest::Pubkey(pk), &secp).expect("failed to get key");
         assert_eq!(got.unwrap(), priv_key)
     }
 
