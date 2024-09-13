@@ -305,7 +305,7 @@ impl Block {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
-                Wtxid::all_zeros()
+                Wtxid::COINBASE
             } else {
                 t.compute_wtxid()
             }

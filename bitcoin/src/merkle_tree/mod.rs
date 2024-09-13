@@ -8,8 +8,8 @@
 //! # use bitcoin::Txid;
 //! # use bitcoin::merkle_tree::{MerkleNode as _, TxMerkleNode};
 //! # use bitcoin::hashes::Hash;
-//! # let tx1 = Txid::all_zeros();  // Dummy hash values.
-//! # let tx2 = Txid::all_zeros();
+//! # let tx1 = Txid::from_byte_array([0xAA; 32]);  // Arbitrary dummy hash values.
+//! # let tx2 = Txid::from_byte_array([0xFF; 32]);
 //! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
 //! let root = TxMerkleNode::calculate_root(tx_hashes.into_iter());
 //! ```

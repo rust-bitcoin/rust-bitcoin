@@ -35,47 +35,25 @@ use crate::{Amount, FeeRate, SignedAmount, VarInt};
 #[doc(inline)]
 pub use primitives::transaction::*;
 
-hashes::hash_newtype! {
-    /// A bitcoin transaction hash/transaction ID.
-    ///
-    /// For compatibility with the existing Bitcoin infrastructure and historical and current
-    /// versions of the Bitcoin Core software itself, this and other [`sha256d::Hash`] types, are
-    /// serialized in reverse byte order when converted to a hex string via [`std::fmt::Display`]
-    /// trait operations.
-    ///
-    /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-    pub struct Txid(sha256d::Hash);
-
-    /// A bitcoin witness transaction ID.
-    pub struct Wtxid(sha256d::Hash);
-}
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 
-impl Txid {
-    /// The `Txid` used in a coinbase prevout.
-    ///
-    /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
-    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
-    pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
-
-    /// The "all zeros" TXID.
-    #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
-    pub fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Txid`] type.
+    pub trait TxidExt impl for Txid {
+        /// The "all zeros" TXID.
+        #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
+        fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
+    }
 }
 
-impl Wtxid {
-    /// The `Wtxid` of a coinbase transaction.
-    ///
-    /// This is used as the wTXID for the coinbase transaction when constructing blocks,
-    /// since the coinbase transaction contains a commitment to all transactions' wTXIDs
-    /// but naturally cannot commit to its own. It is not a real wTXID and should not be
-    /// used in other contexts.
-    pub const COINBASE: Self = Self::from_byte_array([0; 32]);
-
-    /// The "all zeros" wTXID.
-    #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
-    pub fn all_zeros() -> Self { Self::COINBASE }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Wtxid`] type.
+    pub trait WtxidExt impl for Wtxid {
+        /// The "all zeros" wTXID.
+        #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
+        fn all_zeros() -> Self { Self::COINBASE }
+    }
 }
 
 /// Trait that abstracts over a transaction identifier i.e., `Txid` and `Wtxid`.
@@ -117,7 +95,7 @@ impl OutPoint {
     /// The `OutPoint` used in a coinbase prevout.
     ///
     /// This is used as the dummy input for coinbase transactions because they don't have any
-    /// previous outputs. This is not a real outpoint and should not be used in any other contexts.
+    /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 
     /// Creates a new [`OutPoint`].
@@ -583,7 +561,7 @@ impl Transaction {
         self.input.consensus_encode(&mut enc).expect("engines don't error");
         self.output.consensus_encode(&mut enc).expect("engines don't error");
         self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid(sha256d::Hash::from_engine(enc))
+        Txid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -604,7 +582,7 @@ impl Transaction {
     pub fn compute_wtxid(&self) -> Wtxid {
         let mut enc = sha256d::Hash::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid(sha256d::Hash::from_engine(enc))
+        Wtxid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
