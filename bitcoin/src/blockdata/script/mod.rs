@@ -415,7 +415,7 @@ impl AsMut<[u8]> for ScriptBuf {
 impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
-        self.fmt_asm(f)?;
+        bytes_to_asm_fmt(self.as_ref(), f)?;
         f.write_str(")")
     }
 }
@@ -426,7 +426,7 @@ impl fmt::Debug for ScriptBuf {
 
 impl fmt::Display for Script {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_asm(f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { bytes_to_asm_fmt(self.as_ref(), f) }
 }
 
 impl fmt::Display for ScriptBuf {
@@ -616,14 +616,14 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 impl Encodable for Script {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(&self.0, w)
+        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
 impl Encodable for ScriptBuf {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.as_script().consensus_encode(w)
     }
 }
 
@@ -632,7 +632,8 @@ impl Decodable for ScriptBuf {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
+        let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
+        Ok(ScriptBuf::from_bytes(v))
     }
 }
 
