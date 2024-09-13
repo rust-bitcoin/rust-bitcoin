@@ -807,7 +807,7 @@ impl GetKey for $set<Xpriv> {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 for xpriv in self.iter() {
-                    if xpriv.parent_fingerprint == fingerprint {
+                    if xpriv.fingerprint(secp) == fingerprint {
                         let k = xpriv.derive_priv(secp, &path);
                         return Ok(Some(k.to_priv()));
                     }
