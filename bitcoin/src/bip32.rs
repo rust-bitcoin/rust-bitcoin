@@ -602,6 +602,11 @@ impl Xpriv {
         PrivateKey { compressed: true, network: self.network, inner: self.private_key }
     }
 
+    /// Creates new extended public key from this extended private key.
+    pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>,) -> Xpub {
+        Xpub::from_xpriv(secp, self)
+    }
+
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
