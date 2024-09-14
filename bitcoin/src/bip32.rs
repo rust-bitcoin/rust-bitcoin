@@ -732,13 +732,13 @@ impl Xpriv {
 }
 
 impl Xpub {
-    /// Derives a public key from a private key
+    /// Creates extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()`")]
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
         Self::from_xpriv(secp, sk)
     }
 
-    /// Derives a public key from a private key
+    /// Creates extended public key from an extended private key.
     pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Xpub {
         Xpub {
             network: xpriv.network,
