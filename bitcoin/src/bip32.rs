@@ -592,7 +592,13 @@ impl Xpriv {
     }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
+    #[deprecated(since = "TBD", note = "use `to_private_key()`")]
     pub fn to_priv(self) -> PrivateKey {
+        self.to_private_key()
+    }
+
+    /// Constructs ECDSA compressed private key matching internal secret key representation.
+    pub fn to_private_key(self) -> PrivateKey {
         PrivateKey { compressed: true, network: self.network, inner: self.private_key }
     }
 
@@ -606,7 +612,19 @@ impl Xpriv {
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    #[deprecated(since = "TBD", note = "use `derive_xpriv()`")]
     pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
+        &self,
+        secp: &Secp256k1<C>,
+        path: &P,
+    ) -> Xpriv {
+        self.derive_xpriv(secp, path)
+    }
+
+    /// Derives an extended private key from a path.
+    ///
+    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    pub fn derive_xpriv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
         path: &P,
@@ -699,7 +717,7 @@ impl Xpriv {
 
     /// Returns the HASH160 of the public key belonging to the xpriv
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XKeyIdentifier {
-        Xpub::from_priv(secp, self).identifier()
+        Xpub::from_xpriv(secp, self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
@@ -710,28 +728,56 @@ impl Xpriv {
 
 impl Xpub {
     /// Derives a public key from a private key
+    #[deprecated(since = "TBD", note = "use `from_xpriv()`")]
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
+        Self::from_xpriv(secp, sk)
+    }
+
+    /// Derives a public key from a private key
+    pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Xpub {
         Xpub {
-            network: sk.network,
-            depth: sk.depth,
-            parent_fingerprint: sk.parent_fingerprint,
-            child_number: sk.child_number,
-            public_key: secp256k1::PublicKey::from_secret_key(secp, &sk.private_key),
-            chain_code: sk.chain_code,
+            network: xpriv.network,
+            depth: xpriv.depth,
+            parent_fingerprint: xpriv.parent_fingerprint,
+            child_number: xpriv.child_number,
+            public_key: secp256k1::PublicKey::from_secret_key(secp, &xpriv.private_key),
+            chain_code: xpriv.chain_code,
         }
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
+    #[deprecated(since = "TBD", note = "use `to_public_key()`")]
+    pub fn to_pub(self) -> CompressedPublicKey { self.to_public_key() }
+
+    /// Constructs ECDSA compressed public key matching internal public key representation.
+    pub fn to_public_key(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
-    pub fn to_x_only_pub(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
+    #[deprecated(since = "TBD", note = "use `to_x_only_public_key()`")]
+    pub fn to_x_only_pub(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
+
+    /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// the internal public key representation.
+    pub fn to_x_only_public_key(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
     /// Attempts to derive an extended public key from a path.
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
+    #[deprecated(since = "TBD", note = "use `derive_xpub()`")]
     pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
+        &self,
+        secp: &Secp256k1<C>,
+        path: &P,
+    ) -> Result<Xpub, Error> {
+
+        self.derive_xpub(secp, path)
+    }
+
+    /// Attempts to derive an extended public key from a path.
+    ///
+    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
+    pub fn derive_xpub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
         path: &P,
@@ -1004,17 +1050,17 @@ mod tests {
         expected_pk: &str,
     ) {
         let mut sk = Xpriv::new_master(network, seed).unwrap();
-        let mut pk = Xpub::from_priv(secp, &sk);
+        let mut pk = Xpub::from_xpriv(secp, &sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_priv(secp, &path).to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_xpriv(secp, &path).to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(pk.derive_pub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
+            assert_eq!(pk.derive_xpub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
         } else {
-            assert_eq!(&pk.derive_pub(secp, &path).unwrap().to_string()[..], expected_pk);
+            assert_eq!(&pk.derive_xpub(secp, &path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
@@ -1023,12 +1069,12 @@ mod tests {
             match num {
                 Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = Xpub::from_priv(secp, &sk);
+                    pk = Xpub::from_xpriv(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
                     assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
-                    pk = Xpub::from_priv(secp, &sk);
+                    pk = Xpub::from_xpriv(secp, &sk);
                 }
             }
         }
