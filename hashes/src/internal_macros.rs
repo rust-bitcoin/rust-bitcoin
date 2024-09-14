@@ -7,10 +7,8 @@ macro_rules! arr_newtype_fmt_impl {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                #[allow(unused)]
-                use crate::Hash as _;
                 let case = $crate::hex::Case::Lower;
-                if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
+                if <$ty<$($gen),*> as crate::Hash>::DISPLAY_BACKWARD {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
                 } else {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
@@ -21,10 +19,8 @@ macro_rules! arr_newtype_fmt_impl {
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
             #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                #[allow(unused)]
-                use crate::Hash as _;
                 let case = $crate::hex::Case::Upper;
-                if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
+                if <$ty<$($gen),*> as crate::Hash>::DISPLAY_BACKWARD {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
                 } else {
                     $crate::hex::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
