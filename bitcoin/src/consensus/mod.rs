@@ -16,7 +16,7 @@ pub mod validation;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
+    encode::{deserialize, deserialize_partial, serialize, Decodable, DecodableExt, Encodable, ReadExt, WriteExt},
     params::Params,
 };
 
