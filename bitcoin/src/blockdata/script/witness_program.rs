@@ -190,11 +190,11 @@ mod tests {
 
             if size == 20 {
                 assert!(program.expect("valid witness program").is_p2wpkh());
-                continue
+                continue;
             }
             if size == 32 {
                 assert!(program.expect("valid witness program").is_p2wsh());
-                continue
+                continue;
             }
             assert!(program.is_err());
         }
@@ -203,6 +203,8 @@ mod tests {
     #[test]
     fn valid_v1_witness_programs() {
         let arbitrary_bytes = [0x00; 32];
-        assert!(WitnessProgram::new(WitnessVersion::V1, &arbitrary_bytes).expect("valid witness program").is_p2tr());
+        assert!(WitnessProgram::new(WitnessVersion::V1, &arbitrary_bytes)
+            .expect("valid witness program")
+            .is_p2tr());
     }
 }

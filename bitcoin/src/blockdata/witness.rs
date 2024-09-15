@@ -275,9 +275,7 @@ impl Witness {
         let index_size = witness_elements * 4;
         let content_size = slice
             .iter()
-            .map(|elem| {
-                elem.as_ref().len() + compact_size::encoded_size(elem.as_ref().len())
-            })
+            .map(|elem| elem.as_ref().len() + compact_size::encoded_size(elem.as_ref().len()))
             .sum();
 
         let mut content = vec![0u8; content_size + index_size];

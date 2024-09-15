@@ -1167,10 +1167,10 @@ impl FromStr for Amount {
                 if d == Ok(Amount::ZERO) {
                     Ok(Amount::ZERO)
                 } else {
-                   result
+                    result
                 }
-            },
-            _ => result
+            }
+            _ => result,
         }
     }
 }
@@ -1605,10 +1605,10 @@ impl FromStr for SignedAmount {
                 if d == Ok(SignedAmount::ZERO) {
                     Ok(SignedAmount::ZERO)
                 } else {
-                   result
+                    result
                 }
-            },
-            _ => result
+            }
+            _ => result,
         }
     }
 }

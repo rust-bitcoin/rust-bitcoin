@@ -4,9 +4,11 @@
 
 #![cfg(feature = "bitcoin-io")]
 
+use bitcoin_hashes::{
+    hash160, hmac, ripemd160, sha1, sha256, sha256d, sha384, sha512, sha512_256, siphash24,
+    GeneralHash as _,
+};
 use bitcoin_io::Write;
-
-use bitcoin_hashes::{hash160, hmac, ripemd160, sha1, sha256, sha256d, sha384, sha512, sha512_256, siphash24, GeneralHash as _};
 
 macro_rules! write_test {
     ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {
@@ -124,4 +126,3 @@ fn siphash24() {
     engine.write_all(&[99; 64000]).unwrap();
     assert_eq!(format!("{}", siphash24::Hash::from_engine(engine)), "ce456e4e4ecbc5bf");
 }
-

@@ -65,7 +65,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use internals::{impl_to_hex_from_lower_hex};
+use internals::impl_to_hex_from_lower_hex;
 use internals::script::{self, PushDataLenLen};
 use io::{BufRead, Write};
 
@@ -643,15 +643,13 @@ pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Re
     macro_rules! read_push_data_len {
         ($iter:expr, $size:path, $formatter:expr) => {
             match script::read_push_data_len($iter, $size) {
-                Ok(n) => {
-                    n
-                },
+                Ok(n) => n,
                 Err(_) => {
                     $formatter.write_str("<unexpected end>")?;
                     break;
                 }
             }
-        }
+        };
     }
 
     let mut iter = script.iter();
