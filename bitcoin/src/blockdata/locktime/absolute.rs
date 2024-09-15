@@ -10,6 +10,8 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
@@ -431,6 +433,14 @@ impl ordered::ArbitraryOrd for LockTime {
             (Blocks(this), Blocks(that)) => this.cmp(that),
             (Seconds(this), Seconds(that)) => this.cmp(that),
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for LockTime {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let l = u32::arbitrary(u)?;
+        Ok(LockTime::from_consensus(l))
     }
 }
 
