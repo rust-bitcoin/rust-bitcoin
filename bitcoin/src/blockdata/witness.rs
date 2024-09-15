@@ -19,6 +19,8 @@ use crate::taproot::{
     TAPROOT_LEAF_MASK,
 };
 use crate::{Script, VarInt};
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
@@ -689,6 +691,14 @@ impl From<Vec<&[u8]>> for Witness {
 
 impl Default for Witness {
     fn default() -> Self { Self::new() }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Witness {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes = Vec::<Vec::<u8>>::arbitrary(u)?;
+        Ok(Witness::from_slice(&arbitrary_bytes))
+    }
 }
 
 #[cfg(test)]

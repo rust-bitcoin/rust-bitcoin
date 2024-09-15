@@ -1680,12 +1680,73 @@ impl<'a> Arbitrary<'a> for InputWeightPrediction {
 }
 
 #[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for OutPoint {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(OutPoint{
+            txid: Txid::arbitrary(u)?,
+            vout: u32::arbitrary(u)?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Sequence {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = u32::arbitrary(u)?;
+        Ok(Sequence(s))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Transaction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        use absolute::LockTime;
+
+        Ok(Transaction {
+            version: Version::arbitrary(u)?,
+            lock_time: LockTime::arbitrary(u)?,
+            input: Vec::<TxIn>::arbitrary(u)?,
+            output: Vec::<TxOut>::arbitrary(u)?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxIn {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxIn{
+            previous_output: OutPoint::arbitrary(u)?,
+            script_sig: ScriptBuf::arbitrary(u)?,
+            sequence: Sequence::arbitrary(u)?,
+            witness: Witness::arbitrary(u)?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Txid {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes = u.arbitrary()?;
+        let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
+        Ok(Txid(t))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(TxOut {
             value: Amount::arbitrary(u)?,
             script_pubkey: ScriptBuf::arbitrary(u)?,
         })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Version {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = i32::arbitrary(u)?;
+        Ok(Version(v))
     }
 }
 
