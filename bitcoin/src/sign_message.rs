@@ -205,12 +205,13 @@ mod message_signing {
 }
 
 /// Hash message for signature using Bitcoin's message signing format.
-pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
+pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
+    let msg_bytes = msg.as_ref();
     let mut engine = sha256d::Hash::engine();
     engine.input(BITCOIN_SIGNED_MSG_PREFIX);
-    let msg_len = encode::VarInt::from(msg.len());
+    let msg_len = encode::VarInt::from(msg_bytes.len());
     msg_len.consensus_encode(&mut engine).expect("engines don't error");
-    engine.input(msg.as_bytes());
+    engine.input(msg_bytes);
     sha256d::Hash::from_engine(engine)
 }
 
