@@ -3,13 +3,38 @@ name: GitHub Release
 on:
   push:
     tags:
-    - '*'
+      - "*"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: ncipollo/release-action@v1
-      with:
-        generateReleaseNotes: true
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get current tag name
+        id: current_tag
+        run: echo "TAGNAME=$(git describe --abbrev=0)" >> $GITHUB_OUTPUT
+
+      - name: Get previous tag name
+        id: previous_tag
+        run: echo "TAGNAME=$(git describe --abbrev=0 ${{ steps.current_tag.outputs.TAGNAME}}^)" >> $GITHUB_OUTPUT
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Generate
+        id: generate
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          fromTag: ${{ steps.previous_tag.outputs.TAGNAME }}
+          toTag: ${{ steps.current_tag.outputs.TAGNAME }}
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Attach to release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "${{ steps.current_tag.outputs.TAGNAME }}"
+          body: "${{ steps.generate.outputs.changelog }}"
