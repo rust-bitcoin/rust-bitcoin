@@ -1409,6 +1409,42 @@ impl InputWeightPrediction {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for OutPoint {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(OutPoint{
+            txid: Txid::arbitrary(u)?,
+            vout: u32::arbitrary(u)?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for TxIn {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxIn{
+            previous_output: OutPoint::arbitrary(u)?,
+            script_sig: ScriptBuf::arbitrary(u)?,
+            sequence: Sequence::arbitrary(u)?,
+            witness: Witness::arbitrary(u)?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Transaction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        use primitives::absolute::LockTime;
+
+        Ok(Transaction {
+            version: Version::arbitrary(u)?,
+            lock_time: LockTime::arbitrary(u)?,
+            input: Vec::<TxIn>::arbitrary(u)?,
+            output: Vec::<TxOut>::arbitrary(u)?
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};

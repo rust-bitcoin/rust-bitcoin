@@ -22,7 +22,7 @@ rand = ["secp256k1/rand"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-arbitrary = ["dep:arbitrary", "units/arbitrary"]
+arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
 
 [dependencies]
 base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
