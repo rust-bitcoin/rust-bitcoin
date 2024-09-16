@@ -10,6 +10,7 @@ use crate::network::Network;
 #[cfg(doc)]
 use crate::pow::CompactTarget;
 use crate::pow::Target;
+use crate::TestnetVersion;
 
 /// Parameters that influence chain consensus.
 #[non_exhaustive]
@@ -95,7 +96,7 @@ impl Params {
 
     /// The testnet parameters.
     pub const TESTNET: Params = Params {
-        network: Network::Testnet,
+        network: Network::Testnet(TestnetVersion::V3),
         bip16_time: 1333238400,                 // Apr 1 2012
         bip34_height: 21111, // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
         bip65_height: 581885, // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
@@ -148,7 +149,7 @@ impl Params {
     pub const fn new(network: Network) -> Self {
         match network {
             Network::Bitcoin => Params::MAINNET,
-            Network::Testnet => Params::TESTNET,
+            Network::Testnet(TestnetVersion::V3) => Params::TESTNET,
             Network::Signet => Params::SIGNET,
             Network::Regtest => Params::REGTEST,
         }
@@ -184,7 +185,7 @@ impl AsRef<Params> for Network {
     fn as_ref(&self) -> &Params {
         match *self {
             Network::Bitcoin => &MAINNET,
-            Network::Testnet => &TESTNET,
+            Network::Testnet(TestnetVersion::V3) => &TESTNET,
             Network::Signet => &SIGNET,
             Network::Regtest => &REGTEST,
         }

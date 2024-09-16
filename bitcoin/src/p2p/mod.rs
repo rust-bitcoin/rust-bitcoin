@@ -30,7 +30,7 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
 use crate::prelude::*;
-use crate::Network;
+use crate::network::{Network, TestnetVersion};
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -215,7 +215,7 @@ pub struct Magic([u8; 4]);
 impl Magic {
     /// Bitcoin mainnet network magic bytes.
     pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
-    /// Bitcoin testnet network magic bytes.
+    /// Bitcoin testnet3 network magic bytes.
     pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
@@ -250,7 +250,7 @@ impl From<Network> for Magic {
         match network {
             // Note: new network entries must explicitly be matched in `try_from` below.
             Network::Bitcoin => Magic::BITCOIN,
-            Network::Testnet => Magic::TESTNET,
+            Network::Testnet(TestnetVersion::V3) => Magic::TESTNET,
             Network::Signet => Magic::SIGNET,
             Network::Regtest => Magic::REGTEST,
         }
@@ -264,7 +264,7 @@ impl TryFrom<Magic> for Network {
         match magic {
             // Note: any new network entries must be matched against here.
             Magic::BITCOIN => Ok(Network::Bitcoin),
-            Magic::TESTNET => Ok(Network::Testnet),
+            Magic::TESTNET => Ok(Network::Testnet(TestnetVersion::V3)),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
             _ => Err(UnknownMagicError(magic)),
@@ -423,7 +423,7 @@ mod tests {
     fn magic_from_str() {
         let known_network_magic_strs = [
             ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
+            ("0b110907", Network::Testnet(TestnetVersion::V3)),
             ("fabfb5da", Network::Regtest),
             ("0a03cf40", Network::Signet),
         ];

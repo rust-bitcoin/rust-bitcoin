@@ -559,7 +559,7 @@ mod tests {
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
     #[test]
     fn segwit_block_test() {
-        let params = Params::new(Network::Testnet);
+        let params = Params::new(Network::Testnet(crate::TestnetVersion::V3));
         let segwit_block = include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw").to_vec();
 
         let decode: Result<Block, _> = deserialize(&segwit_block);
