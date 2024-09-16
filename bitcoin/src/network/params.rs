@@ -61,6 +61,8 @@
 //! #    let _ = target.difficulty(signet);
 //! #
 //! #    let custom = CustomParams::new();
+//! #    let _ = custom.magic();
+//! #    let _ = custom.challenge_script();
 //! #    let _ = target.difficulty(custom);
 //! # }
 //! ```
