@@ -1157,6 +1157,14 @@ impl ops::DivAssign<u64> for Amount {
 impl FromStr for Amount {
     type Err = ParseError;
 
+    /// Parses a string slice where the slice includes a denomination.
+    ///
+    /// If the string slice is zero, then no denomination is required.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Amount)` if the string amount and denomination parse successfully,
+    /// otherwise, return `Err(ParseError)`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let result = Amount::from_str_with_denomination(s);
 
@@ -1595,6 +1603,14 @@ impl ops::Neg for SignedAmount {
 impl FromStr for SignedAmount {
     type Err = ParseError;
 
+    /// Parses a string slice where the slice includes a denomination.
+    ///
+    /// If the string slice is zero or negative zero, then no denomination is required.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(Amount)` if the string amount and denomination parse successfully,
+    /// otherwise, return `Err(ParseError)`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let result = SignedAmount::from_str_with_denomination(s);
 
