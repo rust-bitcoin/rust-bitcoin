@@ -217,7 +217,12 @@ impl Magic {
     /// Bitcoin mainnet network magic bytes.
     pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
     /// Bitcoin testnet3 network magic bytes.
+    #[deprecated(since = "0.33.0", note = "Use TESTNET3 instead")]
     pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
+    /// Bitcoin testnet3 network magic bytes.
+    pub const TESTNET3: Self = Self([0x0B, 0x11, 0x09, 0x07]);
+    /// Bitcoin testnet4 network magic bytes.
+    pub const TESTNET4: Self = Self([0x1c, 0x16, 0x3f, 0x28]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
@@ -274,7 +279,8 @@ macro_rules! generate_network_magic_conversion {
 // `Network -> Magic` and `Magic -> Network`
 generate_network_magic_conversion! {
     Network::Bitcoin => Magic::BITCOIN,
-    Network::Testnet(TestnetVersion::V3) => Magic::TESTNET,
+    Network::Testnet(TestnetVersion::V3) => Magic::TESTNET3,
+    Network::Testnet(TestnetVersion::V4) => Magic::TESTNET4,
     Network::Signet => Magic::SIGNET,
     Network::Regtest => Magic::REGTEST,
 }
@@ -432,6 +438,7 @@ mod tests {
         let known_network_magic_strs = [
             ("f9beb4d9", Network::Bitcoin),
             ("0b110907", Network::Testnet(TestnetVersion::V3)),
+            ("1c163f28", Network::Testnet(TestnetVersion::V4)),
             ("fabfb5da", Network::Regtest),
             ("0a03cf40", Network::Signet),
         ];
