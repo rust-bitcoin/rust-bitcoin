@@ -17,7 +17,7 @@ use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash, Sequence};
+use crate::{script, Amount, BlockHash, Sequence, TestnetVersion};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -94,7 +94,6 @@ fn bitcoin_genesis_tx() -> Transaction {
         sequence: Sequence::MAX,
         witness: Witness::default(),
     });
-
     // Outputs
     let out_script =
         script::Builder::new().push_slice(GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script();
@@ -106,10 +105,12 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block.
 pub fn genesis_block(params: impl AsRef<Params>) -> Block {
+    let params_ref = params.as_ref();
     let txdata = vec![bitcoin_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].compute_txid().into();
-    let merkle_root = hash.into();
-    match params.as_ref().network {
+    let merkle_root: crate::TxMerkleNode = hash.into();
+
+    match params_ref.network {
         Network::Bitcoin => Block {
             header: block::Header {
                 version: block::Version::ONE,
@@ -121,7 +122,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
             },
             txdata,
         },
-        Network::Testnet => Block {
+        Network::Testnet(TestnetVersion::V3) => Block {
             header: block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
@@ -170,7 +171,7 @@ impl ChainHash {
         111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79, 147, 30, 131,
         101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for testnet bitcoin.
+    /// `ChainHash` for testnet3 bitcoin.
     pub const TESTNET: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,
@@ -191,9 +192,12 @@ impl ChainHash {
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
     pub fn using_genesis_block(params: impl AsRef<Params>) -> Self {
-        let network = params.as_ref().network;
-        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
-        hashes[network as usize]
+        match params.as_ref().network {
+            Network::Bitcoin => Self::BITCOIN,
+            Network::Testnet(TestnetVersion::V3) => Self::TESTNET,
+            Network::Signet => Self::SIGNET,
+            Network::Regtest => Self::REGTEST,
+        }
     }
 
     /// Returns the hash of the `network` genesis block for use as a chain hash.
@@ -201,8 +205,12 @@ impl ChainHash {
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
     pub const fn using_genesis_block_const(network: Network) -> Self {
-        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
-        hashes[network as usize]
+        match network {
+            Network::Bitcoin => Self::BITCOIN,
+            Network::Testnet(TestnetVersion::V3) => Self::TESTNET,
+            Network::Signet => Self::SIGNET,
+            Network::Regtest => Self::REGTEST,
+        }
     }
 
     /// Converts genesis block hash into `ChainHash`.
@@ -332,7 +340,7 @@ mod test {
         #[allow(unreachable_patterns)] // This is specifically trying to catch later added variants.
         match network {
             Network::Bitcoin => {},
-            Network::Testnet => {},
+            Network::Testnet(TestnetVersion::V3) => {},
             Network::Signet => {},
             Network::Regtest => {},
             _ => panic!("update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
@@ -352,7 +360,7 @@ mod test {
 
     chain_hash_genesis_block! {
         mainnet_chain_hash_genesis_block, Network::Bitcoin;
-        testnet_chain_hash_genesis_block, Network::Testnet;
+        testnet_chain_hash_genesis_block, Network::Testnet(TestnetVersion::V3);
         signet_chain_hash_genesis_block, Network::Signet;
         regtest_chain_hash_genesis_block, Network::Regtest;
     }
