@@ -307,7 +307,6 @@ pub enum AddressData {
 /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap().assume_checked();
@@ -315,7 +314,6 @@ pub enum AddressData {
 /// ```
 ///
 /// ```ignore
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap();
@@ -327,7 +325,6 @@ pub enum AddressData {
 ///    check the network and use `Display` in user-facing context.
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkUnchecked};
 /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap();
@@ -335,7 +332,6 @@ pub enum AddressData {
 /// ```
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap().assume_checked();

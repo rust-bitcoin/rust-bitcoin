@@ -197,8 +197,7 @@ impl PartialMerkleTree {
     ///
     /// ```rust
     /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hex::FromHex;
-    /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
+    /// use bitcoin::merkle_tree::PartialMerkleTree;
     ///
     /// // Block 80000
     /// let txids: Vec<Txid> = [

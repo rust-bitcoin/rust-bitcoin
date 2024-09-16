@@ -444,7 +444,6 @@ impl DerivationPath {
     ///
     /// ```
     /// use bitcoin::bip32::DerivationPath;
-    /// use std::str::FromStr;
     ///
     /// let path = "m/84'/0'/0'/0/1".parse::<DerivationPath>().unwrap();
     /// const HARDENED: u32 = 0x80000000;
