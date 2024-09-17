@@ -165,7 +165,7 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// # use bitcoin_primitives::locktime::relative::{Height, Time};
     ///
     /// # let required_height = 100;       // 100 blocks.
     /// # let intervals = 70;     // Approx 10 hours.
@@ -204,7 +204,6 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
     ///
     /// # let required_height = 100;       // 100 blocks.
     /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
@@ -252,7 +251,7 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// # use bitcoin_primitives::locktime::relative::Height;
     ///
     /// let required_height: u16 = 100;
     /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
@@ -279,7 +278,7 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{LockTime, Height, Time};
+    /// # use bitcoin_primitives::locktime::relative::Time;
     ///
     /// let intervals: u16 = 70; // approx 10 hours;
     /// let lock = Sequence::from_512_second_intervals(intervals).to_relative_lock_time().expect("valid time");
