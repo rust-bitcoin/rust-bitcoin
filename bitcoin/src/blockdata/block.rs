@@ -245,6 +245,7 @@ impl Block {
 
     /// Checks if witness commitment in coinbase matches the transaction list.
     pub fn check_witness_commitment(&self) -> bool {
+        // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
         const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
         // Witness commitment is optional if there are no transactions using SegWit in the block.
         if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
