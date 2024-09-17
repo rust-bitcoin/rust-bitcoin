@@ -208,13 +208,15 @@ macro_rules! impl_from_infallible {
 /// Adds an implementation of `pub fn to_hex(&self) -> String` if `alloc` feature is enabled.
 ///
 /// The added function allocates a `String` then calls through to [`core::fmt::LowerHex`].
-/// Calling this macro without the `alloc` feature enabled is a noop.
+/// 
+/// Note: Calling this macro assumes that the calling crate has an `alloc` feature that also activates the
+/// `alloc` crate. Calling this macro without the `alloc` feature enabled is a no-op.
 #[macro_export]
-#[cfg(feature = "alloc")]
 macro_rules! impl_to_hex_from_lower_hex {
     ($t:ident, $hex_len_fn:expr) => {
         impl $t {
             /// Gets the hex representation of this type
+            #[cfg(feature = "alloc")]
             pub fn to_hex(&self) -> alloc::string::String {
                 use core::fmt::Write;
 
@@ -225,14 +227,4 @@ macro_rules! impl_to_hex_from_lower_hex {
             }
         }
     };
-}
-
-/// Adds an implementation of `pub fn to_hex(&self) -> String` if `alloc` feature is enabled.
-///
-/// The added function allocates a `String` then calls through to [`core::fmt::LowerHex`].
-/// Calling this macro without the `alloc` feature enabled is a noop.
-#[macro_export]
-#[cfg(not(feature = "alloc"))]
-macro_rules! impl_to_hex_from_lower_hex {
-    ($t:ident, $hex_len_fn:expr) => {};
 }
