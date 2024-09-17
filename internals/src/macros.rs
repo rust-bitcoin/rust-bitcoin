@@ -161,34 +161,36 @@ macro_rules! const_assert {
 /// # use core::fmt::{Display, Debug};
 /// use bitcoin_internals::impl_from_infallible;
 ///
-/// enum AlphaEnum { Item }
-/// impl_from_infallible!(AlphaEnum);
+/// enum _AlphaEnum { _Item }
+/// impl_from_infallible!(_AlphaEnum);
 ///
-/// enum BetaEnum<'b> { Item(&'b usize) }
-/// impl_from_infallible!(BetaEnum<'b>);
+/// enum _BetaEnum<'b> { _Item(&'b usize) }
+/// impl_from_infallible!(_BetaEnum<'b>);
 ///
-/// enum GammaEnum<T> { Item(T) };
-/// impl_from_infallible!(GammaEnum<T>);
+/// enum _GammaEnum<T> { _Item(T) }
+/// impl_from_infallible!(_GammaEnum<T>);
 ///
-/// enum DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
-///     Item((&'b usize, &'a usize, T, D))
+/// enum _DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
+///     _Item((&'b usize, &'a usize, T, D))
 /// }
-/// impl_from_infallible!(DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
+/// impl_from_infallible!(_DeltaEnum<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
 ///
-/// struct AlphaStruct;
-/// impl_from_infallible!(AlphaStruct);
+/// struct _AlphaStruct;
+/// impl_from_infallible!(_AlphaStruct);
 ///
 /// struct BetaStruct<'b>(&'b usize);
 /// impl_from_infallible!(BetaStruct<'b>);
+/// # let beta_struct = BetaStruct(&0);
+/// # let _ = beta_struct.0;
 ///
-/// struct GammaStruct<T>(T);
-/// impl_from_infallible!(GammaStruct<T>);
+/// struct _GammaStruct<T>(T);
+/// impl_from_infallible!(_GammaStruct<T>);
 ///
-/// struct DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
-///     hello: &'a T,
-///     what: &'b D,
+/// struct _DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a> {
+///     _hello: &'a T,
+///     _what: &'b D,
 /// }
-/// impl_from_infallible!(DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
+/// impl_from_infallible!(_DeltaStruct<'b, 'a: 'static + 'b, T: 'a, D: Debug + Display + 'a>);
 /// ```
 ///
 /// See <https://stackoverflow.com/a/61189128> for more information about this macro.
