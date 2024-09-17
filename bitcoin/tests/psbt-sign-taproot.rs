@@ -27,12 +27,12 @@ fn psbt_sign_taproot() {
         type Error = SignError;
         fn get_key<C: Signing>(
             &self,
-            key_request: KeyRequest,
+            key_request: &KeyRequest,
             _secp: &Secp256k1<C>,
         ) -> Result<Option<PrivateKey>, Self::Error> {
             match key_request {
                 KeyRequest::Bip32((mfp, _)) =>
-                    if mfp == self.mfp {
+                    if *mfp == self.mfp {
                         Ok(Some(self.sk))
                     } else {
                         Err(SignError::KeyNotFound)
