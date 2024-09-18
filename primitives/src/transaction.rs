@@ -13,6 +13,8 @@
 use core::fmt;
 
 use hashes::sha256d;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -69,4 +71,21 @@ impl Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Version {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = i32::arbitrary(u)?;
+        Ok(Version(v))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Txid {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let arbitrary_bytes = u.arbitrary()?;
+        let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
+        Ok(Txid(t))
+    }
 }

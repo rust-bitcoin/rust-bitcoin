@@ -24,6 +24,8 @@ use serde::{Deserialize, Serialize};
 use units::locktime::relative::TimeOverflowError;
 #[cfg(feature = "alloc")]
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 #[cfg(feature = "alloc")]
 use crate::locktime::relative;
@@ -238,3 +240,11 @@ impl fmt::Debug for Sequence {
 
 #[cfg(feature = "alloc")]
 units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Sequence {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = u32::arbitrary(u)?;
+        Ok(Sequence(s))
+    }
+}
