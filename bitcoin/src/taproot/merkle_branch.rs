@@ -53,8 +53,8 @@ impl TaprootMerkleBranch {
             let inner = sl
                 .chunks_exact(TAPROOT_CONTROL_NODE_SIZE)
                 .map(|chunk| {
-                    TapNodeHash::from_slice(chunk)
-                        .expect("chunks_exact always returns the correct size")
+                    let bytes = <[u8; 32]>::try_from(chunk).expect("chunks_exact always returns the correct size");
+                    TapNodeHash::from_byte_array(bytes)
                 })
                 .collect();
 

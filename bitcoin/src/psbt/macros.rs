@@ -173,7 +173,9 @@ macro_rules! impl_psbt_hash_deserialize {
     ($hash_type:ty) => {
         impl $crate::psbt::serialize::Deserialize for $hash_type {
             fn deserialize(bytes: &[u8]) -> core::result::Result<Self, $crate::psbt::Error> {
-                <$hash_type>::from_slice(&bytes[..]).map_err(|e| $crate::psbt::Error::from(e))
+                const LEN: usize = <$hash_type as hashes::Hash>::LEN;
+                let bytes = <[u8; LEN]>::try_from(bytes).map_err(|e| $crate::psbt::Error::from(e))?;
+                Ok(<$hash_type>::from_byte_array(bytes))
             }
         }
     };

@@ -9,9 +9,14 @@ pub mod serde_details {
     use core::str::FromStr;
     use core::{fmt, str};
 
-    use crate::FromSliceError;
-    struct HexVisitor<ValueT>(PhantomData<ValueT>);
-    use serde::{de, Deserializer, Serializer};
+    use serde::de;
+
+    /// Type used to implement serde traits for hashes as hex strings.
+    pub struct HexVisitor<ValueT>(PhantomData<ValueT>);
+
+    impl<ValueT> Default for HexVisitor<ValueT> {
+        fn default() -> Self { Self(PhantomData) }
+    }
 
     impl<'de, ValueT> de::Visitor<'de> for HexVisitor<ValueT>
     where
@@ -43,12 +48,17 @@ pub mod serde_details {
         }
     }
 
-    struct BytesVisitor<ValueT>(PhantomData<ValueT>);
+    /// Type used to implement serde traits for hashes as bytes.
+    pub struct BytesVisitor<ValueT, const N: usize>(PhantomData<ValueT>);
 
-    impl<'de, ValueT> de::Visitor<'de> for BytesVisitor<ValueT>
+    impl<ValueT, const N: usize> Default for BytesVisitor<ValueT, N> {
+        fn default() -> Self { Self(PhantomData) }
+    }
+
+    impl<'de, ValueT, const N: usize> de::Visitor<'de> for BytesVisitor<ValueT, N>
     where
-        ValueT: SerdeHash,
-        <ValueT as FromStr>::Err: fmt::Display,
+        ValueT: crate::Hash,
+        ValueT: crate::Hash<Bytes = [u8; N]>,
     {
         type Value = ValueT;
 
@@ -60,41 +70,12 @@ pub mod serde_details {
         where
             E: de::Error,
         {
-            SerdeHash::from_slice_delegated(v).map_err(|_| {
+            let bytes = <[u8; N]>::try_from(v).map_err(|_| {
                 // from_slice only errors on incorrect length
                 E::invalid_length(v.len(), &stringify!(N))
-            })
-        }
-    }
+            })?;
 
-    /// Default serialization/deserialization methods.
-    pub trait SerdeHash
-    where
-        Self: Sized + FromStr + fmt::Display + crate::Hash,
-        <Self as FromStr>::Err: fmt::Display,
-    {
-        /// Size, in bits, of the hash.
-        const N: usize;
-
-        /// Helper function to turn a deserialized slice into the correct hash type.
-        fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, FromSliceError>;
-
-        /// Do serde serialization.
-        fn serialize<S: Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
-            if s.is_human_readable() {
-                s.collect_str(self)
-            } else {
-                s.serialize_bytes(<Self as crate::Hash>::as_byte_array(self).as_ref())
-            }
-        }
-
-        /// Do serde deserialization.
-        fn deserialize<'de, D: Deserializer<'de>>(d: D) -> core::result::Result<Self, D::Error> {
-            if d.is_human_readable() {
-                d.deserialize_str(HexVisitor::<Self>(PhantomData))
-            } else {
-                d.deserialize_bytes(BytesVisitor::<Self>(PhantomData))
-            }
+            Ok(<Self::Value as crate::Hash>::from_byte_array(bytes))
         }
     }
 }
@@ -105,22 +86,25 @@ pub mod serde_details {
 #[cfg(feature = "serde")]
 macro_rules! serde_impl(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
-        impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {
-            const N : usize = $len;
-            fn from_slice_delegated(sl: &[u8]) -> core::result::Result<Self, $crate::FromSliceError> {
-                <$t<$($gen),*> as $crate::Hash>::from_slice(sl)
-            }
-        }
-
         impl<$($gen: $gent),*> $crate::serde::Serialize for $t<$($gen),*> {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> core::result::Result<S::Ok, S::Error> {
-                $crate::serde_macros::serde_details::SerdeHash::serialize(self, s)
+                if s.is_human_readable() {
+                    s.collect_str(self)
+                } else {
+                    s.serialize_bytes(<Self as $crate::Hash>::as_byte_array(self))
+                }
             }
         }
 
         impl<'de $(, $gen: $gent)*> $crate::serde::Deserialize<'de> for $t<$($gen),*> {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> core::result::Result<$t<$($gen),*>, D::Error> {
-                $crate::serde_macros::serde_details::SerdeHash::deserialize(d)
+                use $crate::serde_macros::serde_details::{BytesVisitor, HexVisitor};
+
+                if d.is_human_readable() {
+                    d.deserialize_str(HexVisitor::<Self>::default())
+                } else {
+                    d.deserialize_bytes(BytesVisitor::<Self, $len>::default())
+                }
             }
         }
 ));
