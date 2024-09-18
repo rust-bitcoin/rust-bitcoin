@@ -817,6 +817,7 @@ impl GetKey for $set<Xpriv> {
             .transpose()
     }
 }}}
+impl_get_key_for_set!(Vec);
 impl_get_key_for_set!(BTreeSet);
 #[cfg(feature = "std")]
 impl_get_key_for_set!(HashSet);
