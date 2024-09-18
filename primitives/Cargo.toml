@@ -22,12 +22,12 @@ serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
 
 [dependencies]
-arbitrary = { version = "1", optional = true }
 hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["bitcoin-io"] }
 internals = { package = "bitcoin-internals", version = "0.3.0" }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false }
 
+arbitrary = { version = "1", optional = true }
 ordered = { version = "0.2.0", optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive"], optional = true }
 
