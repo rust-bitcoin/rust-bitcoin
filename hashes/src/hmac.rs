@@ -127,6 +127,7 @@ impl<T: GeneralHash> GeneralHash for Hmac<T> {
 impl<T: GeneralHash> Hash for Hmac<T> {
     type Bytes = T::Bytes;
 
+    #[allow(deprecated_in_future)]
     fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
 
     fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
@@ -307,7 +308,7 @@ mod tests {
             0x0b, 0x2d, 0x8a, 0x60, 0x0b, 0xdf, 0x4c, 0x0c,
         ];
 
-        let hash = Hmac::<sha512::Hash>::from_slice(&HASH_BYTES).expect("right number of bytes");
+        let hash = Hmac::<sha512::Hash>::from_byte_array(HASH_BYTES);
         assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
         assert_tokens(
             &hash.readable(),

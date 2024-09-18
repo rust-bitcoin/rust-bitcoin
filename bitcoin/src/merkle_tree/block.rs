@@ -724,7 +724,7 @@ mod tests {
             let hashes = &mut self.hashes;
             let mut hash = hashes[n].to_byte_array();
             hash[(bit >> 3) as usize] ^= 1 << (bit & 7);
-            hashes[n] = TxMerkleNode::from_slice(&hash).unwrap();
+            hashes[n] = TxMerkleNode::from_byte_array(hash);
         }
     }
 

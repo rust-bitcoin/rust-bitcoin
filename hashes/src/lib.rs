@@ -265,6 +265,7 @@ pub trait Hash:
     const LEN: usize = Self::Bytes::LEN;
 
     /// Copies a byte slice into a hash object.
+    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Flag indicating whether user-visible serializations of this hash

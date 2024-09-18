@@ -190,12 +190,14 @@ macro_rules! hash_newtype {
         }
 
         $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
-        $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
+        $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
         $crate::borrow_slice_impl!($newtype);
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
             /// Copies a byte slice into a hash object.
+            #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
+            #[allow(deprecated_in_future)]
             pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
             }
@@ -235,6 +237,7 @@ macro_rules! hash_newtype {
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
             #[inline]
+            #[allow(deprecated_in_future)]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }
