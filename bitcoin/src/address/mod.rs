@@ -319,8 +319,8 @@ pub enum AddressData {
 /// ```
 ///
 /// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
-/// an indicator that its network has not been checked. This is to encourage programmer to properly
-/// check the network and use `Display` in user-facing context.
+///    an indicator that its network has not been checked. This is to encourage programmer to properly
+///    check the network and use `Display` in user-facing context.
 ///
 /// ```
 /// # use std::str::FromStr;

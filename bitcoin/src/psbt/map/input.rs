@@ -132,10 +132,12 @@ pub struct Input {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-/// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
-/// type can be either [`EcdsaSighashType`] or [`TapSighashType`] but it is not possible to know
-/// directly which signature hash type the user is dealing with. Therefore, the user is responsible
-/// for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
+/// A Signature hash type for the corresponding input.
+///
+/// As of taproot upgrade, the signature hash type can be either [`EcdsaSighashType`] or
+/// [`TapSighashType`] but it is not possible to know directly which signature hash type the user is
+/// dealing with. Therefore, the user is responsible for converting to/from [`PsbtSighashType`]
+/// from/to the desired signature hash type they need.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
