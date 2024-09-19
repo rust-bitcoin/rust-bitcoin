@@ -1127,7 +1127,8 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     ///
     /// # Examples
     ///
-    /// ```compile_fail
+    /// ```ignore
+    /// # // Example is an incomplete section of code that does not compile by itself
     /// let mut sighasher = SighashCache::new(&mut tx_to_sign);
     /// let sighash = sighasher.p2wpkh_signature_hash(input_index, &utxo.script_pubkey, amount, sighash_type)?;
     ///
