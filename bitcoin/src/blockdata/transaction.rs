@@ -99,21 +99,20 @@ impl OutPoint {
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 }
 
-impl OutPoint {
-    /// Creates a new [`OutPoint`].
-    #[inline]
-    #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
-    pub const fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`OutPoint`] type.
+    pub trait OutPointExt impl for OutPoint {
+        /// Creates a new [`OutPoint`].
+        #[inline]
+        #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
+        #[allow(clippy::new-ret-no-self)]
+        fn new(txid: Txid, vout: u32) -> Self { OutPoint { txid, vout } }
 
-    /// Creates a "null" `OutPoint`.
-    #[inline]
-    #[deprecated(since = "TBD", note = "use OutPoint::COINBASE_PREVOUT instead")]
-    pub fn null() -> OutPoint { Self::COINBASE_PREVOUT }
-
-    /// Checks if an `OutPoint` is "null".
-    #[inline]
-    #[deprecated(since = "TBD", note = "use outpoint == OutPoint::COINBASE_PREVOUT instead")]
-    pub fn is_null(&self) -> bool { *self == OutPoint::null() }
+        /// Checks if an `OutPoint` is "null".
+        #[inline]
+        #[deprecated(since = "TBD", note = "use outpoint == OutPoint::COINBASE_PREVOUT instead")]
+        fn is_null(&self) -> bool { *self == OutPoint::COINBASE_PREVOUT }
+    }
 }
 
 impl fmt::Display for OutPoint {
