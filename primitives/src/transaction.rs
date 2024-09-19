@@ -89,7 +89,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     parse::int(s).map_err(ParseOutPointError::Vout)
 }
 
-/// An error in parsing an OutPoint.
+/// An error in parsing an [`OutPoint`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg(feature = "alloc")]
@@ -156,7 +156,7 @@ impl Txid {
     /// The `Txid` used in a coinbase prevout.
     ///
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
-    /// TXID and should not be used in any other contexts. See `OutPoint::COINBASE_PREVOUT`.
+    /// TXID and should not be used in any other contexts. See [`OutPoint::COINBASE_PREVOUT`].
     pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
 }
 
