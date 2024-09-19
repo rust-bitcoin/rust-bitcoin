@@ -97,7 +97,9 @@ impl OutPoint {
     /// This is used as the dummy input for coinbase transactions because they don't have any
     /// previous outputs. In other words, does not point to a real transaction.
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+}
 
+impl OutPoint {
     /// Creates a new [`OutPoint`].
     #[inline]
     #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
