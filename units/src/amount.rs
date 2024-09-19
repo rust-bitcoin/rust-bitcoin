@@ -1072,14 +1072,6 @@ impl Amount {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Amount {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = u64::arbitrary(u)?;
-        Ok(Amount(a))
-    }
-}
-
 impl default::Default for Amount {
     fn default() -> Self { Amount::ZERO }
 }
@@ -1642,14 +1634,6 @@ impl core::iter::Sum for SignedAmount {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for SignedAmount {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let s = i64::arbitrary(u)?;
-        Ok(SignedAmount(s))
-    }
-}
-
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
@@ -2085,6 +2069,22 @@ mod verification {
                 None
             },
         );
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Amount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = u64::arbitrary(u)?;
+        Ok(Amount(a))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for SignedAmount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = i64::arbitrary(u)?;
+        Ok(SignedAmount(s))
     }
 }
 
