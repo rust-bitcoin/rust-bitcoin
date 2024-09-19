@@ -2155,7 +2155,7 @@ mod tests {
                             vout: 0,
                         },
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                        ..Default::default()
+                        ..TxIn::EMPTY_COINBASE
                     }
                 ],
                 output: vec![
@@ -2186,7 +2186,7 @@ mod tests {
                                     vout: 1,
                                 },
                                 sequence: Sequence::MAX,
-                                ..Default::default()
+                                ..TxIn::EMPTY_COINBASE
                             },
                             TxIn {
                                 previous_output: OutPoint {
@@ -2194,7 +2194,7 @@ mod tests {
                                     vout: 1,
                                 },
                                 sequence: Sequence::MAX,
-                                ..Default::default()
+                                ..TxIn::EMPTY_COINBASE
                             }
                         ],
                         output: vec![
@@ -2258,7 +2258,7 @@ mod tests {
         let unsigned_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
+            input: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
             output: vec![TxOut::NULL],
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
