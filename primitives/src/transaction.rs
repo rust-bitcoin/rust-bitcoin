@@ -15,6 +15,127 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
+use internals::write_err;
+#[cfg(feature = "alloc")]
+use units::parse;
+
+/// A reference to a transaction output.
+///
+/// ### Bitcoin Core References
+///
+/// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+pub struct OutPoint {
+    /// The referenced transaction's txid.
+    pub txid: Txid,
+    /// The index of the referenced output in its transaction's vout.
+    pub vout: u32,
+}
+#[cfg(feature = "serde")]
+internals::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
+
+impl OutPoint {
+    /// The number of bytes that an outpoint contributes to the size of a transaction.
+    pub const SIZE: usize = 32 + 4; // The serialized lengths of txid and vout.
+
+    /// The `OutPoint` used in a coinbase prevout.
+    ///
+    /// This is used as the dummy input for coinbase transactions because they don't have any
+    /// previous outputs. In other words, does not point to a real transaction.
+    pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
+}
+
+impl fmt::Display for OutPoint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.txid, self.vout)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl core::str::FromStr for OutPoint {
+    type Err = ParseOutPointError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() > 75 {
+            // 64 + 1 + 10
+            return Err(ParseOutPointError::TooLong);
+        }
+        let find = s.find(':');
+        if find.is_none() || find != s.rfind(':') {
+            return Err(ParseOutPointError::Format);
+        }
+        let colon = find.unwrap();
+        if colon == 0 || colon == s.len() - 1 {
+            return Err(ParseOutPointError::Format);
+        }
+        Ok(OutPoint {
+            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
+            vout: parse_vout(&s[colon + 1..])?,
+        })
+    }
+}
+
+/// Parses a string-encoded transaction index (vout).
+///
+/// Does not permit leading zeroes or non-digit characters.
+#[cfg(feature = "alloc")]
+fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
+    if s.len() > 1 {
+        let first = s.chars().next().unwrap();
+        if first == '0' || first == '+' {
+            return Err(ParseOutPointError::VoutNotCanonical);
+        }
+    }
+    parse::int(s).map_err(ParseOutPointError::Vout)
+}
+
+/// An error in parsing an OutPoint.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+#[cfg(feature = "alloc")]
+pub enum ParseOutPointError {
+    /// Error in TXID part.
+    Txid(hex::HexToArrayError),
+    /// Error in vout part.
+    Vout(parse::ParseIntError),
+    /// Error in general format.
+    Format,
+    /// Size exceeds max.
+    TooLong,
+    /// Vout part is not strictly numeric without leading zeroes.
+    VoutNotCanonical,
+}
+
+#[cfg(feature = "alloc")]
+internals::impl_from_infallible!(ParseOutPointError);
+
+#[cfg(feature = "alloc")]
+impl fmt::Display for ParseOutPointError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ParseOutPointError::*;
+
+        match *self {
+            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            Vout(ref e) => write_err!(f, "error parsing vout"; e),
+            Format => write!(f, "OutPoint not in <txid>:<vout> format"),
+            TooLong => write!(f, "vout should be at most 10 digits"),
+            VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseOutPointError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use ParseOutPointError::*;
+
+        match self {
+            Txid(e) => Some(e),
+            Vout(e) => Some(e),
+            Format | TooLong | VoutNotCanonical => None,
+        }
+    }
+}
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
@@ -71,6 +192,16 @@ impl Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for OutPoint {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(OutPoint{
+            txid: Txid::arbitrary(u)?,
+            vout: u32::arbitrary(u)?
+        })
+    }
 }
 
 #[cfg(feature = "arbitrary")]
