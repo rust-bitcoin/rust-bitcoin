@@ -15,16 +15,14 @@
 //! use bitcoin_hashes::Sha256;
 //!
 //! let bytes = [0u8; 5];
-//! let hash_of_bytes = Sha256::hash(&bytes);
-//! let hash_of_string = Sha256::hash("some string".as_bytes());
+//! let _hash_of_bytes = Sha256::hash(&bytes);
+//! let _hash_of_string = Sha256::hash("some string".as_bytes());
 //! ```
 //!
 //!
 //! Hashing content from a reader:
 //!
 //! ```rust
-//! use bitcoin_hashes::Sha256;
-//!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
 //! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
@@ -42,9 +40,6 @@
 //! Hashing content by [`std::io::Write`] on `HashEngine`:
 //!
 //! ```rust
-//! use bitcoin_hashes::Sha256;
-//! use std::io::Write;
-//!
 //! #[cfg(std)]
 //! # fn main() -> std::io::Result<()> {
 //! let mut part1: &[u8] = b"hello";
@@ -68,6 +63,7 @@
 #![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
+#![doc(test(attr(warn(unused))))]
 // Instead of littering the codebase for non-fuzzing and bench code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
 #![cfg_attr(bench, allow(dead_code, unused_imports))]

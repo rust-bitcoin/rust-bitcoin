@@ -14,6 +14,7 @@
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![doc(test(attr(warn(unused))))]
 // Coding conventions.
 #![warn(missing_docs)]
 // Exclude lints we don't think are valuable.

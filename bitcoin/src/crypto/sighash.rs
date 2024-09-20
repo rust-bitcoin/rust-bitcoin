@@ -1370,8 +1370,8 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::hashes::{sha256d, Hash, hex::FromHex};
-    /// # use bitcoin::sighash::{LegacySighash, SighashCache};
+    /// # use bitcoin::hashes::{sha256d, hex::FromHex};
+    /// # use bitcoin::sighash::SighashCache;
     /// # use bitcoin::Transaction;
     /// # let mut writer = sha256d::Hash::engine();
     /// # let input_index = 0;

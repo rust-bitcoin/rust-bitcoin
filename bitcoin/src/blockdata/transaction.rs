@@ -114,7 +114,7 @@ impl OutPoint {
     ///
     /// ```rust
     /// use bitcoin::constants::genesis_block;
-    /// use bitcoin::{params, Network};
+    /// use bitcoin::params;
     ///
     /// let block = genesis_block(&params::MAINNET);
     /// let tx = &block.txdata[0];

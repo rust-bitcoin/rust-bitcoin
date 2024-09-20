@@ -288,14 +288,14 @@ pub enum AddressData {
 ///
 /// // variant 1
 /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-/// let address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
+/// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
 ///
 /// // variant 2
-/// let address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
+/// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
 ///                .require_network(Network::Bitcoin).unwrap();
 ///
 /// // variant 3
-/// let address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
+/// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
 ///                .unwrap().require_network(Network::Bitcoin).unwrap();
 /// ```
 ///
@@ -307,7 +307,6 @@ pub enum AddressData {
 /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap().assume_checked();
@@ -315,7 +314,6 @@ pub enum AddressData {
 /// ```
 ///
 /// ```ignore
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap();
@@ -327,7 +325,6 @@ pub enum AddressData {
 ///    check the network and use `Display` in user-facing context.
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkUnchecked};
 /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap();
@@ -335,7 +332,6 @@ pub enum AddressData {
 /// ```
 ///
 /// ```
-/// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
 ///                .unwrap().assume_checked();
