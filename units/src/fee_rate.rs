@@ -3,7 +3,7 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Div, Mul};
+use core::ops::{Add, Div, Mul};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -135,6 +135,36 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
+impl Add for FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
+}
+
+impl Add<FeeRate> for &FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
+impl Add<&FeeRate> for FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
+impl<'a, 'b> Add<&'a FeeRate> for &'b FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
 /// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
     type Output = Amount;
@@ -161,6 +191,19 @@ crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn addition() {
+        let one = FeeRate(1);
+        let two = FeeRate(2);
+        let three = FeeRate(3);
+
+        assert!(one + two == three);
+        assert!(&one + two == three);
+        assert!(one + &two == three);
+        assert!(&one + &two == three);
+    }
 
     #[test]
     fn fee_rate_const_test() {
