@@ -96,6 +96,11 @@ impl FeeRate {
         Some(Amount::from_sat(sats))
     }
 
+    /// Checked addition.
+    ///
+    /// Computes `self + rhs` returning [`None`] if overflow occured.
+    pub fn checked_add(self, rhs: u64) -> Option<Self> { self.0.checked_add(rhs).map(Self) }
+
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
     ///
@@ -284,6 +289,15 @@ mod tests {
         let mut f = FeeRate(3);
         f -= &FeeRate(2);
         assert_eq!(f, FeeRate(1));
+    }
+
+    #[test]
+    fn checked_add() {
+        let f = FeeRate(1).checked_add(2).unwrap();
+        assert_eq!(FeeRate(3), f);
+
+        let f = FeeRate(u64::MAX).checked_add(1);
+        assert!(f.is_none());
     }
 
     #[test]
