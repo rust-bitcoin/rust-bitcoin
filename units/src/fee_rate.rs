@@ -3,7 +3,7 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Add, Sub, Div, Mul};
+use core::ops::{Add, Sub, Div, Mul, AddAssign};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -216,6 +216,14 @@ impl Div<Weight> for Amount {
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
+impl AddAssign for FeeRate {
+    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
+}
+
+impl AddAssign<&FeeRate> for FeeRate {
+    fn add_assign(&mut self, rhs: &FeeRate) { self.0 += rhs.0 }
+}
+
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
@@ -246,6 +254,17 @@ mod tests {
         assert!(&three - two == one);
         assert!(three - &two == one);
         assert!(&three - &two == one);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut f = FeeRate(1);
+        f += FeeRate(2);
+        assert_eq!(f, FeeRate(3));
+
+        let mut f = FeeRate(1);
+        f += &FeeRate(2);
+        assert_eq!(f, FeeRate(3));
     }
 
     #[test]
