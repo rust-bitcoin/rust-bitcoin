@@ -3,7 +3,7 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Add, Div, Mul};
+use core::ops::{Add, Sub, Div, Mul};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -165,6 +165,36 @@ impl<'a, 'b> Add<&'a FeeRate> for &'b FeeRate {
     }
 }
 
+impl Sub for FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
+}
+
+impl Sub<FeeRate> for &FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
+impl Sub<&FeeRate> for FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
+impl<'a, 'b> Sub<&'a FeeRate> for &'b FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
 /// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
     type Output = Amount;
@@ -203,6 +233,19 @@ mod tests {
         assert!(&one + two == three);
         assert!(one + &two == three);
         assert!(&one + &two == three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn subtract() {
+        let one = FeeRate(1);
+        let two = FeeRate(2);
+        let three = FeeRate(3);
+
+        assert!(three - two == one);
+        assert!(&three - two == one);
+        assert!(three - &two == one);
+        assert!(&three - &two == one);
     }
 
     #[test]
