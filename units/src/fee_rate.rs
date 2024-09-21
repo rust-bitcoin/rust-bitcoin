@@ -101,6 +101,11 @@ impl FeeRate {
     /// Computes `self + rhs` returning [`None`] if overflow occured.
     pub fn checked_add(self, rhs: u64) -> Option<Self> { self.0.checked_add(rhs).map(Self) }
 
+    /// Checked subtraction.
+    ///
+    /// Computes `self - rhs` returning [`None`] if overflow occured.
+    pub fn checked_sub(self, rhs: u64) -> Option<Self> { self.0.checked_sub(rhs).map(Self) }
+
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
     ///
@@ -297,6 +302,15 @@ mod tests {
         assert_eq!(FeeRate(3), f);
 
         let f = FeeRate(u64::MAX).checked_add(1);
+        assert!(f.is_none());
+    }
+
+    #[test]
+    fn checked_sub() {
+        let f = FeeRate(2).checked_sub(1).unwrap();
+        assert_eq!(FeeRate(1), f);
+
+        let f = FeeRate::ZERO.checked_sub(1);
         assert!(f.is_none());
     }
 
