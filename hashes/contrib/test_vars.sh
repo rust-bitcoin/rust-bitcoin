@@ -5,7 +5,7 @@
 # shellcheck disable=SC2034
 
 # Test all these features with "std" enabled.
-FEATURES_WITH_STD="bitcoin-io serde small-hash schemars"
+FEATURES_WITH_STD="bitcoin-io serde small-hash"
 
 # Test all these features without "std" enabled.
 FEATURES_WITHOUT_STD="alloc bitcoin-io serde small-hash"

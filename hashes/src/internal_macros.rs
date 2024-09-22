@@ -130,7 +130,6 @@ pub(crate) use hash_trait_impls;
 /// * `$bits` - the number of bits of the hash type
 /// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
 /// * `$doc` - doc string to put on the type
-/// * `$schemars` - a literal that goes into `schema_with`.
 ///
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
@@ -214,30 +213,6 @@ macro_rules! hash_type_no_default {
             /// Constructs a hash from the underlying byte array.
             pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
                 Self::internal_new(bytes)
-            }
-        }
-
-        #[cfg(feature = "schemars")]
-        impl schemars::JsonSchema for Hash {
-            fn schema_name() -> alloc::string::String {
-                use alloc::borrow::ToOwned;
-
-                "Hash".to_owned()
-            }
-
-            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-                use alloc::borrow::ToOwned;
-                use alloc::boxed::Box;
-                use alloc::string::String;
-
-                let len = $bits / 8;
-                let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-                schema.string = Some(Box::new(schemars::schema::StringValidation {
-                    max_length: Some(len * 2),
-                    min_length: Some(len * 2),
-                    pattern: Some("[0-9a-fA-F]+".to_owned()),
-                }));
-                schema.into()
             }
         }
 
