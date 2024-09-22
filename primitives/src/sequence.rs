@@ -17,6 +17,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::impl_to_hex_from_lower_hex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -24,8 +26,6 @@ use serde::{Deserialize, Serialize};
 use units::locktime::relative::TimeOverflowError;
 #[cfg(feature = "alloc")]
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 #[cfg(feature = "alloc")]
 use crate::locktime::relative;
