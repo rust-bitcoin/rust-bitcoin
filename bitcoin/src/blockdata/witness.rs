@@ -7,6 +7,8 @@
 use core::fmt;
 use core::ops::Index;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::compact_size;
 use io::{BufRead, Write};
 
@@ -18,8 +20,6 @@ use crate::prelude::Vec;
 use crate::script::ScriptExt as _;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
 use crate::{Script, VarInt};
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
@@ -623,7 +623,7 @@ impl Default for Witness {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Witness {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let arbitrary_bytes = Vec::<Vec::<u8>>::arbitrary(u)?;
+        let arbitrary_bytes = Vec::<Vec<u8>>::arbitrary(u)?;
         Ok(Witness::from_slice(&arbitrary_bytes))
     }
 }

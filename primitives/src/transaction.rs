@@ -12,9 +12,9 @@
 
 use core::fmt;
 
-use hashes::sha256d;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use hashes::sha256d;
 
 hashes::hash_newtype! {
     /// A bitcoin transaction hash/transaction ID.
