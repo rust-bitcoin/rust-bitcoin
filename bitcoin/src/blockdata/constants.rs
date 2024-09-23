@@ -113,7 +113,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Bitcoin => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::all_zeros(),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
                 time: 1231006505,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
@@ -124,7 +124,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Testnet => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::all_zeros(),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
@@ -135,7 +135,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Signet => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::all_zeros(),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
                 time: 1598918400,
                 bits: CompactTarget::from_consensus(0x1e0377ae),
@@ -146,7 +146,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
         Network::Regtest => Block {
             header: block::Header {
                 version: block::Version::ONE,
-                prev_blockhash: BlockHash::all_zeros(),
+                prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x207fffff),
@@ -261,7 +261,7 @@ mod test {
         let gen = genesis_block(&params::MAINNET);
 
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
@@ -280,7 +280,7 @@ mod test {
     fn testnet_genesis_full_block() {
         let gen = genesis_block(&params::TESTNET);
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
@@ -298,7 +298,7 @@ mod test {
     fn signet_genesis_full_block() {
         let gen = genesis_block(&params::SIGNET);
         assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::all_zeros());
+        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
             gen.header.merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"

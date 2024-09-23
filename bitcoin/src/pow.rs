@@ -1771,7 +1771,7 @@ mod tests {
         // Block 2015, the only information used are `bits` and `time`
         let current = Header {
             version: Version::ONE,
-            prev_blockhash: BlockHash::all_zeros(),
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
             time: 1599332177,
             bits: epoch_start.bits,
@@ -1793,7 +1793,7 @@ mod tests {
         // Block 2016, the only information used is `time`
         let epoch_start = Header {
             version: Version::ONE,
-            prev_blockhash: BlockHash::all_zeros(),
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
             time: 1599332844,
             bits: starting_bits,
@@ -1803,7 +1803,7 @@ mod tests {
         // Block 4031, the only information used are `bits` and `time`
         let current = Header {
             version: Version::ONE,
-            prev_blockhash: BlockHash::all_zeros(),
+            prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
             time: 1600591200,
             bits: starting_bits,
