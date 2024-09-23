@@ -182,8 +182,8 @@ pub trait HashEngine: Clone {
     /// Add data to the hash engine.
     fn input(&mut self, data: &[u8]);
 
-    /// Return the number of bytes already n_bytes_hashed(inputted).
-    fn n_bytes_hashed(&self) -> usize;
+    /// Return the number of bytes already input into the engine.
+    fn n_bytes_hashed(&self) -> u64;
 }
 
 /// Trait describing hash digests which can be constructed by hashing arbitrary data.
@@ -307,6 +307,13 @@ mod sealed {
     pub trait IsByteArray {}
 
     impl<const N: usize> IsByteArray for [u8; N] {}
+}
+
+fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
+    let block_size = <H as HashEngine>::BLOCK_SIZE as u64; // Cast usize to u64 is ok.
+
+    // After modulo operation we know cast u64 to usize as ok.
+    (eng.n_bytes_hashed() % block_size) as usize
 }
 
 /// Attempted to create a hash from an invalid length slice.

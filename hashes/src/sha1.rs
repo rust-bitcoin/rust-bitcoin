@@ -6,7 +6,7 @@ use core::cmp;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::HashEngine as _;
+use crate::{incomplete_block_len, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     160,
@@ -16,19 +16,19 @@ crate::internal_macros::hash_type! {
 
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let data_len = e.length as u64;
+    let n_bytes_hashed = e.bytes_hashed;
 
     let zeroes = [0; BLOCK_SIZE - 8];
     e.input(&[0x80]);
-    if e.length % BLOCK_SIZE > zeroes.len() {
+    if incomplete_block_len(&e) > zeroes.len() {
         e.input(&zeroes);
     }
-    let pad_length = zeroes.len() - (e.length % BLOCK_SIZE);
+    let pad_length = zeroes.len() - incomplete_block_len(&e);
     e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(e.length % BLOCK_SIZE, zeroes.len());
+    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
 
-    e.input(&(8 * data_len).to_be_bytes());
-    debug_assert_eq!(e.length % BLOCK_SIZE, 0);
+    e.input(&(8 * n_bytes_hashed).to_be_bytes());
+    debug_assert_eq!(incomplete_block_len(&e), 0);
 
     Hash(e.midstate())
 }
@@ -40,7 +40,7 @@ const BLOCK_SIZE: usize = 64;
 pub struct HashEngine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 5],
-    length: usize,
+    bytes_hashed: u64,
 }
 
 impl HashEngine {
@@ -48,7 +48,7 @@ impl HashEngine {
     pub const fn new() -> Self {
         Self {
             h: [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
-            length: 0,
+            bytes_hashed: 0,
             buffer: [0; BLOCK_SIZE],
         }
     }
@@ -77,7 +77,7 @@ impl Default for HashEngine {
 impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64;
 
-    fn n_bytes_hashed(&self) -> usize { self.length }
+    fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
     engine_input_impl!();
 }
