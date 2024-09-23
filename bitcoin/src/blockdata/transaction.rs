@@ -1692,8 +1692,21 @@ impl<'a> Arbitrary<'a> for OutPoint {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Sequence {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let s = u32::arbitrary(u)?;
-        Ok(Sequence(s))
+        let choice_range = 8;
+
+        // Equally weight the cases of meaningful sequence numbers
+        let choice = u.int_in_range(0..=choice_range)?;
+        match choice {
+            0 => Ok(Sequence::MAX),
+            1 => Ok(Sequence::ZERO),
+            2 => Ok(Sequence::MIN_NO_RBF),
+            3 => Ok(Sequence::ENABLE_RBF_NO_LOCKTIME),
+            4 => Ok(Sequence::from_consensus(relative::Height::MIN.to_consensus_u32())),
+            5 => Ok(Sequence::from_consensus(relative::Height::MAX.to_consensus_u32())),
+            6 => Ok(Sequence::from_consensus(relative::Time::MIN.to_consensus_u32())),
+            7 => Ok(Sequence::from_consensus(relative::Time::MAX.to_consensus_u32())),
+            _ => Ok(Sequence(u.arbitrary()?))
+        }
     }
 }
 
@@ -1745,8 +1758,13 @@ impl<'a> Arbitrary<'a> for TxOut {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let v = i32::arbitrary(u)?;
-        Ok(Version(v))
+        // Equally weight the case of normal version numbers
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(Version::ONE),
+            1 => Ok(Version::TWO),
+            _ => Ok(Version(u.arbitrary()?))
+        }
     }
 }
 
