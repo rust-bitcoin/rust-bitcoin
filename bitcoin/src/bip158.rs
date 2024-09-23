@@ -41,11 +41,11 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
+#[cfg(feature = "arbitrary")]
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256d, siphash24, Hash};
 use internals::write_err;
 use io::{Read, Write};
-#[cfg(feature = "arbitrary")]
-use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 
 use crate::blockdata::block::{Block, BlockHash};
 use crate::blockdata::script::Script;

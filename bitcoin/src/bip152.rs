@@ -9,11 +9,11 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
+#[cfg(feature = "arbitrary")]
+use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 use hashes::{sha256, siphash24, Hash};
 use internals::impl_array_newtype;
 use io::{Read, Write};
-#[cfg(feature = "arbitrary")]
-use actual_arbitrary::{self as arbitrary, Arbitrary, Unstructured};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
@@ -377,14 +377,20 @@ impl BlockTransactions {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactions {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockTransactions { block_hash: u.arbitrary()?, transactions: Vec::<Transaction>::arbitrary(u)? })
+        Ok(BlockTransactions {
+            block_hash: u.arbitrary()?,
+            transactions: Vec::<Transaction>::arbitrary(u)?,
+        })
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTransactionsRequest {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(BlockTransactionsRequest { block_hash: u.arbitrary()?, indexes: Vec::<u64>::arbitrary(u)? })
+        Ok(BlockTransactionsRequest {
+            block_hash: u.arbitrary()?,
+            indexes: Vec::<u64>::arbitrary(u)?,
+        })
     }
 }
 
