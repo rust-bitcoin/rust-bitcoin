@@ -26,13 +26,8 @@ use crate::{Txid, Wtxid};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
+pub use primitives::merkle_tree::*;
 
-hashes::hash_newtype! {
-    /// A hash of the Merkle tree branch or root for transactions.
-    pub struct TxMerkleNode(sha256d::Hash);
-    /// A hash corresponding to the Merkle tree root for witness data.
-    pub struct WitnessMerkleNode(sha256d::Hash);
-}
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
@@ -104,7 +99,7 @@ impl MerkleNode for TxMerkleNode {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
         encoder.input(other.as_byte_array());
-        Self(sha256d::Hash::from_engine(encoder))
+        Self::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 }
 impl MerkleNode for WitnessMerkleNode {
@@ -115,7 +110,7 @@ impl MerkleNode for WitnessMerkleNode {
         let mut encoder = sha256d::Hash::engine();
         encoder.input(self.as_byte_array());
         encoder.input(other.as_byte_array());
-        Self(sha256d::Hash::from_engine(encoder))
+        Self::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }
 }
 
