@@ -76,8 +76,13 @@ impl fmt::Display for Version {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Version {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let v = i32::arbitrary(u)?;
-        Ok(Version(v))
+        // Equally weight the case of normal version numbers
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(Version::ONE),
+            1 => Ok(Version::TWO),
+            _ => Ok(Version(u.arbitrary()?))
+        }
     }
 }
 
