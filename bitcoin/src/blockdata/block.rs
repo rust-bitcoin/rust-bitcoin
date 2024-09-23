@@ -30,6 +30,7 @@ hashes::hash_newtype! {
     pub struct WitnessCommitment(sha256d::Hash);
 }
 impl_hashencode!(BlockHash);
+
 impl BlockHash {
     /// The "all zeros" blockhash.
     ///
