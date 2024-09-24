@@ -12,8 +12,8 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::compact_size;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{Error, ReadExt, MAX_VEC_SIZE};
-use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::consensus::encode::{self, Error, MAX_VEC_SIZE, ReadExt, WriteExt};
+use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
 use crate::prelude::Vec;
 #[cfg(doc)]
@@ -230,10 +230,13 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 impl Encodable for Witness {
     // `self.content` includes the varints so encoding here includes them, as expected.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let content_with_indices_len = self.content.len();
-        let indices_size = self.len() * 4;
-        let content_len = content_with_indices_len - indices_size;
-        Ok(w.emit_compact_size(self.witness_elements)? + w.emit_slice(&self.content[..content_len])?)
+        let mut written = w.emit_compact_size(self.len())?;
+
+        for element in self.iter() {
+            written += encode::consensus_encode_with_size(element, w)?
+        }
+
+        Ok(written)
     }
 }
 
