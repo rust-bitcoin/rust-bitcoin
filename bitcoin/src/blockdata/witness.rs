@@ -645,14 +645,31 @@ mod test {
         v
     }
 
-    #[test]
-    fn witness_debug_can_display_empty_instruction() {
-        let witness = Witness {
+    // A witness with a single element that is empty (zero length).
+    fn single_empty_element() -> Witness {
+        // The first is 0 serialized as a compact size integer.
+        // The last four bytes represent start at index 0.
+        let content = [0_u8; 5];
+
+        Witness {
             witness_elements: 1,
-            content: append_u32_vec(vec![], &[0]),
-            indices_start: 2,
-        };
+            content: content.to_vec(),
+            indices_start: 1,
+        }
+    }
+
+    #[test]
+    fn witness_debug_can_display_empty_element() {
+        let witness = single_empty_element();
         println!("{:?}", witness);
+    }
+
+    #[test]
+    fn witness_single_empty_element() {
+        let mut got = Witness::new();
+        got.push(&[]);
+        let want = single_empty_element();
+        assert_eq!(got, want)
     }
 
     #[test]
