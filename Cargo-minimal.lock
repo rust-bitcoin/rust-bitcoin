@@ -137,7 +137,6 @@ version = "0.14.0"
 dependencies = [
  "bitcoin-io",
  "hex-conservative",
- "schemars",
  "serde",
  "serde_json",
  "serde_test",
@@ -169,12 +168,6 @@ name = "cfg-if"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
-
-[[package]]
-name = "dyn-clone"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0da518043f6481364cd454be81dfe096cfd3f82daa1466f4946d24ea325b0941"
 
 [[package]]
 name = "getrandom"
@@ -363,17 +356,6 @@ name = "ryu"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c92464b447c0ee8c4fb3824ecc8383b81717b9f1e74ba2e72540aef7b9f82997"
-
-[[package]]
-name = "schemars"
-version = "0.8.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc6ab463ae35acccb5cba66c0084c985257b797d288b6050cc2f6ac1b266cb78"
-dependencies = [
- "dyn-clone",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "secp256k1"

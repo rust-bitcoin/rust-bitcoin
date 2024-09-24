@@ -100,9 +100,6 @@ pub mod _export {
     }
 }
 
-#[cfg(feature = "schemars")]
-extern crate schemars;
-
 mod internal_macros;
 #[macro_use]
 mod util;

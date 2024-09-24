@@ -19,17 +19,6 @@ use crate::{FromSliceError, GeneralHash, Hash, HashEngine};
 #[repr(transparent)]
 pub struct Hmac<T: GeneralHash>(T);
 
-#[cfg(feature = "schemars")]
-impl<T: GeneralHash + schemars::JsonSchema> schemars::JsonSchema for Hmac<T> {
-    fn is_referenceable() -> bool { <T as schemars::JsonSchema>::is_referenceable() }
-
-    fn schema_name() -> alloc::string::String { <T as schemars::JsonSchema>::schema_name() }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        <T as schemars::JsonSchema>::json_schema(gen)
-    }
-}
-
 impl<T: GeneralHash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }

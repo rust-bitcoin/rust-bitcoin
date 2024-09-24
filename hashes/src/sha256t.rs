@@ -21,29 +21,6 @@ pub trait Tag {
 #[repr(transparent)]
 pub struct Hash<T>([u8; 32], PhantomData<T>);
 
-#[cfg(feature = "schemars")]
-impl<T: Tag> schemars::JsonSchema for Hash<T> {
-    fn schema_name() -> alloc::string::String {
-        use alloc::borrow::ToOwned;
-
-        "Hash".to_owned()
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        use alloc::borrow::ToOwned;
-        use alloc::boxed::Box;
-        use alloc::string::String;
-
-        let mut schema: schemars::schema::SchemaObject = <String>::json_schema(gen).into();
-        schema.string = Some(Box::new(schemars::schema::StringValidation {
-            max_length: Some(32 * 2),
-            min_length: Some(32 * 2),
-            pattern: Some("[0-9a-fA-F]+".to_owned()),
-        }));
-        schema.into()
-    }
-}
-
 impl<T> Hash<T>
 where
     T: Tag,
