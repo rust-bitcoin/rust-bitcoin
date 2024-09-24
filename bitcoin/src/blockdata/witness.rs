@@ -231,7 +231,7 @@ impl Encodable for Witness {
     // `self.content` includes the varints so encoding here includes them, as expected.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let content_with_indices_len = self.content.len();
-        let indices_size = self.witness_elements * 4;
+        let indices_size = self.len() * 4;
         let content_len = content_with_indices_len - indices_size;
         Ok(w.emit_compact_size(self.witness_elements)? + w.emit_slice(&self.content[..content_len])?)
     }
