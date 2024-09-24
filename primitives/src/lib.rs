@@ -40,13 +40,18 @@ pub mod pow;
 pub mod script;
 pub mod sequence;
 pub mod transaction;
+#[cfg(feature = "alloc")]
+pub mod witness;
 
 #[doc(inline)]
 pub use units::*;
 
 #[doc(inline)]
 #[cfg(feature = "alloc")]
-pub use self::locktime::{absolute, relative};
+pub use self::{
+    locktime::{absolute, relative},
+    witness::Witness,
+};
 #[doc(inline)]
 pub use self::{
     block::{BlockHash, WitnessCommitment},
