@@ -3,7 +3,7 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Div, Mul};
+use core::ops::{Add, Sub, Div, Mul, AddAssign, SubAssign};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -96,6 +96,16 @@ impl FeeRate {
         Some(Amount::from_sat(sats))
     }
 
+    /// Checked addition.
+    ///
+    /// Computes `self + rhs` returning [`None`] if overflow occured.
+    pub fn checked_add(self, rhs: u64) -> Option<Self> { self.0.checked_add(rhs).map(Self) }
+
+    /// Checked subtraction.
+    ///
+    /// Computes `self - rhs` returning [`None`] if overflow occured.
+    pub fn checked_sub(self, rhs: u64) -> Option<Self> { self.0.checked_sub(rhs).map(Self) }
+
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
     ///
@@ -135,6 +145,66 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
+impl Add for FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
+}
+
+impl Add<FeeRate> for &FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
+impl Add<&FeeRate> for FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
+impl<'a, 'b> Add<&'a FeeRate> for &'b FeeRate {
+    type Output = FeeRate;
+
+    fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 + other.0)
+    }
+}
+
+impl Sub for FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
+}
+
+impl Sub<FeeRate> for &FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
+impl Sub<&FeeRate> for FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
+impl<'a, 'b> Sub<&'a FeeRate> for &'b FeeRate {
+    type Output = FeeRate;
+
+    fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
+        FeeRate(self.0 - other.0)
+    }
+}
+
 /// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
     type Output = Amount;
@@ -156,11 +226,93 @@ impl Div<Weight> for Amount {
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
+impl AddAssign for FeeRate {
+    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
+}
+
+impl AddAssign<&FeeRate> for FeeRate {
+    fn add_assign(&mut self, rhs: &FeeRate) { self.0 += rhs.0 }
+}
+
+impl SubAssign for FeeRate {
+    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
+}
+
+impl SubAssign<&FeeRate> for FeeRate {
+    fn sub_assign(&mut self, rhs: &FeeRate) { self.0 -= rhs.0 }
+}
+
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn addition() {
+        let one = FeeRate(1);
+        let two = FeeRate(2);
+        let three = FeeRate(3);
+
+        assert!(one + two == three);
+        assert!(&one + two == three);
+        assert!(one + &two == three);
+        assert!(&one + &two == three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn subtract() {
+        let one = FeeRate(1);
+        let two = FeeRate(2);
+        let three = FeeRate(3);
+
+        assert!(three - two == one);
+        assert!(&three - two == one);
+        assert!(three - &two == one);
+        assert!(&three - &two == one);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut f = FeeRate(1);
+        f += FeeRate(2);
+        assert_eq!(f, FeeRate(3));
+
+        let mut f = FeeRate(1);
+        f += &FeeRate(2);
+        assert_eq!(f, FeeRate(3));
+    }
+
+    #[test]
+    fn sub_assign() {
+        let mut f = FeeRate(3);
+        f -= FeeRate(2);
+        assert_eq!(f, FeeRate(1));
+
+        let mut f = FeeRate(3);
+        f -= &FeeRate(2);
+        assert_eq!(f, FeeRate(1));
+    }
+
+    #[test]
+    fn checked_add() {
+        let f = FeeRate(1).checked_add(2).unwrap();
+        assert_eq!(FeeRate(3), f);
+
+        let f = FeeRate(u64::MAX).checked_add(1);
+        assert!(f.is_none());
+    }
+
+    #[test]
+    fn checked_sub() {
+        let f = FeeRate(2).checked_sub(1).unwrap();
+        assert_eq!(FeeRate(1), f);
+
+        let f = FeeRate::ZERO.checked_sub(1);
+        assert!(f.is_none());
+    }
 
     #[test]
     fn fee_rate_const_test() {
