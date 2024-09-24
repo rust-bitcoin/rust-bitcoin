@@ -925,11 +925,9 @@ mod test {
         assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 
-    #[cfg(feature = "serde")]
     #[test]
-    fn test_serde_bincode() {
-        use bincode;
-
+    #[cfg(feature = "serde")]
+    fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
         let new_witness_format = Witness::from_slice(&old_witness_format);
 
@@ -937,24 +935,44 @@ mod test {
         let new = bincode::serialize(&new_witness_format).unwrap();
 
         assert_eq!(old, new);
-
-        let back: Witness = bincode::deserialize(&new).unwrap();
-        assert_eq!(new_witness_format, back);
     }
 
     #[cfg(feature = "serde")]
+    fn arbitrary_witness() -> Witness {
+        let mut witness = Witness::default();
+
+        witness.push(&[0_u8]);
+        witness.push(&[1_u8; 32]);
+        witness.push(&[2_u8; 72]);
+
+        witness
+    }
+
     #[test]
-    fn test_serde_human() {
-        use serde_json;
+    #[cfg(feature = "serde")]
+    fn serde_bincode_roundtrips() {
+        let original = arbitrary_witness();
+        let ser = bincode::serialize(&original).unwrap();
+        let rinsed: Witness = bincode::deserialize(&ser).unwrap();
+        assert_eq!(rinsed, original);
+    }
 
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_human_roundtrips() {
+        let original = arbitrary_witness();
+        let ser = serde_json::to_string(&original).unwrap();
+        let rinsed: Witness = serde_json::from_str(&ser).unwrap();
+        assert_eq!(rinsed, original);
+
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_human() {
         let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
-
         let json = serde_json::to_string(&witness).unwrap();
-
         assert_eq!(json, r#"["007b4b","0206030708"]"#);
-
-        let back: Witness = serde_json::from_str(&json).unwrap();
-        assert_eq!(witness, back);
     }
 }
 
