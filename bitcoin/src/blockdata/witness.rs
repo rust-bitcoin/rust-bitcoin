@@ -252,15 +252,15 @@ impl Witness {
     /// It is expected that `pubkey` is related to the secret key used to create `signature`.
     pub fn p2wpkh(signature: ecdsa::Signature, pubkey: secp256k1::PublicKey) -> Witness {
         let mut witness = Witness::new();
-        witness.push_slice(&signature.serialize());
-        witness.push_slice(&pubkey.serialize());
+        witness.push(signature.serialize());
+        witness.push(pubkey.serialize());
         witness
     }
 
     /// Creates a witness required to do a key path spend of a P2TR output.
     pub fn p2tr_key_spend(signature: &taproot::Signature) -> Witness {
         let mut witness = Witness::new();
-        witness.push_slice(&signature.serialize());
+        witness.push(signature.serialize());
         witness
     }
 
@@ -363,7 +363,7 @@ impl Witness {
     ///
     /// Pushes the DER encoded signature + sighash_type, requires an allocation.
     pub fn push_ecdsa_signature(&mut self, signature: ecdsa::Signature) {
-        self.push_slice(&signature.serialize())
+        self.push(signature.serialize())
     }
 
     /// Note `index` is the index into the `content` vector and should be the result of calling
