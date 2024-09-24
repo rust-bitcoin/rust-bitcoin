@@ -309,3 +309,17 @@ macro_rules! serde_round_trip (
         assert_eq!($var, decoded);
     })
 );
+
+/// Serializes a byte slice using the `hex` crate.
+pub struct SerializeBytesAsHex<'a>(pub &'a [u8]);
+
+impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use hex::DisplayHex;
+
+        serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
+    }
+}

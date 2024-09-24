@@ -29,6 +29,7 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPat
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
+use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
     consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
     Sequence, Transaction, TxIn, TxOut, Txid, WPubkeyHash, Witness,

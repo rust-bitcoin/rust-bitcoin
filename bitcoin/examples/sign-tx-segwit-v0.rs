@@ -6,6 +6,7 @@ use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing};
 use bitcoin::sighash::{EcdsaSighashType, SighashCache};
+use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
     transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
     Txid, WPubkeyHash, Witness,
