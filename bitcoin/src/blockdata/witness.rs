@@ -633,7 +633,7 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::*;
-    use crate::consensus::{deserialize, serialize};
+    use crate::consensus::{encode, deserialize, serialize};
     use crate::hex::DisplayHex;
     use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
@@ -786,31 +786,28 @@ mod test {
     }
 
     #[test]
-    fn test_witness() {
-        let w0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
-        let w1 = hex!("000000");
-        let witness_vec = vec![w0.clone(), w1.clone()];
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness = Witness {
-            content: append_u32_vec(&witness_serialized[1..], &[0, 34]),
-            witness_elements: 2,
-            indices_start: 38,
-        };
-        for (i, el) in witness.iter().enumerate() {
-            assert_eq!(witness_vec[i], el);
-        }
-        assert_eq!(witness.last(), Some(&w1[..]));
-        assert_eq!(witness.second_to_last(), Some(&w0[..]));
-        assert_eq!(witness.nth(0), Some(&w0[..]));
-        assert_eq!(witness.nth(1), Some(&w1[..]));
-        assert_eq!(witness.nth(2), None);
-        assert_eq!(&witness[0], &w0[..]);
-        assert_eq!(&witness[1], &w1[..]);
+    fn consensus_serialize() {
+        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
+        let el_1 = hex!("000000");
 
-        let w_into = Witness::from_slice(&witness_vec);
-        assert_eq!(w_into, witness);
+        let mut want_witness = Witness::default();
+        want_witness.push(&el_0);
+        want_witness.push(&el_1);
 
-        assert_eq!(witness_serialized, serialize(&witness));
+        let vec = vec![el_0.clone(), el_1.clone()];
+
+        // Puts a CompactSize at the front as well as one at the front of each element.
+        let want_ser: Vec<u8> = encode::serialize(&vec);
+
+        // `from_slice` expects bytes slices _without_ leading `CompactSize`.
+        let got_witness = Witness::from_slice(&vec);
+        assert_eq!(got_witness, want_witness);
+
+        let got_ser = encode::serialize(&got_witness);
+        assert_eq!(got_ser, want_ser);
+
+        let rinsed: Witness = encode::deserialize(&got_ser).unwrap();
+        assert_eq!(rinsed, want_witness)
     }
 
     #[test]
