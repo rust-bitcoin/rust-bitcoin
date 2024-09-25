@@ -1487,7 +1487,7 @@ mod tests {
         let tx = Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
+            input: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
             output: vec![TxOut::NULL],
         };
         let script = ScriptBuf::new();
@@ -1676,7 +1676,7 @@ mod tests {
         let dumb_tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn::default()],
+            input: vec![TxIn::EMPTY_COINBASE],
             output: vec![],
         };
         let mut c = SighashCache::new(&dumb_tx);

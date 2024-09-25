@@ -127,10 +127,6 @@ impl OutPoint {
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
 }
 
-impl Default for OutPoint {
-    fn default() -> Self { OutPoint::null() }
-}
-
 impl fmt::Display for OutPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}", self.txid, self.vout)
@@ -249,6 +245,14 @@ pub struct TxIn {
 }
 
 impl TxIn {
+    /// An empty transaction input with the previous output as for a coinbase transaction.
+    pub const EMPTY_COINBASE: TxIn = TxIn {
+        previous_output: OutPoint::COINBASE_PREVOUT,
+        script_sig: ScriptBuf::new(),
+        sequence: Sequence::MAX,
+        witness: Witness::new(),
+    };
+
     /// Returns the input base weight.
     ///
     /// Base weight excludes the witness and script.
@@ -311,17 +315,6 @@ impl TxIn {
     ///
     /// Total size includes the witness data (for base size see [`Self::base_size`]).
     pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
-}
-
-impl Default for TxIn {
-    fn default() -> TxIn {
-        TxIn {
-            previous_output: OutPoint::default(),
-            script_sig: ScriptBuf::new(),
-            sequence: Sequence::MAX,
-            witness: Witness::default(),
-        }
-    }
 }
 
 /// Bitcoin transaction output.
@@ -1541,16 +1534,6 @@ mod tests {
     }
 
     #[test]
-    fn txin_default() {
-        let txin = TxIn::default();
-        assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.script_sig, ScriptBuf::new());
-        assert_eq!(txin.sequence, Sequence::from_consensus(0xFFFFFFFF));
-        assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.witness.len(), 0);
-    }
-
-    #[test]
     fn is_coinbase() {
         use crate::constants;
         use crate::network::Network;
@@ -2251,7 +2234,7 @@ mod tests {
 
     #[test]
     fn outpoint_format() {
-        let outpoint = OutPoint::default();
+        let outpoint = OutPoint::COINBASE_PREVOUT;
 
         let debug = "OutPoint { txid: 0000000000000000000000000000000000000000000000000000000000000000, vout: 4294967295 }";
         assert_eq!(debug, format!("{:?}", &outpoint));
