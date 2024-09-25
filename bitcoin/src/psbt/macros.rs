@@ -115,14 +115,14 @@ macro_rules! impl_psbt_insert_pair {
 macro_rules! psbt_insert_hash_pair {
     (&mut $slf:ident.$map:ident <= $raw_key:ident|$raw_value:ident|$hash:path|$hash_type_error:path) => {
         if $raw_key.key_data.is_empty() {
-            return Err(psbt::Error::InvalidKey($raw_key));
+            return Err($crate::psbt::Error::InvalidKey($raw_key));
         }
         let key_val: $hash = Deserialize::deserialize(&$raw_key.key_data)?;
         match $slf.$map.entry(key_val) {
             btree_map::Entry::Vacant(empty_key) => {
                 let val: Vec<u8> = Deserialize::deserialize(&$raw_value)?;
                 if <$hash as hashes::GeneralHash>::hash(&val) != key_val {
-                    return Err(psbt::Error::InvalidPreimageHashPair {
+                    return Err($crate::psbt::Error::InvalidPreimageHashPair {
                         preimage: val.into_boxed_slice(),
                         hash: Box::from(key_val.borrow()),
                         hash_type: $hash_type_error,
@@ -130,7 +130,7 @@ macro_rules! psbt_insert_hash_pair {
                 }
                 empty_key.insert(val);
             }
-            btree_map::Entry::Occupied(_) => return Err(psbt::Error::DuplicateKey($raw_key)),
+            btree_map::Entry::Occupied(_) => return Err($crate::psbt::Error::DuplicateKey($raw_key)),
         }
     }
 }
