@@ -24,7 +24,7 @@ fn do_test(data: &[u8]) {
                     // others it'll just reserialize them as pushes.)
                     if bytes.len() == 1 && bytes[0] != 0x80 && bytes[0] != 0x00 {
                         if let Ok(num) = bytes.read_scriptint() {
-                            b = b.push_int(num);
+                            b = b.push_int_unchecked(num);
                         } else {
                             b = b.push_slice(bytes);
                         }

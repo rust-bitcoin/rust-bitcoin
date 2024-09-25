@@ -370,7 +370,7 @@ impl BenefactorWallet {
         beneficiary_key: XOnlyPublicKey,
     ) -> ScriptBuf {
         script::Builder::new()
-            .push_int(locktime.to_consensus_u32() as i64)
+            .push_lock_time(locktime)
             .push_opcode(OP_CLTV)
             .push_opcode(OP_DROP)
             .push_x_only_key(beneficiary_key)
