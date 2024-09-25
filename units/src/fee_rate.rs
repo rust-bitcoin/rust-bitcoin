@@ -3,7 +3,7 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Add, Sub, Div, Mul, AddAssign, SubAssign};
+use core::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -154,25 +154,19 @@ impl Add for FeeRate {
 impl Add<FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 + other.0)
-    }
+    fn add(self, other: FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
 }
 
 impl Add<&FeeRate> for FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 + other.0)
-    }
+    fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
 }
 
 impl<'a, 'b> Add<&'a FeeRate> for &'b FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 + other.0)
-    }
+    fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
 }
 
 impl Sub for FeeRate {
@@ -184,25 +178,19 @@ impl Sub for FeeRate {
 impl Sub<FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 - other.0)
-    }
+    fn sub(self, other: FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
 }
 
 impl Sub<&FeeRate> for FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 - other.0)
-    }
+    fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
 }
 
 impl<'a, 'b> Sub<&'a FeeRate> for &'b FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output {
-        FeeRate(self.0 - other.0)
-    }
+    fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
 }
 
 /// Computes the ceiling so that the fee computation is conservative.

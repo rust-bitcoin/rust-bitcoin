@@ -80,9 +80,9 @@ pub struct HashEngine {
     k0: u64,
     k1: u64,
     bytes_hashed: u64, // how many bytes we've processed
-    state: State,  // hash State
-    tail: u64,     // unprocessed bytes le
-    ntail: usize,  // how many bytes in tail are valid
+    state: State,      // hash State
+    tail: u64,         // unprocessed bytes le
+    ntail: usize,      // how many bytes in tail are valid
 }
 
 impl HashEngine {
@@ -134,7 +134,8 @@ impl crate::HashEngine for HashEngine {
 
         if self.ntail != 0 {
             needed = 8 - self.ntail;
-            self.tail |= unsafe { u8to64_le(msg, 0, cmp::min(bytes_hashed, needed)) } << (8 * self.ntail);
+            self.tail |=
+                unsafe { u8to64_le(msg, 0, cmp::min(bytes_hashed, needed)) } << (8 * self.ntail);
             if bytes_hashed < needed {
                 self.ntail += bytes_hashed;
                 return;
