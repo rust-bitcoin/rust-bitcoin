@@ -430,7 +430,7 @@ impl Address {
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
-        let builder = script::Builder::new().push_int(0).push_slice(pk.wpubkey_hash());
+        let builder = script::Builder::new().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Address::p2sh_from_hash(script_hash, network)
     }
@@ -458,7 +458,7 @@ impl Address {
         network: impl Into<NetworkKind>,
     ) -> Result<Address, WitnessScriptSizeError> {
         let hash = witness_script.wscript_hash()?;
-        let builder = script::Builder::new().push_int(0).push_slice(&hash);
+        let builder = script::Builder::new().push_int_unchecked(0).push_slice(&hash);
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
         Ok(Address::p2sh_from_hash(script_hash, network))
     }
