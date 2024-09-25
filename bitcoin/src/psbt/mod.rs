@@ -1223,7 +1223,7 @@ mod tests {
     use crate::Sequence;
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, Error> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
