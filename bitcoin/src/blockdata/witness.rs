@@ -757,7 +757,7 @@ mod test {
     }
 
     #[test]
-    fn test_iter_len() {
+    fn exact_sized_iterator() {
         let mut witness = Witness::default();
         for i in 0..5 {
             assert_eq!(witness.iter().len(), i);
