@@ -269,7 +269,7 @@ impl Serialize for taproot::Signature {
 
 impl Deserialize for taproot::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        use taproot::SigFromSliceError::*;
+        use taproot::DecodeError::*;
 
         taproot::Signature::from_slice(bytes).map_err(|e| match e {
             SighashType(err) => Error::NonStandardSighashType(err.0),
