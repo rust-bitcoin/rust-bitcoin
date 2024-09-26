@@ -15,16 +15,14 @@ pub mod raw;
 pub mod serialize;
 
 use self::map::Map;
-use crate::bip32::{KeySource, Xpub};
 use crate::consensus::encode::Decodable;
 use crate::io::Write;
-use crate::prelude::{BTreeMap, DisplayHex, Vec};
-use crate::transaction::Transaction;
+use crate::prelude::{DisplayHex, Vec};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    map::{Input, Output, PsbtSighashType},
+    map::{Input, Global, Output, PsbtSighashType},
     error::Error,
 };
 
@@ -32,20 +30,8 @@ pub use self::{
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Psbt {
-    /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
-    pub unsigned_tx: Transaction,
-    /// The version number of this PSBT. If omitted, the version number is 0.
-    pub version: u32,
-    /// A global map from extended public keys to the used key fingerprint and
-    /// derivation path as defined by BIP 32.
-    pub xpub: BTreeMap<Xpub, KeySource>,
-    /// Global proprietary key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
-    pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
-    /// Unknown global key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
-    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
-
+    /// The global map.
+    pub global: Global,
     /// The corresponding key-value map for each input in the unsigned transaction.
     pub inputs: Vec<Input>,
     /// The corresponding key-value map for each output in the unsigned transaction.
@@ -55,7 +41,7 @@ pub struct Psbt {
 impl Psbt {
     /// Checks that unsigned transaction does not have scriptSig's or witness data.
     fn unsigned_tx_checks(&self) -> Result<(), Error> {
-        for txin in &self.unsigned_tx.input {
+        for txin in &self.global.unsigned_tx.input {
             if !txin.script_sig.is_empty() {
                 return Err(Error::UnsignedTxHasScriptSigs);
             }
@@ -91,7 +77,7 @@ impl Psbt {
         // separator
         written_len += write_all(w, &[0xff])?;
 
-        written_len += write_all(w, &self.serialize_map())?;
+        written_len += write_all(w, &self.global.serialize_map())?;
 
         for i in &self.inputs {
             written_len += write_all(w, &i.serialize_map())?;
@@ -124,8 +110,7 @@ impl Psbt {
             return Err(Error::InvalidSeparator);
         }
 
-        let mut global = Psbt::decode_global(r)?;
-        global.unsigned_tx_checks()?;
+        let global = Global::decode(r)?;
 
         let inputs: Vec<Input> = {
             let inputs_len: usize = (global.unsigned_tx.input).len();
@@ -151,9 +136,10 @@ impl Psbt {
             outputs
         };
 
-        global.inputs = inputs;
-        global.outputs = outputs;
-        Ok(global)
+        let psbt = Psbt { global, inputs, outputs };
+        psbt.unsigned_tx_checks()?;
+
+        Ok(psbt)
     }
 }
 
@@ -228,12 +214,12 @@ mod tests {
     use secp256k1::Secp256k1;
 
     use super::*;
-    use crate::bip32::{ChildNumber, KeySource, Xpriv};
+    use crate::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
     use crate::locktime::absolute;
     use crate::prelude::BTreeMap;
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::{ScriptBuf, ScriptBufExt as _};
-    use crate::transaction::{self, OutPoint, TxIn, TxOut};
+    use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
     use crate::{Amount, NetworkKind, Sequence, Witness};
 
     #[track_caller]
@@ -248,17 +234,18 @@ mod tests {
     #[test]
     fn trivial_psbt() {
         let psbt = Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
-                lock_time: absolute::LockTime::ZERO,
-                input: vec![],
-                output: vec![],
+            global: Global {
+                unsigned_tx: Transaction {
+                    version: transaction::Version::TWO,
+                    lock_time: absolute::LockTime::ZERO,
+                    input: vec![],
+                    output: vec![],
+                },
+                xpub: Default::default(),
+                version: 0,
+                proprietary: BTreeMap::new(),
+                unknown: BTreeMap::new(),
             },
-            xpub: Default::default(),
-            version: 0,
-            proprietary: BTreeMap::new(),
-            unknown: BTreeMap::new(),
-
             inputs: vec![],
             outputs: vec![],
         };
@@ -320,41 +307,44 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_global() {
         let expected = Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
-                lock_time: absolute::LockTime::from_consensus(1257139),
-                input: vec![TxIn {
-                    previous_output: OutPoint {
-                        txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126"
-                            .parse()
+            global: Global {
+                unsigned_tx: Transaction {
+                    version: transaction::Version::TWO,
+                    lock_time: absolute::LockTime::from_consensus(1257139),
+                    input: vec![TxIn {
+                        previous_output: OutPoint {
+                            txid:
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126"
+                                    .parse()
+                                    .unwrap(),
+                            vout: 0,
+                        },
+                        script_sig: ScriptBuf::new(),
+                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                        witness: Witness::default(),
+                    }],
+                    output: vec![
+                        TxOut {
+                            value: Amount::from_sat(99_999_699),
+                            script_pubkey: ScriptBuf::from_hex(
+                                "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
+                            )
                             .unwrap(),
-                        vout: 0,
-                    },
-                    script_sig: ScriptBuf::new(),
-                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                    witness: Witness::default(),
-                }],
-                output: vec![
-                    TxOut {
-                        value: Amount::from_sat(99_999_699),
-                        script_pubkey: ScriptBuf::from_hex(
-                            "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
-                        )
-                        .unwrap(),
-                    },
-                    TxOut {
-                        value: Amount::from_sat(100_000_000),
-                        script_pubkey: ScriptBuf::from_hex(
-                            "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
-                        )
-                        .unwrap(),
-                    },
-                ],
+                        },
+                        TxOut {
+                            value: Amount::from_sat(100_000_000),
+                            script_pubkey: ScriptBuf::from_hex(
+                                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+                            )
+                            .unwrap(),
+                        },
+                    ],
+                },
+                xpub: Default::default(),
+                version: 0,
+                proprietary: Default::default(),
+                unknown: Default::default(),
             },
-            xpub: Default::default(),
-            version: 0,
-            proprietary: Default::default(),
-            unknown: Default::default(),
             inputs: vec![Input::default()],
             outputs: vec![Output::default(), Output::default()],
         };
@@ -440,22 +430,23 @@ mod tests {
         .collect();
 
         let psbt = Psbt {
-            version: 0,
-            xpub: {
-                let xpub: Xpub =
-                    "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
-                    QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
-                vec![(xpub, key_source)].into_iter().collect()
+            global: Global {
+                version: 0,
+                xpub: {
+                    let xpub: Xpub =
+                        "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
+                         QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
+                    vec![(xpub, key_source)].into_iter().collect()
+                },
+                unsigned_tx: {
+                    let mut unsigned = tx.clone();
+                    unsigned.input[0].script_sig = ScriptBuf::new();
+                    unsigned.input[0].witness = Witness::default();
+                    unsigned
+                },
+                proprietary: proprietary.clone(),
+                unknown: unknown.clone(),
             },
-            unsigned_tx: {
-                let mut unsigned = tx.clone();
-                unsigned.input[0].script_sig = ScriptBuf::new();
-                unsigned.input[0].witness = Witness::default();
-                unsigned
-            },
-            proprietary: proprietary.clone(),
-            unknown: unknown.clone(),
-
             inputs: vec![
                 Input {
                     non_witness_utxo: Some(tx),
@@ -509,36 +500,37 @@ mod tests {
 
         // same vector as valid_vector_1 from BIPs with added
         let mut unserialized = Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
-                lock_time: absolute::LockTime::from_consensus(1257139),
-                input: vec![
-                    TxIn {
-                        previous_output: OutPoint {
-                            txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
-                            vout: 0,
+            global: Global {
+                unsigned_tx: Transaction {
+                    version: transaction::Version::TWO,
+                    lock_time: absolute::LockTime::from_consensus(1257139),
+                    input: vec![
+                        TxIn {
+                            previous_output: OutPoint {
+                                txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
+                                vout: 0,
+                            },
+                            script_sig: ScriptBuf::new(),
+                            sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                            witness: Witness::default(),
+                        }
+                    ],
+                    output: vec![
+                        TxOut {
+                            value: Amount::from_sat(99_999_699),
+                            script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                         },
-                        script_sig: ScriptBuf::new(),
-                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                        witness: Witness::default(),
-                    }
-                ],
-                output: vec![
-                    TxOut {
-                        value: Amount::from_sat(99_999_699),
-                        script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
-                    },
-                    TxOut {
-                        value: Amount::from_sat(100_000_000),
-                        script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
-                    },
-                ],
+                        TxOut {
+                            value: Amount::from_sat(100_000_000),
+                            script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                        },
+                    ],
+                },
+                version: 0,
+                xpub: Default::default(),
+                proprietary: Default::default(),
+                unknown: BTreeMap::new(),
             },
-            version: 0,
-            xpub: Default::default(),
-            proprietary: Default::default(),
-            unknown: BTreeMap::new(),
-
             inputs: vec![
                 Input {
                     non_witness_utxo: Some(Transaction {
@@ -612,12 +604,12 @@ mod tests {
     #[test]
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: Psbt = hex_psbt("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
-        psbt.proprietary.insert(
+        psbt.global.proprietary.insert(
             raw::ProprietaryKey { prefix: b"test".to_vec(), subtype: 0u8, key: b"test".to_vec() },
             b"test".to_vec(),
         );
-        assert!(!psbt.proprietary.is_empty());
+        assert!(!psbt.global.proprietary.is_empty());
         let rtt: Psbt = hex_psbt(&psbt.serialize_hex()).unwrap();
-        assert!(!rtt.proprietary.is_empty());
+        assert!(!rtt.global.proprietary.is_empty());
     }
 }

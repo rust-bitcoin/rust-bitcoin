@@ -31,7 +31,7 @@ use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+use bitcoin::psbt::{Global, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
@@ -267,21 +267,22 @@ fn serde_regression_psbt() {
     .collect();
 
     let psbt = Psbt {
-        version: 0,
-        xpub: {
-            let s = include_str!("data/serde/extended_pub_key");
-            let xpub = s.trim().parse::<Xpub>().unwrap();
-            vec![(xpub, key_source)].into_iter().collect()
+        global : Global {
+            version: 0,
+            xpub: {
+                let s = include_str!("data/serde/extended_pub_key");
+                let xpub = s.trim().parse::<Xpub>().unwrap();
+                vec![(xpub, key_source)].into_iter().collect()
+            },
+            unsigned_tx: {
+                let mut unsigned = tx.clone();
+                unsigned.input[0].script_sig = ScriptBuf::new();
+                unsigned.input[0].witness = Witness::default();
+                unsigned
+            },
+            proprietary: proprietary.clone(),
+            unknown: unknown.clone(),
         },
-        unsigned_tx: {
-            let mut unsigned = tx.clone();
-            unsigned.input[0].script_sig = ScriptBuf::new();
-            unsigned.input[0].witness = Witness::default();
-            unsigned
-        },
-        proprietary: proprietary.clone(),
-        unknown: unknown.clone(),
-
         inputs: vec![Input {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {

@@ -3,7 +3,7 @@
 use internals::ToU64 as _;
 use io::{BufRead, Cursor, Read};
 
-use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
+use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, KeySource, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
 use crate::prelude::{btree_map, BTreeMap, Vec};
@@ -11,10 +11,29 @@ use crate::psbt::consts::{
     PSBT_GLOBAL_PROPRIETARY, PSBT_GLOBAL_UNSIGNED_TX, PSBT_GLOBAL_VERSION, PSBT_GLOBAL_XPUB,
 };
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error, Psbt};
+use crate::psbt::{raw, Error};
 use crate::transaction::Transaction;
 
-impl Map for Psbt {
+/// The global key-value map.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Global {
+    /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
+    pub unsigned_tx: Transaction,
+    /// The version number of this PSBT. If omitted, the version number is 0.
+    pub version: u32,
+    /// A global map from extended public keys to the used key fingerprint and
+    /// derivation path as defined by BIP 32.
+    pub xpub: BTreeMap<Xpub, KeySource>,
+    /// Global proprietary key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
+    pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+    /// Unknown global key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
+    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
+}
+
+impl Map for Global {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
@@ -64,8 +83,8 @@ impl Map for Psbt {
     }
 }
 
-impl Psbt {
-    pub(crate) fn decode_global<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+impl Global {
+    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE.to_u64());
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
@@ -193,14 +212,12 @@ impl Psbt {
         }
 
         if let Some(tx) = tx {
-            Ok(Psbt {
+            Ok(Global {
                 unsigned_tx: tx,
                 version: version.unwrap_or(0),
                 xpub: xpub_map,
                 proprietary,
                 unknown: unknowns,
-                inputs: vec![],
-                outputs: vec![],
             })
         } else {
             Err(Error::MustHaveUnsignedTx)
