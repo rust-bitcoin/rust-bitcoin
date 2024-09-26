@@ -5,7 +5,7 @@ use core::fmt;
 use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
-use crate::opcodes::{self, Opcode};
+use crate::opcodes::Opcode;
 use crate::prelude::Vec;
 use crate::script::{ScriptBufExt as _, ScriptBufExtPriv as _, ScriptExtPriv as _};
 use crate::Sequence;
@@ -46,20 +46,23 @@ impl Builder {
     ///
     /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
     /// opcodes to push some small integers.
-    /// It doesn't check whether the integer in the range of [-2^31 +1...2^31 -1].
+    ///
+    /// This function implements `CScript::push_int64` from Core `script.h`.
+    ///
+    /// > Numeric opcodes (OP_1ADD, etc) are restricted to operating on 4-byte integers.
+    /// > The semantics are subtle, though: operands must be in the range [-2^31 +1...2^31 -1],
+    /// > but results may overflow (and are valid as long as they are not used in a subsequent
+    /// > numeric operation). CScriptNum enforces those semantics by storing results as
+    /// > an int64 and allowing out-of-range values to be returned as a vector of bytes but
+    /// > throwing an exception if arithmetic is done or the result is interpreted as an integer.
+    ///
+    /// Does not check whether `n` is in the range of [-2^31 +1...2^31 -1].
     pub fn push_int_unchecked(self, n: i64) -> Builder {
-        // We can special-case -1, 1-16
-        if n == -1 || (1..=16).contains(&n) {
-            let opcode = Opcode::from((n - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
-            self.push_opcode(opcode)
-        }
-        // We can also special-case zero
-        else if n == 0 {
-            self.push_opcode(opcodes::OP_0)
-        }
-        // Otherwise encode it as data
-        else {
-            self.push_int_non_minimal(n)
+        match n {
+            -1 => self.push_opcode(OP_PUSHNUM_NEG1),
+            0 => self.push_opcode(OP_PUSHBYTES_0),
+            1..=16 => self.push_opcode(Opcode::from(n as u8 + (OP_PUSHNUM_1.to_u8() - 1))),
+            _ => self.push_int_non_minimal(n),
         }
     }
 

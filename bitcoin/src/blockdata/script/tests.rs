@@ -916,3 +916,9 @@ fn instruction_script_num_parse() {
         Some(Ok(Instruction::PushBytes(PushBytes::empty()))),
     );
 }
+
+#[test]
+fn script_push_int_overflow() {
+    // Only errors if `data == i32::MIN` (CScriptNum cannot have value -2^31).
+    assert_eq!(Builder::new().push_int(i32::MIN), Err(Error::NumericOverflow));
+}
