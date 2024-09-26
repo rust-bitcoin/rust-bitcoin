@@ -43,6 +43,18 @@ pub struct Output {
 }
 
 impl Output {
+    pub(crate) fn decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+        let mut rv: Self = Default::default();
+
+        loop {
+            match raw::Pair::decode(r) {
+                Ok(pair) => rv.insert_pair(pair)?,
+                Err(Error::NoMorePairs) => return Ok(rv),
+                Err(e) => return Err(e),
+            }
+        }
+    }
+
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
         let raw::Pair { key: raw_key, value: raw_value } = pair;
 

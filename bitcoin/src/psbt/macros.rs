@@ -53,29 +53,8 @@ macro_rules! impl_psbtmap_deserialize {
     };
 }
 
-macro_rules! impl_psbtmap_decoding {
-    ($thing:ty) => {
-        impl $thing {
-            pub(crate) fn decode<R: $crate::io::BufRead + ?Sized>(
-                r: &mut R,
-            ) -> core::result::Result<Self, $crate::psbt::Error> {
-                let mut rv: Self = core::default::Default::default();
-
-                loop {
-                    match $crate::psbt::raw::Pair::decode(r) {
-                        Ok(pair) => rv.insert_pair(pair)?,
-                        Err($crate::psbt::Error::NoMorePairs) => return Ok(rv),
-                        Err(e) => return Err(e),
-                    }
-                }
-            }
-        }
-    };
-}
-
 macro_rules! impl_psbtmap_ser_de_serialize {
     ($thing:ty) => {
-        impl_psbtmap_decoding!($thing);
         impl_psbtmap_serialize!($thing);
         impl_psbtmap_deserialize!($thing);
     };
