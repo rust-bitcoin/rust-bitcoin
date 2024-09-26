@@ -24,7 +24,7 @@ use crate::prelude::{DisplayHex, Vec};
 #[doc(inline)]
 pub use self::{
     map::{Input, Global, Output},
-    error::Error,
+    error::DeserializeError,
     sighash_type::PsbtSighashType,
 };
 
@@ -78,23 +78,23 @@ impl Psbt {
     }
 
     /// Deserialize a value from raw binary data.
-    pub fn deserialize(mut bytes: &[u8]) -> Result<Self, Error> {
+    pub fn deserialize(mut bytes: &[u8]) -> Result<Self, DeserializeError> {
         Self::deserialize_from_reader(&mut bytes)
     }
 
     /// Deserialize a value from raw binary data read from a `BufRead` object.
-    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
+    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, DeserializeError> {
         const MAGIC_BYTES: &[u8] = b"psbt";
 
         let magic: [u8; 4] = Decodable::consensus_decode(r)?;
         if magic != MAGIC_BYTES {
-            return Err(Error::InvalidMagic);
+            return Err(DeserializeError::InvalidMagic);
         }
 
         const PSBT_SERPARATOR: u8 = 0xff_u8;
         let separator: u8 = Decodable::consensus_decode(r)?;
         if separator != PSBT_SERPARATOR {
-            return Err(Error::InvalidSeparator);
+            return Err(DeserializeError::InvalidSeparator);
         }
 
         let global = Global::decode(r)?;
@@ -139,14 +139,14 @@ mod display_from_str {
     use base64::prelude::{Engine as _, BASE64_STANDARD};
     use internals::write_err;
 
-    use super::{Error, Psbt};
+    use super::{DeserializeError, Psbt};
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
     #[non_exhaustive]
     pub enum PsbtParseError {
         /// Error in internal PSBT data structure.
-        PsbtEncoding(Error),
+        PsbtEncoding(DeserializeError),
         /// Error in PSBT Base64 encoding.
         Base64Encoding(::base64::DecodeError),
     }
@@ -210,7 +210,7 @@ mod tests {
     use crate::{Amount, NetworkKind, Sequence, Witness};
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::DeserializeError> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
@@ -240,6 +240,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn psbt_uncompressed_key() {
         let psbt: Psbt = hex_psbt("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
         assert!(psbt.inputs[0].partial_sigs.len() == 1);
@@ -286,7 +287,8 @@ mod tests {
             ..Default::default()
         };
 
-        let actual = Output::deserialize(&expected.serialize()).unwrap();
+        let mut bytes: &[u8] = &expected.serialize();
+        let actual = Output::decode(&mut bytes).unwrap();
 
         assert_eq!(expected, actual);
     }

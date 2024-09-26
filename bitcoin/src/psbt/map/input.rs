@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::fmt;
+
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use internals::write_err;
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
@@ -15,9 +18,10 @@ use crate::psbt::consts::{
     PSBT_IN_TAP_KEY_SIG, PSBT_IN_TAP_LEAF_SCRIPT, PSBT_IN_TAP_MERKLE_ROOT, PSBT_IN_TAP_SCRIPT_SIG,
     PSBT_IN_WITNESS_SCRIPT, PSBT_IN_WITNESS_UTXO,
 };
+use crate::psbt::error::PsbtHash;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
-use crate::psbt::{error, raw, Error, PsbtSighashType};
+use crate::psbt::{error, raw, serialize, PsbtSighashType};
 use crate::script::ScriptBuf;
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 use crate::transaction::{Transaction, TxOut};
@@ -98,13 +102,13 @@ impl Input {
         loop {
             match raw::Pair::decode(r) {
                 Ok(pair) => rv.insert_pair(pair)?,
-                Err(Error::NoMorePairs) => return Ok(rv),
-                Err(e) => return Err(e),
+                Err(serialize::Error::NoMorePairs) => return Ok(rv),
+                Err(e) => return Err(DecodeError::DeserPair(e)),
             }
         }
     }
 
-    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), InsertPairError> {
         let raw::Pair { key: raw_key, value: raw_value } = pair;
 
         match raw_key.type_value {
@@ -209,14 +213,16 @@ impl Input {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
                     }
-                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key)),
+                    btree_map::Entry::Occupied(_) =>
+                        return Err(InsertPairError::DuplicateKey(raw_key)),
                 }
             }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
+                btree_map::Entry::Occupied(k) =>
+                    return Err(InsertPairError::DuplicateKey(k.key().clone())),
             },
         }
 
@@ -315,4 +321,99 @@ impl Map for Input {
     }
 }
 
-impl_psbtmap_ser_de_serialize!(Input);
+impl_psbtmap_serialize!(Input);
+
+/// An error while decoding.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum DecodeError {
+    /// Error inserting a key-value pair.
+    InsertPair(InsertPairError),
+    /// Error deserializing a pair.
+    DeserPair(serialize::Error),
+}
+
+impl fmt::Display for DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use DecodeError::*;
+
+        match *self {
+            InsertPair(ref e) => write_err!(f, "error inserting a pair"; e),
+            DeserPair(ref e) => write_err!(f, "error deserializing a pair"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DecodeError::*;
+
+        match *self {
+            InsertPair(ref e) => Some(e),
+            DeserPair(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<InsertPairError> for DecodeError {
+    fn from(e: InsertPairError) -> Self { Self::InsertPair(e) }
+}
+
+/// Error inserting a key-value pair.
+#[derive(Debug)]
+pub enum InsertPairError {
+    /// Keys within key-value map should never be duplicated.
+    DuplicateKey(raw::Key),
+    /// Error deserializing raw value.
+    Deser(serialize::Error),
+    /// Key should contain data.
+    InvalidKeyDataEmpty(raw::Key),
+    /// Key should not contain data.
+    InvalidKeyDataNotEmpty(raw::Key),
+    /// The pre-image must hash to the corresponding psbt hash.
+    InvalidPreimageHashPair {
+        /// Hash-type
+        hash_type: PsbtHash,
+        /// Pre-image
+        preimage: Box<[u8]>,
+        /// Hash value
+        hash: Box<[u8]>,
+    },
+}
+
+impl fmt::Display for InsertPairError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use InsertPairError::*;
+
+        match *self {
+            DuplicateKey(ref key) => write!(f, "duplicate key: {}", key),
+            Deser(ref e) => write_err!(f, "error deserializing raw value"; e),
+            InvalidKeyDataEmpty(ref key) => write!(f, "key should contain data: {}", key),
+            InvalidKeyDataNotEmpty(ref key) => write!(f, "key should not contain data: {}", key),
+            InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
+                // directly using debug forms of psbthash enums
+                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InsertPairError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use InsertPairError::*;
+
+        match *self {
+            Deser(ref e) => Some(e),
+            DuplicateKey(_)
+            | InvalidKeyDataEmpty(_)
+            | InvalidKeyDataNotEmpty(_)
+            | InvalidPreimageHashPair { .. } => None,
+        }
+    }
+}
+
+impl From<serialize::Error> for InsertPairError {
+    fn from(e: serialize::Error) -> Self { Self::Deser(e) }
+}

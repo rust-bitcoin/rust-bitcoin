@@ -10,11 +10,11 @@
 //! > ...
 
 /// The `global-map`.
-mod global;
+pub(crate) mod global;
 /// The `input-map`.
-mod input;
+pub(crate) mod input;
 /// The `output-map`.
-mod output;
+pub(crate) mod output;
 
 use crate::prelude::Vec;
 use crate::psbt::raw;

@@ -5,23 +5,25 @@
 //! Traits to serialize PSBT values to and from raw bytes
 //! according to the BIP-174 specification.
 
+use core::fmt;
+
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use internals::write_err;
 use secp256k1::XOnlyPublicKey;
 
 use super::PsbtSighashType;
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
+use crate::crypto::key::{self, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::Vec;
-use crate::psbt::Error;
 use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-use crate::VarInt;
+use crate::{absolute, VarInt};
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -124,7 +126,7 @@ impl Serialize for KeySource {
 impl Deserialize for KeySource {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 4 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+            return Err(Error::NotEnoughData);
         }
 
         let fprint: Fingerprint = bytes[0..4].try_into().expect("4 is the fingerprint length");
@@ -202,7 +204,7 @@ impl Serialize for (XOnlyPublicKey, TapLeafHash) {
 impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 32 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+            return Err(Error::NotEnoughData);
         }
         let a: XOnlyPublicKey = Deserialize::deserialize(&bytes[..32])?;
         let b: TapLeafHash = Deserialize::deserialize(&bytes[32..])?;
@@ -233,7 +235,7 @@ impl Serialize for (ScriptBuf, LeafVersion) {
 impl Deserialize for (ScriptBuf, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+            return Err(Error::NotEnoughData);
         }
         // The last byte is LeafVersion.
         let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
@@ -306,6 +308,110 @@ impl Deserialize for TapTree {
 
 // Helper function to compute key source len
 fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_ref().len() }
+
+// TODO: This error is still too general but splitting it up is
+// non-trivial because it is returned by the Deserialize trait.
+/// Ways that deserializing a PSBT might fail.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum Error {
+    /// Not enough data to deserialize object.
+    NotEnoughData,
+    /// Non-proprietary key type found when proprietary key was expected
+    InvalidProprietaryKey,
+    /// Signals that there are no more key-value pairs in a key-value map.
+    NoMorePairs,
+    /// Unable to parse as a standard sighash type.
+    NonStandardSighashType(u32),
+    /// Invalid hash when parsing slice.
+    InvalidHash(hashes::FromSliceError),
+    /// Serialization error in bitcoin consensus-encoded structures
+    ConsensusEncoding(encode::Error),
+    /// Parsing error indicating invalid public keys
+    InvalidPublicKey(key::FromSliceError),
+    /// Parsing error indicating invalid secp256k1 public keys
+    InvalidSecp256k1PublicKey(secp256k1::Error),
+    /// Parsing error indicating invalid xonly public keys
+    InvalidXOnlyPublicKey,
+    /// Parsing error indicating invalid ECDSA signatures
+    InvalidEcdsaSignature(ecdsa::DecodeError),
+    /// Parsing error indicating invalid taproot signatures
+    InvalidTaprootSignature(taproot::SigFromSliceError),
+    /// Parsing error indicating invalid control block
+    InvalidControlBlock,
+    /// Parsing error indicating invalid leaf version
+    InvalidLeafVersion,
+    /// Parsing error indicating a taproot error
+    Taproot(&'static str),
+    /// Taproot tree deserilaization error
+    TapTree(crate::taproot::IncompleteBuilderError),
+    /// Couldn't converting parsed u32 to a lock time.
+    LockTime(absolute::ConversionError),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
+        match *self {
+            NotEnoughData => f.write_str("not enough data to deserialize object"),
+            InvalidProprietaryKey =>
+                write!(f, "non-proprietary key type found when proprietary key was expected"),
+            NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
+            NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
+            ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
+            InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
+            InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
+            InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
+            InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
+            InvalidControlBlock => f.write_str("invalid control block"),
+            InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Taproot(s) => write!(f, "taproot error -  {}", s),
+            TapTree(ref e) => write_err!(f, "taproot tree error"; e),
+            LockTime(ref e) => write_err!(f, "parsed locktime invalid"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use Error::*;
+
+        match *self {
+            InvalidHash(ref e) => Some(e),
+            ConsensusEncoding(ref e) => Some(e),
+            LockTime(ref e) => Some(e),
+            NotEnoughData
+            | InvalidProprietaryKey
+            | NoMorePairs
+            | NonStandardSighashType(_)
+            | InvalidPublicKey(_)
+            | InvalidSecp256k1PublicKey(_)
+            | InvalidXOnlyPublicKey
+            | InvalidEcdsaSignature(_)
+            | InvalidTaprootSignature(_)
+            | InvalidControlBlock
+            | InvalidLeafVersion
+            | Taproot(_)
+            | TapTree(_) => None,
+        }
+    }
+}
+
+impl From<hashes::FromSliceError> for Error {
+    fn from(e: hashes::FromSliceError) -> Self { Self::InvalidHash(e) }
+}
+
+impl From<encode::Error> for Error {
+    fn from(e: encode::Error) -> Self { Self::ConsensusEncoding(e) }
+}
+
+impl From<absolute::ConversionError> for Error {
+    fn from(e: absolute::ConversionError) -> Self { Self::LockTime(e) }
+}
 
 #[cfg(test)]
 mod tests {

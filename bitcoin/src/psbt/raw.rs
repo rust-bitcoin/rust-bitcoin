@@ -15,7 +15,7 @@ use crate::consensus::encode::{
     self, deserialize, serialize, Decodable, Encodable, ReadExt, VarInt, WriteExt, MAX_VEC_SIZE,
 };
 use crate::prelude::{DisplayHex, Vec};
-use crate::psbt::Error;
+use crate::psbt::serialize;
 
 /// A PSBT key in its raw byte form.
 ///
@@ -72,11 +72,11 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, serialize::Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
 
         if byte_size == 0 {
-            return Err(Error::NoMorePairs);
+            return Err(serialize::Error::NoMorePairs);
         }
 
         let key_byte_size: u64 = byte_size - 1;
@@ -128,14 +128,14 @@ impl Serialize for Pair {
 }
 
 impl Deserialize for Pair {
-    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+    fn deserialize(bytes: &[u8]) -> Result<Self, serialize::Error> {
         let mut decoder = bytes;
         Pair::decode(&mut decoder)
     }
 }
 
 impl Pair {
-    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, serialize::Error> {
         Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
     }
 }
@@ -182,16 +182,16 @@ impl<Subtype> TryFrom<Key> for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u8> + Into<u8>,
 {
-    type Error = Error;
+    type Error = serialize::Error;
 
     /// Constructs a [`ProprietaryKey`] from a [`Key`].
     ///
     /// # Errors
     ///
-    /// Returns [`Error::InvalidProprietaryKey`] if `key` does not start with `0xFC` byte.
+    /// Returns [`serialize::Error::InvalidProprietaryKey`] if `key` does not start with `0xFC` byte.
     fn try_from(key: Key) -> Result<Self, Self::Error> {
         if key.type_value != 0xFC {
-            return Err(Error::InvalidProprietaryKey);
+            return Err(serialize::Error::InvalidProprietaryKey);
         }
 
         Ok(deserialize(&key.key_data)?)

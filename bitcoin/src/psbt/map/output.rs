@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::fmt;
+
+use internals::write_err;
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
@@ -10,7 +13,7 @@ use crate::psbt::consts::{
     PSBT_OUT_WITNESS_SCRIPT,
 };
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error};
+use crate::psbt::{raw, serialize};
 use crate::script::ScriptBuf;
 use crate::taproot::{TapLeafHash, TapTree};
 
@@ -43,19 +46,19 @@ pub struct Output {
 }
 
 impl Output {
-    pub(crate) fn decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, DecodeError> {
         let mut rv: Self = Default::default();
 
         loop {
             match raw::Pair::decode(r) {
                 Ok(pair) => rv.insert_pair(pair)?,
-                Err(Error::NoMorePairs) => return Ok(rv),
-                Err(e) => return Err(e),
+                Err(serialize::Error::NoMorePairs) => return Ok(rv),
+                Err(e) => return Err(DecodeError::DeserPair(e)),
             }
         }
     }
 
-    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), InsertPairError> {
         let raw::Pair { key: raw_key, value: raw_value } = pair;
 
         match raw_key.type_value {
@@ -80,7 +83,8 @@ impl Output {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
                     }
-                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key)),
+                    btree_map::Entry::Occupied(_) =>
+                        return Err(InsertPairError::DuplicateKey(raw_key)),
                 }
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
@@ -102,7 +106,8 @@ impl Output {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
+                btree_map::Entry::Occupied(k) =>
+                    return Err(InsertPairError::DuplicateKey(k.key().clone())),
             },
         }
 
@@ -150,4 +155,83 @@ impl Map for Output {
     }
 }
 
-impl_psbtmap_ser_de_serialize!(Output);
+impl_psbtmap_serialize!(Output);
+
+/// An error while decoding.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum DecodeError {
+    /// Error inserting a key-value pair.
+    InsertPair(InsertPairError),
+    /// Error deserializing a pair.
+    DeserPair(serialize::Error),
+}
+
+impl fmt::Display for DecodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use DecodeError::*;
+
+        match *self {
+            InsertPair(ref e) => write_err!(f, "error inserting a pair"; e),
+            DeserPair(ref e) => write_err!(f, "error deserializing a pair"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DecodeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DecodeError::*;
+
+        match *self {
+            InsertPair(ref e) => Some(e),
+            DeserPair(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<InsertPairError> for DecodeError {
+    fn from(e: InsertPairError) -> Self { Self::InsertPair(e) }
+}
+
+/// Error inserting a key-value pair.
+#[derive(Debug)]
+pub enum InsertPairError {
+    /// Keys within key-value map should never be duplicated.
+    DuplicateKey(raw::Key),
+    /// Error deserializing raw value.
+    Deser(serialize::Error),
+    /// Key should contain data.
+    InvalidKeyDataEmpty(raw::Key),
+    /// Key should not contain data.
+    InvalidKeyDataNotEmpty(raw::Key),
+}
+
+impl fmt::Display for InsertPairError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use InsertPairError::*;
+
+        match *self {
+            DuplicateKey(ref key) => write!(f, "duplicate key: {}", key),
+            Deser(ref e) => write_err!(f, "error deserializing raw value"; e),
+            InvalidKeyDataEmpty(ref key) => write!(f, "key should contain data: {}", key),
+            InvalidKeyDataNotEmpty(ref key) => write!(f, "key should not contain data: {}", key),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InsertPairError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use InsertPairError::*;
+
+        match *self {
+            Deser(ref e) => Some(e),
+            DuplicateKey(_) | InvalidKeyDataEmpty(_) | InvalidKeyDataNotEmpty(_) => None,
+        }
+    }
+}
+
+impl From<serialize::Error> for InsertPairError {
+    fn from(e: serialize::Error) -> Self { Self::Deser(e) }
+}
