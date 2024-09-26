@@ -13,6 +13,7 @@ mod error;
 mod map;
 pub mod raw;
 pub mod serialize;
+mod sighash_type;
 
 use self::map::Map;
 use crate::consensus::encode::Decodable;
@@ -22,8 +23,9 @@ use crate::prelude::{DisplayHex, Vec};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    map::{Input, Global, Output, PsbtSighashType},
+    map::{Input, Global, Output},
     error::Error,
+    sighash_type::PsbtSighashType,
 };
 
 /// A Partially Signed Transaction.
