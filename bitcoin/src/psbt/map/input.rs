@@ -19,9 +19,6 @@ use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error, PsbtSighashType};
 use crate::script::ScriptBuf;
-use crate::sighash::{
-    EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, TapSighashType,
-};
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
@@ -95,31 +92,7 @@ pub struct Input {
 }
 
 impl Input {
-    /// Obtains the [`EcdsaSighashType`] for this input if one is specified. If no sighash type is
-    /// specified, returns [`EcdsaSighashType::All`].
-    ///
-    /// # Errors
-    ///
-    /// If the `sighash_type` field is set to a non-standard ECDSA sighash value.
-    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
-        self.sighash_type
-            .map(|sighash_type| sighash_type.ecdsa_hash_ty())
-            .unwrap_or(Ok(EcdsaSighashType::All))
-    }
-
-    /// Obtains the [`TapSighashType`] for this input if one is specified. If no sighash type is
-    /// specified, returns [`TapSighashType::Default`].
-    ///
-    /// # Errors
-    ///
-    /// If the `sighash_type` field is set to a invalid Taproot sighash value.
-    pub fn taproot_hash_ty(&self) -> Result<TapSighashType, InvalidSighashTypeError> {
-        self.sighash_type
-            .map(|sighash_type| sighash_type.taproot_hash_ty())
-            .unwrap_or(Ok(TapSighashType::Default))
-    }
-
-    pub(crate) fn decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Self, DecodeError> {
         let mut rv: Self = Default::default();
 
         loop {
@@ -248,36 +221,6 @@ impl Input {
         }
 
         Ok(())
-    }
-
-    /// Combines this [`Input`] with `other` `Input` (as described by BIP 174).
-    pub fn combine(&mut self, other: Self) {
-        combine!(non_witness_utxo, self, other);
-
-        if let (&None, Some(witness_utxo)) = (&self.witness_utxo, other.witness_utxo) {
-            self.witness_utxo = Some(witness_utxo);
-            self.non_witness_utxo = None; // Clear out any non-witness UTXO when we set a witness one
-        }
-
-        self.partial_sigs.extend(other.partial_sigs);
-        self.bip32_derivation.extend(other.bip32_derivation);
-        self.ripemd160_preimages.extend(other.ripemd160_preimages);
-        self.sha256_preimages.extend(other.sha256_preimages);
-        self.hash160_preimages.extend(other.hash160_preimages);
-        self.hash256_preimages.extend(other.hash256_preimages);
-        self.tap_script_sigs.extend(other.tap_script_sigs);
-        self.tap_scripts.extend(other.tap_scripts);
-        self.tap_key_origins.extend(other.tap_key_origins);
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-
-        combine!(redeem_script, self, other);
-        combine!(witness_script, self, other);
-        combine!(final_script_sig, self, other);
-        combine!(final_script_witness, self, other);
-        combine!(tap_key_sig, self, other);
-        combine!(tap_internal_key, self, other);
-        combine!(tap_merkle_root, self, other);
     }
 }
 
