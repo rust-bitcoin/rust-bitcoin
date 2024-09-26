@@ -14,13 +14,13 @@ mod map;
 pub mod raw;
 pub mod serialize;
 
-use core::{cmp, fmt};
+use core::fmt;
 
 use internals::write_err;
 
 use crate::bip32::{KeySource, Xpub};
-use crate::prelude::{btree_map, BTreeMap, Box, Vec};
-use crate::transaction::{self, Transaction, TxOut};
+use crate::prelude::{BTreeMap, Vec};
+use crate::transaction::{self, Transaction};
 use crate::sighash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -69,180 +69,6 @@ impl Psbt {
 
         Ok(())
     }
-
-    /// Creates a PSBT from an unsigned transaction.
-    ///
-    /// # Errors
-    ///
-    /// If transactions is not unsigned.
-    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
-        let psbt = Psbt {
-            inputs: vec![Default::default(); tx.input.len()],
-            outputs: vec![Default::default(); tx.output.len()],
-
-            unsigned_tx: tx,
-            xpub: Default::default(),
-            version: 0,
-            proprietary: Default::default(),
-            unknown: Default::default(),
-        };
-        psbt.unsigned_tx_checks()?;
-        Ok(psbt)
-    }
-
-    /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
-    ///
-    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
-    pub fn combine(&mut self, other: Self) -> Result<(), Error> {
-        if self.unsigned_tx != other.unsigned_tx {
-            return Err(Error::UnexpectedUnsignedTx {
-                expected: Box::new(self.unsigned_tx.clone()),
-                actual: Box::new(other.unsigned_tx),
-            });
-        }
-
-        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
-        //          the specification. It can pick arbitrarily when conflicts occur.
-
-        // Keeping the highest version
-        self.version = cmp::max(self.version, other.version);
-
-        // Merging xpubs
-        for (xpub, (fingerprint1, derivation1)) in other.xpub {
-            match self.xpub.entry(xpub) {
-                btree_map::Entry::Vacant(entry) => {
-                    entry.insert((fingerprint1, derivation1));
-                }
-                btree_map::Entry::Occupied(mut entry) => {
-                    // Here in case of the conflict we select the version with algorithm:
-                    // 1) if everything is equal we do nothing
-                    // 2) report an error if
-                    //    - derivation paths are equal and fingerprints are not
-                    //    - derivation paths are of the same length, but not equal
-                    //    - derivation paths has different length, but the shorter one
-                    //      is not the strict suffix of the longer one
-                    // 3) choose longest derivation otherwise
-
-                    let (fingerprint2, derivation2) = entry.get().clone();
-
-                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2)
-                        || (derivation1.len() < derivation2.len()
-                            && derivation1[..]
-                                == derivation2[derivation2.len() - derivation1.len()..])
-                    {
-                        continue;
-                    } else if derivation2[..]
-                        == derivation1[derivation1.len() - derivation2.len()..]
-                    {
-                        entry.insert((fingerprint1, derivation1));
-                        continue;
-                    }
-                    return Err(Error::CombineInconsistentKeySources(Box::new(xpub)));
-                }
-            }
-        }
-
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
-            self_input.combine(other_input);
-        }
-
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
-            self_output.combine(other_output);
-        }
-
-        Ok(())
-    }
-
-    /// Returns the spending utxo for this PSBT's input at `input_index`.
-    pub fn spend_utxo(&self, input_index: usize) -> Result<&TxOut, SignError> {
-        let input = self.checked_input(input_index)?;
-        let utxo = if let Some(witness_utxo) = &input.witness_utxo {
-            witness_utxo
-        } else if let Some(non_witness_utxo) = &input.non_witness_utxo {
-            let vout = self.unsigned_tx.input[input_index].previous_output.vout;
-            &non_witness_utxo.output[vout as usize]
-        } else {
-            return Err(SignError::MissingSpendUtxo);
-        };
-        Ok(utxo)
-    }
-
-    /// Gets the input at `input_index` after checking that it is a valid index.
-    fn checked_input(&self, input_index: usize) -> Result<&Input, IndexOutOfBoundsError> {
-        self.check_index_is_within_bounds(input_index)?;
-        Ok(&self.inputs[input_index])
-    }
-
-    /// Checks `input_index` is within bounds for the PSBT `inputs` array and
-    /// for the PSBT `unsigned_tx` `input` array.
-    fn check_index_is_within_bounds(
-        &self,
-        input_index: usize,
-    ) -> Result<(), IndexOutOfBoundsError> {
-        if input_index >= self.inputs.len() {
-            return Err(IndexOutOfBoundsError::Inputs {
-                index: input_index,
-                length: self.inputs.len(),
-            });
-        }
-
-        if input_index >= self.unsigned_tx.input.len() {
-            return Err(IndexOutOfBoundsError::TxInput {
-                index: input_index,
-                length: self.unsigned_tx.input.len(),
-            });
-        }
-
-        Ok(())
-    }
-}
-
-/// The various output types supported by the Bitcoin network.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[non_exhaustive]
-pub enum OutputType {
-    /// An output of type: pay-to-pubkey or pay-to-pubkey-hash.
-    Bare,
-    /// A pay-to-witness-pubkey-hash output (P2WPKH).
-    Wpkh,
-    /// A pay-to-witness-script-hash output (P2WSH).
-    Wsh,
-    /// A nested segwit output, pay-to-witness-pubkey-hash nested in a pay-to-script-hash.
-    ShWpkh,
-    /// A nested segwit output, pay-to-witness-script-hash nested in a pay-to-script-hash.
-    ShWsh,
-    /// A pay-to-script-hash output excluding wrapped segwit (P2SH).
-    Sh,
-    /// A Taproot output (P2TR).
-    Tr,
-}
-
-impl OutputType {
-    /// The signing algorithm used to sign this output type.
-    pub fn signing_algorithm(&self) -> SigningAlgorithm {
-        use OutputType::*;
-
-        match self {
-            Bare | Wpkh | Wsh | ShWpkh | ShWsh | Sh => SigningAlgorithm::Ecdsa,
-            Tr => SigningAlgorithm::Schnorr,
-        }
-    }
-}
-
-/// Signing algorithms supported by the Bitcoin network.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum SigningAlgorithm {
-    /// The Elliptic Curve Digital Signature Algorithm (see [wikipedia]).
-    ///
-    /// [wikipedia]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
-    Ecdsa,
-    /// The Schnorr signature algorithm (see [wikipedia]).
-    ///
-    /// [wikipedia]: https://en.wikipedia.org/wiki/Schnorr_signature
-    Schnorr,
 }
 
 /// Errors encountered while calculating the sighash message.
