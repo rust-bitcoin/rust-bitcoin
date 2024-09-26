@@ -21,7 +21,7 @@ use internals::write_err;
 use crate::bip32::{KeySource, Xpub};
 use crate::prelude::{btree_map, BTreeMap, Box, Vec};
 use crate::transaction::{self, Transaction, TxOut};
-use crate::{sighash, Amount, FeeRate};
+use crate::sighash;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -55,32 +55,6 @@ pub struct Psbt {
 }
 
 impl Psbt {
-    /// Returns an iterator for the funding UTXOs of the psbt
-    ///
-    /// For each PSBT input that contains UTXO information `Ok` is returned containing that information.
-    /// The order of returned items is same as the order of inputs.
-    ///
-    /// # Errors
-    ///
-    /// The function returns error when UTXO information is not present or is invalid.
-    ///
-    /// # Panics
-    ///
-    /// The function panics if the length of transaction inputs is not equal to the length of PSBT inputs.
-    pub fn iter_funding_utxos(&self) -> impl Iterator<Item = Result<&TxOut, Error>> {
-        assert_eq!(self.inputs.len(), self.unsigned_tx.input.len());
-        self.unsigned_tx.input.iter().zip(&self.inputs).map(|(tx_input, psbt_input)| {
-            match (&psbt_input.witness_utxo, &psbt_input.non_witness_utxo) {
-                (Some(witness_utxo), _) => Ok(witness_utxo),
-                (None, Some(non_witness_utxo)) => {
-                    let vout = tx_input.previous_output.vout as usize;
-                    non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
-                }
-                (None, None) => Err(Error::MissingUtxo),
-            }
-        })
-    }
-
     /// Checks that unsigned transaction does not have scriptSig's or witness data.
     fn unsigned_tx_checks(&self) -> Result<(), Error> {
         for txin in &self.unsigned_tx.input {
@@ -114,97 +88,6 @@ impl Psbt {
         };
         psbt.unsigned_tx_checks()?;
         Ok(psbt)
-    }
-
-    /// The default `max_fee_rate` value used for extracting transactions with [`extract_tx`]
-    ///
-    /// As of 2023, even the biggest overpayers during the highest fee markets only paid around
-    /// 1000 sats/vByte. 25k sats/vByte is obviously a mistake at this point.
-    ///
-    /// [`extract_tx`]: Psbt::extract_tx
-    pub const DEFAULT_MAX_FEE_RATE: FeeRate = FeeRate::from_sat_per_vb_unchecked(25_000);
-
-    /// An alias for [`extract_tx_fee_rate_limit`].
-    ///
-    /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
-    pub fn extract_tx(self) -> Result<Transaction, ExtractTxError> {
-        self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
-    }
-
-    /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
-    ///
-    /// # Errors
-    ///
-    /// [`ExtractTxError`] variants will contain either the [`Psbt`] itself or the [`Transaction`]
-    /// that was extracted. These can be extracted from the Errors in order to recover.
-    /// See the error documentation for info on the variants. In general, it covers large fees.
-    pub fn extract_tx_fee_rate_limit(self) -> Result<Transaction, ExtractTxError> {
-        self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
-    }
-
-    /// Extracts the [`Transaction`] from a [`Psbt`] by filling in the available signature information.
-    ///
-    /// # Errors
-    ///
-    /// See [`extract_tx`].
-    ///
-    /// [`extract_tx`]: Psbt::extract_tx
-    pub fn extract_tx_with_fee_rate_limit(
-        self,
-        max_fee_rate: FeeRate,
-    ) -> Result<Transaction, ExtractTxError> {
-        self.internal_extract_tx_with_fee_rate_limit(max_fee_rate)
-    }
-
-    /// Perform [`extract_tx_fee_rate_limit`] without the fee rate check.
-    ///
-    /// This can result in a transaction with absurdly high fees. Use with caution.
-    ///
-    /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
-    pub fn extract_tx_unchecked_fee_rate(self) -> Transaction { self.internal_extract_tx() }
-
-    #[inline]
-    fn internal_extract_tx(self) -> Transaction {
-        let mut tx: Transaction = self.unsigned_tx;
-
-        for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
-            vin.witness = psbtin.final_script_witness.unwrap_or_default();
-        }
-
-        tx
-    }
-
-    #[inline]
-    fn internal_extract_tx_with_fee_rate_limit(
-        self,
-        max_fee_rate: FeeRate,
-    ) -> Result<Transaction, ExtractTxError> {
-        let fee = match self.fee() {
-            Ok(fee) => fee,
-            Err(Error::MissingUtxo) =>
-                return Err(ExtractTxError::MissingInputValue { tx: self.internal_extract_tx() }),
-            Err(Error::NegativeFee) => return Err(ExtractTxError::SendingTooMuch { psbt: self }),
-            Err(Error::FeeOverflow) =>
-                return Err(ExtractTxError::AbsurdFeeRate {
-                    fee_rate: FeeRate::MAX,
-                    tx: self.internal_extract_tx(),
-                }),
-            _ => unreachable!(),
-        };
-
-        // Note: Move prevents usage of &self from now on.
-        let tx = self.internal_extract_tx();
-
-        // Now that the extracted Transaction is made, decide how to return it.
-        let fee_rate =
-            FeeRate::from_sat_per_kwu(fee.to_sat().saturating_mul(1000) / tx.weight().to_wu());
-        // Prefer to return an AbsurdFeeRate error when both trigger.
-        if fee_rate > max_fee_rate {
-            return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
-        }
-
-        Ok(tx)
     }
 
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
@@ -314,28 +197,6 @@ impl Psbt {
         }
 
         Ok(())
-    }
-
-    /// Calculates transaction fee.
-    ///
-    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
-    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
-    /// - [`Error::NegativeFee`] if calculated value is negative.
-    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
-    pub fn fee(&self) -> Result<Amount, Error> {
-        let mut inputs: u64 = 0;
-        for utxo in self.iter_funding_utxos() {
-            inputs = inputs.checked_add(utxo?.value.to_sat()).ok_or(Error::FeeOverflow)?;
-        }
-        let mut outputs: u64 = 0;
-        for out in &self.unsigned_tx.output {
-            outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
-        }
-        inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
     }
 }
 
@@ -488,60 +349,6 @@ impl From<sighash::TaprootError> for SignError {
     fn from(e: sighash::TaprootError) -> Self { SignError::TaprootError(e) }
 }
 
-/// This error is returned when extracting a [`Transaction`] from a [`Psbt`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum ExtractTxError {
-    /// The [`FeeRate`] is too high
-    AbsurdFeeRate {
-        /// The [`FeeRate`]
-        fee_rate: FeeRate,
-        /// The extracted [`Transaction`] (use this to ignore the error)
-        tx: Transaction,
-    },
-    /// One or more of the inputs lacks value information (witness_utxo or non_witness_utxo)
-    MissingInputValue {
-        /// The extracted [`Transaction`] (use this to ignore the error)
-        tx: Transaction,
-    },
-    /// Input value is less than Output Value, and the [`Transaction`] would be invalid.
-    SendingTooMuch {
-        /// The original [`Psbt`] is returned untouched.
-        psbt: Psbt,
-    },
-}
-
-internals::impl_from_infallible!(ExtractTxError);
-
-impl fmt::Display for ExtractTxError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use ExtractTxError::*;
-
-        match *self {
-            AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "an absurdly high fee rate of {}", fee_rate),
-            MissingInputValue { .. } => write!(
-                f,
-                "one of the inputs lacked value information (witness_utxo or non_witness_utxo)"
-            ),
-            SendingTooMuch { .. } => write!(
-                f,
-                "transaction would be invalid due to output value being greater than input value."
-            ),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for ExtractTxError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ExtractTxError::*;
-
-        match *self {
-            AbsurdFeeRate { .. } | MissingInputValue { .. } | SendingTooMuch { .. } => None,
-        }
-    }
-}
 
 /// Input index out of bounds (actual index, maximum index allowed).
 #[derive(Debug, Clone, PartialEq, Eq)]
