@@ -11,4 +11,4 @@ FEATURES_WITH_STD="rand-std serde secp-recovery bitcoinconsensus base64 ordered 
 FEATURES_WITHOUT_STD="rand serde secp-recovery bitcoinconsensus base64 ordered arbitrary"
 
 # Run these examples.
-EXAMPLES="ecdsa-psbt:std,bitcoinconsensus sign-tx-segwit-v0:rand-std sign-tx-taproot:rand-std taproot-psbt:bitcoinconsensus,rand-std sighash:std"
+EXAMPLES="sign-tx-segwit-v0:rand-std sign-tx-taproot:rand-std sighash:std"
