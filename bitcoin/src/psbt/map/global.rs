@@ -33,56 +33,6 @@ pub struct Global {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-impl Map for Global {
-    fn get_pairs(&self) -> Vec<raw::Pair> {
-        let mut rv: Vec<raw::Pair> = Default::default();
-
-        rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
-            value: {
-                // Manually serialized to ensure 0-input txs are serialized
-                // without witnesses.
-                let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
-                ret
-            },
-        });
-
-        for (xpub, (fingerprint, derivation)) in &self.xpub {
-            rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_XPUB, key_data: xpub.encode().to_vec() },
-                value: {
-                    let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
-                    ret.extend(fingerprint.as_bytes());
-                    derivation.into_iter().for_each(|n| ret.extend(&u32::from(*n).to_le_bytes()));
-                    ret
-                },
-            });
-        }
-
-        // Serializing version only for non-default value; otherwise test vectors fail
-        if self.version > 0 {
-            rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key_data: vec![] },
-                value: self.version.to_le_bytes().to_vec(),
-            });
-        }
-
-        for (key, value) in self.proprietary.iter() {
-            rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
-        }
-
-        for (key, value) in self.unknown.iter() {
-            rv.push(raw::Pair { key: key.clone(), value: value.clone() });
-        }
-
-        rv
-    }
-}
-
 impl Global {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE.to_u64());
@@ -222,5 +172,55 @@ impl Global {
         } else {
             Err(Error::MustHaveUnsignedTx)
         }
+    }
+}
+
+impl Map for Global {
+    fn get_pairs(&self) -> Vec<raw::Pair> {
+        let mut rv: Vec<raw::Pair> = Default::default();
+
+        rv.push(raw::Pair {
+            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
+            value: {
+                // Manually serialized to ensure 0-input txs are serialized
+                // without witnesses.
+                let mut ret = Vec::new();
+                ret.extend(encode::serialize(&self.unsigned_tx.version));
+                ret.extend(encode::serialize(&self.unsigned_tx.input));
+                ret.extend(encode::serialize(&self.unsigned_tx.output));
+                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
+                ret
+            },
+        });
+
+        for (xpub, (fingerprint, derivation)) in &self.xpub {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_XPUB, key_data: xpub.encode().to_vec() },
+                value: {
+                    let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
+                    ret.extend(fingerprint.as_bytes());
+                    derivation.into_iter().for_each(|n| ret.extend(&u32::from(*n).to_le_bytes()));
+                    ret
+                },
+            });
+        }
+
+        // Serializing version only for non-default value; otherwise test vectors fail
+        if self.version > 0 {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key_data: vec![] },
+                value: self.version.to_le_bytes().to_vec(),
+            });
+        }
+
+        for (key, value) in self.proprietary.iter() {
+            rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
+        }
+
+        for (key, value) in self.unknown.iter() {
+            rv.push(raw::Pair { key: key.clone(), value: value.clone() });
+        }
+
+        rv
     }
 }
