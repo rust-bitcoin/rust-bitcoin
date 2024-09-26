@@ -173,6 +173,21 @@ impl Global {
             Err(Error::MustHaveUnsignedTx)
         }
     }
+
+    /// Checks that unsigned transaction does not have scriptSig's or witness data.
+    pub(crate) fn unsigned_tx_checks(&self) -> Result<(), Error> {
+        for txin in &self.unsigned_tx.input {
+            if !txin.script_sig.is_empty() {
+                return Err(Error::UnsignedTxHasScriptSigs);
+            }
+
+            if !txin.witness.is_empty() {
+                return Err(Error::UnsignedTxHasScriptWitnesses);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl Map for Global {

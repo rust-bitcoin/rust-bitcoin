@@ -39,21 +39,6 @@ pub struct Psbt {
 }
 
 impl Psbt {
-    /// Checks that unsigned transaction does not have scriptSig's or witness data.
-    fn unsigned_tx_checks(&self) -> Result<(), Error> {
-        for txin in &self.global.unsigned_tx.input {
-            if !txin.script_sig.is_empty() {
-                return Err(Error::UnsignedTxHasScriptSigs);
-            }
-
-            if !txin.witness.is_empty() {
-                return Err(Error::UnsignedTxHasScriptWitnesses);
-            }
-        }
-
-        Ok(())
-    }
-
     /// Serialize a value as bytes in hex.
     pub fn serialize_hex(&self) -> String { self.serialize().to_lower_hex_string() }
 
@@ -111,6 +96,7 @@ impl Psbt {
         }
 
         let global = Global::decode(r)?;
+        global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
             let inputs_len: usize = (global.unsigned_tx.input).len();
@@ -137,7 +123,6 @@ impl Psbt {
         };
 
         let psbt = Psbt { global, inputs, outputs };
-        psbt.unsigned_tx_checks()?;
 
         Ok(psbt)
     }
