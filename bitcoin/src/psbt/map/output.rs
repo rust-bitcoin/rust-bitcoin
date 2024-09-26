@@ -4,25 +4,15 @@ use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
 use crate::prelude::{btree_map, BTreeMap, Vec};
+use crate::psbt::consts::{
+    PSBT_OUT_BIP32_DERIVATION, PSBT_OUT_PROPRIETARY, PSBT_OUT_REDEEM_SCRIPT,
+    PSBT_OUT_TAP_BIP32_DERIVATION, PSBT_OUT_TAP_INTERNAL_KEY, PSBT_OUT_TAP_TREE,
+    PSBT_OUT_WITNESS_SCRIPT,
+};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
 use crate::script::ScriptBuf;
 use crate::taproot::{TapLeafHash, TapTree};
-
-/// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
-const PSBT_OUT_REDEEM_SCRIPT: u64 = 0x00;
-/// Type: Witness ScriptBuf PSBT_OUT_WITNESS_SCRIPT = 0x01
-const PSBT_OUT_WITNESS_SCRIPT: u64 = 0x01;
-/// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
-const PSBT_OUT_BIP32_DERIVATION: u64 = 0x02;
-/// Type: Taproot Internal Key PSBT_OUT_TAP_INTERNAL_KEY = 0x05
-const PSBT_OUT_TAP_INTERNAL_KEY: u64 = 0x05;
-/// Type: Taproot Tree PSBT_OUT_TAP_TREE = 0x06
-const PSBT_OUT_TAP_TREE: u64 = 0x06;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
-const PSBT_OUT_TAP_BIP32_DERIVATION: u64 = 0x07;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
-const PSBT_OUT_PROPRIETARY: u64 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.

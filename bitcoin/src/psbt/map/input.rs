@@ -10,6 +10,14 @@ use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
+use crate::psbt::consts::{
+    PSBT_IN_BIP32_DERIVATION, PSBT_IN_FINAL_SCRIPTSIG, PSBT_IN_FINAL_SCRIPTWITNESS,
+    PSBT_IN_HASH160, PSBT_IN_HASH256, PSBT_IN_NON_WITNESS_UTXO, PSBT_IN_PARTIAL_SIG,
+    PSBT_IN_PROPRIETARY, PSBT_IN_REDEEM_SCRIPT, PSBT_IN_RIPEMD160, PSBT_IN_SHA256,
+    PSBT_IN_SIGHASH_TYPE, PSBT_IN_TAP_BIP32_DERIVATION, PSBT_IN_TAP_INTERNAL_KEY,
+    PSBT_IN_TAP_KEY_SIG, PSBT_IN_TAP_LEAF_SCRIPT, PSBT_IN_TAP_MERKLE_ROOT, PSBT_IN_TAP_SCRIPT_SIG,
+    PSBT_IN_WITNESS_SCRIPT, PSBT_IN_WITNESS_UTXO,
+};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{error, raw, Error};
@@ -21,47 +29,6 @@ use crate::sighash::{
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-
-/// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
-const PSBT_IN_NON_WITNESS_UTXO: u64 = 0x00;
-/// Type: Witness UTXO PSBT_IN_WITNESS_UTXO = 0x01
-const PSBT_IN_WITNESS_UTXO: u64 = 0x01;
-/// Type: Partial Signature PSBT_IN_PARTIAL_SIG = 0x02
-const PSBT_IN_PARTIAL_SIG: u64 = 0x02;
-/// Type: Sighash Type PSBT_IN_SIGHASH_TYPE = 0x03
-const PSBT_IN_SIGHASH_TYPE: u64 = 0x03;
-/// Type: Redeem Script PSBT_IN_REDEEM_SCRIPT = 0x04
-const PSBT_IN_REDEEM_SCRIPT: u64 = 0x04;
-/// Type: Witness Script PSBT_IN_WITNESS_SCRIPT = 0x05
-const PSBT_IN_WITNESS_SCRIPT: u64 = 0x05;
-/// Type: BIP 32 Derivation Path PSBT_IN_BIP32_DERIVATION = 0x06
-const PSBT_IN_BIP32_DERIVATION: u64 = 0x06;
-/// Type: Finalized scriptSig PSBT_IN_FINAL_SCRIPTSIG = 0x07
-const PSBT_IN_FINAL_SCRIPTSIG: u64 = 0x07;
-/// Type: Finalized scriptWitness PSBT_IN_FINAL_SCRIPTWITNESS = 0x08
-const PSBT_IN_FINAL_SCRIPTWITNESS: u64 = 0x08;
-/// Type: RIPEMD160 preimage PSBT_IN_RIPEMD160 = 0x0a
-const PSBT_IN_RIPEMD160: u64 = 0x0a;
-/// Type: SHA256 preimage PSBT_IN_SHA256 = 0x0b
-const PSBT_IN_SHA256: u64 = 0x0b;
-/// Type: HASH160 preimage PSBT_IN_HASH160 = 0x0c
-const PSBT_IN_HASH160: u64 = 0x0c;
-/// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
-const PSBT_IN_HASH256: u64 = 0x0d;
-/// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
-const PSBT_IN_TAP_KEY_SIG: u64 = 0x13;
-/// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
-const PSBT_IN_TAP_SCRIPT_SIG: u64 = 0x14;
-/// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
-const PSBT_IN_TAP_LEAF_SCRIPT: u64 = 0x15;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_IN_TAP_BIP32_DERIVATION = 0x16
-const PSBT_IN_TAP_BIP32_DERIVATION: u64 = 0x16;
-/// Type: Taproot Internal Key PSBT_IN_TAP_INTERNAL_KEY = 0x17
-const PSBT_IN_TAP_INTERNAL_KEY: u64 = 0x17;
-/// Type: Taproot Merkle Root PSBT_IN_TAP_MERKLE_ROOT = 0x18
-const PSBT_IN_TAP_MERKLE_ROOT: u64 = 0x18;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
-const PSBT_IN_PROPRIETARY: u64 = 0xFC;
 
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.

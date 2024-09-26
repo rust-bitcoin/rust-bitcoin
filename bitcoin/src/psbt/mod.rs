@@ -8,6 +8,7 @@
 
 #[macro_use]
 mod macros;
+mod consts;
 mod error;
 mod map;
 pub mod raw;
