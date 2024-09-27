@@ -36,3 +36,6 @@ serde = { version = "1.0", default-features = false, optional = true }
 [dev-dependencies]
 serde_test = "1.0"
 serde_json = "1.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(hashes_fuzz)', 'cfg(rust_v_1_64)' ] }
