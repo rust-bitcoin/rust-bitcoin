@@ -24,12 +24,12 @@
 //!
 //! ```
 //! #[cfg(feature = "std")] {
-//! # fn main() -> std::io::Result<()> {
-//! use bitcoin_hashes::{Hash as _, Sha256};
+//! # fn _example() -> std::io::Result<()> {
+//! use bitcoin_hashes::Sha256;
 //! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
 //! let mut engine = Sha256::engine();
 //! std::io::copy(&mut reader, &mut engine)?;
-//! let hash = Sha256::from_engine(engine);
+//! let _hash = Sha256::from_engine(engine);
 //! # Ok(())
 //! # }}
 //! ```
@@ -39,17 +39,17 @@
 //!
 //! ```
 //! #[cfg(feature = "std")] {
-//! # fn main() -> std::io::Result<()> {
+//! # fn _example() -> std::io::Result<()> {
 //! use std::io::Write as _; // Or `bitcoin-io::Write` if `bitcoin-io` feature is enabled.
 //! use bitcoin_hashes::Sha256;
-//! let mut part1: &[u8] = b"hello";
-//! let mut part2: &[u8] = b" ";
-//! let mut part3: &[u8] = b"world";
+//! let part1: &[u8] = b"hello";
+//! let part2: &[u8] = b" ";
+//! let part3: &[u8] = b"world";
 //! let mut engine = Sha256::engine();
 //! engine.write_all(part1)?;
 //! engine.write_all(part2)?;
 //! engine.write_all(part3)?;
-//! let hash = Sha256::from_engine(engine);
+//! let _hash = Sha256::from_engine(engine);
 //! # Ok(())
 //! # }}
 //! ```
