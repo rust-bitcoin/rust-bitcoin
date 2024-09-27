@@ -242,28 +242,36 @@ impl fmt::Debug for Sequence {
 units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
+#[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for Sequence {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let mut choice_range = 4;
-        if cfg!(feature = "alloc") {
-            choice_range = 8;
-        }
-
         // Equally weight the cases of meaningful sequence numbers
-        let choice = u.int_in_range(0..=choice_range)?;
+        let choice = u.int_in_range(0..=8)?;
         match choice {
             0 => Ok(Sequence::MAX),
             1 => Ok(Sequence::ZERO),
             2 => Ok(Sequence::MIN_NO_RBF),
             3 => Ok(Sequence::ENABLE_RBF_NO_LOCKTIME),
-            #[cfg(feature = "alloc")]
             4 => Ok(Sequence::from_consensus(relative::Height::MIN.to_consensus_u32())),
-            #[cfg(feature = "alloc")]
             5 => Ok(Sequence::from_consensus(relative::Height::MAX.to_consensus_u32())),
-            #[cfg(feature = "alloc")]
             6 => Ok(Sequence::from_consensus(relative::Time::MIN.to_consensus_u32())),
-            #[cfg(feature = "alloc")]
             7 => Ok(Sequence::from_consensus(relative::Time::MAX.to_consensus_u32())),
+            _ => Ok(Sequence(u.arbitrary()?))
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(not(feature = "alloc"))]
+impl<'a> Arbitrary<'a> for Sequence {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Equally weight the cases of meaningful sequence numbers
+        let choice = u.int_in_range(0..=4)?;
+        match choice {
+            0 => Ok(Sequence::MAX),
+            1 => Ok(Sequence::ZERO),
+            2 => Ok(Sequence::MIN_NO_RBF),
+            3 => Ok(Sequence::ENABLE_RBF_NO_LOCKTIME),
             _ => Ok(Sequence(u.arbitrary()?))
         }
     }
