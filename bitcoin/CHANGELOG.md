@@ -1,3 +1,7 @@
+# 0.32.3 - 2024-09-27
+
+- Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
+
 # 0.32.2 - 2024-06-07
 
 - Fix a bug when parsing 256-bit numeric types [#2837](https://github.com/rust-bitcoin/rust-bitcoin/pull/2837)
