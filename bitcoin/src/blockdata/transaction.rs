@@ -111,19 +111,6 @@ impl OutPoint {
     pub fn null() -> OutPoint { Self::COINBASE_PREVOUT }
 
     /// Checks if an `OutPoint` is "null".
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use bitcoin::constants::genesis_block;
-    /// use bitcoin::params;
-    ///
-    /// let block = genesis_block(&params::MAINNET);
-    /// let tx = &block.txdata[0];
-    ///
-    /// // Coinbase transactions don't have any previous output.
-    /// assert!(tx.input[0].previous_output.is_null());
-    /// ```
     #[inline]
     #[deprecated(since = "TBD", note = "use outpoint == OutPoint::COINBASE_PREVOUT instead")]
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
