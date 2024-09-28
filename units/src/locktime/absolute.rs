@@ -62,7 +62,7 @@ impl Height {
     /// assert_eq!(height.to_consensus_u32(), h);
     /// ```
     #[inline]
-    pub fn from_consensus(n: u32) -> Result<Height, ConversionError> {
+    pub const fn from_consensus(n: u32) -> Result<Height, ConversionError> {
         if is_block_height(n) {
             Ok(Self(n))
         } else {
@@ -72,7 +72,7 @@ impl Height {
 
     /// Converts this [`Height`] to its inner `u32` value.
     #[inline]
-    pub fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for Height {
@@ -158,7 +158,7 @@ impl Time {
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
-    pub fn from_consensus(n: u32) -> Result<Time, ConversionError> {
+    pub const fn from_consensus(n: u32) -> Result<Time, ConversionError> {
         if is_block_time(n) {
             Ok(Self(n))
         } else {
@@ -168,7 +168,7 @@ impl Time {
 
     /// Converts this [`Time`] to its inner `u32` value.
     #[inline]
-    pub fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for Time {
@@ -244,10 +244,10 @@ where
 }
 
 /// Returns true if `n` is a block height i.e., less than 500,000,000.
-pub fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
+pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
 /// Returns true if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
-pub fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
+pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -261,10 +261,10 @@ pub struct ConversionError {
 
 impl ConversionError {
     /// Constructs a `ConversionError` from an invalid `n` when expecting a height value.
-    fn invalid_height(n: u32) -> Self { Self { unit: LockTimeUnit::Blocks, input: n } }
+    const fn invalid_height(n: u32) -> Self { Self { unit: LockTimeUnit::Blocks, input: n } }
 
     /// Constructs a `ConversionError` from an invalid `n` when expecting a time value.
-    fn invalid_time(n: u32) -> Self { Self { unit: LockTimeUnit::Seconds, input: n } }
+    const fn invalid_time(n: u32) -> Self { Self { unit: LockTimeUnit::Seconds, input: n } }
 }
 
 impl fmt::Display for ConversionError {
