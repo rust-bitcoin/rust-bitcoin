@@ -256,7 +256,7 @@ impl<'a> Arbitrary<'a> for Sequence {
             5 => Ok(Sequence::from_consensus(relative::Height::MAX.to_consensus_u32())),
             6 => Ok(Sequence::from_consensus(relative::Time::MIN.to_consensus_u32())),
             7 => Ok(Sequence::from_consensus(relative::Time::MAX.to_consensus_u32())),
-            _ => Ok(Sequence(u.arbitrary()?))
+            _ => Ok(Sequence(u.arbitrary()?)),
         }
     }
 }
@@ -272,7 +272,7 @@ impl<'a> Arbitrary<'a> for Sequence {
             1 => Ok(Sequence::ZERO),
             2 => Ok(Sequence::MIN_NO_RBF),
             3 => Ok(Sequence::ENABLE_RBF_NO_LOCKTIME),
-            _ => Ok(Sequence(u.arbitrary()?))
+            _ => Ok(Sequence(u.arbitrary()?)),
         }
     }
 }

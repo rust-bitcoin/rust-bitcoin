@@ -1479,7 +1479,7 @@ impl<'a> Arbitrary<'a> for EcdsaSighashType {
             2 => Ok(EcdsaSighashType::Single),
             3 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
             4 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay)
+            _ => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
         }
     }
 }
@@ -1495,7 +1495,7 @@ impl<'a> Arbitrary<'a> for TapSighashType {
             3 => Ok(TapSighashType::Single),
             4 => Ok(TapSighashType::AllPlusAnyoneCanPay),
             5 => Ok(TapSighashType::NonePlusAnyoneCanPay),
-            _ => Ok(TapSighashType::SinglePlusAnyoneCanPay)
+            _ => Ok(TapSighashType::SinglePlusAnyoneCanPay),
         }
     }
 }
