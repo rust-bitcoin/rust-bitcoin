@@ -18,19 +18,20 @@ impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
-        rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
-            value: {
-                // Manually serialized to ensure 0-input txs are serialized
-                // without witnesses.
-                let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
-                ret
-            },
-        });
+        if let Some(unsigned_tx) = &self.unsigned_tx {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
+                value: {
+                    // Manually serialized to ensure 0-input txs are serialized without witnesses.
+                    let mut ret = Vec::new();
+                    ret.extend(encode::serialize(&unsigned_tx.version));
+                    ret.extend(encode::serialize(&unsigned_tx.input));
+                    ret.extend(encode::serialize(&unsigned_tx.output));
+                    ret.extend(encode::serialize(&unsigned_tx.lock_time));
+                    ret
+                },
+            });
+        }
 
         for (xpub, (fingerprint, derivation)) in &self.xpub {
             rv.push(raw::Pair {
@@ -194,9 +195,14 @@ impl Psbt {
 
         if let Some(tx) = tx {
             Ok(Psbt {
-                unsigned_tx: tx,
-                version: version.unwrap_or(0),
+                unsigned_tx: Some(tx),
                 xpub: xpub_map,
+                tx_version: None,
+                fallback_lock_time: None,
+                input_count: None,
+                output_count: None,
+                tx_modifiable_flags: None,
+                version: version.unwrap_or(0),
                 proprietary,
                 unknown: unknowns,
                 inputs: vec![],

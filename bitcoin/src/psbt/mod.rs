@@ -13,12 +13,14 @@ mod error;
 mod map;
 pub mod raw;
 pub mod serialize;
+mod version;
 
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
 use internals::write_err;
+use primitives::locktime::absolute;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
@@ -36,6 +38,7 @@ use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 pub use self::{
     map::{Input, Output, PsbtSighashType},
     error::Error,
+    version::Version,
 };
 
 /// A Partially Signed Transaction.
@@ -43,16 +46,49 @@ pub use self::{
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Psbt {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
-    pub unsigned_tx: Transaction,
-
-    /// The version number of this PSBT. If omitted, the version number is 0.
-    pub version: u32,
+    ///
+    /// PSBT_GLOBAL_UNSIGNED_TX: Required for v0, excluded for v2.
+    pub unsigned_tx: Option<Transaction>,
 
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32.
+    ///
+    /// PSBT_GLOBAL_XPUB: Optional for v0, optional for v2.
     pub xpub: BTreeMap<Xpub, KeySource>,
 
+    /// The version number of the transaction being built.
+    ///
+    /// PSBT_GLOBAL_TX_VERSION: Excluded for v0, required for v2.
+    pub tx_version: Option<transaction::Version>,
+
+    /// The transaction locktime to use if no inputs specify a required locktime.
+    ///
+    /// PSBT_GLOBAL_FALLBACK_LOCKTIME: Excluded for v0, optional for v2.
+    pub fallback_lock_time: Option<absolute::LockTime>,
+
+    /// The number of inputs in this PSBT.
+    ///
+    /// PSBT_GLOBAL_INPUT_COUNT: Excluded for v0, required for v2.
+    pub input_count: Option<usize>, // Serialized as compact int.
+
+    /// The number of outputs in this PSBT.
+    ///
+    /// PSBT_GLOBAL_OUTPUT_COUNT: Excluded for v0, required for v2.
+    pub output_count: Option<usize>, // Serialized as compact int.
+
+    /// A bitfield for various transaction modification flags.
+    ///
+    /// PSBT_GLOBAL_TX_MODIFIABLE: Excluded for v0, optional for v2.
+    pub tx_modifiable_flags: Option<u8>,
+
+    /// The version number of this PSBT (if omitted defaults to version 0).
+    ///
+    /// PSBT_GLOBAL_VERSION: Optional for v0, optional for v2.
+    pub version: u32, // This is not an option because if omitted it is implied to be 0.
+
     /// Global proprietary key-value pairs.
+    ///
+    /// PSBT_GLOBAL_PROPRIETARY: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
 
@@ -81,31 +117,38 @@ impl Psbt {
     ///
     /// The function panics if the length of transaction inputs is not equal to the length of PSBT inputs.
     pub fn iter_funding_utxos(&self) -> impl Iterator<Item = Result<&TxOut, Error>> {
-        assert_eq!(self.inputs.len(), self.unsigned_tx.input.len());
-        self.unsigned_tx.input.iter().zip(&self.inputs).map(|(tx_input, psbt_input)| {
-            match (&psbt_input.witness_utxo, &psbt_input.non_witness_utxo) {
-                (Some(witness_utxo), _) => Ok(witness_utxo),
-                (None, Some(non_witness_utxo)) => {
-                    let vout = tx_input.previous_output.vout as usize;
-                    non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
-                }
-                (None, None) => Err(Error::MissingUtxo),
+        match &self.unsigned_tx {
+            Some(unsigned_tx) => {
+                assert_eq!(self.inputs.len(), unsigned_tx.input.len());
+                unsigned_tx.input.iter().zip(&self.inputs).map(|(tx_input, psbt_input)| {
+                    match (&psbt_input.witness_utxo, &psbt_input.non_witness_utxo) {
+                        (Some(witness_utxo), _) => Ok(witness_utxo),
+                        (None, Some(non_witness_utxo)) => {
+                            let vout = tx_input.previous_output.vout as usize;
+                            non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
+                        }
+                        (None, None) => Err(Error::MissingUtxo),
+                    }
+                })
             }
-        })
+            None => panic!("currently unsupported for PSBT v2")
+        }
     }
 
     /// Checks that unsigned transaction does not have scriptSig's or witness data.
     fn unsigned_tx_checks(&self) -> Result<(), Error> {
-        for txin in &self.unsigned_tx.input {
-            if !txin.script_sig.is_empty() {
-                return Err(Error::UnsignedTxHasScriptSigs);
-            }
+        if let Some(ref unsigned_tx) = self.unsigned_tx {
+            for txin in &unsigned_tx.input {
+                if !txin.script_sig.is_empty() {
+                    return Err(Error::UnsignedTxHasScriptSigs);
+                }
 
-            if !txin.witness.is_empty() {
-                return Err(Error::UnsignedTxHasScriptWitnesses);
+                if !txin.witness.is_empty() {
+                    return Err(Error::UnsignedTxHasScriptWitnesses);
+                }
             }
         }
-
+        // No checks for PSBT v2.
         Ok(())
     }
 
@@ -115,15 +158,22 @@ impl Psbt {
     ///
     /// If transactions is not unsigned.
     pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
-        let psbt = Psbt {
-            inputs: vec![Default::default(); tx.input.len()],
-            outputs: vec![Default::default(); tx.output.len()],
+        let inputs = vec![Default::default(); tx.input.len()];
+        let outputs = vec![Default::default(); tx.output.len()];
 
-            unsigned_tx: tx,
+        let psbt = Psbt {
+            unsigned_tx: Some(tx),
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             version: 0,
             proprietary: Default::default(),
             unknown: Default::default(),
+            inputs,
+            outputs,
         };
         psbt.unsigned_tx_checks()?;
         Ok(psbt)
@@ -176,9 +226,10 @@ impl Psbt {
     /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
     pub fn extract_tx_unchecked_fee_rate(self) -> Transaction { self.internal_extract_tx() }
 
+    // Panics if called on PSBT v2.
     #[inline]
     fn internal_extract_tx(self) -> Transaction {
-        let mut tx: Transaction = self.unsigned_tx;
+        let mut tx: Transaction = self.unsigned_tx.unwrap();
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
             vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
@@ -223,11 +274,15 @@ impl Psbt {
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
     ///
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
+    ///
+    /// # Panics
+    ///
+    /// Panics if called with PSBT v2.
     pub fn combine(&mut self, other: Self) -> Result<(), Error> {
-        if self.unsigned_tx != other.unsigned_tx {
+        if self.unsigned_tx.as_ref() != other.unsigned_tx.as_ref() {
             return Err(Error::UnexpectedUnsignedTx {
-                expected: Box::new(self.unsigned_tx.clone()),
-                actual: Box::new(other.unsigned_tx),
+                expected: Box::new(self.unsigned_tx.clone().unwrap()),
+                actual: Box::new(other.unsigned_tx.unwrap()),
             });
         }
 
@@ -297,6 +352,10 @@ impl Psbt {
     ///
     /// If an error is returned some signatures may already have been added to the PSBT. Since
     /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called with PSBT v2.
     pub fn sign<C, K>(
         &mut self,
         k: &K,
@@ -306,7 +365,7 @@ impl Psbt {
         C: Signing + Verification,
         K: GetKey,
     {
-        let tx = self.unsigned_tx.clone(); // clone because we need to mutably borrow when signing.
+        let tx = self.unsigned_tx.clone().unwrap(); // clone because we need to mutably borrow when signing.
         let mut cache = SighashCache::new(&tx);
 
         let mut used = BTreeMap::new();
@@ -618,12 +677,16 @@ impl Psbt {
     }
 
     /// Returns the spending utxo for this PSBT's input at `input_index`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called with PSBT v2.
     pub fn spend_utxo(&self, input_index: usize) -> Result<&TxOut, SignError> {
         let input = self.checked_input(input_index)?;
         let utxo = if let Some(witness_utxo) = &input.witness_utxo {
             witness_utxo
         } else if let Some(non_witness_utxo) = &input.non_witness_utxo {
-            let vout = self.unsigned_tx.input[input_index].previous_output.vout;
+            let vout = self.unsigned_tx.as_ref().unwrap().input[input_index].previous_output.vout;
             &non_witness_utxo.output[vout as usize]
         } else {
             return Err(SignError::MissingSpendUtxo);
@@ -639,6 +702,10 @@ impl Psbt {
 
     /// Checks `input_index` is within bounds for the PSBT `inputs` array and
     /// for the PSBT `unsigned_tx` `input` array.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called with PSBT v2.
     fn check_index_is_within_bounds(
         &self,
         input_index: usize,
@@ -650,10 +717,10 @@ impl Psbt {
             });
         }
 
-        if input_index >= self.unsigned_tx.input.len() {
+        if input_index >= self.unsigned_tx.as_ref().unwrap().input.len() {
             return Err(IndexOutOfBoundsError::TxInput {
                 index: input_index,
-                length: self.unsigned_tx.input.len(),
+                length: self.unsigned_tx.as_ref().unwrap().input.len(),
             });
         }
 
@@ -714,13 +781,17 @@ impl Psbt {
     /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
     /// - [`Error::NegativeFee`] if calculated value is negative.
     /// - [`Error::FeeOverflow`] if an integer overflow occurs.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called with PSBT v2.
     pub fn fee(&self) -> Result<Amount, Error> {
         let mut inputs: u64 = 0;
         for utxo in self.iter_funding_utxos() {
             inputs = inputs.checked_add(utxo?.value.to_sat()).ok_or(Error::FeeOverflow)?;
         }
         let mut outputs: u64 = 0;
-        for out in &self.unsigned_tx.output {
+        for out in &self.unsigned_tx.as_ref().unwrap().output {
             outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
         }
         inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
@@ -1237,10 +1308,11 @@ mod tests {
         }
     }
 
+    // PSBTv0
     #[track_caller]
     fn psbt_with_values(input: u64, output: u64) -> Psbt {
         Psbt {
-            unsigned_tx: Transaction {
+            unsigned_tx: Some(Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::ZERO,
                 input: vec![TxIn {
@@ -1261,8 +1333,13 @@ mod tests {
                     )
                     .unwrap(),
                 }],
-            },
+            }),
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             version: 0,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
@@ -1281,16 +1358,22 @@ mod tests {
         }
     }
 
+    // PSBT v0
     #[test]
     fn trivial_psbt() {
         let psbt = Psbt {
-            unsigned_tx: Transaction {
+            unsigned_tx: Some(Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::ZERO,
                 input: vec![],
                 output: vec![],
-            },
+            }),
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             version: 0,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
@@ -1400,7 +1483,7 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_global() {
         let expected = Psbt {
-            unsigned_tx: Transaction {
+            unsigned_tx: Some(Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
@@ -1430,8 +1513,13 @@ mod tests {
                         .unwrap(),
                     },
                 ],
-            },
+            }),
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             version: 0,
             proprietary: Default::default(),
             unknown: Default::default(),
@@ -1455,6 +1543,7 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
+    // PSBT v0
     #[test]
     fn deserialize_and_serialize_psbt_with_two_partial_sigs() {
         let hex = "70736274ff0100890200000001207ae985d787dfe6143d5c58fad79cc7105e0e799fcf033b7f2ba17e62d7b3200000000000ffffffff02563d03000000000022002019899534b9a011043c0dd57c3ff9a381c3522c5f27c6a42319085b56ca543a1d6adc020000000000220020618b47a07ebecca4e156edb1b9ea7c24bdee0139fc049237965ffdaf56d5ee73000000000001012b801a0600000000002200201148e93e9315e37dbed2121be5239257af35adc03ffdfc5d914b083afa44dab82202025fe7371376d53cf8a2783917c28bf30bd690b0a4d4a207690093ca2b920ee076473044022007e06b362e89912abd4661f47945430739b006a85d1b2a16c01dc1a4bd07acab022061576d7aa834988b7ab94ef21d8eebd996ea59ea20529a19b15f0c9cebe3d8ac01220202b3fe93530020a8294f0e527e33fbdff184f047eb6b5a1558a352f62c29972f8a473044022002787f926d6817504431ee281183b8119b6845bfaa6befae45e13b6d430c9d2f02202859f149a6cd26ae2f03a107e7f33c7d91730dade305fe077bae677b5d44952a01010547522102b3fe93530020a8294f0e527e33fbdff184f047eb6b5a1558a352f62c29972f8a21025fe7371376d53cf8a2783917c28bf30bd690b0a4d4a207690093ca2b920ee07652ae0001014752210283ef76537f2d58ae3aa3a4bd8ae41c3f230ccadffb1a0bd3ca504d871cff05e7210353d79cc0cb1396f4ce278d005f16d948e02a6aec9ed1109f13747ecb1507b37b52ae00010147522102b3937241777b6665e0d694e52f9c1b188433641df852da6fc42187b5d8a368a321034cdd474f01cc5aa7ff834ad8bcc882a87e854affc775486bc2a9f62e8f49bd7852ae00";
@@ -1531,8 +1620,13 @@ mod tests {
                 let mut unsigned = tx.clone();
                 unsigned.input[0].script_sig = ScriptBuf::new();
                 unsigned.input[0].witness = Witness::default();
-                unsigned
+                Some(unsigned)
             },
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             proprietary: proprietary.clone(),
             unknown: unknown.clone(),
 
@@ -1646,10 +1740,11 @@ mod tests {
             "cHNidP8BAHUCAAAAASaBcTce3/KF6Tet7qSze3gADAVmy7OtZGQXE8pCFxv2AAAAAAD+////AtPf9QUAAAAAGXapFNDFmQPFusKGh2DpD9UhpGZap2UgiKwA4fUFAAAAABepFDVF5uM7gyxHBQ8k0+65PJwDlIvHh7MuEwAAAQD9pQEBAAAAAAECiaPHHqtNIOA3G7ukzGmPopXJRjr6Ljl/hTPMti+VZ+UBAAAAFxYAFL4Y0VKpsBIDna89p95PUzSe7LmF/////4b4qkOnHf8USIk6UwpyN+9rRgi7st0tAXHmOuxqSJC0AQAAABcWABT+Pp7xp0XpdNkCxDVZQ6vLNL1TU/////8CAMLrCwAAAAAZdqkUhc/xCX/Z4Ai7NK9wnGIZeziXikiIrHL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHAkcwRAIgJxK+IuAnDzlPVoMR3HyppolwuAJf3TskAinwf4pfOiQCIAGLONfc0xTnNMkna9b7QPZzMlvEuqFEyADS8vAtsnZcASED0uFWdJQbrUqZY3LLh+GFbTZSYG2YVi/jnF6efkE/IQUCSDBFAiEA0SuFLYXc2WHS9fSrZgZU327tzHlMDDPOXMMJ/7X85Y0CIGczio4OFyXBl/saiK9Z9R5E5CVbIBZ8hoQDHAXR8lkqASECI7cr7vCWXRC+B3jv7NYfysb3mk6haTkzgHNEZPhPKrMAAAAAAQA/AgAAAAH//////////////////////////////////////////wAAAAAA/////wEAAAAAAAAAAANqAQAAAAAAAAAA".parse::<Psbt>().unwrap();
         }
 
+        // PSBT v0
         #[test]
         fn valid_vector_1() {
             let unserialized = Psbt {
-                unsigned_tx: Transaction {
+                unsigned_tx: Some(Transaction {
                     version: transaction::Version::TWO,
                     lock_time: absolute::LockTime::from_consensus(1257139),
                     input: vec![
@@ -1673,8 +1768,13 @@ mod tests {
                             script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                         },
                     ],
-                },
+                }),
                 xpub: Default::default(),
+                tx_version: None,
+                fallback_lock_time: None,
+                input_count: None,
+                output_count: None,
+                tx_modifiable_flags: None,
                 version: 0,
                 proprietary: BTreeMap::new(),
                 unknown: BTreeMap::new(),
@@ -1780,7 +1880,7 @@ mod tests {
             assert_eq!(psbt.inputs.len(), 1);
             assert_eq!(psbt.outputs.len(), 2);
 
-            let tx_input = &psbt.unsigned_tx.input[0];
+            let tx_input = &psbt.unsigned_tx.as_ref().unwrap().input[0];
             let psbt_non_witness_utxo = psbt.inputs[0].non_witness_utxo.as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.compute_txid());
@@ -1848,7 +1948,7 @@ mod tests {
             assert_eq!(psbt.inputs.len(), 1);
             assert_eq!(psbt.outputs.len(), 1);
 
-            let tx = &psbt.unsigned_tx;
+            let tx = &psbt.unsigned_tx.unwrap();
             assert_eq!(
                 tx.compute_txid(),
                 "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115".parse().unwrap(),
@@ -1968,6 +2068,7 @@ mod tests {
         }
     }
 
+    // PSBT v0
     #[test]
     fn serialize_and_deserialize_preimage_psbt() {
         // create a sha preimage map
@@ -1982,7 +2083,7 @@ mod tests {
 
         // same vector as valid_vector_1 from BIPs with added
         let mut unserialized = Psbt {
-            unsigned_tx: Transaction {
+            unsigned_tx: Some(Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
@@ -2006,9 +2107,14 @@ mod tests {
                         script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
-            },
+            }),
             version: 0,
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             proprietary: Default::default(),
             unknown: BTreeMap::new(),
 
@@ -2144,6 +2250,7 @@ mod tests {
         assert_eq!(got.unwrap(), priv_key)
     }
 
+    // PSBT v0
     #[test]
     fn test_fee() {
         let output_0_val = Amount::from_sat(99_999_699);
@@ -2151,7 +2258,7 @@ mod tests {
         let prev_output_val = Amount::from_sat(200_000_000);
 
         let mut t = Psbt {
-            unsigned_tx: Transaction {
+            unsigned_tx: Some(Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
@@ -2174,8 +2281,13 @@ mod tests {
                         script_pubkey:  ScriptBuf::new()
                     },
                 ],
-            },
+            }),
             xpub: Default::default(),
+            tx_version: None,
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             version: 0,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
@@ -2239,14 +2351,19 @@ mod tests {
         }
         //  negative fee
         let mut t3 = t.clone();
-        t3.unsigned_tx.output[0].value = prev_output_val;
+        let mut tx = t3.unsigned_tx.take().unwrap();
+        tx.output[0].value = prev_output_val;
+        t3.unsigned_tx = Some(tx);
+
         match t3.fee().unwrap_err() {
             Error::NegativeFee => {}
             e => panic!("unexpected error: {:?}", e),
         }
         // overflow
-        t.unsigned_tx.output[0].value = Amount::MAX;
-        t.unsigned_tx.output[1].value = Amount::MAX;
+        let mut tx = t.unsigned_tx.take().unwrap();
+        tx.output[0].value = Amount::MAX;
+        tx.output[1].value = Amount::MAX;
+        t.unsigned_tx = Some(tx);
         match t.fee().unwrap_err() {
             Error::FeeOverflow => {}
             e => panic!("unexpected error: {:?}", e),

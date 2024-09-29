@@ -97,27 +97,36 @@ impl Psbt {
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
+            if let Some(ref unsigned_tx) = global.unsigned_tx {
+                let inputs_len: usize = (unsigned_tx.input).len();
 
-            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
+                let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
-            for _ in 0..inputs_len {
-                inputs.push(Input::decode(r)?);
+                for _ in 0..inputs_len {
+                    inputs.push(Input::decode(r)?);
+                }
+                inputs
+            } else {
+                // TODO: Currently we only support PSBT v0.
+                Vec::new()
             }
-
-            inputs
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
+            if let Some(ref unsigned_tx) = global.unsigned_tx {
+                let outputs_len: usize = (unsigned_tx.output).len();
 
-            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
+                let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
-            for _ in 0..outputs_len {
-                outputs.push(Output::decode(r)?);
+                for _ in 0..outputs_len {
+                    outputs.push(Output::decode(r)?);
+                }
+
+                outputs
+            } else {
+                // TODO: Currently we only support PSBT v0.
+                Vec::new()
             }
-
-            outputs
         };
 
         global.inputs = inputs;

@@ -277,8 +277,13 @@ fn serde_regression_psbt() {
             let mut unsigned = tx.clone();
             unsigned.input[0].script_sig = ScriptBuf::new();
             unsigned.input[0].witness = Witness::default();
-            unsigned
+            Some(unsigned)
         },
+        tx_version: None,
+        fallback_lock_time: None,
+        input_count: None,
+        output_count: None,
+        tx_modifiable_flags: None,
         proprietary: proprietary.clone(),
         unknown: unknown.clone(),
 
@@ -318,6 +323,13 @@ fn serde_regression_psbt() {
     Psbt::deserialize(&serialized).unwrap();
 
     let got = serialize(&psbt).unwrap();
+
+    use std::fs::File;
+    use std::io::Write;
+    let mut file = File::create("/tmp/psbt_bincode").unwrap();
+    file.write_all(&got).unwrap();
+
+    
     let want = include_bytes!("data/serde/psbt_bincode") as &[_];
     assert_eq!(got, want)
 }

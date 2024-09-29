@@ -279,7 +279,7 @@ fn generate_bip86_key_spend_tx(
     }
 
     // SIGNER
-    let unsigned_tx = psbt.unsigned_tx.clone();
+    let unsigned_tx = psbt.unsigned_tx.take().unwrap();
     psbt.inputs.iter_mut().enumerate().try_for_each::<_, Result<(), Box<dyn std::error::Error>>>(
         |(vout, input)| {
             let sighash_type = input
@@ -489,7 +489,7 @@ impl BenefactorWallet {
 
             // Build up the leaf script and combine with internal key into a Taproot commitment
             let lock_time = absolute::LockTime::from_height(
-                psbt.unsigned_tx.lock_time.to_consensus_u32() + lock_time_delta,
+                psbt.unsigned_tx.as_ref().unwrap().lock_time.to_consensus_u32() + lock_time_delta,
             )
             .unwrap();
             let script = Self::time_lock_script(lock_time, beneficiary_key);
@@ -507,16 +507,17 @@ impl BenefactorWallet {
                 taproot_spend_info.merkle_root(),
             );
 
-            psbt.unsigned_tx.output =
+            let mut unsigned_tx = psbt.unsigned_tx.take().unwrap();
+            unsigned_tx.output =
                 vec![TxOut { script_pubkey: output_script_pubkey.clone(), value: output_value }];
+            unsigned_tx.lock_time = absolute::LockTime::ZERO;
             psbt.outputs = vec![Output::default()];
-            psbt.unsigned_tx.lock_time = absolute::LockTime::ZERO;
 
             let sighash_type = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.taproot_hash_ty().ok())
                 .unwrap_or(TapSighashType::All);
-            let hash = SighashCache::new(&psbt.unsigned_tx).taproot_key_spend_signature_hash(
+            let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 0,
                 &sighash::Prevouts::All(&[TxOut {
                     value: input_value,
@@ -639,13 +640,15 @@ impl BeneficiaryWallet {
         let input_value = psbt.inputs[0].witness_utxo.as_ref().unwrap().value;
         let input_script_pubkey =
             psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.clone();
-        psbt.unsigned_tx.lock_time = lock_time;
-        psbt.unsigned_tx.output = vec![TxOut {
+
+        let mut unsigned_tx = psbt.unsigned_tx.take().unwrap();
+        unsigned_tx.lock_time = lock_time;
+        unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
             value: input_value - ABSOLUTE_FEES_IN_SATS,
         }];
         psbt.outputs = vec![Output::default()];
-        let unsigned_tx = psbt.unsigned_tx.clone();
+        psbt.unsigned_tx = Some(unsigned_tx.clone());
 
         // SIGNER
         for (x_only_pubkey, (leaf_hashes, (_, derivation_path))) in
