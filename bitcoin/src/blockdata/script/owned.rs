@@ -157,14 +157,6 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for ScriptBuf {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let v = Vec::<u8>::arbitrary(u)?;
-        Ok(ScriptBuf(v))
-    }
-}
-
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
@@ -300,5 +292,13 @@ impl<'a> Drop for ScriptBufAsVec<'a> {
     fn drop(&mut self) {
         let vec = core::mem::take(&mut self.1);
         *(self.0) = ScriptBuf::from_bytes(vec);
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for ScriptBuf {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = Vec::<u8>::arbitrary(u)?;
+        Ok(ScriptBuf(v))
     }
 }
