@@ -81,7 +81,7 @@ impl<'a> Arbitrary<'a> for Version {
         match choice {
             0 => Ok(Version::ONE),
             1 => Ok(Version::TWO),
-            _ => Ok(Version(u.arbitrary()?))
+            _ => Ok(Version(u.arbitrary()?)),
         }
     }
 }

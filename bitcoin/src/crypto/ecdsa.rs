@@ -323,7 +323,7 @@ impl<'a> Arbitrary<'a> for Signature {
         signature_bytes[..32].copy_from_slice(&bytes);
         signature_bytes[32..].copy_from_slice(&bytes);
 
-        Ok(Signature{
+        Ok(Signature {
             signature: secp256k1::ecdsa::Signature::from_compact(&signature_bytes).unwrap(),
             sighash_type: EcdsaSighashType::arbitrary(u)?,
         })
