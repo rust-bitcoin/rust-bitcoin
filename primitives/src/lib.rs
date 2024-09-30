@@ -29,6 +29,7 @@ extern crate std;
 #[macro_use]
 extern crate serde;
 
+pub mod block;
 #[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod opcodes;
@@ -45,6 +46,7 @@ pub use units::*;
 pub use self::locktime::{absolute, relative};
 #[doc(inline)]
 pub use self::{
+    block::{BlockHash, WitnessCommitment},
     pow::CompactTarget,
     sequence::Sequence,
     transaction::{Txid, Wtxid},
