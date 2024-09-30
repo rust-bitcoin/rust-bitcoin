@@ -766,7 +766,7 @@ impl GetKey for Xpriv {
                     Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
-                    && path[0] == self.child_number
+                    && path[0] == self.child_index
                 {
                     let path = DerivationPath::from_iter(path.into_iter().skip(1).copied());
                     let k = self.derive_xpriv(secp, &path);
@@ -1213,7 +1213,7 @@ mod tests {
 
     use super::*;
     use crate::address::script_pubkey::ScriptExt as _;
-    use crate::bip32::ChildNumber;
+    use crate::bip32::ChildKeyIndex;
     use crate::locktime::absolute;
     use crate::network::NetworkKind;
     use crate::psbt::serialize::{Deserialize, Serialize};
@@ -1358,15 +1358,15 @@ mod tests {
 
         let fprint = sk.fingerprint(secp);
 
-        let dpath: Vec<ChildNumber> = vec![
-            ChildNumber::ZERO_NORMAL,
-            ChildNumber::ONE_NORMAL,
-            ChildNumber::from_normal_idx(2).unwrap(),
-            ChildNumber::from_normal_idx(4).unwrap(),
-            ChildNumber::from_normal_idx(42).unwrap(),
-            ChildNumber::from_hardened_idx(69).unwrap(),
-            ChildNumber::from_normal_idx(420).unwrap(),
-            ChildNumber::from_normal_idx(31337).unwrap(),
+        let dpath: Vec<ChildKeyIndex> = vec![
+            ChildKeyIndex::ZERO_NORMAL,
+            ChildKeyIndex::ONE_NORMAL,
+            ChildKeyIndex::from_normal_index(2).unwrap(),
+            ChildKeyIndex::from_normal_index(4).unwrap(),
+            ChildKeyIndex::from_normal_index(42).unwrap(),
+            ChildKeyIndex::from_hardened_index(69),
+            ChildKeyIndex::from_normal_index(420).unwrap(),
+            ChildKeyIndex::from_normal_index(31337).unwrap(),
         ];
 
         sk = sk.derive_xpriv(secp, &dpath);
