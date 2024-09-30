@@ -285,6 +285,12 @@ mod tests {
     }
 
     #[test]
+    fn fee_rate_div_by_weight() {
+        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        assert_eq!(fee_rate, FeeRate(863));
+    }
+
+    #[test]
     fn checked_add() {
         let f = FeeRate(1).checked_add(2).unwrap();
         assert_eq!(FeeRate(3), f);
