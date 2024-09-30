@@ -404,6 +404,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::locktime::absolute;
     use crate::merkle_tree::TxMerkleNode;
+    use crate::transaction::OutPointExt;
     use crate::{
         transaction, Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
         Witness,
