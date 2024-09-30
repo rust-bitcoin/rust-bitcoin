@@ -12,14 +12,14 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::compact_size;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{Error, MAX_VEC_SIZE};
+use crate::consensus::encode::{Error, ReadExt, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::crypto::ecdsa;
 use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{self, TAPROOT_ANNEX_PREFIX};
-use crate::{Script, VarInt};
+use crate::Script;
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
@@ -137,7 +137,7 @@ pub struct Iter<'a> {
 
 impl Decodable for Witness {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
+        let witness_elements = r.read_compact_size()? as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
         if witness_elements > MAX_VEC_SIZE {
@@ -159,16 +159,15 @@ impl Decodable for Witness {
             let mut content = vec![0u8; cursor + 128];
 
             for i in 0..witness_elements {
-                let element_size_varint = VarInt::consensus_decode(r)?;
-                let element_size_varint_len = element_size_varint.size();
-                let element_size = element_size_varint.0 as usize;
+                let element_size = r.read_compact_size()? as usize;
+                let element_size_len = compact_size::encoded_size(element_size);
                 let required_len = cursor
                     .checked_add(element_size)
                     .ok_or(self::Error::OversizedVectorAllocation {
                         requested: usize::MAX,
                         max: MAX_VEC_SIZE,
                     })?
-                    .checked_add(element_size_varint_len)
+                    .checked_add(element_size_len)
                     .ok_or(self::Error::OversizedVectorAllocation {
                         requested: usize::MAX,
                         max: MAX_VEC_SIZE,
@@ -186,10 +185,7 @@ impl Decodable for Witness {
                 encode_cursor(&mut content, 0, i, cursor - witness_index_space);
 
                 resize_if_needed(&mut content, required_len);
-                element_size_varint.consensus_encode(
-                    &mut &mut content[cursor..cursor + element_size_varint_len],
-                )?;
-                cursor += element_size_varint_len;
+                cursor += (&mut content[cursor..cursor + element_size_len]).emit_compact_size(element_size)?;
                 r.read_exact(&mut content[cursor..cursor + element_size])?;
                 cursor += element_size;
             }
@@ -234,13 +230,10 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 impl Encodable for Witness {
     // `self.content` includes the varints so encoding here includes them, as expected.
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = VarInt::from(self.witness_elements);
-        len.consensus_encode(w)?;
         let content_with_indices_len = self.content.len();
         let indices_size = self.witness_elements * 4;
         let content_len = content_with_indices_len - indices_size;
-        w.emit_slice(&self.content[..content_len])?;
-        Ok(content_len + len.size())
+        Ok(w.emit_compact_size(self.witness_elements)? + w.emit_slice(&self.content[..content_len])?)
     }
 }
 

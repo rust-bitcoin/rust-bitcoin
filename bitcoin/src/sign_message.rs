@@ -7,7 +7,7 @@
 
 use hashes::{sha256d, HashEngine};
 
-use crate::consensus::{encode, Encodable};
+use crate::consensus::encode::WriteExt;
 
 #[rustfmt::skip]
 #[doc(inline)]
@@ -209,8 +209,7 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
     let msg_bytes = msg.as_ref();
     let mut engine = sha256d::Hash::engine();
     engine.input(BITCOIN_SIGNED_MSG_PREFIX);
-    let msg_len = encode::VarInt::from(msg_bytes.len());
-    msg_len.consensus_encode(&mut engine).expect("engines don't error");
+    engine.emit_compact_size(msg_bytes.len()).expect("engines don't error");
     engine.input(msg_bytes);
     sha256d::Hash::from_engine(engine)
 }
