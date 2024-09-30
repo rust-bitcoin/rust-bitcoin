@@ -626,86 +626,131 @@ mod test {
     use hex::test_hex_unwrap as hex;
 
     use super::*;
-    use crate::consensus::{deserialize, serialize};
+    use crate::consensus::{encode, deserialize, serialize};
     use crate::hex::DisplayHex;
     use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
 
-    fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {
-        for &num in n {
+    // Appends all the indices onto the end of a list of elements.
+    fn append_u32_vec(elements: &[u8], indices: &[u32]) -> Vec<u8> {
+        let mut v = elements.to_vec();
+        for &num in indices {
             v.extend_from_slice(&num.to_ne_bytes());
         }
         v
     }
 
-    #[test]
-    fn witness_debug_can_display_empty_instruction() {
-        let witness = Witness {
+    // A witness with a single element that is empty (zero length).
+    fn single_empty_element() -> Witness {
+        // The first is 0 serialized as a compact size integer.
+        // The last four bytes represent start at index 0.
+        let content = [0_u8; 5];
+
+        Witness {
             witness_elements: 1,
-            content: append_u32_vec(vec![], &[0]),
-            indices_start: 2,
-        };
+            content: content.to_vec(),
+            indices_start: 1,
+        }
+    }
+
+    #[test]
+    fn witness_debug_can_display_empty_element() {
+        let witness = single_empty_element();
         println!("{:?}", witness);
     }
 
     #[test]
-    fn test_push() {
+    fn witness_single_empty_element() {
+        let mut got = Witness::new();
+        got.push(&[]);
+        let want = single_empty_element();
+        assert_eq!(got, want)
+    }
+
+    #[test]
+    fn push() {
+        // Sanity check default.
         let mut witness = Witness::default();
         assert_eq!(witness.last(), None);
         assert_eq!(witness.second_to_last(), None);
+
         assert_eq!(witness.nth(0), None);
         assert_eq!(witness.nth(1), None);
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
-        witness.push(&vec![0u8]);
+
+        // Push a single byte element onto the witness stack.
+        let push = [0_u8];
+        witness.push(&push);
+
+        let elements = [1u8, 0];
         let expected = Witness {
             witness_elements: 1,
-            content: append_u32_vec(vec![1u8, 0], &[0]),
-            indices_start: 2,
+            content: append_u32_vec(&elements, &[0]), // Start at index 0.
+            indices_start: elements.len(),
         };
         assert_eq!(witness, expected);
-        assert_eq!(witness.last(), Some(&[0u8][..]));
+
+        let element_0 = push.as_slice();
+        assert_eq!(element_0, &witness[0]);
+
         assert_eq!(witness.second_to_last(), None);
-        assert_eq!(witness.nth(0), Some(&[0u8][..]));
+        assert_eq!(witness.last(), Some(element_0));
+
+        assert_eq!(witness.nth(0), Some(element_0));
         assert_eq!(witness.nth(1), None);
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
-        assert_eq!(&witness[0], &[0u8][..]);
-        witness.push(&vec![2u8, 3u8]);
+
+        // Now push 2 byte element onto the witness stack.
+        let push = [2u8, 3u8];
+        witness.push(&push);
+
+        let elements = [1u8, 0, 2, 2, 3];
         let expected = Witness {
             witness_elements: 2,
-            content: append_u32_vec(vec![1u8, 0, 2, 2, 3], &[0, 2]),
-            indices_start: 5,
+            content: append_u32_vec(&elements, &[0, 2]),
+            indices_start: elements.len(),
         };
         assert_eq!(witness, expected);
-        assert_eq!(witness.last(), Some(&[2u8, 3u8][..]));
-        assert_eq!(witness.second_to_last(), Some(&[0u8][..]));
-        assert_eq!(witness.nth(0), Some(&[0u8][..]));
-        assert_eq!(witness.nth(1), Some(&[2u8, 3u8][..]));
+
+        let element_1 = push.as_slice();
+        assert_eq!(element_1, &witness[1]);
+
+        assert_eq!(witness.nth(0), Some(element_0));
+        assert_eq!(witness.nth(1), Some(element_1));
         assert_eq!(witness.nth(2), None);
         assert_eq!(witness.nth(3), None);
-        assert_eq!(&witness[0], &[0u8][..]);
-        assert_eq!(&witness[1], &[2u8, 3u8][..]);
-        witness.push(&vec![4u8, 5u8]);
+
+        assert_eq!(witness.second_to_last(), Some(element_0));
+        assert_eq!(witness.last(), Some(element_1));
+
+        // Now push another 2 byte element onto the witness stack.
+        let push = [4u8, 5u8];
+        witness.push(&push);
+
+        let elements = [1u8, 0, 2, 2, 3, 2, 4, 5];
         let expected = Witness {
             witness_elements: 3,
-            content: append_u32_vec(vec![1u8, 0, 2, 2, 3, 2, 4, 5], &[0, 2, 5]),
-            indices_start: 8,
+            content: append_u32_vec(&elements, &[0, 2, 5]),
+            indices_start: elements.len(),
         };
         assert_eq!(witness, expected);
-        assert_eq!(witness.last(), Some(&[4u8, 5u8][..]));
-        assert_eq!(witness.second_to_last(), Some(&[2u8, 3u8][..]));
-        assert_eq!(witness.nth(0), Some(&[0u8][..]));
-        assert_eq!(witness.nth(1), Some(&[2u8, 3u8][..]));
-        assert_eq!(witness.nth(2), Some(&[4u8, 5u8][..]));
+
+        let element_2 = push.as_slice();
+        assert_eq!(element_2, &witness[2]);
+
+        assert_eq!(witness.nth(0), Some(element_0));
+        assert_eq!(witness.nth(1), Some(element_1));
+        assert_eq!(witness.nth(2), Some(element_2));
         assert_eq!(witness.nth(3), None);
-        assert_eq!(&witness[0], &[0u8][..]);
-        assert_eq!(&witness[1], &[2u8, 3u8][..]);
-        assert_eq!(&witness[2], &[4u8, 5u8][..]);
+
+        assert_eq!(witness.second_to_last(), Some(element_1));
+        assert_eq!(witness.last(), Some(element_2));
     }
 
     #[test]
-    fn test_iter_len() {
+    fn exact_sized_iterator() {
         let mut witness = Witness::default();
         for i in 0..5 {
             assert_eq!(witness.iter().len(), i);
@@ -734,31 +779,28 @@ mod test {
     }
 
     #[test]
-    fn test_witness() {
-        let w0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
-        let w1 = hex!("000000");
-        let witness_vec = vec![w0.clone(), w1.clone()];
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness = Witness {
-            content: append_u32_vec(witness_serialized[1..].to_vec(), &[0, 34]),
-            witness_elements: 2,
-            indices_start: 38,
-        };
-        for (i, el) in witness.iter().enumerate() {
-            assert_eq!(witness_vec[i], el);
-        }
-        assert_eq!(witness.last(), Some(&w1[..]));
-        assert_eq!(witness.second_to_last(), Some(&w0[..]));
-        assert_eq!(witness.nth(0), Some(&w0[..]));
-        assert_eq!(witness.nth(1), Some(&w1[..]));
-        assert_eq!(witness.nth(2), None);
-        assert_eq!(&witness[0], &w0[..]);
-        assert_eq!(&witness[1], &w1[..]);
+    fn consensus_serialize() {
+        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
+        let el_1 = hex!("000000");
 
-        let w_into = Witness::from_slice(&witness_vec);
-        assert_eq!(w_into, witness);
+        let mut want_witness = Witness::default();
+        want_witness.push(&el_0);
+        want_witness.push(&el_1);
 
-        assert_eq!(witness_serialized, serialize(&witness));
+        let vec = vec![el_0.clone(), el_1.clone()];
+
+        // Puts a CompactSize at the front as well as one at the front of each element.
+        let want_ser: Vec<u8> = encode::serialize(&vec);
+
+        // `from_slice` expects bytes slices _without_ leading `CompactSize`.
+        let got_witness = Witness::from_slice(&vec);
+        assert_eq!(got_witness, want_witness);
+
+        let got_ser = encode::serialize(&got_witness);
+        assert_eq!(got_ser, want_ser);
+
+        let rinsed: Witness = encode::deserialize(&got_ser).unwrap();
+        assert_eq!(rinsed, want_witness)
     }
 
     #[test]
@@ -876,11 +918,9 @@ mod test {
         assert!(deserialize::<Witness>(&bytes).is_err()); // OversizedVectorAllocation
     }
 
-    #[cfg(feature = "serde")]
     #[test]
-    fn test_serde_bincode() {
-        use bincode;
-
+    #[cfg(feature = "serde")]
+    fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
         let new_witness_format = Witness::from_slice(&old_witness_format);
 
@@ -888,24 +928,44 @@ mod test {
         let new = bincode::serialize(&new_witness_format).unwrap();
 
         assert_eq!(old, new);
-
-        let back: Witness = bincode::deserialize(&new).unwrap();
-        assert_eq!(new_witness_format, back);
     }
 
     #[cfg(feature = "serde")]
+    fn arbitrary_witness() -> Witness {
+        let mut witness = Witness::default();
+
+        witness.push(&[0_u8]);
+        witness.push(&[1_u8; 32]);
+        witness.push(&[2_u8; 72]);
+
+        witness
+    }
+
     #[test]
-    fn test_serde_human() {
-        use serde_json;
+    #[cfg(feature = "serde")]
+    fn serde_bincode_roundtrips() {
+        let original = arbitrary_witness();
+        let ser = bincode::serialize(&original).unwrap();
+        let rinsed: Witness = bincode::deserialize(&ser).unwrap();
+        assert_eq!(rinsed, original);
+    }
 
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_human_roundtrips() {
+        let original = arbitrary_witness();
+        let ser = serde_json::to_string(&original).unwrap();
+        let rinsed: Witness = serde_json::from_str(&ser).unwrap();
+        assert_eq!(rinsed, original);
+
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_human() {
         let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
-
         let json = serde_json::to_string(&witness).unwrap();
-
         assert_eq!(json, r#"["007b4b","0206030708"]"#);
-
-        let back: Witness = serde_json::from_str(&json).unwrap();
-        assert_eq!(witness, back);
     }
 }
 
