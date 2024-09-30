@@ -6,6 +6,9 @@
 //! We refer to the documentation on the types for more information.
 
 #[cfg(feature = "alloc")]
+use crate::{Weight, FeeRate};
+
+#[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
 use core::str::FromStr;
@@ -1038,6 +1041,22 @@ impl Amount {
     /// can be made.
     /// Returns [`None`] if overflow occurred.
     pub fn checked_div(self, rhs: u64) -> Option<Amount> { self.0.checked_div(rhs).map(Amount) }
+
+    /// Checked weight division.
+    ///
+    /// Be aware that integer division loses the remainder if no exact division
+    /// can be made.  This method rounds up ensuring the transaction fee-rate is
+    /// sufficient.  If you wish to round-down, use the unchecked version instead.
+    ///
+    /// [`None`] is returned if an overflow occurred.
+    #[cfg(feature = "alloc")]
+    pub fn checked_div_by_weight(self, rhs: Weight) -> Option<FeeRate> {
+        let sats = self.0.checked_mul(1000)?;
+        let wu = rhs.to_wu();
+
+        let fee_rate = sats.checked_add(wu.checked_sub(1)?)?.checked_div(wu)?;
+        Some(FeeRate::from_sat_per_kwu(fee_rate))
+    }
 
     /// Checked remainder.
     ///
@@ -2217,6 +2236,31 @@ mod tests {
 
         assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
         assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn amount_checked_div_by_weight() {
+        let weight = Weight::from_kwu(1).unwrap();
+        let fee_rate = Amount::from_sat(1)
+            .checked_div_by_weight(weight)
+            .unwrap();
+        // 1 sats / 1,000 wu = 1 sats/kwu
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
+
+        let weight = Weight::from_wu(381);
+        let fee_rate = Amount::from_sat(329)
+            .checked_div_by_weight(weight)
+            .unwrap();
+        // 329 sats / 381 wu = 863.5 sats/kwu
+        // round up to 864
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
+
+        let fee_rate = Amount::MAX.checked_div_by_weight(weight);
+        assert!(fee_rate.is_none());
+
+        let fee_rate = Amount::ONE_SAT.checked_div_by_weight(Weight::ZERO);
+        assert!(fee_rate.is_none());
     }
 
     #[test]
