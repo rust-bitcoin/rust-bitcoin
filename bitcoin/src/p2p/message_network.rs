@@ -15,7 +15,7 @@ use crate::p2p::address::Address;
 use crate::p2p::ServiceFlags;
 use crate::prelude::{Cow, String};
 
-/// Some simple messages
+// Some simple messages
 
 /// The `version` message
 #[derive(PartialEq, Eq, Clone, Debug)]
