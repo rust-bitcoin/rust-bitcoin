@@ -112,17 +112,17 @@ impl ColdStorage {
     /// The newly created signer along with the data needed to configure a watch-only wallet.
     fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
         let master_xpriv = xpriv.parse::<Xpriv>()?;
-        let master_xpub = Xpub::from_priv(secp, &master_xpriv);
+        let master_xpub = Xpub::from_xpriv(secp, &master_xpriv);
 
         // Hardened children require secret data to derive.
 
         let path = "84h/0h/0h".into_derivation_path()?;
-        let account_0_xpriv = master_xpriv.derive_priv(secp, &path);
-        let account_0_xpub = Xpub::from_priv(secp, &account_0_xpriv);
+        let account_0_xpriv = master_xpriv.derive_xpriv(secp, &path);
+        let account_0_xpub = Xpub::from_xpriv(secp, &account_0_xpriv);
 
         let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
-        let input_xpriv = master_xpriv.derive_priv(secp, &path);
-        let input_xpub = Xpub::from_priv(secp, &input_xpriv);
+        let input_xpriv = master_xpriv.derive_xpriv(secp, &path);
+        let input_xpub = Xpub::from_xpriv(secp, &input_xpriv);
 
         let wallet = ColdStorage { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
@@ -205,7 +205,7 @@ impl WatchOnly {
     fn update_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
         let mut input = Input { witness_utxo: Some(previous_output()), ..Default::default() };
 
-        let pk = self.input_xpub.to_pub();
+        let pk = self.input_xpub.to_public_key();
         let wpkh = pk.wpubkey_hash();
 
         let redeem_script = ScriptBuf::new_p2wpkh(wpkh);
@@ -235,7 +235,7 @@ impl WatchOnly {
         let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
         let mut script_witness: Witness = Witness::new();
         script_witness.push(sigs[0].serialize());
-        script_witness.push(self.input_xpub.to_pub().to_bytes());
+        script_witness.push(self.input_xpub.to_public_key().to_bytes());
 
         psbt.inputs[0].final_script_witness = Some(script_witness);
 
@@ -258,9 +258,9 @@ impl WatchOnly {
         secp: &Secp256k1<C>,
     ) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
         let path = [ChildNumber::ONE_NORMAL, ChildNumber::ZERO_NORMAL];
-        let derived = self.account_0_xpub.derive_pub(secp, &path)?;
+        let derived = self.account_0_xpub.derive_xpub(secp, &path)?;
 
-        let pk = derived.to_pub();
+        let pk = derived.to_public_key();
         let addr = Address::p2wpkh(pk, NETWORK);
         let path = path.into_derivation_path()?;
 

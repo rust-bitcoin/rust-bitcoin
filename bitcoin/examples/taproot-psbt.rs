@@ -297,7 +297,7 @@ fn generate_bip86_key_spend_tx(
                 .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
                 .ok_or("missing Taproot key origin")?;
 
-            let secret_key = master_xpriv.derive_priv(secp, &derivation_path).to_priv().inner;
+            let secret_key = master_xpriv.derive_xpriv(secp, &derivation_path).to_private_key().inner;
             sign_psbt_taproot(
                 secret_key,
                 input.tap_internal_key.unwrap(),
@@ -392,9 +392,9 @@ impl BenefactorWallet {
         // that we use an unhardened path so we can make use of xpubs.
         let derivation_path = format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
         let internal_keypair =
-            self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_keypair(&self.secp);
+            self.master_xpriv.derive_xpriv(&self.secp, &derivation_path).to_keypair(&self.secp);
         let beneficiary_key =
-            self.beneficiary_xpub.derive_pub(&self.secp, &derivation_path)?.to_x_only_pub();
+            self.beneficiary_xpub.derive_xpub(&self.secp, &derivation_path)?.to_x_only_public_key();
 
         // Build up the leaf script and combine with internal key into a Taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
@@ -482,10 +482,10 @@ impl BenefactorWallet {
                 format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
             let new_internal_keypair = self
                 .master_xpriv
-                .derive_priv(&self.secp, &new_derivation_path)
+                .derive_xpriv(&self.secp, &new_derivation_path)
                 .to_keypair(&self.secp);
             let beneficiary_key =
-                self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
+                self.beneficiary_xpub.derive_xpub(&self.secp, &new_derivation_path)?.to_x_only_public_key();
 
             // Build up the leaf script and combine with internal key into a Taproot commitment
             let lock_time = absolute::LockTime::from_height(
@@ -531,7 +531,7 @@ impl BenefactorWallet {
                     .get(&input.tap_internal_key.ok_or("internal key missing in PSBT")?)
                     .ok_or("missing Taproot key origin")?;
                 let secret_key =
-                    self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
+                    self.master_xpriv.derive_xpriv(&self.secp, &derivation_path).to_private_key().inner;
                 sign_psbt_taproot(
                     secret_key,
                     spend_info.internal_key(),
@@ -628,7 +628,7 @@ impl BeneficiaryWallet {
         Ok(Self { master_xpriv, secp: Secp256k1::new() })
     }
 
-    fn master_xpub(&self) -> Xpub { Xpub::from_priv(&self.secp, &self.master_xpriv) }
+    fn master_xpub(&self) -> Xpub { Xpub::from_xpriv(&self.secp, &self.master_xpriv) }
 
     fn spend_inheritance(
         &self,
@@ -652,7 +652,7 @@ impl BeneficiaryWallet {
             &psbt.inputs[0].tap_key_origins.clone()
         {
             let secret_key =
-                self.master_xpriv.derive_priv(&self.secp, &derivation_path).to_priv().inner;
+                self.master_xpriv.derive_xpriv(&self.secp, &derivation_path).to_private_key().inner;
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(

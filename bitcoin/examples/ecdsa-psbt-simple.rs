@@ -60,11 +60,11 @@ fn get_external_address_xpriv<C: Signing>(
 ) -> Xpriv {
     let derivation_path =
         BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
-    let child_xpriv = master_xpriv.derive_priv(secp, &derivation_path);
+    let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
     let external_index = ChildNumber::ZERO_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_priv(secp, &[external_index, idx])
+    child_xpriv.derive_xpriv(secp, &[external_index, idx])
 }
 
 // Derive the internal address xpriv.
@@ -75,11 +75,11 @@ fn get_internal_address_xpriv<C: Signing>(
 ) -> Xpriv {
     let derivation_path =
         BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
-    let child_xpriv = master_xpriv.derive_priv(secp, &derivation_path);
+    let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
     let internal_index = ChildNumber::ONE_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_priv(secp, &[internal_index, idx])
+    child_xpriv.derive_xpriv(secp, &[internal_index, idx])
 }
 
 // The address to send to.
@@ -133,10 +133,10 @@ fn main() {
     let xpriv_change = get_internal_address_xpriv(&secp, master_xpriv, 1);
 
     // Get the PKs
-    let pk_input_1 = Xpub::from_priv(&secp, &xpriv_input_1).to_pub();
-    let pk_input_2 = Xpub::from_priv(&secp, &xpriv_input_2).to_pub();
+    let pk_input_1 = Xpub::from_xpriv(&secp, &xpriv_input_1).to_public_key();
+    let pk_input_2 = Xpub::from_xpriv(&secp, &xpriv_input_2).to_public_key();
     let pk_inputs = [pk_input_1, pk_input_2];
-    let pk_change = Xpub::from_priv(&secp, &xpriv_change).to_pub();
+    let pk_change = Xpub::from_xpriv(&secp, &xpriv_change).to_public_key();
 
     // Get the Witness Public Key Hashes (WPKHs)
     let wpkhs: Vec<WPubkeyHash> = pk_inputs.iter().map(|pk| pk.wpubkey_hash()).collect();

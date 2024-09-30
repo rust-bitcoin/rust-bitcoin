@@ -762,15 +762,15 @@ impl GetKey for Xpriv {
             KeyRequest::Pubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == *fingerprint {
-                    let k = self.derive_priv(secp, &path);
-                    Some(k.to_priv())
+                    let k = self.derive_xpriv(secp, &path);
+                    Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
                     && path[0] == self.child_number
                 {
                     let path = DerivationPath::from_iter(path.into_iter().skip(1).copied());
-                    let k = self.derive_priv(secp, &path);
-                    Some(k.to_priv())
+                    let k = self.derive_xpriv(secp, &path);
+                    Some(k.to_private_key())
                 } else {
                     None
                 };
@@ -1369,9 +1369,9 @@ mod tests {
             ChildNumber::from_normal_idx(31337).unwrap(),
         ];
 
-        sk = sk.derive_priv(secp, &dpath);
+        sk = sk.derive_xpriv(secp, &dpath);
 
-        let pk = Xpub::from_priv(secp, &sk);
+        let pk = Xpub::from_xpriv(secp, &sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
