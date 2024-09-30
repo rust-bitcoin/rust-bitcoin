@@ -28,12 +28,14 @@ impl Height {
 
     /// Returns the inner `u16` value.
     #[inline]
-    pub fn value(self) -> u16 { self.0 }
+    pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 { self.0.into() }
+    pub const fn to_consensus_u32(&self) -> u32 {
+        self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    }
 }
 
 impl From<u16> for Height {
@@ -106,12 +108,14 @@ impl Time {
 
     /// Returns the inner `u16` value.
     #[inline]
-    pub fn value(self) -> u16 { self.0 }
+    pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 { (1u32 << 22) | u32::from(self.0) }
+    pub const fn to_consensus_u32(&self) -> u32 {
+        (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    }
 }
 
 crate::impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
