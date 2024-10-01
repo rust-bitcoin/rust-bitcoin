@@ -11,7 +11,7 @@
 //!
 //! Hashing a single byte slice or a string:
 //!
-//! ```rust
+//! ```
 //! use bitcoin_hashes::Sha256;
 //!
 //! let bytes = [0u8; 5];
@@ -22,39 +22,32 @@
 //!
 //! Hashing content from a reader:
 //!
-//! ```rust
-//! #[cfg(std)]
-//! # fn main() -> std::io::Result<()> {
+//! ```
+//! #[cfg(feature = "std")] {
+//! use bitcoin_hashes::Sha256;
 //! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
 //! let mut engine = Sha256::engine();
-//! std::io::copy(&mut reader, &mut engine)?;
-//! let hash = Sha256::from_engine(engine);
-//! # Ok(())
+//! std::io::copy(&mut reader, &mut engine).unwrap();
+//! let _hash = Sha256::from_engine(engine);
 //! # }
-//!
-//! #[cfg(not(std))]
-//! # fn main() {}
 //! ```
 //!
 //!
 //! Hashing content by [`std::io::Write`] on `HashEngine`:
 //!
-//! ```rust
-//! #[cfg(std)]
-//! # fn main() -> std::io::Result<()> {
-//! let mut part1: &[u8] = b"hello";
-//! let mut part2: &[u8] = b" ";
-//! let mut part3: &[u8] = b"world";
+//! ```
+//! #[cfg(feature = "std")] {
+//! use std::io::Write as _; // Or `bitcoin-io::Write` if `bitcoin-io` feature is enabled.
+//! use bitcoin_hashes::Sha256;
+//! let part1: &[u8] = b"hello";
+//! let part2: &[u8] = b" ";
+//! let part3: &[u8] = b"world";
 //! let mut engine = Sha256::engine();
-//! engine.write_all(part1)?;
-//! engine.write_all(part2)?;
-//! engine.write_all(part3)?;
-//! let hash = Sha256::from_engine(engine);
-//! # Ok(())
+//! engine.write_all(part1).expect("engine writes don't error");
+//! engine.write_all(part2).unwrap();
+//! engine.write_all(part3).unwrap();
+//! let _hash = Sha256::from_engine(engine);
 //! # }
-//!
-//! #[cfg(not(std))]
-//! # fn main() {}
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
