@@ -9,14 +9,14 @@ use internals::ToU64 as _;
 
 use super::witness_version::WitnessVersion;
 use super::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, PushBytes,
-    RedeemScriptSizeError, ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
+    Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
+    ScriptBuf, ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
 use crate::consensus::Encodable;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::DUST_RELAY_TX_FEE;
-use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, Vec};
+use crate::prelude::{sink, Box, DisplayHex, String, ToOwned, ToString, Vec};
 use crate::taproot::{LeafVersion, TapLeafHash};
 use crate::FeeRate;
 
@@ -483,16 +483,12 @@ crate::internal_macros::define_extension_trait! {
         /// Writes the human-readable assembly representation of the script to the formatter.
         #[deprecated(since = "TBD", note = "use the script's Display impl instead")]
         fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-            bytes_to_asm_fmt(self.as_ref(), f)
+            write!(f, "{}", self)
         }
 
         /// Returns the human-readable assembly representation of the script.
         #[deprecated(since = "TBD", note = "use `to_string()` instead")]
-        fn to_asm_string(&self) -> String {
-            let mut buf = String::new();
-            bytes_to_asm_fmt(self.as_ref(), &mut buf).expect("in-memory writers don't fail");
-            buf
-        }
+        fn to_asm_string(&self) -> String { self.to_string() }
 
         /// Formats the script as lower-case hex.
         ///
