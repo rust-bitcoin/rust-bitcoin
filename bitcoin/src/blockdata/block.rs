@@ -9,6 +9,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine};
 use io::{BufRead, Write};
 
@@ -476,6 +478,44 @@ impl std::error::Error for ValidationError {
         match *self {
             BadProofOfWork | BadTarget => None,
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Version {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Equally weight known versions and arbitrary versions
+        let choice = u.int_in_range(0..=3)?;
+        match choice {
+            0 => Ok(Version::ONE),
+            1 => Ok(Version::TWO),
+            2 => Ok(Version::NO_SOFT_FORK_SIGNALLING),
+            _ => Ok(Version::from_consensus(u.arbitrary()?))
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Header {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Header {
+            version: Version::arbitrary(u)?,
+            prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
+            merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
+            time: u.arbitrary()?,
+            bits: CompactTarget::from_consensus(u.arbitrary()?),
+            nonce: u.arbitrary()?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Block {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Block {
+            header: Header::arbitrary(u)?,
+            txdata: Vec::<Transaction>::arbitrary(u)?,
+        })
     }
 }
 
