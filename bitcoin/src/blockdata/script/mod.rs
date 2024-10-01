@@ -415,7 +415,7 @@ impl AsMut<[u8]> for ScriptBuf {
 impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
-        bytes_to_asm_fmt(self.as_ref(), f)?;
+        fmt::Display::fmt(self, f)?;
         f.write_str(")")
     }
 }
@@ -425,8 +425,76 @@ impl fmt::Debug for ScriptBuf {
 }
 
 impl fmt::Display for Script {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { bytes_to_asm_fmt(self.as_ref(), f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // This has to be a macro because it needs to break the loop
+        macro_rules! read_push_data_len {
+            ($iter:expr, $size:path, $formatter:expr) => {
+                match script::read_push_data_len($iter, $size) {
+                    Ok(n) => n,
+                    Err(_) => {
+                        $formatter.write_str("<unexpected end>")?;
+                        break;
+                    }
+                }
+            };
+        }
+
+        let mut iter = self.as_bytes().iter();
+        // Was at least one opcode emitted?
+        let mut at_least_one = false;
+        // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
+        // of `for`.
+        while let Some(byte) = iter.next() {
+            let opcode = Opcode::from(*byte);
+
+            let data_len = if let opcodes::Class::PushBytes(n) =
+                opcode.classify(opcodes::ClassifyContext::Legacy)
+            {
+                n as usize
+            } else {
+                match opcode {
+                    OP_PUSHDATA1 => {
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, PushDataLenLen::One, f)
+                    }
+                    OP_PUSHDATA2 => {
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, PushDataLenLen::Two, f)
+                    }
+                    OP_PUSHDATA4 => {
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, PushDataLenLen::Four, f)
+                    }
+                    _ => 0,
+                }
+            };
+
+            if at_least_one {
+                f.write_str(" ")?;
+            } else {
+                at_least_one = true;
+            }
+            // Write the opcode
+            if opcode == OP_PUSHBYTES_0 {
+                f.write_str("OP_0")?;
+            } else {
+                write!(f, "{:?}", opcode)?;
+            }
+            // Write any pushdata
+            if data_len > 0 {
+                f.write_str(" ")?;
+                if data_len <= iter.len() {
+                    for ch in iter.by_ref().take(data_len) {
+                        write!(f, "{:02x}", ch)?;
+                    }
+                } else {
+                    f.write_str("<push past end>")?;
+                    break;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl fmt::Display for ScriptBuf {
@@ -635,78 +703,6 @@ impl Decodable for ScriptBuf {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
         Ok(ScriptBuf::from_bytes(v))
     }
-}
-
-/// Writes the assembly decoding of the script bytes to the formatter.
-pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
-    // This has to be a macro because it needs to break the loop
-    macro_rules! read_push_data_len {
-        ($iter:expr, $size:path, $formatter:expr) => {
-            match script::read_push_data_len($iter, $size) {
-                Ok(n) => n,
-                Err(_) => {
-                    $formatter.write_str("<unexpected end>")?;
-                    break;
-                }
-            }
-        };
-    }
-
-    let mut iter = script.iter();
-    // Was at least one opcode emitted?
-    let mut at_least_one = false;
-    // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
-    // of `for`.
-    while let Some(byte) = iter.next() {
-        let opcode = Opcode::from(*byte);
-
-        let data_len = if let opcodes::Class::PushBytes(n) =
-            opcode.classify(opcodes::ClassifyContext::Legacy)
-        {
-            n as usize
-        } else {
-            match opcode {
-                OP_PUSHDATA1 => {
-                    // side effects: may write and break from the loop
-                    read_push_data_len!(&mut iter, PushDataLenLen::One, f)
-                }
-                OP_PUSHDATA2 => {
-                    // side effects: may write and break from the loop
-                    read_push_data_len!(&mut iter, PushDataLenLen::Two, f)
-                }
-                OP_PUSHDATA4 => {
-                    // side effects: may write and break from the loop
-                    read_push_data_len!(&mut iter, PushDataLenLen::Four, f)
-                }
-                _ => 0,
-            }
-        };
-
-        if at_least_one {
-            f.write_str(" ")?;
-        } else {
-            at_least_one = true;
-        }
-        // Write the opcode
-        if opcode == OP_PUSHBYTES_0 {
-            f.write_str("OP_0")?;
-        } else {
-            write!(f, "{:?}", opcode)?;
-        }
-        // Write any pushdata
-        if data_len > 0 {
-            f.write_str(" ")?;
-            if data_len <= iter.len() {
-                for ch in iter.by_ref().take(data_len) {
-                    write!(f, "{:02x}", ch)?;
-                }
-            } else {
-                f.write_str("<push past end>")?;
-                break;
-            }
-        }
-    }
-    Ok(())
 }
 
 /// Ways that a script might fail. Not everything is split up as
