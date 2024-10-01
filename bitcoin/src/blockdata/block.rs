@@ -190,13 +190,13 @@ impl Default for Version {
 
 impl Encodable for Version {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version)
+        Decodable::consensus_decode(r).map(Version::from_consensus)
     }
 }
 
@@ -515,7 +515,7 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, Version(1));
+        assert_eq!(real_decode.header.version, Version::from_consensus(1));
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
@@ -557,7 +557,7 @@ mod tests {
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, Version(Version::USE_VERSION_BITS as i32)); // VERSIONBITS but no bits set
+        assert_eq!(real_decode.header.version, Version::from_consensus(0x2000_0000)); // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
@@ -587,13 +587,13 @@ mod tests {
         let decode: Result<Block, _> = deserialize(&block);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, Version(2147483647));
+        assert_eq!(real_decode.header.version, Version::from_consensus(2147483647));
 
         let block2 = hex!("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
         let decode2: Result<Block, _> = deserialize(&block2);
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
-        assert_eq!(real_decode2.header.version, Version(-2147483648));
+        assert_eq!(real_decode2.header.version, Version::from_consensus(-2147483648));
     }
 
     #[test]
@@ -614,7 +614,7 @@ mod tests {
 
         // test with modified header
         let mut invalid_header: Header = some_header;
-        invalid_header.version.0 += 1;
+        invalid_header.version = Version::from_consensus(invalid_header.version.to_consensus() + 1);
         match invalid_header.validate_pow(invalid_header.target()) {
             Err(ValidationError::BadProofOfWork) => (),
             _ => panic!("unexpected result from validate_pow"),
@@ -635,7 +635,7 @@ mod tests {
     fn soft_fork_signalling() {
         for i in 0..31 {
             let version_int = (0x20000000u32 ^ 1 << i) as i32;
-            let version = Version(version_int);
+            let version = Version::from_consensus(version_int);
             if i < 29 {
                 assert!(version.is_signalling_soft_fork(i));
             } else {
@@ -643,7 +643,7 @@ mod tests {
             }
         }
 
-        let segwit_signal = Version(0x20000000 ^ 1 << 1);
+        let segwit_signal = Version::from_consensus(0x20000000 ^ 1 << 1);
         assert!(!segwit_signal.is_signalling_soft_fork(0));
         assert!(segwit_signal.is_signalling_soft_fork(1));
         assert!(!segwit_signal.is_signalling_soft_fork(2));
