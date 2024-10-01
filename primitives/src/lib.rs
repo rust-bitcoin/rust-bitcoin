@@ -35,6 +35,8 @@ pub mod locktime;
 pub mod opcodes;
 pub mod merkle_tree;
 pub mod pow;
+#[cfg(feature = "alloc")]
+pub mod script;
 pub mod sequence;
 pub mod transaction;
 
@@ -56,5 +58,11 @@ pub use self::{
 #[allow(unused_imports)]
 mod prelude {
     #[cfg(feature = "alloc")]
-    pub use alloc::string::{String, ToString};
+    pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+
+    #[cfg(feature = "alloc")]
+    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, BorrowMut, Cow, ToOwned}, slice, rc};
+
+    #[cfg(all(feature = "alloc", target_has_atomic = "ptr"))]
+    pub use alloc::sync;
 }
