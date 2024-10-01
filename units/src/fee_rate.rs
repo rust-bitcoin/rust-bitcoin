@@ -208,10 +208,26 @@ impl Mul<Weight> for FeeRate {
     fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
 }
 
+/// Computes the fee-rate as the ceiling of Amount / Weight.
+///
+/// When the resulting fee-rate is a non-integer amount, the amount is rounded up,
+/// ensuring that the transaction fee-rate is enough instead of falling short if
+/// rounded down.
 impl Div<Weight> for Amount {
     type Output = FeeRate;
 
-    fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
+    fn div(self, rhs: Weight) -> Self::Output {
+        let sats = self.to_sat() * 1_000;
+        let wu = rhs.to_wu();
+
+        let result = sats / wu;
+
+        if sats % wu != 0 {
+            FeeRate(result + 1)
+        } else {
+            FeeRate(result)
+        }
+    }
 }
 
 impl AddAssign for FeeRate {
@@ -282,6 +298,22 @@ mod tests {
         let mut f = FeeRate(3);
         f -= &FeeRate(2);
         assert_eq!(f, FeeRate(1));
+    }
+
+    #[test]
+    fn fee_rate_amount_div_by_weight() {
+        let amount = Amount::from_sat(1);
+        let weight = Weight::from_kwu(1).unwrap();
+        let fee_rate = amount / weight;
+        // 1 sats * 1,000 wu = 1 sats/kwu
+        assert_eq!(fee_rate, FeeRate(1));
+
+        let amount = Amount::from_sat(329);
+        let weight = Weight::from_wu(381);
+        let fee_rate = amount / weight;
+        // 329 sats * 381 wu = 863.5 sats/kwu
+        // round up to 864
+        assert_eq!(fee_rate, FeeRate(864));
     }
 
     #[test]
