@@ -31,7 +31,7 @@ pub mod serde_details {
             if let Ok(hex) = str::from_utf8(v) {
                 hex.parse::<Self::Value>().map_err(E::custom)
             } else {
-                return Err(E::invalid_value(de::Unexpected::Bytes(v), &self));
+                Err(E::invalid_value(de::Unexpected::Bytes(v), &self))
             }
         }
 

@@ -276,7 +276,7 @@ pub mod hex_bytes {
                 if let Ok(hex) = core::str::from_utf8(v) {
                     FromHex::from_hex(hex).map_err(E::custom)
                 } else {
-                    return Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self));
+                    Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self))
                 }
             }
 
