@@ -1152,6 +1152,19 @@ impl InputWeightPrediction {
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
     pub const P2WPKH_MAX: Self = InputWeightPrediction::from_slice(0, &[72, 33]);
 
+    /// Input weight prediction corresponding to spending of [nested P2WPKH] output with the largest possible
+    /// DER-encoded signature.
+    ///
+    /// If the input in your transaction uses nested P2WPKH you can use this instead of
+    /// [`InputWeightPrediction::new`].
+    ///
+    /// This is useful when you **do not** use [signature grinding] and want to ensure you are not
+    /// under-paying. See [`ground_nested_p2wpkh`](Self::ground_nested_p2wpkh) if you do use signature grinding.
+    ///
+    /// [nested P2WPKH]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh
+    /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
+    pub const NESTED_P2WPKH_MAX: Self = InputWeightPrediction::from_slice(23, &[72, 33]);
+
     /// Input weight prediction corresponding to spending of a P2PKH output with the largest possible
     /// DER-encoded signature, and a compressed public key.
     ///
@@ -1204,6 +1217,27 @@ impl InputWeightPrediction {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
         InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
+    }
+
+    /// Input weight prediction corresponding to spending of [nested P2WPKH] output using [signature
+    /// grinding].
+    ///
+    /// If the input in your transaction uses P2WPKH and you use signature grinding you can use this
+    /// instead of [`InputWeightPrediction::new`]. See [`NESTED_P2WPKH_MAX`](Self::NESTED_P2WPKH_MAX) if you don't
+    /// use signature grinding.
+    ///
+    /// Note: `bytes_to_grind` is usually `1` because of exponential cost of higher values.
+    ///
+    /// # Panics
+    ///
+    /// The funcion panics in const context and debug builds if `bytes_to_grind` is higher than 62.
+    ///
+    /// [nested P2WPKH]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#p2wpkh-nested-in-bip16-p2sh
+    /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
+    pub const fn ground_nested_p2wpkh(bytes_to_grind: usize) -> Self {
+        // Written to trigger const/debug panic for unreasonably high values.
+        let der_signature_size = 10 + (62 - bytes_to_grind);
+        InputWeightPrediction::from_slice(23, &[der_signature_size, 33])
     }
 
     /// Input weight prediction corresponding to spending of a P2PKH output using [signature
@@ -2088,6 +2122,10 @@ mod tests {
         assert_eq!(
             InputWeightPrediction::ground_p2wpkh(0).weight(),
             InputWeightPrediction::P2WPKH_MAX.weight()
+        );
+        assert_eq!(
+            InputWeightPrediction::ground_nested_p2wpkh(0).weight(),
+            InputWeightPrediction::NESTED_P2WPKH_MAX.weight()
         );
         assert_eq!(
             InputWeightPrediction::ground_p2pkh_compressed(0).weight(),
