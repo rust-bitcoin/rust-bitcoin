@@ -38,12 +38,14 @@ pub struct Sequence(pub u32);
 impl Sequence {
     /// The maximum allowable sequence number.
     ///
-    /// This sequence number disables absolute lock time and replace-by-fee.
+    /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
     pub const MAX: Self = Sequence(0xFFFFFFFF);
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and absolute lock time.
     pub const ZERO: Self = Sequence(0);
+    /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
+    pub const FINAL: Self = Sequence::MAX;
     /// The sequence number that enables absolute lock time but disables replace-by-fee
     /// and relative lock time.
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
