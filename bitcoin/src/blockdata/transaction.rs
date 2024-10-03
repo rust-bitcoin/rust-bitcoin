@@ -1304,8 +1304,8 @@ impl InputWeightPrediction {
         InputWeightPrediction { script_size, witness_size }
     }
 
-    /// Tallies the total weight added to a transaction by an input with this weight prediction,
-    /// not counting potential witness flag bytes or the witness count varint.
+    /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
+    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
     pub const fn weight(&self) -> Weight {
         Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
     }
