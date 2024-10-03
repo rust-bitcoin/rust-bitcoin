@@ -241,8 +241,7 @@ impl fmt::Debug for Sequence {
 #[cfg(feature = "alloc")]
 units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
-#[cfg(feature = "arbitrary")]
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "arbitrary", feature = "alloc"))]
 impl<'a> Arbitrary<'a> for Sequence {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the cases of meaningful sequence numbers
@@ -261,8 +260,7 @@ impl<'a> Arbitrary<'a> for Sequence {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-#[cfg(not(feature = "alloc"))]
+#[cfg(all(feature = "arbitrary", not(feature = "alloc")))]
 impl<'a> Arbitrary<'a> for Sequence {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the cases of meaningful sequence numbers
