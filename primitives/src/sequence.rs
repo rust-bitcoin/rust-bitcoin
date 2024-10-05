@@ -51,7 +51,16 @@ impl Sequence {
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
+    #[deprecated(
+        since = "TBD",
+        note = "This constant has ambiguous name. Please use ENABLE_LOCKTIME_AND_RBF instead."
+    )]
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
+    /// The maximum sequence number that enables replace-by-fee and absolute lock time but
+    /// disables relative lock time.
+    ///
+    /// This sequence number has no meaning other than to enable RBF and the absolute locktime.
+    pub const ENABLE_LOCKTIME_AND_RBF: Self = Sequence(0xFFFFFFFD);
 
     /// The number of bytes that a sequence number contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
