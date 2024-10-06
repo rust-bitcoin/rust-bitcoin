@@ -5,8 +5,6 @@
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -122,14 +120,6 @@ impl FeeRate {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for FeeRate {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let f = u64::arbitrary(u)?;
-        Ok(FeeRate(f))
-    }
-}
-
 /// Alternative will display the unit.
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -231,6 +221,23 @@ impl SubAssign<&FeeRate> for FeeRate {
 }
 
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    #[cfg(feature = "arbitrary")]
+    use arbitrary::{Arbitrary, Unstructured};
+
+    use super::*;
+
+    #[cfg(feature = "arbitrary")]
+    impl<'a> Arbitrary<'a> for FeeRate {
+        fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+            let f = u64::arbitrary(u)?;
+            Ok(FeeRate(f))
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

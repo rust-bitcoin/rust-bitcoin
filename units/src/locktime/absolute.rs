@@ -153,7 +153,7 @@ impl Time {
     /// ```rust
     /// use bitcoin_units::locktime::absolute::Time;
     ///
-    /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
+    /// let t: u32 = 1653195600; // Sunday, 22 May 2022 05:00:00
     /// let time = Time::from_consensus(t).expect("invalid time value");
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
@@ -368,6 +368,21 @@ impl From<ParseIntError> for ParseError {
 
 impl From<ConversionError> for ParseError {
     fn from(value: ConversionError) -> Self { Self::Conversion(value.input.into()) }
+}
+
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    use super::*;
+    use crate::testing_infrastructure::TestDummy;
+
+    impl TestDummy for Height {
+        fn test_dummy() -> Height { Height(800_000) }
+    }
+
+    impl TestDummy for Time {
+        fn test_dummy() -> Height { Time(1653195600) } // Sunday, 22 May 2022 05:00:00
+    }
 }
 
 #[cfg(test)]

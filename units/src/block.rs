@@ -231,6 +231,21 @@ impl ops::SubAssign<BlockInterval> for BlockInterval {
     fn sub_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() - rhs.to_u32(); }
 }
 
+/// This module holds implementations of stuff useful for writing test code.
+#[cfg(feature = "test-infrastructure")]
+mod testing_infrastructure {
+    use super::*;
+    use crate::testing_infrastructure::TestDummy;
+
+    impl TestDummy for BlockHeight {
+        fn test_dummy() -> BlockHeight { BlockHeight(800_000) }
+    }
+
+    impl TestDummy for BlockInterval {
+        fn test_dummy() -> BlockInterval { BlockInterval(100) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
