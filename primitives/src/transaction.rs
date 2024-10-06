@@ -197,10 +197,7 @@ impl fmt::Display for Version {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for OutPoint {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(OutPoint{
-            txid: Txid::arbitrary(u)?,
-            vout: u32::arbitrary(u)?
-        })
+        Ok(OutPoint { txid: Txid::arbitrary(u)?, vout: u32::arbitrary(u)? })
     }
 }
 

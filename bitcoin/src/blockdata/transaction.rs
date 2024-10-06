@@ -88,7 +88,6 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-
 /// Bitcoin transaction input.
 ///
 /// It contains the location of the previous transaction's output,
@@ -1233,13 +1232,16 @@ impl InputWeightPrediction {
         T: IntoIterator,
         T::Item: Borrow<usize>,
     {
-        let (count, total_size) =
-            witness_element_lengths.into_iter().fold((0usize, 0), |(count, total_size), elem_len| {
+        let (count, total_size) = witness_element_lengths.into_iter().fold(
+            (0usize, 0),
+            |(count, total_size), elem_len| {
                 let elem_len = *elem_len.borrow();
                 let elem_size = elem_len + compact_size::encoded_size(elem_len);
                 (count + 1, total_size + elem_size)
-            });
-        let witness_size = if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
+            },
+        );
+        let witness_size =
+            if count > 0 { total_size + compact_size::encoded_size(count) } else { 0 };
         let script_size = input_script_len + compact_size::encoded_size(input_script_len);
 
         InputWeightPrediction { script_size, witness_size }
@@ -1265,7 +1267,8 @@ impl InputWeightPrediction {
         } else {
             0
         };
-        let script_size = input_script_len + compact_size::encoded_size_const(input_script_len as u64);
+        let script_size =
+            input_script_len + compact_size::encoded_size_const(input_script_len as u64);
 
         InputWeightPrediction { script_size, witness_size }
     }
