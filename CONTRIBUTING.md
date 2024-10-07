@@ -110,7 +110,8 @@ Prerequisites that a PR must satisfy for merging into the `master` branch:
   commits, or, more preferably, as separate commits, so that it's easy to
   reorder them during review and check that the new tests fail without the new
   code);
-* contain all inline docs for newly introduced API and pass doc tests;
+* contain all inline docs for newly introduced API and pass doc tests including
+  running `just lint` without any errors or warnings;
 * be based on the recent `master` tip from the original repository at
   <https://github.com/rust-bitcoin/rust-bitcoin>.
 
@@ -428,6 +429,8 @@ Generally we prefer to have non-panicking APIs but it is impractical in some cas
 sure, feel free to ask. If we determine panicking is more practical it must be documented. Internal
 panics that could theoretically occur because of bugs in our code must not be documented.
 
+Example code within the rustdocs should compile and lint with `just lint` without any errors or
+warnings.
 
 #### Derives
 
