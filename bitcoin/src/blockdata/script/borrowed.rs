@@ -394,6 +394,25 @@ impl Script {
         }
     }
 
+    /// Get redeemScript following BIP16 rules regarding P2SH spending.
+    ///
+    /// This does not guarantee that this represents a P2SH input [`Script`].
+    /// It merely gets the last push of the script. Use
+    /// [`Script::is_p2sh`](crate::blockdata::script::Script::is_p2sh) on the
+    /// scriptPubKey to check whether it is actually a P2SH script.
+    pub fn redeem_script(&self) -> Option<&Script> {
+        // Script must consist entirely of pushes.
+        if self.instructions().any(|i| i.is_err() || i.unwrap().push_bytes().is_none()) {
+            return None;
+        }
+
+        if let Some(Ok(Instruction::PushBytes(b))) = self.instructions().last() {
+            Some(Script::from_bytes(b.as_bytes()))
+        } else {
+            None
+        }
+    }
+
     /// Returns the minimum value an output with this script should have in order to be
     /// broadcastable on today’s Bitcoin network.
     #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
