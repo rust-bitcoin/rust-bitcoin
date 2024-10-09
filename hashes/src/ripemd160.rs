@@ -37,7 +37,7 @@ fn from_engine(mut e: HashEngine) -> Hash {
 #[cfg(hashes_fuzz)]
 fn from_engine(e: HashEngine) -> Hash {
     let mut res = e.midstate();
-    res[0] ^= (e.length & 0xff) as u8;
+    res[0] ^= (e.bytes_hashed & 0xff) as u8;
     Hash(res)
 }
 

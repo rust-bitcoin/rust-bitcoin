@@ -91,7 +91,7 @@ macro_rules! engine_input_impl(
             for c in inp {
                 self.buffer[0] ^= *c;
             }
-            self.length += inp.len();
+            self.bytes_hashed += inp.len();
         }
     )
 );
