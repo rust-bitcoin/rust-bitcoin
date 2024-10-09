@@ -188,6 +188,9 @@ impl Version {
 
     /// The second Bitcoin transaction version (post-BIP-68).
     pub const TWO: Self = Self(2);
+
+    /// The third Bitcoin transaction version (post-BIP-431).
+    pub const THREE: Self = Self(3);
 }
 
 impl fmt::Display for Version {
@@ -208,10 +211,11 @@ impl<'a> Arbitrary<'a> for OutPoint {
 impl<'a> Arbitrary<'a> for Version {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the case of normal version numbers
-        let choice = u.int_in_range(0..=2)?;
+        let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Version::ONE),
             1 => Ok(Version::TWO),
+            2 => Ok(Version::THREE),
             _ => Ok(Version(u.arbitrary()?)),
         }
     }
