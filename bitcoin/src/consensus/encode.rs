@@ -323,7 +323,7 @@ impl<R: Read + ?Sized> ReadExt for R {
         self.read_exact(slice).map_err(Error::Io)
     }
     #[inline]
-    #[rustfmt::skip]            // Formatter munges code comments below.
+    #[rustfmt::skip] // Formatter munges code comments below.
     fn read_compact_size(&mut self) -> Result<u64, Error> {
         match self.read_u8()? {
             0xFF => {
@@ -493,9 +493,7 @@ pub const fn varint_size_u64(v: u64) -> usize {
 
 /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1), and 9 otherwise.
 #[inline]
-pub fn varint_size(v: impl ToU64) -> usize {
-    varint_size_u64(v.to_u64())
-}
+pub fn varint_size(v: impl ToU64) -> usize { varint_size_u64(v.to_u64()) }
 
 impl Encodable for bool {
     #[inline]
@@ -935,14 +933,8 @@ mod tests {
         assert_eq!(encode(0xFD), [0xFDu8, 0xFD, 0]);
         assert_eq!(encode(0xFFF), [0xFDu8, 0xFF, 0xF]);
         assert_eq!(encode(0xF0F0F0F), [0xFEu8, 0xF, 0xF, 0xF, 0xF]);
-        assert_eq!(
-            encode(0xF0F0F0F0F0E0),
-            vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0],
-        );
-        assert_eq!(
-            test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(),
-            0x100000000,
-        );
+        assert_eq!(encode(0xF0F0F0F0F0E0), vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0],);
+        assert_eq!(test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(), 0x100000000,);
         assert_eq!(test_varint_encode(0xFE, &0x10000_u64.to_le_bytes()).unwrap(), 0x10000);
         assert_eq!(test_varint_encode(0xFD, &0xFD_u64.to_le_bytes()).unwrap(), 0xFD);
 
