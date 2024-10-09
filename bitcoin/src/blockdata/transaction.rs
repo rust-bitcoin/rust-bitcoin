@@ -343,7 +343,7 @@ fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Transaction {
-    /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
+    /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
     pub version: Version,
     /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
     ///
@@ -797,7 +797,7 @@ crate::internal_macros::define_extension_trait! {
         fn non_standard(version: i32) -> Version { Self(version) }
 
         /// Returns true if this transaction version number is considered standard.
-        fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO }
+        fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO || *self == Version::THREE }
     }
 }
 
