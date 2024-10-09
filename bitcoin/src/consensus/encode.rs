@@ -323,6 +323,7 @@ impl<R: Read + ?Sized> ReadExt for R {
         self.read_exact(slice).map_err(Error::Io)
     }
     #[inline]
+    #[rustfmt::skip]            // Formatter munges code comments below.
     fn read_compact_size(&mut self) -> Result<u64, Error> {
         match self.read_u8()? {
             0xFF => {
