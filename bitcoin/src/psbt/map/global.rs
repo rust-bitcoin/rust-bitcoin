@@ -7,36 +7,31 @@ use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
 use crate::prelude::{btree_map, BTreeMap, Vec};
+use crate::psbt::consts::{
+    PSBT_GLOBAL_PROPRIETARY, PSBT_GLOBAL_UNSIGNED_TX, PSBT_GLOBAL_VERSION, PSBT_GLOBAL_XPUB,
+};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, Psbt};
 use crate::transaction::Transaction;
-
-/// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
-const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
-/// Type: Extended Public Key PSBT_GLOBAL_XPUB = 0x01
-const PSBT_GLOBAL_XPUB: u8 = 0x01;
-/// Type: Version Number PSBT_GLOBAL_VERSION = 0xFB
-const PSBT_GLOBAL_VERSION: u8 = 0xFB;
-/// Type: Proprietary Use Type PSBT_GLOBAL_PROPRIETARY = 0xFC
-const PSBT_GLOBAL_PROPRIETARY: u8 = 0xFC;
 
 impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
-        rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
-            value: {
-                // Manually serialized to ensure 0-input txs are serialized
-                // without witnesses.
-                let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
-                ret
-            },
-        });
+        if let Some(unsigned_tx) = &self.unsigned_tx {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
+                value: {
+                    // Manually serialized to ensure 0-input txs are serialized without witnesses.
+                    let mut ret = Vec::new();
+                    ret.extend(encode::serialize(&unsigned_tx.version));
+                    ret.extend(encode::serialize(&unsigned_tx.input));
+                    ret.extend(encode::serialize(&unsigned_tx.output));
+                    ret.extend(encode::serialize(&unsigned_tx.lock_time));
+                    ret
+                },
+            });
+        }
 
         for (xpub, (fingerprint, derivation)) in &self.xpub {
             rv.push(raw::Pair {
@@ -200,9 +195,14 @@ impl Psbt {
 
         if let Some(tx) = tx {
             Ok(Psbt {
-                unsigned_tx: tx,
-                version: version.unwrap_or(0),
+                unsigned_tx: Some(tx),
                 xpub: xpub_map,
+                tx_version: None,
+                fallback_lock_time: None,
+                input_count: None,
+                output_count: None,
+                tx_modifiable_flags: None,
+                version: version.unwrap_or(0),
                 proprietary,
                 unknown: unknowns,
                 inputs: vec![],

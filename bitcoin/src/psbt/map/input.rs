@@ -4,12 +4,23 @@ use core::fmt;
 use core::str::FromStr;
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use primitives::transaction::Txid;
+use primitives::sequence::Sequence;
+use primitives::locktime::absolute;
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
+use crate::psbt::consts::{
+    PSBT_IN_BIP32_DERIVATION, PSBT_IN_FINAL_SCRIPTSIG, PSBT_IN_FINAL_SCRIPTWITNESS,
+    PSBT_IN_HASH160, PSBT_IN_HASH256, PSBT_IN_NON_WITNESS_UTXO, PSBT_IN_PARTIAL_SIG,
+    PSBT_IN_PROPRIETARY, PSBT_IN_REDEEM_SCRIPT, PSBT_IN_RIPEMD160, PSBT_IN_SHA256,
+    PSBT_IN_SIGHASH_TYPE, PSBT_IN_TAP_BIP32_DERIVATION, PSBT_IN_TAP_INTERNAL_KEY,
+    PSBT_IN_TAP_KEY_SIG, PSBT_IN_TAP_LEAF_SCRIPT, PSBT_IN_TAP_MERKLE_ROOT, PSBT_IN_TAP_SCRIPT_SIG,
+    PSBT_IN_WITNESS_SCRIPT, PSBT_IN_WITNESS_UTXO,
+};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
@@ -22,110 +33,164 @@ use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
 
-/// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
-const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
-/// Type: Witness UTXO PSBT_IN_WITNESS_UTXO = 0x01
-const PSBT_IN_WITNESS_UTXO: u8 = 0x01;
-/// Type: Partial Signature PSBT_IN_PARTIAL_SIG = 0x02
-const PSBT_IN_PARTIAL_SIG: u8 = 0x02;
-/// Type: Sighash Type PSBT_IN_SIGHASH_TYPE = 0x03
-const PSBT_IN_SIGHASH_TYPE: u8 = 0x03;
-/// Type: Redeem Script PSBT_IN_REDEEM_SCRIPT = 0x04
-const PSBT_IN_REDEEM_SCRIPT: u8 = 0x04;
-/// Type: Witness Script PSBT_IN_WITNESS_SCRIPT = 0x05
-const PSBT_IN_WITNESS_SCRIPT: u8 = 0x05;
-/// Type: BIP 32 Derivation Path PSBT_IN_BIP32_DERIVATION = 0x06
-const PSBT_IN_BIP32_DERIVATION: u8 = 0x06;
-/// Type: Finalized scriptSig PSBT_IN_FINAL_SCRIPTSIG = 0x07
-const PSBT_IN_FINAL_SCRIPTSIG: u8 = 0x07;
-/// Type: Finalized scriptWitness PSBT_IN_FINAL_SCRIPTWITNESS = 0x08
-const PSBT_IN_FINAL_SCRIPTWITNESS: u8 = 0x08;
-/// Type: RIPEMD160 preimage PSBT_IN_RIPEMD160 = 0x0a
-const PSBT_IN_RIPEMD160: u8 = 0x0a;
-/// Type: SHA256 preimage PSBT_IN_SHA256 = 0x0b
-const PSBT_IN_SHA256: u8 = 0x0b;
-/// Type: HASH160 preimage PSBT_IN_HASH160 = 0x0c
-const PSBT_IN_HASH160: u8 = 0x0c;
-/// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
-const PSBT_IN_HASH256: u8 = 0x0d;
-/// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
-const PSBT_IN_TAP_KEY_SIG: u8 = 0x13;
-/// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
-const PSBT_IN_TAP_SCRIPT_SIG: u8 = 0x14;
-/// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
-const PSBT_IN_TAP_LEAF_SCRIPT: u8 = 0x15;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_IN_TAP_BIP32_DERIVATION = 0x16
-const PSBT_IN_TAP_BIP32_DERIVATION: u8 = 0x16;
-/// Type: Taproot Internal Key PSBT_IN_TAP_INTERNAL_KEY = 0x17
-const PSBT_IN_TAP_INTERNAL_KEY: u8 = 0x17;
-/// Type: Taproot Merkle Root PSBT_IN_TAP_MERKLE_ROOT = 0x18
-const PSBT_IN_TAP_MERKLE_ROOT: u8 = 0x18;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
-const PSBT_IN_PROPRIETARY: u8 = 0xFC;
-
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
-    /// The non-witness transaction this input spends from. Should only be
-    /// `Option::Some` for inputs which spend non-segwit outputs or
-    /// if it is unknown whether an input spends a segwit output.
+    /// The non-witness transaction this input spends from.
+    ///
+    /// This should be present for inputs that spend non-segwit outputs and can be present
+    /// for inputs that spend segwit outputs.
+    ///
+    /// PSBT_IN_NON_WITNESS_UTXO: Optional for v0, optional for v2.
     pub non_witness_utxo: Option<Transaction>,
-    /// The transaction output this input spends from. Should only be
-    /// `Option::Some` for inputs which spend segwit outputs,
-    /// including P2SH embedded ones.
+
+    /// The transaction output this input spends from.
+    ///
+    /// This should only be present for inputs which spend segwit outputs, including
+    /// P2SH embedded ones.
+    ///
+    /// PSBT_IN_WITNESS_UTXO: Optional for v0, optional for v2.
     pub witness_utxo: Option<TxOut>,
+
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-Taproot inputs.
+    ///
+    /// PSBT_IN_PARTIAL_SIG: Optional for v0, optional for v2.
     pub partial_sigs: BTreeMap<PublicKey, ecdsa::Signature>,
-    /// The sighash type to be used for this input. Signatures for this input
-    /// must use the sighash type.
+
+    /// The sighash type to be used for this input.
+    ///
+    /// Signatures for this input must use the sighash type, finalizers must fail to finalize inputs
+    /// which have signatures that do not match the specified sighash type.
+    ///
+    /// PSBT_IN_SIGHASH_TYPE: Optional for v0, optional for v2.
     pub sighash_type: Option<PsbtSighashType>,
-    /// The redeem script for this input.
+
+    /// The redeem script for this input if it has one.
+    ///
+    /// PSBT_IN_REDEEM_SCRIPT: Optional for v0, optional for v2.
     pub redeem_script: Option<ScriptBuf>,
-    /// The witness script for this input.
+
+    /// The witnessScript for this input if it has one.
+    ///
+    /// PSBT_IN_WITNESS_SCRIPT: Optional for v0, optional for v2.
     pub witness_script: Option<ScriptBuf>,
+
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
+    ///
+    /// PSBT_IN_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
+    ///
+    /// PSBT_IN_SCRIPTSIG: Optional for v0, optional for v2.
     pub final_script_sig: Option<ScriptBuf>,
+
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
+    ///
+    /// PSBT_IN_SCRIPTWITNESS: Optional for v0, optional for v2.
     pub final_script_witness: Option<Witness>,
+
     /// RIPEMD160 hash to preimage map.
+    ///
+    /// PSBT_IN_RIPEMD160: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub ripemd160_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
+
     /// SHA256 hash to preimage map.
+    ///
+    /// PSBT_IN_SHA256: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
+
     /// HSAH160 hash to preimage map.
+    ///
+    /// PSBT_IN_HASH160: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
+
     /// HAS256 hash to preimage map.
+    ///
+    /// PSBT_IN_HASH256: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
+
+    /// The txid of the previous transaction whose output at `self.spent_output_index` is being spent.
+    ///
+    /// In other words, the output being spent by this `Input` is:
+    ///
+    ///  `OutPoint { txid: self.previous_txid, vout: self.spent_output_index }`
+    ///
+    /// PSBT_IN_PREVIOUS_TXID: Excluded for v0, required for v2.
+    pub previous_txid: Option<Txid>,
+
+    /// The index of the output being spent in the transaction with the txid of `self.previous_txid`.
+    ///
+    /// PSBT_IN_OUTPUT_INDEX: Excluded for v0, required for v2.
+    pub spent_output_index: Option<u32>,
+
+    /// The sequence number of this input.
+    ///
+    /// If omitted, assumed to be the final sequence number ([`Sequence::MAX`]).
+    ///
+    /// PSBT_IN_SEQUENCE: Excluded for v0, optional for v2.
+    pub sequence: Option<Sequence>,
+
+    /// The minimum Unix timestamp that this input requires to be set as the transaction's lock time.
+    ///
+    /// PSBT_IN_REQUIRED_TIME_LOCKTIME: Excluded for v0, optional for v2.
+    pub min_time: Option<absolute::Time>,
+
+    /// The minimum block height that this input requires to be set as the transaction's lock time.
+    ///
+    /// PSBT_IN_REQUIRED_HEIGHT_LOCKTIME: Excluded for v0, optional for v2.
+    pub min_height: Option<absolute::Height>,
+
     /// Serialized Taproot signature with sighash type for key spend.
+    ///
+    /// PSBT_IN_TAP_SCRIPT_SIG: Optional for v0, optional for v2.
     pub tap_key_sig: Option<taproot::Signature>,
+
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
+    ///
+    /// PSBT_IN_TAP_SCRIPT_SIG: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), taproot::Signature>,
-    /// Map of Control blocks to Script version pair.
+
+    /// Map of control blocks to script version pair.
+    ///
+    /// PSBT_IN_TAP_LEAF_SCRIPT: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf, LeafVersion)>,
+
     /// Map of tap root x only keys to origin info and leaf hashes contained in it.
+    ///
+    /// PSBT_IN_TAP_BIP32_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
-    /// Taproot Internal key.
+
+    /// Taproot internal key.
+    ///
+    /// PSBT_IN_TAP_INTERNAL_KEY: Optional for v0, optional for v2.
     pub tap_internal_key: Option<XOnlyPublicKey>,
-    /// Taproot Merkle root.
+
+    /// Taproot Merkle root hash.
+    ///
+    /// PSBT_IN_TAP_MERKLE_ROOT: Optional for v0, optional for v2.
     pub tap_merkle_root: Option<TapNodeHash>,
+
     /// Proprietary key-value pairs for this input.
+    ///
+    /// PSBT_IN_PROPRIETARY: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+
     /// Unknown key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
@@ -242,6 +307,20 @@ impl PsbtSighashType {
 }
 
 impl Input {
+    /// Returns true if `Psbt` has minimum fields required to be a valid PSBT version 0.
+    pub fn is_valid_v0(&self) -> bool {
+        self.previous_txid.is_none()
+            && self.spent_output_index.is_none()
+            && self.sequence.is_none()
+            && self.min_time.is_none()
+            && self.min_height.is_none()
+    }
+
+    /// Returns true if `Psbt` has minimum fields required to be a valid PSBT version 2.
+    pub fn is_valid_v2(&self) -> bool {
+        self.previous_txid.is_some() && self.spent_output_index.is_some()
+    }
+
     /// Obtains the [`EcdsaSighashType`] for this input if one is specified. If no sighash type is
     /// specified, returns [`EcdsaSighashType::All`].
     ///

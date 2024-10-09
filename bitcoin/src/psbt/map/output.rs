@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use secp256k1::XOnlyPublicKey;
+use units::Amount;
 
 use crate::bip32::KeySource;
 use crate::prelude::{btree_map, BTreeMap, Vec};
+use crate::psbt::consts::{
+    PSBT_OUT_BIP32_DERIVATION, PSBT_OUT_PROPRIETARY, PSBT_OUT_REDEEM_SCRIPT,
+    PSBT_OUT_TAP_BIP32_DERIVATION, PSBT_OUT_TAP_INTERNAL_KEY, PSBT_OUT_TAP_TREE,
+    PSBT_OUT_WITNESS_SCRIPT,
+};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
 use crate::script::ScriptBuf;
 use crate::taproot::{TapLeafHash, TapTree};
-
-/// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
-const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
-/// Type: Witness ScriptBuf PSBT_OUT_WITNESS_SCRIPT = 0x01
-const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
-/// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
-const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
-/// Type: Taproot Internal Key PSBT_OUT_TAP_INTERNAL_KEY = 0x05
-const PSBT_OUT_TAP_INTERNAL_KEY: u8 = 0x05;
-/// Type: Taproot Tree PSBT_OUT_TAP_TREE = 0x06
-const PSBT_OUT_TAP_TREE: u8 = 0x06;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
-const PSBT_OUT_TAP_BIP32_DERIVATION: u8 = 0x07;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
-const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
@@ -30,23 +21,54 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
     /// The redeem script for this output.
+    ///
+    /// PSBT_OUT_REDEEM_SCRIPT: Optional for v0, optional for v2.
     pub redeem_script: Option<ScriptBuf>,
+
     /// The witness script for this output.
+    ///
+    /// PSBT_OUT_WITNESS_SCRIPT: Optional for v0, optional for v2.
     pub witness_script: Option<ScriptBuf>,
-    /// A map from public keys needed to spend this output to their
-    /// corresponding master key fingerprints and derivation paths.
+
+    /// A map from public keys needed to spend this output to their corresponding master key
+    /// fingerprints and derivation paths.
+    ///
+    /// PSBT_OUT_BIP32_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
-    /// The internal pubkey.
+
+    /// The output's amount (serialized as satoshis).
+    ///
+    /// PSBT_OUT_AMOUNT: Excluded for v0, required for v2.
+    pub amount: Option<Amount>,
+
+    /// The script for this output, also known as the scriptPubKey.
+    ///
+    /// PSBT_OUT_SCRIPT: Excluded for v0, required for v2.
+    pub script_pubkey: Option<ScriptBuf>,
+
+    /// The X-only pubkey used as the internal key in this output.
+    ///
+    /// PSBT_OUT_TAP_INTERNAL_KEY: Optional for v0, optional for v2.
     pub tap_internal_key: Option<XOnlyPublicKey>,
-    /// Taproot Output tree.
+
+    /// Taproot output tree.
+    ///
+    /// PSBT_OUT_TAP_TREE: Optional for v0, optional for v2.
     pub tap_tree: Option<TapTree>,
-    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
+
+    /// Map of Taproot x only keys to origin info and leaf hashes contained in it.
+    ///
+    /// PSBT_OUT_TAP_BIP32_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
+
     /// Proprietary key-value pairs for this output.
+    ///
+    /// PSBT_OUT_PROPRIETARY: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+
     /// Unknown key-value pairs for this output.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,

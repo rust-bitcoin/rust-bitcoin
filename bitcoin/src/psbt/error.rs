@@ -101,6 +101,7 @@ pub enum Error {
     PartialDataConsumption,
     /// I/O error.
     Io(io::Error),
+
 }
 
 internals::impl_from_infallible!(Error);
