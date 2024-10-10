@@ -7,7 +7,7 @@
 pub mod serde_details {
     use core::marker::PhantomData;
     use core::str::FromStr;
-    use core::{fmt, ops, str};
+    use core::{fmt, str};
 
     use crate::FromSliceError;
     struct HexVisitor<ValueT>(PhantomData<ValueT>);
@@ -73,8 +73,7 @@ pub mod serde_details {
         Self: Sized
             + FromStr
             + fmt::Display
-            + ops::Index<usize, Output = u8>
-            + ops::Index<ops::RangeFull, Output = [u8]>,
+            + crate::Hash,
         <Self as FromStr>::Err: fmt::Display,
     {
         /// Size, in bits, of the hash.
@@ -88,7 +87,7 @@ pub mod serde_details {
             if s.is_human_readable() {
                 s.collect_str(self)
             } else {
-                s.serialize_bytes(&self[..])
+                s.serialize_bytes(<Self as crate::Hash>::as_byte_array(self).as_ref())
             }
         }
 
