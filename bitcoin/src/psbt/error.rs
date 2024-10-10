@@ -56,7 +56,7 @@ pub enum Error {
     /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
     /// Invalid hash when parsing slice.
-    InvalidHash(hashes::FromSliceError),
+    InvalidHash(core::array::TryFromSliceError),
     /// The pre-image must hash to the corresponding psbt hash
     InvalidPreimageHashPair {
         /// Hash-type
@@ -203,8 +203,8 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<hashes::FromSliceError> for Error {
-    fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
+impl From<core::array::TryFromSliceError> for Error {
+    fn from(e: core::array::TryFromSliceError) -> Error { Error::InvalidHash(e) }
 }
 
 impl From<encode::Error> for Error {

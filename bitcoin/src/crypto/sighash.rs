@@ -1527,7 +1527,7 @@ mod tests {
         let cache = SighashCache::new(&tx);
 
         let got = cache.legacy_signature_hash(1, &script, SIGHASH_SINGLE).expect("sighash");
-        let want = LegacySighash::from_slice(&UINT256_ONE).unwrap();
+        let want = LegacySighash::from_byte_array(UINT256_ONE);
 
         assert_eq!(got, want)
     }
@@ -1550,7 +1550,8 @@ mod tests {
             let script = ScriptBuf::from(Vec::from_hex(script).unwrap());
             let mut raw_expected = Vec::from_hex(expected_result).unwrap();
             raw_expected.reverse();
-            let want = LegacySighash::from_slice(&raw_expected[..]).unwrap();
+            let bytes = <[u8; 32]>::try_from(&raw_expected[..]).unwrap();
+            let want = LegacySighash::from_byte_array(bytes);
 
             let cache = SighashCache::new(&tx);
             let got = cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap();

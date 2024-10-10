@@ -56,6 +56,7 @@
 #![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
+#![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
 // Instead of littering the codebase for non-fuzzing and bench code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
@@ -265,6 +266,7 @@ pub trait Hash:
     const LEN: usize = Self::Bytes::LEN;
 
     /// Copies a byte slice into a hash object.
+    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Flag indicating whether user-visible serializations of this hash
