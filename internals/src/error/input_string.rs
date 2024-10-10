@@ -102,7 +102,7 @@ pub struct CannotParse<'a, T: fmt::Display + ?Sized> {
     what: &'a T,
 }
 
-impl<'a, T: fmt::Display + ?Sized> fmt::Display for CannotParse<'a, T> {
+impl<T: fmt::Display + ?Sized> fmt::Display for CannotParse<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         storage::cannot_parse(&self.input.0, &self.what, f)
     }
