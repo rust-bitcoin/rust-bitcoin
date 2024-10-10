@@ -92,7 +92,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
         let sig = ecdsa::Signature::from_slice(instr.unwrap().push_bytes().unwrap().as_bytes())
             .expect("failed to parse sig");
         let sighash = cache
-            .legacy_signature_hash(inp_idx, script_code, sig.sighash_type.to_u32())
+            .legacy_signature_hash(inp_idx, script_code, sig.sighash_type)
             .expect("failed to compute sighash");
         println!("Legacy sighash: {:x} (sighash flag {})", sighash, sig.sighash_type);
     }
