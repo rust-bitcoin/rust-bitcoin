@@ -3,7 +3,7 @@ extern crate bitcoin;
 use std::{env, process};
 
 use bitcoin::address::{Address, KnownHrp};
-use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
+use bitcoin::bip32::{ChildKeyIndex, DerivationPath, Xpriv, Xpub};
 use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
@@ -47,7 +47,7 @@ fn main() {
 
     // generate first receiving address at m/0/0
     // manually creating indexes this time
-    let zero = ChildNumber::ZERO_NORMAL;
+    let zero = ChildKeyIndex::ZERO_NORMAL;
     let public_key = xpub.derive_xpub(&secp, &[zero, zero]).unwrap().public_key;
     let address = Address::p2wpkh(CompressedPublicKey(public_key), KnownHrp::Mainnet);
     println!("First receiving address: {}", address);

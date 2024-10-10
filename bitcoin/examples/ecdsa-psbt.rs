@@ -32,7 +32,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
+use bitcoin::bip32::{ChildKeyIndex, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
@@ -116,11 +116,11 @@ impl ColdStorage {
 
         // Hardened children require secret data to derive.
 
-        let path = "84h/0h/0h".into_derivation_path()?;
+        let path = "84h/0h/0h".parse::<DerivationPath>()?;
         let account_0_xpriv = master_xpriv.derive_xpriv(secp, &path);
         let account_0_xpub = Xpub::from_xpriv(secp, &account_0_xpriv);
 
-        let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
+        let path = INPUT_UTXO_DERIVATION_PATH.parse::<DerivationPath>()?;
         let input_xpriv = master_xpriv.derive_xpriv(secp, &path);
         let input_xpub = Xpub::from_xpriv(secp, &input_xpriv);
 
@@ -257,19 +257,19 @@ impl WatchOnly {
         &self,
         secp: &Secp256k1<C>,
     ) -> Result<(CompressedPublicKey, Address, DerivationPath)> {
-        let path = [ChildNumber::ONE_NORMAL, ChildNumber::ZERO_NORMAL];
+        let path = [ChildKeyIndex::ONE_NORMAL, ChildKeyIndex::ZERO_NORMAL];
         let derived = self.account_0_xpub.derive_xpub(secp, &path)?;
 
         let pk = derived.to_public_key();
         let addr = Address::p2wpkh(pk, NETWORK);
-        let path = path.into_derivation_path()?;
+        let path = DerivationPath::from(path.to_vec());
 
         Ok((pk, addr, path))
     }
 }
 
 fn input_derivation_path() -> Result<DerivationPath> {
-    let path = INPUT_UTXO_DERIVATION_PATH.into_derivation_path()?;
+    let path = INPUT_UTXO_DERIVATION_PATH.parse::<DerivationPath>()?;
     Ok(path)
 }
 

@@ -25,7 +25,7 @@
 use std::collections::BTreeMap;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
+use bitcoin::bip32::{ChildKeyIndex, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
@@ -59,10 +59,10 @@ fn get_external_address_xpriv<C: Signing>(
     index: u32,
 ) -> Xpriv {
     let derivation_path =
-        BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
+        BIP84_DERIVATION_PATH.parse::<DerivationPath>().expect("valid derivation path");
     let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
-    let external_index = ChildNumber::ZERO_NORMAL;
-    let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
+    let external_index = ChildKeyIndex::ZERO_NORMAL;
+    let idx = ChildKeyIndex::from_normal_index(index).expect("valid index");
 
     child_xpriv.derive_xpriv(secp, &[external_index, idx])
 }
@@ -74,10 +74,10 @@ fn get_internal_address_xpriv<C: Signing>(
     index: u32,
 ) -> Xpriv {
     let derivation_path =
-        BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
+        BIP84_DERIVATION_PATH.parse::<DerivationPath>().expect("valid derivation path");
     let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
-    let internal_index = ChildNumber::ONE_NORMAL;
-    let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
+    let internal_index = ChildKeyIndex::ONE_NORMAL;
+    let idx = ChildKeyIndex::from_normal_index(index).expect("valid index");
 
     child_xpriv.derive_xpriv(secp, &[internal_index, idx])
 }
