@@ -2,9 +2,6 @@
 
 //! SHA256d implementation (double SHA256).
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::sha256;
 
 crate::internal_macros::hash_type! {
@@ -34,10 +31,10 @@ impl crate::HashEngine for HashEngine {
 
 fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
-    let sha2d = sha256::Hash::hash(&sha2[..]);
+    let sha2d = sha256::Hash::hash(sha2.as_byte_array());
 
     let mut ret = [0; 32];
-    ret.copy_from_slice(&sha2d[..]);
+    ret.copy_from_slice(sha2d.as_byte_array());
     Hash(ret)
 }
 
@@ -79,7 +76,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha256d::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha256d::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte

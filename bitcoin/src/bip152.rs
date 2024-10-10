@@ -111,8 +111,8 @@ impl ShortId {
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
         (
-            u64::from_le_bytes(h[0..8].try_into().expect("8 byte slice")),
-            u64::from_le_bytes(h[8..16].try_into().expect("8 byte slice")),
+            u64::from_le_bytes(h.as_byte_array()[0..8].try_into().expect("8 byte slice")),
+            u64::from_le_bytes(h.as_byte_array()[8..16].try_into().expect("8 byte slice")),
         )
     }
 
@@ -124,7 +124,7 @@ impl ShortId {
 
         // 3. Dropping the 2 most significant bytes from the SipHash output to make it 6 bytes.
         let mut id = ShortId([0; 6]);
-        id.0.copy_from_slice(&hash[0..6]);
+        id.0.copy_from_slice(&hash.as_byte_array()[0..6]);
         id
     }
 }
