@@ -285,6 +285,12 @@ mod tests {
     }
 
     #[test]
+    fn fee_rate_div_by_weight() {
+        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        assert_eq!(fee_rate, FeeRate(863));
+    }
+
+    #[test]
     fn checked_add() {
         let f = FeeRate(1).checked_add(2).unwrap();
         assert_eq!(FeeRate(3), f);
@@ -367,6 +373,13 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         assert_eq!(Amount::from_sat(9), fee);
+
+        let weight = Weight::from_wu(381);
+        let fee_rate = FeeRate::from_sat_per_kwu(864);
+        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        // 381 * 0.864 yields 329.18.
+        // The result is then rounded up to 330.
+        assert_eq!(fee, Amount::from_sat(330));
     }
 
     #[test]
