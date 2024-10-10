@@ -11,7 +11,7 @@ use hashes::sha256d;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, WriteExt, ReadExt};
+use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, ReadExt, WriteExt};
 use crate::merkle_tree::MerkleBlock;
 use crate::p2p::address::{AddrV2Message, Address};
 use crate::p2p::{

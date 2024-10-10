@@ -29,9 +29,7 @@ const MAX_ENCODING_SIZE: usize = 9;
 /// - 5 for 0x10000..=(2^32-1)
 /// - 9 otherwise.
 #[inline]
-pub fn encoded_size(value: impl ToU64) -> usize {
-    encoded_size_const(value.to_u64())
-}
+pub fn encoded_size(value: impl ToU64) -> usize { encoded_size_const(value.to_u64()) }
 
 /// Returns the number of bytes used to encode this `CompactSize` value (in const context).
 ///

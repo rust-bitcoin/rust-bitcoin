@@ -12,7 +12,7 @@ use hashes::{sha256, siphash24};
 use internals::{impl_array_newtype, ToU64 as _};
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Decodable, Encodable, WriteExt, ReadExt};
+use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
