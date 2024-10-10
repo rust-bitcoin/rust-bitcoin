@@ -190,7 +190,7 @@ impl fmt::Display for AddressInner {
 pub enum KnownHrp {
     /// The main Bitcoin network.
     Mainnet,
-    /// The test networks, testnet and signet.
+    /// The test networks, testnet (testnet3), testnet4, and signet.
     Testnets,
     /// The regtest network.
     Regtest,
@@ -203,7 +203,7 @@ impl KnownHrp {
 
         match network {
             Bitcoin => Self::Mainnet,
-            Testnet | Signet => Self::Testnets,
+            Testnet(_) | Signet => Self::Testnets,
             Regtest => Self::Regtest,
         }
     }
@@ -692,11 +692,11 @@ impl Address<NetworkUnchecked> {
     /// network a simple comparison is not enough anymore. Instead this function can be used.
     ///
     /// ```rust
-    /// use bitcoin::{Address, Network};
+    /// use bitcoin::{Address, Network, TestnetVersion};
     /// use bitcoin::address::NetworkUnchecked;
     ///
     /// let address: Address<NetworkUnchecked> = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
-    /// assert!(address.is_valid_for_network(Network::Testnet));
+    /// assert!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V3)));
     /// assert!(address.is_valid_for_network(Network::Regtest));
     /// assert!(address.is_valid_for_network(Network::Signet));
     ///
@@ -704,7 +704,7 @@ impl Address<NetworkUnchecked> {
     ///
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Bitcoin));
-    /// assert_eq!(address.is_valid_for_network(Network::Testnet), false);
+    /// assert_eq!(address.is_valid_for_network(Network::Testnet(TestnetVersion::V4)), false);
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
         use AddressInner::*;
@@ -873,7 +873,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::params;
-    use crate::network::Network::{Bitcoin, Testnet};
+    use crate::network::{Network::{Bitcoin, Testnet}, TestnetVersion};
 
     fn roundtrips(addr: &Address, network: Network) {
         assert_eq!(
@@ -925,7 +925,7 @@ mod tests {
         let addr = Address::p2pkh(key, NetworkKind::Test);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
-        roundtrips(&addr, Testnet);
+        roundtrips(&addr, Testnet(TestnetVersion::V3));
     }
 
     #[test]
@@ -948,7 +948,7 @@ mod tests {
         let addr = Address::p2sh(&script, NetworkKind::Test).unwrap();
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
-        roundtrips(&addr, Testnet);
+        roundtrips(&addr, Testnet(TestnetVersion::V3));
     }
 
     #[test]
@@ -1256,7 +1256,7 @@ mod tests {
         let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p";
         let address = Address::from_str(address_string)
             .expect("address")
-            .require_network(Network::Testnet)
+            .require_network(Network::Testnet(TestnetVersion::V3))
             .expect("testnet");
 
         let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
