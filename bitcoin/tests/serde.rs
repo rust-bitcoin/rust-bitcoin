@@ -325,7 +325,7 @@ fn serde_regression_psbt() {
 #[test]
 fn serde_regression_raw_pair() {
     let pair = Pair {
-        key: Key { type_value: 1u8, key_data: vec![0u8, 1u8, 2u8, 3u8] },
+        key: Key { type_value: 1u64, key_data: vec![0u8, 1u8, 2u8, 3u8] },
         value: vec![0u8, 1u8, 2u8, 3u8],
     };
     let got = serialize(&pair).unwrap();
@@ -337,7 +337,7 @@ fn serde_regression_raw_pair() {
 fn serde_regression_proprietary_key() {
     let key = ProprietaryKey {
         prefix: vec![0u8, 1u8, 2u8, 3u8],
-        subtype: 1u8,
+        subtype: 1u64,
         key: vec![0u8, 1u8, 2u8, 3u8],
     };
     let got = serialize(&key).unwrap();

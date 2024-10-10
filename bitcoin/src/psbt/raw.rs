@@ -7,12 +7,12 @@
 
 use core::fmt;
 
-use internals::ToU64 as _;
+use internals::{ToU64 as _};
 use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
-    self, deserialize, serialize, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
+    self, deserialize, serialize, Decodable, Encodable, MAX_VEC_SIZE, ReadExt, WriteExt,
 };
 use crate::prelude::{DisplayHex, Vec};
 use crate::psbt::Error;
@@ -24,7 +24,7 @@ use crate::psbt::Error;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Key {
     /// The type of this PSBT key.
-    pub type_value: u8,
+    pub type_value: u64,     // Encoded as a compact size.
     /// The key data itself in raw byte form.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key_data: Vec<u8>,
@@ -44,7 +44,7 @@ pub struct Pair {
 }
 
 /// Default implementation for proprietary key subtyping
-pub type ProprietaryType = u8;
+pub type ProprietaryType = u64;
 
 /// Proprietary keys (i.e. keys starting with 0xFC byte) with their internal
 /// structure according to BIP 174.
@@ -52,7 +52,7 @@ pub type ProprietaryType = u8;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ProprietaryKey<Subtype = ProprietaryType>
 where
-    Subtype: Copy + From<u8> + Into<u8>,
+    Subtype: Copy + From<u64> + Into<u64>,
 {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
@@ -89,7 +89,7 @@ impl Key {
             .into());
         }
 
-        let type_value: u8 = Decodable::consensus_decode(r)?;
+        let type_value = r.read_compact_size()?;
 
         let mut key_data = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
@@ -105,7 +105,7 @@ impl Serialize for Key {
         let mut buf = Vec::new();
         buf.emit_compact_size(self.key_data.len() + 1).expect("in-memory writers don't error");
 
-        self.type_value.consensus_encode(&mut buf).expect("in-memory writers don't error");
+        buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
         for key in &self.key_data {
             key.consensus_encode(&mut buf).expect("in-memory writers don't error");
@@ -140,11 +140,11 @@ impl Pair {
 
 impl<Subtype> Encodable for ProprietaryKey<Subtype>
 where
-    Subtype: Copy + From<u8> + Into<u8>,
+    Subtype: Copy + From<u64> + Into<u64>,
 {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(w)? + 1;
-        w.emit_u8(self.subtype.into())?;
+        w.emit_compact_size(self.subtype.into())?;
         w.write_all(&self.key)?;
         len += self.key.len();
         Ok(len)
@@ -153,11 +153,11 @@ where
 
 impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
-    Subtype: Copy + From<u8> + Into<u8>,
+    Subtype: Copy + From<u64> + Into<u64>,
 {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
-        let subtype = Subtype::from(r.read_u8()?);
+        let subtype = Subtype::from(r.read_compact_size()?);
 
         // The limit is a DOS protection mechanism the exact value is not
         // important, 1024 bytes is bigger than any key should be.
@@ -170,7 +170,7 @@ where
 
 impl<Subtype> ProprietaryKey<Subtype>
 where
-    Subtype: Copy + From<u8> + Into<u8>,
+    Subtype: Copy + From<u64> + Into<u64>,
 {
     /// Constructs full [Key] corresponding to this proprietary key type
     pub fn to_key(&self) -> Key { Key { type_value: 0xFC, key_data: serialize(self) } }
@@ -178,7 +178,7 @@ where
 
 impl<Subtype> TryFrom<Key> for ProprietaryKey<Subtype>
 where
-    Subtype: Copy + From<u8> + Into<u8>,
+    Subtype: Copy + From<u64> + Into<u64>,
 {
     type Error = Error;
 
