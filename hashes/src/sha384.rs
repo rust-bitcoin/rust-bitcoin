@@ -2,9 +2,6 @@
 
 //! SHA384 implementation.
 
-use core::ops::Index;
-use core::slice::SliceIndex;
-
 use crate::sha512;
 
 crate::internal_macros::hash_type! {
@@ -15,7 +12,7 @@ crate::internal_macros::hash_type! {
 
 fn from_engine(e: HashEngine) -> Hash {
     let mut ret = [0; 48];
-    ret.copy_from_slice(&sha512::from_engine(e.0)[..48]);
+    ret.copy_from_slice(&sha512::from_engine(e.0).as_byte_array()[..48]);
     Hash(ret)
 }
 
@@ -125,7 +122,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha384::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<sha384::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
 
             // Hash through engine, checking that we can input byte by byte

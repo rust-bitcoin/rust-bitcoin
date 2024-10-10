@@ -86,15 +86,6 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        impl<I: SliceIndex<[u8]> $(, $gen: $gent)*> Index<I> for Hash<$($gen),*> {
-            type Output = I::Output;
-
-            #[inline]
-            fn index(&self, index: I) -> &Self::Output {
-                &self.0[index]
-            }
-        }
-
         impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
 

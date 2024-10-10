@@ -7,7 +7,7 @@ fn do_test(data: &[u8]) {
     let eng_hash = ripemd160::Hash::from_engine(engine);
 
     let hash = ripemd160::Hash::hash(data);
-    assert_eq!(&hash[..], &eng_hash[..]);
+    assert_eq!(hash.as_byte_array(), eng_hash.as_byte_array());
 }
 
 fn main() {

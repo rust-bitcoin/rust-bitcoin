@@ -3,8 +3,6 @@
 //! RIPEMD160 implementation.
 
 use core::cmp;
-use core::ops::Index;
-use core::slice::SliceIndex;
 
 use crate::{incomplete_block_len, HashEngine as _};
 
@@ -479,7 +477,7 @@ mod tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = ripemd160::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<ripemd160::Hash>().expect("parse hex"));
-            assert_eq!(hash[..], test.output);
+            assert_eq!(hash.as_byte_array(), &test.output);
             assert_eq!(hash.to_string(), test.output_str);
             assert_eq!(ripemd160::Hash::from_bytes_ref(&test.output), &hash);
             assert_eq!(ripemd160::Hash::from_bytes_mut(&mut test.output), &hash);
