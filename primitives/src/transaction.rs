@@ -15,6 +15,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
+#[cfg(feature = "alloc")]
 use internals::write_err;
 #[cfg(feature = "alloc")]
 use units::parse;

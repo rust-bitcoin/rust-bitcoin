@@ -10,7 +10,7 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
-use core::{cmp, fmt, str};
+use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -1339,6 +1339,8 @@ impl<'a> Arbitrary<'a> for Transaction {
 
 #[cfg(test)]
 mod tests {
+    use core::str;
+
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
