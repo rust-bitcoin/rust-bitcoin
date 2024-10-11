@@ -12,6 +12,8 @@ use core::fmt;
 use hashes::{sha256d, HashEngine};
 use internals::compact_size;
 use io::{BufRead, Write};
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -397,6 +399,30 @@ impl std::error::Error for ValidationError {
         match *self {
             BadProofOfWork | BadTarget => None,
         }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Header {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Header {
+            version: Version::arbitrary(u)?,
+            prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
+            merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
+            time: u.arbitrary()?,
+            bits: CompactTarget::from_consensus(u.arbitrary()?),
+            nonce: u.arbitrary()?
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Block {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Block {
+            header: Header::arbitrary(u)?,
+            txdata: Vec::<Transaction>::arbitrary(u)?,
+        })
     }
 }
 
