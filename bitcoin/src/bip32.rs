@@ -593,9 +593,7 @@ impl Xpriv {
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
     #[deprecated(since = "TBD", note = "use `to_private_key()`")]
-    pub fn to_priv(self) -> PrivateKey {
-        self.to_private_key()
-    }
+    pub fn to_priv(self) -> PrivateKey { self.to_private_key() }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
     pub fn to_private_key(self) -> PrivateKey {
@@ -603,7 +601,7 @@ impl Xpriv {
     }
 
     /// Creates new extended public key from this extended private key.
-    pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>,) -> Xpub {
+    pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Xpub {
         Xpub::from_xpriv(secp, self)
     }
 
@@ -775,7 +773,6 @@ impl Xpub {
         secp: &Secp256k1<C>,
         path: &P,
     ) -> Result<Xpub, Error> {
-
         self.derive_xpub(secp, path)
     }
 
