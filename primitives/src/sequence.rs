@@ -282,7 +282,7 @@ impl<'a> Arbitrary<'a> for Sequence {
             0 => Ok(Sequence::MAX),
             1 => Ok(Sequence::ZERO),
             2 => Ok(Sequence::MIN_NO_RBF),
-            3 => Ok(Sequence::ENABLE_RBF_NO_LOCKTIME),
+            3 => Ok(Sequence::ENABLE_LOCKTIME_AND_RBF),
             _ => Ok(Sequence(u.arbitrary()?)),
         }
     }

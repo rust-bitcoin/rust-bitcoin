@@ -34,7 +34,7 @@ fn main() {
     let input = TxIn {
         previous_output: dummy_out_point, // The dummy output we are spending.
         script_sig: ScriptBuf::default(), // For a p2tr script_sig is empty.
-        sequence: Sequence::ENABLE_RBF_NO_LOCKTIME,
+        sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
         witness: Witness::default(), // Filled in after signing.
     };
 

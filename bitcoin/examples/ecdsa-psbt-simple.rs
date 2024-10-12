@@ -155,7 +155,7 @@ fn main() {
         .map(|(outpoint, _)| TxIn {
             previous_output: outpoint,
             script_sig: ScriptBuf::default(),
-            sequence: Sequence::ENABLE_RBF_NO_LOCKTIME,
+            sequence: Sequence::ENABLE_LOCKTIME_AND_RBF,
             witness: Witness::default(),
         })
         .collect();
