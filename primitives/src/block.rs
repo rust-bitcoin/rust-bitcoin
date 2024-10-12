@@ -106,3 +106,34 @@ impl<'a> Arbitrary<'a> for Version {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_version_is_not_signalling_with_invalid_bit() {
+        let arbitrary_version = Version::from_consensus(1234567890);
+        // The max bit number to signal is 28.
+        assert!(!Version::is_signalling_soft_fork(&arbitrary_version, 29));
+    }
+
+    #[test]
+    fn test_version_is_not_signalling_when_use_version_bit_not_set() {
+        let version = Version::from_consensus(0b01000000000000000000000000000000);
+        // Top three bits must be 001 to signal.
+        assert!(!Version::is_signalling_soft_fork(&version, 1));
+    }
+
+    #[test]
+    fn test_version_is_signalling() {
+        let version = Version::from_consensus(0b00100000000000000000000000000010);
+        assert!(Version::is_signalling_soft_fork(&version, 1));
+    }
+
+    #[test]
+    fn test_version_is_not_signalling() {
+        let version = Version::from_consensus(0b00100000000000000000000000000010);
+        assert!(!Version::is_signalling_soft_fork(&version, 0));
+    }
+}
