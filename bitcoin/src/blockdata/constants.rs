@@ -51,8 +51,28 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
 
+// This is the 65 byte (uncompressed) pubkey used as the one-and-only output of the genesis transaction.
+//
+// ref: https://blockstream.info/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b?expand
+// Note output script includes a leading 0x41 and trailing 0xac (added below using the `script::Builder`).
+#[rustfmt::skip]
+const GENESIS_OUTPUT_PK: [u8; 65] = [
+    0x04,
+    0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27,
+    0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7, 0x10,
+    0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6,
+    0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde, 0xb6,
+    0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4,
+    0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12, 0xde,
+    0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57,
+    0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d, 0x5f
+];
+
+#[rustfmt::skip]
+const TESTNET4_GENESIS_OUTPUT_PK: [u8; 33] = [0x00; 33];
+
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
-fn bitcoin_genesis_tx() -> Transaction {
+fn bitcoin_genesis_tx(params: &Params) -> Transaction {
     // Base
     let mut ret = Transaction {
         version: transaction::Version::ONE,
@@ -61,23 +81,34 @@ fn bitcoin_genesis_tx() -> Transaction {
         output: vec![],
     };
 
-    // Inputs
-    let in_script = script::Builder::new()
-        .push_int(486604799)
-        .push_int_non_minimal(4)
-        .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
-        .into_script();
+    let (in_script, out_script) = {
+        match params.network {
+            Network::Testnet4 => (
+                script::Builder::new()
+                .push_int(486604799)
+                .push_int_non_minimal(4)
+                .push_slice(b"03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e")
+                .into_script(),
+                script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
+
+            ),
+            _ => (
+                script::Builder::new()
+                .push_int(486604799)
+                .push_int_non_minimal(4)
+                .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+                .into_script(),
+                script::Builder::new().push_slice(GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script(),
+            ),
+        }
+    };
+
     ret.input.push(TxIn {
         previous_output: OutPoint::null(),
         script_sig: in_script,
         sequence: Sequence::MAX,
         witness: Witness::default(),
     });
-
-    // Outputs
-    let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
-    let out_script =
-        script::Builder::new().push_slice(script_bytes).push_opcode(OP_CHECKSIG).into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
@@ -86,10 +117,12 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block.
 pub fn genesis_block(params: impl AsRef<Params>) -> Block {
-    let txdata = vec![bitcoin_genesis_tx()];
+    let params = params.as_ref();
+    let txdata = vec![bitcoin_genesis_tx(params)];
     let hash: sha256d::Hash = txdata[0].compute_txid().into();
-    let merkle_root = hash.into();
-    match params.as_ref().network {
+    let merkle_root: crate::TxMerkleNode = hash.into();
+
+    match params.network {
         Network::Bitcoin => Block {
             header: block::Header {
                 version: block::Version::ONE,
@@ -109,6 +142,17 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 414098458,
+            },
+            txdata,
+        },
+        Network::Testnet4 => Block {
+            header: block::Header {
+                version: block::Version::ONE,
+                prev_blockhash: Hash::all_zeros(),
+                merkle_root,
+                time: 1714777860,
+                bits: CompactTarget::from_consensus(0x1d00ffff),
+                nonce: 393743547,
             },
             txdata,
         },
@@ -150,10 +194,21 @@ impl ChainHash {
         111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79, 147, 30, 131,
         101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0,
     ]);
-    /// `ChainHash` for testnet bitcoin.
+    /// `ChainHash` for testnet3 bitcoin.
+    #[deprecated(since = "0.32.4", note = "Use TESTNET3 instead")]
     pub const TESTNET: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,
+    ]);
+    /// `ChainHash` for testnet3 bitcoin.
+    pub const TESTNET3: Self = Self([
+        67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
+        32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,
+    ]);
+    /// `ChainHash` for testnet4 bitcoin.
+    pub const TESTNET4: Self = Self([
+        67, 240, 139, 218, 176, 80, 227, 91, 86, 124, 134, 75, 145, 244, 127, 80, 174, 114, 90,
+        226, 222, 83, 188, 251, 186, 242, 132, 218, 0, 0, 0, 0,
     ]);
     /// `ChainHash` for signet bitcoin.
     pub const SIGNET: Self = Self([
@@ -171,9 +226,13 @@ impl ChainHash {
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
     pub fn using_genesis_block(params: impl AsRef<Params>) -> Self {
-        let network = params.as_ref().network;
-        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
-        hashes[network as usize]
+        match params.as_ref().network {
+            Network::Bitcoin => Self::BITCOIN,
+            Network::Testnet => Self::TESTNET3,
+            Network::Testnet4 => Self::TESTNET4,
+            Network::Signet => Self::SIGNET,
+            Network::Regtest => Self::REGTEST,
+        }
     }
 
     /// Returns the hash of the `network` genesis block for use as a chain hash.
@@ -181,8 +240,13 @@ impl ChainHash {
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
     pub const fn using_genesis_block_const(network: Network) -> Self {
-        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
-        hashes[network as usize]
+        match network {
+            Network::Bitcoin => Self::BITCOIN,
+            Network::Testnet => Self::TESTNET3,
+            Network::Testnet4 => Self::TESTNET4,
+            Network::Signet => Self::SIGNET,
+            Network::Regtest => Self::REGTEST,
+        }
     }
 
     /// Converts genesis block hash into `ChainHash`.
@@ -203,7 +267,7 @@ mod test {
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
-        let gen = bitcoin_genesis_tx();
+        let gen = bitcoin_genesis_tx(&Params::MAINNET);
 
         assert_eq!(gen.version, transaction::Version::ONE);
         assert_eq!(gen.input.len(), 1);
@@ -259,7 +323,7 @@ mod test {
 
     #[test]
     fn testnet_genesis_full_block() {
-        let gen = genesis_block(&params::TESTNET);
+        let gen = genesis_block(&params::TESTNET3);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(
@@ -314,6 +378,7 @@ mod test {
         match network {
             Network::Bitcoin => {},
             Network::Testnet => {},
+            Network::Testnet4 => {},
             Network::Signet => {},
             Network::Regtest => {},
             _ => panic!("Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
@@ -334,6 +399,7 @@ mod test {
     chain_hash_genesis_block! {
         mainnet_chain_hash_genesis_block, Network::Bitcoin;
         testnet_chain_hash_genesis_block, Network::Testnet;
+        testnet4_chain_hash_genesis_block, Network::Testnet4;
         signet_chain_hash_genesis_block, Network::Signet;
         regtest_chain_hash_genesis_block, Network::Regtest;
     }
