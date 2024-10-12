@@ -8,6 +8,8 @@
 //! these blocks and the blockchain.
 
 use hashes::sha256d;
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 /// Bitcoin block version number.
 ///
@@ -89,4 +91,18 @@ hashes::hash_newtype! {
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Version {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        // Equally weight known versions and arbitrary versions
+        let choice = u.int_in_range(0..=3)?;
+        match choice {
+            0 => Ok(Version::ONE),
+            1 => Ok(Version::TWO),
+            2 => Ok(Version::NO_SOFT_FORK_SIGNALLING),
+            _ => Ok(Version::from_consensus(u.arbitrary()?))
+        }
+    }
 }
