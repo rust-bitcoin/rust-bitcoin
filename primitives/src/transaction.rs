@@ -172,13 +172,14 @@ impl Wtxid {
 
 /// The transaction version.
 ///
-/// Currently, as specified by [BIP-68], only version 1 and 2 are considered standard.
+/// Currently, as specified by [BIP-68] and [BIP-431], version 1, 2, and 3 are considered standard.
 ///
 /// Standardness of the inner `i32` is not an invariant because you are free to create transactions
 /// of any version, transactions with non-standard version numbers will not be relayed by the
 /// Bitcoin network.
 ///
 /// [BIP-68]: https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki
+/// [BIP-431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(pub i32);
@@ -189,6 +190,9 @@ impl Version {
 
     /// The second Bitcoin transaction version (post-BIP-68).
     pub const TWO: Self = Self(2);
+
+    /// The third Bitcoin transaction version (post-BIP-431).
+    pub const THREE: Self = Self(3);
 }
 
 impl fmt::Display for Version {
@@ -206,10 +210,11 @@ impl<'a> Arbitrary<'a> for OutPoint {
 impl<'a> Arbitrary<'a> for Version {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         // Equally weight the case of normal version numbers
-        let choice = u.int_in_range(0..=2)?;
+        let choice = u.int_in_range(0..=3)?;
         match choice {
             0 => Ok(Version::ONE),
             1 => Ok(Version::TWO),
+            2 => Ok(Version::THREE),
             _ => Ok(Version(u.arbitrary()?)),
         }
     }
