@@ -6,9 +6,6 @@
 //! We refer to the documentation on the types for more information.
 
 #[cfg(feature = "alloc")]
-use crate::{Weight, FeeRate};
-
-#[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::cmp::Ordering;
 use core::str::FromStr;
@@ -20,6 +17,9 @@ use ::serde::{Deserialize, Serialize};
 use arbitrary::{Arbitrary, Unstructured};
 use internals::error::InputString;
 use internals::write_err;
+
+#[cfg(feature = "alloc")]
+use crate::{FeeRate, Weight};
 
 /// A set of denominations in which amounts can be expressed.
 ///
@@ -2242,16 +2242,12 @@ mod tests {
     #[test]
     fn amount_checked_div_by_weight() {
         let weight = Weight::from_kwu(1).unwrap();
-        let fee_rate = Amount::from_sat(1)
-            .checked_div_by_weight(weight)
-            .unwrap();
+        let fee_rate = Amount::from_sat(1).checked_div_by_weight(weight).unwrap();
         // 1 sats / 1,000 wu = 1 sats/kwu
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
 
         let weight = Weight::from_wu(381);
-        let fee_rate = Amount::from_sat(329)
-            .checked_div_by_weight(weight)
-            .unwrap();
+        let fee_rate = Amount::from_sat(329).checked_div_by_weight(weight).unwrap();
         // 329 sats / 381 wu = 863.5 sats/kwu
         // round up to 864
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
