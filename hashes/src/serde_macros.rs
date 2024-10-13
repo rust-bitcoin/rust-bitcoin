@@ -70,10 +70,7 @@ pub mod serde_details {
     /// Default serialization/deserialization methods.
     pub trait SerdeHash
     where
-        Self: Sized
-            + FromStr
-            + fmt::Display
-            + crate::Hash,
+        Self: Sized + FromStr + fmt::Display + crate::Hash,
         <Self as FromStr>::Err: fmt::Display,
     {
         /// Size, in bits, of the hash.

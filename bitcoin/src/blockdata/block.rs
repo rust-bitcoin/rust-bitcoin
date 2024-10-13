@@ -9,11 +9,11 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine};
 use internals::compact_size;
 use io::{BufRead, Write};
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 use super::Weight;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -411,7 +411,7 @@ impl<'a> Arbitrary<'a> for Header {
             merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
             time: u.arbitrary()?,
             bits: CompactTarget::from_consensus(u.arbitrary()?),
-            nonce: u.arbitrary()?
+            nonce: u.arbitrary()?,
         })
     }
 }
@@ -419,10 +419,7 @@ impl<'a> Arbitrary<'a> for Header {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Block {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Block {
-            header: Header::arbitrary(u)?,
-            txdata: Vec::<Transaction>::arbitrary(u)?,
-        })
+        Ok(Block { header: Header::arbitrary(u)?, txdata: Vec::<Transaction>::arbitrary(u)? })
     }
 }
 

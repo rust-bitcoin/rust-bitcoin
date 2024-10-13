@@ -7,9 +7,9 @@
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 
-use hashes::sha256d;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use hashes::sha256d;
 
 /// Bitcoin block version number.
 ///
@@ -102,7 +102,7 @@ impl<'a> Arbitrary<'a> for Version {
             0 => Ok(Version::ONE),
             1 => Ok(Version::TWO),
             2 => Ok(Version::NO_SOFT_FORK_SIGNALLING),
-            _ => Ok(Version::from_consensus(u.arbitrary()?))
+            _ => Ok(Version::from_consensus(u.arbitrary()?)),
         }
     }
 }
