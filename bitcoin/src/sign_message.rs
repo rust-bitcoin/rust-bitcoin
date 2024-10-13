@@ -6,6 +6,7 @@
 //! library is used with the `secp-recovery` feature.
 
 use hashes::{sha256d, HashEngine};
+use secp256k1::SecretKey;
 
 use crate::consensus::encode::WriteExt;
 
@@ -212,6 +213,19 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
     engine.emit_compact_size(msg_bytes.len()).expect("engines don't error");
     engine.input(msg_bytes);
     sha256d::Hash::from_engine(engine)
+}
+
+/// Sign message using Bitcoin's message signing format.
+#[cfg(feature = "secp-recovery")]
+pub fn sign<C: secp256k1::Signing>(
+    secp_ctx: &secp256k1::Secp256k1<C>,
+    msg: impl AsRef<[u8]>,
+    privkey: SecretKey,
+) -> MessageSignature {
+    let msg_hash = signed_msg_hash(msg);
+    let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
+    let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, &privkey);
+    MessageSignature { signature: secp_sig, compressed: true }
 }
 
 #[cfg(test)]
