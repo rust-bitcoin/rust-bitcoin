@@ -78,7 +78,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 
 use bitcoin::address::script_pubkey::{BuilderExt as _, ScriptBufExt as _};
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
+use bitcoin::bip32::{ChildKeyIndex, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -348,7 +348,7 @@ struct BenefactorWallet {
     current_spend_info: Option<TaprootSpendInfo>,
     next_psbt: Option<Psbt>,
     secp: Secp256k1<secp256k1::All>,
-    next: ChildNumber,
+    next: ChildKeyIndex,
 }
 
 impl BenefactorWallet {
@@ -362,7 +362,7 @@ impl BenefactorWallet {
             current_spend_info: None,
             next_psbt: None,
             secp: Secp256k1::new(),
-            next: ChildNumber::ZERO_NORMAL,
+            next: ChildKeyIndex::ZERO_NORMAL,
         })
     }
 
@@ -384,8 +384,8 @@ impl BenefactorWallet {
         lock_time: absolute::LockTime,
         input_utxo: P2trUtxo,
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
-        if let ChildNumber::Normal { index } = self.next {
-            if index > 0 && self.current_spend_info.is_some() {
+        if let ChildKeyIndex::Normal(index) = self.next {
+            if index.index() > 0 && self.current_spend_info.is_some() {
                 return Err("transaction already exists, use refresh_inheritance_timelock to refresh the timelock".into());
             }
         }

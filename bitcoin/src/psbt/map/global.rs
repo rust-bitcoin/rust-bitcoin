@@ -3,7 +3,7 @@
 use internals::ToU64 as _;
 use io::{BufRead, Cursor, Read};
 
-use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
+use crate::bip32::{ChildKeyIndex, DerivationPath, Fingerprint, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
 use crate::prelude::{btree_map, BTreeMap, Vec};
@@ -130,9 +130,9 @@ impl Psbt {
                                 decoder.read_exact(&mut fingerprint[..]).map_err(|_| {
                                     Error::XPubKey("can't read global xpub fingerprint")
                                 })?;
-                                let mut path = Vec::<ChildNumber>::with_capacity(child_count);
+                                let mut path = Vec::<ChildKeyIndex>::with_capacity(child_count);
                                 while let Ok(index) = u32::consensus_decode(&mut decoder) {
-                                    path.push(ChildNumber::from(index))
+                                    path.push(ChildKeyIndex::from(index))
                                 }
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique

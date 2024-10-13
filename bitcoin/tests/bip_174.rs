@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
+use bitcoin::bip32::{DerivationPath, Fingerprint, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
@@ -61,7 +61,7 @@ fn bip174_psbt_workflow() {
 
     // Strings from BIP 174 test vector.
     let test_vector = [
-        ("cP53pDbR5WtAD8dYAW9hhTjuvvTVaEiQBdrz9XPrgLBeRFiyCbQr", "0h/0h/0h"), // from_priv, into_derivation_path?
+        ("cP53pDbR5WtAD8dYAW9hhTjuvvTVaEiQBdrz9XPrgLBeRFiyCbQr", "0h/0h/0h"), // from_priv
         ("cR6SXDoyfQrcp4piaiHE97Rsgta9mNhGTen9XeonVgwsh4iSgw6d", "0h/0h/2h"),
     ];
 
@@ -276,7 +276,7 @@ fn bip32_derivation(
         let path = pk_path[i].1;
 
         let pk = pk.parse::<PublicKey>().unwrap();
-        let path = path.into_derivation_path().unwrap();
+        let path = path.parse::<DerivationPath>().unwrap();
 
         tree.insert(pk.inner, (fingerprint, path));
     }
@@ -314,7 +314,7 @@ fn parse_and_verify_keys(
         let wif_priv = PrivateKey::from_wif(secret_key).expect("failed to parse key");
 
         let path =
-            derivation_path.into_derivation_path().expect("failed to convert derivation path");
+            derivation_path.parse::<DerivationPath>().expect("failed to convert derivation path");
         let derived_priv = ext_priv.derive_xpriv(secp, &path).to_private_key();
         assert_eq!(wif_priv, derived_priv);
         let derived_pub = derived_priv.public_key(secp);
