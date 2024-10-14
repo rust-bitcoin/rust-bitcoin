@@ -574,14 +574,25 @@ mod tests {
         }
     }
 
+    fn header() -> Header {
+        let header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
+        deserialize(&header).expect("can't deserialize correct block header")
+    }
+
     #[test]
     fn compact_roundrtip_test() {
-        let some_header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
-
-        let header: Header =
-            deserialize(&some_header).expect("can't deserialize correct block header");
-
+        let header = header();
         assert_eq!(header.bits, header.target().to_compact_lossy());
+    }
+
+    #[test]
+    fn header_block_hash_regression() {
+        let header = header();
+        let block_hash = "00000000b0c5a240b2a61d2e75692224efd4cbecdf6eaf4cc2cf477ca7c270e7";
+
+        let want = block_hash.parse::<BlockHash>().unwrap();
+        let got = header.block_hash();
+        assert_eq!(got, want)
     }
 
     #[test]
