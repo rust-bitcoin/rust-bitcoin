@@ -254,7 +254,7 @@ impl Target {
     /// Panics if `self` is zero (divide by zero).
     ///
     /// [max]: Target::max
-    /// [target]: crate::block::Header::target
+    /// [target]: crate::block::HeaderExt::target
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
         // Panic here may be eaiser to debug than during the actual division.

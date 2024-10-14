@@ -20,110 +20,54 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode, WitnessMerkleNode};
 use crate::network::Params;
-use crate::pow::{CompactTarget, Target, Work};
+use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
 use crate::transaction::{Transaction, Wtxid};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::block::{Version, BlockHash, WitnessCommitment};
+pub use primitives::block::{Version, BlockHash, Header, WitnessCommitment};
 
 impl_hashencode!(BlockHash);
 
-/// Bitcoin block header.
-///
-/// Contains all the block's information except the actual transactions, but
-/// including a root of a [Merkle tree] committing to all transactions in the block.
-///
-/// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
-///
-/// ### Bitcoin Core References
-///
-/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
-#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Header {
-    /// Block version, now repurposed for soft fork signalling.
-    pub version: Version,
-    /// Reference to the previous block in the chain.
-    pub prev_blockhash: BlockHash,
-    /// The root hash of the Merkle tree of transactions in the block.
-    pub merkle_root: TxMerkleNode,
-    /// The timestamp of the block, as claimed by the miner.
-    pub time: u32,
-    /// The target value below which the blockhash must lie.
-    pub bits: CompactTarget,
-    /// The nonce, selected to obtain a low enough blockhash.
-    pub nonce: u32,
-}
-
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
-impl Header {
-    /// The number of bytes that the block header contributes to the size of a block.
-    // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
-    pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Header`] type.
+    pub trait HeaderExt impl for Header {
+        /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
+        fn target(&self) -> Target { self.bits.into() }
 
-    /// Returns the block hash.
-    // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
-    pub fn block_hash(&self) -> BlockHash {
-        let mut engine = sha256d::Hash::engine();
-        engine.input(&self.version.to_consensus().to_le_bytes());
-        engine.input(self.prev_blockhash.as_byte_array());
-        engine.input(self.merkle_root.as_byte_array());
-        engine.input(&self.time.to_le_bytes());
-        engine.input(&self.bits.to_consensus().to_le_bytes());
-        engine.input(&self.nonce.to_le_bytes());
-
-        BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
-    }
-
-    /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
-    pub fn target(&self) -> Target { self.bits.into() }
-
-    /// Computes the popular "difficulty" measure for mining.
-    ///
-    /// Difficulty represents how difficult the current target makes it to find a block, relative to
-    /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
-    pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        self.target().difficulty(params)
-    }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    pub fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
-        self.target().difficulty_float(params)
-    }
-
-    /// Checks that the proof-of-work for the block is valid, returning the block hash.
-    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
-        let target = self.target();
-        if target != required_target {
-            return Err(ValidationError::BadTarget);
+        /// Computes the popular "difficulty" measure for mining.
+        ///
+        /// Difficulty represents how difficult the current target makes it to find a block, relative to
+        /// how difficult it would be at the highest possible target (highest target == lowest difficulty).
+        fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
+            self.target().difficulty(params)
         }
-        let block_hash = self.block_hash();
-        if target.is_met_by(block_hash) {
-            Ok(block_hash)
-        } else {
-            Err(ValidationError::BadProofOfWork)
+
+        /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+        fn difficulty_float(&self, params: impl AsRef<Params>) -> f64 {
+            self.target().difficulty_float(params)
         }
-    }
 
-    /// Returns the total work of the block.
-    pub fn work(&self) -> Work { self.target().to_work() }
-}
+        /// Checks that the proof-of-work for the block is valid, returning the block hash.
+        fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
+            let target = self.target();
+            if target != required_target {
+                return Err(ValidationError::BadTarget);
+            }
+            let block_hash = self.block_hash();
+            if target.is_met_by(block_hash) {
+                Ok(block_hash)
+            } else {
+                Err(ValidationError::BadProofOfWork)
+            }
+        }
 
-impl fmt::Debug for Header {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Header")
-            .field("block_hash", &self.block_hash())
-            .field("version", &self.version)
-            .field("prev_blockhash", &self.prev_blockhash)
-            .field("merkle_root", &self.merkle_root)
-            .field("time", &self.time)
-            .field("bits", &self.bits)
-            .field("nonce", &self.nonce)
-            .finish()
+        /// Returns the total work of the block.
+        fn work(&self) -> Work { self.target().to_work() }
     }
 }
 
@@ -317,14 +261,6 @@ impl Block {
     }
 }
 
-impl From<Header> for BlockHash {
-    fn from(header: Header) -> BlockHash { header.block_hash() }
-}
-
-impl From<&Header> for BlockHash {
-    fn from(header: &Header) -> BlockHash { header.block_hash() }
-}
-
 impl From<Block> for BlockHash {
     fn from(block: Block) -> BlockHash { block.block_hash() }
 }
@@ -410,20 +346,6 @@ impl std::error::Error for ValidationError {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Header {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Header {
-            version: Version::arbitrary(u)?,
-            prev_blockhash: BlockHash::from_byte_array(u.arbitrary()?),
-            merkle_root: TxMerkleNode::from_byte_array(u.arbitrary()?),
-            time: u.arbitrary()?,
-            bits: CompactTarget::from_consensus(u.arbitrary()?),
-            nonce: u.arbitrary()?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Block {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Block { header: Header::arbitrary(u)?, txdata: Vec::<Transaction>::arbitrary(u)? })
@@ -437,7 +359,7 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::{Network, TestnetVersion};
+    use crate::{CompactTarget, Network, TestnetVersion};
 
     #[test]
     fn test_coinbase_and_bip34() {
