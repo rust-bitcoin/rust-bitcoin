@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use hex_lit::hex;
+use primitives::opcodes;
 
 use super::*;
 use crate::address::script_pubkey::{
