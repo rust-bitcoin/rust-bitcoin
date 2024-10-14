@@ -193,7 +193,8 @@ impl Decodable for Witness {
             content.truncate(cursor);
             // Index space is now at the end of the Vec
             content.rotate_left(witness_index_space);
-            Ok(Witness { content, witness_elements, indices_start: cursor - witness_index_space })
+            let indices_start = cursor - witness_index_space;
+            Ok(Witness::from_parts__unstable(content, witness_elements, indices_start))
         }
     }
 }
@@ -246,6 +247,19 @@ impl Witness {
     #[inline]
     pub const fn new() -> Self {
         Witness { content: Vec::new(), witness_elements: 0, indices_start: 0 }
+    }
+
+    /// Creates a new [`Witness`] from inner parts.
+    ///
+    /// This function leaks implementation details of the `Witness`, as such it is unstable and
+    /// should not be relied upon (it is primarily provided for use in `rust-bitcoin`).
+    ///
+    /// UNSTABLE: This function may change, break, or disappear in any release.
+    #[inline]
+    #[doc(hidden)]
+    #[allow(non_snake_case)]    // Because of `__unstable`.
+    pub fn from_parts__unstable(content: Vec<u8>, witness_elements: usize, indices_start: usize) -> Self {
+        Witness { content, witness_elements, indices_start }
     }
 
     /// Creates a witness required to spend a P2WPKH output.
