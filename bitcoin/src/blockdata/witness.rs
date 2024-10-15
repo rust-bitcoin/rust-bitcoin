@@ -775,7 +775,7 @@ mod test {
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];
-        assert_eq!(witness.to_vec(), expected_witness);
+        assert_eq!(witness.to_bytes(), expected_witness);
     }
 
     #[test]

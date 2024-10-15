@@ -77,7 +77,7 @@ macro_rules! hash_trait_impls {
         }
 
         $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
+        serde_impl!(Hash, { $bits / 8 } $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
@@ -97,6 +97,7 @@ macro_rules! hash_trait_impls {
 
             const DISPLAY_BACKWARD: bool = $reverse;
 
+            #[allow(deprecated_in_future)]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }

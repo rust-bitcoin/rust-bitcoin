@@ -345,6 +345,6 @@ mod tests {
         let mut buf = vec![];
         sig.serialize_to_writer(&mut buf).expect("write failed");
 
-        assert_eq!(sig.to_vec(), buf)
+        assert_eq!(sig.to_bytes(), buf)
     }
 }
