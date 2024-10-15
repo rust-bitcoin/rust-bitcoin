@@ -217,7 +217,7 @@ impl Magic {
     /// Bitcoin mainnet network magic bytes.
     pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
     /// Bitcoin testnet3 network magic bytes.
-    #[deprecated(since = "0.33.0", note = "Use TESTNET3 instead")]
+    #[deprecated(since = "0.33.0", note = "use `TESTNET3` instead")]
     pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
     /// Bitcoin testnet3 network magic bytes.
     pub const TESTNET3: Self = Self([0x0B, 0x11, 0x09, 0x07]);

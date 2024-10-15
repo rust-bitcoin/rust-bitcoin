@@ -41,7 +41,7 @@ crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Txid`] type.
     pub trait TxidExt impl for Txid {
         /// The "all zeros" TXID.
-        #[deprecated(since = "TBD", note = "use Txid::COINBASE_PREVOUT instead")]
+        #[deprecated(since = "TBD", note = "use `Txid::COINBASE_PREVOUT` instead")]
         fn all_zeros() -> Self { Self::COINBASE_PREVOUT }
     }
 }
@@ -50,7 +50,7 @@ crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Wtxid`] type.
     pub trait WtxidExt impl for Wtxid {
         /// The "all zeros" wTXID.
-        #[deprecated(since = "TBD", note = "use Wtxid::COINBASE instead")]
+        #[deprecated(since = "TBD", note = "use `Wtxid::COINBASE` instead")]
         fn all_zeros() -> Self { Self::COINBASE }
     }
 }
@@ -83,7 +83,7 @@ crate::internal_macros::define_extension_trait! {
 
         /// Checks if an `OutPoint` is "null".
         #[inline]
-        #[deprecated(since = "TBD", note = "use outpoint == OutPoint::COINBASE_PREVOUT instead")]
+        #[deprecated(since = "TBD", note = "use `outpoint == OutPoint::COINBASE_PREVOUT` instead")]
         fn is_null(&self) -> bool { *self == OutPoint::COINBASE_PREVOUT }
     }
 }
@@ -377,11 +377,9 @@ impl Transaction {
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
-    /// This method is deprecated.  Use `compute_ntxid` instead.
-    #[deprecated(
-        since = "0.31.0",
-        note = "ntxid has been renamed to compute_ntxid to note that it's computationally expensive.  use compute_ntxid() instead."
-    )]
+    /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
+    /// computationally expensive.  Use `compute_ntxid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
     pub fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
 
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -409,11 +407,9 @@ impl Transaction {
 
     /// Computes the [`Txid`].
     ///
-    /// This method is deprecated.  Use `compute_txid` instead.
-    #[deprecated(
-        since = "0.31.0",
-        note = "txid has been renamed to compute_txid to note that it's computationally expensive.  use compute_txid() instead."
-    )]
+    /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
+    /// computationally expensive.  Use `compute_txid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
     pub fn txid(&self) -> Txid { self.compute_txid() }
 
     /// Computes the [`Txid`].
@@ -433,11 +429,9 @@ impl Transaction {
 
     /// Computes the segwit version of the transaction id.
     ///
-    /// This method is deprecated.  Use `compute_wtxid` instead.
-    #[deprecated(
-        since = "0.31.0",
-        note = "wtxid has been renamed to compute_wtxid to note that it's computationally expensive.  use compute_wtxid() instead."
-    )]
+    /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
+    /// computationally expensive.  Use `compute_wtxid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
     pub fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
 
     /// Computes the segwit version of the transaction id.

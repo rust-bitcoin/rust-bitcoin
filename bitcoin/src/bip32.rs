@@ -28,11 +28,11 @@ const VERSION_BYTES_TESTNETS_PUBLIC: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
 const VERSION_BYTES_TESTNETS_PRIVATE: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
 
 /// The old name for xpub, extended public key.
-#[deprecated(since = "0.31.0", note = "use Xpub instead")]
+#[deprecated(since = "0.31.0", note = "use `Xpub` instead")]
 pub type ExtendedPubKey = Xpub;
 
 /// The old name for xpriv, extended public key.
-#[deprecated(since = "0.31.0", note = "use Xpriv instead")]
+#[deprecated(since = "0.31.0", note = "use `Xpriv` instead")]
 pub type ExtendedPrivKey = Xpriv;
 
 /// A chain code
@@ -592,7 +592,7 @@ impl Xpriv {
     }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
-    #[deprecated(since = "TBD", note = "use `to_private_key()`")]
+    #[deprecated(since = "TBD", note = "use `to_private_key()` instead")]
     pub fn to_priv(self) -> PrivateKey { self.to_private_key() }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
@@ -615,7 +615,7 @@ impl Xpriv {
     /// Derives an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
-    #[deprecated(since = "TBD", note = "use `derive_xpriv()`")]
+    #[deprecated(since = "TBD", note = "use `derive_xpriv()` instead")]
     pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
@@ -731,7 +731,7 @@ impl Xpriv {
 
 impl Xpub {
     /// Creates extended public key from an extended private key.
-    #[deprecated(since = "TBD", note = "use `from_xpriv()`")]
+    #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
         Self::from_xpriv(secp, sk)
     }
@@ -749,7 +749,7 @@ impl Xpub {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    #[deprecated(since = "TBD", note = "use `to_public_key()`")]
+    #[deprecated(since = "TBD", note = "use `to_public_key()` instead")]
     pub fn to_pub(self) -> CompressedPublicKey { self.to_public_key() }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
@@ -757,7 +757,7 @@ impl Xpub {
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
-    #[deprecated(since = "TBD", note = "use `to_x_only_public_key()`")]
+    #[deprecated(since = "TBD", note = "use `to_x_only_public_key()` instead")]
     pub fn to_x_only_pub(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
@@ -767,7 +767,7 @@ impl Xpub {
     /// Attempts to derive an extended public key from a path.
     ///
     /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
-    #[deprecated(since = "TBD", note = "use `derive_xpub()`")]
+    #[deprecated(since = "TBD", note = "use `derive_xpub()` instead")]
     pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,

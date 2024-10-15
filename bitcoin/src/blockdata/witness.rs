@@ -296,7 +296,7 @@ impl Witness {
     pub fn to_bytes(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
 
     /// Convenience method to create an array of byte-arrays from this witness.
-    #[deprecated(since = "TBD", note = "Use to_bytes instead")]
+    #[deprecated(since = "TBD", note = "use `to_bytes` instead")]
     pub fn to_vec(&self) -> Vec<Vec<u8>> { self.to_bytes() }
 
     /// Returns `true` if the witness contains no element.

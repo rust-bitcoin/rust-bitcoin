@@ -47,10 +47,9 @@ pub const MAX_STACK_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.
 pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
 /// Maximum allowed value for an integer in Script.
-#[deprecated(
-    since = "TBD",
-    note = "This constant has ambiguous semantics. Please carefully check your intended use-case and define a new constant reflecting that."
-)]
+/// This constant has ambiguous semantics. Please carefully check your intended use-case and define
+/// a new constant reflecting that.
+#[deprecated(since = "TBD", note = "use a more specific constant instead")]
 pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
@@ -200,7 +199,7 @@ impl ChainHash {
         101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0,
     ]);
     /// `ChainHash` for testnet3 bitcoin.
-    #[deprecated(since = "0.33.0", note = "Use TESTNET3 instead")]
+    #[deprecated(since = "0.33.0", note = "use `TESTNET3` instead")]
     pub const TESTNET: Self = Self([
         67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151,
         32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0,

@@ -223,10 +223,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// This method has potentially confusing semantics and an unclear purpose, so it's going to be
         /// removed. Use `is_op_return` if you want `OP_RETURN` semantics.
-        #[deprecated(
-            since = "0.32.0",
-            note = "The method has potentially confusing semantics and is going to be removed, you might want `is_op_return`"
-        )]
+        #[deprecated(since = "0.32.0", note = "use `is_op_return` instead")]
         #[inline]
         fn is_provably_unspendable(&self) -> bool {
             use crate::opcodes::Class::{IllegalOp, ReturnOp};
@@ -263,7 +260,7 @@ crate::internal_macros::define_extension_trait! {
 
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today’s Bitcoin network.
-        #[deprecated(since = "0.32.0", note = "use minimal_non_dust and friends")]
+        #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
         fn dust_value(&self) -> crate::Amount { self.minimal_non_dust() }
 
         /// Returns the minimum value an output with this script should have in order to be
@@ -367,7 +364,7 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Writes the human-readable assembly representation of the script to the formatter.
-        #[deprecated(since = "TBD", note = "use the script's Display impl instead")]
+        #[deprecated(since = "TBD", note = "use the script's `Display` impl instead")]
         fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
             write!(f, "{}", self)
         }

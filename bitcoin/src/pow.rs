@@ -286,12 +286,12 @@ impl Target {
 
     /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use min_transition_threshold instead")]
+    #[deprecated(since = "0.32.0", note = "use `min_transition_threshold` instead")]
     pub fn min_difficulty_transition_threshold(&self) -> Self { self.min_transition_threshold() }
 
     /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
     /// adjustment occurs.
-    #[deprecated(since = "0.32.0", note = "use max_transition_threshold instead")]
+    #[deprecated(since = "0.32.0", note = "use `max_transition_threshold` instead")]
     pub fn max_difficulty_transition_threshold(&self) -> Self {
         self.max_transition_threshold_unchecked()
     }

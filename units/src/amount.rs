@@ -996,7 +996,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
-    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
+    #[deprecated(since = "TBD", note = "use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
@@ -1406,7 +1406,7 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
-    #[deprecated(since = "TBD", note = "Use `display_in()` instead")]
+    #[deprecated(since = "TBD", note = "use `display_in()` instead")]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
