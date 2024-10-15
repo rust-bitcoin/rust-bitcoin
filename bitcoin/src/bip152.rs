@@ -143,6 +143,8 @@ impl Decodable for ShortId {
     }
 }
 
+/// A structure to relay a block header, short IDs, and a select few transactions.
+///
 /// A [HeaderAndShortIds] structure is used to relay a block header, the short
 /// transactions IDs used for matching already-available transactions, and a
 /// select few transactions which we expect a peer may be missing.
@@ -492,7 +494,7 @@ mod test {
     fn test_getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
             block_hash: Hash::all_zeros(),
-            indexes: vec![core::u64::MAX],
+            indexes: vec![u64::MAX],
         });
     }
 }
