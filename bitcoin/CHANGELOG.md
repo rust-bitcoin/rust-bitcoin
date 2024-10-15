@@ -1,4 +1,23 @@
-# 0.32.0 - TODO: Add date when we do final release
+# 0.32.3 - 2024-09-27
+
+- Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
+
+# 0.32.2 - 2024-06-07
+
+- Fix a bug when parsing 256-bit numeric types [#2837](https://github.com/rust-bitcoin/rust-bitcoin/pull/2837)
+
+# 0.32.1 - 2024-05-29
+
+Fix things we broke/removed from the `Address` API in the last release.
+
+- Enable getting the witness program from an address [#2804](https://github.com/rust-bitcoin/rust-bitcoin/pull/2804)
+- Make `Address:p2sh_from_hash` public [#2806](https://github.com/rust-bitcoin/rust-bitcoin/pull/2806)
+- Add an `AddressData` type [#2810](https://github.com/rust-bitcoin/rust-bitcoin/pull/2810)
+
+If you are looking for the `address::Payload` type we removed in `v0.32.0` then the `AddressData` type
+might be what you are after.
+
+# 0.32.0 - 2024-04-23
 
 - Bump MSRV to Rust 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
 - Remove "no-std" feature [#2233](https://github.com/rust-bitcoin/rust-bitcoin/pull/2233)
@@ -98,7 +117,12 @@ In particular consider having some type that implements `AsRef<Params>`, we have
 - Add `NetworkValidationError` [#2508](https://github.com/rust-bitcoin/rust-bitcoin/pull/2508) but don't return it [#2610](https://github.com/rust-bitcoin/rust-bitcoin/pull/2610)
 - Improve leaf errors ("leaf" means not enum with nested error type) [#2530](https://github.com/rust-bitcoin/rust-bitcoin/pull/2530)
 
-# 0.31.1 - 2023-10-18
+# 0.31.1 - 2024-01-09
+
+- Fix bug in `FeeRate::checked_mul_by_weight` [#2128](https://github.com/rust-bitcoin/rust-bitcoin/pull/2182)
+- Add BIP-32 types remove in 0.31 back in and mark as deprecated [#2258](https://github.com/rust-bitcoin/rust-bitcoin/pull/2258)
+
+# 0.31.0 - 2023-10-18
 
 - Bump MSRV to Rust 1.48.0 [#1729](https://github.com/rust-bitcoin/rust-bitcoin/pull/1729)
 - Add new example code for signature verification [#1776](https://github.com/rust-bitcoin/rust-bitcoin/pull/1776)
@@ -159,6 +183,10 @@ In particular consider having some type that implements `AsRef<Params>`, we have
   - Add `ValidationError` [#1874](https://github.com/rust-bitcoin/rust-bitcoin/pull/1874)
   - Improve `crypto::taproot` error type [#1895](https://github.com/rust-bitcoin/rust-bitcoin/pull/1895)
   - Audit error types code base wide [#2101](https://github.com/rust-bitcoin/rust-bitcoin/pull/2101)
+
+# 0.30.2 - 2023-11-16
+
+- Expose valid (min, max) difficulty transition thresholds [#1820](Expose valid (min, max) difficulty transition thresholds)
 
 # 0.30.1 - 2023-07-16
 
