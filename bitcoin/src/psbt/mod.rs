@@ -1440,7 +1440,7 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_psbtkvpair() {
         let expected = raw::Pair {
-            key: raw::Key { type_value: 0u8, key_data: vec![42u8, 69u8] },
+            key: raw::Key { type_value: 0u64, key_data: vec![42u8, 69u8] },
             value: vec![69u8, 42u8, 4u8],
         };
 
@@ -1850,7 +1850,7 @@ mod tests {
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
             let key: raw::Key =
-                raw::Key { type_value: 0x0fu8, key_data: hex!("010203040506070809") };
+                raw::Key { type_value: 0x0fu64, key_data: hex!("010203040506070809") };
             let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
 
             unknown.insert(key, value);
@@ -2080,7 +2080,7 @@ mod tests {
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: Psbt = hex_psbt("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
         psbt.proprietary.insert(
-            raw::ProprietaryKey { prefix: b"test".to_vec(), subtype: 0u8, key: b"test".to_vec() },
+            raw::ProprietaryKey { prefix: b"test".to_vec(), subtype: 0u64, key: b"test".to_vec() },
             b"test".to_vec(),
         );
         assert!(!psbt.proprietary.is_empty());
