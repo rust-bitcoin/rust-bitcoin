@@ -159,7 +159,6 @@ struct DisplayWrapper<'a, T: 'a + Encodable, E>(&'a T, PhantomData<E>);
 impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut writer = IoWrapper::<'_, _, E::Encoder>::new(f, E::default().into());
-        #[allow(unused_variables)] // When debug_assertions are not enabled.
         self.0.consensus_encode(&mut writer).map_err(|error| {
             #[cfg(debug_assertions)]
             {
@@ -174,6 +173,8 @@ impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, 
                     );
                 }
             }
+            #[cfg(not(debug_assertions))]
+            let _ = error;
             fmt::Error
         })?;
         let result = writer.actually_flush();
@@ -200,7 +201,6 @@ impl<W: fmt::Write> ErrorTrackingWriter<W> {
     }
 
     #[track_caller]
-    #[allow(unused_variables)] // When debug_assertions are not enabled.
     fn assert_no_error(&self, fun: &str) {
         #[cfg(debug_assertions)]
         {
@@ -208,6 +208,8 @@ impl<W: fmt::Write> ErrorTrackingWriter<W> {
                 panic!("`{}` called on errored writer", fun);
             }
         }
+        #[cfg(not(debug_assertions))]
+        let _ = fun;
     }
 
     fn assert_was_error<Offender>(&self) {
@@ -219,12 +221,13 @@ impl<W: fmt::Write> ErrorTrackingWriter<W> {
         }
     }
 
-    #[allow(unused_variables)] // When debug_assertions are not enabled.
     fn set_error(&mut self, was: bool) {
         #[cfg(debug_assertions)]
         {
             self.was_error |= was;
         }
+        #[cfg(not(debug_assertions))]
+        let _ = was;
     }
 
     fn check_err<T, E>(&mut self, result: Result<T, E>) -> Result<T, E> {
