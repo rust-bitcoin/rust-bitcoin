@@ -1,3 +1,9 @@
+# 0.32.4 - 2024-10-15
+
+- Backport: Add additional inspectors on Script and Witness [#2646](https://github.com/rust-bitcoin/rust-bitcoin/pull/2646)
+- Backport new CI set up
+- Backport/fix lint warnings (to assist continual backporting)
+
 # 0.32.3 - 2024-09-27
 
 - Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
