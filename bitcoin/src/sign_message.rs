@@ -256,6 +256,7 @@ mod tests {
         let secp_sig = secp.sign_ecdsa_recoverable(&msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
+        assert_eq!(signature.to_string(), super::sign(&secp, message, privkey).to_string());
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = &signature.to_string().parse::<super::MessageSignature>().unwrap();
         let pubkey = signature2
