@@ -163,7 +163,7 @@ impl Add<&FeeRate> for FeeRate {
     fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
 }
 
-impl<'a, 'b> Add<&'a FeeRate> for &'b FeeRate {
+impl<'a> Add<&'a FeeRate> for &FeeRate {
     type Output = FeeRate;
 
     fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
@@ -187,7 +187,7 @@ impl Sub<&FeeRate> for FeeRate {
     fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
 }
 
-impl<'a, 'b> Sub<&'a FeeRate> for &'b FeeRate {
+impl<'a> Sub<&'a FeeRate> for &FeeRate {
     type Output = FeeRate;
 
     fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
