@@ -6,6 +6,7 @@
 //! library is used with the `secp-recovery` feature.
 
 use hashes::{sha256d, HashEngine};
+#[cfg(feature = "secp-recovery")]
 use secp256k1::SecretKey;
 
 use crate::consensus::encode::WriteExt;
