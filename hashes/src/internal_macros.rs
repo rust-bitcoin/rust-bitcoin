@@ -130,6 +130,9 @@ macro_rules! hash_type {
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
         impl Hash {
+            /// Produces a hash from the current state of a given engine.
+            pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+
             /// Constructs a new engine.
             pub fn engine() -> HashEngine { Default::default() }
 
@@ -179,9 +182,6 @@ macro_rules! hash_type_no_default {
                 // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
                 unsafe { &mut *(bytes as *mut _ as *mut Self) }
             }
-
-            /// Produces a hash from the current state of a given engine.
-            pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
 
             /// Copies a byte slice into a hash object.
             pub fn from_slice(
