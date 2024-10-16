@@ -46,7 +46,7 @@ where
     pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
 
     /// Copies a byte slice into a hash object.
-    #[deprecated(since = "TBD", note = "Use `from_byte_array` instead.")]
+    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
         if sl.len() != 32 {
             Err(FromSliceError { expected: 32, got: sl.len() })
@@ -211,7 +211,7 @@ macro_rules! sha256t_tag {
 ///
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
-#[deprecated(since = "TBD", note = "use `sha256_tag!` combined with `hash_newtype!`")]
+#[deprecated(since = "TBD", note = "use `sha256_tag!` combined with `hash_newtype!` instead")]
 macro_rules! sha256t_hash_newtype {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);) => {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);

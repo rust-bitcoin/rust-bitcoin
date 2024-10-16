@@ -124,7 +124,7 @@ mod message_signing {
         }
 
         /// Create a `MessageSignature` from a byte slice.
-        #[deprecated(since = "TBD", note = "Use `from_byte_array` instead.")]
+        #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
         pub fn from_slice(bytes: &[u8]) -> Result<MessageSignature, MessageSignatureError> {
             let byte_array: [u8; 65] =
                 bytes.try_into().map_err(|_| MessageSignatureError::InvalidLength)?;

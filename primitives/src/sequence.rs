@@ -51,10 +51,7 @@ impl Sequence {
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
-    #[deprecated(
-        since = "TBD",
-        note = "This constant has ambiguous name. Please use ENABLE_LOCKTIME_AND_RBF instead."
-    )]
+    #[deprecated(since = "TBD", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.

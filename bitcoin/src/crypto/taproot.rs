@@ -58,7 +58,7 @@ impl Signature {
     }
 
     /// Serializes the signature.
-    #[deprecated(since = "TBD", note = "Use to_bytes instead")]
+    #[deprecated(since = "TBD", note = "use `to_bytes` instead")]
     pub fn to_vec(self) -> Vec<u8> { self.to_bytes() }
 
     /// Serializes the signature to `writer`.

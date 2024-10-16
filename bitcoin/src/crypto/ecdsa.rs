@@ -71,7 +71,7 @@ impl Signature {
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) into `Vec`.
-    #[deprecated(since = "TBD", note = "Use to_bytes instead")]
+    #[deprecated(since = "TBD", note = "use `to_bytes` instead")]
     pub fn to_vec(self) -> Vec<u8> { self.to_bytes() }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) to a `writer`.
