@@ -42,12 +42,6 @@ where
         unsafe { &mut *(bytes as *mut _ as *mut Self) }
     }
 
-    /// Constructs a new engine.
-    pub fn engine() -> HashEngine { T::engine() }
-
-    /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
-
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "TBD", note = "Use `from_byte_array` instead.")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
@@ -59,6 +53,12 @@ where
             Ok(Self::from_byte_array(ret))
         }
     }
+
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
+
+    /// Constructs a new engine.
+    pub fn engine() -> HashEngine { T::engine() }
 
     /// Hashes some bytes.
     #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
