@@ -6,8 +6,11 @@ use core::cmp;
 
 use crate::{incomplete_block_len, HashEngine as _};
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 20;
+
 crate::internal_macros::hash_type! {
-    160,
+    LEN,
     false,
     "Output of the SHA1 hash function."
 }
@@ -52,8 +55,8 @@ impl HashEngine {
     }
 
     #[cfg(not(hashes_fuzz))]
-    pub(crate) fn midstate(&self) -> [u8; 20] {
-        let mut ret = [0; 20];
+    pub(crate) fn midstate(&self) -> [u8; LEN] {
+        let mut ret = [0; LEN];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes())
         }
@@ -61,9 +64,9 @@ impl HashEngine {
     }
 
     #[cfg(hashes_fuzz)]
-    pub(crate) fn midstate(&self) -> [u8; 20] {
-        let mut ret = [0; 20];
-        ret.copy_from_slice(&self.buffer[..20]);
+    pub(crate) fn midstate(&self) -> [u8; LEN] {
+        let mut ret = [0; LEN];
+        ret.copy_from_slice(&self.buffer[..LEN]);
         ret
     }
 }

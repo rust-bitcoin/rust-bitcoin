@@ -4,8 +4,11 @@
 
 use crate::sha256;
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 32;
+
 crate::internal_macros::hash_type! {
-    256,
+    LEN,
     true,
     "Output of the SHA256d hash function."
 }
@@ -33,7 +36,7 @@ fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
     let sha2d = sha256::Hash::hash(sha2.as_byte_array());
 
-    let mut ret = [0; 32];
+    let mut ret = [0; LEN];
     ret.copy_from_slice(sha2d.as_byte_array());
     Hash(ret)
 }

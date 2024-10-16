@@ -7,6 +7,9 @@ use core::marker::PhantomData;
 
 use crate::{sha256, FromSliceError, HashEngine as _};
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 32;
+
 type HashEngine = sha256::HashEngine;
 
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
@@ -17,25 +20,25 @@ pub trait Tag {
 
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
-pub struct Hash<T>([u8; 32], PhantomData<T>);
+pub struct Hash<T>([u8; LEN], PhantomData<T>);
 
 impl<T> Hash<T>
 where
     T: Tag,
 {
-    const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
+    const fn internal_new(arr: [u8; LEN]) -> Self { Hash(arr, PhantomData) }
 
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
-    pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+    pub fn from_bytes_ref(bytes: &[u8; LEN]) -> &Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; LEN]
         unsafe { &*(bytes as *const _ as *const Self) }
     }
 
     /// Zero cost conversion between a fixed length byte array exclusive reference and
     /// an exclusive reference to this Hash type.
-    pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
+    pub fn from_bytes_mut(bytes: &mut [u8; LEN]) -> &mut Self {
+        // Safety: Sound because Self is #[repr(transparent)] containing [u8; LEN]
         unsafe { &mut *(bytes as *mut _ as *mut Self) }
     }
 
@@ -51,7 +54,7 @@ where
         if sl.len() != 32 {
             Err(FromSliceError { expected: 32, got: sl.len() })
         } else {
-            let mut ret = [0; 32];
+            let mut ret = [0; LEN];
             ret.copy_from_slice(sl);
             Ok(Self::from_byte_array(ret))
         }
@@ -100,13 +103,13 @@ where
     }
 
     /// Returns the underlying byte array.
-    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; LEN] { self.0 }
 
     /// Returns a reference to the underlying byte array.
-    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+    pub const fn as_byte_array(&self) -> &[u8; LEN] { &self.0 }
 
     /// Constructs a hash from the underlying byte array.
-    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+    pub const fn from_byte_array(bytes: [u8; LEN]) -> Self { Self::internal_new(bytes) }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
@@ -118,7 +121,7 @@ impl<T: Tag> PartialEq for Hash<T> {
 }
 impl<T: Tag> Eq for Hash<T> {}
 impl<T: Tag> Default for Hash<T> {
-    fn default() -> Self { Hash([0; 32], PhantomData) }
+    fn default() -> Self { Hash([0; LEN], PhantomData) }
 }
 impl<T: Tag> PartialOrd for Hash<T> {
     fn partial_cmp(&self, other: &Hash<T>) -> Option<cmp::Ordering> {
@@ -132,7 +135,7 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
 }
 
-crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
+crate::internal_macros::hash_trait_impls!(LEN, false, T: Tag);
 
 fn from_engine<T>(e: sha256::HashEngine) -> Hash<T>
 where
