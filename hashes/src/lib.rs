@@ -2,10 +2,8 @@
 
 //! Rust hashes library.
 //!
-//! This is a simple, no-dependency library which implements the hash functions
-//! needed by Bitcoin. These are SHA256, SHA256d, and RIPEMD160. As an ancillary
-//! thing, it exposes hexadecimal serialization and deserialization, since these
-//! are needed to display hashes anway.
+//! This library implements the hash functions needed by Bitcoin. As an ancillary thing, it exposes
+//! hexadecimal serialization and deserialization, since these are needed to display hashes.
 //!
 //! ## Commonly used operations
 //!
@@ -23,9 +21,10 @@
 //! Hashing content from a reader:
 //!
 //! ```
-//! #[cfg(feature = "std")] {
+//! # #[cfg(feature = "std")] {
 //! use bitcoin_hashes::Sha256;
-//! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
+//!
+//! let mut reader: &[u8] = b"hello"; // In real code, this could be a `File` or `TcpStream`.
 //! let mut engine = Sha256::engine();
 //! std::io::copy(&mut reader, &mut engine).unwrap();
 //! let _hash = Sha256::from_engine(engine);
@@ -33,12 +32,13 @@
 //! ```
 //!
 //!
-//! Hashing content by [`std::io::Write`] on `HashEngine`:
+//! Hashing content using [`std::io::Write`] on a `HashEngine`:
 //!
 //! ```
-//! #[cfg(feature = "std")] {
-//! use std::io::Write as _; // Or `bitcoin-io::Write` if `bitcoin-io` feature is enabled.
+//! # #[cfg(feature = "std")] {
+//! use std::io::Write as _;
 //! use bitcoin_hashes::Sha256;
+//!
 //! let part1: &[u8] = b"hello";
 //! let part2: &[u8] = b" ";
 //! let part3: &[u8] = b"world";
