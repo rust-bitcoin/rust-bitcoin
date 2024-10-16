@@ -270,6 +270,9 @@ pub trait Hash:
     /// For some reason Satoshi decided this should be true for `Sha256dHash`, so here we are.
     const DISPLAY_BACKWARD: bool = false;
 
+    /// Constructs a hash from the underlying byte array.
+    fn from_byte_array(bytes: Self::Bytes) -> Self;
+
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
@@ -279,9 +282,6 @@ pub trait Hash:
 
     /// Returns a reference to the underlying byte array.
     fn as_byte_array(&self) -> &Self::Bytes;
-
-    /// Constructs a hash from the underlying byte array.
-    fn from_byte_array(bytes: Self::Bytes) -> Self;
 }
 
 /// Ensures that a type is an array.

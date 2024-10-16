@@ -97,6 +97,8 @@ macro_rules! hash_trait_impls {
 
             const DISPLAY_BACKWARD: bool = $reverse;
 
+            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
+
             #[allow(deprecated_in_future)]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
                 Self::from_slice(sl)
@@ -105,8 +107,6 @@ macro_rules! hash_trait_impls {
             fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
-
-            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
         }
     }
 }
@@ -169,6 +169,11 @@ macro_rules! hash_type_no_default {
         impl Hash {
             const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
+            /// Constructs a hash from the underlying byte array.
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
+                Self::internal_new(bytes)
+            }
+
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
             pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
@@ -201,11 +206,6 @@ macro_rules! hash_type_no_default {
 
             /// Returns a reference to the underlying byte array.
             pub const fn as_byte_array(&self) -> &[u8; $bits / 8] { &self.0 }
-
-            /// Constructs a hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
-                Self::internal_new(bytes)
-            }
         }
 
         $crate::internal_macros::hash_trait_impls!($bits, $reverse);
