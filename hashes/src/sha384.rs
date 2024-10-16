@@ -4,15 +4,18 @@
 
 use crate::sha512;
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 48;
+
 crate::internal_macros::hash_type! {
-    384,
+    LEN,
     false,
     "Output of the SHA384 hash function."
 }
 
 fn from_engine(e: HashEngine) -> Hash {
-    let mut ret = [0; 48];
-    ret.copy_from_slice(&sha512::from_engine(e.0).as_byte_array()[..48]);
+    let mut ret = [0; LEN];
+    ret.copy_from_slice(&sha512::from_engine(e.0).as_byte_array()[..LEN]);
     Hash(ret)
 }
 

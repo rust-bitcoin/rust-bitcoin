@@ -50,7 +50,7 @@ pub(crate) use arr_newtype_fmt_impl;
 /// Implpements various conversion traits as well as the [`crate::Hash`] trait.
 /// Arguments:
 ///
-/// * `$bits` - number of bits this hash type has
+/// * `$len` - length of this hash type in bytes
 /// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
 ///    otherwise.
 /// * `$gen: $gent` - generic type(s) and trait bound(s)
@@ -58,17 +58,17 @@ pub(crate) use arr_newtype_fmt_impl;
 /// Restrictions on usage:
 ///
 /// * There must be a free-standing `fn from_engine(HashEngine) -> Hash` in the scope
-/// * `fn internal_new([u8; $bits / 8]) -> Self` must exist on `Hash`
+/// * `fn internal_new([u8; $len]) -> Self` must exist on `Hash`
 ///
 /// `from_engine` obviously implements the finalization algorithm.
 macro_rules! hash_trait_impls {
-    ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
+    ($len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 use $crate::{hex::{FromHex}};
 
-                let mut bytes = <[u8; $bits / 8]>::from_hex(s)?;
+                let mut bytes = <[u8; $len]>::from_hex(s)?;
                 if $reverse {
                     bytes.reverse();
                 }
@@ -76,12 +76,12 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        serde_impl!(Hash, { $bits / 8 } $(, $gen: $gent)*);
+        $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $len $(, $gen: $gent)*);
+        serde_impl!(Hash, { $len } $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
-            fn as_ref(&self) -> &[u8; $bits / 8] {
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $len]> for Hash<$($gen),*> {
+            fn as_ref(&self) -> &[u8; $len] {
                 &self.0
             }
         }
@@ -93,7 +93,7 @@ macro_rules! hash_trait_impls {
         }
 
         impl<$($gen: $gent),*> $crate::Hash for Hash<$($gen),*> {
-            type Bytes = [u8; $bits / 8];
+            type Bytes = [u8; $len];
 
             const DISPLAY_BACKWARD: bool = $reverse;
 
@@ -119,15 +119,15 @@ pub(crate) use hash_trait_impls;
 ///
 /// Arguments:
 ///
-/// * `$bits` - the number of bits of the hash type
+/// * `$len` - length of this hash type in bytes
 /// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
 /// * `$doc` - doc string to put on the type
 ///
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
-    ($bits:expr, $reverse:expr, $doc:literal) => {
-        $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
+    ($len:expr, $reverse:expr, $doc:literal) => {
+        $crate::internal_macros::hash_type_no_default!($len, $reverse, $doc);
 
         impl Hash {
             /// Constructs a new engine.
@@ -157,26 +157,26 @@ macro_rules! hash_type {
 pub(crate) use hash_type;
 
 macro_rules! hash_type_no_default {
-    ($bits:expr, $reverse:expr, $doc:literal) => {
+    ($len:expr, $reverse:expr, $doc:literal) => {
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[repr(transparent)]
-        pub struct Hash([u8; $bits / 8]);
+        pub struct Hash([u8; $len]);
 
         impl Hash {
-            const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
+            const fn internal_new(arr: [u8; $len]) -> Self { Hash(arr) }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
-            pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+            pub fn from_bytes_ref(bytes: &[u8; $len]) -> &Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $len]
                 unsafe { &*(bytes as *const _ as *const Self) }
             }
 
             /// Zero cost conversion between a fixed length byte array exclusive reference and
             /// an exclusive reference to this Hash type.
-            pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+            pub fn from_bytes_mut(bytes: &mut [u8; $len]) -> &mut Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $len]
                 unsafe { &mut *(bytes as *mut _ as *mut Self) }
             }
 
@@ -187,28 +187,28 @@ macro_rules! hash_type_no_default {
             pub fn from_slice(
                 sl: &[u8],
             ) -> $crate::_export::_core::result::Result<Hash, $crate::FromSliceError> {
-                if sl.len() != $bits / 8 {
-                    Err($crate::FromSliceError { expected: $bits / 8, got: sl.len() })
+                if sl.len() != $len {
+                    Err($crate::FromSliceError { expected: $len, got: sl.len() })
                 } else {
-                    let mut ret = [0; $bits / 8];
+                    let mut ret = [0; $len];
                     ret.copy_from_slice(sl);
                     Ok(Self::internal_new(ret))
                 }
             }
 
             /// Returns the underlying byte array.
-            pub const fn to_byte_array(self) -> [u8; $bits / 8] { self.0 }
+            pub const fn to_byte_array(self) -> [u8; $len] { self.0 }
 
             /// Returns a reference to the underlying byte array.
-            pub const fn as_byte_array(&self) -> &[u8; $bits / 8] { &self.0 }
+            pub const fn as_byte_array(&self) -> &[u8; $len] { &self.0 }
 
             /// Constructs a hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
+            pub const fn from_byte_array(bytes: [u8; $len]) -> Self {
                 Self::internal_new(bytes)
             }
         }
 
-        $crate::internal_macros::hash_trait_impls!($bits, $reverse);
+        $crate::internal_macros::hash_trait_impls!($len, $reverse);
 
         $crate::internal_macros::impl_io_write!(
             HashEngine,

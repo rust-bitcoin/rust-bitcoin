@@ -9,15 +9,18 @@
 
 use crate::sha512;
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 32;
+
 crate::internal_macros::hash_type! {
-    256,
+    LEN,
     false,
     "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 algorithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>."
 }
 
 fn from_engine(e: HashEngine) -> Hash {
-    let mut ret = [0; 32];
-    ret.copy_from_slice(&sha512::from_engine(e.0).as_byte_array()[..32]);
+    let mut ret = [0; LEN];
+    ret.copy_from_slice(&sha512::from_engine(e.0).as_byte_array()[..LEN]);
     Hash(ret)
 }
 

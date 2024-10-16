@@ -9,8 +9,11 @@
 
 use crate::{ripemd160, sha256};
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 20;      // Because of ripemd160.
+
 crate::internal_macros::hash_type! {
-    160,
+    LEN,
     false,
     "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"
 }
@@ -38,7 +41,7 @@ fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
     let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
 
-    let mut ret = [0; 20];
+    let mut ret = [0; LEN];
     ret.copy_from_slice(rmd.as_byte_array());
     Hash(ret)
 }
