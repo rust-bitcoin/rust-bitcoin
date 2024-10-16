@@ -4,7 +4,7 @@
 
 use crate::sha256;
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     256,
     true,
     "Output of the SHA256d hash function."

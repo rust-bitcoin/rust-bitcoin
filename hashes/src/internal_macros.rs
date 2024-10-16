@@ -112,7 +112,7 @@ macro_rules! hash_trait_impls {
 }
 pub(crate) use hash_trait_impls;
 
-/// Creates a type called `Hash` and implements standard interface for it.
+/// Creates a type called `Hash` and implements the standard general hashing interface for it.
 ///
 /// The created type has a single field and will have all standard derives as well as an
 /// implementation of [`crate::Hash`].
@@ -125,7 +125,7 @@ pub(crate) use hash_trait_impls;
 ///
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
-macro_rules! hash_type {
+macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
@@ -157,7 +157,7 @@ macro_rules! hash_type {
         }
     };
 }
-pub(crate) use hash_type;
+pub(crate) use general_hash_type;
 
 macro_rules! hash_type_no_default {
     ($bits:expr, $reverse:expr, $doc:literal) => {
