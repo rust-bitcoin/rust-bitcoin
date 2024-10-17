@@ -1854,8 +1854,16 @@ mod test {
     #[test]
     #[cfg(feature = "serde")]
     fn test_merkle_branch_serde() {
-        let hash1 = TapNodeHash("03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b".parse::<sha256t::Hash<TapBranchTag>>().unwrap());
-        let hash2 = TapNodeHash("8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9".parse::<sha256t::Hash<TapBranchTag>>().unwrap());
+        let hash1 = TapNodeHash(
+            "03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b"
+                .parse::<sha256t::Hash<TapBranchTag>>()
+                .unwrap(),
+        );
+        let hash2 = TapNodeHash(
+            "8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9"
+                .parse::<sha256t::Hash<TapBranchTag>>()
+                .unwrap(),
+        );
         let merkle_branch = TaprootMerkleBranch::from([hash1, hash2]);
         // use serde_test to test serialization and deserialization
         serde_test::assert_tokens(
