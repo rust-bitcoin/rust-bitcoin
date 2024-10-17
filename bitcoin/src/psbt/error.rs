@@ -69,8 +69,11 @@ pub enum Error {
     /// Conflicting data during combine procedure:
     /// global extended public key has inconsistent key sources
     CombineInconsistentKeySources(Box<Xpub>),
-    /// Serialization error in bitcoin consensus-encoded structures
-    ConsensusEncoding(encode::Error),
+    // TODO: Think harder about these errors.
+    /// Decoding a consensus-encoded structure failed
+    ConsensusEncoding(encode::DecodeFromReaderError),
+    /// Invalid consensus-encoded structure.
+    ConsensusInvalidEncoding(encode::Error),
     /// Negative fee
     NegativeFee,
     /// Integer overflow in fee calculation
@@ -141,6 +144,7 @@ impl fmt::Display for Error {
                 write!(f, "combine conflict: {}", s)
             }
             ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
+            ConsensusInvalidEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
             NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             FeeOverflow => f.write_str("integer overflow in fee calculation"),
             InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
@@ -169,6 +173,7 @@ impl std::error::Error for Error {
         match *self {
             InvalidHash(ref e) => Some(e),
             ConsensusEncoding(ref e) => Some(e),
+            ConsensusInvalidEncoding(ref e) => Some(e),
             Io(ref e) => Some(e),
             InvalidMagic
             | MissingUtxo
@@ -207,8 +212,12 @@ impl From<core::array::TryFromSliceError> for Error {
     fn from(e: core::array::TryFromSliceError) -> Error { Error::InvalidHash(e) }
 }
 
+impl From<encode::DecodeFromReaderError> for Error {
+    fn from(e: encode::DecodeFromReaderError) -> Self { Error::ConsensusEncoding(e) }
+}
+
 impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Self { Error::ConsensusEncoding(e) }
+    fn from(e: encode::Error) -> Self { Error::ConsensusInvalidEncoding(e) }
 }
 
 impl From<io::Error> for Error {

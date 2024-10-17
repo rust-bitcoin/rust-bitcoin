@@ -82,10 +82,10 @@ impl Encodable for PrefilledTransaction {
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx)
-            .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
+            .map_err(|_| encode::DecodeFromReaderError::InvalidEncoding(encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds")))?;
         let tx = Transaction::consensus_decode_from_reader(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
@@ -138,7 +138,7 @@ impl Encodable for ShortId {
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::DecodeFromReaderError> {
         Ok(ShortId(Decodable::consensus_decode_from_reader(r)?))
     }
 }
@@ -163,7 +163,7 @@ pub struct HeaderAndShortIds {
 }
 
 impl Decodable for HeaderAndShortIds {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let header_short_ids = HeaderAndShortIds {
             header: Decodable::consensus_decode_from_reader(r)?,
             nonce: Decodable::consensus_decode_from_reader(r)?,
@@ -172,7 +172,7 @@ impl Decodable for HeaderAndShortIds {
         };
         match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
             Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
-            _ => Err(encode::Error::ParseFailed("indexes overflowed 16 bits")),
+            _ => Err(encode::Error::ParseFailed("indexes overflowed 16 bits").into()),
         }
     }
 }
@@ -300,7 +300,7 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode_from_reader(r)?,
             indexes: {
@@ -312,12 +312,12 @@ impl Decodable for BlockTransactionsRequest {
                 // transactions that would be allowed in a vector.
                 let byte_size = nb_indexes
                     .checked_mul(mem::size_of::<Transaction>())
-                    .ok_or(encode::Error::ParseFailed("invalid length"))?;
+                    .ok_or(encode::DecodeFromReaderError::InvalidEncoding(encode::Error::ParseFailed("invalid length")))?;
                 if byte_size > encode::MAX_VEC_SIZE {
-                    return Err(encode::Error::OversizedVectorAllocation {
-                        requested: byte_size,
+                    return Err(encode::OversizedVectorError {
+                        size: byte_size,
                         max: encode::MAX_VEC_SIZE,
-                    });
+                    }.into());
                 }
 
                 let mut indexes = Vec::with_capacity(nb_indexes);
@@ -326,12 +326,12 @@ impl Decodable for BlockTransactionsRequest {
                     let differential = r.read_compact_size()?;
                     last_index = match last_index.checked_add(differential) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(encode::Error::ParseFailed("block index overflow").into()),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(encode::Error::ParseFailed("block index overflow").into()),
                     };
                 }
                 indexes

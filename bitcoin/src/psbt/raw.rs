@@ -82,11 +82,10 @@ impl Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE.to_u64() {
-            return Err(encode::Error::OversizedVectorAllocation {
-                requested: key_byte_size as usize,
+            return Err(encode::DecodeFromReaderError::OversizedVector(encode::OversizedVectorError {
+                size: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
-            }
-            .into());
+            }).into());
         }
 
         let type_value = r.read_compact_size()?;
@@ -155,7 +154,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let prefix = Vec::<u8>::consensus_decode_from_reader(r)?;
         let subtype = Subtype::from(r.read_compact_size()?);
 

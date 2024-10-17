@@ -801,7 +801,7 @@ impl Encodable for Version {
 }
 
 impl Decodable for Version {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Decodable::consensus_decode_from_reader(r).map(Version)
     }
 }
@@ -815,7 +815,7 @@ impl Encodable for OutPoint {
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Ok(OutPoint {
             txid: Decodable::consensus_decode_from_reader(r)?,
             vout: Decodable::consensus_decode_from_reader(r)?,
@@ -836,7 +836,7 @@ impl Decodable for TxIn {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, encode::DecodeFromReaderError> {
         Ok(TxIn {
             previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
             script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
@@ -853,7 +853,7 @@ impl Encodable for Sequence {
 }
 
 impl Decodable for Sequence {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Decodable::consensus_decode_from_reader(r).map(Sequence)
     }
 }
@@ -885,7 +885,7 @@ impl Encodable for Transaction {
 impl Decodable for Transaction {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, encode::DecodeFromReaderError> {
         let version = Version::consensus_decode_from_finite_reader(r)?;
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
@@ -900,7 +900,7 @@ impl Decodable for Transaction {
                         txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
+                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present").into())
                     } else {
                         Ok(Transaction {
                             version,
@@ -911,7 +911,7 @@ impl Decodable for Transaction {
                     }
                 }
                 // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
+                x => Err(encode::Error::UnsupportedSegwitFlag(x).into()),
             }
         // non-segwit
         } else {

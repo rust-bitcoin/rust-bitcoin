@@ -321,7 +321,7 @@ impl Decodable for ScriptBuf {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, encode::DecodeFromReaderError> {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;
         Ok(ScriptBuf::from_bytes(v))
     }

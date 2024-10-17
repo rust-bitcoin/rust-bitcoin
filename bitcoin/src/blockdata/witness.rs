@@ -12,7 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use internals::compact_size;
 use io::{BufRead, Write};
 
-use crate::consensus::encode::{self, Error, ReadExt, WriteExt, MAX_VEC_SIZE};
+use crate::consensus::encode::{self, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
 use crate::prelude::Vec;
@@ -136,15 +136,15 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let witness_elements = r.read_compact_size()? as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
         if witness_elements > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation {
-                requested: witness_elements,
+            return Err(encode::OversizedVectorError {
+                size: witness_elements,
                 max: MAX_VEC_SIZE,
-            });
+            }.into());
         }
         if witness_elements == 0 {
             Ok(Witness::default())
@@ -163,21 +163,21 @@ impl Decodable for Witness {
                 let element_size_len = compact_size::encoded_size(element_size);
                 let required_len = cursor
                     .checked_add(element_size)
-                    .ok_or(self::Error::OversizedVectorAllocation {
-                        requested: usize::MAX,
+                    .ok_or(encode::OversizedVectorError {
+                        size: usize::MAX,
                         max: MAX_VEC_SIZE,
                     })?
                     .checked_add(element_size_len)
-                    .ok_or(self::Error::OversizedVectorAllocation {
-                        requested: usize::MAX,
+                    .ok_or(encode::OversizedVectorError {
+                        size: usize::MAX,
                         max: MAX_VEC_SIZE,
                     })?;
 
                 if required_len > MAX_VEC_SIZE + witness_index_space {
-                    return Err(self::Error::OversizedVectorAllocation {
-                        requested: required_len,
+                    return Err(encode::OversizedVectorError {
+                        size: required_len,
                         max: MAX_VEC_SIZE,
-                    });
+                    }.into());
                 }
 
                 // We will do content.rotate_left(witness_index_space) later.

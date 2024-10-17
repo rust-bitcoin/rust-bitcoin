@@ -205,7 +205,7 @@ impl Encodable for ServiceFlags {
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Ok(ServiceFlags(Decodable::consensus_decode_from_reader(r)?))
     }
 }
@@ -315,7 +315,7 @@ impl Encodable for Magic {
 }
 
 impl Decodable for Magic {
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Ok(Magic(Decodable::consensus_decode_from_reader(reader)?))
     }
 }

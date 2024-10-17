@@ -80,7 +80,7 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let inv_type: u32 = Decodable::consensus_decode_from_reader(r)?;
         Ok(match inv_type {
             0 => Inventory::Error,

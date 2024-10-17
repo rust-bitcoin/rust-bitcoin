@@ -110,7 +110,7 @@ impl Encodable for CommandString {
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode_from_reader(r)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
             if u > 0 {
@@ -410,7 +410,7 @@ impl Decodable for HeaderDeserializationWrapper {
     #[inline]
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, encode::DecodeFromReaderError> {
         let len = r.read_compact_size()?;
         // should be above usual number of items to avoid
         // allocation
@@ -420,14 +420,14 @@ impl Decodable for HeaderDeserializationWrapper {
             if u8::consensus_decode_from_reader(r)? != 0u8 {
                 return Err(encode::Error::ParseFailed(
                     "Headers message should not contain transactions",
-                ));
+                ).into());
             }
         }
         Ok(HeaderDeserializationWrapper(ret))
     }
 
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
@@ -435,7 +435,7 @@ impl Decodable for HeaderDeserializationWrapper {
 impl Decodable for RawNetworkMessage {
     fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
         r: &mut R,
-    ) -> Result<Self, encode::Error> {
+    ) -> Result<Self, encode::DecodeFromReaderError> {
         let magic = Decodable::consensus_decode_from_finite_reader(r)?;
         let cmd = CommandString::consensus_decode_from_finite_reader(r)?;
         let checked_data = CheckedData::consensus_decode_from_finite_reader(r)?;
@@ -532,7 +532,7 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }

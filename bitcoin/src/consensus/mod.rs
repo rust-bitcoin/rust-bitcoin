@@ -19,7 +19,7 @@ use crate::consensus;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
+    encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt, DecodeFromReaderError, OversizedVectorError},
 };
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
@@ -33,17 +33,22 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
         IterReader { iterator: iterator.fuse(), buf: None, error: None }
     }
 
-    fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
+    fn decode<T: Decodable>(mut self) -> Result<T, DecodeError> {
         let result = T::consensus_decode_from_reader(&mut self);
         match (result, self.error) {
             (Ok(_), None) if self.iterator.next().is_some() => Err(DecodeError::TooManyBytes),
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
 
-            (Err(consensus::encode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
-            (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
-            (Err(consensus::encode::Error::Io(io_error)), de_error) => panic!("unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
-            (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
+            (Err(e), None) => {
+                match e {
+                    DecodeFromReaderError::Io(_) => unreachable!("read from iterator never returns an I/O error"),
+                    // FIXME: Is this right or should we be differentiating between the two errors?
+                    DecodeFromReaderError::OversizedVector(e) => Err(DecodeError::Consensus(encode::Error::OversizedVector(e))),
+                    DecodeFromReaderError::InvalidEncoding(e) => Err(DecodeError::Consensus(e)),
+                }
+            }
+            (Err(_), Some(_)) => todo!(),
         }
     }
 }
@@ -105,18 +110,16 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> BufRead for IterReader<E,
 
 /// Error when consensus decoding from an `[IterReader]`.
 #[derive(Debug)]
-pub enum DecodeError<E> {
+pub enum DecodeError {
     /// Attempted to decode an object from an iterator that yielded too many bytes.
     TooManyBytes,
     /// Invalid consensus encoding.
     Consensus(consensus::encode::Error),
-    /// Other decoding error.
-    Other(E),
 }
 
-internals::impl_from_infallible!(DecodeError<E>);
+internals::impl_from_infallible!(DecodeError);
 
-impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
+impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use DecodeError::*;
 
@@ -124,20 +127,18 @@ impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
             TooManyBytes =>
                 write!(f, "attempted to decode object from an iterator that yielded too many bytes"),
             Consensus(ref e) => write_err!(f, "invalid consensus encoding"; e),
-            Other(ref other) => write!(f, "other decoding error: {:?}", other),
         }
     }
 }
 
 #[cfg(feature = "std")]
-impl<E: fmt::Debug> std::error::Error for DecodeError<E> {
+impl std::error::Error for DecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use DecodeError::*;
 
         match *self {
             TooManyBytes => None,
             Consensus(ref e) => Some(e),
-            Other(_) => None, // TODO: Is this correct?
         }
     }
 }

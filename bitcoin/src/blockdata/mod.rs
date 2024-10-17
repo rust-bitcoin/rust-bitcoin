@@ -74,7 +74,7 @@ pub mod locktime {
 
         impl Decodable for LockTime {
             #[inline]
-            fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+            fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
                 u32::consensus_decode_from_reader(r).map(LockTime::from_consensus)
             }
         }

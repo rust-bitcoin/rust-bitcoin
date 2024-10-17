@@ -189,7 +189,7 @@ pub mod amount {
 
     impl Decodable for Amount {
         #[inline]
-        fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
             Ok(Amount::from_sat(Decodable::consensus_decode_from_reader(r)?))
         }
     }
@@ -229,7 +229,7 @@ mod encode_impls {
         ($ty:ident) => {
             impl Decodable for $ty {
                 #[inline]
-                fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+                fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::DecodeFromReaderError> {
                     let inner = u32::consensus_decode_from_reader(r)?;
                     Ok($ty::from(inner))
                 }
