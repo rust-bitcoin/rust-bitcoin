@@ -22,6 +22,7 @@ pub use self::{
     encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
     error::{Error, FromHexError, DecodeError},
 };
+pub(crate) use self::error::parse_failed_error;
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
     iterator: core::iter::Fuse<I>,

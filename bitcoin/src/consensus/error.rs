@@ -155,3 +155,7 @@ impl From<OddLengthStringError> for FromHexError {
     #[inline]
     fn from(e: OddLengthStringError) -> Self { Self::OddLengthString(e) }
 }
+
+/// Constructs a `Error::ParseFailed` error.
+// This whole variant should go away because of the inner string.
+pub(crate) fn parse_failed_error(msg: &'static str) -> Error { Error::ParseFailed(msg) }

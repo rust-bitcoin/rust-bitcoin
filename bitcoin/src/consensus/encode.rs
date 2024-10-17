@@ -60,7 +60,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
     if consumed == data.len() {
         Ok(rv)
     } else {
-        Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+        Err(super::parse_failed_error("data not consumed entirely when explicitly deserializing"))
     }
 }
 
@@ -418,7 +418,7 @@ impl Decodable for String {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<String, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
-            .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
+            .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
     }
 }
 
@@ -433,7 +433,7 @@ impl Decodable for Cow<'static, str> {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Cow<'static, str>, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
-            .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
+            .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
             .map(Cow::Owned)
     }
 }
