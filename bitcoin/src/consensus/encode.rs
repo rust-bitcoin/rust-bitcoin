@@ -1027,13 +1027,11 @@ mod tests {
         ])
         .is_err());
 
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
-
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
-        // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
+        // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
         let err =
             deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        assert!(matches!(err, Error::MissingData));
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
@@ -1055,11 +1053,10 @@ mod tests {
         Vec<T>: Decodable,
         T: fmt::Debug,
     {
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
         let mut buf = Vec::new();
         buf.emit_compact_size(super::MAX_VEC_SIZE / mem::size_of::<T>()).unwrap();
         let err = deserialize::<Vec<T>>(&buf).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        assert!(matches!(err, Error::MissingData));
     }
 
     #[test]
