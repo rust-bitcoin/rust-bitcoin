@@ -38,14 +38,14 @@ impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
 }
 
 #[cfg(feature = "std")]
-impl<E: fmt::Debug> std::error::Error for DecodeError<E> {
+impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeError<E> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use DecodeError::*;
 
         match *self {
             TooManyBytes => None,
             Consensus(ref e) => Some(e),
-            Other(_) => None, // TODO: Is this correct?
+            Other(ref e) => Some(e),
         }
     }
 }
