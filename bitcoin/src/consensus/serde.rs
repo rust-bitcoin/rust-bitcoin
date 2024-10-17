@@ -159,7 +159,7 @@ struct DisplayWrapper<'a, T: 'a + Encodable, E>(&'a T, PhantomData<E>);
 impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut writer = IoWrapper::<'_, _, E::Encoder>::new(f, E::default().into());
-        self.0.consensus_encode(&mut writer).map_err(|error| {
+        self.0.consensus_encode_to_writer(&mut writer).map_err(|error| {
             #[cfg(debug_assertions)]
             {
                 if error.kind() != io::ErrorKind::Other
@@ -360,11 +360,6 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 // not a trait impl because we panic on some variants
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
     match error {
-        ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
-        ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
-            "the requested allocation of {} items exceeds maximum of {}",
-            requested, max
-        )),
         ConsensusError::InvalidChecksum { expected, actual } => E::invalid_value(
             Unexpected::Bytes(&actual),
             &DisplayExpected(format_args!(
@@ -377,32 +372,7 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
         ConsensusError::ParseFailed(msg) => E::custom(msg),
         ConsensusError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
-    }
-}
-
-impl<E> DecodeError<E>
-where
-    E: serde::de::Error,
-{
-    fn unify(self) -> E {
-        match self {
-            DecodeError::Other(error) => error,
-            DecodeError::TooManyBytes => E::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(error) => consensus_error_into_serde(error),
-        }
-    }
-}
-
-impl<E> IntoDeError for DecodeError<E>
-where
-    E: IntoDeError,
-{
-    fn into_de_error<DE: serde::de::Error>(self) -> DE {
-        match self {
-            DecodeError::Other(error) => error.into_de_error(),
-            DecodeError::TooManyBytes => DE::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(error) => consensus_error_into_serde(error),
-        }
+        ConsensusError::OversizedVector(_) => E::custom(format_args!("oversized vector")),
     }
 }
 
@@ -438,7 +408,7 @@ impl<E> With<E> {
             let serializer = serializer.serialize_seq(None)?;
             let mut writer = BinWriter { serializer, error: None };
 
-            let result = value.consensus_encode(&mut writer);
+            let result = value.consensus_encode_to_writer(&mut writer);
             match (result, writer.error) {
                 (Ok(_), None) => writer.serializer.end(),
                 (Ok(_), Some(error)) =>
@@ -506,4 +476,22 @@ impl<'a, S: serde::de::SeqAccess<'a>> Iterator for SeqIterator<'a, S> {
     type Item = Result<u8, S::Error>;
 
     fn next(&mut self) -> Option<Self::Item> { self.0.next_element::<u8>().transpose() }
+}
+
+impl DecodeError {
+    fn unify<E: serde::de::Error>(self) -> E {
+        match self {
+            DecodeError::TooManyBytes => serde::de::Error::custom(format_args!("got more bytes than expected")),
+            DecodeError::Consensus(error) => consensus_error_into_serde(error),
+        }
+    }
+}
+
+impl IntoDeError for DecodeError {
+    fn into_de_error<E: serde::de::Error>(self) -> E {
+        match self {
+            DecodeError::TooManyBytes => E::custom(format_args!("got more bytes than expected")),
+            DecodeError::Consensus(error) => consensus_error_into_serde(error),
+        }
+    }
 }

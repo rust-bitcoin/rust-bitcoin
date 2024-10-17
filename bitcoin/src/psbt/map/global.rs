@@ -95,10 +95,10 @@ impl Psbt {
                                     // txs without witnesses are deserialized
                                     // properly.
                                     tx = Some(Transaction {
-                                        version: Decodable::consensus_decode(&mut decoder)?,
-                                        input: Decodable::consensus_decode(&mut decoder)?,
-                                        output: Decodable::consensus_decode(&mut decoder)?,
-                                        lock_time: Decodable::consensus_decode(&mut decoder)?,
+                                        version: Decodable::consensus_decode_from_reader(&mut decoder)?,
+                                        input: Decodable::consensus_decode_from_reader(&mut decoder)?,
+                                        output: Decodable::consensus_decode_from_reader(&mut decoder)?,
+                                        lock_time: Decodable::consensus_decode_from_reader(&mut decoder)?,
                                     });
 
                                     if decoder.position() != vlen.to_u64() {
@@ -131,7 +131,7 @@ impl Psbt {
                                     Error::XPubKey("can't read global xpub fingerprint")
                                 })?;
                                 let mut path = Vec::<ChildNumber>::with_capacity(child_count);
-                                while let Ok(index) = u32::consensus_decode(&mut decoder) {
+                                while let Ok(index) = u32::consensus_decode_from_reader(&mut decoder) {
                                     path.push(ChildNumber::from(index))
                                 }
                                 let derivation = DerivationPath::from(path);
@@ -160,7 +160,7 @@ impl Psbt {
                                             "invalid global version value length (must be 4 bytes)",
                                         ));
                                     }
-                                    version = Some(Decodable::consensus_decode(&mut decoder)?);
+                                    version = Some(Decodable::consensus_decode_from_reader(&mut decoder)?);
                                     // We only understand version 0 PSBTs. According to BIP-174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {

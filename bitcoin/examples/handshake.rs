@@ -40,7 +40,7 @@ fn main() {
         let mut stream_reader = BufReader::new(read_stream);
         loop {
             // Loop an retrieve new messages
-            let reply = message::RawNetworkMessage::consensus_decode(&mut stream_reader).unwrap();
+            let reply = message::RawNetworkMessage::consensus_decode_from_reader(&mut stream_reader).unwrap();
             match reply.payload() {
                 message::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload());
