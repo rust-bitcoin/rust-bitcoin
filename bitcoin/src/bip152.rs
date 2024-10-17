@@ -75,18 +75,18 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 
 impl Encodable for PrefilledTransaction {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        Ok(w.emit_compact_size(self.idx)? + self.tx.consensus_encode(w)?)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        Ok(w.emit_compact_size(self.idx)? + self.tx.consensus_encode_to_writer(w)?)
     }
 }
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx)
             .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
-        let tx = Transaction::consensus_decode(r)?;
+        let tx = Transaction::consensus_decode_from_reader(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
 }
@@ -103,8 +103,8 @@ impl ShortId {
         // 1. single-SHA256 hashing the block header with the nonce appended (in little-endian)
         let h = {
             let mut engine = sha256::Hash::engine();
-            header.consensus_encode(&mut engine).expect("engines don't error");
-            nonce.consensus_encode(&mut engine).expect("engines don't error");
+            header.consensus_encode_to_engine(&mut engine);
+            nonce.consensus_encode_to_engine(&mut engine);
             sha256::Hash::from_engine(engine)
         };
 
@@ -131,15 +131,15 @@ impl ShortId {
 
 impl Encodable for ShortId {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
-        Ok(ShortId(Decodable::consensus_decode(r)?))
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+        Ok(ShortId(Decodable::consensus_decode_from_reader(r)?))
     }
 }
 
@@ -163,12 +163,12 @@ pub struct HeaderAndShortIds {
 }
 
 impl Decodable for HeaderAndShortIds {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let header_short_ids = HeaderAndShortIds {
-            header: Decodable::consensus_decode(r)?,
-            nonce: Decodable::consensus_decode(r)?,
-            short_ids: Decodable::consensus_decode(r)?,
-            prefilled_txs: Decodable::consensus_decode(r)?,
+            header: Decodable::consensus_decode_from_reader(r)?,
+            nonce: Decodable::consensus_decode_from_reader(r)?,
+            short_ids: Decodable::consensus_decode_from_reader(r)?,
+            prefilled_txs: Decodable::consensus_decode_from_reader(r)?,
         };
         match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
             Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
@@ -178,12 +178,12 @@ impl Decodable for HeaderAndShortIds {
 }
 
 impl Encodable for HeaderAndShortIds {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.header.consensus_encode(w)?;
-        len += self.nonce.consensus_encode(w)?;
-        len += self.short_ids.consensus_encode(w)?;
-        len += self.prefilled_txs.consensus_encode(w)?;
+        len += self.header.consensus_encode_to_writer(w)?;
+        len += self.nonce.consensus_encode_to_writer(w)?;
+        len += self.short_ids.consensus_encode_to_writer(w)?;
+        len += self.prefilled_txs.consensus_encode_to_writer(w)?;
         Ok(len)
     }
 }
@@ -286,8 +286,8 @@ impl Encodable for BlockTransactionsRequest {
     ///
     /// Panics if the index overflows [`u64::MAX`]. This happens when [`BlockTransactionsRequest::indexes`]
     /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = self.block_hash.consensus_encode(w)?;
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = self.block_hash.consensus_encode_to_writer(w)?;
         // Manually encode indexes because they are differentially encoded VarInts.
         len += w.emit_compact_size(self.indexes.len())?;
         let mut last_idx = 0;
@@ -300,9 +300,9 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(BlockTransactionsRequest {
-            block_hash: BlockHash::consensus_decode(r)?,
+            block_hash: BlockHash::consensus_decode_from_reader(r)?,
             indexes: {
                 // Manually decode indexes because they are differentially encoded VarInts.
                 let nb_indexes = r.read_compact_size()? as usize;

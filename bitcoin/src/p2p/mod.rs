@@ -198,15 +198,15 @@ impl ops::BitXorAssign for ServiceFlags {
 
 impl Encodable for ServiceFlags {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(ServiceFlags(Decodable::consensus_decode(r)?))
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(ServiceFlags(Decodable::consensus_decode_from_reader(r)?))
     }
 }
 /// Network magic bytes to identify the cryptocurrency network the message was intended for.
@@ -309,14 +309,14 @@ impl fmt::UpperHex for Magic {
 }
 
 impl Encodable for Magic {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(writer)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode_to_writer(writer)
     }
 }
 
 impl Decodable for Magic {
-    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
-        Ok(Magic(Decodable::consensus_decode(reader)?))
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+        Ok(Magic(Decodable::consensus_decode_from_reader(reader)?))
     }
 }
 

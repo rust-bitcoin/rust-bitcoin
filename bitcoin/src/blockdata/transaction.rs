@@ -420,10 +420,10 @@ impl Transaction {
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
         let mut enc = sha256d::Hash::engine();
-        self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
-        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
+        self.version.consensus_encode_to_engine(&mut enc);
+        self.input.consensus_encode_to_engine(&mut enc);
+        self.output.consensus_encode_to_engine(&mut enc);
+        self.lock_time.consensus_encode_to_engine(&mut enc);
         Txid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
@@ -442,7 +442,7 @@ impl Transaction {
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
         let mut enc = sha256d::Hash::engine();
-        self.consensus_encode(&mut enc).expect("engines don't error");
+        self.consensus_encode_to_engine(&mut enc);
         Wtxid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
     }
 
@@ -795,40 +795,40 @@ crate::internal_macros::define_extension_trait! {
 }
 
 impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version)
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode_from_reader(r).map(Version)
     }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(w)?;
-        Ok(len + self.vout.consensus_encode(w)?)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let len = self.txid.consensus_encode_to_writer(w)?;
+        Ok(len + self.vout.consensus_encode_to_writer(w)?)
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(OutPoint {
-            txid: Decodable::consensus_decode(r)?,
-            vout: Decodable::consensus_decode(r)?,
+            txid: Decodable::consensus_decode_from_reader(r)?,
+            vout: Decodable::consensus_decode_from_reader(r)?,
         })
     }
 }
 
 impl Encodable for TxIn {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.previous_output.consensus_encode(w)?;
-        len += self.script_sig.consensus_encode(w)?;
-        len += self.sequence.consensus_encode(w)?;
+        len += self.previous_output.consensus_encode_to_writer(w)?;
+        len += self.script_sig.consensus_encode_to_writer(w)?;
+        len += self.sequence.consensus_encode_to_writer(w)?;
         Ok(len)
     }
 }
@@ -847,37 +847,37 @@ impl Decodable for TxIn {
 }
 
 impl Encodable for Sequence {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for Sequence {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Sequence)
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode_from_reader(r).map(Sequence)
     }
 }
 
 impl Encodable for Transaction {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.version.consensus_encode(w)?;
+        len += self.version.consensus_encode_to_writer(w)?;
 
         // Legacy transaction serialization format only includes inputs and outputs.
         if !self.uses_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
+            len += self.input.consensus_encode_to_writer(w)?;
+            len += self.output.consensus_encode_to_writer(w)?;
         } else {
             // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
+            len += SEGWIT_MARKER.consensus_encode_to_writer(w)?;
+            len += SEGWIT_FLAG.consensus_encode_to_writer(w)?;
+            len += self.input.consensus_encode_to_writer(w)?;
+            len += self.output.consensus_encode_to_writer(w)?;
             for input in &self.input {
-                len += input.witness.consensus_encode(w)?;
+                len += input.witness.consensus_encode_to_writer(w)?;
             }
         }
-        len += self.lock_time.consensus_encode(w)?;
+        len += self.lock_time.consensus_encode_to_writer(w)?;
         Ok(len)
     }
 }
@@ -1350,11 +1350,24 @@ mod tests {
 
     #[test]
     fn encode_to_unsized_writer() {
-        let mut buf = [0u8; 1024];
         let raw_tx = hex!(SOME_TX);
-        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
+        let tx: Transaction = Decodable::consensus_decode_from_reader(&mut raw_tx.as_slice()).unwrap();
 
-        let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
+        let mut buf = vec![0u8; 1024];
+        let size = tx.consensus_encode_to_writer(&mut &mut buf[..]).unwrap();
+
+        assert_eq!(size, SOME_TX.len() / 2);
+        assert_eq!(raw_tx, &buf[..size]);
+    }
+
+    #[test]
+    fn encode_to_vec() {
+        let raw_tx = hex!(SOME_TX);
+        let tx: Transaction = Decodable::consensus_decode_from_reader(&mut raw_tx.as_slice()).unwrap();
+
+        let mut buf = vec!();
+        let size = tx.consensus_encode(&mut buf);
+
         assert_eq!(size, SOME_TX.len() / 2);
         assert_eq!(raw_tx, &buf[..size]);
     }
@@ -2102,7 +2115,7 @@ mod tests {
              5d5aca00000000"
         );
 
-        let tx = Transaction::consensus_decode::<&[u8]>(&mut tx_raw.as_ref()).unwrap();
+        let tx = Transaction::consensus_decode_from_reader::<&[u8]>(&mut tx_raw.as_ref()).unwrap();
         let input_weights = vec![
             InputWeightPrediction::P2WPKH_MAX,
             InputWeightPrediction::ground_p2wpkh(1),

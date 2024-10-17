@@ -92,8 +92,8 @@ impl TapLeafHash {
     /// Computes the leaf hash from components.
     pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
         let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
+        ver.to_consensus().consensus_encode_to_engine(&mut eng);
+        script.consensus_encode_to_engine(&mut eng);
         let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
         TapLeafHash::from_byte_array(inner.to_byte_array())
     }

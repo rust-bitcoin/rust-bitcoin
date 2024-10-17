@@ -159,7 +159,7 @@ struct DisplayWrapper<'a, T: 'a + Encodable, E>(&'a T, PhantomData<E>);
 impl<'a, T: 'a + Encodable, E: ByteEncoder> fmt::Display for DisplayWrapper<'a, T, E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut writer = IoWrapper::<'_, _, E::Encoder>::new(f, E::default().into());
-        self.0.consensus_encode(&mut writer).map_err(|error| {
+        self.0.consensus_encode_to_writer(&mut writer).map_err(|error| {
             #[cfg(debug_assertions)]
             {
                 if error.kind() != io::ErrorKind::Other
@@ -438,7 +438,7 @@ impl<E> With<E> {
             let serializer = serializer.serialize_seq(None)?;
             let mut writer = BinWriter { serializer, error: None };
 
-            let result = value.consensus_encode(&mut writer);
+            let result = value.consensus_encode_to_writer(&mut writer);
             match (result, writer.error) {
                 (Ok(_), None) => writer.serializer.end(),
                 (Ok(_), Some(error)) =>

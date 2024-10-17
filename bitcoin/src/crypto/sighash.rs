@@ -330,9 +330,8 @@ impl<'s> ScriptPath<'s> {
 
         self.leaf_version
             .to_consensus()
-            .consensus_encode(&mut enc)
-            .expect("writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
+            .consensus_encode_to_engine(&mut enc);
+        self.script.consensus_encode_to_engine(&mut enc);
 
         let inner = sha256t::Hash::<TapLeafTag>::from_engine(enc);
         TapLeafHash::from_byte_array(inner.to_byte_array())
@@ -610,18 +609,18 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
         // epoch
-        0u8.consensus_encode(writer)?;
+        0u8.consensus_encode_to_writer(writer)?;
 
         // * Control:
         // hash_type (1).
-        (sighash_type as u8).consensus_encode(writer)?;
+        (sighash_type as u8).consensus_encode_to_writer(writer)?;
 
         // * Transaction Data:
         // nVersion (4): the nVersion of the transaction.
-        self.tx.borrow().version.consensus_encode(writer)?;
+        self.tx.borrow().version.consensus_encode_to_writer(writer)?;
 
         // nLockTime (4): the nLockTime of the transaction.
-        self.tx.borrow().lock_time.consensus_encode(writer)?;
+        self.tx.borrow().lock_time.consensus_encode_to_writer(writer)?;
 
         // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
         //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
@@ -629,20 +628,20 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //     sha_scriptpubkeys (32): the SHA256 of the serialization of all spent output scriptPubKeys.
         //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
         if !anyone_can_pay {
-            self.common_cache().prevouts.consensus_encode(writer)?;
+            self.common_cache().prevouts.consensus_encode_to_writer(writer)?;
             self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
                 .amounts
-                .consensus_encode(writer)?;
+                .consensus_encode_to_writer(writer)?;
             self.taproot_cache(prevouts.get_all().map_err(SigningDataError::sighash)?)
                 .script_pubkeys
-                .consensus_encode(writer)?;
-            self.common_cache().sequences.consensus_encode(writer)?;
+                .consensus_encode_to_writer(writer)?;
+            self.common_cache().sequences.consensus_encode_to_writer(writer)?;
         }
 
         // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
         //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
         if sighash != TapSighashType::None && sighash != TapSighashType::Single {
-            self.common_cache().outputs.consensus_encode(writer)?;
+            self.common_cache().outputs.consensus_encode_to_writer(writer)?;
         }
 
         // * Data about this input:
@@ -655,7 +654,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if leaf_hash_code_separator.is_some() {
             spend_type |= 2u8;
         }
-        spend_type.consensus_encode(writer)?;
+        spend_type.consensus_encode_to_writer(writer)?;
 
         // If hash_type & 0x80 equals SIGHASH_ANYONECANPAY:
         //      outpoint (36): the COutPoint of this input (32-byte hash + 4-byte little-endian).
@@ -665,12 +664,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if anyone_can_pay {
             let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
             let previous_output = prevouts.get(input_index).map_err(SigningDataError::sighash)?;
-            txin.previous_output.consensus_encode(writer)?;
-            previous_output.value.consensus_encode(writer)?;
-            previous_output.script_pubkey.consensus_encode(writer)?;
-            txin.sequence.consensus_encode(writer)?;
+            txin.previous_output.consensus_encode_to_writer(writer)?;
+            previous_output.value.consensus_encode_to_writer(writer)?;
+            previous_output.script_pubkey.consensus_encode_to_writer(writer)?;
+            txin.sequence.consensus_encode_to_writer(writer)?;
         } else {
-            (input_index as u32).consensus_encode(writer)?;
+            (input_index as u32).consensus_encode_to_writer(writer)?;
         }
 
         // If an annex is present (the lowest bit of spend_type is set):
@@ -678,9 +677,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //      includes the mandatory 0x50 prefix.
         if let Some(annex) = annex {
             let mut enc = sha256::Hash::engine();
-            annex.consensus_encode(&mut enc)?;
+            annex.consensus_encode_to_engine(&mut enc);
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(writer)?;
+            hash.consensus_encode_to_writer(writer)?;
         }
 
         // * Data about this output:
@@ -697,9 +696,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     outputs_length: self.tx.borrow().output.len(),
                 }))
                 .map_err(SigningDataError::Sighash)?
-                .consensus_encode(&mut enc)?;
+                .consensus_encode_to_engine(&mut enc);
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(writer)?;
+            hash.consensus_encode_to_writer(writer)?;
         }
 
         //     if (scriptpath):
@@ -707,9 +706,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         //         ss += bytes([0])
         //         ss += struct.pack("<i", codeseparator_pos)
         if let Some((hash, code_separator_pos)) = leaf_hash_code_separator {
-            hash.as_byte_array().consensus_encode(writer)?;
-            KEY_VERSION_0.consensus_encode(writer)?;
-            code_separator_pos.consensus_encode(writer)?;
+            hash.as_byte_array().consensus_encode_to_writer(writer)?;
+            KEY_VERSION_0.consensus_encode_to_writer(writer)?;
+            code_separator_pos.consensus_encode_to_writer(writer)?;
         }
 
         Ok(())
@@ -806,45 +805,45 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
-        self.tx.borrow().version.consensus_encode(writer)?;
+        self.tx.borrow().version.consensus_encode_to_writer(writer)?;
 
         if !anyone_can_pay {
-            self.segwit_cache().prevouts.consensus_encode(writer)?;
+            self.segwit_cache().prevouts.consensus_encode_to_writer(writer)?;
         } else {
-            zero_hash.consensus_encode(writer)?;
+            zero_hash.consensus_encode_to_writer(writer)?;
         }
 
         if !anyone_can_pay
             && sighash != EcdsaSighashType::Single
             && sighash != EcdsaSighashType::None
         {
-            self.segwit_cache().sequences.consensus_encode(writer)?;
+            self.segwit_cache().sequences.consensus_encode_to_writer(writer)?;
         } else {
-            zero_hash.consensus_encode(writer)?;
+            zero_hash.consensus_encode_to_writer(writer)?;
         }
 
         {
             let txin = &self.tx.borrow().tx_in(input_index).map_err(SigningDataError::sighash)?;
-            txin.previous_output.consensus_encode(writer)?;
-            script_code.consensus_encode(writer)?;
-            value.consensus_encode(writer)?;
-            txin.sequence.consensus_encode(writer)?;
+            txin.previous_output.consensus_encode_to_writer(writer)?;
+            script_code.consensus_encode_to_writer(writer)?;
+            value.consensus_encode_to_writer(writer)?;
+            txin.sequence.consensus_encode_to_writer(writer)?;
         }
 
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
-            self.segwit_cache().outputs.consensus_encode(writer)?;
+            self.segwit_cache().outputs.consensus_encode_to_writer(writer)?;
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
         {
             let mut single_enc = LegacySighash::engine();
-            self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
+            self.tx.borrow().output[input_index].consensus_encode_to_engine(&mut single_enc);
             let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(hash.as_byte_array())?;
         } else {
             writer.write_all(&zero_hash)?;
         }
 
-        self.tx.borrow().lock_time.consensus_encode(writer)?;
-        sighash_type.to_u32().consensus_encode(writer)?;
+        self.tx.borrow().lock_time.consensus_encode_to_writer(writer)?;
+        sighash_type.to_u32().consensus_encode_to_writer(writer)?;
         Ok(())
     }
 
@@ -1003,8 +1002,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 _ => unreachable!(),
             };
             // hash the result
-            tx.consensus_encode(writer)?;
-            sighash_type.to_le_bytes().consensus_encode(writer)?;
+            tx.consensus_encode_to_writer(writer)?;
+            sighash_type.to_le_bytes().consensus_encode_to_writer(writer)?;
             Ok(())
         }
 
@@ -1069,8 +1068,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
             for txin in tx.input.iter() {
-                txin.previous_output.consensus_encode(&mut enc_prevouts).unwrap();
-                txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
+                txin.previous_output.consensus_encode_to_engine(&mut enc_prevouts);
+                txin.sequence.consensus_encode_to_engine(&mut enc_sequences);
             }
             CommonCache {
                 prevouts: sha256::Hash::from_engine(enc_prevouts),
@@ -1078,7 +1077,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                 outputs: {
                     let mut enc = sha256::Hash::engine();
                     for txout in tx.output.iter() {
-                        txout.consensus_encode(&mut enc).unwrap();
+                        txout.consensus_encode_to_engine(&mut enc);
                     }
                     sha256::Hash::from_engine(enc)
                 },
@@ -1104,8 +1103,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             let mut enc_amounts = sha256::Hash::engine();
             let mut enc_script_pubkeys = sha256::Hash::engine();
             for prevout in prevouts {
-                prevout.borrow().value.consensus_encode(&mut enc_amounts).unwrap();
-                prevout.borrow().script_pubkey.consensus_encode(&mut enc_script_pubkeys).unwrap();
+                prevout.borrow().value.consensus_encode_to_engine(&mut enc_amounts);
+                prevout.borrow().script_pubkey.consensus_encode_to_engine(&mut enc_script_pubkeys);
             }
             TaprootCache {
                 amounts: sha256::Hash::from_engine(enc_amounts),
@@ -1171,8 +1170,8 @@ impl<'a> Annex<'a> {
 }
 
 impl<'a> Encodable for Annex<'a> {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        encode::consensus_encode_with_size(self.0, w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        encode::consensus_encode_to_writer_with_size(self.0, w)
     }
 }
 

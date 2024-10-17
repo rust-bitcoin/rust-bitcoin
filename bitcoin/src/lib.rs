@@ -189,15 +189,15 @@ pub mod amount {
 
     impl Decodable for Amount {
         #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
+        fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+            Ok(Amount::from_sat(Decodable::consensus_decode_from_reader(r)?))
         }
     }
 
     impl Encodable for Amount {
         #[inline]
-        fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-            self.to_sat().consensus_encode(w)
+        fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            self.to_sat().consensus_encode_to_writer(w)
         }
     }
 }
@@ -229,20 +229,20 @@ mod encode_impls {
         ($ty:ident) => {
             impl Decodable for $ty {
                 #[inline]
-                fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                    let inner = u32::consensus_decode(r)?;
+                fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+                    let inner = u32::consensus_decode_from_reader(r)?;
                     Ok($ty::from(inner))
                 }
             }
 
             impl Encodable for $ty {
                 #[inline]
-                fn consensus_encode<W: Write + ?Sized>(
+                fn consensus_encode_to_writer<W: Write + ?Sized>(
                     &self,
                     w: &mut W,
                 ) -> Result<usize, io::Error> {
                     let inner = self.to_u32();
-                    inner.consensus_encode(w)
+                    inner.consensus_encode_to_writer(w)
                 }
             }
         };

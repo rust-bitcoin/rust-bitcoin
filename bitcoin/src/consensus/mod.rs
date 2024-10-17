@@ -34,7 +34,7 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
-        let result = T::consensus_decode(&mut self);
+        let result = T::consensus_decode_from_reader(&mut self);
         match (result, self.error) {
             (Ok(_), None) if self.iterator.next().is_some() => Err(DecodeError::TooManyBytes),
             (Ok(value), None) => Ok(value),

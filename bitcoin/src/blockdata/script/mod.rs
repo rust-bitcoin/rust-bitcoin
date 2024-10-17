@@ -305,15 +305,15 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        crate::consensus::encode::consensus_encode_to_writer_with_size(self.as_bytes(), w)
     }
 }
 
 impl Encodable for ScriptBuf {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.as_script().consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.as_script().consensus_encode_to_writer(w)
     }
 }
 

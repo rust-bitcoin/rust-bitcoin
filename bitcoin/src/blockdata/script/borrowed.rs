@@ -398,11 +398,11 @@ crate::internal_macros::define_extension_trait! {
                 } else if self.is_witness_program() {
                     32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.consensus_encode_to_writer(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
                 } else {
                     32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
-                    self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
+                    self.consensus_encode_to_writer(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
                 })
                 .expect("dust_relay_fee or script length should not be absurdly large")
                 / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE

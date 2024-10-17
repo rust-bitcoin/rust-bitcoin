@@ -83,13 +83,13 @@ impl Psbt {
     pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
         const MAGIC_BYTES: &[u8] = b"psbt";
 
-        let magic: [u8; 4] = Decodable::consensus_decode(r)?;
+        let magic: [u8; 4] = Decodable::consensus_decode_from_reader(r)?;
         if magic != MAGIC_BYTES {
             return Err(Error::InvalidMagic);
         }
 
         const PSBT_SERPARATOR: u8 = 0xff_u8;
-        let separator: u8 = Decodable::consensus_decode(r)?;
+        let separator: u8 = Decodable::consensus_decode_from_reader(r)?;
         if separator != PSBT_SERPARATOR {
             return Err(Error::InvalidSeparator);
         }
@@ -223,7 +223,7 @@ impl Deserialize for KeySource {
 
         let mut d = &bytes[4..];
         while !d.is_empty() {
-            match u32::consensus_decode(&mut d) {
+            match u32::consensus_decode_from_reader(&mut d) {
                 Ok(index) => dpath.push(index.into()),
                 Err(e) => return Err(e.into()),
             }
@@ -337,7 +337,7 @@ impl Deserialize for (ScriptBuf, LeafVersion) {
 impl Serialize for (Vec<TapLeafHash>, KeySource) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(32 * self.0.len() + key_source_len(&self.1));
-        self.0.consensus_encode(&mut buf).expect("Vecs don't error allocation");
+        self.0.consensus_encode(&mut buf);
         buf.extend(self.1.serialize());
         buf
     }
@@ -369,7 +369,7 @@ impl Serialize for TapTree {
             // safe to cast from usize to u8
             buf.push(leaf_info.merkle_branch().len() as u8);
             buf.push(leaf_info.version().to_consensus());
-            leaf_info.script().consensus_encode(&mut buf).expect("Vecs dont err");
+            leaf_info.script().consensus_encode(&mut buf);
         }
         buf
     }

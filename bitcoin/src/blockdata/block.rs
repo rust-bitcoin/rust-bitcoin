@@ -68,7 +68,7 @@ impl Header {
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = sha256d::Hash::engine();
-        self.consensus_encode(&mut engine).expect("engines don't error");
+        self.consensus_encode_to_engine(&mut engine);
         BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
     }
 
@@ -121,14 +121,14 @@ impl fmt::Debug for Header {
 }
 
 impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_consensus().consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version::from_consensus)
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode_from_reader(r).map(Version::from_consensus)
     }
 }
 
@@ -217,7 +217,7 @@ impl Block {
         witness_reserved_value: &[u8],
     ) -> WitnessCommitment {
         let mut encoder = sha256d::Hash::engine();
-        witness_root.consensus_encode(&mut encoder).expect("engines don't error");
+        witness_root.consensus_encode_to_engine(&mut encoder);
         encoder.input(witness_reserved_value);
         WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
     }

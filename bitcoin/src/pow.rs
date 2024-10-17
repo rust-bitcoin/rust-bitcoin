@@ -436,15 +436,15 @@ impl From<CompactTarget> for Target {
 
 impl Encodable for CompactTarget {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.to_consensus().consensus_encode(w)
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_consensus().consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for CompactTarget {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(CompactTarget::from_consensus)
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        u32::consensus_decode_from_finite_reader(r).map(CompactTarget::from_consensus)
     }
 }
 

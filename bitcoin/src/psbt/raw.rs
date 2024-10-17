@@ -93,7 +93,7 @@ impl Key {
 
         let mut key_data = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
-            key_data.push(Decodable::consensus_decode(r)?);
+            key_data.push(Decodable::consensus_decode_from_reader(r)?);
         }
 
         Ok(Key { type_value, key_data })
@@ -108,7 +108,7 @@ impl Serialize for Key {
         buf.emit_compact_size(self.type_value).expect("in-memory writers don't error");
 
         for key in &self.key_data {
-            key.consensus_encode(&mut buf).expect("in-memory writers don't error");
+            key.consensus_encode(&mut buf);
         }
 
         buf
@@ -120,7 +120,7 @@ impl Serialize for Pair {
         let mut buf = Vec::new();
         buf.extend(self.key.serialize());
         // <value> := <valuelen> <valuedata>
-        self.value.consensus_encode(&mut buf).unwrap();
+        self.value.consensus_encode(&mut buf);
         buf
     }
 }
@@ -134,7 +134,7 @@ impl Deserialize for Pair {
 
 impl Pair {
     pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
+        Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode_from_reader(r)? })
     }
 }
 
@@ -142,8 +142,8 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = self.prefix.consensus_encode(w)? + 1;
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = self.prefix.consensus_encode_to_writer(w)? + 1;
         w.emit_compact_size(self.subtype.into())?;
         w.write_all(&self.key)?;
         len += self.key.len();
@@ -155,8 +155,8 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let prefix = Vec::<u8>::consensus_decode(r)?;
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let prefix = Vec::<u8>::consensus_decode_from_reader(r)?;
         let subtype = Subtype::from(r.read_compact_size()?);
 
         // The limit is a DOS protection mechanism the exact value is not

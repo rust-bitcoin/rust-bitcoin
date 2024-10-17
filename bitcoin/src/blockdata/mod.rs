@@ -39,7 +39,7 @@ pub mod fee_rate {
             const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
             let raw_tx = hex!(SOME_TX);
-            let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
+            let tx: Transaction = Decodable::consensus_decode_from_reader(&mut raw_tx.as_slice()).unwrap();
 
             let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
 
@@ -66,16 +66,16 @@ pub mod locktime {
 
         impl Encodable for LockTime {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
                 let v = self.to_consensus_u32();
-                v.consensus_encode(w)
+                v.consensus_encode_to_writer(w)
             }
         }
 
         impl Decodable for LockTime {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-                u32::consensus_decode(r).map(LockTime::from_consensus)
+            fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+                u32::consensus_decode_from_reader(r).map(LockTime::from_consensus)
             }
         }
     }

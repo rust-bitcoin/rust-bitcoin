@@ -99,19 +99,19 @@ impl AsRef<str> for CommandString {
 
 impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
         rawbytes[..strbytes.len()].copy_from_slice(strbytes);
-        rawbytes.consensus_encode(w)
+        rawbytes.consensus_encode_to_writer(w)
     }
 }
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let rawbytes: [u8; 12] = Decodable::consensus_decode_from_reader(r)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
             if u > 0 {
                 Some(u as char)
@@ -304,7 +304,7 @@ impl RawNetworkMessage {
     /// Creates a [RawNetworkMessage]
     pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
         let mut engine = sha256d::Hash::engine();
-        let payload_len = payload.consensus_encode(&mut engine).expect("engine doesn't error");
+        let payload_len = payload.consensus_encode_to_engine(&mut engine);
         let payload_len = u32::try_from(payload_len).expect("network message use u32 as length");
         let checksum = sha256d::Hash::from_engine(engine);
         let checksum = checksum.to_byte_array();
@@ -336,50 +336,50 @@ struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
 impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += w.emit_compact_size(self.0.len())?;
         for header in self.0.iter() {
-            len += header.consensus_encode(w)?;
-            len += 0u8.consensus_encode(w)?;
+            len += header.consensus_encode_to_writer(w)?;
+            len += 0u8.consensus_encode_to_writer(w)?;
         }
         Ok(len)
     }
 }
 
 impl Encodable for NetworkMessage {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
-            NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Inv(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetData(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::NotFound(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Version(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Addr(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Inv(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetData(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::NotFound(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Tx(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Block(ref dat) => dat.consensus_encode_to_writer(writer),
             NetworkMessage::Headers(ref dat) =>
-                HeaderSerializationWrapper(dat).consensus_encode(writer),
-            NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterLoad(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FilterAdd(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFilters(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFilter(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFHeaders(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetCFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CFCheckpt(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::SendCmpct(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::CmpctBlock(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::GetBlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::FeeFilter(ref dat) => dat.consensus_encode(writer),
-            NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
+                HeaderSerializationWrapper(dat).consensus_encode_to_writer(writer),
+            NetworkMessage::Ping(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Pong(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::FilterLoad(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::FilterAdd(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetCFilters(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::CFilter(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetCFHeaders(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::CFHeaders(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetCFCheckpt(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::CFCheckpt(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::SendCmpct(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::CmpctBlock(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::GetBlockTxn(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Alert(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::Reject(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::FeeFilter(ref dat) => dat.consensus_encode_to_writer(writer),
+            NetworkMessage::AddrV2(ref dat) => dat.consensus_encode_to_writer(writer),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
@@ -387,19 +387,19 @@ impl Encodable for NetworkMessage {
             | NetworkMessage::WtxidRelay
             | NetworkMessage::FilterClear
             | NetworkMessage::SendAddrV2 => Ok(0),
-            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode_to_writer(writer),
         }
     }
 }
 
 impl Encodable for RawNetworkMessage {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode_to_writer<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.magic.consensus_encode(w)?;
-        len += self.command().consensus_encode(w)?;
-        len += self.payload_len.consensus_encode(w)?;
-        len += self.checksum.consensus_encode(w)?;
-        len += self.payload().consensus_encode(w)?;
+        len += self.magic.consensus_encode_to_writer(w)?;
+        len += self.command().consensus_encode_to_writer(w)?;
+        len += self.payload_len.consensus_encode_to_writer(w)?;
+        len += self.checksum.consensus_encode_to_writer(w)?;
+        len += self.payload().consensus_encode_to_writer(w)?;
         Ok(len)
     }
 }
@@ -416,8 +416,8 @@ impl Decodable for HeaderDeserializationWrapper {
         // allocation
         let mut ret = Vec::with_capacity(core::cmp::min(1024 * 16, len as usize));
         for _ in 0..len {
-            ret.push(Decodable::consensus_decode(r)?);
-            if u8::consensus_decode(r)? != 0u8 {
+            ret.push(Decodable::consensus_decode_from_reader(r)?);
+            if u8::consensus_decode_from_reader(r)? != 0u8 {
                 return Err(encode::Error::ParseFailed(
                     "Headers message should not contain transactions",
                 ));
@@ -427,7 +427,7 @@ impl Decodable for HeaderDeserializationWrapper {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
@@ -532,7 +532,7 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_reader<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
