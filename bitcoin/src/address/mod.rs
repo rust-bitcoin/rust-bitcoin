@@ -799,47 +799,21 @@ impl Address<NetworkUnchecked> {
         };
         Address(inner, PhantomData)
     }
-}
 
-impl From<Address> for ScriptBuf {
-    fn from(a: Address) -> Self { a.script_pubkey() }
-}
+    /// Parse a bech32 Address string
+    pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
+        let (hrp, witness_version, data) = bech32::segwit::decode(s)?;
+        let version = WitnessVersion::try_from(witness_version.to_u8())?;
+        let program = WitnessProgram::new(version, &data)
+            .expect("bech32 guarantees valid program length for witness");
 
-// Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
-// be used in QR codes, see [`Address::to_qr_uri`].
-impl fmt::Display for Address {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, fmt) }
-}
-
-impl<V: NetworkValidation> fmt::Debug for Address<V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if V::IS_CHECKED {
-            fmt::Display::fmt(&self.0, f)
-        } else {
-            write!(f, "Address<NetworkUnchecked>(")?;
-            fmt::Display::fmt(&self.0, f)?;
-            write!(f, ")")
-        }
+        let hrp = KnownHrp::from_hrp(hrp)?;
+        let inner = AddressInner::Segwit { program, hrp };
+        Ok(Address(inner, PhantomData))
     }
-}
 
-/// Address can be parsed only with `NetworkUnchecked`.
-impl FromStr for Address<NetworkUnchecked> {
-    type Err = ParseError;
-
-    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
-        if let Ok((hrp, witness_version, data)) = bech32::segwit::decode(s) {
-            let version = WitnessVersion::try_from(witness_version.to_u8())?;
-            let program = WitnessProgram::new(version, &data)
-                .expect("bech32 guarantees valid program length for witness");
-
-            let hrp = KnownHrp::from_hrp(hrp)?;
-            let inner = AddressInner::Segwit { program, hrp };
-            return Ok(Address(inner, PhantomData));
-        }
-
-        // If segwit decoding fails, assume its a legacy address.
-
+    /// Parse a base58 Address string
+    pub fn from_base58_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
@@ -872,6 +846,50 @@ impl FromStr for Address<NetworkUnchecked> {
         };
 
         Ok(Address(inner, PhantomData))
+    }
+}
+
+impl From<Address> for ScriptBuf {
+    fn from(a: Address) -> Self { a.script_pubkey() }
+}
+
+// Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
+// be used in QR codes, see [`Address::to_qr_uri`].
+impl fmt::Display for Address {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, fmt) }
+}
+
+impl<V: NetworkValidation> fmt::Debug for Address<V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if V::IS_CHECKED {
+            fmt::Display::fmt(&self.0, f)
+        } else {
+            write!(f, "Address<NetworkUnchecked>(")?;
+            fmt::Display::fmt(&self.0, f)?;
+            write!(f, ")")
+        }
+    }
+}
+
+/// Address can be parsed only with `NetworkUnchecked`.
+///
+/// Only segwit bech32 addresses prefixed with `bc`, `bcrt` or `tb` and legacy base58 addresses
+/// prefixed with `1`, `2, `3`, `m` or `n` are supported.
+impl FromStr for Address<NetworkUnchecked> {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
+        if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
+            Address::from_bech32_str(s)
+        } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
+            Address::from_base58_str(s)
+        } else {
+            let hrp = match s.rfind('1') {
+                Some(pos) => &s[..pos],
+                None => s,
+            };
+            Err(UnknownHrpError(hrp.to_owned()).into())
+        }
     }
 }
 
