@@ -361,6 +361,8 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
     match error {
         ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
+        ConsensusError::MissingData =>
+            E::custom("missing data (early end of file or slice too short)"),
         ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",
             requested, max

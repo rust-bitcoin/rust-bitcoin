@@ -56,6 +56,8 @@ impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeEr
 pub enum Error {
     /// And I/O error.
     Io(io::Error),
+    /// Missing data (early end of file or slice too short).
+    MissingData, // TODO: Can we add more context?
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
         /// The capacity requested.
@@ -86,6 +88,7 @@ impl fmt::Display for Error {
 
         match *self {
             Io(ref e) => write_err!(f, "IO error"; e),
+            MissingData => write!(f, "missing data (early end of file or slice too short)"),
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             InvalidChecksum { expected: ref e, actual: ref a } =>
@@ -105,7 +108,8 @@ impl std::error::Error for Error {
 
         match self {
             Io(e) => Some(e),
-            OversizedVectorAllocation { .. }
+            MissingData
+            | OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
             | ParseFailed(_)
@@ -115,7 +119,14 @@ impl std::error::Error for Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self { Error::Io(error) }
+    fn from(e: io::Error) -> Self {
+        use io::ErrorKind;
+
+        match e.kind() {
+            ErrorKind::UnexpectedEof => Error::MissingData,
+            _ => Error::Io(e),
+        }
+    }
 }
 
 /// Hex deserialization error.
