@@ -69,7 +69,7 @@ pub const PROTOCOL_VERSION: u32 = 70001;
 pub enum Network {
     /// Mainnet Bitcoin.
     Bitcoin,
-    /// Bitcoin's testnet network.
+    /// Bitcoin's testnet4 network.
     Testnet,
     /// Bitcoin's signet network.
     Signet,
@@ -554,12 +554,12 @@ mod tests {
     #[test]
     fn serialize_test() {
         assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Network::Testnet.magic()), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(serialize(&Network::Testnet.magic()), &[0x1c, 0x16, 0x3f, 0x28]);
         assert_eq!(serialize(&Network::Signet.magic()), &[0x0a, 0x03, 0xcf, 0x40]);
         assert_eq!(serialize(&Network::Regtest.magic()), &[0xfa, 0xbf, 0xb5, 0xda]);
 
         assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.magic()));
-        assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet.magic()));
+        assert_eq!(deserialize(&[0x1c, 0x16, 0x3f, 0x28]).ok(), Some(Network::Testnet.magic()));
         assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
         assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
     }
@@ -645,7 +645,7 @@ mod tests {
     fn magic_from_str() {
         let known_network_magic_strs = [
             ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
+            ("1c163f28", Network::Testnet),
             ("fabfb5da", Network::Regtest),
             ("0a03cf40", Network::Signet),
         ];

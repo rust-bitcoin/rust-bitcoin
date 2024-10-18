@@ -84,16 +84,16 @@ pub const MAX_MONEY: u64 = 21_000_000 * COIN_VALUE;
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx(network: Network) -> Transaction {
-    if network == Network::Bitcoin {
-        return bitcoin_mainnet_genesis_tx();
+    if network == Network::Testnet {
+        return bitcoin_testnet4_genesis_tx();
     } else {
-        return bitcoin_testnet_genesis_tx();
+        return bitcoin_default_genesis_tx();
     }
 
 }
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
-fn bitcoin_mainnet_genesis_tx() -> Transaction {
+fn bitcoin_default_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
         version: 1,
@@ -131,7 +131,7 @@ fn bitcoin_mainnet_genesis_tx() -> Transaction {
 
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
-fn bitcoin_testnet_genesis_tx() -> Transaction {
+fn bitcoin_testnet4_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
         version: 1,
@@ -300,11 +300,11 @@ mod test {
         let gen = genesis_block(Network::Testnet);
         assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
-        assert_eq!(gen.header.merkle_root.to_string(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
-        assert_eq!(gen.header.time, 1296688602);
+        assert_eq!(gen.header.merkle_root.to_string(), "7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e");
+        assert_eq!(gen.header.time, 1714777860);
         assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
-        assert_eq!(gen.header.nonce, 414098458);
-        assert_eq!(gen.header.block_hash().to_string(), "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+        assert_eq!(gen.header.nonce, 393743547);
+        assert_eq!(gen.header.block_hash().to_string(), "00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043");
     }
 
     #[test]
