@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use internals::ToU64 as _;
-use io::{BufRead, Cursor, Read};
+use io::BufRead;
 
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
-use crate::consensus::{encode, Decodable};
+use crate::consensus::{self, encode};
+use crate::locktime::absolute;
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, Psbt};
-use crate::transaction::Transaction;
+use crate::transaction::{self, Transaction};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u64 = 0x00;
@@ -89,19 +90,40 @@ impl Psbt {
                                 // there can only be one unsigned transaction
                                 if tx.is_none() {
                                     let vlen: usize = pair.value.len();
-                                    let mut decoder = Cursor::new(pair.value);
 
                                     // Manually deserialized to ensure 0-input
                                     // txs without witnesses are deserialized
                                     // properly.
-                                    tx = Some(Transaction {
-                                        version: Decodable::consensus_decode(&mut decoder)?,
-                                        input: Decodable::consensus_decode(&mut decoder)?,
-                                        output: Decodable::consensus_decode(&mut decoder)?,
-                                        lock_time: Decodable::consensus_decode(&mut decoder)?,
-                                    });
+                                    let buf = &pair.value[..];
+                                    let mut start = 0;
 
-                                    if decoder.position() != vlen.to_u64() {
+                                    let (version, size) =
+                                        consensus::deserialize_partial::<transaction::Version>(
+                                            &buf[start..],
+                                        )?;
+                                    start += size;
+
+                                    let (input, size) =
+                                        consensus::deserialize_partial::<Vec<transaction::TxIn>>(
+                                            &buf[start..],
+                                        )?;
+                                    start += size;
+
+                                    let (output, size) =
+                                        consensus::deserialize_partial::<Vec<transaction::TxOut>>(
+                                            &buf[start..],
+                                        )?;
+                                    start += size;
+
+                                    let (lock_time, size) =
+                                        consensus::deserialize_partial::<absolute::LockTime>(
+                                            &buf[start..],
+                                        )?;
+                                    start += size;
+
+                                    tx = Some(Transaction { version, input, output, lock_time });
+
+                                    if start != vlen {
                                         return Err(Error::PartialDataConsumption);
                                     }
                                 } else {
@@ -125,14 +147,22 @@ impl Psbt {
                                 }
 
                                 let child_count = pair.value.len() / 4 - 1;
-                                let mut decoder = Cursor::new(pair.value);
-                                let mut fingerprint = [0u8; 4];
-                                decoder.read_exact(&mut fingerprint[..]).map_err(|_| {
-                                    Error::XPubKey("can't read global xpub fingerprint")
-                                })?;
+                                let buf = &pair.value[..];
+                                let mut start = 0;
+                                let (fingerprint, size) =
+                                    consensus::deserialize_partial::<[u8; 4]>(&buf[start..])
+                                        .map_err(|_| {
+                                            Error::XPubKey("can't read global xpub fingerprint")
+                                        })?;
+                                debug_assert_eq!(size, 4);
+                                start += size;
+
                                 let mut path = Vec::<ChildNumber>::with_capacity(child_count);
-                                while let Ok(index) = u32::consensus_decode(&mut decoder) {
-                                    path.push(ChildNumber::from(index))
+                                while let Ok((index, size)) =
+                                    consensus::deserialize_partial::<u32>(&buf[start..])
+                                {
+                                    path.push(ChildNumber::from(index));
+                                    start += size;
                                 }
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique
@@ -154,13 +184,12 @@ impl Psbt {
                                 // there can only be one version
                                 if version.is_none() {
                                     let vlen: usize = pair.value.len();
-                                    let mut decoder = Cursor::new(pair.value);
                                     if vlen != 4 {
                                         return Err(Error::Version(
                                             "invalid global version value length (must be 4 bytes)",
                                         ));
                                     }
-                                    version = Some(Decodable::consensus_decode(&mut decoder)?);
+                                    version = Some(consensus::deserialize::<u32>(&pair.value)?);
                                     // We only understand version 0 PSBTs. According to BIP-174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {
