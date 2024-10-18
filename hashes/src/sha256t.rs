@@ -25,6 +25,9 @@ where
 {
     const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
 
+    /// Constructs a hash from the underlying byte array.
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
     pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
@@ -39,12 +42,6 @@ where
         unsafe { &mut *(bytes as *mut _ as *mut Self) }
     }
 
-    /// Constructs a new engine.
-    pub fn engine() -> HashEngine { T::engine() }
-
-    /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
-
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
@@ -56,6 +53,12 @@ where
             Ok(Self::from_byte_array(ret))
         }
     }
+
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
+
+    /// Constructs a new engine.
+    pub fn engine() -> HashEngine { T::engine() }
 
     /// Hashes some bytes.
     #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
@@ -104,9 +107,6 @@ where
 
     /// Returns a reference to the underlying byte array.
     pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
-
-    /// Constructs a hash from the underlying byte array.
-    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
