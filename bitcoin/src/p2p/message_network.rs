@@ -8,7 +8,7 @@
 use hashes::sha256d;
 use io::{BufRead, Write};
 
-use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::consensus::{self, encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::p2p;
 use crate::p2p::address::Address;
@@ -126,7 +126,7 @@ impl Decodable for RejectReason {
             0x41 => RejectReason::Dust,
             0x42 => RejectReason::Fee,
             0x43 => RejectReason::Checkpoint,
-            _ => return Err(encode::Error::ParseFailed("unknown reject code")),
+            _ => return Err(consensus::parse_failed_error("unknown reject code")),
         })
     }
 }

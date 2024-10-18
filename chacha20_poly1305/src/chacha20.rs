@@ -19,9 +19,7 @@ pub struct Key([u8; 32]);
 
 impl Key {
     /// Create a new key.
-    pub const fn new(key: [u8; 32]) -> Self {
-        Key(key)
-    }
+    pub const fn new(key: [u8; 32]) -> Self { Key(key) }
 }
 
 /// A 96-bit initialization vector (IV), or nonce.
@@ -30,9 +28,7 @@ pub struct Nonce([u8; 12]);
 
 impl Nonce {
     /// Create a new nonce.
-    pub const fn new(nonce: [u8; 12]) -> Self {
-        Nonce(nonce)
-    }
+    pub const fn new(nonce: [u8; 12]) -> Self { Nonce(nonce) }
 }
 
 /// A SIMD-friendly structure which holds 25% of the cipher state.
@@ -330,8 +326,9 @@ fn keystream_at_slice(key: Key, nonce: Nonce, count: u32, seek: usize) -> [u8; 6
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use super::*;
     use hex::prelude::*;
+
+    use super::*;
 
     #[test]
     fn test_chacha_block() {
