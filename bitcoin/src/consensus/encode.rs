@@ -160,7 +160,7 @@ macro_rules! decoder_fn {
         #[inline]
         fn $name(&mut self) -> core::result::Result<$val_type, Error> {
             let mut val = [0; $byte_len];
-            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            self.read_exact(&mut val[..])?;
             Ok(<$val_type>::from_le_bytes(val))
         }
     };
@@ -216,9 +216,7 @@ impl<R: Read + ?Sized> ReadExt for R {
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
     #[inline]
-    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
-        self.read_exact(slice).map_err(Error::Io)
-    }
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> { Ok(self.read_exact(slice)?) }
     #[inline]
     #[rustfmt::skip] // Formatter munges code comments below.
     fn read_compact_size(&mut self) -> Result<u64, Error> {
