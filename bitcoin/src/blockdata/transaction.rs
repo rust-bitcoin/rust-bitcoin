@@ -129,63 +129,66 @@ impl TxIn {
     };
 }
 
-impl TxIn {
-    /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
-    /// [`Transaction`].
-    ///
-    /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
-    ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
-    ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
-    ///  this input then the script execution will fail [BIP-0065].
-    ///
-    /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
-    pub fn enables_lock_time(&self) -> bool { self.sequence != Sequence::MAX }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TxIn`] type.
+    pub trait TxInExt impl for TxIn {
+        /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
+        /// [`Transaction`].
+        ///
+        /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
+        ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
+        ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
+        ///  this input then the script execution will fail [BIP-0065].
+        ///
+        /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+        fn enables_lock_time(&self) -> bool { self.sequence != Sequence::MAX }
 
-    /// The weight of the TxIn when it's included in a legacy transaction (i.e., a transaction
-    /// having only legacy inputs).
-    ///
-    /// The witness weight is ignored here even when the witness is non-empty.
-    /// If you want the witness to be taken into account, use `TxIn::segwit_weight` instead.
-    ///
-    /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
-    /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
-    /// the input length `VarInt` to increase its encoding length.
-    pub fn legacy_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size().to_u64())
+        /// The weight of the TxIn when it's included in a legacy transaction (i.e., a transaction
+        /// having only legacy inputs).
+        ///
+        /// The witness weight is ignored here even when the witness is non-empty.
+        /// If you want the witness to be taken into account, use `TxIn::segwit_weight` instead.
+        ///
+        /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
+        /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
+        /// the input length `VarInt` to increase its encoding length.
+        fn legacy_weight(&self) -> Weight {
+            Weight::from_non_witness_data_size(self.base_size().to_u64())
+        }
+
+        /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
+        /// having at least one segwit input).
+        ///
+        /// This always takes into account the witness, even when empty, in which
+        /// case 1WU for the witness length varint (`00`) is included.
+        ///
+        /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
+        /// might increase more than `TxIn::segwit_weight`. This happens when:
+        /// - the new input added causes the input length `VarInt` to increase its encoding length
+        /// - the new input is the first segwit input added - this will add an additional 2WU to the
+        ///   transaction weight to take into account the segwit marker
+        fn segwit_weight(&self) -> Weight {
+            Weight::from_non_witness_data_size(self.base_size().to_u64())
+                + Weight::from_witness_data_size(self.witness.size().to_u64())
+        }
+
+        /// Returns the base size of this input.
+        ///
+        /// Base size excludes the witness data (see [`Self::total_size`]).
+        fn base_size(&self) -> usize {
+            let mut size = OutPoint::SIZE;
+
+            size += compact_size::encoded_size(self.script_sig.len());
+            size += self.script_sig.len();
+
+            size + Sequence::SIZE
+        }
+
+        /// Returns the total number of bytes that this input contributes to a transaction.
+        ///
+        /// Total size includes the witness data (for base size see [`Self::base_size`]).
+        fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
     }
-
-    /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
-    /// having at least one segwit input).
-    ///
-    /// This always takes into account the witness, even when empty, in which
-    /// case 1WU for the witness length varint (`00`) is included.
-    ///
-    /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
-    /// might increase more than `TxIn::segwit_weight`. This happens when:
-    /// - the new input added causes the input length `VarInt` to increase its encoding length
-    /// - the new input is the first segwit input added - this will add an additional 2WU to the
-    ///   transaction weight to take into account the segwit marker
-    pub fn segwit_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size().to_u64())
-            + Weight::from_witness_data_size(self.witness.size().to_u64())
-    }
-
-    /// Returns the base size of this input.
-    ///
-    /// Base size excludes the witness data (see [`Self::total_size`]).
-    pub fn base_size(&self) -> usize {
-        let mut size = OutPoint::SIZE;
-
-        size += compact_size::encoded_size(self.script_sig.len());
-        size += self.script_sig.len();
-
-        size + Sequence::SIZE
-    }
-
-    /// Returns the total number of bytes that this input contributes to a transaction.
-    ///
-    /// Total size includes the witness data (for base size see [`Self::base_size`]).
-    pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
 }
 
 /// Bitcoin transaction output.
@@ -1338,6 +1341,7 @@ mod sealed {
     impl Sealed for super::Txid {}
     impl Sealed for super::Wtxid {}
     impl Sealed for super::OutPoint {}
+    impl Sealed for super::TxIn {}
     impl Sealed for super::TxOut {}
     impl Sealed for super::Version {}
 }
