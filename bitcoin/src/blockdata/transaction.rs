@@ -127,7 +127,9 @@ impl TxIn {
         sequence: Sequence::MAX,
         witness: Witness::new(),
     };
+}
 
+impl TxIn {
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
     ///
