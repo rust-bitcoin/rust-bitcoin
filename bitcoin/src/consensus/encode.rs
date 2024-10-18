@@ -36,7 +36,7 @@ use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use super::{Error, FromHexError};
+pub use super::{Error, FromHexError, InvalidError};
 
 /// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
@@ -76,6 +76,7 @@ pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
 /// doesn't consume the entire vector.
 pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
     let mut decoder = Cursor::new(data);
+
     let rv = Decodable::consensus_decode_from_finite_reader(&mut decoder)?;
     let consumed = decoder.position() as usize;
 
@@ -224,7 +225,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFF => {
                 let x = self.read_u64()?;
                 if x < 0x1_0000_0000 { // I.e., would have fit in a `u32`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(InvalidError::NonMinimalVarInt.into())
                 } else {
                     Ok(x)
                 }
@@ -232,7 +233,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFE => {
                 let x = self.read_u32()?;
                 if x < 0x1_0000 { // I.e., would have fit in a `u16`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(InvalidError::NonMinimalVarInt.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -240,7 +241,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFD => {
                 let x = self.read_u16()?;
                 if x < 0xFD {   // Could have been encoded as a `u8`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(InvalidError::NonMinimalVarInt.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -649,7 +650,8 @@ impl Decodable for CheckedData {
         let data = read_bytes_from_finite_reader(r, opts)?;
         let expected_checksum = sha2_checksum(&data);
         if expected_checksum != checksum {
-            Err(self::Error::InvalidChecksum { expected: expected_checksum, actual: checksum })
+            Err(InvalidError::InvalidChecksum { expected: expected_checksum, actual: checksum }
+                .into())
         } else {
             Ok(CheckedData { data, checksum })
         }
@@ -858,50 +860,50 @@ mod tests {
             discriminant(
                 &test_varint_encode(0xFF, &(0x100000000_u64 - 1).to_le_bytes()).unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFE, &(0x10000_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFD, &(0xFD_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
 
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&InvalidError::NonMinimalVarInt.into())
         );
 
         let mut vec_256 = vec![0; 259];
@@ -1027,13 +1029,14 @@ mod tests {
         ])
         .is_err());
 
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
-
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
-        // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
+        // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
         let err =
             deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        match err {
+            Error::Io(e) => panic!("unexpected I/O error {}", e),
+            Error::Invalid(e) => assert_eq!(e, InvalidError::MissingData),
+        }
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
@@ -1055,11 +1058,13 @@ mod tests {
         Vec<T>: Decodable,
         T: fmt::Debug,
     {
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
         let mut buf = Vec::new();
         buf.emit_compact_size(super::MAX_VEC_SIZE / mem::size_of::<T>()).unwrap();
         let err = deserialize::<Vec<T>>(&buf).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        match err {
+            Error::Io(e) => panic!("unexpected I/O error {}", e),
+            Error::Invalid(e) => assert_eq!(e, InvalidError::MissingData),
+        }
     }
 
     #[test]
