@@ -57,13 +57,43 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
 
+// This is the 65 byte (uncompressed) pubkey used as the one-and-only output of the genesis transaction.
+//
+// ref: https://blockstream.info/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b?expand
+// Note output script includes a leading 0x41 and trailing 0xac (added below using the `script::Builder`).
+#[rustfmt::skip]
+const GENESIS_OUTPUT_PK: [u8; 65] = [
+    0x04,
+    0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27,
+    0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7, 0x10,
+    0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, 0x09, 0xa6,
+    0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, 0xde, 0xb6,
+    0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, 0x38, 0xc4,
+    0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, 0x12, 0xde,
+    0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, 0x8d, 0x57,
+    0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, 0x1d, 0x5f
+];
+
+#[rustfmt::skip]
+const TESTNET4_GENESIS_OUTPUT_PK: [u8; 33] = [0x00; 33];
+
 /// The maximum value allowed in an output (useful for sanity checking,
 /// since keeping everything below this value should prevent overflows
 /// if you are doing anything remotely sane with monetary values).
 pub const MAX_MONEY: u64 = 21_000_000 * COIN_VALUE;
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
-fn bitcoin_genesis_tx() -> Transaction {
+fn bitcoin_genesis_tx(network: Network) -> Transaction {
+    if network == Network::Bitcoin {
+        return bitcoin_mainnet_genesis_tx();
+    } else {
+        return bitcoin_testnet_genesis_tx();
+    }
+
+}
+
+/// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
+fn bitcoin_mainnet_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
         version: 1,
@@ -99,9 +129,44 @@ fn bitcoin_genesis_tx() -> Transaction {
     ret
 }
 
+
+/// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
+fn bitcoin_testnet_genesis_tx() -> Transaction {
+    // Base
+    let mut ret = Transaction {
+        version: 1,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![],
+    };
+
+    // Inputs
+    let in_script = script::Builder::new()
+        .push_int(486604799)
+        .push_int_non_minimal(4)
+        .push_slice(b"03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e")
+        .into_script();
+    let out_script = script::Builder::new().push_slice(TESTNET4_GENESIS_OUTPUT_PK).push_opcode(OP_CHECKSIG).into_script();
+    ret.input.push(TxIn {
+        previous_output: OutPoint::null(),
+        script_sig: in_script,
+        sequence: Sequence::MAX,
+        witness: Witness::default(),
+    });
+
+    // Outputs
+    ret.output.push(TxOut {
+        value: 50 * COIN_VALUE,
+        script_pubkey: out_script
+    });
+
+    // end
+    ret
+}
+
 /// Constructs and returns the genesis block.
 pub fn genesis_block(network: Network) -> Block {
-    let txdata = vec![bitcoin_genesis_tx()];
+    let txdata = vec![bitcoin_genesis_tx(network)];
     let hash: sha256d::Hash = txdata[0].txid().into();
     let merkle_root = hash.into();
     match network {
@@ -171,7 +236,7 @@ impl ChainHash {
     /// `ChainHash` for mainnet bitcoin.
     pub const BITCOIN: Self = Self([111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79, 147, 30, 131, 101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0]);
     /// `ChainHash` for testnet bitcoin.
-    pub const TESTNET: Self = Self([67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151, 32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0]);
+    pub const TESTNET: Self = Self([67, 240, 139, 218, 176, 80, 227, 91, 86, 124, 134, 75, 145, 244, 127, 80, 174, 114, 90, 226, 222, 83, 188, 251, 186, 242, 132, 218, 0, 0, 0, 0]);
     /// `ChainHash` for signet bitcoin.
     pub const SIGNET: Self = Self([246, 30, 238, 59, 99, 163, 128, 164, 119, 160, 99, 175, 50, 178, 187, 201, 124, 159, 249, 240, 31, 44, 66, 37, 233, 115, 152, 129, 8, 0, 0, 0]);
     /// `ChainHash` for regtest bitcoin.
@@ -197,7 +262,7 @@ mod test {
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
-        let gen = bitcoin_genesis_tx();
+        let gen = bitcoin_genesis_tx(Network::Bitcoin);
 
         assert_eq!(gen.version, 1);
         assert_eq!(gen.input.len(), 1);
