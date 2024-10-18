@@ -127,14 +127,14 @@ impl<T: GeneralHash> GeneralHash for Hmac<T> {
 impl<T: GeneralHash> Hash for Hmac<T> {
     type Bytes = T::Bytes;
 
+    fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
+
     #[allow(deprecated_in_future)]
     fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
 
     fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
 
     fn as_byte_array(&self) -> &Self::Bytes { self.0.as_byte_array() }
-
-    fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
 }
 
 #[cfg(feature = "serde")]
