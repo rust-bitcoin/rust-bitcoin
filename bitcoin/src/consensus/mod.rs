@@ -20,7 +20,7 @@ use crate::consensus;
 #[doc(inline)]
 pub use self::{
     encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
-    error::{Error, FromHexError, DecodeError},
+    error::{Error, FromHexError, DecodeError, ParseError},
 };
 pub(crate) use self::error::parse_failed_error;
 

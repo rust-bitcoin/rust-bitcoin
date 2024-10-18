@@ -56,6 +56,54 @@ impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeEr
 pub enum Error {
     /// And I/O error.
     Io(io::Error),
+    /// Error parsing encoded object.
+    Parse(ParseError),
+}
+
+internals::impl_from_infallible!(Error);
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
+        match *self {
+            Io(ref e) => write_err!(f, "IO error"; e),
+            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use Error::*;
+
+        match *self {
+            Io(ref e) => Some(e),
+            Parse(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        use io::ErrorKind;
+
+        match e.kind() {
+            ErrorKind::UnexpectedEof => Error::Parse(ParseError::MissingData),
+            _ => Error::Io(e),
+        }
+    }
+}
+
+impl From<ParseError> for Error {
+    fn from(e: ParseError) -> Self { Error::Parse(e) }
+}
+
+/// Encoding is invalid.
+#[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ParseError {
     /// Missing data (early end of file or slice too short).
     MissingData, // TODO: Can we add more context?
     /// Tried to allocate an oversized vector.
@@ -80,14 +128,13 @@ pub enum Error {
     UnsupportedSegwitFlag(u8),
 }
 
-internals::impl_from_infallible!(Error);
+internals::impl_from_infallible!(ParseError);
 
-impl fmt::Display for Error {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use ParseError::*;
 
         match *self {
-            Io(ref e) => write_err!(f, "IO error"; e),
             MissingData => write!(f, "missing data (early end of file or slice too short)"),
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
@@ -102,29 +149,17 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+        use ParseError::*;
 
         match self {
-            Io(e) => Some(e),
             MissingData
             | OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
             | ParseFailed(_)
             | UnsupportedSegwitFlag(_) => None,
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        use io::ErrorKind;
-
-        match e.kind() {
-            ErrorKind::UnexpectedEof => Error::MissingData,
-            _ => Error::Io(e),
         }
     }
 }
@@ -169,4 +204,6 @@ impl From<OddLengthStringError> for FromHexError {
 
 /// Constructs a `Error::ParseFailed` error.
 // This whole variant should go away because of the inner string.
-pub(crate) fn parse_failed_error(msg: &'static str) -> Error { Error::ParseFailed(msg) }
+pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
+    Error::Parse(ParseError::ParseFailed(msg))
+}

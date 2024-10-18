@@ -315,10 +315,11 @@ impl Decodable for BlockTransactionsRequest {
                     .checked_mul(mem::size_of::<Transaction>())
                     .ok_or(consensus::parse_failed_error("invalid length"))?;
                 if byte_size > encode::MAX_VEC_SIZE {
-                    return Err(encode::Error::OversizedVectorAllocation {
+                    return Err(encode::ParseError::OversizedVectorAllocation {
                         requested: byte_size,
                         max: encode::MAX_VEC_SIZE,
-                    });
+                    }
+                    .into());
                 }
 
                 let mut indexes = Vec::with_capacity(nb_indexes);

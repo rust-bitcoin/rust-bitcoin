@@ -913,7 +913,7 @@ impl Decodable for Transaction {
                     }
                 }
                 // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
+                x => Err(encode::ParseError::UnsupportedSegwitFlag(x).into()),
             }
         // non-segwit
         } else {
@@ -1486,7 +1486,7 @@ mod tests {
         let tx_bytes = hex!("0000fd000001021921212121212121212121f8b372b0239cc1dff600000000004f4f4f4f4f4f4f4f000000000000000000000000000000333732343133380d000000000000000000000000000000ff000000000009000dff000000000000000800000000000000000d");
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_err());
-        assert!(tx.unwrap_err().to_string().contains("witness flag set but no witnesses present"));
+        assert!(matches!(tx.unwrap_err(), crate::consensus::Error::Parse(_)));
     }
 
     #[test]

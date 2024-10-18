@@ -17,8 +17,7 @@ use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
 
-use super::encode::Error as ConsensusError;
-use super::{Decodable, Encodable};
+use super::{Decodable, Encodable, Error, ParseError};
 use crate::consensus::{DecodeError, IterReader};
 
 /// Hex-encoding strategy
@@ -358,26 +357,25 @@ impl<D: fmt::Display> serde::de::Expected for DisplayExpected<D> {
 }
 
 // not a trait impl because we panic on some variants
-fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
+fn consensus_error_into_serde<E: serde::de::Error>(error: ParseError) -> E {
     match error {
-        ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
-        ConsensusError::MissingData =>
+        ParseError::MissingData =>
             E::custom("missing data (early end of file or slice too short)"),
-        ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
+        ParseError::OversizedVectorAllocation { requested, max } => E::custom(format_args!(
             "the requested allocation of {} items exceeds maximum of {}",
             requested, max
         )),
-        ConsensusError::InvalidChecksum { expected, actual } => E::invalid_value(
+        ParseError::InvalidChecksum { expected, actual } => E::invalid_value(
             Unexpected::Bytes(&actual),
             &DisplayExpected(format_args!(
                 "checksum {:02x}{:02x}{:02x}{:02x}",
                 expected[0], expected[1], expected[2], expected[3]
             )),
         ),
-        ConsensusError::NonMinimalVarInt =>
+        ParseError::NonMinimalVarInt =>
             E::custom(format_args!("compact size was not encoded minimally")),
-        ConsensusError::ParseFailed(msg) => E::custom(msg),
-        ConsensusError::UnsupportedSegwitFlag(flag) =>
+        ParseError::ParseFailed(msg) => E::custom(msg),
+        ParseError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
     }
 }
@@ -390,7 +388,9 @@ where
         match self {
             DecodeError::Other(error) => error,
             DecodeError::TooManyBytes => E::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(error) => consensus_error_into_serde(error),
+            DecodeError::Consensus(Error::Parse(e)) => consensus_error_into_serde(e),
+            DecodeError::Consensus(Error::Io(_)) =>
+                unreachable!("iterator never returns I/O error"),
         }
     }
 }
@@ -403,7 +403,9 @@ where
         match self {
             DecodeError::Other(error) => error.into_de_error(),
             DecodeError::TooManyBytes => DE::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(error) => consensus_error_into_serde(error),
+            DecodeError::Consensus(Error::Parse(e)) => consensus_error_into_serde(e),
+            DecodeError::Consensus(Error::Io(_)) =>
+                unreachable!("iterator never returns I/O error"),
         }
     }
 }
