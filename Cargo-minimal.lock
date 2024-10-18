@@ -95,6 +95,7 @@ name = "bitcoin-internals"
 version = "0.4.0"
 dependencies = [
  "bincode",
+ "hex-conservative",
  "serde",
  "serde_json",
 ]
@@ -111,6 +112,7 @@ name = "bitcoin-primitives"
 version = "0.100.0"
 dependencies = [
  "arbitrary",
+ "bincode",
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
@@ -119,6 +121,7 @@ dependencies = [
  "mutagen",
  "ordered",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -204,7 +207,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1aa273bf451e37ed35ced41c71a5e2a4e29064afb104158f2514bcd71c2c986"
 dependencies = [
  "arrayvec",
- "serde",
 ]
 
 [[package]]

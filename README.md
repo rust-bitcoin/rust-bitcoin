@@ -52,6 +52,13 @@ are no plans to do so. Of course, patches to fix specific consensus incompatibil
 16-bit pointer sizes are not supported and we can't promise they will be. If you care about them
 please let us know, so we can know how large the interest is and possibly decide to support them.
 
+### Semver compliance
+
+We try hard to maintain strict semver compliance with our releases. This codebase includes some
+public functions marked unstable (e.g., `pub fn foo__unstable()`). These functions do not adhere to
+semver rules; use them at your own discretion.
+
+
 ## Documentation
 
 Currently can be found on [docs.rs/bitcoin](https://docs.rs/bitcoin/). Patches to add usage examples
