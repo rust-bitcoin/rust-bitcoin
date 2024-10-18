@@ -32,7 +32,7 @@ use crate::{Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::*;
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version};
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
