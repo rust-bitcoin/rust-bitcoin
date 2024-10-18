@@ -32,7 +32,7 @@ use crate::{Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn, TxOut};
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
@@ -151,32 +151,6 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-/// Bitcoin transaction output.
-///
-/// Defines new coins to be created as a result of the transaction,
-/// along with spending conditions ("script", aka "output script"),
-/// which an input spending it must satisfy.
-///
-/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
-///
-/// ### Bitcoin Core References
-///
-/// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct TxOut {
-    /// The value of the output, in satoshis.
-    pub value: Amount,
-    /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: ScriptBuf,
-}
-
-impl TxOut {
-    /// This is used as a "null txout" in consensus signing code.
-    pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
-}
-
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxOut`] type.
     pub trait TxOutExt impl for TxOut {
@@ -228,13 +202,6 @@ crate::internal_macros::define_extension_trait! {
         fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
             TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TxOut {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 
