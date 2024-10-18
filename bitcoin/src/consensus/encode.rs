@@ -36,7 +36,7 @@ use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
-pub use super::{Error, FromHexError, ParseError};
+pub use super::{Error, FromHexError, ParseError, DeserializeError};
 
 /// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
@@ -53,14 +53,14 @@ pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
 
 /// Deserializes an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
+pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, DeserializeError> {
     let (rv, consumed) = deserialize_partial(data)?;
 
     // Fail if data are not consumed entirely.
     if consumed == data.len() {
         Ok(rv)
     } else {
-        Err(super::parse_failed_error("data not consumed entirely when explicitly deserializing"))
+        Err(DeserializeError::Unconsumed)
     }
 }
 
@@ -74,10 +74,15 @@ pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
 
 /// Deserializes an object from a vector, but will not report an error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
+pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), ParseError> {
     let mut decoder = Cursor::new(data);
 
-    let rv = Decodable::consensus_decode_from_finite_reader(&mut decoder)?;
+    let rv = match Decodable::consensus_decode_from_finite_reader(&mut decoder) {
+        Ok(rv) => rv,
+        Err(Error::Parse(e)) => return Err(e),
+        Err(Error::Io(_)) =>
+            unreachable!("consensus_decode code never returns an I/O error for in-memory reads"),
+    };
     let consumed = decoder.position() as usize;
 
     Ok((rv, consumed))
@@ -1033,10 +1038,7 @@ mod tests {
         // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
         let err =
             deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        match err {
-            Error::Io(e) => panic!("unexpected I/O error {}", e),
-            Error::Parse(e) => assert_eq!(e, ParseError::MissingData),
-        }
+        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
@@ -1061,10 +1063,7 @@ mod tests {
         let mut buf = Vec::new();
         buf.emit_compact_size(super::MAX_VEC_SIZE / mem::size_of::<T>()).unwrap();
         let err = deserialize::<Vec<T>>(&buf).unwrap_err();
-        match err {
-            Error::Io(e) => panic!("unexpected I/O error {}", e),
-            Error::Parse(e) => assert_eq!(e, ParseError::MissingData),
-        }
+        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
     }
 
     #[test]

@@ -11,6 +11,45 @@ use internals::write_err;
 #[cfg(doc)]
 use super::IterReader;
 
+/// Error deserializing from a slice.
+#[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DeserializeError {
+    /// Error parsing encoded object.
+    Parse(ParseError),
+    /// Data unconsumed error.
+    Unconsumed,
+}
+
+internals::impl_from_infallible!(DeserializeError);
+
+impl fmt::Display for DeserializeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use DeserializeError::*;
+
+        match *self {
+            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Unconsumed => write!(f, "data not consumed entirely when deserializing"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DeserializeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DeserializeError::*;
+
+        match *self {
+            Parse(ref e) => Some(e),
+            Unconsumed => None,
+        }
+    }
+}
+
+impl From<ParseError> for DeserializeError {
+    fn from(e: ParseError) -> Self { Self::Parse(e) }
+}
+
 /// Error when consensus decoding from an `[IterReader]`.
 #[derive(Debug)]
 pub enum DecodeError<E> {
