@@ -39,6 +39,7 @@ pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
 pub mod sequence;
+#[cfg(feature = "alloc")]
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
@@ -50,6 +51,7 @@ pub use units::*;
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
+    transaction::{Txid, Wtxid},
     witness::Witness,
 };
 #[doc(inline)]
@@ -57,7 +59,6 @@ pub use self::{
     block::{BlockHash, WitnessCommitment},
     pow::CompactTarget,
     sequence::Sequence,
-    transaction::{Txid, Wtxid},
 };
 
 #[rustfmt::skip]

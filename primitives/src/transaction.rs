@@ -15,9 +15,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
-#[cfg(feature = "alloc")]
 use internals::write_err;
-#[cfg(feature = "alloc")]
 use units::parse;
 
 /// A reference to a transaction output.
@@ -52,7 +50,6 @@ impl fmt::Display for OutPoint {
     }
 }
 
-#[cfg(feature = "alloc")]
 impl core::str::FromStr for OutPoint {
     type Err = ParseOutPointError;
 
@@ -79,7 +76,6 @@ impl core::str::FromStr for OutPoint {
 /// Parses a string-encoded transaction index (vout).
 ///
 /// Does not permit leading zeroes or non-digit characters.
-#[cfg(feature = "alloc")]
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
         let first = s.chars().next().unwrap();
@@ -93,7 +89,6 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
 /// An error in parsing an [`OutPoint`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-#[cfg(feature = "alloc")]
 pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hex::HexToArrayError),
@@ -107,10 +102,8 @@ pub enum ParseOutPointError {
     VoutNotCanonical,
 }
 
-#[cfg(feature = "alloc")]
 internals::impl_from_infallible!(ParseOutPointError);
 
-#[cfg(feature = "alloc")]
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseOutPointError::*;
