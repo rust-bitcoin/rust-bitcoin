@@ -24,7 +24,7 @@ use crate::{Script, ScriptBuf};
 // Re-export these so downstream only has to use one `taproot` module.
 #[rustfmt::skip]
 #[doc(inline)]
-pub use crate::crypto::taproot::{SigFromSliceError, Signature};
+pub use crate::crypto::taproot::{DecodeError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
 

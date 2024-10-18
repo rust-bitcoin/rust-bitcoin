@@ -11,7 +11,7 @@ use core::{fmt, ops};
 pub use into_iter::IntoIter;
 use io::Write;
 
-use super::{SigFromSliceError, Signature};
+use super::{DecodeError, Signature};
 
 pub(crate) const MAX_LEN: usize = 65; // 64 for sig, 1B sighash flag
 
@@ -117,13 +117,13 @@ impl<'a> From<&'a Signature> for SerializedSignature {
 }
 
 impl TryFrom<SerializedSignature> for Signature {
-    type Error = SigFromSliceError;
+    type Error = DecodeError;
 
     fn try_from(value: SerializedSignature) -> Result<Self, Self::Error> { value.to_signature() }
 }
 
 impl<'a> TryFrom<&'a SerializedSignature> for Signature {
-    type Error = SigFromSliceError;
+    type Error = DecodeError;
 
     fn try_from(value: &'a SerializedSignature) -> Result<Self, Self::Error> {
         value.to_signature()
@@ -155,7 +155,7 @@ impl SerializedSignature {
     /// Convert the serialized signature into the Signature struct.
     /// (This deserializes it)
     #[inline]
-    pub fn to_signature(&self) -> Result<Signature, SigFromSliceError> {
+    pub fn to_signature(&self) -> Result<Signature, DecodeError> {
         Signature::from_slice(self)
     }
 
