@@ -32,7 +32,7 @@ use crate::{Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn};
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
@@ -88,46 +88,6 @@ crate::internal_macros::define_extension_trait! {
 // We need to use this const here but do not want to make it public in `primitives::TxIn`.
 const TX_IN_BASE_WEIGHT: Weight =
     Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
-
-/// Bitcoin transaction input.
-///
-/// It contains the location of the previous transaction's output,
-/// that it spends and set of scripts that satisfy its spending
-/// conditions.
-///
-/// ### Bitcoin Core References
-///
-/// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct TxIn {
-    /// The reference to the previous output that is being used as an input.
-    pub previous_output: OutPoint,
-    /// The script which pushes values on the stack which will cause
-    /// the referenced output's script to be accepted.
-    pub script_sig: ScriptBuf,
-    /// The sequence number, which suggests to miners which of two
-    /// conflicting transactions should be preferred, or 0xFFFFFFFF
-    /// to ignore this feature. This is generally never used since
-    /// the miner behavior cannot be enforced.
-    pub sequence: Sequence,
-    /// Witness data: an array of byte-arrays.
-    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
-    /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
-    /// (de)serialization routines.
-    pub witness: Witness,
-}
-
-impl TxIn {
-    /// An empty transaction input with the previous output as for a coinbase transaction.
-    pub const EMPTY_COINBASE: TxIn = TxIn {
-        previous_output: OutPoint::COINBASE_PREVOUT,
-        script_sig: ScriptBuf::new(),
-        sequence: Sequence::MAX,
-        witness: Witness::new(),
-    };
-}
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TxIn`] type.
@@ -1307,18 +1267,6 @@ impl InputWeightPrediction {
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
     pub const fn weight(&self) -> Weight {
         Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TxIn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxIn {
-            previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptBuf::arbitrary(u)?,
-            sequence: Sequence::arbitrary(u)?,
-            witness: Witness::arbitrary(u)?,
-        })
     }
 }
 
