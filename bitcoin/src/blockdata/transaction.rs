@@ -82,6 +82,13 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+/// Returns the input base weight.
+///
+/// Base weight excludes the witness and script.
+// We need to use this const here but do not want to make it public in `primitives::TxIn`.
+const TX_IN_BASE_WEIGHT: Weight =
+    Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
+
 /// Bitcoin transaction input.
 ///
 /// It contains the location of the previous transaction's output,
@@ -120,12 +127,6 @@ impl TxIn {
         sequence: Sequence::MAX,
         witness: Witness::new(),
     };
-
-    /// Returns the input base weight.
-    ///
-    /// Base weight excludes the witness and script.
-    const BASE_WEIGHT: Weight =
-        Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
     /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
     /// [`Transaction`].
@@ -955,7 +956,7 @@ pub fn effective_value(
     satisfaction_weight: Weight,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TxIn::BASE_WEIGHT)?;
+    let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
     let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
