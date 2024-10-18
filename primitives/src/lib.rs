@@ -51,7 +51,7 @@ pub use units::*;
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
-    transaction::{Txid, TxIn, Wtxid},
+    transaction::{Txid, TxIn, TxOut, Wtxid},
     witness::Witness,
 };
 #[doc(inline)]
