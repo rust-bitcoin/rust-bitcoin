@@ -11,6 +11,45 @@ use internals::write_err;
 #[cfg(doc)]
 use super::IterReader;
 
+/// Error deserializing from a slice.
+#[derive(Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DeserError {
+    /// Invalid encoding.
+    Invalid(InvalidError),
+    /// Data unconsumed error.
+    Unconsumed,
+}
+
+internals::impl_from_infallible!(DeserError);
+
+impl fmt::Display for DeserError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use DeserError::*;
+
+        match *self {
+            Invalid(ref e) => write_err!(f, "invalid encoding"; e),
+            Unconsumed => write!(f, "data not consumed entirely when deserializing"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DeserError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DeserError::*;
+
+        match *self {
+            Invalid(ref e) => Some(e),
+            Unconsumed => None,
+        }
+    }
+}
+
+impl From<InvalidError> for DeserError {
+    fn from(e: InvalidError) -> Self { Self::Invalid(e) }
+}
+
 /// Error when consensus decoding from an `[IterReader]`.
 #[derive(Debug)]
 pub enum DecodeError<E> {
