@@ -190,7 +190,7 @@ impl fmt::Display for AddressInner {
 pub enum KnownHrp {
     /// The main Bitcoin network.
     Mainnet,
-    /// The test networks, testnet and signet.
+    /// The test networks, testnet (testnet3), testnet4, and signet.
     Testnets,
     /// The regtest network.
     Regtest,
@@ -203,7 +203,7 @@ impl KnownHrp {
 
         match network {
             Bitcoin => Self::Mainnet,
-            Testnet | Signet => Self::Testnets,
+            Testnet | Testnet4 | Signet => Self::Testnets,
             Regtest => Self::Regtest,
         }
     }
@@ -704,7 +704,7 @@ impl Address<NetworkUnchecked> {
     ///
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Bitcoin));
-    /// assert_eq!(address.is_valid_for_network(Network::Testnet), false);
+    /// assert_eq!(address.is_valid_for_network(Network::Testnet4), false);
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
         use AddressInner::*;
