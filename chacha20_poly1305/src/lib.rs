@@ -6,10 +6,10 @@
 pub mod chacha20;
 pub mod poly1305;
 
+use core::fmt;
+
 use chacha20::ChaCha20;
 use poly1305::Poly1305;
-
-use core::fmt;
 
 pub use self::chacha20::{Key, Nonce};
 
@@ -48,9 +48,7 @@ pub struct ChaCha20Poly1305 {
 
 impl ChaCha20Poly1305 {
     /// Make a new instance of a ChaCha20Poly1305 AEAD.
-    pub const fn new(key: Key, nonce: Nonce) -> Self {
-        ChaCha20Poly1305 { key, nonce }
-    }
+    pub const fn new(key: Key, nonce: Nonce) -> Self { ChaCha20Poly1305 { key, nonce } }
 
     /// Encrypt content in place and return the Poly1305 16-byte authentication tag.
     ///
@@ -145,8 +143,9 @@ fn encode_lengths(aad_len: u64, content_len: u64) -> [u8; 16] {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use super::*;
     use hex::prelude::*;
+
+    use super::*;
 
     #[test]
     fn test_rfc7539() {

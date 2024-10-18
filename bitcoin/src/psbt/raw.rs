@@ -7,12 +7,12 @@
 
 use core::fmt;
 
-use internals::{ToU64 as _};
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use super::serialize::{Deserialize, Serialize};
 use crate::consensus::encode::{
-    self, deserialize, serialize, Decodable, Encodable, MAX_VEC_SIZE, ReadExt, WriteExt,
+    self, deserialize, serialize, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
 };
 use crate::prelude::{DisplayHex, Vec};
 use crate::psbt::Error;
@@ -24,7 +24,7 @@ use crate::psbt::Error;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Key {
     /// The type of this PSBT key.
-    pub type_value: u64,     // Encoded as a compact size.
+    pub type_value: u64, // Encoded as a compact size.
     /// The key data itself in raw byte form.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key_data: Vec<u8>,
@@ -82,10 +82,10 @@ impl Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE.to_u64() {
-            return Err(encode::Error::OversizedVectorAllocation {
+            return Err(encode::Error::Invalid(encode::InvalidError::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
-            }
+            })
             .into());
         }
 
