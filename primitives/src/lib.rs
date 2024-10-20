@@ -47,17 +47,17 @@ pub mod witness;
 pub use units::*;
 
 #[doc(inline)]
-#[cfg(feature = "alloc")]
-pub use self::{
-    locktime::{absolute, relative},
-    witness::Witness,
-};
-#[doc(inline)]
 pub use self::{
     block::{BlockHash, WitnessCommitment},
     pow::CompactTarget,
     sequence::Sequence,
     transaction::{Txid, Wtxid},
+};
+#[doc(inline)]
+#[cfg(feature = "alloc")]
+pub use self::{
+    locktime::{absolute, relative},
+    witness::Witness,
 };
 
 #[rustfmt::skip]

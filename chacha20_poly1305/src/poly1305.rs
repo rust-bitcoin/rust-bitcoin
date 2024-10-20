@@ -223,8 +223,9 @@ fn _print_acc(num: &[u32; 5]) {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use super::*;
     use hex::prelude::*;
+
+    use super::*;
 
     #[test]
     fn test_rfc7539() {
