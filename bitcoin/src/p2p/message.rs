@@ -19,7 +19,7 @@ use crate::p2p::{
     Magic,
 };
 use crate::prelude::{Box, Cow, String, ToOwned, Vec};
-use crate::{block, transaction};
+use crate::{block, consensus, transaction};
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -418,7 +418,7 @@ impl Decodable for HeaderDeserializationWrapper {
         for _ in 0..len {
             ret.push(Decodable::consensus_decode(r)?);
             if u8::consensus_decode(r)? != 0u8 {
-                return Err(encode::Error::ParseFailed(
+                return Err(consensus::parse_failed_error(
                     "Headers message should not contain transactions",
                 ));
             }
