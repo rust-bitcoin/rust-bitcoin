@@ -430,6 +430,11 @@ define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::CompactTarget {}
+}
+
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
 }

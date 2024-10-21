@@ -216,6 +216,11 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Witness {}
+}
+
 /// Correctness Requirements: value must always fit within u32
 // This is duplicated in `primitives::witness`, if you change it please do so over there also.
 #[inline]

@@ -61,12 +61,6 @@ pub trait TxIdentifier: sealed::Sealed + AsRef<[u8]> {}
 impl TxIdentifier for Txid {}
 impl TxIdentifier for Wtxid {}
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Txid {}
-    impl Sealed for super::Wtxid {}
-}
-
 /// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
 const SEGWIT_MARKER: u8 = 0x00;
 /// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
@@ -1332,6 +1326,15 @@ impl<'a> Arbitrary<'a> for Transaction {
             output: Vec::<TxOut>::arbitrary(u)?,
         })
     }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Txid {}
+    impl Sealed for super::Wtxid {}
+    impl Sealed for super::OutPoint {}
+    impl Sealed for super::TxOut {}
+    impl Sealed for super::Version {}
 }
 
 #[cfg(test)]
