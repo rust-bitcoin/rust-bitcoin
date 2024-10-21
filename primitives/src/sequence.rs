@@ -284,3 +284,35 @@ impl<'a> Arbitrary<'a> for Sequence {
         }
     }
 }
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests {
+    use super::*;
+
+    const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
+
+    #[test]
+    fn from_seconds_floor_success() {
+        let expected = Sequence::from_hex("0x0040ffff").unwrap();
+        let actual = Sequence::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_floor_causes_overflow_error() {
+        assert!(Sequence::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512).is_err());
+    }
+
+    #[test]
+    fn from_seconds_ceil_success() {
+        let expected = Sequence::from_hex("0x0040ffff").unwrap();
+        let actual = Sequence::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS - 511).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn from_seconds_ceil_causes_overflow_error() {
+        assert!(Sequence::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1).is_err());
+    }
+}
