@@ -59,8 +59,9 @@ use crate::taproot::TapNodeHash;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::error::{
-        FromScriptError, InvalidBase58PayloadLengthError, InvalidLegacyPrefixError, LegacyAddressTooLongError,
-        NetworkValidationError, ParseError, UnknownAddressTypeError, UnknownHrpError,
+        Base58Error, Bech32Error, FromScriptError, InvalidBase58PayloadLengthError,
+        InvalidLegacyPrefixError, LegacyAddressTooLongError, NetworkValidationError,
+        ParseError, UnknownAddressTypeError, UnknownHrpError
 };
 
 /// The different types of addresses.
@@ -801,7 +802,7 @@ impl Address<NetworkUnchecked> {
     }
 
     /// Parse a bech32 Address string
-    pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
+    pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
         let (hrp, witness_version, data) = bech32::segwit::decode(s)?;
         let version = WitnessVersion::try_from(witness_version.to_u8())?;
         let program = WitnessProgram::new(version, &data)
@@ -813,7 +814,7 @@ impl Address<NetworkUnchecked> {
     }
 
     /// Parse a base58 Address string
-    pub fn from_base58_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
+    pub fn from_base58_str(s: &str) -> Result<Address<NetworkUnchecked>, Base58Error> {
         if s.len() > 50 {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
@@ -875,14 +876,25 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 ///
 /// Only segwit bech32 addresses prefixed with `bc`, `bcrt` or `tb` and legacy base58 addresses
 /// prefixed with `1`, `2, `3`, `m` or `n` are supported.
+///
+/// # Errors
+///
+/// - [`ParseError::Bech32`] if the segwit address begins with a `bc`, `bcrt` or `tb` and is not a
+///   valid bech32 address.
+///
+/// - [`ParseError::Base58`] if the legacy address begins with a `1`, `2`, `3`, `m` or `n` and is
+///   not a valid base58 address.
+///
+/// - [`UnknownHrpError`] if the address does not begin with one of the above segwit or
+///   legacy prifixes.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
-            Address::from_bech32_str(s)
+            Ok(Address::from_bech32_str(s)?)
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
-            Address::from_base58_str(s)
+            Ok(Address::from_base58_str(s)?)
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],

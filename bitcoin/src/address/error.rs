@@ -76,22 +76,10 @@ impl std::error::Error for UnknownAddressTypeError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseError {
-    /// Base58 error.
-    Base58(base58::Error),
+    /// Base58 legacy decoding error.
+    Base58(Base58Error),
     /// Bech32 segwit decoding error.
-    Bech32(bech32::segwit::DecodeError),
-    /// A witness version conversion/parsing error.
-    WitnessVersion(witness_version::TryFromError),
-    /// A witness program error.
-    WitnessProgram(witness_program::Error),
-    /// Tried to parse an unknown HRP.
-    UnknownHrp(UnknownHrpError),
-    /// Legacy address is too long.
-    LegacyAddressTooLong(LegacyAddressTooLongError),
-    /// Invalid base58 payload data length for legacy address.
-    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
-    /// Invalid legacy address prefix in base58 data payload.
-    InvalidLegacyPrefix(InvalidLegacyPrefixError),
+    Bech32(Bech32Error),
     /// Address's network differs from required one.
     NetworkValidation(NetworkValidationError),
 }
@@ -104,13 +92,7 @@ impl fmt::Display for ParseError {
 
         match *self {
             Base58(ref e) => write_err!(f, "base58 error"; e),
-            Bech32(ref e) => write_err!(f, "bech32 segwit decoding error"; e),
-            WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
-            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            UnknownHrp(ref e) => write_err!(f, "tried to parse an unknown hrp"; e),
-            LegacyAddressTooLong(ref e) => write_err!(f, "legacy address base58 string"; e),
-            InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy address base58 data"; e),
-            InvalidLegacyPrefix(ref e) => write_err!(f, "legacy address base58 prefix"; e),
+            Bech32(ref e) => write_err!(f, "bech32 error"; e),
             NetworkValidation(ref e) => write_err!(f, "validation error"; e),
         }
     }
@@ -124,47 +106,21 @@ impl std::error::Error for ParseError {
         match *self {
             Base58(ref e) => Some(e),
             Bech32(ref e) => Some(e),
-            WitnessVersion(ref e) => Some(e),
-            WitnessProgram(ref e) => Some(e),
-            UnknownHrp(ref e) => Some(e),
-            LegacyAddressTooLong(ref e) => Some(e),
-            InvalidBase58PayloadLength(ref e) => Some(e),
-            InvalidLegacyPrefix(ref e) => Some(e),
             NetworkValidation(ref e) => Some(e),
         }
     }
 }
 
-impl From<base58::Error> for ParseError {
-    fn from(e: base58::Error) -> Self { Self::Base58(e) }
+impl From<Base58Error> for ParseError {
+    fn from(e: Base58Error) -> Self { Self::Base58(e) }
 }
 
-impl From<bech32::segwit::DecodeError> for ParseError {
-    fn from(e: bech32::segwit::DecodeError) -> Self { Self::Bech32(e) }
-}
-
-impl From<witness_version::TryFromError> for ParseError {
-    fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
-}
-
-impl From<witness_program::Error> for ParseError {
-    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
+impl From<Bech32Error> for ParseError {
+    fn from(e: Bech32Error) -> Self { Self::Bech32(e) }
 }
 
 impl From<UnknownHrpError> for ParseError {
-    fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
-}
-
-impl From<LegacyAddressTooLongError> for ParseError {
-    fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
-}
-
-impl From<InvalidBase58PayloadLengthError> for ParseError {
-    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
-}
-
-impl From<InvalidLegacyPrefixError> for ParseError {
-    fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
+    fn from(e: UnknownHrpError) -> ParseError { Self::Bech32(e.into()) }
 }
 
 impl From<NetworkValidationError> for ParseError {
@@ -204,6 +160,124 @@ impl fmt::Display for NetworkValidationError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for NetworkValidationError {}
+
+/// Bech32 related error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum Bech32Error {
+    /// Parse segwit Bech32 error.
+    ParseBech32(bech32::segwit::DecodeError),
+    /// A witness version conversion/parsing error.
+    WitnessVersion(witness_version::TryFromError),
+    /// A witness program error.
+    WitnessProgram(witness_program::Error),
+    /// Tried to parse an unknown HRP.
+    UnknownHrp(UnknownHrpError),
+}
+
+internals::impl_from_infallible!(Bech32Error);
+
+impl fmt::Display for Bech32Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Bech32Error::*;
+
+        match *self {
+            ParseBech32(ref e) => write_err!(f, "segwit parsing error"; e),
+            WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
+            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            UnknownHrp(ref e) => write_err!(f, "unknown hrp error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Bech32Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use Bech32Error::*;
+
+        match *self {
+            ParseBech32(ref e) => Some(e),
+            WitnessVersion(ref e) => Some(e),
+            WitnessProgram(ref e) => Some(e),
+            UnknownHrp(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<bech32::segwit::DecodeError> for Bech32Error {
+    fn from(e: bech32::segwit::DecodeError) -> Self { Self::ParseBech32(e) }
+}
+
+impl From<witness_version::TryFromError> for Bech32Error {
+    fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
+}
+
+impl From<witness_program::Error> for Bech32Error {
+    fn from(e: witness_program::Error) -> Self { Self::WitnessProgram(e) }
+}
+
+impl From<UnknownHrpError> for Bech32Error {
+    fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
+}
+
+/// Base58 related error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum Base58Error {
+    /// Parse legacy Base58 error.
+    ParseBase58(base58::Error),
+    /// Legacy address is too long.
+    LegacyAddressTooLong(LegacyAddressTooLongError),
+    /// Invalid base58 payload data length for legacy address.
+    InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+    /// Invalid legacy address prefix in base58 data payload.
+    InvalidLegacyPrefix(InvalidLegacyPrefixError),
+}
+
+internals::impl_from_infallible!(Base58Error);
+
+impl fmt::Display for Base58Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Base58Error::*;
+
+        match *self {
+            ParseBase58(ref e) => write_err!(f, "legacy parsing error"; e),
+            LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
+            InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy payload length error"; e),
+            InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Base58Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use Base58Error::*;
+
+        match *self {
+            ParseBase58(ref e) => Some(e),
+            LegacyAddressTooLong(ref e) => Some(e),
+            InvalidBase58PayloadLength(ref e) => Some(e),
+            InvalidLegacyPrefix(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<base58::Error> for Base58Error {
+    fn from(e: base58::Error) -> Self { Self::ParseBase58(e) }
+}
+
+impl From<LegacyAddressTooLongError> for Base58Error {
+    fn from(e: LegacyAddressTooLongError) -> Self { Self::LegacyAddressTooLong(e) }
+}
+
+impl From<InvalidBase58PayloadLengthError> for Base58Error {
+    fn from(e: InvalidBase58PayloadLengthError) -> Self { Self::InvalidBase58PayloadLength(e) }
+}
+
+impl From<InvalidLegacyPrefixError> for Base58Error {
+    fn from(e: InvalidLegacyPrefixError) -> Self { Self::InvalidLegacyPrefix(e) }
+}
 
 /// Decoded base58 data was an invalid length.
 #[derive(Debug, Clone, PartialEq, Eq)]
