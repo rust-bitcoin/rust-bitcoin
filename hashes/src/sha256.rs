@@ -14,7 +14,7 @@ use crate::{incomplete_block_len, sha256d, HashEngine as _};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     256,
     false,
     "Output of the SHA256 hash function."

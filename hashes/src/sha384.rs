@@ -4,7 +4,7 @@
 
 use crate::sha512;
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     384,
     false,
     "Output of the SHA384 hash function."

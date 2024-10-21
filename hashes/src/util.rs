@@ -195,6 +195,11 @@ macro_rules! hash_newtype {
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
+            /// Constructs a hash from the underlying byte array.
+            pub const fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
+            }
+
             /// Copies a byte slice into a hash object.
             #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
             #[allow(deprecated_in_future)]
@@ -210,11 +215,6 @@ macro_rules! hash_newtype {
             /// Returns a reference to the underlying byte array.
             pub const fn as_byte_array(&self) -> &<$hash as $crate::Hash>::Bytes {
                 self.0.as_byte_array()
-            }
-
-            /// Constructs a hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
-                $newtype(<$hash>::from_byte_array(bytes))
             }
         }
 
@@ -236,6 +236,8 @@ macro_rules! hash_newtype {
 
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
+            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
+
             #[inline]
             #[allow(deprecated_in_future)]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
@@ -245,8 +247,6 @@ macro_rules! hash_newtype {
             fn to_byte_array(self) -> Self::Bytes { self.to_byte_array() }
 
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
-
-            fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {

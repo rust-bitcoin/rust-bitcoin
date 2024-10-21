@@ -9,7 +9,7 @@
 
 use crate::{ripemd160, sha256};
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     160,
     false,
     "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"

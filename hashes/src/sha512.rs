@@ -6,7 +6,7 @@ use core::cmp;
 
 use crate::{incomplete_block_len, HashEngine as _};
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     512,
     false,
     "Output of the SHA512 hash function."
