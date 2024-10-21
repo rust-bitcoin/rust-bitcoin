@@ -18,7 +18,7 @@ use crate::Script;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::witness::{Witness, Iter};
+pub use primitives::witness::{Iter, Witness};
 
 impl Decodable for Witness {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
