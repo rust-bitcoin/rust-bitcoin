@@ -182,7 +182,7 @@ pub mod amount {
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
     pub use units::amount::{
-        Amount, CheckedSum, Denomination, Display, ParseAmountError, SignedAmount,
+        Amount, CheckedSum, Denomination, Display, ParseAmountError, ParseError, SignedAmount,
     };
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
