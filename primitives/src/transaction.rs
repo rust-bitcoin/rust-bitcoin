@@ -18,7 +18,84 @@ use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::write_err;
 #[cfg(feature = "alloc")]
-use units::parse;
+use units::{parse, Amount};
+
+#[cfg(feature = "alloc")]
+use crate::script::ScriptBuf;
+#[cfg(feature = "alloc")]
+use crate::sequence::Sequence;
+#[cfg(feature = "alloc")]
+use crate::witness::Witness;
+
+/// Bitcoin transaction input.
+///
+/// It contains the location of the previous transaction's output,
+/// that it spends and set of scripts that satisfy its spending
+/// conditions.
+///
+/// ### Bitcoin Core References
+///
+/// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(feature = "alloc")]
+pub struct TxIn {
+    /// The reference to the previous output that is being used as an input.
+    pub previous_output: OutPoint,
+    /// The script which pushes values on the stack which will cause
+    /// the referenced output's script to be accepted.
+    pub script_sig: ScriptBuf,
+    /// The sequence number, which suggests to miners which of two
+    /// conflicting transactions should be preferred, or 0xFFFFFFFF
+    /// to ignore this feature. This is generally never used since
+    /// the miner behavior cannot be enforced.
+    pub sequence: Sequence,
+    /// Witness data: an array of byte-arrays.
+    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
+    /// Encodable/Decodable, as it is (de)serialized at the end of the full
+    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
+    /// (de)serialization routines.
+    pub witness: Witness,
+}
+
+#[cfg(feature = "alloc")]
+impl TxIn {
+    /// An empty transaction input with the previous output as for a coinbase transaction.
+    pub const EMPTY_COINBASE: TxIn = TxIn {
+        previous_output: OutPoint::COINBASE_PREVOUT,
+        script_sig: ScriptBuf::new(),
+        sequence: Sequence::MAX,
+        witness: Witness::new(),
+    };
+}
+
+/// Bitcoin transaction output.
+///
+/// Defines new coins to be created as a result of the transaction,
+/// along with spending conditions ("script", aka "output script"),
+/// which an input spending it must satisfy.
+///
+/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
+///
+/// ### Bitcoin Core References
+///
+/// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(feature = "alloc")]
+pub struct TxOut {
+    /// The value of the output, in satoshis.
+    pub value: Amount,
+    /// The script which must be satisfied for the output to be spent.
+    pub script_pubkey: ScriptBuf,
+}
+
+#[cfg(feature = "alloc")]
+impl TxOut {
+    /// This is used as a "null txout" in consensus signing code.
+    pub const NULL: Self =
+        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+}
 
 /// A reference to a transaction output.
 ///
@@ -197,6 +274,27 @@ impl Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(feature = "alloc")]
+impl<'a> Arbitrary<'a> for TxIn {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxIn {
+            previous_output: OutPoint::arbitrary(u)?,
+            script_sig: ScriptBuf::arbitrary(u)?,
+            sequence: Sequence::arbitrary(u)?,
+            witness: Witness::arbitrary(u)?,
+        })
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(feature = "alloc")]
+impl<'a> Arbitrary<'a> for TxOut {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
+    }
 }
 
 #[cfg(feature = "arbitrary")]
