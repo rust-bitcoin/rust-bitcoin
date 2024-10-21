@@ -189,9 +189,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
-        $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
-        $crate::borrow_slice_impl!($newtype);
+        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, <$newtype as $crate::Hash>::DISPLAY_BACKWARD);
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
@@ -247,25 +245,6 @@ macro_rules! hash_newtype {
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
-        }
-
-        impl $crate::_export::_core::str::FromStr for $newtype {
-            type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::{hex::FromHex};
-
-                let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
-                if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    bytes.reverse();
-                };
-                Ok($newtype(<$hash>::from_byte_array(bytes)))
-            }
-        }
-
-        impl $crate::_export::_core::convert::AsRef<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
-            fn as_ref(&self) -> &[u8; <$hash as $crate::Hash>::LEN] {
-                AsRef::<[u8; <$hash as $crate::Hash>::LEN]>::as_ref(&self.0)
-            }
         }
         )+
     };

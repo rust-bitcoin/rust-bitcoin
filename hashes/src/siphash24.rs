@@ -6,8 +6,11 @@ use core::{cmp, mem};
 
 use crate::HashEngine as _;
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 8;
+
 crate::internal_macros::hash_type_no_default! {
-    64,
+    LEN,
     false,
     "Output of the SipHash24 hash function."
 }
@@ -241,7 +244,7 @@ mod tests {
     #[test]
     fn test_siphash_2_4() {
         #[rustfmt::skip]
-        let vecs: [[u8; 8]; 64] = [
+        let vecs: [[u8; LEN]; 64] = [
             [0x31, 0x0e, 0x0e, 0xdd, 0x47, 0xdb, 0x6f, 0x72],
             [0xfd, 0x67, 0xdc, 0x93, 0xc5, 0x39, 0xf8, 0x74],
             [0x5a, 0x4f, 0xa9, 0xd9, 0x09, 0x80, 0x6c, 0x0d],

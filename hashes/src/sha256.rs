@@ -14,8 +14,11 @@ use crate::{incomplete_block_len, sha256d, HashEngine as _};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
+/// The length in bytes of this hash.
+pub const LEN: usize = 32;
+
 crate::internal_macros::hash_type! {
-    256,
+    LEN,
     false,
     "Output of the SHA256 hash function."
 }
@@ -43,7 +46,7 @@ fn from_engine(mut e: HashEngine) -> Hash {
 #[cfg(hashes_fuzz)]
 fn from_engine(e: HashEngine) -> Hash {
     let mut hash = e.midstate_unchecked().bytes;
-    if hash == [0; 32] {
+    if hash == [0; LEN] {
         // Assume sha256 is secure and never generate 0-hashes (which represent invalid
         // secp256k1 secret keys, causing downstream application breakage).
         hash[0] = 1;
@@ -107,7 +110,7 @@ impl HashEngine {
     // Does not check that `HashEngine::can_extract_midstate`.
     #[cfg(not(hashes_fuzz))]
     fn midstate_unchecked(&self) -> Midstate {
-        let mut ret = [0; 32];
+        let mut ret = [0; LEN];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
             ret_bytes.copy_from_slice(&val.to_be_bytes());
         }
@@ -117,8 +120,8 @@ impl HashEngine {
     // Does not check that `HashEngine::can_extract_midstate`.
     #[cfg(hashes_fuzz)]
     fn midstate_unchecked(&self) -> Midstate {
-        let mut ret = [0; 32];
-        ret.copy_from_slice(&self.buffer[..32]);
+        let mut ret = [0; LEN];
+        ret.copy_from_slice(&self.buffer[..LEN]);
         Midstate { bytes: ret, bytes_hashed: self.bytes_hashed }
     }
 }
@@ -172,7 +175,7 @@ impl Hash {
 #[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Midstate {
     /// Raw bytes of the midstate i.e., the already-hashed contents of the hash engine.
-    bytes: [u8; 32],
+    bytes: [u8; LEN],
     /// Number of bytes hashed to achieve this midstate.
     // INVARIANT must always be a multiple of 64.
     bytes_hashed: u64,
@@ -184,7 +187,7 @@ impl Midstate {
     /// # Panics
     ///
     /// Panics if `bytes_hashed` is not a multiple of 64.
-    pub const fn new(state: [u8; 32], bytes_hashed: u64) -> Self {
+    pub const fn new(state: [u8; LEN], bytes_hashed: u64) -> Self {
         if bytes_hashed % 64 != 0 {
             panic!("bytes hashed is not a multiple of 64");
         }
@@ -193,10 +196,10 @@ impl Midstate {
     }
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
-    pub const fn as_parts(&self) -> (&[u8; 32], u64) { (&self.bytes, self.bytes_hashed) }
+    pub const fn as_parts(&self) -> (&[u8; LEN], u64) { (&self.bytes, self.bytes_hashed) }
 
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
-    pub const fn to_parts(self) -> ([u8; 32], u64) { (self.bytes, self.bytes_hashed) }
+    pub const fn to_parts(self) -> ([u8; LEN], u64) { (self.bytes, self.bytes_hashed) }
 
     /// Creates midstate for tagged hashes.
     ///
@@ -473,7 +476,7 @@ impl Midstate {
             state[6] = state[6].wrapping_add(g);
             state[7] = state[7].wrapping_add(h);
         }
-        let mut output = [0u8; 32];
+        let mut output = [0u8; LEN];
         let mut i = 0;
         #[allow(clippy::identity_op)] // more readble
         while i < 8 {
@@ -875,7 +878,7 @@ mod tests {
         #[derive(Clone)]
         struct Test {
             input: &'static str,
-            output: [u8; 32],
+            output: [u8; LEN],
             output_str: &'static str,
         }
 
@@ -957,7 +960,7 @@ mod tests {
             0xff, 0xa3, 0xa4, 0xc6, 0x44, 0x81, 0xd4, 0x1c,
         ]);
         // 32 bytes of zeroes representing "new asset"
-        engine.input(&[0; 32]);
+        engine.input(&[0; LEN]);
 
         // RPC output
         static WANT: Midstate = sha256::Midstate::new([
@@ -1007,14 +1010,14 @@ mod tests {
         // obtained by applying sha256 to sha256("MuSig coefficient")||sha256("MuSig
         // coefficient").
         #[rustfmt::skip]
-        static MIDSTATE: [u8; 32] = [
+        static MIDSTATE: [u8; LEN] = [
             0x0f, 0xd0, 0x69, 0x0c, 0xfe, 0xfe, 0xae, 0x97,
             0x99, 0x6e, 0xac, 0x7f, 0x5c, 0x30, 0xd8, 0x64,
             0x8c, 0x4a, 0x05, 0x73, 0xac, 0xa1, 0xa2, 0x2f,
             0x6f, 0x43, 0xb8, 0x01, 0x85, 0xce, 0x27, 0xcd,
         ];
         #[rustfmt::skip]
-        static HASH_EXPECTED: [u8; 32] = [
+        static HASH_EXPECTED: [u8; LEN] = [
             0x18, 0x84, 0xe4, 0x72, 0x40, 0x4e, 0xf4, 0x5a,
             0xb4, 0x9c, 0x4e, 0xa4, 0x9a, 0xe6, 0x23, 0xa8,
             0x88, 0x52, 0x7f, 0x7d, 0x8a, 0x06, 0x94, 0x20,
@@ -1069,7 +1072,7 @@ mod tests {
         use serde_test::{assert_tokens, Configure, Token};
 
         #[rustfmt::skip]
-        static HASH_BYTES: [u8; 32] = [
+        static HASH_BYTES: [u8; LEN] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7,
             0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6, 0x3d, 0x97,
             0xaa, 0x63, 0x15, 0x64, 0xd5, 0xd7, 0x89, 0xc2,
