@@ -26,7 +26,7 @@ use crate::{Txid, Wtxid};
 #[rustfmt::skip]
 #[doc(inline)]
 pub use self::block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
-pub use primitives::merkle_tree::*;
+pub use primitives::merkle_tree::{TxMerkleNode, WitnessMerkleNode};
 
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
