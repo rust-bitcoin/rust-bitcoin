@@ -887,7 +887,7 @@ impl Amount {
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
-    pub fn to_sat(self) -> u64 { self.0 }
+    pub const fn to_sat(self) -> u64 { self.0 }
 
     /// Converts from a value expressing bitcoins to an [`Amount`].
     #[cfg(feature = "alloc")]
@@ -1313,7 +1313,7 @@ impl SignedAmount {
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
-    pub fn to_sat(self) -> i64 { self.0 }
+    pub const fn to_sat(self) -> i64 { self.0 }
 
     /// Convert from a value expressing bitcoins to an [`SignedAmount`].
     #[cfg(feature = "alloc")]
