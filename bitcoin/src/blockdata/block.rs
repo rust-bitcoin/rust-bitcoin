@@ -71,6 +71,11 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Header {}
+}
+
 impl Encodable for Version {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.to_consensus().consensus_encode(w)

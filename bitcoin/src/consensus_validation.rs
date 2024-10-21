@@ -161,6 +161,11 @@ define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Script {}
+}
+
 impl Transaction {
     /// Verifies that this transaction is able to spend its inputs.
     ///

@@ -81,6 +81,11 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::ScriptBuf {}
+}
+
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptBufExtPriv impl for ScriptBuf {
         /// Pretends to convert `&mut ScriptBuf` to `&mut Vec<u8>` so that it can be modified.
