@@ -140,7 +140,7 @@ crate::internal_macros::define_extension_trait! {
         fn push_ecdsa_signature(&mut self, signature: ecdsa::Signature) {
             self.push(signature.serialize())
         }
- 
+
         /// Get Tapscript following BIP341 rules regarding accounting for an annex.
         ///
         /// This does not guarantee that this represents a P2TR [`Witness`]. It

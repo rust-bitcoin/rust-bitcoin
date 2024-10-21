@@ -63,8 +63,12 @@ impl Witness {
     /// UNSTABLE: This function may change, break, or disappear in any release.
     #[inline]
     #[doc(hidden)]
-    #[allow(non_snake_case)]    // Because of `__unstable`.
-    pub fn from_parts__unstable(content: Vec<u8>, witness_elements: usize, indices_start: usize) -> Self {
+    #[allow(non_snake_case)] // Because of `__unstable`.
+    pub fn from_parts__unstable(
+        content: Vec<u8>,
+        witness_elements: usize,
+        indices_start: usize,
+    ) -> Self {
         Witness { content, witness_elements, indices_start }
     }
 
@@ -462,11 +466,7 @@ mod test {
         // The last four bytes represent start at index 0.
         let content = [0_u8; 5];
 
-        Witness {
-            witness_elements: 1,
-            content: content.to_vec(),
-            indices_start: 1,
-        }
+        Witness { witness_elements: 1, content: content.to_vec(), indices_start: 1 }
     }
 
     #[test]
@@ -568,7 +568,7 @@ mod test {
     #[test]
     fn exact_sized_iterator() {
         let arbitrary_element = [1_u8, 2, 3];
-        let num_pushes = 5;     // Somewhat arbitrary.
+        let num_pushes = 5; // Somewhat arbitrary.
 
         let mut witness = Witness::default();
 
@@ -623,7 +623,6 @@ mod test {
         let ser = serde_json::to_string(&original).unwrap();
         let rinsed: Witness = serde_json::from_str(&ser).unwrap();
         assert_eq!(rinsed, original);
-
     }
 
     #[test]

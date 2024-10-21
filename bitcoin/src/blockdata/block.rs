@@ -141,7 +141,8 @@ impl Block {
             .iter()
             .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
         {
-            let bytes = <[u8; 32]>::try_from(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+            let bytes = <[u8; 32]>::try_from(&coinbase.output[pos].script_pubkey.as_bytes()[6..38])
+                .unwrap();
             let commitment = WitnessCommitment::from_byte_array(bytes);
             // Witness reserved value is in coinbase input witness.
             let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
