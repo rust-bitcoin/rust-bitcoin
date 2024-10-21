@@ -21,7 +21,7 @@ pub use self::{
 /// Implements `FeeRate` and assoctiated features.
 pub mod fee_rate {
     /// Re-export everything from the [`units::fee_rate`] module.
-    pub use units::fee_rate::*;
+    pub use units::fee_rate::FeeRate;
 
     #[cfg(test)]
     mod tests {
@@ -62,7 +62,7 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
-        pub use primitives::locktime::absolute::*;
+        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, Time};
 
         impl Encodable for LockTime {
             #[inline]
@@ -87,7 +87,7 @@ pub mod locktime {
         //! whether bit 22 of the `u32` consensus value is set.
 
         /// Re-export everything from the `primitives::locktime::relative` module.
-        pub use primitives::locktime::relative::*;
+        pub use primitives::locktime::relative::{Height, LockTime, Time, TimeOverflowError, DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError};
     }
 }
 
@@ -100,5 +100,5 @@ pub mod opcodes {
 /// Implements `Weight` and associated features.
 pub mod weight {
     /// Re-export everything from the [`units::weight`] module.
-    pub use units::weight::*;
+    pub use units::weight::Weight;
 }
