@@ -12,7 +12,7 @@ use crate::crypto::{ecdsa, taproot};
 use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
-use crate::psbt::{self, error, raw, Error};
+use crate::psbt::{error, raw, Error};
 use crate::script::ScriptBuf;
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
