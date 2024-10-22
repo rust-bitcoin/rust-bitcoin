@@ -280,6 +280,7 @@ jobs:
 
   WASM:                         # hashes crate only.
     name: WASM - stable toolchain
+    continue-on-error: true     # wasm-bindgen-test is not currently working.
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
