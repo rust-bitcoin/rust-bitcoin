@@ -110,22 +110,7 @@ impl From<&LeafNode> for TapNodeHash {
 impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
     pub fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
-        Self::combine_node_hashes(a, b).0
-    }
-
-    /// Computes branch hash given two hashes of the nodes underneath it and returns
-    /// whether the left node was the one hashed first.
-    fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
-        let mut eng = sha256t::Hash::<TapBranchTag>::engine();
-        if a < b {
-            eng.input(a.as_ref());
-            eng.input(b.as_ref());
-        } else {
-            eng.input(b.as_ref());
-            eng.input(a.as_ref());
-        };
-        let inner = sha256t::Hash::<TapBranchTag>::from_engine(eng);
-        (TapNodeHash::from_byte_array(inner.to_byte_array()), a < b)
+        combine_node_hashes(a, b).0
     }
 
     /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
@@ -143,6 +128,21 @@ impl TapNodeHash {
 
 impl From<TapLeafHash> for TapNodeHash {
     fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
+}
+
+/// Computes branch hash given two hashes of the nodes underneath it and returns
+/// whether the left node was the one hashed first.
+fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
+    let mut eng = sha256t::Hash::<TapBranchTag>::engine();
+    if a < b {
+        eng.input(a.as_ref());
+        eng.input(b.as_ref());
+    } else {
+        eng.input(b.as_ref());
+        eng.input(a.as_ref());
+    };
+    let inner = sha256t::Hash::<TapBranchTag>::from_engine(eng);
+    (TapNodeHash::from_byte_array(inner.to_byte_array()), a < b)
 }
 
 /// Maximum depth of a Taproot tree script spend path.
@@ -853,7 +853,7 @@ impl NodeInfo {
     /// Combines two [`NodeInfo`] to create a new parent.
     pub fn combine(a: Self, b: Self) -> Result<Self, TaprootBuilderError> {
         let mut all_leaves = Vec::with_capacity(a.leaves.len() + b.leaves.len());
-        let (hash, left_first) = TapNodeHash::combine_node_hashes(a.hash, b.hash);
+        let (hash, left_first) = combine_node_hashes(a.hash, b.hash);
         let (a, b) = if left_first { (a, b) } else { (b, a) };
         for mut a_leaf in a.leaves {
             a_leaf.merkle_branch.push(b.hash)?; // add hashing partner
