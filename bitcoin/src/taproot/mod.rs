@@ -11,7 +11,7 @@ use core::cmp::Reverse;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use hashes::{sha256t, HashEngine};
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
@@ -27,40 +27,7 @@ use crate::{Script, ScriptBuf};
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
-
-// Taproot test vectors from BIP-341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapLeaf\".
-    ///
-    /// This is used for computing tapscript script spend hash.
-    pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
-}
-
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
-}
-
-hash_newtype! {
-    /// Tagged hash used in Taproot trees.
-    ///
-    /// See BIP-340 for tagging rules.
-    pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
-}
-
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
-}
-
-hash_newtype! {
-    /// Taproot-tagged hash with tag \"TapTweak\".
-    ///
-    /// This hash type is used while computing the tweaked public key.
-    pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
-}
+pub use primitives::taproot::{TapLeafTag, TapLeafHash, TapBranchTag, TapNodeHash, TapTweakTag, TapTweakHash};
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TapTweakHash`] type.
@@ -133,10 +100,6 @@ crate::internal_macros::define_extension_trait! {
             TapNodeHash::from(TapLeafHash::from_script(script, ver))
         }
     }
-}
-
-impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
 }
 
 /// Computes branch hash given two hashes of the nodes underneath it and returns
@@ -1554,6 +1517,13 @@ impl fmt::Display for InvalidControlBlockSizeError {
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidControlBlockSizeError {}
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::TapTweakHash {}
+    impl Sealed for super::TapLeafHash {}
+    impl Sealed for super::TapNodeHash {}
+}
+
 #[cfg(test)]
 mod test {
     use hashes::sha256;
@@ -1863,15 +1833,17 @@ mod test {
     #[test]
     #[cfg(feature = "serde")]
     fn test_merkle_branch_serde() {
-        let hash1 = TapNodeHash(
+        let hash1 = TapNodeHash::from_byte_array(
             "03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b"
                 .parse::<sha256t::Hash<TapBranchTag>>()
-                .unwrap(),
+                .unwrap()
+                .to_byte_array(),
         );
-        let hash2 = TapNodeHash(
+        let hash2 = TapNodeHash::from_byte_array(
             "8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9"
                 .parse::<sha256t::Hash<TapBranchTag>>()
-                .unwrap(),
+                .unwrap()
+                .to_byte_array(),
         );
         let merkle_branch = TaprootMerkleBranch::from([hash1, hash2]);
         // use serde_test to test serialization and deserialization
