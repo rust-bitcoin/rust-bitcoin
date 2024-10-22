@@ -11,7 +11,7 @@ use crate::psbt::serialize::Serialize;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    input::{Input, PsbtSighashType},
+    input::Input,
     output::Output,
 };
 

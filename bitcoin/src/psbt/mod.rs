@@ -13,6 +13,7 @@ mod error;
 mod map;
 pub mod raw;
 pub mod serialize;
+pub mod sighash_type;
 
 use core::{cmp, fmt};
 #[cfg(feature = "std")]
@@ -34,8 +35,9 @@ use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    map::{Input, Output, PsbtSighashType},
+    map::{Input, Output},
     error::Error,
+    sighash_type::PsbtSighashType,
 };
 
 /// A Partially Signed Transaction.
