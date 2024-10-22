@@ -2,10 +2,8 @@
 
 //! Rust hashes library.
 //!
-//! This is a simple, no-dependency library which implements the hash functions
-//! needed by Bitcoin. These are SHA256, SHA256d, and RIPEMD160. As an ancillary
-//! thing, it exposes hexadecimal serialization and deserialization, since these
-//! are needed to display hashes anway.
+//! This library implements the hash functions needed by Bitcoin. As an ancillary thing, it exposes
+//! hexadecimal serialization and deserialization, since these are needed to display hashes.
 //!
 //! ## Commonly used operations
 //!
@@ -23,9 +21,10 @@
 //! Hashing content from a reader:
 //!
 //! ```
-//! #[cfg(feature = "std")] {
+//! # #[cfg(feature = "std")] {
 //! use bitcoin_hashes::Sha256;
-//! let mut reader: &[u8] = b"hello"; // in real code, this could be a `File` or `TcpStream`
+//!
+//! let mut reader: &[u8] = b"hello"; // In real code, this could be a `File` or `TcpStream`.
 //! let mut engine = Sha256::engine();
 //! std::io::copy(&mut reader, &mut engine).unwrap();
 //! let _hash = Sha256::from_engine(engine);
@@ -33,12 +32,13 @@
 //! ```
 //!
 //!
-//! Hashing content by [`std::io::Write`] on `HashEngine`:
+//! Hashing content using [`std::io::Write`] on a `HashEngine`:
 //!
 //! ```
-//! #[cfg(feature = "std")] {
-//! use std::io::Write as _; // Or `bitcoin-io::Write` if `bitcoin-io` feature is enabled.
+//! # #[cfg(feature = "std")] {
+//! use std::io::Write as _;
 //! use bitcoin_hashes::Sha256;
+//!
 //! let part1: &[u8] = b"hello";
 //! let part2: &[u8] = b" ";
 //! let part3: &[u8] = b"world";
@@ -74,8 +74,8 @@ extern crate core;
 #[cfg(feature = "bitcoin-io")]
 extern crate bitcoin_io as io;
 
-#[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.
+#[cfg(feature = "serde")]
 pub extern crate serde;
 
 #[cfg(all(test, feature = "serde"))]
@@ -265,23 +265,23 @@ pub trait Hash:
     /// Length of the hash, in bytes.
     const LEN: usize = Self::Bytes::LEN;
 
+    /// Flag indicating whether user-visible serializations of this hash should be backward.
+    ///
+    /// For some reason Satoshi decided this should be true for `Sha256dHash`, so here we are.
+    const DISPLAY_BACKWARD: bool = false;
+
+    /// Constructs a hash from the underlying byte array.
+    fn from_byte_array(bytes: Self::Bytes) -> Self;
+
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
-
-    /// Flag indicating whether user-visible serializations of this hash
-    /// should be backward. For some reason Satoshi decided this should be
-    /// true for `Sha256dHash`, so here we are.
-    const DISPLAY_BACKWARD: bool = false;
 
     /// Returns the underlying byte array.
     fn to_byte_array(self) -> Self::Bytes;
 
     /// Returns a reference to the underlying byte array.
     fn as_byte_array(&self) -> &Self::Bytes;
-
-    /// Constructs a hash from the underlying byte array.
-    fn from_byte_array(bytes: Self::Bytes) -> Self;
 }
 
 /// Ensures that a type is an array.

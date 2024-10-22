@@ -168,6 +168,9 @@ impl crate::HashEngine for HashEngine {
 }
 
 impl Hash {
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+
     /// Hashes the given data with an engine with the provided keys.
     pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Hash {
         let mut engine = HashEngine::with_keys(k0, k1);

@@ -9,7 +9,7 @@
 
 use crate::sha512;
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     256,
     false,
     "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 algorithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>."

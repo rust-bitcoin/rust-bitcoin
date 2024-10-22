@@ -6,7 +6,7 @@ use core::cmp;
 
 use crate::{incomplete_block_len, HashEngine as _};
 
-crate::internal_macros::hash_type! {
+crate::internal_macros::general_hash_type! {
     160,
     false,
     "Output of the RIPEMD160 hash function."
