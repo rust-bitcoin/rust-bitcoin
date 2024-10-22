@@ -1509,6 +1509,7 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::ScriptBufExt as _;
+    use crate::taproot::TapTweakHashExt as _;
 
     extern crate serde_json;
 

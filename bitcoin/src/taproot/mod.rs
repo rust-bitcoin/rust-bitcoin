@@ -62,40 +62,46 @@ hash_newtype! {
     pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
 }
 
-impl TapTweakHash {
-    /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
-    /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_tweak(
-        internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapNodeHash>,
-    ) -> TapTweakHash {
-        let mut eng = sha256t::Hash::<TapTweakTag>::engine();
-        // always hash the key
-        eng.input(&internal_key.serialize());
-        if let Some(h) = merkle_root {
-            eng.input(h.as_ref());
-        } else {
-            // nothing to hash
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapTweakHash`] type.
+    pub trait TapTweakHashExt impl for TapTweakHash {
+        /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
+        /// `P` is the internal key and `R` is the Merkle root.
+        fn from_key_and_tweak(
+            internal_key: UntweakedPublicKey,
+            merkle_root: Option<TapNodeHash>,
+        ) -> TapTweakHash {
+            let mut eng = sha256t::Hash::<TapTweakTag>::engine();
+            // always hash the key
+            eng.input(&internal_key.serialize());
+            if let Some(h) = merkle_root {
+                eng.input(h.as_ref());
+            } else {
+                // nothing to hash
+            }
+            let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
+            TapTweakHash::from_byte_array(inner.to_byte_array())
         }
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        TapTweakHash::from_byte_array(inner.to_byte_array())
-    }
 
-    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-    pub fn to_scalar(self) -> Scalar {
-        // This is statistically extremely unlikely to panic.
-        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
+        /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+        fn to_scalar(self) -> Scalar {
+            // This is statistically extremely unlikely to panic.
+            Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
+        }
     }
 }
 
-impl TapLeafHash {
-    /// Computes the leaf hash from components.
-    pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
-        let mut eng = sha256t::Hash::<TapLeafTag>::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
-        script.consensus_encode(&mut eng).expect("engines don't error");
-        let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
-        TapLeafHash::from_byte_array(inner.to_byte_array())
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapLeafHash`] type.
+    pub trait TapLeafHashExt impl for TapLeafHash {
+        /// Computes the leaf hash from components.
+        fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
+            let mut eng = sha256t::Hash::<TapLeafTag>::engine();
+            ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+            script.consensus_encode(&mut eng).expect("engines don't error");
+            let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
+            TapLeafHash::from_byte_array(inner.to_byte_array())
+        }
     }
 }
 
@@ -107,22 +113,25 @@ impl From<&LeafNode> for TapNodeHash {
     fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
-impl TapNodeHash {
-    /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
-        combine_node_hashes(a, b).0
-    }
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TapNodeHash`] type.
+    pub trait TapNodeHashExt impl for TapNodeHash {
+        /// Computes branch hash given two hashes of the nodes underneath it.
+        fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
+            combine_node_hashes(a, b).0
+        }
 
-    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
-    ///
-    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
-    /// hash is constructed from a hidden node. This also has better ergonomics
-    /// because it does not require the caller to import the Hash trait.
-    pub fn assume_hidden(hash: [u8; 32]) -> TapNodeHash { TapNodeHash::from_byte_array(hash) }
+        /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+        ///
+        /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+        /// hash is constructed from a hidden node. This also has better ergonomics
+        /// because it does not require the caller to import the Hash trait.
+        fn assume_hidden(hash: [u8; 32]) -> TapNodeHash { TapNodeHash::from_byte_array(hash) }
 
-    /// Computes the [`TapNodeHash`] from a script and a leaf version.
-    pub fn from_script(script: &Script, ver: LeafVersion) -> TapNodeHash {
-        TapNodeHash::from(TapLeafHash::from_script(script, ver))
+        /// Computes the [`TapNodeHash`] from a script and a leaf version.
+        fn from_script(script: &Script, ver: LeafVersion) -> TapNodeHash {
+            TapNodeHash::from(TapLeafHash::from_script(script, ver))
+        }
     }
 }
 
