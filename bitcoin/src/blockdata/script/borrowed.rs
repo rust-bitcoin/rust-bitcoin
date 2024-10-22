@@ -387,6 +387,11 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Script {}
+}
+
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
         fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {

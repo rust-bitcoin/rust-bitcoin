@@ -195,6 +195,13 @@ pub(super) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
 
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Script {}
+    impl Sealed for super::ScriptBuf {}
+    impl Sealed for super::Builder {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
