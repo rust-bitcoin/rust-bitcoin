@@ -51,14 +51,17 @@ impl From<ParseError> for DeserializeError {
 }
 
 /// Error when consensus decoding from an `[IterReader]`.
+///
+/// This is the same as a `DeserializeError` with an additional variant to return any error yealded
+/// by the inner bytes iterator.
 #[derive(Debug)]
 pub enum DecodeError<E> {
-    /// Attempted to decode an object from an iterator that yielded too many bytes.
-    TooManyBytes,
     /// Invalid consensus encoding.
-    Consensus(Error),
+    Parse(ParseError),
+    /// Data unconsumed error.
+    Unconsumed,
     /// Other decoding error.
-    Other(E),
+    Other(E),                   // Yielded by the inner iterator.
 }
 
 internals::impl_from_infallible!(DecodeError<E>);
@@ -68,9 +71,8 @@ impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
         use DecodeError::*;
 
         match *self {
-            TooManyBytes =>
-                write!(f, "attempted to decode object from an iterator that yielded too many bytes"),
-            Consensus(ref e) => write_err!(f, "invalid consensus encoding"; e),
+            Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
+            Unconsumed => write!(f, "data not consumed entirely when deserializing"),
             Other(ref other) => write!(f, "other decoding error: {:?}", other),
         }
     }
@@ -82,8 +84,8 @@ impl<E: fmt::Debug + std::error::Error + 'static> std::error::Error for DecodeEr
         use DecodeError::*;
 
         match *self {
-            TooManyBytes => None,
-            Consensus(ref e) => Some(e),
+            Parse(ref e) => Some(e),
+            Unconsumed => None,
             Other(ref e) => Some(e),
         }
     }

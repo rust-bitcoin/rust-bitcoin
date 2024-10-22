@@ -17,7 +17,7 @@ use serde::de::{SeqAccess, Unexpected, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserializer, Serializer};
 
-use super::{Decodable, Encodable, Error, ParseError};
+use super::{Decodable, Encodable, ParseError};
 use crate::consensus::{DecodeError, IterReader};
 
 /// Hex-encoding strategy
@@ -387,10 +387,8 @@ where
     fn unify(self) -> E {
         match self {
             DecodeError::Other(error) => error,
-            DecodeError::TooManyBytes => E::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(Error::Parse(e)) => consensus_error_into_serde(e),
-            DecodeError::Consensus(Error::Io(_)) =>
-                unreachable!("iterator never returns I/O error"),
+            DecodeError::Unconsumed => E::custom(format_args!("got more bytes than expected")),
+            DecodeError::Parse(e) => consensus_error_into_serde(e),
         }
     }
 }
@@ -402,10 +400,8 @@ where
     fn into_de_error<DE: serde::de::Error>(self) -> DE {
         match self {
             DecodeError::Other(error) => error.into_de_error(),
-            DecodeError::TooManyBytes => DE::custom(format_args!("got more bytes than expected")),
-            DecodeError::Consensus(Error::Parse(e)) => consensus_error_into_serde(e),
-            DecodeError::Consensus(Error::Io(_)) =>
-                unreachable!("iterator never returns I/O error"),
+            DecodeError::Unconsumed => DE::custom(format_args!("got more bytes than expected")),
+            DecodeError::Parse(e) => consensus_error_into_serde(e),
         }
     }
 }
