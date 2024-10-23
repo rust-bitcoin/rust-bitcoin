@@ -16,7 +16,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};
 use crate::internal_macros::{impl_array_newtype_stringify, impl_consensus_encoding};
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
-use crate::{block, Block, BlockHash, Transaction};
+use crate::{block, consensus, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -84,8 +84,9 @@ impl Decodable for PrefilledTransaction {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
-        let idx = u16::try_from(idx)
-            .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
+        let idx = u16::try_from(idx).map_err(|_| {
+            consensus::parse_failed_error("BIP152 prefilled tx index out of bounds")
+        })?;
         let tx = Transaction::consensus_decode(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
@@ -172,7 +173,7 @@ impl Decodable for HeaderAndShortIds {
         };
         match header_short_ids.short_ids.len().checked_add(header_short_ids.prefilled_txs.len()) {
             Some(x) if x <= u16::MAX.into() => Ok(header_short_ids),
-            _ => Err(encode::Error::ParseFailed("indexes overflowed 16 bits")),
+            _ => Err(consensus::parse_failed_error("indexes overflowed 16 bits")),
         }
     }
 }
@@ -312,12 +313,13 @@ impl Decodable for BlockTransactionsRequest {
                 // transactions that would be allowed in a vector.
                 let byte_size = nb_indexes
                     .checked_mul(mem::size_of::<Transaction>())
-                    .ok_or(encode::Error::ParseFailed("invalid length"))?;
+                    .ok_or(consensus::parse_failed_error("invalid length"))?;
                 if byte_size > encode::MAX_VEC_SIZE {
-                    return Err(encode::Error::OversizedVectorAllocation {
+                    return Err(encode::ParseError::OversizedVectorAllocation {
                         requested: byte_size,
                         max: encode::MAX_VEC_SIZE,
-                    });
+                    }
+                    .into());
                 }
 
                 let mut indexes = Vec::with_capacity(nb_indexes);
@@ -326,12 +328,12 @@ impl Decodable for BlockTransactionsRequest {
                     let differential = r.read_compact_size()?;
                     last_index = match last_index.checked_add(differential) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(consensus::parse_failed_error("block index overflow")),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
                         Some(i) => i,
-                        None => return Err(encode::Error::ParseFailed("block index overflow")),
+                        None => return Err(consensus::parse_failed_error("block index overflow")),
                     };
                 }
                 indexes

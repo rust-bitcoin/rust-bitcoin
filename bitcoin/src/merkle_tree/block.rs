@@ -426,10 +426,11 @@ impl Decodable for PartialMerkleTree {
 
         let nb_bytes_for_bits = r.read_compact_size()? as usize;
         if nb_bytes_for_bits > MAX_VEC_SIZE {
-            return Err(encode::Error::OversizedVectorAllocation {
+            return Err(encode::ParseError::OversizedVectorAllocation {
                 requested: nb_bytes_for_bits,
                 max: MAX_VEC_SIZE,
-            });
+            }
+            .into());
         }
         let mut bits = vec![false; nb_bytes_for_bits * 8];
         for chunk in bits.chunks_mut(8) {

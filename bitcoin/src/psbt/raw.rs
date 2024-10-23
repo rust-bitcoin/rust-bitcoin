@@ -82,10 +82,10 @@ impl Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE.to_u64() {
-            return Err(encode::Error::OversizedVectorAllocation {
+            return Err(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
-            }
+            })
             .into());
         }
 

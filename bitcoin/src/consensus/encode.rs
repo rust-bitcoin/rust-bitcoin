@@ -14,132 +14,29 @@
 //! scripts come with an opcode decode, hashes are big-endian, numbers are
 //! typically big-endian decimals, etc.)
 
-use core::{fmt, mem};
+use core::mem;
 
 use hashes::{sha256, sha256d, GeneralHash, Hash};
-use hex::error::{InvalidCharError, OddLengthStringError};
-use internals::{compact_size, write_err, ToU64};
+use hex::DisplayHex as _;
+use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
 
+use super::IterReader;
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::{self, BlockHash};
-use crate::consensus::{DecodeError, IterReader};
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "std")]
 use crate::p2p::{
     address::{AddrV2Message, Address},
     message_blockdata::Inventory,
 };
-use crate::prelude::{rc, sync, Box, Cow, DisplayHex, String, Vec};
+use crate::prelude::{rc, sync, Box, Cow, String, Vec};
 use crate::taproot::TapLeafHash;
 use crate::transaction::{Transaction, TxIn, TxOut};
 
-/// Encoding error.
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// And I/O error.
-    Io(io::Error),
-    /// Tried to allocate an oversized vector.
-    OversizedVectorAllocation {
-        /// The capacity requested.
-        requested: usize,
-        /// The maximum capacity.
-        max: usize,
-    },
-    /// Checksum was invalid.
-    InvalidChecksum {
-        /// The expected checksum.
-        expected: [u8; 4],
-        /// The invalid checksum.
-        actual: [u8; 4],
-    },
-    /// VarInt was encoded in a non-minimal way.
-    NonMinimalVarInt,
-    /// Parsing error.
-    ParseFailed(&'static str),
-    /// Unsupported Segwit flag.
-    UnsupportedSegwitFlag(u8),
-}
-
-internals::impl_from_infallible!(Error);
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-
-        match *self {
-            Io(ref e) => write_err!(f, "IO error"; e),
-            OversizedVectorAllocation { requested: ref r, max: ref m } =>
-                write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
-            InvalidChecksum { expected: ref e, actual: ref a } =>
-                write!(f, "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
-            NonMinimalVarInt => write!(f, "non-minimal varint"),
-            ParseFailed(ref s) => write!(f, "parse failed: {}", s),
-            UnsupportedSegwitFlag(ref swflag) =>
-                write!(f, "unsupported segwit version: {}", swflag),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
-
-        match self {
-            Io(e) => Some(e),
-            OversizedVectorAllocation { .. }
-            | InvalidChecksum { .. }
-            | NonMinimalVarInt
-            | ParseFailed(_)
-            | UnsupportedSegwitFlag(_) => None,
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self { Error::Io(error) }
-}
-
-/// Hex deserialization error.
-#[derive(Debug)]
-pub enum FromHexError {
-    /// Purported hex string had odd length.
-    OddLengthString(OddLengthStringError),
-    /// Decoding error.
-    Decode(DecodeError<InvalidCharError>),
-}
-
-impl fmt::Display for FromHexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use FromHexError::*;
-
-        match *self {
-            OddLengthString(ref e) =>
-                write_err!(f, "odd length, failed to create bytes from hex"; e),
-            Decode(ref e) => write_err!(f, "decoding error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for FromHexError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use FromHexError::*;
-
-        match *self {
-            OddLengthString(ref e) => Some(e),
-            Decode(ref e) => Some(e),
-        }
-    }
-}
-
-impl From<OddLengthStringError> for FromHexError {
-    #[inline]
-    fn from(e: OddLengthStringError) -> Self { Self::OddLengthString(e) }
-}
+#[rustfmt::skip]                // Keep public re-exports separate.
+pub use super::{Error, FromHexError, ParseError, DeserializeError};
 
 /// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
@@ -156,14 +53,14 @@ pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
 
 /// Deserializes an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
+pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, DeserializeError> {
     let (rv, consumed) = deserialize_partial(data)?;
 
     // Fail if data are not consumed entirely.
     if consumed == data.len() {
         Ok(rv)
     } else {
-        Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+        Err(DeserializeError::Unconsumed)
     }
 }
 
@@ -177,9 +74,15 @@ pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
 
 /// Deserializes an object from a vector, but will not report an error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
+pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), ParseError> {
     let mut decoder = Cursor::new(data);
-    let rv = Decodable::consensus_decode_from_finite_reader(&mut decoder)?;
+
+    let rv = match Decodable::consensus_decode_from_finite_reader(&mut decoder) {
+        Ok(rv) => rv,
+        Err(Error::Parse(e)) => return Err(e),
+        Err(Error::Io(_)) =>
+            unreachable!("consensus_decode code never returns an I/O error for in-memory reads"),
+    };
     let consumed = decoder.position() as usize;
 
     Ok((rv, consumed))
@@ -263,7 +166,7 @@ macro_rules! decoder_fn {
         #[inline]
         fn $name(&mut self) -> core::result::Result<$val_type, Error> {
             let mut val = [0; $byte_len];
-            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            self.read_exact(&mut val[..])?;
             Ok(<$val_type>::from_le_bytes(val))
         }
     };
@@ -319,9 +222,7 @@ impl<R: Read + ?Sized> ReadExt for R {
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
     #[inline]
-    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
-        self.read_exact(slice).map_err(Error::Io)
-    }
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> { Ok(self.read_exact(slice)?) }
     #[inline]
     #[rustfmt::skip] // Formatter munges code comments below.
     fn read_compact_size(&mut self) -> Result<u64, Error> {
@@ -329,7 +230,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFF => {
                 let x = self.read_u64()?;
                 if x < 0x1_0000_0000 { // I.e., would have fit in a `u32`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(ParseError::NonMinimalVarInt.into())
                 } else {
                     Ok(x)
                 }
@@ -337,7 +238,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFE => {
                 let x = self.read_u32()?;
                 if x < 0x1_0000 { // I.e., would have fit in a `u16`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(ParseError::NonMinimalVarInt.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -345,7 +246,7 @@ impl<R: Read + ?Sized> ReadExt for R {
             0xFD => {
                 let x = self.read_u16()?;
                 if x < 0xFD {   // Could have been encoded as a `u8`.
-                    Err(Error::NonMinimalVarInt)
+                    Err(ParseError::NonMinimalVarInt.into())
                 } else {
                     Ok(x as u64)
                 }
@@ -521,7 +422,7 @@ impl Decodable for String {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<String, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
-            .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
+            .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
     }
 }
 
@@ -536,7 +437,7 @@ impl Decodable for Cow<'static, str> {
     #[inline]
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Cow<'static, str>, Error> {
         String::from_utf8(Decodable::consensus_decode(r)?)
-            .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
+            .map_err(|_| super::parse_failed_error("String was not valid UTF8"))
             .map(Cow::Owned)
     }
 }
@@ -754,7 +655,8 @@ impl Decodable for CheckedData {
         let data = read_bytes_from_finite_reader(r, opts)?;
         let expected_checksum = sha2_checksum(&data);
         if expected_checksum != checksum {
-            Err(self::Error::InvalidChecksum { expected: expected_checksum, actual: checksum })
+            Err(ParseError::InvalidChecksum { expected: expected_checksum, actual: checksum }
+                .into())
         } else {
             Ok(CheckedData { data, checksum })
         }
@@ -859,6 +761,7 @@ impl Decodable for TapLeafHash {
 
 #[cfg(test)]
 mod tests {
+    use core::fmt;
     use core::mem::discriminant;
 
     use super::*;
@@ -962,50 +865,50 @@ mod tests {
             discriminant(
                 &test_varint_encode(0xFF, &(0x100000000_u64 - 1).to_le_bytes()).unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFE, &(0x10000_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&test_varint_encode(0xFD, &(0xFD_u64 - 1).to_le_bytes()).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
 
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
         assert_eq!(
             discriminant(
                 &deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00])
                     .unwrap_err()
             ),
-            discriminant(&Error::NonMinimalVarInt)
+            discriminant(&ParseError::NonMinimalVarInt.into())
         );
 
         let mut vec_256 = vec![0; 259];
@@ -1131,13 +1034,11 @@ mod tests {
         ])
         .is_err());
 
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
-
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
-        // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
+        // by making sure it fails with `MissingData` and not an `OversizedVectorAllocation` Error.
         let err =
             deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
 
         test_len_is_max_vec::<u8>();
         test_len_is_max_vec::<BlockHash>();
@@ -1159,11 +1060,10 @@ mod tests {
         Vec<T>: Decodable,
         T: fmt::Debug,
     {
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
         let mut buf = Vec::new();
         buf.emit_compact_size(super::MAX_VEC_SIZE / mem::size_of::<T>()).unwrap();
         let err = deserialize::<Vec<T>>(&buf).unwrap_err();
-        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+        assert_eq!(err, DeserializeError::Parse(ParseError::MissingData));
     }
 
     #[test]
@@ -1264,7 +1164,7 @@ mod tests {
         hex.push_str("abcdef");
         assert!(matches!(
             deserialize_hex::<Transaction>(&hex).unwrap_err(),
-            FromHexError::Decode(DecodeError::TooManyBytes)
+            FromHexError::Decode(DecodeError::Unconsumed)
         ));
     }
 }

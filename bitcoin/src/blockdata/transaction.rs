@@ -20,7 +20,7 @@ use io::{BufRead, Write};
 use primitives::Sequence;
 
 use super::Weight;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, Time};
 use crate::prelude::{Borrow, Vec};
@@ -894,7 +894,9 @@ impl Decodable for Transaction {
                         txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
+                        Err(consensus::parse_failed_error(
+                            "witness flag set but no witnesses present",
+                        ))
                     } else {
                         Ok(Transaction {
                             version,
@@ -905,7 +907,7 @@ impl Decodable for Transaction {
                     }
                 }
                 // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
+                x => Err(encode::ParseError::UnsupportedSegwitFlag(x).into()),
             }
         // non-segwit
         } else {
@@ -1487,7 +1489,7 @@ mod tests {
         let tx_bytes = hex!("0000fd000001021921212121212121212121f8b372b0239cc1dff600000000004f4f4f4f4f4f4f4f000000000000000000000000000000333732343133380d000000000000000000000000000000ff000000000009000dff000000000000000800000000000000000d");
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_err());
-        assert!(tx.unwrap_err().to_string().contains("witness flag set but no witnesses present"));
+        assert!(matches!(tx.unwrap_err(), crate::consensus::DeserializeError::Parse(_)));
     }
 
     #[test]

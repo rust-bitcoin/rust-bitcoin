@@ -6,12 +6,12 @@
 //! conform to Bitcoin consensus.
 
 pub mod encode;
+mod error;
 #[cfg(feature = "serde")]
 pub mod serde;
 
 use core::fmt;
 
-use internals::write_err;
 use io::{BufRead, Read};
 
 use crate::consensus;
@@ -20,7 +20,9 @@ use crate::consensus;
 #[doc(inline)]
 pub use self::{
     encode::{deserialize, deserialize_partial, serialize, Decodable, Encodable, ReadExt, WriteExt},
+    error::{Error, FromHexError, DecodeError, ParseError, DeserializeError},
 };
+pub(crate) use self::error::parse_failed_error;
 
 struct IterReader<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> {
     iterator: core::iter::Fuse<I>,
@@ -36,12 +38,12 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
         let result = T::consensus_decode(&mut self);
         match (result, self.error) {
-            (Ok(_), None) if self.iterator.next().is_some() => Err(DecodeError::TooManyBytes),
+            (Ok(_), None) if self.iterator.next().is_some() => Err(DecodeError::Unconsumed),
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
 
             (Err(consensus::encode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
-            (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
+            (Err(consensus::encode::Error::Parse(parse_error)), None) => Err(DecodeError::Parse(parse_error)),
             (Err(consensus::encode::Error::Io(io_error)), de_error) => panic!("unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
         }
@@ -99,45 +101,6 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> BufRead for IterReader<E,
         debug_assert!(len <= 1);
         if len > 0 {
             self.buf = None;
-        }
-    }
-}
-
-/// Error when consensus decoding from an `[IterReader]`.
-#[derive(Debug)]
-pub enum DecodeError<E> {
-    /// Attempted to decode an object from an iterator that yielded too many bytes.
-    TooManyBytes,
-    /// Invalid consensus encoding.
-    Consensus(consensus::encode::Error),
-    /// Other decoding error.
-    Other(E),
-}
-
-internals::impl_from_infallible!(DecodeError<E>);
-
-impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use DecodeError::*;
-
-        match *self {
-            TooManyBytes =>
-                write!(f, "attempted to decode object from an iterator that yielded too many bytes"),
-            Consensus(ref e) => write_err!(f, "invalid consensus encoding"; e),
-            Other(ref other) => write!(f, "other decoding error: {:?}", other),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<E: fmt::Debug> std::error::Error for DecodeError<E> {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use DecodeError::*;
-
-        match *self {
-            TooManyBytes => None,
-            Consensus(ref e) => Some(e),
-            Other(_) => None, // TODO: Is this correct?
         }
     }
 }
