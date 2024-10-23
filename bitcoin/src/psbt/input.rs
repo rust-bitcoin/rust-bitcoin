@@ -5,7 +5,7 @@
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
-use super::{map, raw};
+use super::serialize::{map, raw};
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};

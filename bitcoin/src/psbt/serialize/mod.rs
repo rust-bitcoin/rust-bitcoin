@@ -5,6 +5,12 @@
 //! Traits to serialize PSBT values to and from raw bytes
 //! according to the BIP-174 specification.
 
+#[macro_use]
+mod macros;
+mod error;
+pub(super) mod map;
+pub mod raw;
+
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
 use secp256k1::XOnlyPublicKey;
@@ -15,13 +21,19 @@ use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, 
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::prelude::Vec;
-use crate::psbt::Error;
 use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
+
+#[rustfmt::skip]                // Keep public re-exports separate.
+#[doc(inline)]
+pub use self::{
+    error::Error,
+    map::{Input, Output, Psbt},
+};
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.

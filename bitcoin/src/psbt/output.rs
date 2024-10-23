@@ -4,7 +4,7 @@
 
 use secp256k1::XOnlyPublicKey;
 
-use super::{map, raw};
+use super::serialize::{map, raw};
 use crate::bip32::KeySource;
 use crate::prelude::{BTreeMap, Vec};
 use crate::script::ScriptBuf;

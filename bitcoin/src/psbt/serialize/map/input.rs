@@ -16,8 +16,9 @@ use crate::psbt::consts::{
     PSBT_IN_TAP_KEY_SIG, PSBT_IN_TAP_LEAF_SCRIPT, PSBT_IN_TAP_MERKLE_ROOT, PSBT_IN_TAP_SCRIPT_SIG,
     PSBT_IN_WITNESS_SCRIPT, PSBT_IN_WITNESS_UTXO,
 };
-use crate::psbt::error::PsbtHash;
-use crate::psbt::{raw, Error, PsbtSighashType};
+use crate::psbt::serialize::error::PsbtHash;
+use crate::psbt::serialize::{raw, Error};
+use crate::psbt::PsbtSighashType;
 use crate::script::ScriptBuf;
 use crate::sighash::{
     EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, TapSighashType,

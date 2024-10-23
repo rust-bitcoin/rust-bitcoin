@@ -9,11 +9,8 @@
 #[macro_use]
 mod macros;
 mod consts;
-mod error;
 pub mod input;
-mod map;
 pub mod output;
-pub mod raw;
 pub mod serialize;
 pub mod sighash_type;
 
@@ -26,6 +23,7 @@ use internals::write_err;
 use io::{self, Write};
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
+use self::serialize::{map, raw};
 use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
@@ -41,11 +39,11 @@ use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 pub use self::{
     input::Input,
     output::Output,
-    error::Error,
+    serialize::Error,
     sighash_type::PsbtSighashType,
 };
 #[cfg(feature = "base64")]
-pub use self::map::PsbtParseError;
+pub use self::serialize::map::PsbtParseError;
 
 /// A Partially Signed Bitcoin Transaction (PSBT).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -1236,7 +1234,7 @@ mod tests {
     use crate::Sequence;
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::serialize::Error> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
