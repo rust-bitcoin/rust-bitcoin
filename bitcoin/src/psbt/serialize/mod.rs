@@ -25,8 +25,7 @@ use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::transaction::{Transaction, TxOut};
-use crate::witness::Witness;
+use crate::{absolute, Amount, Sequence, Transaction, TxOut, Txid, Witness};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -45,9 +44,13 @@ pub(crate) trait Deserialize: Sized {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error>;
 }
 
+impl_psbt_de_serialize!(Amount);
+impl_psbt_de_serialize!(Sequence);
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
 impl_psbt_de_serialize!(Witness);
+impl_psbt_de_serialize!(u32);
+impl_psbt_hash_de_serialize!(Txid);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);
@@ -57,6 +60,28 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 
 // Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
+
+impl Serialize for absolute::Height {
+    fn serialize(&self) -> Vec<u8> { self.to_consensus_u32().serialize() }
+}
+
+impl Deserialize for absolute::Height {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let h: u32 = encode::deserialize(bytes)?;
+        Ok(Self::from_consensus(h)?)
+    }
+}
+
+impl Serialize for absolute::Time {
+    fn serialize(&self) -> Vec<u8> { self.to_consensus_u32().serialize() }
+}
+
+impl Deserialize for absolute::Time {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let h: u32 = encode::deserialize(bytes)?;
+        Ok(Self::from_consensus(h)?)
+    }
+}
 
 impl Serialize for ScriptBuf {
     fn serialize(&self) -> Vec<u8> { self.to_bytes() }

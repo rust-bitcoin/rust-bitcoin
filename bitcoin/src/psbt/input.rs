@@ -2,6 +2,8 @@
 
 //! A PSBT input.
 
+use core::fmt;
+
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
@@ -112,8 +114,12 @@ impl Input {
     /// Creates an `Input` from a serializable [`Input`].
     ///
     /// [`Input`]: crate::psbt::map::Input
-    pub fn from_serializable(input: map::Input) -> Self {
-        Input {
+    pub fn from_serializable(input: map::Input) -> Result<Self, V0InvalidError> {
+        if !input.is_valid_v0() {
+            return Err(V0InvalidError);
+        }
+
+        Ok(Input {
             non_witness_utxo: input.non_witness_utxo,
             witness_utxo: input.witness_utxo,
             partial_sigs: input.partial_sigs,
@@ -135,7 +141,7 @@ impl Input {
             tap_merkle_root: input.tap_merkle_root,
             proprietary: input.proprietary,
             unknown: input.unknown,
-        }
+        })
     }
 
     /// Converts this `Input` into a serializable [`Input`].
@@ -156,6 +162,11 @@ impl Input {
             sha256_preimages: self.sha256_preimages,
             hash160_preimages: self.hash160_preimages,
             hash256_preimages: self.hash256_preimages,
+            previous_txid: None,
+            spent_output_index: None,
+            sequence: None,
+            min_time: None,
+            min_height: None,
             tap_key_sig: self.tap_key_sig,
             tap_script_sigs: self.tap_script_sigs,
             tap_scripts: self.tap_scripts,
@@ -221,6 +232,20 @@ impl Input {
         combine!(tap_merkle_root, self, other);
     }
 }
+
+/// Input is not valid for PSBT v0 (BIP-174).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct V0InvalidError;
+
+impl fmt::Display for V0InvalidError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "input is not valid for PSBT v0 (BIP-174)")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for V0InvalidError {}
 
 #[cfg(test)]
 mod test {

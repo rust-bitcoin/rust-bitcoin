@@ -6,41 +6,124 @@ use internals::ToU64 as _;
 use io::{self, BufRead, Cursor, Read, Write};
 
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, KeySource, Xpub};
-use crate::consensus::encode::MAX_VEC_SIZE;
+use crate::consensus::encode::{MAX_VEC_SIZE, ReadExt as _};
 use crate::consensus::{encode, Decodable};
 use crate::prelude::{btree_map, BTreeMap, Vec, DisplayHex};
 use crate::psbt::consts::{
-    PSBT_GLOBAL_PROPRIETARY, PSBT_GLOBAL_UNSIGNED_TX, PSBT_GLOBAL_VERSION, PSBT_GLOBAL_XPUB,
+    PSBT_GLOBAL_PROPRIETARY, PSBT_GLOBAL_UNSIGNED_TX, PSBT_GLOBAL_VERSION, PSBT_GLOBAL_XPUB, PSBT_GLOBAL_TX_VERSION, PSBT_GLOBAL_FALLBACK_LOCKTIME, PSBT_GLOBAL_INPUT_COUNT, PSBT_GLOBAL_OUTPUT_COUNT, PSBT_GLOBAL_TX_MODIFIABLE,
 };
 use crate::psbt::serialize::map::{self, Map};
 use crate::psbt::serialize::{raw, Error};
-use crate::transaction::Transaction;
+use crate::locktime::absolute;
+use crate::transaction::{self, Transaction};
+use crate::psbt;
 
 /// A serializable PSBT.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Psbt {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
-    pub unsigned_tx: Transaction,
-    /// The version number of this PSBT. If omitted, the version number is 0.
-    pub version: u32,
+    ///
+    /// PSBT_GLOBAL_UNSIGNED_TX: Required for v0, excluded for v2.
+    pub unsigned_tx: Option<Transaction>,
+
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32.
+    ///
+    /// PSBT_GLOBAL_XPUB: Optional for v0, optional for v2.
     pub xpub: BTreeMap<Xpub, KeySource>,
+
+    /// The version number of the transaction being built.
+    ///
+    /// PSBT_GLOBAL_TX_VERSION: Excluded for v0, required for v2.
+    pub tx_version: Option<transaction::Version>,
+
+    /// The transaction locktime to use if no inputs specify a required locktime.
+    ///
+    /// PSBT_GLOBAL_FALLBACK_LOCKTIME: Excluded for v0, optional for v2.
+    pub fallback_lock_time: Option<absolute::LockTime>,
+
+    /// The number of inputs in this PSBT.
+    ///
+    /// PSBT_GLOBAL_INPUT_COUNT: Excluded for v0, required for v2.
+    pub input_count: Option<usize>, // Serialized as compact int.
+
+    /// The number of outputs in this PSBT.
+    ///
+    /// PSBT_GLOBAL_OUTPUT_COUNT: Excluded for v0, required for v2.
+    pub output_count: Option<usize>, // Serialized as compact int.
+
+    /// A bitfield for various transaction modification flags.
+    ///
+    /// PSBT_GLOBAL_TX_MODIFIABLE: Excluded for v0, optional for v2.
+    pub tx_modifiable_flags: Option<u8>,
+
+    /// The version number of this PSBT (if omitted defaults to version 0).
+    ///
+    /// PSBT_GLOBAL_VERSION: Optional for v0, optional for v2.
+    pub version: u32, // This is not an option because if omitted it is implied to be 0.
+
     /// Global proprietary key-value pairs.
+    ///
+    /// PSBT_GLOBAL_PROPRIETARY: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+
     /// Unknown global key-value pairs.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 
     /// The corresponding key-value map for each input in the unsigned transaction.
     pub inputs: Vec<map::Input>,
+
     /// The corresponding key-value map for each output in the unsigned transaction.
     pub outputs: Vec<map::Output>,
 }
 
 impl Psbt {
+    /// Checks if `Psbt` has fields set as required by the respective BIP based on `self.version`.
+    pub fn is_valid(&self) -> bool {
+        match self.version {
+            0 => self.is_valid_v0(),
+            2 => self.is_valid_v2(),
+            _ => false,
+        }
+    }
+
+    /// Checks if `Psbt` has fields set as required by `BIP-174`.
+    pub fn is_valid_v0(&self) -> bool {
+        if self.version != 0 {
+            return false;
+        }
+
+        let global_fields_are_valid = self.unsigned_tx.is_some()
+            && self.tx_version.is_none()
+            && self.input_count.is_none()
+            && self.output_count.is_none();
+
+        let inputs_are_valid = self.inputs.iter().all(|input| input.is_valid_v0());
+        let outputs_are_valid = self.outputs.iter().all(|output| output.is_valid_v0());
+
+        global_fields_are_valid && inputs_are_valid && outputs_are_valid
+    }
+
+    /// Checks if `Psbt` has fields set as required by `BIP-370`.
+    pub fn is_valid_v2(&self) -> bool {
+        if self.version != 2 {
+            return false;
+        }
+
+        let global_fields_are_valid = self.unsigned_tx.is_none()
+            && self.tx_version.is_some()
+            && self.input_count.is_some()
+            && self.output_count.is_some();
+
+        let inputs_are_valid = self.inputs.iter().all(|input| input.is_valid_v2());
+        let outputs_are_valid = self.outputs.iter().all(|output| output.is_valid_v2());
+
+        global_fields_are_valid && inputs_are_valid && outputs_are_valid
+    }
+
     /// Serialize a value as bytes in hex.
     pub fn serialize_hex(&self) -> String { self.serialize().to_lower_hex_string() }
 
@@ -98,29 +181,26 @@ impl Psbt {
         }
 
         let mut global = Psbt::decode_global(r)?;
-        global.unsigned_tx_checks()?;
+        match (global.version, &global.unsigned_tx) {
+            (0, Some(tx)) => psbt::unsigned_tx_checks(tx)?,
+            (_, _) => {}        // FIXME: Is this correct?
+        }
 
         let inputs: Vec<map::Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
-
+            let inputs_len = global.num_inputs();
             let mut inputs: Vec<map::Input> = Vec::with_capacity(inputs_len);
-
             for _ in 0..inputs_len {
                 inputs.push(map::Input::decode(r)?);
             }
-
             inputs
         };
 
         let outputs: Vec<map::Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
-
+            let outputs_len = global.num_outputs();
             let mut outputs: Vec<map::Output> = Vec::with_capacity(outputs_len);
-
             for _ in 0..outputs_len {
                 outputs.push(map::Output::decode(r)?);
             }
-
             outputs
         };
 
@@ -129,31 +209,18 @@ impl Psbt {
         Ok(global)
     }
 
-    /// Checks that unsigned transaction does not have scriptSig's or witness data.
-    // FIXME: Duplicated in `psbt::Psbt`.
-    fn unsigned_tx_checks(&self) -> Result<(), Error> {
-        for txin in &self.unsigned_tx.input {
-            if !txin.script_sig.is_empty() {
-                return Err(Error::UnsignedTxHasScriptSigs);
-            }
-
-            if !txin.witness.is_empty() {
-                return Err(Error::UnsignedTxHasScriptWitnesses);
-            }
-        }
-
-        Ok(())
-    }
-
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
     ///
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     pub fn combine(&mut self, other: Self) -> Result<(), Error> {
-        if self.unsigned_tx != other.unsigned_tx {
-            return Err(Error::UnexpectedUnsignedTx {
-                expected: Box::new(self.unsigned_tx.clone()),
-                actual: Box::new(other.unsigned_tx),
-            });
+        // FIXME: What if one is valid v0 and one is valid v2?
+        if let (Some(ref this), Some(ref that)) = (&self.unsigned_tx, &other.unsigned_tx) {
+            if this != that {
+                return Err(Error::UnexpectedUnsignedTx {
+                    expected: Box::new(this.clone()),
+                    actual: Box::new(that.clone()),
+                });
+            }
         }
 
         // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
@@ -210,25 +277,47 @@ impl Psbt {
 
         Ok(())
     }
+
+    fn num_inputs(&self) -> usize {
+        if self.is_valid_v0() {
+            self.unsigned_tx.as_ref().unwrap().input.len()
+        } else if self.is_valid_v2() {
+            self.input_count.unwrap()
+        } else {
+            0                   // FIXME: Should we error instead?
+        }
+    }
+
+    fn num_outputs(&self) -> usize {
+        if self.is_valid_v0() {
+            self.unsigned_tx.as_ref().unwrap().output.len()
+        } else if self.is_valid_v2() {
+            self.output_count.unwrap()
+        } else {
+            0                   // FIXME: Should we error instead?
+        }
+    }
 }
 
 impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
-        rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
-            value: {
-                // Manually serialized to ensure 0-input txs are serialized
-                // without witnesses.
-                let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
-                ret
-            },
-        });
+        if let Some(ref unsigned_tx) = self.unsigned_tx {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key_data: vec![] },
+                value: {
+                    // Manually serialized to ensure 0-input txs are serialized without witnesses.
+                    let mut ret = Vec::new();
+                    ret.extend(encode::serialize(&unsigned_tx.version));
+                    ret.extend(encode::serialize(&unsigned_tx.input));
+                    ret.extend(encode::serialize(&unsigned_tx.output));
+                    ret.extend(encode::serialize(&unsigned_tx.lock_time));
+                    ret
+                },
+            });
+        }
+
 
         for (xpub, (fingerprint, derivation)) in &self.xpub {
             rv.push(raw::Pair {
@@ -265,11 +354,16 @@ impl Map for Psbt {
 impl Psbt {
     pub(crate) fn decode_global<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE.to_u64());
-        let mut tx: Option<Transaction> = None;
-        let mut version: Option<u32> = None;
-        let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
+        let mut unsigned_tx: Option<Transaction> = None;
         let mut xpub_map: BTreeMap<Xpub, (Fingerprint, DerivationPath)> = Default::default();
+        let mut tx_version: Option<transaction::Version> = None;
+        let mut fallback_lock_time: Option<absolute::LockTime> = None;
+        let mut input_count: Option<usize> = None;
+        let mut output_count: Option<usize> = None;
+        let mut tx_modifiable_flags: Option<u8> = None;
+        let mut version: Option<u32> = None;
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
+        let mut unknown: BTreeMap<raw::Key, Vec<u8>> = Default::default();
 
         loop {
             match raw::Pair::decode(&mut r) {
@@ -279,14 +373,14 @@ impl Psbt {
                             // key has to be empty
                             if pair.key.key_data.is_empty() {
                                 // there can only be one unsigned transaction
-                                if tx.is_none() {
+                                if unsigned_tx.is_none() {
                                     let vlen: usize = pair.value.len();
                                     let mut decoder = Cursor::new(pair.value);
 
                                     // Manually deserialized to ensure 0-input
                                     // txs without witnesses are deserialized
                                     // properly.
-                                    tx = Some(Transaction {
+                                    unsigned_tx = Some(Transaction {
                                         version: Decodable::consensus_decode(&mut decoder)?,
                                         input: Decodable::consensus_decode(&mut decoder)?,
                                         output: Decodable::consensus_decode(&mut decoder)?,
@@ -340,6 +434,85 @@ impl Psbt {
                                 ));
                             }
                         }
+                        PSBT_GLOBAL_TX_VERSION => {
+                            if pair.key.key_data.is_empty() {
+                                if tx_version.is_none() {
+                                    let vlen: usize = pair.value.len();
+                                    let mut decoder = Cursor::new(pair.value);
+                                    if vlen != 4 {
+                                        return Err(Error::ValueWrongLength(vlen, 4));
+                                    }
+                                    // TODO: Consider doing checks for standard transaction version?
+                                    tx_version = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyDataNotEmpty(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_FALLBACK_LOCKTIME => {
+                            if pair.key.key_data.is_empty() {
+                                if fallback_lock_time.is_none() {
+                                    let vlen: usize = pair.value.len();
+                                    if vlen != 4 {
+                                        return Err(Error::ValueWrongLength(vlen, 4));
+                                    }
+                                    let mut decoder = Cursor::new(pair.value);
+                                    fallback_lock_time = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyDataNotEmpty(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_INPUT_COUNT => {
+                            if pair.key.key_data.is_empty() {
+                                if output_count.is_none() {
+                                    // TODO: Do we need to check the length for a VarInt?
+                                    // let vlen: usize = pair.value.len();
+                                    let mut decoder = Cursor::new(pair.value);
+                                    let count = decoder.read_compact_size()?;
+                                    input_count = Some(count as usize); // compact_size fits in 32 bits.
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyDataNotEmpty(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_OUTPUT_COUNT => {
+                            if pair.key.key_data.is_empty() {
+                                if output_count.is_none() {
+                                    // TODO: Do we need to check the length for a VarInt?
+                                    // let vlen: usize = pair.value.len();
+                                    let mut decoder = Cursor::new(pair.value);
+                                    let count = decoder.read_compact_size()?;
+                                    output_count = Some(count as usize); // compact_size fits in 32 bits.
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyDataNotEmpty(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_TX_MODIFIABLE => {
+                            if pair.key.key_data.is_empty() {
+                                if tx_modifiable_flags.is_none() {
+                                    let vlen: usize = pair.value.len();
+                                    if vlen != 1 {
+                                        return Err(Error::ValueWrongLength(vlen, 1));
+                                    }
+                                    let mut decoder = Cursor::new(pair.value);
+                                    tx_modifiable_flags = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKeyDataNotEmpty(pair.key));
+                            }
+                        }
                         PSBT_GLOBAL_VERSION => {
                             // key has to be empty
                             if pair.key.key_data.is_empty() {
@@ -376,7 +549,7 @@ impl Psbt {
                             btree_map::Entry::Occupied(_) =>
                                 return Err(Error::DuplicateKey(pair.key)),
                         },
-                        _ => match unknowns.entry(pair.key) {
+                        _ => match unknown.entry(pair.key) {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
                             }
@@ -390,19 +563,20 @@ impl Psbt {
             }
         }
 
-        if let Some(tx) = tx {
-            Ok(Psbt {
-                unsigned_tx: tx,
-                version: version.unwrap_or(0),
-                xpub: xpub_map,
-                proprietary,
-                unknown: unknowns,
-                inputs: vec![],
-                outputs: vec![],
-            })
-        } else {
-            Err(Error::MustHaveUnsignedTx)
-        }
+        Ok(Psbt {
+            unsigned_tx,
+            xpub: xpub_map,
+            tx_version,
+            fallback_lock_time,
+            input_count,
+            output_count,
+            tx_modifiable_flags,
+            version: version.unwrap_or(0),
+            proprietary,
+            unknown,
+            inputs: vec![],
+            outputs: vec![],
+        })
     }
 }
 
@@ -505,9 +679,10 @@ mod tests {
 
     #[test]
     fn serialize_then_deserialize_global() {
+        let tx_version = transaction::Version::TWO;
         let expected = Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
+            unsigned_tx: Some(Transaction {
+                version: tx_version,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
@@ -536,9 +711,14 @@ mod tests {
                         .unwrap(),
                     },
                 ],
-            },
-            xpub: Default::default(),
+            }),
             version: 0,
+            xpub: Default::default(),
+            tx_version: Some(tx_version),
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             proprietary: Default::default(),
             unknown: Default::default(),
             inputs: vec![Input::default()],
@@ -641,8 +821,9 @@ mod tests {
 
         #[test]
         fn valid_vector_1() {
+            let tx_version = transaction::Version::TWO;
             let unserialized = Psbt {
-                unsigned_tx: Transaction {
+                unsigned_tx: Some(Transaction {
                     version: transaction::Version::TWO,
                     lock_time: absolute::LockTime::from_consensus(1257139),
                     input: vec![
@@ -666,11 +847,16 @@ mod tests {
                             script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                         },
                     ],
-                },
-                xpub: Default::default(),
+                }),
                 version: 0,
-                proprietary: BTreeMap::new(),
-                unknown: BTreeMap::new(),
+                xpub: Default::default(),
+                tx_version: Some(tx_version),
+                fallback_lock_time: None,
+                input_count: None,
+                output_count: None,
+                tx_modifiable_flags: None,
+                proprietary: Default::default(),
+                unknown: Default::default(),
 
                 inputs: vec![
                     Input {
@@ -773,7 +959,7 @@ mod tests {
             assert_eq!(psbt.inputs.len(), 1);
             assert_eq!(psbt.outputs.len(), 2);
 
-            let tx_input = &psbt.unsigned_tx.input[0];
+            let tx_input = &psbt.unsigned_tx.unwrap().input[0];
             let psbt_non_witness_utxo = psbt.inputs[0].non_witness_utxo.as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.compute_txid());
@@ -843,7 +1029,7 @@ mod tests {
 
             let tx = &psbt.unsigned_tx;
             assert_eq!(
-                tx.compute_txid(),
+                tx.as_ref().unwrap().compute_txid(),
                 "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115".parse().unwrap(),
             );
 
@@ -974,9 +1160,10 @@ mod tests {
         hash160_preimages.insert(hash160::Hash::hash(&[1u8]), vec![1u8]);
 
         // same vector as valid_vector_1 from BIPs with added
+        let tx_version = transaction::Version::TWO;
         let mut unserialized = Psbt {
-            unsigned_tx: Transaction {
-                version: transaction::Version::TWO,
+            unsigned_tx: Some(Transaction {
+                version: tx_version,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
                     TxIn {
@@ -999,11 +1186,16 @@ mod tests {
                         script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
-            },
+            }),
             version: 0,
             xpub: Default::default(),
+            tx_version: Some(tx_version),
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
             proprietary: Default::default(),
-            unknown: BTreeMap::new(),
+            unknown: Default::default(),
 
             inputs: vec![
                 Input {
