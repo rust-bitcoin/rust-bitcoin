@@ -114,6 +114,8 @@ macro_rules! impl_psbt_insert_pair {
 #[rustfmt::skip]
 macro_rules! psbt_insert_hash_pair {
     (&mut $slf:ident.$map:ident <= $raw_key:ident|$raw_value:ident|$hash:path|$hash_type_error:path) => {
+        use $crate::psbt::serialize::Deserialize;
+
         if $raw_key.key_data.is_empty() {
             return Err($crate::psbt::Error::InvalidKey($raw_key));
         }
