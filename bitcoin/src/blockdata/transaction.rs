@@ -304,13 +304,6 @@ impl Transaction {
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
-    /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
-    /// computationally expensive.  Use `compute_ntxid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
-    pub fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
-
-    /// Computes a "normalized TXID" which does not include any signatures.
-    ///
     /// This gives a way to identify a transaction that is "the same" as
     /// another in the sense of having same inputs and outputs.
     #[doc(alias = "ntxid")]
@@ -334,13 +327,6 @@ impl Transaction {
 
     /// Computes the [`Txid`].
     ///
-    /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
-    /// computationally expensive.  Use `compute_txid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
-    pub fn txid(&self) -> Txid { self.compute_txid() }
-
-    /// Computes the [`Txid`].
-    ///
     /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::compute_wtxid()`].
@@ -352,13 +338,6 @@ impl Transaction {
 
     /// Computes the segwit version of the transaction id.
     ///
-    /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
-    /// computationally expensive.  Use `compute_wtxid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
-    pub fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
-
-    /// Computes the segwit version of the transaction id.
-    ///
     /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
     /// this will be equal to [`Transaction::txid()`].
@@ -367,6 +346,29 @@ impl Transaction {
         let hash = hash_transaction(self, self.uses_segwit_serialization());
         Wtxid::from_byte_array(hash.to_byte_array())
     }
+}
+
+impl Transaction {
+    /// Computes a "normalized TXID" which does not include any signatures.
+    ///
+    /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
+    /// computationally expensive.  Use `compute_ntxid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
+    pub fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
+
+    /// Computes the [`Txid`].
+    ///
+    /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
+    /// computationally expensive.  Use `compute_txid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
+    pub fn txid(&self) -> Txid { self.compute_txid() }
+
+    /// Computes the segwit version of the transaction id.
+    ///
+    /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
+    /// computationally expensive.  Use `compute_wtxid` instead.
+    #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
+    pub fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
     ///
@@ -526,6 +528,24 @@ impl Transaction {
         cost.saturating_add(self.count_witness_sigops(&mut spent))
     }
 
+    /// Returns a reference to the input at `input_index` if it exists.
+    #[inline]
+    pub fn tx_in(&self, input_index: usize) -> Result<&TxIn, InputsIndexError> {
+        self.input
+            .get(input_index)
+            .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
+    }
+
+    /// Returns a reference to the output at `output_index` if it exists.
+    #[inline]
+    pub fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
+        self.output
+            .get(output_index)
+            .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
+    }
+}
+
+impl Transaction {
     /// Gets the sigop count.
     ///
     /// Counts sigops for this transaction's input scriptSigs and output scriptPubkeys i.e., doesn't
@@ -627,22 +647,6 @@ impl Transaction {
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
         self.input.is_empty()
-    }
-
-    /// Returns a reference to the input at `input_index` if it exists.
-    #[inline]
-    pub fn tx_in(&self, input_index: usize) -> Result<&TxIn, InputsIndexError> {
-        self.input
-            .get(input_index)
-            .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
-    }
-
-    /// Returns a reference to the output at `output_index` if it exists.
-    #[inline]
-    pub fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
-        self.output
-            .get(output_index)
-            .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
 }
 
