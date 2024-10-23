@@ -19,7 +19,7 @@ use crate::absolute;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::absolute::*;
+pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, ParseTimeError, Time, LOCK_TIME_THRESHOLD};
 
 /// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
 /// since epoch).

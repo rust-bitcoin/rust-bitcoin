@@ -45,7 +45,14 @@ pub mod transaction;
 pub mod witness;
 
 #[doc(inline)]
-pub use units::*;
+pub use units::amount::{Amount, SignedAmount};
+#[cfg(feature = "alloc")]
+#[doc(inline)]
+pub use units::{
+    block::{BlockHeight, BlockInterval},
+    fee_rate::FeeRate,
+    weight::Weight
+};
 
 #[doc(inline)]
 pub use self::{
