@@ -20,7 +20,7 @@ use crate::internal_macros::impl_asref_push_bytes;
 use crate::network::NetworkKind;
 use crate::prelude::{DisplayHex, String, Vec};
 use crate::script::{self, ScriptBuf};
-use crate::taproot::{TapNodeHash, TapTweakHash};
+use crate::taproot::{TapNodeHash, TapTweakHash, TapTweakHashExt as _};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
