@@ -30,7 +30,7 @@ use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
-use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
+use bitcoin::psbt::serialize::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};

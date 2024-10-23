@@ -4,11 +4,12 @@ use core::fmt;
 
 use internals::write_err;
 
+use super::raw;
 use crate::bip32::Xpub;
 use crate::consensus::encode;
 use crate::prelude::Box;
-use crate::psbt::raw;
 use crate::transaction::Transaction;
+use crate::locktime::absolute;
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -101,6 +102,13 @@ pub enum Error {
     PartialDataConsumption,
     /// I/O error.
     Io(io::Error),
+    /// Value was not the correct length (got, want).
+    // TODO: Use struct instead of tuple.
+    ValueWrongLength(usize, usize),
+    /// Key should not contain data.
+    InvalidKeyDataNotEmpty(raw::Key),
+    /// Failed to convert `u32` to an absolute height/time value.
+    AbsoluteLockTime(absolute::ConversionError),
 }
 
 internals::impl_from_infallible!(Error);
@@ -157,6 +165,10 @@ impl fmt::Display for Error {
             PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
             Io(ref e) => write_err!(f, "I/O error"; e),
+            ValueWrongLength(got, want) =>
+                write!(f, "value (keyvalue pair) wrong length (got, want) {} {}", got, want),
+            InvalidKeyDataNotEmpty(ref key) => write!(f, "key should not contain data: {}", key),
+            AbsoluteLockTime(ref e) => write_err!(f, "failed to convert `u32` to an absolute height/time value"; e),
         }
     }
 }
@@ -170,6 +182,7 @@ impl std::error::Error for Error {
             InvalidHash(ref e) => Some(e),
             ConsensusEncoding(ref e) => Some(e),
             Io(ref e) => Some(e),
+            AbsoluteLockTime(ref e) => Some(e),
             InvalidMagic
             | MissingUtxo
             | InvalidSeparator
@@ -198,7 +211,9 @@ impl std::error::Error for Error {
             | TapTree(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption => None,
+            | PartialDataConsumption
+            | ValueWrongLength(..)
+            | InvalidKeyDataNotEmpty(_) => None,
         }
     }
 }
@@ -213,4 +228,8 @@ impl From<encode::Error> for Error {
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self { Error::Io(e) }
+}
+
+impl From<absolute::ConversionError> for Error {
+    fn from(e: absolute::ConversionError) -> Self { Error::AbsoluteLockTime(e) }
 }

@@ -5,15 +5,18 @@ mod input;
 mod output;
 
 use crate::prelude::Vec;
-use crate::psbt::raw;
+use crate::psbt::serialize::raw;
 use crate::psbt::serialize::Serialize;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    input::{Input, PsbtSighashType},
+    global::Psbt,
+    input::Input,
     output::Output,
 };
+#[cfg(feature = "base64")]
+pub use self::global::PsbtParseError;
 
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {
