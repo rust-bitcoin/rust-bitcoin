@@ -11,9 +11,12 @@ use crate::psbt::serialize::Serialize;
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
+    global::Psbt,
     input::Input,
     output::Output,
 };
+#[cfg(feature = "base64")]
+pub use self::global::PsbtParseError;
 
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {

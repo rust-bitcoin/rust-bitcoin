@@ -152,3 +152,59 @@ impl Map for Output {
 }
 
 impl_psbtmap_ser_de_serialize!(Output);
+
+#[cfg(test)]
+mod tests {
+    use hex::test_hex_unwrap as hex;
+    use secp256k1::Secp256k1;
+
+    use super::*;
+    use crate::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
+    use crate::blockdata::script::ScriptBufExt;
+    use crate::network::NetworkKind;
+    use crate::psbt::serialize::{Deserialize, Serialize};
+
+    #[test]
+    fn serialize_then_deserialize_output() {
+        let secp = &Secp256k1::new();
+        let seed = hex!("000102030405060708090a0b0c0d0e0f");
+
+        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
+
+        let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
+
+        let fprint = sk.fingerprint(secp);
+
+        let dpath: Vec<ChildNumber> = vec![
+            ChildNumber::ZERO_NORMAL,
+            ChildNumber::ONE_NORMAL,
+            ChildNumber::from_normal_idx(2).unwrap(),
+            ChildNumber::from_normal_idx(4).unwrap(),
+            ChildNumber::from_normal_idx(42).unwrap(),
+            ChildNumber::from_hardened_idx(69).unwrap(),
+            ChildNumber::from_normal_idx(420).unwrap(),
+            ChildNumber::from_normal_idx(31337).unwrap(),
+        ];
+
+        sk = sk.derive_xpriv(secp, &dpath);
+
+        let pk = Xpub::from_xpriv(secp, &sk);
+
+        hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
+
+        let expected: Output = Output {
+            redeem_script: Some(
+                ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+            ),
+            witness_script: Some(
+                ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+            ),
+            bip32_derivation: hd_keypaths,
+            ..Default::default()
+        };
+
+        let actual = Output::deserialize(&expected.serialize()).unwrap();
+
+        assert_eq!(expected, actual);
+    }
+}

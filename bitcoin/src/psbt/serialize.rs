@@ -9,15 +9,13 @@ use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
 use secp256k1::XOnlyPublicKey;
 
-use super::map::{Input, Map, Output};
 use super::PsbtSighashType;
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::io::Write;
-use crate::prelude::{DisplayHex, String, Vec};
-use crate::psbt::{Error, Psbt};
+use crate::prelude::Vec;
+use crate::psbt::Error;
 use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
@@ -38,95 +36,6 @@ pub(crate) trait Deserialize: Sized {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error>;
 }
 
-impl Psbt {
-    /// Serialize a value as bytes in hex.
-    pub fn serialize_hex(&self) -> String { self.serialize().to_lower_hex_string() }
-
-    /// Serialize as raw binary data
-    pub fn serialize(&self) -> Vec<u8> {
-        let mut buf: Vec<u8> = Vec::new();
-        self.serialize_to_writer(&mut buf).expect("Writing to Vec can't fail");
-        buf
-    }
-
-    /// Serialize the PSBT into a writer.
-    pub fn serialize_to_writer(&self, w: &mut impl Write) -> io::Result<usize> {
-        let mut written_len = 0;
-
-        fn write_all(w: &mut impl Write, data: &[u8]) -> io::Result<usize> {
-            w.write_all(data).map(|_| data.len())
-        }
-
-        // magic
-        written_len += write_all(w, b"psbt")?;
-        // separator
-        written_len += write_all(w, &[0xff])?;
-
-        written_len += write_all(w, &self.serialize_map())?;
-
-        for i in &self.inputs {
-            written_len += write_all(w, &i.serialize_map())?;
-        }
-
-        for i in &self.outputs {
-            written_len += write_all(w, &i.serialize_map())?;
-        }
-
-        Ok(written_len)
-    }
-
-    /// Deserialize a value from raw binary data.
-    pub fn deserialize(mut bytes: &[u8]) -> Result<Self, Error> {
-        Self::deserialize_from_reader(&mut bytes)
-    }
-
-    /// Deserialize a value from raw binary data read from a `BufRead` object.
-    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
-        const MAGIC_BYTES: &[u8] = b"psbt";
-
-        let magic: [u8; 4] = Decodable::consensus_decode(r)?;
-        if magic != MAGIC_BYTES {
-            return Err(Error::InvalidMagic);
-        }
-
-        const PSBT_SERPARATOR: u8 = 0xff_u8;
-        let separator: u8 = Decodable::consensus_decode(r)?;
-        if separator != PSBT_SERPARATOR {
-            return Err(Error::InvalidSeparator);
-        }
-
-        let mut global = Psbt::decode_global(r)?;
-        global.unsigned_tx_checks()?;
-
-        let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
-
-            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
-
-            for _ in 0..inputs_len {
-                inputs.push(Input::decode(r)?);
-            }
-
-            inputs
-        };
-
-        let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
-
-            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
-
-            for _ in 0..outputs_len {
-                outputs.push(Output::decode(r)?);
-            }
-
-            outputs
-        };
-
-        global.inputs = inputs;
-        global.outputs = outputs;
-        Ok(global)
-    }
-}
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
 impl_psbt_de_serialize!(Witness);
@@ -457,12 +366,5 @@ mod tests {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
         let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
-    }
-
-    #[test]
-    #[should_panic(expected = "InvalidMagic")]
-    fn invalid_vector_1() {
-        let hex_psbt = b"0200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf6000000006a473044022070b2245123e6bf474d60c5b50c043d4c691a5d2435f09a34a7662a9dc251790a022001329ca9dacf280bdf30740ec0390422422c81cb45839457aeb76fc12edd95b3012102657d118d3357b8e0f4c2cd46db7b39f6d9c38d9a70abcb9b2de5dc8dbfe4ce31feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300";
-        Psbt::deserialize(hex_psbt).unwrap();
     }
 }
