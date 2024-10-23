@@ -313,7 +313,7 @@ macro_rules! serde_round_trip (
 /// Serializes a byte slice using the `hex` crate.
 pub struct SerializeBytesAsHex<'a>(pub &'a [u8]);
 
-impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
+impl serde::Serialize for SerializeBytesAsHex<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
