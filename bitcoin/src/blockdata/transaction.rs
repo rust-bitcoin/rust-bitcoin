@@ -413,12 +413,8 @@ impl Transaction {
     /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
-        let mut enc = sha256d::Hash::engine();
-        self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
-        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
+        let hash = hash_transaction(self, false);
+        Txid::from_byte_array(hash.to_byte_array())
     }
 
     /// Computes the segwit version of the transaction id.
@@ -435,9 +431,8 @@ impl Transaction {
     /// this will be equal to [`Transaction::txid()`].
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
-        let mut enc = sha256d::Hash::engine();
-        self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
+        let hash = hash_transaction(self, self.uses_segwit_serialization());
+        Wtxid::from_byte_array(hash.to_byte_array())
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
@@ -716,6 +711,64 @@ impl Transaction {
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
+}
+
+// This is equivalent to consensus encoding but hashes the fields manually.
+fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256d::Hash {
+    use hashes::HashEngine as _;
+
+    let mut enc = sha256d::Hash::engine();
+    enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
+
+    if uses_segwit_serialization {
+        // BIP-141 (segwit) transaction serialization also includes marker and flag.
+        enc.input(&[SEGWIT_MARKER]);
+        enc.input(&[SEGWIT_FLAG]);
+    }
+
+    // Encode inputs (excluding witness data) with leading compact size encoded int.
+    let input_len = tx.input.len();
+    enc.input(compact_size::encode(input_len).as_slice());
+    for input in &tx.input {
+        // Encode each input same as we do in `Encodable for TxIn`.
+        enc.input(input.previous_output.txid.as_byte_array());
+        enc.input(&input.previous_output.vout.to_le_bytes());
+
+        let script_sig_bytes = input.script_sig.as_bytes();
+        enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
+        enc.input(script_sig_bytes);
+
+        enc.input(&input.sequence.0.to_le_bytes())
+    }
+
+    // Encode outputs with leading compact size encoded int.
+    let output_len = tx.output.len();
+    enc.input(compact_size::encode(output_len).as_slice());
+    for output in &tx.output {
+        // Encode each output same as we do in `Encodable for TxOut`.
+        enc.input(&output.value.to_sat().to_le_bytes());
+
+        let script_pubkey_bytes = output.script_pubkey.as_bytes();
+        enc.input(compact_size::encode(script_pubkey_bytes.len()).as_slice());
+        enc.input(script_pubkey_bytes);
+    }
+
+    if uses_segwit_serialization {
+        // BIP-141 (segwit) transaction serialization also includes the witness data.
+        for input in &tx.input {
+            // Same as `Encodable for Witness`.
+            enc.input(compact_size::encode(input.witness.len()).as_slice());
+            for element in input.witness.iter() {
+                enc.input(compact_size::encode(element.len()).as_slice());
+                enc.input(element);
+            }
+        }
+    }
+
+    // Same as `Encodable for absolute::LockTime`.
+    enc.input(&tx.lock_time.to_consensus_u32().to_le_bytes());
+
+    sha256d::Hash::from_engine(enc)
 }
 
 /// Error attempting to do an out of bounds access on the transaction inputs vector.
