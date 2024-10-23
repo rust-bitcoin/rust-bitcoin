@@ -31,7 +31,7 @@ use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::serialize::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
@@ -265,7 +265,7 @@ fn serde_regression_psbt() {
     .collect();
 
     let psbt = Psbt {
-        version: 0,
+        version: psbt::Version::Zero,
         xpub: {
             let s = include_str!("data/serde/extended_pub_key");
             let xpub = s.trim().parse::<Xpub>().unwrap();

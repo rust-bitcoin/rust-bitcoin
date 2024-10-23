@@ -10,9 +10,9 @@ use crate::psbt::serialize::{raw, Serialize};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    global::Psbt,
-    input::Input,
-    output::Output,
+    global::{Psbt, InvalidError as PsbtInvalidError, V0InvalidError as PsbtV0InvalidError, V2InvalidError as PsbtV2InvalidError},
+    input::{Input, V0InvalidError as InputV0InvalidError, V2InvalidError as InputV2InvalidError},
+    output::{Output, V0InvalidError as OutputV0InvalidError, V2InvalidError as OutputV2InvalidError},
 };
 #[cfg(feature = "base64")]
 pub use self::global::PsbtParseError;

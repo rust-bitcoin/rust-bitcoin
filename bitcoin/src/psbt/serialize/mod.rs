@@ -10,6 +10,7 @@ mod macros;
 mod error;
 pub(super) mod map;
 pub mod raw;
+mod tests;
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
@@ -25,14 +26,13 @@ use crate::script::ScriptBuf;
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::transaction::{Transaction, TxOut};
-use crate::witness::Witness;
+use crate::{absolute, Amount, Sequence, Transaction, TxOut, Txid, Witness};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
     error::Error,
-    map::{Input, Output, Psbt},
+    map::{Input, Output, Psbt, PsbtInvalidError, PsbtV0InvalidError, PsbtV2InvalidError, InputV0InvalidError, InputV2InvalidError, OutputV0InvalidError, OutputV2InvalidError},
 };
 
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -48,9 +48,13 @@ pub(crate) trait Deserialize: Sized {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error>;
 }
 
+impl_psbt_de_serialize!(Amount);
+impl_psbt_de_serialize!(Sequence);
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
 impl_psbt_de_serialize!(Witness);
+impl_psbt_de_serialize!(u32);
+impl_psbt_hash_de_serialize!(Txid);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);
@@ -60,6 +64,28 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 
 // Taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
+
+impl Serialize for absolute::Height {
+    fn serialize(&self) -> Vec<u8> { self.to_consensus_u32().serialize() }
+}
+
+impl Deserialize for absolute::Height {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let h: u32 = encode::deserialize(bytes)?;
+        Ok(Self::from_consensus(h)?)
+    }
+}
+
+impl Serialize for absolute::Time {
+    fn serialize(&self) -> Vec<u8> { self.to_consensus_u32().serialize() }
+}
+
+impl Deserialize for absolute::Time {
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        let h: u32 = encode::deserialize(bytes)?;
+        Ok(Self::from_consensus(h)?)
+    }
+}
 
 impl Serialize for ScriptBuf {
     fn serialize(&self) -> Vec<u8> { self.to_vec() }
@@ -319,64 +345,3 @@ impl Deserialize for TapTree {
 
 // Helper function to compute key source len
 fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_ref().len() }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::script::ScriptBufExt as _;
-
-    // Composes tree matching a given depth map, filled with dumb script leafs,
-    // each of which consists of a single push-int op code, with int value
-    // increased for each consecutive leaf.
-    pub fn compose_taproot_builder<'map>(
-        opcode: u8,
-        depth_map: impl IntoIterator<Item = &'map u8>,
-    ) -> TaprootBuilder {
-        let mut val = opcode;
-        let mut builder = TaprootBuilder::new();
-        for depth in depth_map {
-            let script = ScriptBuf::from_hex(&format!("{:02x}", val)).unwrap();
-            builder = builder.add_leaf(*depth, script).unwrap();
-            let (new_val, _) = val.overflowing_add(1);
-            val = new_val;
-        }
-        builder
-    }
-
-    #[test]
-    fn taptree_hidden() {
-        let dummy_hash = TapNodeHash::from_byte_array([0x12; 32]);
-        let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
-        builder = builder
-            .add_leaf_with_ver(
-                3,
-                ScriptBuf::from_hex("b9").unwrap(),
-                LeafVersion::from_consensus(0xC2).unwrap(),
-            )
-            .unwrap();
-        builder = builder.add_hidden_node(3, dummy_hash).unwrap();
-        assert!(TapTree::try_from(builder).is_err());
-    }
-
-    #[test]
-    fn taptree_roundtrip() {
-        let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
-        builder = builder
-            .add_leaf_with_ver(
-                3,
-                ScriptBuf::from_hex("b9").unwrap(),
-                LeafVersion::from_consensus(0xC2).unwrap(),
-            )
-            .unwrap();
-        let tree = TapTree::try_from(builder).unwrap();
-        let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
-        assert_eq!(tree, tree_prime);
-    }
-
-    #[test]
-    fn can_deserialize_non_standard_psbt_sighash_type() {
-        let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
-        let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
-        assert!(sighash.is_ok())
-    }
-}

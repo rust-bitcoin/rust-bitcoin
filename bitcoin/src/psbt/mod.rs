@@ -13,6 +13,8 @@ pub mod input;
 pub mod output;
 pub mod serialize;
 pub mod sighash_type;
+mod signer_checks;
+mod version;
 
 use core::convert::Infallible;
 use core::{cmp, fmt};
@@ -37,10 +39,12 @@ use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    input::Input,
-    output::Output,
+    serialize::map::{PsbtInvalidError, PsbtV0InvalidError, PsbtV2InvalidError, InputV0InvalidError, InputV2InvalidError, OutputV0InvalidError, OutputV2InvalidError},
+    input::{Input, InvalidError as InputInvalidError},
+    output::{Output, InvalidError as OutputInvalidError},
     serialize::Error,
     sighash_type::PsbtSighashType,
+    version::{Version, UnsupportedVersionError},
 };
 #[cfg(feature = "base64")]
 pub use self::serialize::map::PsbtParseError;
@@ -53,7 +57,7 @@ pub struct Psbt {
     pub unsigned_tx: Transaction,
 
     /// The version number of this PSBT. If omitted, the version number is 0.
-    pub version: u32,
+    pub version: Version,
 
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32.
@@ -78,26 +82,45 @@ impl Psbt {
     /// Creates a `Psbt` from a serializable [`Psbt`].
     ///
     /// [`Psbt`]: crate::psbt::map::Psbt
-    pub fn from_serializable(psbt: map::Psbt) -> Self {
-        Self {
-            unsigned_tx: psbt.unsigned_tx,
+    pub fn from_serializable(psbt: map::Psbt) -> Result<Self, PsbtInvalidError> {
+        psbt.assert_valid()?;
+
+        Ok(Self {
+            unsigned_tx: psbt.unsigned_tx.unwrap(),
             version: psbt.version,
             xpub: psbt.xpub,
             proprietary: psbt.proprietary,
             unknown: psbt.unknown,
-            inputs: psbt.inputs.into_iter().map(Input::from_serializable).collect(),
-            outputs: psbt.outputs.into_iter().map(Output::from_serializable).collect(),
-        }
+            inputs: psbt
+                .inputs
+                .into_iter()
+                .map(Input::from_serializable)
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap(), // Inputs are guaranteed valid by assert_valid
+            outputs: psbt
+                .outputs
+                .into_iter()
+                .map(Output::from_serializable)
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap(), // Inputs are guaranteed valid by assert_valid
+        })
     }
 
     /// Converts this `Psbt` into a serializable [`Psbt`].
     ///
     /// [`Psbt`]: crate::psbt::map::Psbt
     pub fn into_serializable(self) -> map::Psbt {
+        let tx_version = self.unsigned_tx.version;
+
         map::Psbt {
-            unsigned_tx: self.unsigned_tx,
-            version: self.version,
+            unsigned_tx: Some(self.unsigned_tx),
             xpub: self.xpub,
+            tx_version: Some(tx_version),
+            fallback_lock_time: None,
+            input_count: None,
+            output_count: None,
+            tx_modifiable_flags: None,
+            version: self.version,
             proprietary: self.proprietary,
             unknown: self.unknown,
             inputs: self.inputs.into_iter().map(|input| input.into_serializable()).collect(),
@@ -120,15 +143,15 @@ impl Psbt {
     }
 
     /// Deserialize a value from raw binary data.
-    pub fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, DeserializeError> {
         let psbt = map::Psbt::deserialize(bytes)?;
-        Ok(Self::from_serializable(psbt))
+        Ok(Self::from_serializable(psbt)?)
     }
 
     /// Deserialize a value from raw binary data read from a `BufRead` object.
-    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, Error> {
+    pub fn deserialize_from_reader<R: io::BufRead>(r: &mut R) -> Result<Self, DeserializeError> {
         let psbt = map::Psbt::deserialize_from_reader(r)?;
-        Ok(Self::from_serializable(psbt))
+        Ok(Self::from_serializable(psbt)?)
     }
 
     /// Returns an iterator for the funding UTXOs of the psbt
@@ -184,7 +207,7 @@ impl Psbt {
 
             unsigned_tx: tx,
             xpub: Default::default(),
-            version: 0,
+            version: Version::Zero,
             proprietary: Default::default(),
             unknown: Default::default(),
         };
@@ -1220,6 +1243,63 @@ impl std::error::Error for IndexOutOfBoundsError {
     }
 }
 
+/// Checks that unsigned transaction does not have scriptSig's or witness data.
+// FIXME: Use of general error is horrible.
+fn unsigned_tx_checks(unsigned_tx: &Transaction) -> Result<(), Error> {
+    for txin in &unsigned_tx.input {
+        if !txin.script_sig.is_empty() {
+            return Err(Error::UnsignedTxHasScriptSigs);
+        }
+
+        if !txin.witness.is_empty() {
+            return Err(Error::UnsignedTxHasScriptWitnesses);
+        }
+    }
+
+    Ok(())
+}
+
+/// PSBT deserialization failed.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum DeserializeError {
+    /// Decoding failed.
+    Decode(serialize::Error),
+    /// Not valid for PSBT v0.
+    PsbtInvalid(PsbtInvalidError),
+}
+
+impl fmt::Display for DeserializeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use DeserializeError::*;
+
+        match *self {
+            Decode(ref e) => write_err!(f, "decode"; e),
+            PsbtInvalid(ref e) => write_err!(f, "psbt"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DeserializeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DeserializeError::*;
+
+        match *self {
+            Decode(ref e) => Some(e),
+            PsbtInvalid(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<serialize::Error> for DeserializeError {
+    fn from(e: serialize::Error) -> Self { Self::Decode(e) }
+}
+
+impl From<PsbtInvalidError> for DeserializeError {
+    fn from(e: PsbtInvalidError) -> Self { Self::PsbtInvalid(e) }
+}
+
 #[cfg(test)]
 mod tests {
     use hex::FromHex;
@@ -1234,7 +1314,7 @@ mod tests {
     use crate::Sequence;
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::serialize::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::DeserializeError> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
@@ -1268,7 +1348,7 @@ mod tests {
                 }],
             },
             xpub: Default::default(),
-            version: 0,
+            version: Version::Zero,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
 
@@ -1296,7 +1376,7 @@ mod tests {
                 output: vec![],
             },
             xpub: Default::default(),
-            version: 0,
+            version: Version::Zero,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
 
@@ -1417,7 +1497,7 @@ mod tests {
         .collect();
 
         let psbt = Psbt {
-            version: 0,
+            version: Version::Zero,
             xpub: {
                 let xpub: Xpub =
                     "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
@@ -1513,7 +1593,7 @@ mod tests {
     fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
         use secp256k1::rand::thread_rng;
 
-        use crate::network::NetworkKind;
+        use crate::NetworkKind;
 
         let secp = Secp256k1::new();
 
@@ -1568,7 +1648,7 @@ mod tests {
                 ],
             },
             xpub: Default::default(),
-            version: 0,
+            version: Version::Zero,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
 

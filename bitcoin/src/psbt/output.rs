@@ -2,6 +2,9 @@
 
 //! A PSBT output.
 
+use core::convert::Infallible;
+use core::fmt;
+
 use secp256k1::XOnlyPublicKey;
 
 use super::serialize::{map, raw};
@@ -49,8 +52,12 @@ impl Output {
     /// Creates an `Output` from a serializable [`Output`].
     ///
     /// [`Output`]: crate::psbt::map::Output
-    pub fn from_serializable(output: map::Output) -> Self {
-        Self {
+    pub fn from_serializable(output: map::Output) -> Result<Self, InvalidError> {
+        if !output.is_valid() {
+            return Err(InvalidError);
+        }
+
+        Ok(Self {
             redeem_script: output.redeem_script,
             witness_script: output.witness_script,
             bip32_derivation: output.bip32_derivation,
@@ -59,7 +66,7 @@ impl Output {
             tap_key_origins: output.tap_key_origins,
             proprietary: output.proprietary,
             unknown: output.unknown,
-        }
+        })
     }
 
     /// Converts this `Output` outto a serializable [`Output`].
@@ -70,6 +77,8 @@ impl Output {
             redeem_script: self.redeem_script,
             witness_script: self.witness_script,
             bip32_derivation: self.bip32_derivation,
+            amount: None,
+            script_pubkey: None,
             tap_internal_key: self.tap_internal_key,
             tap_tree: self.tap_tree,
             tap_key_origins: self.tap_key_origins,
@@ -91,3 +100,21 @@ impl Output {
         combine!(tap_tree, self, other);
     }
 }
+
+/// Output is neither valid for v0 or v2.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct InvalidError;
+
+impl From<Infallible> for InvalidError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for InvalidError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "output is neither valid for v0 or v2")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidError {}
