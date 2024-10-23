@@ -9,8 +9,8 @@ use crate::psbt::consts::{
     PSBT_OUT_TAP_BIP32_DERIVATION, PSBT_OUT_TAP_INTERNAL_KEY, PSBT_OUT_TAP_TREE,
     PSBT_OUT_WITNESS_SCRIPT,
 };
-use crate::psbt::map::Map;
-use crate::psbt::{raw, Error};
+use crate::psbt::serialize::map::Map;
+use crate::psbt::serialize::{raw, Error};
 use crate::script::ScriptBuf;
 use crate::taproot::{TapLeafHash, TapTree};
 

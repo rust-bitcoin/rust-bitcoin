@@ -9,11 +9,8 @@
 #[macro_use]
 mod macros;
 mod consts;
-mod error;
-mod map;
 pub mod input;
 pub mod output;
-pub mod raw;
 pub mod serialize;
 pub mod sighash_type;
 
@@ -30,6 +27,7 @@ use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
+use crate::psbt::serialize::{raw, map};
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TxOut};
@@ -40,7 +38,7 @@ use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 pub use self::{
     input::Input,
     output::Output,
-    error::Error,
+    serialize::Error,
     sighash_type::PsbtSighashType,
 };
 #[cfg(feature = "base64")]
@@ -1228,7 +1226,7 @@ mod tests {
     use crate::Sequence;
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::serialize::Error> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),

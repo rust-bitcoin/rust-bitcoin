@@ -9,12 +9,11 @@ use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, KeySource, Xpub};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Decodable};
 use crate::prelude::{btree_map, BTreeMap, Vec, DisplayHex};
-use crate::psbt::map;
 use crate::psbt::consts::{
     PSBT_GLOBAL_PROPRIETARY, PSBT_GLOBAL_UNSIGNED_TX, PSBT_GLOBAL_VERSION, PSBT_GLOBAL_XPUB,
 };
-use crate::psbt::map::Map;
-use crate::psbt::{raw, Error};
+use crate::psbt::serialize::map::{self, Map};
+use crate::psbt::serialize::{raw, Error};
 use crate::transaction::Transaction;
 
 /// A serializable PSBT.
@@ -480,7 +479,7 @@ mod tests {
     use crate::address::script_pubkey::ScriptExt as _;
     use crate::blockdata::script::ScriptExt as _;
     use crate::locktime::absolute;
-    use crate::psbt::map::{Input, Output};
+    use crate::psbt::serialize::map::{Input, Output};
     use crate::psbt::serialize::{Deserialize, Serialize};
     use crate::script::{ScriptBuf, ScriptBufExt as _};
     use crate::sighash::EcdsaSighashType;
@@ -489,7 +488,7 @@ mod tests {
     use crate::{Amount, Sequence};
 
     #[track_caller]
-    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
+    pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::serialize::error::Error> {
         let r = Vec::from_hex(s);
         match r {
             Err(_e) => panic!("unable to parse hex string {}", s),
@@ -571,7 +570,7 @@ mod tests {
 
     mod bip_vectors {
         use super::*;
-        use crate::psbt::map::Map;
+        use crate::psbt::serialize::map::Map;
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]
