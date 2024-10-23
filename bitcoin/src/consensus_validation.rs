@@ -174,21 +174,14 @@ impl Transaction {
     /// The `spent` closure should not return the same [`TxOut`] twice!
     ///
     /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
-    pub fn verify<S>(&self, spent: &S) -> Result<(), TxVerifyError>
-    where
-        S: Fn(&OutPoint) -> Option<TxOut>,
-    {
+    pub fn verify<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> Result<(), TxVerifyError> {
         verify_transaction(self, spent)
     }
 
     /// Verifies that this transaction is able to spend its inputs.
     ///
     /// The `spent` closure should not return the same [`TxOut`] twice!
-    pub fn verify_with_flags<S, F>(&self, spent: &S, flags: F) -> Result<(), TxVerifyError>
-    where
-        S: Fn(&OutPoint) -> Option<TxOut>,
-        F: Into<u32>,
-    {
+    pub fn verify_with_flags<S: Fn(&OutPoint) -> Option<TxOut>, F: Into<u32>>(&self, spent: &S, flags: F) -> Result<(), TxVerifyError> {
         verify_transaction_with_flags(self, spent, flags)
     }
 }

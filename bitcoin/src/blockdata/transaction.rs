@@ -517,10 +517,7 @@ impl Transaction {
     /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
     /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
     /// as well as any segwit sigops will not be counted for that input.
-    pub fn total_sigop_cost<S>(&self, spent: &S) -> usize
-    where
-        S: Fn(&OutPoint) -> Option<TxOut>,
-    {
+    pub fn total_sigop_cost<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
         let mut cost = self.count_p2pk_p2pkh_sigops().saturating_mul(4);
 
         // coinbase tx is correctly handled because `spent` will always returns None.
@@ -564,10 +561,7 @@ impl Transaction {
     }
 
     /// Does not include wrapped segwit (see `count_witness_sigops`).
-    fn count_p2sh_sigops<S>(&self, spent: &S) -> usize
-    where
-        S: Fn(&OutPoint) -> Option<TxOut>,
-    {
+    fn count_p2sh_sigops<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
         fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
             let mut count: usize = 0;
             if prevout.script_pubkey.is_p2sh() {
@@ -589,10 +583,7 @@ impl Transaction {
     }
 
     /// Includes wrapped segwit (returns 0 for Taproot spends).
-    fn count_witness_sigops<S>(&self, spent: &S) -> usize
-    where
-        S: Fn(&OutPoint) -> Option<TxOut>,
-    {
+    fn count_witness_sigops<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
         fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
             if witness_program.is_p2wpkh() {
                 1
