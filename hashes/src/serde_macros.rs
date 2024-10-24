@@ -18,7 +18,7 @@ pub mod serde_details {
         fn default() -> Self { Self(PhantomData) }
     }
 
-    impl<'de, ValueT> de::Visitor<'de> for HexVisitor<ValueT>
+    impl<ValueT> de::Visitor<'_> for HexVisitor<ValueT>
     where
         ValueT: FromStr,
         <ValueT as FromStr>::Err: fmt::Display,
@@ -55,7 +55,7 @@ pub mod serde_details {
         fn default() -> Self { Self(PhantomData) }
     }
 
-    impl<'de, ValueT, const N: usize> de::Visitor<'de> for BytesVisitor<ValueT, N>
+    impl<ValueT, const N: usize> de::Visitor<'_> for BytesVisitor<ValueT, N>
     where
         ValueT: crate::Hash,
         ValueT: crate::Hash<Bytes = [u8; N]>,
