@@ -515,15 +515,15 @@ impl Transaction {
     /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
     /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
     /// as well as any segwit sigops will not be counted for that input.
-    pub fn total_sigop_cost<S>(&self, mut spent: S) -> usize
+    pub fn total_sigop_cost<S>(&self, spent: &S) -> usize
     where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
+        S: Fn(&OutPoint) -> Option<TxOut>,
     {
         let mut cost = self.count_p2pk_p2pkh_sigops().saturating_mul(4);
 
         // coinbase tx is correctly handled because `spent` will always returns None.
-        cost = cost.saturating_add(self.count_p2sh_sigops(&mut spent).saturating_mul(4));
-        cost.saturating_add(self.count_witness_sigops(&mut spent))
+        cost = cost.saturating_add(self.count_p2sh_sigops(&spent).saturating_mul(4));
+        cost.saturating_add(self.count_witness_sigops(&spent))
     }
 
     /// Gets the sigop count.
@@ -544,9 +544,9 @@ impl Transaction {
     }
 
     /// Does not include wrapped segwit (see `count_witness_sigops`).
-    fn count_p2sh_sigops<S>(&self, spent: &mut S) -> usize
+    fn count_p2sh_sigops<S>(&self, spent: &S) -> usize
     where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
+        S: Fn(&OutPoint) -> Option<TxOut>,
     {
         fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
             let mut count: usize = 0;
@@ -569,9 +569,9 @@ impl Transaction {
     }
 
     /// Includes wrapped segwit (returns 0 for Taproot spends).
-    fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
+    fn count_witness_sigops<S>(&self, spent: &S) -> usize
     where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
+        S: Fn(&OutPoint) -> Option<TxOut>,
     {
         fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
             if witness_program.is_p2wpkh() {
@@ -1733,12 +1733,12 @@ mod tests {
         spent.insert(spent1.compute_txid(), spent1);
         spent.insert(spent2.compute_txid(), spent2);
         spent.insert(spent3.compute_txid(), spent3);
-        let mut spent2 = spent.clone();
-        let mut spent3 = spent.clone();
+        let spent2 = spent.clone();
+        let spent3 = spent.clone();
 
         spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -1751,8 +1751,8 @@ mod tests {
         double_spending.input.push(re_use);
 
         assert!(double_spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent2.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent2.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -1765,8 +1765,8 @@ mod tests {
         spending.input[1].witness = Witness::from_slice(&witness);
 
         let error = spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent3.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent3.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -2052,7 +2052,7 @@ mod tests {
             let tx_bytes = hex!(hx);
             let tx: Transaction = deserialize(&tx_bytes).unwrap();
             assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
-            assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
+            assert_eq!(tx.total_sigop_cost(&return_none), *expected_none);
         }
     }
 
