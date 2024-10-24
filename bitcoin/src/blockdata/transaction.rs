@@ -1717,7 +1717,7 @@ mod tests {
     fn transaction_verify() {
         use std::collections::HashMap;
 
-        use crate::consensus_validation::TxVerifyError;
+        use crate::consensus_validation::{TxVerifyError, TransactionExt as _};
         use crate::witness::Witness;
 
         // a random recent segwit transaction from blockchain using both old and segwit inputs
