@@ -32,7 +32,7 @@ use crate::{Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::*;
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn, TxOut};
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
@@ -82,133 +82,73 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-/// Bitcoin transaction input.
+/// Returns the input base weight.
 ///
-/// It contains the location of the previous transaction's output,
-/// that it spends and set of scripts that satisfy its spending
-/// conditions.
-///
-/// ### Bitcoin Core References
-///
-/// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct TxIn {
-    /// The reference to the previous output that is being used as an input.
-    pub previous_output: OutPoint,
-    /// The script which pushes values on the stack which will cause
-    /// the referenced output's script to be accepted.
-    pub script_sig: ScriptBuf,
-    /// The sequence number, which suggests to miners which of two
-    /// conflicting transactions should be preferred, or 0xFFFFFFFF
-    /// to ignore this feature. This is generally never used since
-    /// the miner behavior cannot be enforced.
-    pub sequence: Sequence,
-    /// Witness data: an array of byte-arrays.
-    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
-    /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
-    /// (de)serialization routines.
-    pub witness: Witness,
-}
+/// Base weight excludes the witness and script.
+// We need to use this const here but do not want to make it public in `primitives::TxIn`.
+const TX_IN_BASE_WEIGHT: Weight =
+    Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
 
-impl TxIn {
-    /// An empty transaction input with the previous output as for a coinbase transaction.
-    pub const EMPTY_COINBASE: TxIn = TxIn {
-        previous_output: OutPoint::COINBASE_PREVOUT,
-        script_sig: ScriptBuf::new(),
-        sequence: Sequence::MAX,
-        witness: Witness::new(),
-    };
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`TxIn`] type.
+    pub trait TxInExt impl for TxIn {
+        /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
+        /// [`Transaction`].
+        ///
+        /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
+        ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
+        ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
+        ///  this input then the script execution will fail [BIP-0065].
+        ///
+        /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+        fn enables_lock_time(&self) -> bool { self.sequence != Sequence::MAX }
 
-    /// Returns the input base weight.
-    ///
-    /// Base weight excludes the witness and script.
-    const BASE_WEIGHT: Weight =
-        Weight::from_vb_unwrap(OutPoint::SIZE as u64 + Sequence::SIZE as u64);
+        /// The weight of the TxIn when it's included in a legacy transaction (i.e., a transaction
+        /// having only legacy inputs).
+        ///
+        /// The witness weight is ignored here even when the witness is non-empty.
+        /// If you want the witness to be taken into account, use `TxIn::segwit_weight` instead.
+        ///
+        /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
+        /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
+        /// the input length `VarInt` to increase its encoding length.
+        fn legacy_weight(&self) -> Weight {
+            Weight::from_non_witness_data_size(self.base_size().to_u64())
+        }
 
-    /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
-    /// [`Transaction`].
-    ///
-    /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
-    ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
-    ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
-    ///  this input then the script execution will fail [BIP-0065].
-    ///
-    /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
-    pub fn enables_lock_time(&self) -> bool { self.sequence != Sequence::MAX }
+        /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
+        /// having at least one segwit input).
+        ///
+        /// This always takes into account the witness, even when empty, in which
+        /// case 1WU for the witness length varint (`00`) is included.
+        ///
+        /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
+        /// might increase more than `TxIn::segwit_weight`. This happens when:
+        /// - the new input added causes the input length `VarInt` to increase its encoding length
+        /// - the new input is the first segwit input added - this will add an additional 2WU to the
+        ///   transaction weight to take into account the segwit marker
+        fn segwit_weight(&self) -> Weight {
+            Weight::from_non_witness_data_size(self.base_size().to_u64())
+                + Weight::from_witness_data_size(self.witness.size().to_u64())
+        }
 
-    /// The weight of the TxIn when it's included in a legacy transaction (i.e., a transaction
-    /// having only legacy inputs).
-    ///
-    /// The witness weight is ignored here even when the witness is non-empty.
-    /// If you want the witness to be taken into account, use `TxIn::segwit_weight` instead.
-    ///
-    /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
-    /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
-    /// the input length `VarInt` to increase its encoding length.
-    pub fn legacy_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size().to_u64())
+        /// Returns the base size of this input.
+        ///
+        /// Base size excludes the witness data (see [`Self::total_size`]).
+        fn base_size(&self) -> usize {
+            let mut size = OutPoint::SIZE;
+
+            size += compact_size::encoded_size(self.script_sig.len());
+            size += self.script_sig.len();
+
+            size + Sequence::SIZE
+        }
+
+        /// Returns the total number of bytes that this input contributes to a transaction.
+        ///
+        /// Total size includes the witness data (for base size see [`Self::base_size`]).
+        fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
     }
-
-    /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
-    /// having at least one segwit input).
-    ///
-    /// This always takes into account the witness, even when empty, in which
-    /// case 1WU for the witness length varint (`00`) is included.
-    ///
-    /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
-    /// might increase more than `TxIn::segwit_weight`. This happens when:
-    /// - the new input added causes the input length `VarInt` to increase its encoding length
-    /// - the new input is the first segwit input added - this will add an additional 2WU to the
-    ///   transaction weight to take into account the segwit marker
-    pub fn segwit_weight(&self) -> Weight {
-        Weight::from_non_witness_data_size(self.base_size().to_u64())
-            + Weight::from_witness_data_size(self.witness.size().to_u64())
-    }
-
-    /// Returns the base size of this input.
-    ///
-    /// Base size excludes the witness data (see [`Self::total_size`]).
-    pub fn base_size(&self) -> usize {
-        let mut size = OutPoint::SIZE;
-
-        size += compact_size::encoded_size(self.script_sig.len());
-        size += self.script_sig.len();
-
-        size + Sequence::SIZE
-    }
-
-    /// Returns the total number of bytes that this input contributes to a transaction.
-    ///
-    /// Total size includes the witness data (for base size see [`Self::base_size`]).
-    pub fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
-}
-
-/// Bitcoin transaction output.
-///
-/// Defines new coins to be created as a result of the transaction,
-/// along with spending conditions ("script", aka "output script"),
-/// which an input spending it must satisfy.
-///
-/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
-///
-/// ### Bitcoin Core References
-///
-/// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct TxOut {
-    /// The value of the output, in satoshis.
-    pub value: Amount,
-    /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: ScriptBuf,
-}
-
-impl TxOut {
-    /// This is used as a "null txout" in consensus signing code.
-    pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 }
 
 crate::internal_macros::define_extension_trait! {
@@ -262,13 +202,6 @@ crate::internal_macros::define_extension_trait! {
         fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
             TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TxOut {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 
@@ -955,7 +888,7 @@ pub fn effective_value(
     satisfaction_weight: Weight,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TxIn::BASE_WEIGHT)?;
+    let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
     let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
@@ -1305,18 +1238,6 @@ impl InputWeightPrediction {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for TxIn {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxIn {
-            previous_output: OutPoint::arbitrary(u)?,
-            script_sig: ScriptBuf::arbitrary(u)?,
-            sequence: Sequence::arbitrary(u)?,
-            witness: Witness::arbitrary(u)?,
-        })
-    }
-}
-
-#[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Transaction {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         use primitives::absolute::LockTime;
@@ -1335,6 +1256,7 @@ mod sealed {
     impl Sealed for super::Txid {}
     impl Sealed for super::Wtxid {}
     impl Sealed for super::OutPoint {}
+    impl Sealed for super::TxIn {}
     impl Sealed for super::TxOut {}
     impl Sealed for super::Version {}
 }

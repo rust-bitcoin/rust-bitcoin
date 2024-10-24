@@ -59,6 +59,7 @@ pub use self::{
 pub use self::{
     locktime::{absolute, relative},
     witness::Witness,
+    transaction::{TxIn, TxOut},
 };
 
 #[rustfmt::skip]
