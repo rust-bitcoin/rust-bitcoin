@@ -441,8 +441,9 @@ impl<E> With<E> {
             let result = value.consensus_encode(&mut writer);
             match (result, writer.error) {
                 (Ok(_), None) => writer.serializer.end(),
-                (Ok(_), Some(error)) =>
-                    panic!("{} silently ate an IO error: {:?}", core::any::type_name::<T>(), error),
+                (Ok(_), Some(error)) => {
+                    panic!("{} silently ate an IO error: {:?}", core::any::type_name::<T>(), error)
+                }
                 (Err(io_error), Some(ser_error))
                     if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() =>
                     Err(ser_error),

@@ -120,8 +120,9 @@ impl fmt::Display for Error {
             PsbtUtxoOutOfbounds =>
                 f.write_str("output index is out of bounds of non witness script output array"),
             InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            InvalidProprietaryKey =>
-                write!(f, "non-proprietary key type found when proprietary key was expected"),
+            InvalidProprietaryKey => {
+                write!(f, "non-proprietary key type found when proprietary key was expected")
+            }
             DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
             UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
             UnsignedTxHasScriptWitnesses =>

@@ -104,3 +104,47 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> BufRead for IterReader<E,
         }
     }
 }
+<<<<<<< HEAD
+
+
+/// Error when consensus decoding from an `[IterReader]`.
+#[derive(Debug)]
+pub enum DecodeError<E> {
+    /// Attempted to decode an object from an iterator that yielded too many bytes.
+    TooManyBytes,
+    /// Invalid consensus encoding.
+    Consensus(consensus::encode::Error),
+    /// Other decoding error.
+    Other(E),
+}
+
+internals::impl_from_infallible!(DecodeError<E>);
+
+impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use DecodeError::*;
+
+        match *self {
+            TooManyBytes => {
+                write!(f, "attempted to decode object from an iterator that yielded too many bytes")
+            }
+            Consensus(ref e) => write_err!(f, "invalid consensus encoding"; e),
+            Other(ref other) => write!(f, "other decoding error: {:?}", other),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<E: fmt::Debug> std::error::Error for DecodeError<E> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use DecodeError::*;
+
+        match *self {
+            TooManyBytes => None,
+            Consensus(ref e) => Some(e),
+            Other(_) => None, // TODO: Is this correct?
+        }
+    }
+}
+=======
+>>>>>>> a6254212 (Move consensus error code to submodule)

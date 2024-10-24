@@ -54,8 +54,9 @@ mod message_signing {
                 InvalidLength => write!(f, "length not 65 bytes"),
                 InvalidEncoding(ref e) => write_err!(f, "invalid encoding"; e),
                 InvalidBase64 => write!(f, "invalid base64"),
-                UnsupportedAddressType(ref address_type) =>
-                    write!(f, "unsupported address type: {}", address_type),
+                UnsupportedAddressType(ref address_type) => {
+                    write!(f, "unsupported address type: {}", address_type)
+                }
             }
         }
     }
@@ -101,7 +102,7 @@ mod message_signing {
         pub fn serialize(&self) -> [u8; 65] {
             let (recid, raw) = self.signature.serialize_compact();
             let mut serialized = [0u8; 65];
-            serialized[0] = recid.to_i32() as u8 + if self.compressed { 31 } else { 27 };
+            serialized[0] = Into::<i32>::into(recid) as u8 + if self.compressed { 31 } else { 27 };
             serialized[1..].copy_from_slice(&raw[..]);
             serialized
         }
@@ -112,7 +113,7 @@ mod message_signing {
             if bytes[0] < 27 {
                 return Err(secp256k1::Error::InvalidRecoveryId);
             };
-            let recid = RecoveryId::from_i32(((bytes[0] - 27) & 0x03) as i32)?;
+            let recid = RecoveryId::try_from(((bytes[0] - 27) & 0x03) as i32)?;
             Ok(MessageSignature {
                 signature: RecoverableSignature::from_compact(&bytes[1..], recid)?,
                 compressed: ((bytes[0] - 27) & 0x04) != 0,

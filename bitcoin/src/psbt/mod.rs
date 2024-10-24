@@ -444,9 +444,9 @@ impl Psbt {
                         .to_inner();
 
                     #[cfg(feature = "rand-std")]
-                    let signature = secp.sign_schnorr(&msg, &key_pair);
+                    let signature = secp.sign_schnorr(msg.as_ref(), &key_pair);
                     #[cfg(not(feature = "rand-std"))]
-                    let signature = secp.sign_schnorr_no_aux_rand(&msg, &key_pair);
+                    let signature = secp.sign_schnorr_no_aux_rand(msg.as_ref(), &key_pair);
 
                     let signature = taproot::Signature { signature, sighash_type };
                     input.tap_key_sig = Some(signature);
@@ -471,9 +471,9 @@ impl Psbt {
                             self.sighash_taproot(input_index, cache, Some(lh))?;
 
                         #[cfg(feature = "rand-std")]
-                        let signature = secp.sign_schnorr(&msg, &key_pair);
+                        let signature = secp.sign_schnorr(msg.as_ref(), &key_pair);
                         #[cfg(not(feature = "rand-std"))]
-                        let signature = secp.sign_schnorr_no_aux_rand(&msg, &key_pair);
+                        let signature = secp.sign_schnorr_no_aux_rand(msg.as_ref(), &key_pair);
 
                         let signature = taproot::Signature { signature, sighash_type };
                         input.tap_script_sigs.insert((xonly, lh), signature);
@@ -988,8 +988,9 @@ impl fmt::Display for SignError {
             TaprootError(ref e) => write_err!(f, "Taproot sighash"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
-            WrongSigningAlgorithm =>
-                write!(f, "attempt to sign an input with the wrong signing algorithm"),
+            WrongSigningAlgorithm => {
+                write!(f, "attempt to sign an input with the wrong signing algorithm")
+            }
             Unsupported => write!(f, "signing request currently unsupported"),
         }
     }
@@ -1063,8 +1064,9 @@ impl fmt::Display for ExtractTxError {
         use ExtractTxError::*;
 
         match *self {
-            AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "an absurdly high fee rate of {}", fee_rate),
+            AbsurdFeeRate { fee_rate, .. } => {
+                write!(f, "an absurdly high fee rate of {}", fee_rate)
+            }
             MissingInputValue { .. } => write!(
                 f,
                 "one of the inputs lacked value information (witness_utxo or non_witness_utxo)"
