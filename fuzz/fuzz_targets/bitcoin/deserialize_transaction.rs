@@ -1,3 +1,4 @@
+use bitcoin::transaction::TransactionExt;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

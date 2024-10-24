@@ -27,7 +27,7 @@ use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
-use crate::transaction::{self, Transaction, TxOut};
+use crate::transaction::{self, Transaction, TxOut, TransactionExt as _};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
