@@ -23,7 +23,7 @@ use crate::network::Params;
 use crate::pow::{Target, Work};
 use crate::prelude::Vec;
 use crate::script::{self, ScriptExt as _};
-use crate::transaction::{Transaction, Wtxid};
+use crate::transaction::{Transaction, Wtxid, TransactionExt as _};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

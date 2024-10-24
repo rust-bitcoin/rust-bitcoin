@@ -34,6 +34,7 @@ use std::fmt;
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
+use bitcoin::consensus_validation::TransactionExt as _;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
@@ -83,7 +84,7 @@ fn main() -> Result<()> {
 
     // You can use `bt sendrawtransaction` to broadcast the extracted transaction.
     let tx = finalized.extract_tx_unchecked_fee_rate();
-    tx.verify(|_| Some(previous_output())).expect("failed to verify transaction");
+    tx.verify(&|_| Some(previous_output())).expect("failed to verify transaction");
 
     let hex = encode::serialize_hex(&tx);
     println!("You should now be able to broadcast the following transaction: \n\n{}", hex);

@@ -10,10 +10,8 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
-use core::{cmp, fmt};
+use core::fmt;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
@@ -32,7 +30,7 @@ use crate::{Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn, TxOut};
+pub use primitives::transaction::{OutPoint, ParseOutPointError, Txid, Wtxid, Version, TxIn, TxOut, Transaction};
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
@@ -211,443 +209,302 @@ fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
     Amount::SIZE + compact_size::encoded_size(len) + len
 }
 
-/// Bitcoin transaction.
-///
-/// An authenticated movement of coins.
-///
-/// See [Bitcoin Wiki: Transaction][wiki-transaction] for more information.
-///
-/// [wiki-transaction]: https://en.bitcoin.it/wiki/Transaction
-///
-/// ### Bitcoin Core References
-///
-/// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
-///
-/// ### Serialization notes
-///
-/// If any inputs have nonempty witnesses, the entire transaction is serialized
-/// in the post-BIP141 Segwit format which includes a list of witnesses. If all
-/// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
-/// format.
-///
-/// There is one major exception to this: to avoid deserialization ambiguity,
-/// if the transaction has no inputs, it is serialized in the BIP141 style. Be
-/// aware that this differs from the transaction format in PSBT, which _never_
-/// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
-/// are always unsigned and therefore their inputs have empty witnesses.)
-///
-/// The specific ambiguity is that Segwit uses the flag bytes `0001` where an old
-/// serializer would read the number of transaction inputs. The old serializer
-/// would interpret this as "no inputs, one output", which means the transaction
-/// is invalid, and simply reject it. Segwit further specifies that this encoding
-/// should *only* be used when some input has a nonempty witness; that is,
-/// witness-less transactions should be encoded in the traditional format.
-///
-/// However, in protocols where transactions may legitimately have 0 inputs, e.g.
-/// when parties are cooperatively funding a transaction, the "00 means Segwit"
-/// heuristic does not work. Since Segwit requires such a transaction be encoded
-/// in the original transaction format (since it has no inputs and therefore
-/// no input witnesses), a traditionally encoded transaction may have the `0001`
-/// Segwit flag in it, which confuses most Segwit parsers including the one in
-/// Bitcoin Core.
-///
-/// We therefore deviate from the spec by always using the Segwit witness encoding
-/// for 0-input transactions, which results in unambiguously parseable transactions.
-///
-/// ### A note on ordering
-///
-/// This type implements `Ord`, even though it contains a locktime, which is not
-/// itself `Ord`. This was done to simplify applications that may need to hold
-/// transactions inside a sorted container. We have ordered the locktimes based
-/// on their representation as a `u32`, which is not a semantically meaningful
-/// order, and therefore the ordering on `Transaction` itself is not semantically
-/// meaningful either.
-///
-/// The ordering is, however, consistent with the ordering present in this library
-/// before this change, so users should not notice any breakage (here) when
-/// transitioning from 0.29 to 0.30.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Transaction {
-    /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
-    pub version: Version,
-    /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
-    ///
-    /// ### Relevant BIPs
-    ///
-    /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
-    /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
-    pub lock_time: absolute::LockTime,
-    /// List of transaction inputs.
-    pub input: Vec<TxIn>,
-    /// List of transaction outputs.
-    pub output: Vec<TxOut>,
-}
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Transaction`] type.
+    pub trait TransactionExt impl for Transaction {
+        /// Computes a "normalized TXID" which does not include any signatures.
+        ///
+        /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
+        /// computationally expensive.  Use `compute_ntxid` instead.
+        #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
+        fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
 
-impl cmp::PartialOrd for Transaction {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
-}
-impl cmp::Ord for Transaction {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.version
-            .cmp(&other.version)
-            .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
-            .then(self.input.cmp(&other.input))
-            .then(self.output.cmp(&other.output))
-    }
-}
+        /// Computes the [`Txid`].
+        ///
+        /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
+        /// computationally expensive.  Use `compute_txid` instead.
+        #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
+        fn txid(&self) -> Txid { self.compute_txid() }
 
-impl Transaction {
-    // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
-    /// Maximum transaction weight for Bitcoin Core 25.0.
-    pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
+        /// Computes the segwit version of the transaction id.
+        ///
+        /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
+        /// computationally expensive.  Use `compute_wtxid` instead.
+        #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
+        fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
 
-    /// Computes a "normalized TXID" which does not include any signatures.
-    ///
-    /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
-    /// computationally expensive.  Use `compute_ntxid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
-    pub fn ntxid(&self) -> sha256d::Hash { self.compute_ntxid() }
+        /// Returns the weight of this transaction, as defined by BIP-141.
+        ///
+        /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
+        /// > the same method as calculating Block weight from Base size and Total size).
+        ///
+        /// For transactions with an empty witness, this is simply the consensus-serialized size times
+        /// four. For transactions with a witness, this is the non-witness consensus-serialized size
+        /// multiplied by three plus the with-witness consensus-serialized size.
+        ///
+        /// For transactions with no inputs, this function will return a value 2 less than the actual
+        /// weight of the serialized transaction. The reason is that zero-input transactions, post-segwit,
+        /// cannot be unambiguously serialized; we make a choice that adds two extra bytes. For more
+        /// details see [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+        /// which uses a "input count" of `0x00` as a `marker` for a Segwit-encoded transaction.
+        ///
+        /// If you need to use 0-input transactions, we strongly recommend you do so using the PSBT
+        /// API. The unsigned transaction encoded within PSBT is always a non-segwit transaction
+        /// and can therefore avoid this ambiguity.
+        #[inline]
+        fn weight(&self) -> Weight {
+            // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+            let wu = self.base_size() * 3 + self.total_size();
+            Weight::from_wu_usize(wu)
+        }
 
-    /// Computes a "normalized TXID" which does not include any signatures.
-    ///
-    /// This gives a way to identify a transaction that is "the same" as
-    /// another in the sense of having same inputs and outputs.
-    #[doc(alias = "ntxid")]
-    pub fn compute_ntxid(&self) -> sha256d::Hash {
-        let cloned_tx = Transaction {
-            version: self.version,
-            lock_time: self.lock_time,
-            input: self
+        /// Returns the base transaction size.
+        ///
+        /// > Base transaction size is the size of the transaction serialised with the witness data stripped.
+        fn base_size(&self) -> usize {
+            let mut size: usize = 4; // Serialized length of a u32 for the version number.
+
+            size += compact_size::encoded_size(self.input.len());
+            size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
+
+            size += compact_size::encoded_size(self.output.len());
+            size += self.output.iter().map(|output| output.size()).sum::<usize>();
+
+            size + absolute::LockTime::SIZE
+        }
+
+        /// Returns the total transaction size.
+        ///
+        /// > Total transaction size is the transaction size in bytes serialized as described in BIP144,
+        /// > including base data and witness data.
+        #[inline]
+        fn total_size(&self) -> usize {
+            let mut size: usize = 4; // Serialized length of a u32 for the version number.
+            let uses_segwit = self.uses_segwit_serialization();
+
+            if uses_segwit {
+                size += 2; // 1 byte for the marker and 1 for the flag.
+            }
+
+            size += compact_size::encoded_size(self.input.len());
+            size += self
                 .input
                 .iter()
-                .map(|txin| TxIn {
-                    script_sig: ScriptBuf::new(),
-                    witness: Witness::default(),
-                    ..*txin
-                })
-                .collect(),
-            output: self.output.clone(),
-        };
-        cloned_tx.compute_txid().into()
-    }
+                .map(|input| if uses_segwit { input.total_size() } else { input.base_size() })
+                .sum::<usize>();
 
-    /// Computes the [`Txid`].
-    ///
-    /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
-    /// computationally expensive.  Use `compute_txid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
-    pub fn txid(&self) -> Txid { self.compute_txid() }
+            size += compact_size::encoded_size(self.output.len());
+            size += self.output.iter().map(|output| output.size()).sum::<usize>();
 
-    /// Computes the [`Txid`].
-    ///
-    /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
-    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
-    /// this will be equal to [`Transaction::compute_wtxid()`].
-    #[doc(alias = "txid")]
-    pub fn compute_txid(&self) -> Txid {
-        let mut enc = sha256d::Hash::engine();
-        self.version.consensus_encode(&mut enc).expect("engines don't error");
-        self.input.consensus_encode(&mut enc).expect("engines don't error");
-        self.output.consensus_encode(&mut enc).expect("engines don't error");
-        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
-        Txid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
-    }
-
-    /// Computes the segwit version of the transaction id.
-    ///
-    /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
-    /// computationally expensive.  Use `compute_wtxid` instead.
-    #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
-    pub fn wtxid(&self) -> Wtxid { self.compute_wtxid() }
-
-    /// Computes the segwit version of the transaction id.
-    ///
-    /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
-    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
-    /// this will be equal to [`Transaction::txid()`].
-    #[doc(alias = "wtxid")]
-    pub fn compute_wtxid(&self) -> Wtxid {
-        let mut enc = sha256d::Hash::engine();
-        self.consensus_encode(&mut enc).expect("engines don't error");
-        Wtxid::from_byte_array(sha256d::Hash::from_engine(enc).to_byte_array())
-    }
-
-    /// Returns the weight of this transaction, as defined by BIP-141.
-    ///
-    /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
-    /// > the same method as calculating Block weight from Base size and Total size).
-    ///
-    /// For transactions with an empty witness, this is simply the consensus-serialized size times
-    /// four. For transactions with a witness, this is the non-witness consensus-serialized size
-    /// multiplied by three plus the with-witness consensus-serialized size.
-    ///
-    /// For transactions with no inputs, this function will return a value 2 less than the actual
-    /// weight of the serialized transaction. The reason is that zero-input transactions, post-segwit,
-    /// cannot be unambiguously serialized; we make a choice that adds two extra bytes. For more
-    /// details see [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    /// which uses a "input count" of `0x00` as a `marker` for a Segwit-encoded transaction.
-    ///
-    /// If you need to use 0-input transactions, we strongly recommend you do so using the PSBT
-    /// API. The unsigned transaction encoded within PSBT is always a non-segwit transaction
-    /// and can therefore avoid this ambiguity.
-    #[inline]
-    pub fn weight(&self) -> Weight {
-        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
-        let wu = self.base_size() * 3 + self.total_size();
-        Weight::from_wu_usize(wu)
-    }
-
-    /// Returns the base transaction size.
-    ///
-    /// > Base transaction size is the size of the transaction serialised with the witness data stripped.
-    pub fn base_size(&self) -> usize {
-        let mut size: usize = 4; // Serialized length of a u32 for the version number.
-
-        size += compact_size::encoded_size(self.input.len());
-        size += self.input.iter().map(|input| input.base_size()).sum::<usize>();
-
-        size += compact_size::encoded_size(self.output.len());
-        size += self.output.iter().map(|output| output.size()).sum::<usize>();
-
-        size + absolute::LockTime::SIZE
-    }
-
-    /// Returns the total transaction size.
-    ///
-    /// > Total transaction size is the transaction size in bytes serialized as described in BIP144,
-    /// > including base data and witness data.
-    #[inline]
-    pub fn total_size(&self) -> usize {
-        let mut size: usize = 4; // Serialized length of a u32 for the version number.
-        let uses_segwit = self.uses_segwit_serialization();
-
-        if uses_segwit {
-            size += 2; // 1 byte for the marker and 1 for the flag.
+            size + absolute::LockTime::SIZE
         }
 
-        size += compact_size::encoded_size(self.input.len());
-        size += self
-            .input
-            .iter()
-            .map(|input| if uses_segwit { input.total_size() } else { input.base_size() })
-            .sum::<usize>();
-
-        size += compact_size::encoded_size(self.output.len());
-        size += self.output.iter().map(|output| output.size()).sum::<usize>();
-
-        size + absolute::LockTime::SIZE
-    }
-
-    /// Returns the "virtual size" (vsize) of this transaction.
-    ///
-    /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP141`], which
-    /// is different to what is implemented in Bitcoin Core. The computation should be the same for
-    /// any remotely sane transaction, and a standardness-rule-correct version is available in the
-    /// [`policy`] module.
-    ///
-    /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
-    ///
-    /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
-    /// [`policy`]: ../../policy/index.html
-    #[inline]
-    pub fn vsize(&self) -> usize {
-        // No overflow because it's computed from data in memory
-        self.weight().to_vbytes_ceil() as usize
-    }
-
-    /// Checks if this is a coinbase transaction.
-    ///
-    /// The first transaction in the block distributes the mining reward and is called the coinbase
-    /// transaction. It is impossible to check if the transaction is first in the block, so this
-    /// function checks the structure of the transaction instead - the previous output must be
-    /// all-zeros (creates satoshis "out of thin air").
-    #[doc(alias = "is_coin_base")] // method previously had this name
-    pub fn is_coinbase(&self) -> bool {
-        self.input.len() == 1 && self.input[0].previous_output == OutPoint::COINBASE_PREVOUT
-    }
-
-    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
-    ///
-    /// # Warning
-    ///
-    /// **Incorrectly relying on RBF may lead to monetary loss!**
-    ///
-    /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
-    /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
-    /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
-    pub fn is_explicitly_rbf(&self) -> bool {
-        self.input.iter().any(|input| input.sequence.is_rbf())
-    }
-
-    /// Returns true if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
-    ///
-    /// # Returns
-    ///
-    /// By definition if the lock time is not enabled the transaction's absolute timelock is
-    /// considered to be satisfied i.e., there are no timelock constraints restricting this
-    /// transaction from being mined immediately.
-    pub fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
-        if !self.is_lock_time_enabled() {
-            return true;
+        /// Returns the "virtual size" (vsize) of this transaction.
+        ///
+        /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP141`], which
+        /// is different to what is implemented in Bitcoin Core. The computation should be the same for
+        /// any remotely sane transaction, and a standardness-rule-correct version is available in the
+        /// [`policy`] module.
+        ///
+        /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
+        ///
+        /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+        /// [`policy`]: ../../policy/index.html
+        #[inline]
+        fn vsize(&self) -> usize {
+            // No overflow because it's computed from data in memory
+            self.weight().to_vbytes_ceil() as usize
         }
-        self.lock_time.is_satisfied_by(height, time)
-    }
 
-    /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
-    ///
-    /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
-    pub fn is_lock_time_enabled(&self) -> bool { self.input.iter().any(|i| i.enables_lock_time()) }
-
-    /// Returns an iterator over lengths of `script_pubkey`s in the outputs.
-    ///
-    /// This is useful in combination with [`predict_weight`] if you have the transaction already
-    /// constructed with a dummy value in the fee output which you'll adjust after calculating the
-    /// weight.
-    pub fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
-        self.output.iter().map(|txout| txout.script_pubkey.len())
-    }
-
-    /// Counts the total number of sigops.
-    ///
-    /// This value is for pre-Taproot transactions only.
-    ///
-    /// > In Taproot, a different mechanism is used. Instead of having a global per-block limit,
-    /// > there is a per-transaction-input limit, proportional to the size of that input.
-    /// > ref: <https://bitcoin.stackexchange.com/questions/117356/what-is-sigop-signature-operation#117359>
-    ///
-    /// The `spent` parameter is a closure/function that looks up the output being spent by each input
-    /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
-    /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
-    /// as well as any segwit sigops will not be counted for that input.
-    pub fn total_sigop_cost<S>(&self, mut spent: S) -> usize
-    where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
-    {
-        let mut cost = self.count_p2pk_p2pkh_sigops().saturating_mul(4);
-
-        // coinbase tx is correctly handled because `spent` will always returns None.
-        cost = cost.saturating_add(self.count_p2sh_sigops(&mut spent).saturating_mul(4));
-        cost.saturating_add(self.count_witness_sigops(&mut spent))
-    }
-
-    /// Gets the sigop count.
-    ///
-    /// Counts sigops for this transaction's input scriptSigs and output scriptPubkeys i.e., doesn't
-    /// count sigops in the redeemScript for p2sh or the sigops in the witness (use
-    /// `count_p2sh_sigops` and `count_witness_sigops` respectively).
-    fn count_p2pk_p2pkh_sigops(&self) -> usize {
-        let mut count: usize = 0;
-        for input in &self.input {
-            // 0 for p2wpkh, p2wsh, and p2sh (including wrapped segwit).
-            count = count.saturating_add(input.script_sig.count_sigops_legacy());
+        /// Checks if this is a coinbase transaction.
+        ///
+        /// The first transaction in the block distributes the mining reward and is called the coinbase
+        /// transaction. It is impossible to check if the transaction is first in the block, so this
+        /// function checks the structure of the transaction instead - the previous output must be
+        /// all-zeros (creates satoshis "out of thin air").
+        #[doc(alias = "is_coin_base")] // method previously had this name
+        fn is_coinbase(&self) -> bool {
+            self.input.len() == 1 && self.input[0].previous_output == OutPoint::COINBASE_PREVOUT
         }
-        for output in &self.output {
-            count = count.saturating_add(output.script_pubkey.count_sigops_legacy());
-        }
-        count
-    }
 
-    /// Does not include wrapped segwit (see `count_witness_sigops`).
-    fn count_p2sh_sigops<S>(&self, spent: &mut S) -> usize
-    where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
-    {
-        fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
+        /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
+        ///
+        /// # Warning
+        ///
+        /// **Incorrectly relying on RBF may lead to monetary loss!**
+        ///
+        /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
+        /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
+        /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
+        fn is_explicitly_rbf(&self) -> bool {
+            self.input.iter().any(|input| input.sequence.is_rbf())
+        }
+
+        /// Returns true if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
+        ///
+        /// # Returns
+        ///
+        /// By definition if the lock time is not enabled the transaction's absolute timelock is
+        /// considered to be satisfied i.e., there are no timelock constraints restricting this
+        /// transaction from being mined immediately.
+        fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
+            if !self.is_lock_time_enabled() {
+                return true;
+            }
+            self.lock_time.is_satisfied_by(height, time)
+        }
+
+        /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
+        ///
+        /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+        fn is_lock_time_enabled(&self) -> bool { self.input.iter().any(|i| i.enables_lock_time()) }
+
+        /// Returns an iterator over lengths of `script_pubkey`s in the outputs.
+        ///
+        /// This is useful in combination with [`predict_weight`] if you have the transaction already
+        /// constructed with a dummy value in the fee output which you'll adjust after calculating the
+        /// weight.
+        fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
+            self.output.iter().map(|txout| txout.script_pubkey.len())
+        }
+
+        /// Counts the total number of sigops.
+        ///
+        /// This value is for pre-Taproot transactions only.
+        ///
+        /// > In Taproot, a different mechanism is used. Instead of having a global per-block limit,
+        /// > there is a per-transaction-input limit, proportional to the size of that input.
+        /// > ref: <https://bitcoin.stackexchange.com/questions/117356/what-is-sigop-signature-operation#117359>
+        ///
+        /// The `spent` parameter is a closure/function that looks up the output being spent by each input
+        /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
+        /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
+        /// as well as any segwit sigops will not be counted for that input.
+        fn total_sigop_cost<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
+            let mut cost = self.count_p2pk_p2pkh_sigops().saturating_mul(4);
+
+            // coinbase tx is correctly handled because `spent` will always returns None.
+            cost = cost.saturating_add(self.count_p2sh_sigops(&spent).saturating_mul(4));
+            cost.saturating_add(self.count_witness_sigops(&spent))
+        }
+
+        /// Returns a reference to the input at `input_index` if it exists.
+        #[inline]
+        fn tx_in(&self, input_index: usize) -> Result<&TxIn, InputsIndexError> {
+            self.input
+                .get(input_index)
+                .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
+        }
+
+        /// Returns a reference to the output at `output_index` if it exists.
+        #[inline]
+        fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
+            self.output
+                .get(output_index)
+                .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
+        }
+    }
+}
+
+crate::internal_macros::define_extension_trait! {
+    trait TransactionExtPriv impl for Transaction {
+        /// Gets the sigop count.
+        ///
+        /// Counts sigops for this transaction's input scriptSigs and output scriptPubkeys i.e., doesn't
+        /// count sigops in the redeemScript for p2sh or the sigops in the witness (use
+        /// `count_p2sh_sigops` and `count_witness_sigops` respectively).
+        fn count_p2pk_p2pkh_sigops(&self) -> usize {
             let mut count: usize = 0;
-            if prevout.script_pubkey.is_p2sh() {
-                if let Some(redeem) = input.script_sig.last_pushdata() {
-                    count =
-                        count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
+            for input in &self.input {
+                // 0 for p2wpkh, p2wsh, and p2sh (including wrapped segwit).
+                count = count.saturating_add(input.script_sig.count_sigops_legacy());
+            }
+            for output in &self.output {
+                count = count.saturating_add(output.script_pubkey.count_sigops_legacy());
+            }
+            count
+        }
+
+        /// Does not include wrapped segwit (see `count_witness_sigops`).
+        fn count_p2sh_sigops<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
+            fn count_sigops(prevout: &TxOut, input: &TxIn) -> usize {
+                let mut count: usize = 0;
+                if prevout.script_pubkey.is_p2sh() {
+                    if let Some(redeem) = input.script_sig.last_pushdata() {
+                        count =
+                            count.saturating_add(Script::from_bytes(redeem.as_bytes()).count_sigops());
+                    }
+                }
+                count
+            }
+
+            let mut count: usize = 0;
+            for input in &self.input {
+                if let Some(prevout) = spent(&input.previous_output) {
+                    count = count.saturating_add(count_sigops(&prevout, input));
                 }
             }
             count
         }
 
-        let mut count: usize = 0;
-        for input in &self.input {
-            if let Some(prevout) = spent(&input.previous_output) {
-                count = count.saturating_add(count_sigops(&prevout, input));
+        /// Includes wrapped segwit (returns 0 for Taproot spends).
+        fn count_witness_sigops<S: Fn(&OutPoint) -> Option<TxOut>>(&self, spent: &S) -> usize {
+            fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
+                if witness_program.is_p2wpkh() {
+                    1
+                } else if witness_program.is_p2wsh() {
+                    // Treat the last item of the witness as the witnessScript
+                    return witness
+                        .last()
+                        .map(Script::from_bytes)
+                        .map(|s| s.count_sigops())
+                        .unwrap_or(0);
+                } else {
+                    0
+                }
             }
-        }
-        count
-    }
 
-    /// Includes wrapped segwit (returns 0 for Taproot spends).
-    fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
-    where
-        S: FnMut(&OutPoint) -> Option<TxOut>,
-    {
-        fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script) -> usize {
-            if witness_program.is_p2wpkh() {
-                1
-            } else if witness_program.is_p2wsh() {
-                // Treat the last item of the witness as the witnessScript
-                return witness
-                    .last()
-                    .map(Script::from_bytes)
-                    .map(|s| s.count_sigops())
-                    .unwrap_or(0);
-            } else {
-                0
-            }
-        }
+            fn count_sigops(prevout: TxOut, input: &TxIn) -> usize {
+                let script_sig = &input.script_sig;
+                let witness = &input.witness;
 
-        fn count_sigops(prevout: TxOut, input: &TxIn) -> usize {
-            let script_sig = &input.script_sig;
-            let witness = &input.witness;
-
-            let witness_program = if prevout.script_pubkey.is_witness_program() {
-                &prevout.script_pubkey
-            } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
-                // If prevout is P2SH and scriptSig is push only
-                // then we wrap the last push (redeemScript) in a Script
-                if let Some(push_bytes) = script_sig.last_pushdata() {
-                    Script::from_bytes(push_bytes.as_bytes())
+                let witness_program = if prevout.script_pubkey.is_witness_program() {
+                    &prevout.script_pubkey
+                } else if prevout.script_pubkey.is_p2sh() && script_sig.is_push_only() {
+                    // If prevout is P2SH and scriptSig is push only
+                    // then we wrap the last push (redeemScript) in a Script
+                    if let Some(push_bytes) = script_sig.last_pushdata() {
+                        Script::from_bytes(push_bytes.as_bytes())
+                    } else {
+                        return 0;
+                    }
                 } else {
                     return 0;
-                }
-            } else {
-                return 0;
-            };
+                };
 
-            // This will return 0 if the redeemScript wasn't a witness program
-            count_sigops_with_witness_program(witness, witness_program)
-        }
-
-        let mut count: usize = 0;
-        for input in &self.input {
-            if let Some(prevout) = spent(&input.previous_output) {
-                count = count.saturating_add(count_sigops(prevout, input));
+                // This will return 0 if the redeemScript wasn't a witness program
+                count_sigops_with_witness_program(witness, witness_program)
             }
+
+            let mut count: usize = 0;
+            for input in &self.input {
+                if let Some(prevout) = spent(&input.previous_output) {
+                    count = count.saturating_add(count_sigops(prevout, input));
+                }
+            }
+            count
         }
-        count
-    }
 
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
-    fn uses_segwit_serialization(&self) -> bool {
-        if self.input.iter().any(|input| !input.witness.is_empty()) {
-            return true;
+        /// Returns whether or not to serialize transaction as specified in BIP-144.
+        // Duplicated in `primitives`, if you patch this please do so over there also.
+        fn uses_segwit_serialization(&self) -> bool {
+            if self.input.iter().any(|input| !input.witness.is_empty()) {
+                return true;
+            }
+            // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+            // `Transaction` docs for full explanation).
+            self.input.is_empty()
         }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
-        // `Transaction` docs for full explanation).
-        self.input.is_empty()
-    }
-
-    /// Returns a reference to the input at `input_index` if it exists.
-    #[inline]
-    pub fn tx_in(&self, input_index: usize) -> Result<&TxIn, InputsIndexError> {
-        self.input
-            .get(input_index)
-            .ok_or(IndexOutOfBoundsError { index: input_index, length: self.input.len() }.into())
-    }
-
-    /// Returns a reference to the output at `output_index` if it exists.
-    #[inline]
-    pub fn tx_out(&self, output_index: usize) -> Result<&TxOut, OutputsIndexError> {
-        self.output
-            .get(output_index)
-            .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
 }
 
@@ -852,22 +709,6 @@ impl Decodable for Transaction {
             })
         }
     }
-}
-
-impl From<Transaction> for Txid {
-    fn from(tx: Transaction) -> Txid { tx.compute_txid() }
-}
-
-impl From<&Transaction> for Txid {
-    fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
-}
-
-impl From<Transaction> for Wtxid {
-    fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
-}
-
-impl From<&Transaction> for Wtxid {
-    fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
 /// Computes the value of an output accounting for the cost of spending it.
@@ -1237,22 +1078,9 @@ impl InputWeightPrediction {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Transaction {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        use primitives::absolute::LockTime;
-
-        Ok(Transaction {
-            version: Version::arbitrary(u)?,
-            lock_time: LockTime::arbitrary(u)?,
-            input: Vec::<TxIn>::arbitrary(u)?,
-            output: Vec::<TxOut>::arbitrary(u)?,
-        })
-    }
-}
-
 mod sealed {
     pub trait Sealed {}
+    impl Sealed for super::Transaction {}
     impl Sealed for super::Txid {}
     impl Sealed for super::Wtxid {}
     impl Sealed for super::OutPoint {}
@@ -1663,7 +1491,7 @@ mod tests {
     fn transaction_verify() {
         use std::collections::HashMap;
 
-        use crate::consensus_validation::TxVerifyError;
+        use crate::consensus_validation::{TxVerifyError, TransactionExt as _};
         use crate::witness::Witness;
 
         // a random recent segwit transaction from blockchain using both old and segwit inputs
@@ -1680,12 +1508,12 @@ mod tests {
         spent.insert(spent1.compute_txid(), spent1);
         spent.insert(spent2.compute_txid(), spent2);
         spent.insert(spent3.compute_txid(), spent3);
-        let mut spent2 = spent.clone();
-        let mut spent3 = spent.clone();
+        let spent2 = spent.clone();
+        let spent3 = spent.clone();
 
         spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -1698,8 +1526,8 @@ mod tests {
         double_spending.input.push(re_use);
 
         assert!(double_spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent2.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent2.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -1712,8 +1540,8 @@ mod tests {
         spending.input[1].witness = Witness::from_slice(&witness);
 
         let error = spending
-            .verify(|point: &OutPoint| {
-                if let Some(tx) = spent3.remove(&point.txid) {
+            .verify(&|point: &OutPoint| {
+                if let Some(tx) = spent3.get(&point.txid) {
                     return tx.output.get(point.vout as usize).cloned();
                 }
                 None
@@ -1999,7 +1827,7 @@ mod tests {
             let tx_bytes = hex!(hx);
             let tx: Transaction = deserialize(&tx_bytes).unwrap();
             assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
-            assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
+            assert_eq!(tx.total_sigop_cost(&return_none), *expected_none);
         }
     }
 

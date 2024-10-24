@@ -80,6 +80,7 @@ use std::collections::BTreeMap;
 use bitcoin::address::script_pubkey::{BuilderExt as _, ScriptBufExt as _};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
 use bitcoin::consensus::encode;
+use bitcoin::consensus_validation::TransactionExt as _;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
@@ -329,7 +330,7 @@ fn generate_bip86_key_spend_tx(
 
     // EXTRACTOR
     let tx = psbt.extract_tx_unchecked_fee_rate();
-    tx.verify(|_| {
+    tx.verify(&|_| {
         Some(TxOut {
             value: from_amount,
             script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey).unwrap(),
@@ -565,7 +566,7 @@ impl BenefactorWallet {
 
             // EXTRACTOR
             let tx = psbt.extract_tx_unchecked_fee_rate();
-            tx.verify(|_| {
+            tx.verify(&|_| {
                 Some(TxOut { value: input_value, script_pubkey: output_script_pubkey.clone() })
             })
             .expect("failed to verify transaction");
@@ -707,7 +708,7 @@ impl BeneficiaryWallet {
 
         // EXTRACTOR
         let tx = psbt.extract_tx_unchecked_fee_rate();
-        tx.verify(|_| {
+        tx.verify(&|_| {
             Some(TxOut { value: input_value, script_pubkey: input_script_pubkey.clone() })
         })
         .expect("failed to verify transaction");
