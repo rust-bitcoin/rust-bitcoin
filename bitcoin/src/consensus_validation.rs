@@ -161,11 +161,6 @@ define_extension_trait! {
     }
 }
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Script {}
-}
-
 impl Transaction {
     /// Verifies that this transaction is able to spend its inputs.
     ///
@@ -184,6 +179,11 @@ impl Transaction {
     pub fn verify_with_flags<S: Fn(&OutPoint) -> Option<TxOut>, F: Into<u32>>(&self, spent: &S, flags: F) -> Result<(), TxVerifyError> {
         verify_transaction_with_flags(self, spent, flags)
     }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Script {}
 }
 
 /// Wrapped error from `bitcoinconsensus`.
