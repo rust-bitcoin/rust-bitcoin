@@ -58,8 +58,8 @@ pub use self::{
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
-    witness::Witness,
     transaction::{TxIn, TxOut},
+    witness::Witness,
 };
 
 #[rustfmt::skip]

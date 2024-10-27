@@ -27,7 +27,9 @@ use crate::{Script, ScriptBuf};
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
-pub use primitives::taproot::{TapLeafTag, TapLeafHash, TapBranchTag, TapNodeHash, TapTweakTag, TapTweakHash};
+pub use primitives::taproot::{
+    TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+};
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TapTweakHash`] type.

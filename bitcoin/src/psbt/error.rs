@@ -147,7 +147,8 @@ impl fmt::Display for Error {
             ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
             ConsensusDeserialize(ref e) =>
                 write_err!(f, "bitcoin consensus deserializaton error"; e),
-            ConsensusParse(ref e) => write_err!(f, "error parsing bitcoin consensus encoded object"; e),
+            ConsensusParse(ref e) =>
+                write_err!(f, "error parsing bitcoin consensus encoded object"; e),
             NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             FeeOverflow => f.write_str("integer overflow in fee calculation"),
             InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
