@@ -28,6 +28,8 @@ use crate::transaction::{Transaction, Wtxid};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use primitives::block::{Version, BlockHash, Header, WitnessCommitment};
+#[doc(inline)]
+pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
 
 impl_hashencode!(BlockHash);
 
