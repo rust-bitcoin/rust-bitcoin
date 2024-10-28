@@ -49,19 +49,15 @@ impl Decodable for Witness {
                 let element_size_len = compact_size::encoded_size(element_size);
                 let required_len = cursor
                     .checked_add(element_size)
-                    .ok_or(encode::Error::Parse(
-                        encode::ParseError::OversizedVectorAllocation {
-                            requested: usize::MAX,
-                            max: MAX_VEC_SIZE,
-                        },
-                    ))?
+                    .ok_or(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
+                        requested: usize::MAX,
+                        max: MAX_VEC_SIZE,
+                    }))?
                     .checked_add(element_size_len)
-                    .ok_or(encode::Error::Parse(
-                        encode::ParseError::OversizedVectorAllocation {
-                            requested: usize::MAX,
-                            max: MAX_VEC_SIZE,
-                        },
-                    ))?;
+                    .ok_or(encode::Error::Parse(encode::ParseError::OversizedVectorAllocation {
+                        requested: usize::MAX,
+                        max: MAX_VEC_SIZE,
+                    }))?;
 
                 if required_len > MAX_VEC_SIZE + witness_index_space {
                     return Err(encode::ParseError::OversizedVectorAllocation {

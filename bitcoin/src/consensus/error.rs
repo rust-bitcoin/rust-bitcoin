@@ -61,7 +61,7 @@ pub enum DecodeError<E> {
     /// Data unconsumed error.
     Unconsumed,
     /// Other decoding error.
-    Other(E),                   // Yielded by the inner iterator.
+    Other(E), // Yielded by the inner iterator.
 }
 
 internals::impl_from_infallible!(DecodeError<E>);
