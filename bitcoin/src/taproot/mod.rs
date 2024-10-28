@@ -744,11 +744,11 @@ impl<'tree> Iterator for ScriptLeaves<'tree> {
     fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
 }
 
-impl<'tree> ExactSizeIterator for ScriptLeaves<'tree> {}
+impl ExactSizeIterator for ScriptLeaves<'_> {}
 
-impl<'tree> FusedIterator for ScriptLeaves<'tree> {}
+impl FusedIterator for ScriptLeaves<'_> {}
 
-impl<'tree> DoubleEndedIterator for ScriptLeaves<'tree> {
+impl DoubleEndedIterator for ScriptLeaves<'_> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         ScriptLeaf::from_leaf_node(self.leaf_iter.next_back()?)
@@ -770,11 +770,11 @@ impl<'a> Iterator for LeafNodes<'a> {
     fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
 }
 
-impl<'tree> ExactSizeIterator for LeafNodes<'tree> {}
+impl ExactSizeIterator for LeafNodes<'_> {}
 
-impl<'tree> FusedIterator for LeafNodes<'tree> {}
+impl FusedIterator for LeafNodes<'_> {}
 
-impl<'tree> DoubleEndedIterator for LeafNodes<'tree> {
+impl DoubleEndedIterator for LeafNodes<'_> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> { self.leaf_iter.next_back() }
 }
@@ -1277,7 +1277,7 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
         D: serde::Deserializer<'de>,
     {
         struct U8Visitor;
-        impl<'de> serde::de::Visitor<'de> for U8Visitor {
+        impl serde::de::Visitor<'_> for U8Visitor {
             type Value = LeafVersion;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

@@ -207,17 +207,17 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 /// leaks, which is OK since we never leak.)
 pub(crate) struct ScriptBufAsVec<'a>(&'a mut ScriptBuf, Vec<u8>);
 
-impl<'a> core::ops::Deref for ScriptBufAsVec<'a> {
+impl core::ops::Deref for ScriptBufAsVec<'_> {
     type Target = Vec<u8>;
 
     fn deref(&self) -> &Self::Target { &self.1 }
 }
 
-impl<'a> core::ops::DerefMut for ScriptBufAsVec<'a> {
+impl core::ops::DerefMut for ScriptBufAsVec<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.1 }
 }
 
-impl<'a> Drop for ScriptBufAsVec<'a> {
+impl Drop for ScriptBufAsVec<'_> {
     fn drop(&mut self) {
         let vec = core::mem::take(&mut self.1);
         *(self.0) = ScriptBuf::from_bytes(vec);

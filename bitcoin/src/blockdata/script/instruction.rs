@@ -14,7 +14,7 @@ pub enum Instruction<'a> {
     Op(Opcode),
 }
 
-impl<'a> Instruction<'a> {
+impl Instruction<'_> {
     /// Returns the opcode if the instruction is not a data push.
     pub fn opcode(&self) -> Option<Opcode> {
         match self {
@@ -200,7 +200,7 @@ impl<'a> Iterator for Instructions<'a> {
     }
 }
 
-impl<'a> core::iter::FusedIterator for Instructions<'a> {}
+impl core::iter::FusedIterator for Instructions<'_> {}
 
 /// Iterator over script instructions with their positions.
 ///

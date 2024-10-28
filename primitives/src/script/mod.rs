@@ -360,7 +360,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 
         if deserializer.is_human_readable() {
             struct Visitor;
-            impl<'de> serde::de::Visitor<'de> for Visitor {
+            impl serde::de::Visitor<'_> for Visitor {
                 type Value = ScriptBuf;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
@@ -379,7 +379,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
         } else {
             struct BytesVisitor;
 
-            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
+            impl serde::de::Visitor<'_> for BytesVisitor {
                 type Value = ScriptBuf;
 
                 fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {

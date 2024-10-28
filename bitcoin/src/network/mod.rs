@@ -104,7 +104,7 @@ impl<'de> Deserialize<'de> for Network {
     {
         struct NetworkVisitor;
 
-        impl<'de> Visitor<'de> for NetworkVisitor {
+        impl Visitor<'_> for NetworkVisitor {
             type Value = Network;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -265,7 +265,7 @@ pub mod as_core_arg {
     {
         struct NetworkVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for NetworkVisitor {
+        impl serde::de::Visitor<'_> for NetworkVisitor {
             type Value = Network;
 
             fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {

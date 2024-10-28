@@ -334,7 +334,7 @@ impl RawNetworkMessage {
 
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
-impl<'a> Encodable for HeaderSerializationWrapper<'a> {
+impl Encodable for HeaderSerializationWrapper<'_> {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;

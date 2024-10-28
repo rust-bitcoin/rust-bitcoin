@@ -128,7 +128,7 @@ impl TryFrom<Opcode> for WitnessVersion {
     }
 }
 
-impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
+impl TryFrom<Instruction<'_>> for WitnessVersion {
     type Error = TryFromInstructionError;
 
     fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {

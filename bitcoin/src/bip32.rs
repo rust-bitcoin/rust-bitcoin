@@ -296,7 +296,7 @@ impl IntoDerivationPath for String {
     fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
 }
 
-impl<'a> IntoDerivationPath for &'a str {
+impl IntoDerivationPath for &'_ str {
     fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
 }
 
@@ -363,7 +363,7 @@ impl<'a> DerivationPathIterator<'a> {
     }
 }
 
-impl<'a> Iterator for DerivationPathIterator<'a> {
+impl Iterator for DerivationPathIterator<'_> {
     type Item = DerivationPath;
 
     fn next(&mut self) -> Option<Self::Item> {
