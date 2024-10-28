@@ -117,7 +117,7 @@ pub mod hex {
         }
     }
 
-    impl<'a> Iterator for Decoder<'a> {
+    impl Iterator for Decoder<'_> {
         type Item = Result<u8, DecodeError>;
 
         fn next(&mut self) -> Option<Self::Item> {
@@ -262,7 +262,7 @@ impl<'a, W: fmt::Write, E: EncodeBytes> IoWrapper<'a, W, E> {
     fn actually_flush(&mut self) -> fmt::Result { self.encoder.flush(&mut self.writer) }
 }
 
-impl<'a, W: fmt::Write, E: EncodeBytes> Write for IoWrapper<'a, W, E> {
+impl<W: fmt::Write, E: EncodeBytes> Write for IoWrapper<'_, W, E> {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
         match self.encoder.encode_chunk(&mut self.writer, bytes) {
             Ok(()) => Ok(bytes.len()),
@@ -473,7 +473,7 @@ impl<E> With<E> {
 
 struct HRVisitor<T: Decodable, D: for<'a> ByteDecoder<'a>>(PhantomData<fn() -> (T, D)>);
 
-impl<'de, T: Decodable, D: for<'a> ByteDecoder<'a>> Visitor<'de> for HRVisitor<T, D> {
+impl<T: Decodable, D: for<'a> ByteDecoder<'a>> Visitor<'_> for HRVisitor<T, D> {
     type Value = T;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
