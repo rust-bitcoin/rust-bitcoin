@@ -1,3 +1,11 @@
+# 0.32.4 - 2024-10-24
+
+- Bound decode methods on `Read`, rather than `BufRead` [#3173](https://github.com/rust-bitcoin/rust-bitcoin/pull/3173)
+- Backport - Some additional inspectors on `Script` and `Witness` [#2646](https://github.com/rust-bitcoin/rust-bitcoin/pull/2646)
+- Backport - Add difficulty adjustment calculation [#3494](https://github.com/rust-bitcoin/rust-bitcoin/pull/3494)
+- Backport - Add testnet 4 support [#3453](https://github.com/rust-bitcoin/rust-bitcoin/pull/3453)
+- Backport - CI: Copy main workflow from master [#3418](https://github.com/rust-bitcoin/rust-bitcoin/pull/3418)
+
 # 0.32.3 - 2024-09-27
 
 - Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
