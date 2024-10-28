@@ -166,7 +166,7 @@ impl std::error::Error for NetworkValidationError {}
 #[non_exhaustive]
 pub enum Bech32Error {
     /// Parse segwit Bech32 error.
-    ParseBech32(bech32::segwit::DecodeError),
+    ParseBech32(ParseBech32Error),
     /// A witness version conversion/parsing error.
     WitnessVersion(witness_version::TryFromError),
     /// A witness program error.
@@ -204,10 +204,6 @@ impl std::error::Error for Bech32Error {
     }
 }
 
-impl From<bech32::segwit::DecodeError> for Bech32Error {
-    fn from(e: bech32::segwit::DecodeError) -> Self { Self::ParseBech32(e) }
-}
-
 impl From<witness_version::TryFromError> for Bech32Error {
     fn from(e: witness_version::TryFromError) -> Self { Self::WitnessVersion(e) }
 }
@@ -218,6 +214,24 @@ impl From<witness_program::Error> for Bech32Error {
 
 impl From<UnknownHrpError> for Bech32Error {
     fn from(e: UnknownHrpError) -> Self { Self::UnknownHrp(e) }
+}
+
+/// Bech32 parsing related error.
+// This wrapper exists because we do not want to expose the `bech32` crate in our public API.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseBech32Error(pub(crate) bech32::segwit::DecodeError);
+
+internals::impl_from_infallible!(ParseBech32Error);
+
+impl fmt::Display for ParseBech32Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "bech32 parsing error"; self.0)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseBech32Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
 }
 
 /// Base58 related error.
