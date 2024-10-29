@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: CC0-1.0
 
 //! SipHash 2-4 implementation.

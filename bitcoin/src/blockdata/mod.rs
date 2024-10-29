@@ -87,7 +87,10 @@ pub mod locktime {
         //! whether bit 22 of the `u32` consensus value is set.
 
         /// Re-export everything from the `primitives::locktime::relative` module.
-        pub use primitives::locktime::relative::{Height, LockTime, Time, TimeOverflowError, DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError};
+        pub use primitives::locktime::relative::{
+            DisabledLockTimeError, Height, IncompatibleHeightError, IncompatibleTimeError,
+            LockTime, Time, TimeOverflowError,
+        };
     }
 }
 
