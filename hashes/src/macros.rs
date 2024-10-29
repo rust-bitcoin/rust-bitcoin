@@ -3,6 +3,7 @@
 //! Public macros.
 
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! hex_fmt_impl(
     ($reverse:expr, $len:expr, $ty:ident) => (
@@ -48,6 +49,7 @@ macro_rules! hex_fmt_impl(
 );
 
 /// Adds slicing traits implementations to a given type `$ty`
+#[doc(hidden)]
 #[macro_export]
 macro_rules! borrow_slice_impl(
     ($ty:ident) => (
@@ -439,6 +441,7 @@ pub mod serde_details {
 
 /// Implements `Serialize` and `Deserialize` for a type `$t` which
 /// represents a newtype over a byte-slice over length `$len`.
+#[doc(hidden)]
 #[macro_export]
 #[cfg(feature = "serde")]
 macro_rules! serde_impl(
