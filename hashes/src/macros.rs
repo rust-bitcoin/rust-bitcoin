@@ -2,8 +2,8 @@
 
 //! Public macros.
 
-#[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+#[macro_export]
 macro_rules! hex_fmt_impl(
     ($reverse:expr, $len:expr, $ty:ident) => (
         $crate::hex_fmt_impl!($reverse, $len, $ty, );
