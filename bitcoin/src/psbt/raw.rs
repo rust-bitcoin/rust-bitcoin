@@ -143,8 +143,8 @@ where
     Subtype: Copy + From<u64> + Into<u64>,
 {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = self.prefix.consensus_encode(w)? + 1;
-        w.emit_compact_size(self.subtype.into())?;
+        let mut len = self.prefix.consensus_encode(w)?;
+        len += w.emit_compact_size(self.subtype.into())?;
         w.write_all(&self.key)?;
         len += self.key.len();
         Ok(len)
