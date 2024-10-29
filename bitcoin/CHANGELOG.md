@@ -1,3 +1,20 @@
+# 0.33.0-alpha - TODO: Set date
+
+- Enforce script size limit when hashing scripts [#2794](https://github.com/rust-bitcoin/rust-bitcoin/pull/2794)
+
+## Upgrade notes
+
+- `MAX_SCRIPT_ELEMENT_SIZE` was removed in [#2794](https://github.com/rust-bitcoin/rust-bitcoin/pull/2794)
+  you may want to use `MAX_REDEEM_SCRIPT_SIZE` or perhaps `MAX_STACK_ELEMENT_SIZE` (see `bitcoin/src/blockdata/constants`).
+- `ecdsa::Error` was replaced by `ecdsa::DecodeError` and `ecdsa::ParseSignatureError`
+  (returned by `ecdsa::Signature::from_slice` and `from_str` respectively).
+- `script::read_scriptint` was move to be a method on `PushBytes`.
+- You can likely just remove the `hashes::Hash` trait import.
+- Change `OutPoint::default()` to `OutPoint::COINBASE_PREVOUT` if appropriate.
+- Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
+- Change `to_raw_hash()` to `to_byte_array()`.
+- `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
+
 # 0.32.3 - 2024-09-27
 
 - Backport BIP-32 alias' without typo [#3252](https://github.com/rust-bitcoin/rust-bitcoin/pull/3252)
