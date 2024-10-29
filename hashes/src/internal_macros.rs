@@ -99,7 +99,7 @@ macro_rules! hash_trait_impls {
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 
-            #[allow(deprecated_in_future)]
+            #[allow(deprecated)]
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }

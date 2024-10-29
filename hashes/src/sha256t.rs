@@ -43,7 +43,7 @@ where
     }
 
     /// Copies a byte slice into a hash object.
-    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
+    #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
         if sl.len() != 32 {
             Err(FromSliceError { expected: 32, got: sl.len() })
@@ -186,6 +186,7 @@ macro_rules! sha256t_tag {
 /// The syntax is:
 ///
 /// ```
+/// # #[allow(deprecated)] {
 /// # use bitcoin_hashes::sha256t_hash_newtype;
 /// sha256t_hash_newtype! {
 ///     /// Optional documentation details here.
@@ -197,6 +198,7 @@ macro_rules! sha256t_tag {
 ///     #[hash_newtype(backward)]
 ///     pub struct FooHash(_);
 /// }
+/// # }
 /// ```
 ///
 /// The structs must be defined in this order - tag first, then hash type. `hash_str` marker
@@ -211,7 +213,7 @@ macro_rules! sha256t_tag {
 ///
 /// [`hash_newtype`]: crate::hash_newtype
 #[macro_export]
-#[deprecated(since = "TBD", note = "use `sha256_tag!` combined with `hash_newtype!` instead")]
+#[deprecated(since = "0.15.0", note = "use `sha256_tag!` combined with `hash_newtype!` instead")]
 macro_rules! sha256t_hash_newtype {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+); $(#[$($hash_attr:tt)*])* $hash_vis:vis struct $hash_name:ident($(#[$($field_attr:tt)*])* _);) => {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);

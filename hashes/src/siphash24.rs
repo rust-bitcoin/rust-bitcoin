@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: CC0-1.0
 
 //! SipHash 2-4 implementation.
@@ -203,7 +204,7 @@ impl Hash {
     }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.
-    #[deprecated(since = "TBD", note = "use `to_u64` instead")]
+    #[deprecated(since = "0.15.0", note = "use `to_u64` instead")]
     pub fn as_u64(&self) -> u64 { self.to_u64() }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.

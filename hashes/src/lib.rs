@@ -112,7 +112,7 @@ pub mod sha512;
 pub mod sha512_256;
 pub mod siphash24;
 
-#[deprecated(since = "TBD", note = "use crate::macros instead")]
+#[deprecated(since = "0.15.0", note = "use crate::macros instead")]
 pub mod serde_macros {
     //! Macros for serde trait implementations, and supporting code.
 
@@ -284,7 +284,7 @@ pub trait Hash:
     fn from_byte_array(bytes: Self::Bytes) -> Self;
 
     /// Copies a byte slice into a hash object.
-    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
+    #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Returns the underlying byte array.
