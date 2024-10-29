@@ -253,3 +253,34 @@ macro_rules! impl_io_write {
     }
 }
 pub(crate) use impl_io_write;
+
+macro_rules! engine_input_impl(
+    () => (
+        #[cfg(not(hashes_fuzz))]
+        fn input(&mut self, mut inp: &[u8]) {
+
+            while !inp.is_empty() {
+                let buf_idx = $crate::incomplete_block_len(self);
+                let rem_len = <Self as crate::HashEngine>::BLOCK_SIZE - buf_idx;
+                let write_len = cmp::min(rem_len, inp.len());
+
+                self.buffer[buf_idx..buf_idx + write_len]
+                    .copy_from_slice(&inp[..write_len]);
+                self.bytes_hashed += write_len as u64;
+                if $crate::incomplete_block_len(self) == 0 {
+                    self.process_block();
+                }
+                inp = &inp[write_len..];
+            }
+        }
+
+        #[cfg(hashes_fuzz)]
+        fn input(&mut self, inp: &[u8]) {
+            for c in inp {
+                self.buffer[0] ^= *c;
+            }
+            self.bytes_hashed += inp.len() as u64;
+        }
+    )
+);
+pub(crate) use engine_input_impl;

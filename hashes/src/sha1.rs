@@ -77,7 +77,7 @@ impl crate::HashEngine for HashEngine {
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
-    engine_input_impl!();
+    crate::internal_macros::engine_input_impl!();
 }
 
 impl HashEngine {
