@@ -1705,7 +1705,7 @@ mod tests {
     fn test_signed_amount_try_from_amount() {
         let ua_positive = Amount::from_sat(123);
         let sa_positive = SignedAmount::try_from(ua_positive).unwrap();
-        assert_eq!(sa_positive, SignedAmount(123));
+        assert_eq!(sa_positive, SignedAmount::from_sat(123));
 
         let ua_max = Amount::MAX;
         let result = SignedAmount::try_from(ua_max);
@@ -1714,11 +1714,11 @@ mod tests {
 
     #[test]
     fn test_amount_try_from_signed_amount() {
-        let sa_positive = SignedAmount(123);
+        let sa_positive = SignedAmount::from_sat(123);
         let ua_positive = Amount::try_from(sa_positive).unwrap();
         assert_eq!(ua_positive, Amount::from_sat(123));
 
-        let sa_negative = SignedAmount(-123);
+        let sa_negative = SignedAmount::from_sat(-123);
         let result = Amount::try_from(sa_negative);
         assert_eq!(result, Err(OutOfRangeError { is_signed: false, is_greater_than_max: false }));
     }
@@ -1925,9 +1925,9 @@ mod tests {
             let amount = Amount::from_sat(i64::MAX as u64);
             assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
             assert!(
-                SignedAmount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_err()
+                SignedAmount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_err()
             );
-            assert!(Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat).is_ok());
+            assert!(Amount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_ok());
         }
 
         // exactly 50 chars.
