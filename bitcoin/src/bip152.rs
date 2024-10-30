@@ -407,9 +407,9 @@ mod test {
     use crate::locktime::absolute;
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
+    use crate::value::ONE_SAT;
     use crate::{
-        transaction, Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
-        Witness,
+        transaction, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -423,7 +423,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: ONE_SAT, script_pubkey: ScriptBuf::new() }],
         }
     }
 

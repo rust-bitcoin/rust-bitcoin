@@ -9,13 +9,13 @@ use bitcoin::secp256k1::{rand, Message, Secp256k1, SecretKey, Signing, Verificat
 use bitcoin::sighash::{Prevouts, SighashCache, TapSighashType};
 use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
-    transaction, Address, Amount, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Txid, Witness,
+    transaction, Address, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+    Value, Witness,
 };
 
-const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat(20_000_000);
-const SPEND_AMOUNT: Amount = Amount::from_sat(5_000_000);
-const CHANGE_AMOUNT: Amount = Amount::from_sat(14_999_000); // 1000 sat fee.
+const DUMMY_UTXO_VALUE: Value = Value::from_sat(20_000_000);
+const SPEND_VALUE: Value = Value::from_sat(5_000_000);
+const CHANGE_VALUE: Value = Value::from_sat(14_999_000); // 1000 sat fee.
 
 fn main() {
     let secp = Secp256k1::new();
@@ -40,11 +40,11 @@ fn main() {
     };
 
     // The spend output is locked to a key controlled by the receiver.
-    let spend = TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
+    let spend = TxOut { value: SPEND_VALUE, script_pubkey: address.script_pubkey() };
 
     // The change output is locked to a key controlled by us.
     let change = TxOut {
-        value: CHANGE_AMOUNT,
+        value: CHANGE_VALUE,
         script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
     };
 
@@ -124,7 +124,7 @@ fn dummy_unspent_transaction_output<C: Verification>(
         vout: 0,
     };
 
-    let utxo = TxOut { value: DUMMY_UTXO_AMOUNT, script_pubkey };
+    let utxo = TxOut { value: DUMMY_UTXO_VALUE, script_pubkey };
 
     (out_point, utxo)
 }

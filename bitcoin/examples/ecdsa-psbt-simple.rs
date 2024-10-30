@@ -31,8 +31,8 @@ use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
-    consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, WPubkeyHash, Witness,
+    consensus, transaction, Address, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
+    Sequence, Transaction, TxIn, TxOut, Txid, Value, WPubkeyHash, Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.
@@ -45,13 +45,13 @@ const BIP84_DERIVATION_PATH: &str = "m/84'/0'/0'";
 // The master fingerprint of the master xpriv.
 const MASTER_FINGERPRINT: &str = "9680603f";
 
-// The dummy UTXO amounts we are spending.
-const DUMMY_UTXO_AMOUNT_INPUT_1: Amount = Amount::from_sat(20_000_000);
-const DUMMY_UTXO_AMOUNT_INPUT_2: Amount = Amount::from_sat(10_000_000);
+// The dummy UTXO values we are spending.
+const DUMMY_UTXO_VALUE_INPUT_1: Value = Value::from_sat(20_000_000);
+const DUMMY_UTXO_VALUE_INPUT_2: Value = Value::from_sat(10_000_000);
 
-// The amounts we are sending to someone, and receiving back as change.
-const SPEND_AMOUNT: Amount = Amount::from_sat(25_000_000);
-const CHANGE_AMOUNT: Amount = Amount::from_sat(4_990_000); // 10_000 sat fee.
+// The values we are sending to someone, and receiving back as change.
+const SPEND_VALUE: Value = Value::from_sat(25_000_000);
+const CHANGE_VALUE: Value = Value::from_sat(4_990_000); // 10_000 sat fee.
 
 // Derive the external address xpriv.
 fn get_external_address_xpriv<C: Signing>(
@@ -106,7 +106,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 0,
     };
 
-    let utxo_1 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_1, script_pubkey: script_pubkey_1 };
+    let utxo_1 = TxOut { value: DUMMY_UTXO_VALUE_INPUT_1, script_pubkey: script_pubkey_1 };
 
     let script_pubkey_2 = "bc1qy7swwpejlw7a2rp774pa8rymh8tw3xvd2x2xkd"
         .parse::<Address<_>>()
@@ -120,7 +120,7 @@ fn dummy_unspent_transaction_outputs() -> Vec<(OutPoint, TxOut)> {
         vout: 1,
     };
 
-    let utxo_2 = TxOut { value: DUMMY_UTXO_AMOUNT_INPUT_2, script_pubkey: script_pubkey_2 };
+    let utxo_2 = TxOut { value: DUMMY_UTXO_VALUE_INPUT_2, script_pubkey: script_pubkey_2 };
     vec![(out_point_1, utxo_1), (out_point_2, utxo_2)]
 }
 
@@ -162,11 +162,11 @@ fn main() {
         .collect();
 
     // The spend output is locked to a key controlled by the receiver.
-    let spend = TxOut { value: SPEND_AMOUNT, script_pubkey: address.script_pubkey() };
+    let spend = TxOut { value: SPEND_VALUE, script_pubkey: address.script_pubkey() };
 
     // The change output is locked to a key controlled by us.
     let change = TxOut {
-        value: CHANGE_AMOUNT,
+        value: CHANGE_VALUE,
         script_pubkey: ScriptBuf::new_p2wpkh(pk_change.wpubkey_hash()), // Change comes back to us.
     };
 

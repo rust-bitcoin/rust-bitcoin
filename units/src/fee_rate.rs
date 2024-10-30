@@ -10,7 +10,7 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::amount::Amount;
+use crate::value::Value;
 use crate::weight::Weight;
 
 /// Represents fee rate.
@@ -91,9 +91,9 @@ impl FeeRate {
     /// rounded down.
     ///
     /// [`None`] is returned if an overflow occurred.
-    pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
+    pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Value> {
         let sats = self.0.checked_mul(rhs.to_wu())?.checked_add(999)? / 1000;
-        Some(Amount::from_sat(sats))
+        Some(Value::from_sat(sats))
     }
 
     /// Checked addition.
@@ -110,14 +110,14 @@ impl FeeRate {
     /// if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn fee_wu(self, weight: Weight) -> Option<Value> { self.checked_mul_by_weight(weight) }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
     /// if an overflow occurred.
     ///
     /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
     /// `Self::fee_wu(weight)`.
-    pub fn fee_vb(self, vb: u64) -> Option<Amount> {
+    pub fn fee_vb(self, vb: u64) -> Option<Value> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
     }
 }
@@ -195,20 +195,20 @@ impl<'a> Sub<&'a FeeRate> for &FeeRate {
 
 /// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
-    type Output = Amount;
+    type Output = Value;
 
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
+        Value::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
     }
 }
 
 impl Mul<Weight> for FeeRate {
-    type Output = Amount;
+    type Output = Value;
 
     fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
 }
 
-impl Div<Weight> for Amount {
+impl Div<Weight> for Value {
     type Output = FeeRate;
 
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        let fee_rate = Value::from_sat(329) / Weight::from_wu(381);
         assert_eq!(fee_rate, FeeRate(863));
     }
 
@@ -360,11 +360,11 @@ mod tests {
     #[test]
     fn checked_weight_mul_test() {
         let weight = Weight::from_vb(10).unwrap();
-        let fee: Amount = FeeRate::from_sat_per_vb(10)
+        let fee: Value = FeeRate::from_sat_per_vb(10)
             .unwrap()
             .checked_mul_by_weight(weight)
-            .expect("expected Amount");
-        assert_eq!(Amount::from_sat(100), fee);
+            .expect("expected Value");
+        assert_eq!(Value::from_sat(100), fee);
 
         let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
@@ -372,14 +372,14 @@ mod tests {
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
-        assert_eq!(Amount::from_sat(9), fee);
+        assert_eq!(Value::from_sat(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
-        assert_eq!(fee, Amount::from_sat(330));
+        assert_eq!(fee, Value::from_sat(330));
     }
 
     #[test]

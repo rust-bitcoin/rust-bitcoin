@@ -37,8 +37,8 @@ use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::witness::Witness;
 use bitcoin::{
-    ecdsa, transaction, Address, Amount, Block, NetworkKind, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, transaction, Address, Block, NetworkKind, OutPoint, PrivateKey, PublicKey, ScriptBuf,
+    Sequence, Target, Transaction, TxIn, TxOut, Txid, Value, Work,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -110,7 +110,7 @@ fn serde_regression_txin() {
 #[test]
 fn serde_regression_txout() {
     let txout = TxOut {
-        value: Amount::from_sat(0xDEADBEEFCAFEBABE),
+        value: Value::from_sat(0xDEADBEEFCAFEBABE),
         script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]),
     };
     let got = serialize(&txout).unwrap();
@@ -238,7 +238,7 @@ fn serde_regression_psbt() {
             .unwrap()]),
         }],
         output: vec![TxOut {
-            value: Amount::from_sat(190_303_501_938),
+            value: Value::from_sat(190_303_501_938),
             script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
         }],
@@ -285,7 +285,7 @@ fn serde_regression_psbt() {
         inputs: vec![Input {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
-                value: Amount::from_sat(190_303_501_938),
+                value: Value::from_sat(190_303_501_938),
                 script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap())),

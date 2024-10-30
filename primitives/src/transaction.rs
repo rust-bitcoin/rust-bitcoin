@@ -18,7 +18,7 @@ use hashes::sha256d;
 #[cfg(feature = "alloc")]
 use internals::write_err;
 #[cfg(feature = "alloc")]
-use units::{parse, Amount};
+use units::{parse, Value};
 
 #[cfg(feature = "alloc")]
 use crate::script::ScriptBuf;
@@ -85,7 +85,7 @@ impl TxIn {
 #[cfg(feature = "alloc")]
 pub struct TxOut {
     /// The value of the output, in satoshis.
-    pub value: Amount,
+    pub value: Value,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
 }
@@ -94,7 +94,7 @@ pub struct TxOut {
 impl TxOut {
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+        TxOut { value: Value::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 }
 
 /// A reference to a transaction output.
@@ -293,7 +293,7 @@ impl<'a> Arbitrary<'a> for TxIn {
 #[cfg(feature = "alloc")]
 impl<'a> Arbitrary<'a> for TxOut {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(TxOut { value: Amount::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
+        Ok(TxOut { value: Value::arbitrary(u)?, script_pubkey: ScriptBuf::arbitrary(u)? })
     }
 }
 

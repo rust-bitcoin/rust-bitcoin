@@ -17,7 +17,7 @@ use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash, Sequence, TestnetVersion};
+use crate::{script, BlockHash, Sequence, TestnetVersion, Value};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -113,7 +113,7 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
         witness: Witness::default(),
     });
 
-    ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
+    ret.output.push(TxOut { value: Value::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
     ret
@@ -266,6 +266,7 @@ mod test {
     use super::*;
     use crate::consensus::encode::serialize;
     use crate::network::params;
+    use crate::value::FIFTY_BTC;
     use crate::Txid;
 
     #[test]
@@ -283,7 +284,7 @@ mod test {
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
-        assert_eq!(gen.output[0].value, "50 BTC".parse::<Amount>().unwrap());
+        assert_eq!(gen.output[0].value, FIFTY_BTC);
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(

@@ -12,7 +12,7 @@ use bitcoin::script::{PushBytes, ScriptBufExt as _};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{
     absolute, script, transaction, Amount, Denomination, NetworkKind, OutPoint, PrivateKey,
-    PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
+    PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Value, Witness,
 };
 
 #[track_caller]
@@ -179,14 +179,20 @@ fn create_transaction() -> Transaction {
         ],
         output: vec![
             TxOut {
-                value: Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
-                    .expect("failed to parse amount"),
+                value: Value::from_sat(
+                    Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
+                        .expect("failed to parse amount")
+                        .to_sat(),
+                ),
                 script_pubkey: ScriptBuf::from_hex(output_0.script_pubkey)
                     .expect("failed to parse script"),
             },
             TxOut {
-                value: Amount::from_str_in(output_1.amount, Denomination::Bitcoin)
-                    .expect("failed to parse amount"),
+                value: Value::from_sat(
+                    Amount::from_str_in(output_1.amount, Denomination::Bitcoin)
+                        .expect("failed to parse amount")
+                        .to_sat(),
+                ),
                 script_pubkey: ScriptBuf::from_hex(output_1.script_pubkey)
                     .expect("failed to parse script"),
             },

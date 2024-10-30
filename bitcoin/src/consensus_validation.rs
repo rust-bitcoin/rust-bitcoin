@@ -7,8 +7,8 @@
 use core::fmt;
 
 use internals::write_err;
+use units::Value;
 
-use crate::amount::Amount;
 use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
@@ -31,7 +31,7 @@ use crate::transaction::{OutPoint, Transaction, TxOut};
 pub fn verify_script(
     script: &Script,
     index: usize,
-    amount: Amount,
+    amount: Value,
     spending_tx: &[u8],
 ) -> Result<(), BitcoinconsensusError> {
     verify_script_with_flags(
@@ -56,7 +56,7 @@ pub fn verify_script(
 pub fn verify_script_with_flags<F: Into<u32>>(
     script: &Script,
     index: usize,
-    amount: Amount,
+    amount: Value,
     spending_tx: &[u8],
     flags: F,
 ) -> Result<(), BitcoinconsensusError> {
@@ -133,7 +133,7 @@ define_extension_trait! {
         fn verify(
             &self,
             index: usize,
-            amount: crate::Amount,
+            amount: Value,
             spending_tx: &[u8],
         ) -> Result<(), BitcoinconsensusError> {
             verify_script(self, index, amount, spending_tx)
@@ -152,7 +152,7 @@ define_extension_trait! {
         fn verify_with_flags(
             &self,
             index: usize,
-            amount: crate::Amount,
+            amount: Value,
             spending_tx: &[u8],
             flags: impl Into<u32>,
         ) -> Result<(), BitcoinconsensusError> {

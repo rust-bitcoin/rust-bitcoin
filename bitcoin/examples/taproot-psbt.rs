@@ -40,7 +40,7 @@ const UTXO_SCRIPT_PUBKEY: &str =
     "5120be27fa8b1f5278faf82cab8da23e8761f8f9bd5d5ebebbb37e0e12a70d92dd16";
 const UTXO_PUBKEY: &str = "a6ac32163539c16b6b5dbbca01b725b8e8acaa5f821ba42c80e7940062140d19";
 const UTXO_MASTER_FINGERPRINT: &str = "e61b318f";
-const ABSOLUTE_FEES_IN_SATS: Amount = Amount::from_sat(1_000);
+const ABSOLUTE_FEE: Value = Value::from_sat(1_000);
 
 // UTXO_1 will be used for spending example 1
 const UTXO_1: P2trUtxo = P2trUtxo {
@@ -49,7 +49,7 @@ const UTXO_1: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_int_btc(50),
+    value: FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -60,7 +60,7 @@ const UTXO_2: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_int_btc(50),
+    value: FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -71,7 +71,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_int_btc(50),
+    value: FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -87,9 +87,10 @@ use bitcoin::script::{ScriptBufExt as _, ScriptExt as _};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::value::{ValueExt as _, FIFTY_BTC, ONE_BTC};
 use bitcoin::{
-    absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
-    TxIn, TxOut, Witness,
+    absolute, script, transaction, Address, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,
+    Value, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -105,12 +106,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let change_address = "bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76"
         .parse::<Address<_>>()?
         .require_network(Network::Regtest)?;
-    let amount_to_send_in_sats = Amount::ONE_BTC;
-    let change_amount = UTXO_1
-        .amount_in_sats
-        .checked_sub(amount_to_send_in_sats)
-        .and_then(|x| x.checked_sub(ABSOLUTE_FEES_IN_SATS))
-        .ok_or("fees more than input amount!")?;
+    let send_value = ONE_BTC;
+    let change_value = UTXO_1
+        .value
+        .checked_sub(send_value)
+        .and_then(|x| x.checked_sub(ABSOLUTE_FEE))
+        .ok_or("fees more than input value!")?;
 
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
         &secp,
@@ -119,8 +120,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Set these fields with valid data for the UTXO from step 5 above
         UTXO_1,
         vec![
-            TxOut { value: amount_to_send_in_sats, script_pubkey: to_address.script_pubkey() },
-            TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
+            TxOut { value: send_value, script_pubkey: to_address.script_pubkey() },
+            TxOut { value: change_value, script_pubkey: change_address.script_pubkey() },
         ],
     )?);
     println!(
@@ -214,7 +215,7 @@ struct P2trUtxo<'a> {
     script_pubkey: &'a str,
     pubkey: &'a str,
     master_fingerprint: &'a str,
-    amount_in_sats: Amount,
+    value: Value,
     derivation_path: &'a str,
 }
 
@@ -225,7 +226,7 @@ fn generate_bip86_key_spend_tx(
     input_utxo: P2trUtxo,
     outputs: Vec<TxOut>,
 ) -> Result<Transaction, Box<dyn std::error::Error>> {
-    let from_amount = input_utxo.amount_in_sats;
+    let from_value = input_utxo.value;
     let input_pubkey = input_utxo.pubkey.parse::<XOnlyPublicKey>()?;
 
     // CREATOR + UPDATER
@@ -258,7 +259,7 @@ fn generate_bip86_key_spend_tx(
         witness_utxo: {
             let script_pubkey = ScriptBuf::from_hex(input_utxo.script_pubkey)
                 .expect("failed to parse input utxo scriptPubkey");
-            Some(TxOut { value: from_amount, script_pubkey })
+            Some(TxOut { value: from_value, script_pubkey })
         },
         tap_key_origins: origins,
         ..Default::default()
@@ -273,7 +274,7 @@ fn generate_bip86_key_spend_tx(
     let mut input_txouts = Vec::<TxOut>::new();
     for input in [&input_utxo].iter() {
         input_txouts.push(TxOut {
-            value: input.amount_in_sats,
+            value: input.value,
             script_pubkey: ScriptBuf::from_hex(input.script_pubkey)?,
         });
     }
@@ -331,7 +332,7 @@ fn generate_bip86_key_spend_tx(
     let tx = psbt.extract_tx_unchecked_fee_rate();
     tx.verify(|_| {
         Some(TxOut {
-            value: from_amount,
+            value: from_value,
             script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey).unwrap(),
         })
     })
@@ -411,7 +412,7 @@ impl BenefactorWallet {
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
         );
-        let value = input_utxo.amount_in_sats - ABSOLUTE_FEES_IN_SATS;
+        let value = input_utxo.value.checked_sub(ABSOLUTE_FEE).unwrap();
 
         // Spend a normal BIP86-like output as an input in our inheritance funding transaction
         let tx = generate_bip86_key_spend_tx(
@@ -475,7 +476,7 @@ impl BenefactorWallet {
             let mut psbt = self.next_psbt.clone().expect("should have next_psbt");
             let input = &mut psbt.inputs[0];
             let input_value = input.witness_utxo.as_ref().unwrap().value;
-            let output_value = input_value - ABSOLUTE_FEES_IN_SATS;
+            let output_value = input_value.checked_sub(ABSOLUTE_FEE).unwrap();
 
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
@@ -599,9 +600,9 @@ impl BenefactorWallet {
             let input = Input {
                 witness_utxo: {
                     let script_pubkey = output_script_pubkey;
-                    let amount = output_value;
+                    let value = output_value;
 
-                    Some(TxOut { value: amount, script_pubkey })
+                    Some(TxOut { value, script_pubkey })
                 },
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),
@@ -648,7 +649,7 @@ impl BeneficiaryWallet {
         psbt.unsigned_tx.lock_time = lock_time;
         psbt.unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
-            value: input_value - ABSOLUTE_FEES_IN_SATS,
+            value: input_value.checked_sub(ABSOLUTE_FEE).unwrap(),
         }];
         psbt.outputs = vec![Output::default()];
         let unsigned_tx = psbt.unsigned_tx.clone();

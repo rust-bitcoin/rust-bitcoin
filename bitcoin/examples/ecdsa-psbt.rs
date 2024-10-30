@@ -39,8 +39,8 @@ use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    transaction, Address, Amount, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    transaction, Address, CompressedPublicKey, Network, OutPoint, ScriptBuf, Sequence, Transaction,
+    TxIn, TxOut, Value, Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -52,7 +52,7 @@ const EXTENDED_MASTER_PRIVATE_KEY: &str = "tprv8ZgxMBicQKsPeSHZFZWT8zxie2dXWcwem
 const INPUT_UTXO_TXID: &str = "295f06639cde6039bf0c3dbf4827f0e3f2b2c2b476408e2f9af731a8d7a9c7fb";
 const INPUT_UTXO_VOUT: u32 = 0;
 const INPUT_UTXO_SCRIPT_PUBKEY: &str = "00149891eeb8891b3e80a2a1ade180f143add23bf5de";
-const INPUT_UTXO_VALUE: &str = "50 BTC";
+const INPUT_UTXO_VALUE: Value = Value::from_sat(50 * 100_000_000);
 // Get this from the desciptor,
 // "wpkh([97f17dca/0'/0'/0']02749483607dafb30c66bd93ece4474be65745ce538c2d70e8e246f17e7a4e0c0c)#m9n56cx0".
 const INPUT_UTXO_DERIVATION_PATH: &str = "0h/0h/0h";
@@ -61,8 +61,8 @@ const INPUT_UTXO_DERIVATION_PATH: &str = "0h/0h/0h";
 const RECEIVE_ADDRESS: &str = "bcrt1qcmnpjjjw78yhyjrxtql6lk7pzpujs3h244p7ae"; // The address to receive the coins we send.
 
 // These should be correct if the UTXO above should is for 50 BTC.
-const OUTPUT_AMOUNT_BTC: &str = "1 BTC";
-const CHANGE_AMOUNT_BTC: &str = "48.99999 BTC"; // 1000 sat transaction fee.
+const OUTPUT_VALUE: Value = Value::from_sat(50 * 100_000_000);
+const CHANGE_VALUE: Value = Value::from_sat(OUTPUT_VALUE.to_sat() - 1000);
 
 const NETWORK: Network = Network::Regtest;
 
@@ -176,10 +176,10 @@ impl WatchOnly {
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
         let to_address =
             RECEIVE_ADDRESS.parse::<Address<_>>()?.require_network(Network::Regtest)?;
-        let to_amount = OUTPUT_AMOUNT_BTC.parse::<Amount>()?;
+        let to_value = OUTPUT_VALUE;
 
         let (_, change_address, _) = self.change_address(secp)?;
-        let change_amount = CHANGE_AMOUNT_BTC.parse::<Amount>()?;
+        let change_value = CHANGE_VALUE;
 
         let tx = Transaction {
             version: transaction::Version::TWO,
@@ -191,8 +191,8 @@ impl WatchOnly {
                 witness: Witness::default(),
             }],
             output: vec![
-                TxOut { value: to_amount, script_pubkey: to_address.script_pubkey() },
-                TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
+                TxOut { value: to_value, script_pubkey: to_address.script_pubkey() },
+                TxOut { value: change_value, script_pubkey: change_address.script_pubkey() },
             ],
         };
 
@@ -276,9 +276,8 @@ fn input_derivation_path() -> Result<DerivationPath> {
 fn previous_output() -> TxOut {
     let script_pubkey = ScriptBuf::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
-    let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
 
-    TxOut { value: amount, script_pubkey }
+    TxOut { value: INPUT_UTXO_VALUE, script_pubkey }
 }
 
 struct Error(Box<dyn std::error::Error>);

@@ -24,7 +24,7 @@ use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::witness::Witness;
-use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{transaction, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Value};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -799,7 +799,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         writer: &mut W,
         input_index: usize,
         script_code: &Script,
-        value: Amount,
+        value: Value,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), SigningDataError<transaction::InputsIndexError>> {
         let zero_hash = [0; 32];
@@ -856,7 +856,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         script_pubkey: &Script,
-        value: Amount,
+        value: Value,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, P2wpkhError> {
         let script_code = script_pubkey.p2wpkh_script_code().ok_or(P2wpkhError::NotP2wpkhScript)?;
@@ -878,7 +878,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         &mut self,
         input_index: usize,
         witness_script: &Script,
-        value: Amount,
+        value: Value,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, transaction::InputsIndexError> {
         let mut enc = SegwitV0Sighash::engine();
@@ -1509,7 +1509,6 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::ScriptBufExt as _;
-    use crate::taproot::TapTweakHashExt as _;
 
     extern crate serde_json;
 
@@ -1827,6 +1826,8 @@ mod tests {
     fn bip_341_sighash_tests() {
         use hex::DisplayHex;
 
+        use crate::taproot::TapTweakHashExt as _;
+
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where
             D: serde::Deserializer<'de>,
@@ -1852,7 +1853,7 @@ mod tests {
             #[serde(rename = "scriptPubKey")]
             script_pubkey: ScriptBuf,
             #[serde(rename = "amountSats")]
-            value: Amount,
+            value: Value,
         }
 
         #[derive(serde::Deserialize)]
@@ -2052,7 +2053,7 @@ mod tests {
         ).unwrap();
 
         let spk = ScriptBuf::from_hex("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1").unwrap();
-        let value = Amount::from_sat(600_000_000);
+        let value = Value::from_sat(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -2093,7 +2094,7 @@ mod tests {
 
         let redeem_script =
             ScriptBuf::from_hex("001479091972186c449eb1ded22b78e40d009bdf0089").unwrap();
-        let value = Amount::from_sat(1_000_000_000);
+        let value = Value::from_sat(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -2125,7 +2126,7 @@ mod tests {
     // Note, if you are looking at the test vectors in BIP-143 and wondering why there is a `cf`
     // prepended to all the script_code hex it is the length byte, it gets added when we consensus
     // encode a script.
-    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf, Amount) {
+    fn bip143_p2wsh_nested_in_p2sh_data() -> (Transaction, ScriptBuf, Value) {
         let tx = deserialize::<Transaction>(&hex!(
             "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000\
              ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f\
@@ -2143,7 +2144,7 @@ mod tests {
         )
         .unwrap();
 
-        let value = Amount::from_sat(987_654_321);
+        let value = Value::from_sat(987_654_321);
         (tx, witness_script, value)
     }
 

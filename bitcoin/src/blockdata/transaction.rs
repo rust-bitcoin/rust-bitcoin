@@ -28,7 +28,7 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount};
+use crate::{Amount, FeeRate, SignedAmount, Value};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -208,7 +208,7 @@ crate::internal_macros::define_extension_trait! {
 /// Returns the total number of bytes that this script pubkey would contribute to a transaction.
 fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
     let len = script_pubkey.len();
-    Amount::SIZE + compact_size::encoded_size(len) + len
+    Value::SIZE + compact_size::encoded_size(len) + len
 }
 
 /// Bitcoin transaction.
@@ -939,11 +939,13 @@ impl From<&Transaction> for Wtxid {
 pub fn effective_value(
     fee_rate: FeeRate,
     satisfaction_weight: Weight,
-    value: Amount,
+    value: Value,
 ) -> Option<SignedAmount> {
     let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
-    let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
-    value.to_signed().ok()?.checked_sub(signed_input_fee)
+    let input_fee = fee_rate.checked_mul_by_weight(weight)?;
+    let input_fee = Value::from_sat(input_fee.to_sat());
+    let signed_input_fee = Amount::from_sat(input_fee.to_sat()).to_signed().ok()?;
+    Amount::from_sat(value.to_sat()).to_signed().ok()?.checked_sub(signed_input_fee)
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1834,32 +1836,33 @@ mod tests {
 
     #[test]
     fn effective_value_happy_path() {
-        let value = "1 cBTC".parse::<Amount>().unwrap();
+        let value = Value::from_sat(1_000_000); // 1 cBTC
         let fee_rate = FeeRate::from_sat_per_kwu(10);
         let satisfaction_weight = Weight::from_wu(204);
         let effective_value = effective_value(fee_rate, satisfaction_weight, value).unwrap();
 
         // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
         let expected_fee = "4 sats".parse::<SignedAmount>().unwrap();
-        let expected_effective_value = value.to_signed().unwrap() - expected_fee;
+        let expected_effective_value =
+            Amount::from_sat(value.to_sat()).to_signed().unwrap() - expected_fee;
         assert_eq!(effective_value, expected_effective_value);
     }
 
     #[test]
     fn effective_value_fee_rate_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::MAX, Weight::ZERO, Amount::ZERO);
+        let eff_value = effective_value(FeeRate::MAX, Weight::ZERO, Value::ZERO);
         assert!(eff_value.is_none());
     }
 
     #[test]
     fn effective_value_weight_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::ZERO, Weight::MAX, Amount::ZERO);
+        let eff_value = effective_value(FeeRate::ZERO, Weight::MAX, Value::ZERO);
         assert!(eff_value.is_none());
     }
 
     #[test]
     fn effective_value_value_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::ZERO, Weight::ZERO, Amount::MAX);
+        let eff_value = effective_value(FeeRate::ZERO, Weight::ZERO, Value::MAX);
         assert!(eff_value.is_none());
     }
 

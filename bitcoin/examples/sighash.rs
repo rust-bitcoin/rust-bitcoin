@@ -1,7 +1,7 @@
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::script::ScriptExt as _;
 use bitcoin::{
-    consensus, ecdsa, sighash, Amount, CompressedPublicKey, Script, ScriptBuf, Transaction,
+    consensus, ecdsa, sighash, CompressedPublicKey, Script, ScriptBuf, Transaction, Value,
 };
 use hex_lit::hex;
 
@@ -43,7 +43,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
-        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
+        .p2wpkh_signature_hash(inp_idx, &spk, Value::from_sat(value), sig.sighash_type)
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from(sighash);
@@ -125,12 +125,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
         assert!((70..=72).contains(&sig_len), "signature length {} out of bounds", sig_len);
         //here we assume that all sighash_flags are the same. Can they be different?
         let sighash = cache
-            .p2wsh_signature_hash(
-                inp_idx,
-                witness_script,
-                Amount::from_sat(value),
-                sig.sighash_type,
-            )
+            .p2wsh_signature_hash(inp_idx, witness_script, Value::from_sat(value), sig.sighash_type)
             .expect("failed to compute sighash");
         println!("Segwit p2wsh sighash: {:x} ({})", sighash, sig.sighash_type);
     }

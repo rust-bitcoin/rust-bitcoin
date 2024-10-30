@@ -20,8 +20,10 @@ use hashes::{sha256, sha256d, GeneralHash, Hash};
 use hex::DisplayHex as _;
 use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
+use units::Value;
 
 use super::IterReader;
+use crate::amount::Amount;
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::bip158::{FilterHash, FilterHeader};
 use crate::block::{self, BlockHash};
@@ -722,6 +724,32 @@ tuple_encode!(T0, T1, T2, T3, T4);
 tuple_encode!(T0, T1, T2, T3, T4, T5);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
+
+impl Decodable for Amount {
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+        Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
+    }
+}
+
+impl Encodable for Amount {
+    #[inline]
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_sat().consensus_encode(w)
+    }
+}
+
+impl Encodable for Value {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_sat().consensus_encode(w)
+    }
+}
+
+impl Decodable for Value {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+        Ok(Self::from_sat(<u64>::consensus_decode(r)?))
+    }
+}
 
 impl Encodable for sha256d::Hash {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
