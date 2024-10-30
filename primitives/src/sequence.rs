@@ -19,7 +19,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::impl_to_hex_from_lower_hex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "alloc")]
@@ -231,7 +230,8 @@ impl fmt::Display for Sequence {
 impl fmt::LowerHex for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
     8 - sequence.0.leading_zeros() as usize / 4
 });
 

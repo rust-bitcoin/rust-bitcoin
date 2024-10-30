@@ -219,7 +219,6 @@ macro_rules! impl_to_hex_from_lower_hex {
     ($t:ident, $hex_len_fn:expr) => {
         impl $t {
             /// Gets the hex representation of this type
-            #[cfg(feature = "alloc")]
             pub fn to_hex(&self) -> alloc::string::String {
                 use core::fmt::Write;
 

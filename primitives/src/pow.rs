@@ -4,8 +4,6 @@
 
 use core::fmt;
 
-use internals::impl_to_hex_from_lower_hex;
-
 /// Encoding of 256-bit target as 32-bit float.
 ///
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
@@ -36,7 +34,8 @@ impl fmt::LowerHex for CompactTarget {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
     8 - compact_target.0.leading_zeros() as usize / 4
 });
 

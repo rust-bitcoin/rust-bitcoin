@@ -12,7 +12,6 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hex::DisplayHex;
-use internals::impl_to_hex_from_lower_hex;
 use internals::script::{self, PushDataLenLen};
 
 use crate::opcodes::all::*;
@@ -231,13 +230,15 @@ impl fmt::LowerHex for Script {
         fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
-impl_to_hex_from_lower_hex!(Script, |script: &Script| script.len() * 2);
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Script, |script: &Script| script.len() * 2);
 
 impl fmt::LowerHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
-impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &ScriptBuf| script_buf.len() * 2);
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &ScriptBuf| script_buf.len() * 2);
 
 impl fmt::UpperHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
