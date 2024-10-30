@@ -112,10 +112,6 @@ fn s_amount_homomorphic_checked() {
 
     assert_eq!(
         SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
-        if n1 >= 0 && n2 >= 0 && n1 >= n2 {
-            Some(SignedAmount::from_sat(n1 - n2))
-        } else {
-            None
-        },
+        if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat(n1 - n2)) } else { None },
     );
 }
