@@ -252,6 +252,7 @@ macro_rules! define_extension_trait {
             fn $fn:ident$(<$($gen:ident: $gent:path),*>)?($($params:tt)*) $( -> $ret:ty )? $body:block
         )*
     }) => {
+        #[cfg_attr(docsrs, doc(notable_trait))]
         $(#[$($trait_attrs)*])* $trait_vis trait $trait_name: sealed::Sealed {
             $(
                 $crate::internal_macros::only_doc_attrs! {
