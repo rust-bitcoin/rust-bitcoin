@@ -340,7 +340,7 @@ impl Transaction {
     ///
     /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
     /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
-    /// this will be equal to [`Transaction::txid()`].
+    /// this will be equal to [`Transaction::compute_txid()`].
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
         let hash = hash_transaction(self, self.uses_segwit_serialization());
