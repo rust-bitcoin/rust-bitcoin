@@ -231,9 +231,9 @@ impl fmt::Display for Sequence {
 impl fmt::LowerHex for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
-impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| 8 - sequence.0.leading_zeros()
-    as usize
-    / 4);
+impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
+    8 - sequence.0.leading_zeros() as usize / 4
+});
 
 impl fmt::UpperHex for Sequence {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
