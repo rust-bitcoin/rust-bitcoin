@@ -51,7 +51,7 @@ pub use units::amount::{Amount, SignedAmount};
 pub use units::{
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
-    weight::Weight
+    weight::Weight,
 };
 
 #[doc(inline)]
