@@ -803,8 +803,8 @@ impl Address<NetworkUnchecked> {
 
     /// Parse a bech32 Address string
     pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
-        let (hrp, witness_version, data) = bech32::segwit::decode(s)
-            .map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
+        let (hrp, witness_version, data) =
+            bech32::segwit::decode(s).map_err(|e| Bech32Error::ParseBech32(ParseBech32Error(e)))?;
         let version = WitnessVersion::try_from(witness_version.to_u8())?;
         let program = WitnessProgram::new(version, &data)
             .expect("bech32 guarantees valid program length for witness");

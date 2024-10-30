@@ -23,6 +23,7 @@ use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
+use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
 use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
@@ -1509,7 +1510,6 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
     use crate::script::ScriptBufExt as _;
-    use crate::taproot::TapTweakHashExt as _;
 
     extern crate serde_json;
 
@@ -1826,6 +1826,8 @@ mod tests {
     #[test]
     fn bip_341_sighash_tests() {
         use hex::DisplayHex;
+
+        use crate::taproot::TapTweakHashExt as _;
 
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where

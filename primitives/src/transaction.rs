@@ -10,22 +10,268 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
+#[cfg(feature = "alloc")]
+use core::cmp;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
-use internals::write_err;
+use internals::{compact_size, write_err};
 #[cfg(feature = "alloc")]
-use units::{parse, Amount};
+use units::{parse, Amount, Weight};
 
+#[cfg(feature = "alloc")]
+use crate::locktime::absolute;
+#[cfg(feature = "alloc")]
+use crate::prelude::Vec;
 #[cfg(feature = "alloc")]
 use crate::script::ScriptBuf;
 #[cfg(feature = "alloc")]
 use crate::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use crate::witness::Witness;
+
+/// Bitcoin transaction.
+///
+/// An authenticated movement of coins.
+///
+/// See [Bitcoin Wiki: Transaction][wiki-transaction] for more information.
+///
+/// [wiki-transaction]: https://en.bitcoin.it/wiki/Transaction
+///
+/// ### Bitcoin Core References
+///
+/// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
+///
+/// ### Serialization notes
+///
+/// If any inputs have nonempty witnesses, the entire transaction is serialized
+/// in the post-BIP141 Segwit format which includes a list of witnesses. If all
+/// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
+/// format.
+///
+/// There is one major exception to this: to avoid deserialization ambiguity,
+/// if the transaction has no inputs, it is serialized in the BIP141 style. Be
+/// aware that this differs from the transaction format in PSBT, which _never_
+/// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
+/// are always unsigned and therefore their inputs have empty witnesses.)
+///
+/// The specific ambiguity is that Segwit uses the flag bytes `0001` where an old
+/// serializer would read the number of transaction inputs. The old serializer
+/// would interpret this as "no inputs, one output", which means the transaction
+/// is invalid, and simply reject it. Segwit further specifies that this encoding
+/// should *only* be used when some input has a nonempty witness; that is,
+/// witness-less transactions should be encoded in the traditional format.
+///
+/// However, in protocols where transactions may legitimately have 0 inputs, e.g.
+/// when parties are cooperatively funding a transaction, the "00 means Segwit"
+/// heuristic does not work. Since Segwit requires such a transaction be encoded
+/// in the original transaction format (since it has no inputs and therefore
+/// no input witnesses), a traditionally encoded transaction may have the `0001`
+/// Segwit flag in it, which confuses most Segwit parsers including the one in
+/// Bitcoin Core.
+///
+/// We therefore deviate from the spec by always using the Segwit witness encoding
+/// for 0-input transactions, which results in unambiguously parseable transactions.
+///
+/// ### A note on ordering
+///
+/// This type implements `Ord`, even though it contains a locktime, which is not
+/// itself `Ord`. This was done to simplify applications that may need to hold
+/// transactions inside a sorted container. We have ordered the locktimes based
+/// on their representation as a `u32`, which is not a semantically meaningful
+/// order, and therefore the ordering on `Transaction` itself is not semantically
+/// meaningful either.
+///
+/// The ordering is, however, consistent with the ordering present in this library
+/// before this change, so users should not notice any breakage (here) when
+/// transitioning from 0.29 to 0.30.
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(feature = "alloc")]
+pub struct Transaction {
+    /// The protocol version, is currently expected to be 1, 2 (BIP 68) or 3 (BIP 431).
+    pub version: Version,
+    /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+    /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
+    pub lock_time: absolute::LockTime,
+    /// List of transaction inputs.
+    pub input: Vec<TxIn>,
+    /// List of transaction outputs.
+    pub output: Vec<TxOut>,
+}
+
+#[cfg(feature = "alloc")]
+impl Transaction {
+    // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
+    /// Maximum transaction weight for Bitcoin Core 25.0.
+    pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
+
+    /// Computes a "normalized TXID" which does not include any signatures.
+    ///
+    /// This gives a way to identify a transaction that is "the same" as
+    /// another in the sense of having same inputs and outputs.
+    #[doc(alias = "ntxid")]
+    pub fn compute_ntxid(&self) -> sha256d::Hash {
+        let cloned_tx = Transaction {
+            version: self.version,
+            lock_time: self.lock_time,
+            input: self
+                .input
+                .iter()
+                .map(|txin| TxIn {
+                    script_sig: ScriptBuf::new(),
+                    witness: Witness::default(),
+                    ..*txin
+                })
+                .collect(),
+            output: self.output.clone(),
+        };
+        cloned_tx.compute_txid().into()
+    }
+
+    /// Computes the [`Txid`].
+    ///
+    /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::compute_wtxid()`].
+    #[doc(alias = "txid")]
+    pub fn compute_txid(&self) -> Txid {
+        let hash = hash_transaction(self, false);
+        Txid::from_byte_array(hash.to_byte_array())
+    }
+
+    /// Computes the segwit version of the transaction id.
+    ///
+    /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::compute_txid()`].
+    #[doc(alias = "wtxid")]
+    pub fn compute_wtxid(&self) -> Wtxid {
+        let hash = hash_transaction(self, self.uses_segwit_serialization());
+        Wtxid::from_byte_array(hash.to_byte_array())
+    }
+
+    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    // This is duplicated in `bitcoin`, if you change it please do so in both places.
+    fn uses_segwit_serialization(&self) -> bool {
+        if self.input.iter().any(|input| !input.witness.is_empty()) {
+            return true;
+        }
+        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // `Transaction` docs for full explanation).
+        self.input.is_empty()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl cmp::PartialOrd for Transaction {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
+}
+
+#[cfg(feature = "alloc")]
+impl cmp::Ord for Transaction {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.version
+            .cmp(&other.version)
+            .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
+            .then(self.input.cmp(&other.input))
+            .then(self.output.cmp(&other.output))
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl From<Transaction> for Txid {
+    fn from(tx: Transaction) -> Txid { tx.compute_txid() }
+}
+
+#[cfg(feature = "alloc")]
+impl From<&Transaction> for Txid {
+    fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
+}
+
+#[cfg(feature = "alloc")]
+impl From<Transaction> for Wtxid {
+    fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
+}
+
+#[cfg(feature = "alloc")]
+impl From<&Transaction> for Wtxid {
+    fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
+}
+
+// Duplicated in `bitcoin`.
+/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
+#[cfg(feature = "alloc")]
+const SEGWIT_MARKER: u8 = 0x00;
+/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
+#[cfg(feature = "alloc")]
+const SEGWIT_FLAG: u8 = 0x01;
+
+// This is equivalent to consensus encoding but hashes the fields manually.
+#[cfg(feature = "alloc")]
+fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256d::Hash {
+    use hashes::HashEngine as _;
+
+    let mut enc = sha256d::Hash::engine();
+    enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
+
+    if uses_segwit_serialization {
+        // BIP-141 (segwit) transaction serialization also includes marker and flag.
+        enc.input(&[SEGWIT_MARKER]);
+        enc.input(&[SEGWIT_FLAG]);
+    }
+
+    // Encode inputs (excluding witness data) with leading compact size encoded int.
+    let input_len = tx.input.len();
+    enc.input(compact_size::encode(input_len).as_slice());
+    for input in &tx.input {
+        // Encode each input same as we do in `Encodable for TxIn`.
+        enc.input(input.previous_output.txid.as_byte_array());
+        enc.input(&input.previous_output.vout.to_le_bytes());
+
+        let script_sig_bytes = input.script_sig.as_bytes();
+        enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
+        enc.input(script_sig_bytes);
+
+        enc.input(&input.sequence.0.to_le_bytes())
+    }
+
+    // Encode outputs with leading compact size encoded int.
+    let output_len = tx.output.len();
+    enc.input(compact_size::encode(output_len).as_slice());
+    for output in &tx.output {
+        // Encode each output same as we do in `Encodable for TxOut`.
+        enc.input(&output.value.to_sat().to_le_bytes());
+
+        let script_pubkey_bytes = output.script_pubkey.as_bytes();
+        enc.input(compact_size::encode(script_pubkey_bytes.len()).as_slice());
+        enc.input(script_pubkey_bytes);
+    }
+
+    if uses_segwit_serialization {
+        // BIP-141 (segwit) transaction serialization also includes the witness data.
+        for input in &tx.input {
+            // Same as `Encodable for Witness`.
+            enc.input(compact_size::encode(input.witness.len()).as_slice());
+            for element in input.witness.iter() {
+                enc.input(compact_size::encode(element.len()).as_slice());
+                enc.input(element);
+            }
+        }
+    }
+
+    // Same as `Encodable for absolute::LockTime`.
+    enc.input(&tx.lock_time.to_consensus_u32().to_le_bytes());
+
+    sha256d::Hash::from_engine(enc)
+}
 
 /// Bitcoin transaction input.
 ///
@@ -274,6 +520,19 @@ impl Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(feature = "alloc")]
+impl<'a> Arbitrary<'a> for Transaction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Transaction {
+            version: Version::arbitrary(u)?,
+            lock_time: absolute::LockTime::arbitrary(u)?,
+            input: Vec::<TxIn>::arbitrary(u)?,
+            output: Vec::<TxOut>::arbitrary(u)?,
+        })
+    }
 }
 
 #[cfg(feature = "arbitrary")]

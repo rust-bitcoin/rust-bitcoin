@@ -34,6 +34,7 @@ use std::fmt;
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
+use bitcoin::consensus_validation::TransactionExt as _;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;

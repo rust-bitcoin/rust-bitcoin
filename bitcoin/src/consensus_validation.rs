@@ -161,12 +161,8 @@ define_extension_trait! {
     }
 }
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Script {}
-}
-
-impl Transaction {
+/// Extension functionality for the [`Transaction`] type.
+pub trait TransactionExt: sealed::Sealed {
     /// Verifies that this transaction is able to spend its inputs.
     ///
     /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`].
@@ -174,23 +170,40 @@ impl Transaction {
     /// The `spent` closure should not return the same [`TxOut`] twice!
     ///
     /// [`bitcoinconsensus::VERIFY_ALL_PRE_TAPROOT`]: https://docs.rs/bitcoinconsensus/0.106.0+26.0/bitcoinconsensus/constant.VERIFY_ALL_PRE_TAPROOT.html
-    pub fn verify<S>(&self, spent: S) -> Result<(), TxVerifyError>
+    fn verify<S>(&self, spent: S) -> Result<(), TxVerifyError>
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>;
+
+    /// Verifies that this transaction is able to spend its inputs.
+    ///
+    /// The `spent` closure should not return the same [`TxOut`] twice!
+    fn verify_with_flags<S, F>(&self, spent: S, flags: F) -> Result<(), TxVerifyError>
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+        F: Into<u32>;
+}
+
+impl TransactionExt for Transaction {
+    fn verify<S>(&self, spent: S) -> Result<(), TxVerifyError>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
     {
         verify_transaction(self, spent)
     }
 
-    /// Verifies that this transaction is able to spend its inputs.
-    ///
-    /// The `spent` closure should not return the same [`TxOut`] twice!
-    pub fn verify_with_flags<S, F>(&self, spent: S, flags: F) -> Result<(), TxVerifyError>
+    fn verify_with_flags<S, F>(&self, spent: S, flags: F) -> Result<(), TxVerifyError>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
         F: Into<u32>,
     {
         verify_transaction_with_flags(self, spent, flags)
     }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Script {}
+    impl Sealed for super::Transaction {}
 }
 
 /// Wrapped error from `bitcoinconsensus`.
