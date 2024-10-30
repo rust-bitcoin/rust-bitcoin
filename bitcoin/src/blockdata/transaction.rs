@@ -501,8 +501,8 @@ impl Transaction {
     /// This is useful in combination with [`predict_weight`] if you have the transaction already
     /// constructed with a dummy value in the fee output which you'll adjust after calculating the
     /// weight.
-    pub fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
-        self.output.iter().map(|txout| txout.script_pubkey.len())
+    pub fn script_pubkey_lens(&self) -> TxOutToScriptPubkeyLengthIter {
+        TxOutToScriptPubkeyLengthIter { inner: self.output.iter() }
     }
 
     /// Counts the total number of sigops.
@@ -543,6 +543,18 @@ impl Transaction {
             .get(output_index)
             .ok_or(IndexOutOfBoundsError { index: output_index, length: self.output.len() }.into())
     }
+}
+
+/// Iterates over transaction outputs and for each output yields the length of the scriptPubkey.
+// This exists to hardcode the type of the closure crated by `map`.
+pub struct TxOutToScriptPubkeyLengthIter<'a> {
+    inner: core::slice::Iter<'a, TxOut>,
+}
+
+impl Iterator for TxOutToScriptPubkeyLengthIter<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<usize> { self.inner.next().map(|txout| txout.script_pubkey.len()) }
 }
 
 impl Transaction {
