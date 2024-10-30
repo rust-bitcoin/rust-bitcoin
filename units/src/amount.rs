@@ -14,7 +14,7 @@ use core::{default, fmt, ops};
 #[cfg(feature = "serde")]
 use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::{Arbitrary, ArbitraryInRange, Unstructured};
 use internals::error::InputString;
 use internals::write_err;
 
@@ -1096,6 +1096,19 @@ impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = u64::arbitrary(u)?;
         Ok(Amount(a))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> ArbitraryInRange<'a> for Amount {
+    type Bound = u64;
+
+    fn arbitrary_in_range<R>(u: &mut Unstructured<'a>, range: &R) -> arbitrary::Result<Self>
+    where
+        R: ops::RangeBounds<Self::Bound>,
+    {
+        let sat = u64::arbitrary_in_range(u, range)?;
+        Ok(Amount::from_sat(sat))
     }
 }
 
