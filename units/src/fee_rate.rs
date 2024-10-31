@@ -211,6 +211,10 @@ impl Mul<Weight> for FeeRate {
 impl Div<Weight> for Amount {
     type Output = FeeRate;
 
+    /// Truncating integer division.
+    ///
+    /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
+    /// `checked_div_by_weight` instead.
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 

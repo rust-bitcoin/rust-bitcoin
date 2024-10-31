@@ -235,7 +235,7 @@ impl Amount {
     ///
     /// Be aware that integer division loses the remainder if no exact division
     /// can be made.  This method rounds up ensuring the transaction fee-rate is
-    /// sufficient.  If you wish to round-down, use the unchecked version instead.
+    /// sufficient. If you wish to round down use `amount / weight`.
     ///
     /// [`None`] is returned if an overflow occurred.
     #[cfg(feature = "alloc")]
