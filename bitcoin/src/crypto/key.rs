@@ -110,7 +110,11 @@ impl PublicKey {
     }
 
     /// Serializes the public key to bytes.
-    pub fn to_bytes(self) -> Vec<u8> {
+    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
+
+    /// Serializes the public key to bytes.
+    pub fn to_vec(self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
         buf
@@ -442,8 +446,13 @@ impl PrivateKey {
         }
     }
 
+
     /// Serializes the private key to bytes.
-    pub fn to_bytes(self) -> Vec<u8> { self.inner[..].to_vec() }
+    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }
+
+    /// Serializes the private key to bytes.
+    pub fn to_vec(self) -> Vec<u8> { self.inner[..].to_vec() }
 
     /// Deserializes a private key from a slice.
     pub fn from_slice(
