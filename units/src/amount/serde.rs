@@ -88,9 +88,7 @@ impl SerdeAmount for Amount {
     #[cfg(feature = "alloc")]
     fn des_btc<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
         use serde::de::Error;
-        Amount::from_btc(f64::deserialize(d)?)
-            .map_err(DisplayFullError)
-            .map_err(D::Error::custom)
+        Amount::from_btc(f64::deserialize(d)?).map_err(DisplayFullError).map_err(D::Error::custom)
     }
 }
 
