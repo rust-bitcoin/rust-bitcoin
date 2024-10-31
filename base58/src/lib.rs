@@ -76,12 +76,12 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
         if usize::from(d58) >= BASE58_DIGITS.len() {
-            return Err(InvalidCharacterError { invalid: d58 });
+            return Err(InvalidCharacterError::new(d58));
         }
         let mut carry = match BASE58_DIGITS[usize::from(d58)] {
             Some(d58) => u32::from(d58),
             None => {
-                return Err(InvalidCharacterError { invalid: d58 });
+                return Err(InvalidCharacterError::new(d58));
             }
         };
         if scratch.is_empty() {
@@ -304,7 +304,7 @@ mod tests {
             Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
         );
         // Non Base58 char.
-        assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError { invalid: 194 });
+        assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError::new(194));
     }
 
     #[test]
