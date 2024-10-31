@@ -62,7 +62,7 @@ impl Amount {
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
 
-    /// Converts from a value expressing bitcoins to an [`Amount`].
+    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
@@ -111,10 +111,10 @@ impl Amount {
         Ok(Amount::from_sat(satoshi))
     }
 
-    /// Parses amounts with denomination suffix like they are produced with
-    /// [`Self::to_string_with_denomination`] or with [`fmt::Display`].
-    /// If you want to parse only the amount without the denomination,
-    /// use [`Self::from_str_in`].
+    /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
+    /// or with [`fmt::Display`].
+    ///
+    /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Amount::from_str_in(amt, denom).map_err(Into::into)
@@ -190,14 +190,14 @@ impl Amount {
         fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
 
-    /// Returns a formatted string of this [`Amount`] in the given denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given denomination.
     ///
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
-    /// Returns a formatted string of this [`Amount`] in the given denomination,
-    /// suffixed with the abbreviation for the denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given denomination, suffixed
+    /// with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
@@ -226,8 +226,8 @@ impl Amount {
 
     /// Checked integer division.
     ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made.
+    /// Be aware that integer division loses the remainder if no exact division can be made.
+    ///
     /// Returns [`None`] if overflow occurred.
     pub fn checked_div(self, rhs: u64) -> Option<Amount> { self.0.checked_div(rhs).map(Amount) }
 
@@ -237,7 +237,7 @@ impl Amount {
     /// can be made.  This method rounds up ensuring the transaction fee-rate is
     /// sufficient. If you wish to round down use `amount / weight`.
     ///
-    /// [`None`] is returned if an overflow occurred.
+    /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
     pub fn checked_div_by_weight(self, rhs: Weight) -> Option<FeeRate> {
         let sats = self.0.checked_mul(1000)?;
@@ -365,8 +365,8 @@ impl FromStr for Amount {
     ///
     /// # Returns
     ///
-    /// `Ok(Amount)` if the string amount and denomination parse successfully,
-    /// otherwise, return `Err(ParseError)`.
+    /// The amount if the string amount and denomination parse successfully,
+    /// otherwise returns `Err(ParseError)`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let result = Amount::from_str_with_denomination(s);
 

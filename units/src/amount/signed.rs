@@ -46,13 +46,13 @@ impl SignedAmount {
     /// The maximum value of an amount.
     pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
-    /// Create an [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    /// Creates a [`SignedAmount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
     pub const fn to_sat(self) -> i64 { self.0 }
 
-    /// Convert from a value expressing bitcoins to a [`SignedAmount`].
+    /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
         SignedAmount::from_float_in(btc, Denomination::Bitcoin)
@@ -88,7 +88,7 @@ impl SignedAmount {
         }
     }
 
-    /// Parse a decimal string as a value in the given denomination.
+    /// Parses a decimal string as a value in the given denomination.
     ///
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [`FromStr`].
@@ -105,10 +105,10 @@ impl SignedAmount {
         }
     }
 
-    /// Parses amounts with denomination suffix like they are produced with
-    /// [`Self::to_string_with_denomination`] or with [`fmt::Display`].
-    /// If you want to parse only the amount without the denomination,
-    /// use [`Self::from_str_in`].
+    /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
+    /// or with [`fmt::Display`].
+    ///
+    /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
     pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         SignedAmount::from_str_in(amt, denom).map_err(Into::into)
@@ -124,9 +124,15 @@ impl SignedAmount {
 
     /// Express this [`SignedAmount`] as a floating-point value in Bitcoin.
     ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
-    ///
     /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
+    /// let amount = SignedAmount::from_sat(100_000);
+    /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
@@ -148,7 +154,7 @@ impl SignedAmount {
         SignedAmount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Create an object that implements [`fmt::Display`] using specified denomination.
+    /// Creates an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.unsigned_abs().to_sat(),
@@ -157,7 +163,7 @@ impl SignedAmount {
         }
     }
 
-    /// Create an object that implements [`fmt::Display`] dynamically selecting denomination.
+    /// Creates an object that implements [`fmt::Display`] dynamically selecting denomination.
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
@@ -169,7 +175,7 @@ impl SignedAmount {
         }
     }
 
-    /// Format the value of this [`SignedAmount`] in the given denomination.
+    /// Formats the value of this [`SignedAmount`] in the given denomination.
     ///
     /// Does not include the denomination.
     #[rustfmt::skip]
@@ -178,14 +184,14 @@ impl SignedAmount {
         fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
 
-    /// Get a string number of this [`SignedAmount`] in the given denomination.
+    /// Returns a formatted string representing this [`SignedAmount`] in the given denomination.
     ///
     /// Does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
-    /// Get a formatted string of this [`SignedAmount`] in the given denomination,
-    /// suffixed with the abbreviation for the denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given denomination, suffixed
+    /// with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
@@ -196,7 +202,7 @@ impl SignedAmount {
     /// Get the absolute value of this [`SignedAmount`].
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
-    /// Get the absolute value of this [`SignedAmount`] returning [`Amount`].
+    /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
     pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [`SignedAmount`].
@@ -248,8 +254,7 @@ impl SignedAmount {
 
     /// Checked integer division.
     ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made.
+    /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
     pub fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
@@ -395,8 +400,8 @@ impl FromStr for SignedAmount {
     ///
     /// # Returns
     ///
-    /// `Ok(Amount)` if the string amount and denomination parse successfully,
-    /// otherwise, return `Err(ParseError)`.
+    /// The amount if the string amount and denomination parse successfully,
+    /// otherwise returns `Err(ParseError)`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let result = SignedAmount::from_str_with_denomination(s);
 
