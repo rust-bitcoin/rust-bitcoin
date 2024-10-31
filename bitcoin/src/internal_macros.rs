@@ -300,13 +300,18 @@ macro_rules! impl_array_newtype {
                 self.0
             }
 
+            /// Copies the underlying bytes into a new `Vec`.
+            #[inline]
+            pub fn to_vec(&self) -> alloc::vec::Vec<u8> { self.0.to_vec() }
+
             /// Returns a slice of the underlying bytes.
             #[inline]
             pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
             /// Copies the underlying bytes into a new `Vec`.
             #[inline]
-            pub fn to_bytes(&self) -> alloc::vec::Vec<u8> { self.0.to_vec() }
+            #[deprecated(since = "TBD", note = "use to_vec instead")]
+            pub fn to_bytes(&self) -> alloc::vec::Vec<u8> { self.to_vec() }
 
             /// Converts the object to a raw pointer.
             #[inline]
