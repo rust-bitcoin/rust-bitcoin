@@ -205,10 +205,7 @@ fn floating_point() {
     assert_eq!(f(11.22, D::Satoshi), Err(TooPreciseError { position: 3 }.into()));
     assert_eq!(f(42.123456781, D::Bitcoin), Err(TooPreciseError { position: 11 }.into()));
     assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
-    assert_eq!(
-        f(18446744073709551617.0, D::Satoshi),
-        Err(OutOfRangeError::too_big(false).into())
-    );
+    assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
 
     // Amount can be grater than the max SignedAmount.
     assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
@@ -241,10 +238,7 @@ fn parsing() {
     let p = Amount::from_str_in;
     let sp = SignedAmount::from_str_in;
 
-    assert_eq!(
-        p("x", btc),
-        Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 }))
-    );
+    assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })));
     assert_eq!(
         p("-", btc),
         Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign }))
@@ -286,19 +280,15 @@ fn parsing() {
     assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
     // Should this even pass?
     assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
-    assert_eq!(
-        p("12345678901.12345678", btc),
-        Ok(Amount::from_sat(12_345_678_901__123_456_78))
-    );
+    assert_eq!(p("12345678901.12345678", btc), Ok(Amount::from_sat(12_345_678_901__123_456_78)));
 
     // make sure satoshi > i64::MAX is checked.
     #[cfg(feature = "alloc")]
     {
         let amount = Amount::from_sat(i64::MAX as u64);
         assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
-        assert!(
-            SignedAmount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_err()
-        );
+        assert!(SignedAmount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat)
+            .is_err());
         assert!(Amount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_ok());
     }
 
@@ -326,10 +316,7 @@ fn to_string() {
     assert_eq!(SignedAmount::from_sat(-42).to_string_in(D::Bitcoin), "-0.00000042");
 
     assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin), "1 BTC");
-    assert_eq!(
-        SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi),
-        "100000000 satoshi"
-    );
+    assert_eq!(SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi), "100000000 satoshi");
     assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin), "0.00000001 BTC");
     assert_eq!(
         SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
@@ -617,32 +604,20 @@ fn to_from_string_in() {
 
     assert_eq!("0.50", format!("{:.2}", Amount::from_sat(50).display_in(D::Bit)));
     assert_eq!("-0.50", format!("{:.2}", SignedAmount::from_sat(-50).display_in(D::Bit)));
-    assert_eq!(
-        "0.10000000",
-        format!("{:.8}", Amount::from_sat(100_000_00).display_in(D::Bitcoin))
-    );
+    assert_eq!("0.10000000", format!("{:.8}", Amount::from_sat(100_000_00).display_in(D::Bitcoin)));
     assert_eq!("-100.00", format!("{:.2}", SignedAmount::from_sat(-10_000).display_in(D::Bit)));
 
     assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
     assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
-    assert_eq!(
-        ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit),
-        Ok(ua_sat(21_000_000))
-    );
-    assert_eq!(
-        ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin),
-        Ok(ua_sat(1))
-    );
+    assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
+    assert_eq!(ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(ua_sat(1)));
     assert_eq!(
         ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
         Ok(ua_sat(1_000_000_000_000))
     );
     assert!(ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
 
-    assert_eq!(
-        sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin),
-        Ok(sa_sat(-1))
-    );
+    assert_eq!(sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sa_sat(-1)));
 
     assert_eq!(
         sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::MicroBitcoin),
@@ -855,19 +830,13 @@ fn checked_sum_amounts() {
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [
-        SignedAmount::from_sat(i64::MIN),
-        SignedAmount::from_sat(-1),
-        SignedAmount::from_sat(21),
-    ];
+    let amounts =
+        [SignedAmount::from_sat(i64::MIN), SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [
-        SignedAmount::from_sat(i64::MAX),
-        SignedAmount::from_sat(1),
-        SignedAmount::from_sat(21),
-    ];
+    let amounts =
+        [SignedAmount::from_sat(i64::MAX), SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
@@ -881,8 +850,8 @@ fn checked_sum_amounts() {
 fn denomination_string_acceptable_forms() {
     // Non-exhaustive list of valid forms.
     let valid = [
-        "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS",
-        "satoshis", "SAT", "sat", "SATS", "sats", "bit", "bits",
+        "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS", "satoshis",
+        "SAT", "sat", "SATS", "sats", "bit", "bits",
     ];
     for denom in valid.iter() {
         assert!(denom.parse::<Denomination>().is_ok());
