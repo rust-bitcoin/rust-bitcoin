@@ -56,7 +56,7 @@ pub use units::{
 
 #[doc(inline)]
 pub use self::{
-    block::{BlockHash, WitnessCommitment},
+    block::{Block, BlockHash, WitnessCommitment},
     pow::CompactTarget,
     sequence::Sequence,
     transaction::{OutPoint, Txid, Wtxid},

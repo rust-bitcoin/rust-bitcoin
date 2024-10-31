@@ -9,8 +9,6 @@
 
 use core::fmt;
 
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine};
 use internals::compact_size;
 use io::{BufRead, Write};
@@ -27,7 +25,7 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::block::{Version, BlockHash, Header, WitnessCommitment};
+pub use primitives::block::{Block, Version, BlockHash, Header, WitnessCommitment};
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
 
@@ -85,32 +83,7 @@ impl Decodable for Version {
     }
 }
 
-/// Bitcoin block.
-///
-/// A collection of transactions with an attached proof of work.
-///
-/// See [Bitcoin Wiki: Block][wiki-block] for more information.
-///
-/// [wiki-block]: https://en.bitcoin.it/wiki/Block
-///
-/// ### Bitcoin Core References
-///
-/// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
-#[derive(PartialEq, Eq, Clone, Debug)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Block {
-    /// The block header
-    pub header: Header,
-    /// List of transactions contained in the block
-    pub txdata: Vec<Transaction>,
-}
-
 impl_consensus_encoding!(Block, header, txdata);
-
-impl Block {
-    /// Returns the block hash.
-    pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
-}
 
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Block`] type.
@@ -267,14 +240,6 @@ fn base_size(block: &Block) -> usize {
     size
 }
 
-impl From<Block> for BlockHash {
-    fn from(block: Block) -> BlockHash { block.block_hash() }
-}
-
-impl From<&Block> for BlockHash {
-    fn from(block: &Block) -> BlockHash { block.block_hash() }
-}
-
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Header {}
@@ -354,13 +319,6 @@ impl std::error::Error for ValidationError {
         match *self {
             BadProofOfWork | BadTarget => None,
         }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Block {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Block { header: Header::arbitrary(u)?, txdata: Vec::<Transaction>::arbitrary(u)? })
     }
 }
 

@@ -15,6 +15,40 @@ use hashes::{sha256d, HashEngine as _};
 
 use crate::merkle_tree::TxMerkleNode;
 use crate::pow::CompactTarget;
+use crate::transaction::Transaction;
+
+/// Bitcoin block.
+///
+/// A collection of transactions with an attached proof of work.
+///
+/// See [Bitcoin Wiki: Block][wiki-block] for more information.
+///
+/// [wiki-block]: https://en.bitcoin.it/wiki/Block
+///
+/// ### Bitcoin Core References
+///
+/// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
+#[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Block {
+    /// The block header
+    pub header: Header,
+    /// List of transactions contained in the block
+    pub txdata: Vec<Transaction>,
+}
+
+impl Block {
+    /// Returns the block hash.
+    pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
+}
+
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash { block.block_hash() }
+}
+
+impl From<&Block> for BlockHash {
+    fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
 
 /// Bitcoin block header.
 ///
@@ -165,6 +199,13 @@ hashes::hash_newtype! {
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Block {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Block { header: Header::arbitrary(u)?, txdata: Vec::<Transaction>::arbitrary(u)? })
+    }
 }
 
 #[cfg(feature = "arbitrary")]
