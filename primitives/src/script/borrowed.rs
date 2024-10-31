@@ -97,14 +97,6 @@ impl Script {
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
 
-    /// Returns the length in bytes of the script.
-    #[inline]
-    pub fn len(&self) -> usize { self.0.len() }
-
-    /// Returns whether the script is the empty script.
-    #[inline]
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
-
     /// Returns a copy of the script data.
     #[inline]
     pub fn to_vec(&self) -> Vec<u8> { self.0.to_owned() }
@@ -113,6 +105,14 @@ impl Script {
     #[inline]
     #[deprecated(since = "TBD", note = "use to_vec instead")]
     pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
+
+    /// Returns the length in bytes of the script.
+    #[inline]
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Returns whether the script is the empty script.
+    #[inline]
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use = "`self` will be dropped if the result is not used"]
