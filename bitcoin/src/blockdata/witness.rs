@@ -112,10 +112,6 @@ impl Encodable for Witness {
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Witness`] type.
     pub trait WitnessExt impl for Witness {
-        /// Convenience method to create an array of byte-arrays from this witness.
-        #[deprecated(since = "TBD", note = "use `to_bytes` instead")]
-        fn to_vec(&self) -> Vec<Vec<u8>> { self.to_bytes() }
-
         /// Creates a witness required to spend a P2WPKH output.
         ///
         /// The witness will be made up of the DER encoded signature + sighash_type followed by the
@@ -269,7 +265,7 @@ mod test {
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];
-        assert_eq!(witness.to_bytes(), expected_witness);
+        assert_eq!(witness.to_vec(), expected_witness);
     }
 
     #[test]

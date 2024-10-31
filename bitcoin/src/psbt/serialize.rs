@@ -172,7 +172,7 @@ impl Deserialize for secp256k1::PublicKey {
 }
 
 impl Serialize for ecdsa::Signature {
-    fn serialize(&self) -> Vec<u8> { self.to_bytes() }
+    fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
 impl Deserialize for ecdsa::Signature {
@@ -265,7 +265,7 @@ impl Deserialize for XOnlyPublicKey {
 }
 
 impl Serialize for taproot::Signature {
-    fn serialize(&self) -> Vec<u8> { self.to_bytes() }
+    fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
 impl Deserialize for taproot::Signature {

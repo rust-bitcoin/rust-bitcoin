@@ -1604,7 +1604,7 @@ mod tests {
             .is_err());
 
         // test that we get a failure if we corrupt a signature
-        let mut witness = spending.input[1].witness.to_bytes();
+        let mut witness = spending.input[1].witness.to_vec();
         witness[0][10] = 42;
         spending.input[1].witness = Witness::from_slice(&witness);
 

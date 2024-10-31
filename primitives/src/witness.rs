@@ -17,7 +17,7 @@ use crate::prelude::Vec;
 ///
 /// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
 /// in that format. You can convert between this type and `Vec<Vec<u8>>` by using [`Witness::from_slice`]
-/// and [`Witness::to_bytes`].
+/// and [`Witness::to_vec`].
 ///
 /// For serialization and deserialization performance it is stored internally as a single `Vec`,
 /// saving some allocations.
@@ -97,7 +97,7 @@ impl Witness {
     }
 
     /// Convenience method to create an array of byte-arrays from this witness.
-    pub fn to_bytes(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
+    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
 
     /// Returns `true` if the witness contains no element.
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }

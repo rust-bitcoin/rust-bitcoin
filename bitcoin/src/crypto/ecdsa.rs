@@ -61,7 +61,7 @@ impl Signature {
     ///
     /// Note: this performs an extra heap allocation, you might prefer the
     /// [`serialize`](Self::serialize) method instead.
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn to_vec(self) -> Vec<u8> {
         self.signature
             .serialize_der()
             .iter()
@@ -69,10 +69,6 @@ impl Signature {
             .chain(iter::once(self.sighash_type as u8))
             .collect()
     }
-
-    /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) into `Vec`.
-    #[deprecated(since = "TBD", note = "use `to_bytes` instead")]
-    pub fn to_vec(self) -> Vec<u8> { self.to_bytes() }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) to a `writer`.
     #[inline]
@@ -345,6 +341,6 @@ mod tests {
         let mut buf = vec![];
         sig.serialize_to_writer(&mut buf).expect("write failed");
 
-        assert_eq!(sig.to_bytes(), buf)
+        assert_eq!(sig.to_vec(), buf)
     }
 }
