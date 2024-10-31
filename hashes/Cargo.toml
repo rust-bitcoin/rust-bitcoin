@@ -21,7 +21,7 @@ alloc = ["bitcoin-io?/alloc", "hex/alloc"]
 small-hash = []
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.2.0", default-features = false }
+hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
 
 bitcoin-io = { version = "0.2.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
