@@ -24,8 +24,8 @@ use crate::prelude::{Borrow, BorrowMut, Box, Cow, ToOwned, Vec};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    borrowed::*,
-    owned::*,
+    borrowed::Script,
+    owned::ScriptBuf,
 };
 
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.

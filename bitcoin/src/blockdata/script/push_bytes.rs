@@ -9,7 +9,8 @@ use crate::script;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use self::primitive::*;
+// This is not the usual re-export, `primitive` here is an code audit thing.
+pub use self::primitive::{PushBytes, PushBytesBuf};
 
 /// This module only contains required operations so that outside functions wouldn't accidentally
 /// break invariants. Therefore auditing this module should be sufficient.
@@ -421,7 +422,8 @@ impl PushBytesErrorReport for core::convert::Infallible {
     fn input_len(&self) -> usize { match *self {} }
 }
 
-pub use error::*;
+#[doc(inline)]
+pub use error::PushBytesError;
 
 #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
 mod error {
