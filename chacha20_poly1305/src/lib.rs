@@ -2,6 +2,12 @@
 
 //! Combine the ChaCha20 stream cipher with the Poly1305 message authentication code
 //! to form an authenticated encryption with additional data (AEAD) algorithm.
+#![no_std]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 pub mod chacha20;
 pub mod poly1305;
@@ -143,6 +149,7 @@ fn encode_lengths(aad_len: u64, content_len: u64) -> [u8; 16] {
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
+    use alloc::vec::Vec;
     use hex::prelude::*;
 
     use super::*;
