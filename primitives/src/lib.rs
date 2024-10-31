@@ -57,15 +57,17 @@ pub use units::{
 #[doc(inline)]
 pub use self::{
     block::{BlockHash, WitnessCommitment},
+    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
     sequence::Sequence,
+    taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
     transaction::{Txid, Wtxid},
 };
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
-    transaction::{TxIn, TxOut},
+    transaction::{TxIn, TxOut, Transaction},
     witness::Witness,
 };
 
