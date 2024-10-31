@@ -107,7 +107,12 @@ impl Script {
 
     /// Returns a copy of the script data.
     #[inline]
-    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_owned() }
+    pub fn to_vec(&self) -> Vec<u8> { self.0.to_owned() }
+
+    /// Returns a copy of the script data.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use to_vec instead")]
+    pub fn to_bytes(&self) -> Vec<u8> { self.to_vec() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use = "`self` will be dropped if the result is not used"]

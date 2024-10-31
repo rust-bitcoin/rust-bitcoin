@@ -140,7 +140,7 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
 impl Serialize for ScriptBuf {
-    fn serialize(&self) -> Vec<u8> { self.to_bytes() }
+    fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
 impl Deserialize for ScriptBuf {
