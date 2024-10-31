@@ -285,7 +285,9 @@ impl default::Default for Amount {
 }
 
 impl fmt::Debug for Amount {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{} SAT", self.to_sat()) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Amount({} SAT)", self.to_sat())
+    }
 }
 
 // No one should depend on a binding contract for Display for this type.
