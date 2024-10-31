@@ -264,14 +264,6 @@ impl Amount {
     }
 }
 
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Amount {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = u64::arbitrary(u)?;
-        Ok(Amount(a))
-    }
-}
-
 impl default::Default for Amount {
     fn default() -> Self { Amount::ZERO }
 }
@@ -385,5 +377,13 @@ impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
         Amount::from_sat(sats)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Amount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = u64::arbitrary(u)?;
+        Ok(Amount(a))
     }
 }
