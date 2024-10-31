@@ -59,13 +59,13 @@ pub use self::{
     block::{BlockHash, WitnessCommitment},
     pow::CompactTarget,
     sequence::Sequence,
-    transaction::{Txid, Wtxid},
+    transaction::{OutPoint, Txid, Wtxid},
 };
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
-    transaction::{TxIn, TxOut},
+    transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };
 
