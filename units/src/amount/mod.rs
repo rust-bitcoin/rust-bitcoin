@@ -800,7 +800,7 @@ impl SignedAmount {
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
     ///
-    /// Returns [`None`] if either [`self`], `rhs` or the result is strictly negative.
+    /// Returns [`None`] if either `self`, `rhs` or the result is strictly negative.
     pub fn positive_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         if self.is_negative() || rhs.is_negative() || rhs > self {
             None
