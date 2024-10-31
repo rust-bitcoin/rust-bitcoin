@@ -361,12 +361,7 @@ impl FromStr for Amount {
 
     /// Parses a string slice where the slice includes a denomination.
     ///
-    /// If the string slice is zero, then no denomination is required.
-    ///
-    /// # Returns
-    ///
-    /// The amount if the string amount and denomination parse successfully,
-    /// otherwise returns `Err(ParseError)`.
+    /// If the returned value would be zero or negative zero, then no denomination is required.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let result = Amount::from_str_with_denomination(s);
 
