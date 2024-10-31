@@ -25,7 +25,7 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use primitives::block::{Block, Version, BlockHash, Header, WitnessCommitment};
+pub use primitives::block::{Block, BlockHash, Header, Version, WitnessCommitment};
 #[doc(inline)]
 pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
 
