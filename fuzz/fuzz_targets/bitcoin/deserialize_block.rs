@@ -1,3 +1,4 @@
+use bitcoin::block::BlockExt as _;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

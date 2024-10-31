@@ -110,141 +110,146 @@ impl_consensus_encoding!(Block, header, txdata);
 impl Block {
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
+}
 
-    /// Checks if Merkle root of header matches Merkle root of the transaction list.
-    pub fn check_merkle_root(&self) -> bool {
-        match self.compute_merkle_root() {
-            Some(merkle_root) => self.header.merkle_root == merkle_root,
-            None => false,
-        }
-    }
-
-    /// Checks if witness commitment in coinbase matches the transaction list.
-    pub fn check_witness_commitment(&self) -> bool {
-        // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
-        const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
-        // Witness commitment is optional if there are no transactions using SegWit in the block.
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
-            return true;
+crate::internal_macros::define_extension_trait! {
+    /// Extension functionality for the [`Block`] type.
+    pub trait BlockExt impl for Block {
+        /// Checks if Merkle root of header matches Merkle root of the transaction list.
+        fn check_merkle_root(&self) -> bool {
+            match self.compute_merkle_root() {
+                Some(merkle_root) => self.header.merkle_root == merkle_root,
+                None => false,
+            }
         }
 
-        if self.txdata.is_empty() {
-            return false;
-        }
+        /// Checks if witness commitment in coinbase matches the transaction list.
+        fn check_witness_commitment(&self) -> bool {
+            // Consists of OP_RETURN, OP_PUSHBYTES_36, and four "witness header" bytes.
+            const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+            // Witness commitment is optional if there are no transactions using SegWit in the block.
+            if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+                return true;
+            }
 
-        let coinbase = &self.txdata[0];
-        if !coinbase.is_coinbase() {
-            return false;
-        }
+            if self.txdata.is_empty() {
+                return false;
+            }
 
-        // Commitment is in the last output that starts with magic bytes.
-        if let Some(pos) = coinbase
-            .output
-            .iter()
-            .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
-        {
-            let bytes = <[u8; 32]>::try_from(&coinbase.output[pos].script_pubkey.as_bytes()[6..38])
-                .unwrap();
-            let commitment = WitnessCommitment::from_byte_array(bytes);
-            // Witness reserved value is in coinbase input witness.
-            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
-            if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                if let Some(witness_root) = self.witness_root() {
-                    return commitment
-                        == Self::compute_witness_commitment(witness_root, witness_vec[0]);
+            let coinbase = &self.txdata[0];
+            if !coinbase.is_coinbase() {
+                return false;
+            }
+
+            // Commitment is in the last output that starts with magic bytes.
+            if let Some(pos) = coinbase
+                .output
+                .iter()
+                .rposition(|o| o.script_pubkey.len() >= 38 && o.script_pubkey.as_bytes()[0..6] == MAGIC)
+            {
+                let bytes = <[u8; 32]>::try_from(&coinbase.output[pos].script_pubkey.as_bytes()[6..38])
+                    .unwrap();
+                let commitment = WitnessCommitment::from_byte_array(bytes);
+                // Witness reserved value is in coinbase input witness.
+                let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+                if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
+                    if let Some(witness_root) = self.witness_root() {
+                        return commitment
+                            == Self::compute_witness_commitment(witness_root, witness_vec[0]);
+                    }
                 }
             }
+
+            false
         }
 
-        false
-    }
-
-    /// Computes the transaction Merkle root.
-    pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
-        TxMerkleNode::calculate_root(hashes)
-    }
-
-    /// Computes the witness commitment for the block's transaction list.
-    pub fn compute_witness_commitment(
-        witness_root: WitnessMerkleNode,
-        witness_reserved_value: &[u8],
-    ) -> WitnessCommitment {
-        let mut encoder = sha256d::Hash::engine();
-        witness_root.consensus_encode(&mut encoder).expect("engines don't error");
-        encoder.input(witness_reserved_value);
-        WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
-    }
-
-    /// Computes the Merkle root of transactions hashed for witness.
-    pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
-        let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
-            if i == 0 {
-                // Replace the first hash with zeroes.
-                Wtxid::COINBASE
-            } else {
-                t.compute_wtxid()
-            }
-        });
-        WitnessMerkleNode::calculate_root(hashes)
-    }
-
-    /// Returns the weight of the block.
-    ///
-    /// > Block weight is defined as Base size * 3 + Total size.
-    pub fn weight(&self) -> Weight {
-        // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
-        let wu = base_size(self) * 3 + self.total_size();
-        Weight::from_wu_usize(wu)
-    }
-
-    /// Returns the total block size.
-    ///
-    /// > Total size is the block size in bytes with transactions serialized as described in BIP144,
-    /// > including base data and witness data.
-    pub fn total_size(&self) -> usize {
-        let mut size = Header::SIZE;
-
-        size += compact_size::encoded_size(self.txdata.len());
-        size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
-
-        size
-    }
-
-    /// Returns the coinbase transaction, if one is present.
-    pub fn coinbase(&self) -> Option<&Transaction> { self.txdata.first() }
-
-    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
-    pub fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
-        // Citing the spec:
-        // Add height as the first item in the coinbase transaction's scriptSig,
-        // and increase block version to 2. The format of the height is
-        // "minimally encoded serialized CScript"" -- first byte is number of bytes in the number
-        // (will be 0x03 on main net for the next 150 or so years with 2^23-1
-        // blocks), following bytes are little-endian representation of the
-        // number (including a sign bit). Height is the height of the mined
-        // block in the block chain, where the genesis block is height zero (0).
-
-        if self.header.version < Version::TWO {
-            return Err(Bip34Error::Unsupported);
+        /// Computes the transaction Merkle root.
+        fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
+            let hashes = self.txdata.iter().map(|obj| obj.compute_txid());
+            TxMerkleNode::calculate_root(hashes)
         }
 
-        let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
-        let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
-        let push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)?;
-        match push.map_err(|_| Bip34Error::NotPresent)? {
-            script::Instruction::PushBytes(b) => {
-                // Check that the number is encoded in the minimal way.
-                let h = b
-                    .read_scriptint()
-                    .map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))?;
-                if h < 0 {
-                    Err(Bip34Error::NegativeHeight)
+        /// Computes the witness commitment for the block's transaction list.
+        fn compute_witness_commitment(
+            witness_root: WitnessMerkleNode,
+            witness_reserved_value: &[u8],
+        ) -> WitnessCommitment {
+            let mut encoder = sha256d::Hash::engine();
+            witness_root.consensus_encode(&mut encoder).expect("engines don't error");
+            encoder.input(witness_reserved_value);
+            WitnessCommitment::from_byte_array(sha256d::Hash::from_engine(encoder).to_byte_array())
+        }
+
+        /// Computes the Merkle root of transactions hashed for witness.
+        fn witness_root(&self) -> Option<WitnessMerkleNode> {
+            let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
+                if i == 0 {
+                    // Replace the first hash with zeroes.
+                    Wtxid::COINBASE
                 } else {
-                    Ok(h as u64)
+                    t.compute_wtxid()
                 }
+            });
+            WitnessMerkleNode::calculate_root(hashes)
+        }
+
+        /// Returns the weight of the block.
+        ///
+        /// > Block weight is defined as Base size * 3 + Total size.
+        fn weight(&self) -> Weight {
+            // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
+            let wu = base_size(self) * 3 + self.total_size();
+            Weight::from_wu_usize(wu)
+        }
+
+        /// Returns the total block size.
+        ///
+        /// > Total size is the block size in bytes with transactions serialized as described in BIP144,
+        /// > including base data and witness data.
+        fn total_size(&self) -> usize {
+            let mut size = Header::SIZE;
+
+            size += compact_size::encoded_size(self.txdata.len());
+            size += self.txdata.iter().map(|tx| tx.total_size()).sum::<usize>();
+
+            size
+        }
+
+        /// Returns the coinbase transaction, if one is present.
+        fn coinbase(&self) -> Option<&Transaction> { self.txdata.first() }
+
+        /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
+        fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
+            // Citing the spec:
+            // Add height as the first item in the coinbase transaction's scriptSig,
+            // and increase block version to 2. The format of the height is
+            // "minimally encoded serialized CScript"" -- first byte is number of bytes in the number
+            // (will be 0x03 on main net for the next 150 or so years with 2^23-1
+            // blocks), following bytes are little-endian representation of the
+            // number (including a sign bit). Height is the height of the mined
+            // block in the block chain, where the genesis block is height zero (0).
+
+            if self.header.version < Version::TWO {
+                return Err(Bip34Error::Unsupported);
             }
-            _ => Err(Bip34Error::NotPresent),
+
+            let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
+            let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
+            let push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)?;
+            match push.map_err(|_| Bip34Error::NotPresent)? {
+                script::Instruction::PushBytes(b) => {
+                    // Check that the number is encoded in the minimal way.
+                    let h = b
+                        .read_scriptint()
+                        .map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))?;
+                    if h < 0 {
+                        Err(Bip34Error::NegativeHeight)
+                    } else {
+                        Ok(h as u64)
+                    }
+                }
+                _ => Err(Bip34Error::NotPresent),
+            }
         }
     }
 }
@@ -273,6 +278,7 @@ impl From<&Block> for BlockHash {
 mod sealed {
     pub trait Sealed {}
     impl Sealed for super::Header {}
+    impl Sealed for super::Block {}
 }
 
 /// An error when looking up a BIP34 block height.

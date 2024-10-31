@@ -117,7 +117,7 @@ impl MerkleNode for WitnessMerkleNode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::block::Block;
+    use crate::block::{Block, BlockExt as _};
     use crate::consensus::encode::deserialize;
 
     #[test]
