@@ -3,8 +3,7 @@
 //! Bitcoin transaction input sequence number.
 //!
 //! The sequence field is used for:
-//! - Indicating whether absolute lock-time (specified in `lock_time` field of `Transaction`)
-//!   is enabled.
+//! - Indicating whether absolute lock-time (specified in `lock_time` field of [`Transaction`]) is enabled.
 //! - Indicating and encoding [BIP-68] relative lock-times.
 //! - Indicating whether a transaction opts-in to [BIP-125] replace-by-fee.
 //!
@@ -28,6 +27,8 @@ use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(feature = "alloc")]
 use crate::locktime::relative;
+#[cfg(all(doc, feature = "alloc"))]
+use crate::transaction::Transaction;
 
 /// Bitcoin transaction input sequence number.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -74,7 +75,7 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
-    /// Returns `true` if the sequence number enables absolute lock-time (`Transaction::lock_time`).
+    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
     pub fn enables_absolute_lock_time(&self) -> bool { *self != Sequence::MAX }
 
