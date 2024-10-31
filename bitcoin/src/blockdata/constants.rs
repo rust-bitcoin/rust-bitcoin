@@ -7,10 +7,9 @@
 //! single transaction.
 
 use hashes::sha256d;
-use internals::impl_array_newtype;
 
 use crate::block::{self, Block};
-use crate::internal_macros::impl_array_newtype_stringify;
+use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
 use crate::opcodes::all::*;
