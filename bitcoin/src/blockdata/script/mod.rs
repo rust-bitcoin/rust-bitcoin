@@ -75,10 +75,10 @@ use crate::OutPoint;
 #[doc(inline)]
 pub use self::{
     borrowed::ScriptExt,
-    builder::*,
-    instruction::*,
+    builder::Builder,
+    instruction::{Instruction, Instructions, InstructionIndices},
     owned::ScriptBufExt,
-    push_bytes::*,
+    push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
 #[doc(inline)]
 pub use primitives::script::*;
