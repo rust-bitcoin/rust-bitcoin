@@ -197,21 +197,8 @@ impl Block {
     /// > Block weight is defined as Base size * 3 + Total size.
     pub fn weight(&self) -> Weight {
         // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
-        let wu = self.base_size() * 3 + self.total_size();
+        let wu = block_base_size(&self.txdata) * 3 + self.total_size();
         Weight::from_wu_usize(wu)
-    }
-
-    /// Returns the base block size.
-    ///
-    /// > Base size is the block size in bytes with the original transaction serialization without
-    /// > any witness-related data, as seen by a non-upgraded node.
-    fn base_size(&self) -> usize {
-        let mut size = Header::SIZE;
-
-        size += compact_size::encoded_size(self.txdata.len());
-        size += self.txdata.iter().map(|tx| tx.base_size()).sum::<usize>();
-
-        size
     }
 
     /// Returns the total block size.
@@ -260,6 +247,19 @@ impl Block {
             (None, _) => Err(Bip34Error::NotPresent),
         }
     }
+}
+
+/// Returns the base block size.
+///
+/// > Base size is the block size in bytes with the original transaction serialization without
+/// > any witness-related data, as seen by a non-upgraded node.
+fn block_base_size(transactions: &[Transaction]) -> usize {
+    let mut size = Header::SIZE;
+
+    size += compact_size::encoded_size(transactions.len());
+    size += transactions.iter().map(|tx| tx.base_size()).sum::<usize>();
+
+    size
 }
 
 impl From<Block> for BlockHash {
@@ -476,7 +476,7 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(&params), 1.0);
 
         assert_eq!(real_decode.total_size(), some_block.len());
-        assert_eq!(real_decode.base_size(), some_block.len());
+        assert_eq!(block_base_size(&real_decode.txdata), some_block.len());
         assert_eq!(
             real_decode.weight(),
             Weight::from_non_witness_data_size(some_block.len().to_u64())
@@ -518,7 +518,7 @@ mod tests {
         assert_eq!(real_decode.header.difficulty_float(&params), 2456598.4399242126);
 
         assert_eq!(real_decode.total_size(), segwit_block.len());
-        assert_eq!(real_decode.base_size(), 4283);
+        assert_eq!(block_base_size(&real_decode.txdata), 4283);
         assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
         assert!(real_decode.check_witness_commitment());
