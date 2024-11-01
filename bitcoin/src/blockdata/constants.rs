@@ -296,7 +296,7 @@ mod test {
         // This is the best.
         let _ = genesis_block(&params::MAINNET);
         // this works and is ok too.
-        let _ = genesis_block(&Network::Bitcoin);
+        let _ = genesis_block(Network::Bitcoin);
         let _ = genesis_block(Network::Bitcoin);
         // This works too, but is suboptimal because it inlines the const.
         let _ = genesis_block(Params::MAINNET);

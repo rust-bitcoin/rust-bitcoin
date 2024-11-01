@@ -244,7 +244,7 @@ mod test {
         let mut witness = Witness::default();
         for i in 0..5 {
             assert_eq!(witness.iter().len(), i);
-            witness.push(&vec![0u8]);
+            witness.push([0u8]);
         }
         let mut iter = witness.iter();
         for i in (0..=5).rev() {

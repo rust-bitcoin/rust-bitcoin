@@ -478,7 +478,7 @@ mod test {
     #[test]
     fn witness_single_empty_element() {
         let mut got = Witness::new();
-        got.push(&[]);
+        got.push([]);
         let want = single_empty_element();
         assert_eq!(got, want)
     }
@@ -497,7 +497,7 @@ mod test {
 
         // Push a single byte element onto the witness stack.
         let push = [0_u8];
-        witness.push(&push);
+        witness.push(push);
 
         let elements = [1u8, 0];
         let expected = Witness {
@@ -520,7 +520,7 @@ mod test {
 
         // Now push 2 byte element onto the witness stack.
         let push = [2u8, 3u8];
-        witness.push(&push);
+        witness.push(push);
 
         let elements = [1u8, 0, 2, 2, 3];
         let expected = Witness {
@@ -543,7 +543,7 @@ mod test {
 
         // Now push another 2 byte element onto the witness stack.
         let push = [4u8, 5u8];
-        witness.push(&push);
+        witness.push(push);
 
         let elements = [1u8, 0, 2, 2, 3, 2, 4, 5];
         let expected = Witness {
@@ -574,7 +574,7 @@ mod test {
 
         for i in 0..num_pushes {
             assert_eq!(witness.iter().len(), i);
-            witness.push(&arbitrary_element);
+            witness.push(arbitrary_element);
         }
 
         let mut iter = witness.iter();
@@ -600,9 +600,9 @@ mod test {
     fn arbitrary_witness() -> Witness {
         let mut witness = Witness::default();
 
-        witness.push(&[0_u8]);
-        witness.push(&[1_u8; 32]);
-        witness.push(&[2_u8; 72]);
+        witness.push([0_u8]);
+        witness.push([1_u8; 32]);
+        witness.push([2_u8; 72]);
 
         witness
     }
