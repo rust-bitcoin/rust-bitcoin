@@ -2,7 +2,6 @@
 
 //! Parsing utilities.
 
-use alloc::string::String;
 use core::fmt;
 use core::str::FromStr;
 
@@ -167,7 +166,7 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
     } else if let Some(checked) = s.strip_prefix("0X") {
         Ok(checked)
     } else {
-        Err(MissingPrefixError::new(s.into()).into())
+        Err(MissingPrefixError::new(s).into())
     }
 }
 
@@ -178,7 +177,7 @@ pub fn hex_remove_prefix(s: &str) -> Result<&str, PrefixedHexError> {
 /// If the input string contains a prefix.
 pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
     if s.starts_with("0x") || s.starts_with("0X") {
-        return Err(ContainsPrefixError::new(s.into()).into());
+        return Err(ContainsPrefixError::new(s).into());
     }
     Ok(s)
 }
@@ -375,17 +374,17 @@ impl From<ParseIntError> for UnprefixedHexError {
 /// Error returned when a hex string is missing a prefix (e.g. `0x`).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MissingPrefixError {
-    hex: String,
+    hex: InputString,
 }
 
 impl MissingPrefixError {
     /// Creates an error from the string with the missing prefix.
-    pub(crate) fn new(hex: String) -> Self { Self { hex } }
+    pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
 }
 
 impl fmt::Display for MissingPrefixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "hex string is missing a prefix (e.g. 0x): {}", self.hex)
+        write!(f, "{} because it is missing the '0x' prefix", self.hex.display_cannot_parse("hex"))
     }
 }
 
@@ -395,17 +394,17 @@ impl std::error::Error for MissingPrefixError {}
 /// Error when hex string contains a prefix (e.g. 0x).
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ContainsPrefixError {
-    hex: String,
+    hex: InputString,
 }
 
 impl ContainsPrefixError {
     /// Creates an error from the string that contains the prefix.
-    pub(crate) fn new(hex: String) -> Self { Self { hex } }
+    pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
 }
 
 impl fmt::Display for ContainsPrefixError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "hex string contains a prefix: {}", self.hex)
+        write!(f, "{} because it contains the '0x' prefix", self.hex.display_cannot_parse("hex"))
     }
 }
 
