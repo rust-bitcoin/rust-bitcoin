@@ -46,9 +46,9 @@ impl Amount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Amount = Self::from_int_btc(1);
+    pub const ONE_BTC: Amount = Self::from_int_btc_const(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Amount = Self::from_int_btc(21_000_000);
+    pub const MAX_MONEY: Amount = Self::from_int_btc_const(21_000_000);
     /// The minimum value of an amount.
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
@@ -68,14 +68,30 @@ impl Amount {
         Amount::from_float_in(btc, Denomination::Bitcoin)
     }
 
-    /// Converts from a value expressing integer values of bitcoins to an [`Amount`]
+    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
+    ///
+    /// # Errors
+    ///
+    /// The function errors if the argument multiplied by the number of sats
+    /// per bitcoin overflows a `u64` type.
+    pub fn from_int_btc(btc: u64) -> Result<Amount, OutOfRangeError> {
+        match btc.checked_mul(100_000_000) {
+            Some(amount) => Ok(Amount::from_sat(amount)),
+            None => Err(OutOfRangeError {
+                is_signed: false,
+                is_greater_than_max: true,
+            })
+        }
+    }
+
+    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`]
     /// in const context.
     ///
     /// # Panics
     ///
     /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows a u64 type.
-    pub const fn from_int_btc(btc: u64) -> Amount {
+    /// per bitcoin overflows a `u64` type.
+    pub const fn from_int_btc_const(btc: u64) -> Amount {
         match btc.checked_mul(100_000_000) {
             Some(amount) => Amount::from_sat(amount),
             None => panic!("checked_mul overflowed"),
