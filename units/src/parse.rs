@@ -7,6 +7,7 @@ use core::fmt;
 use core::str::FromStr;
 
 use internals::write_err;
+use internals::error::InputString;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
 ///
@@ -20,26 +21,20 @@ use internals::write_err;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ParseIntError {
-    pub(crate) input: String,
+    pub(crate) input: InputString,
     // for displaying - see Display impl with nice error message below
-    bits: u8,
+    pub(crate) bits: u8,
     // We could represent this as a single bit but it wouldn't actually derease the cost of moving
     // the struct because String contains pointers so there will be padding of bits at least
     // pointer_size - 1 bytes: min 1B in practice.
-    is_signed: bool,
+    pub(crate) is_signed: bool,
     pub(crate) source: core::num::ParseIntError,
-}
-
-impl ParseIntError {
-    /// Returns the input that was attempted to be parsed.
-    pub fn input(&self) -> &str { &self.input }
 }
 
 impl fmt::Display for ParseIntError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let signed = if self.is_signed { "signed" } else { "unsigned" };
-        let n = if self.bits == 8 { "n" } else { "" };
-        write_err!(f, "failed to parse '{}' as a{} {}-bit {} integer", self.input, n, self.bits, signed; self.source)
+        write_err!(f, "{} ({}, {}-bit)", self.input.display_cannot_parse("integer"), signed, self.bits; self.source)
     }
 }
 
@@ -74,7 +69,7 @@ impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 ///
 /// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
 /// owned since it avoids allocation in error case.
-pub fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseIntError> {
+pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
             input: s.into(),
