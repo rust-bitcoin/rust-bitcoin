@@ -118,34 +118,49 @@ pub mod taproot;
 #[doc(inline)]
 pub use crate::{
     address::{Address, AddressType, KnownHrp},
-    amount::{Amount, Denomination, SignedAmount},
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
-    blockdata::block::{self, Block, BlockHash, Header as BlockHeader, WitnessCommitment},
-    blockdata::constants,
-    blockdata::fee_rate::FeeRate,
-    blockdata::locktime::{self, absolute, relative},
-    blockdata::opcodes::{self, Opcode},
-    blockdata::script::witness_program::{self, WitnessProgram},
-    blockdata::script::witness_version::{self, WitnessVersion},
-    blockdata::script::{self, Script, ScriptBuf, ScriptHash, WScriptHash},
-    blockdata::transaction::{self, OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
-    blockdata::weight::Weight,
-    blockdata::witness::{self, Witness},
     crypto::ecdsa,
     crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
-    merkle_tree::{MerkleBlock, TxMerkleNode, WitnessMerkleNode},
+    merkle_tree::MerkleBlock,
     network::{Network, NetworkKind, TestnetVersion},
     network::params::{self, Params},
-    pow::{CompactTarget, Target, Work},
+    pow::{Target, Work},
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+// Re-export all modules from `blockdata`, users should never need to use `blockdata` directly.
 #[doc(inline)]
-pub use primitives::Sequence;
-pub use units::{BlockHeight, BlockInterval};
+pub use crate::{
+    // These modules also re-export all the respective `primitives` types.
+    blockdata::{block, constants, fee_rate, locktime, opcodes, script, transaction, weight, witness},
+    // And re-export types and modules from `blockdata` that don't come from `primitives`.
+    blockdata::block::Block, // TODO: Move this down below after it is in primitives.
+    blockdata::locktime::{absolute, relative},
+    blockdata::script::witness_program::{self, WitnessProgram},
+    blockdata::script::witness_version::{self, WitnessVersion},
+    blockdata::script::{ScriptHash, WScriptHash}, // TODO: Move these down below after they are in primitives.
+};
+#[doc(inline)]
+pub use primitives::{
+    block::{BlockHash, WitnessCommitment, Header as BlockHeader},
+    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
+    opcodes::Opcode,
+    pow::CompactTarget,
+    script::{Script, ScriptBuf},
+    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
+    witness::Witness,
+    sequence::Sequence,
+};
+#[doc(inline)]
+pub use units::{
+    amount::{Amount, Denomination, SignedAmount},
+    block::{BlockHeight, BlockInterval},
+    fee_rate::FeeRate,
+    weight::Weight
+};
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
