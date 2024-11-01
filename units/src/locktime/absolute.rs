@@ -10,7 +10,6 @@ use internals::write_err;
 
 #[cfg(feature = "alloc")]
 use crate::parse;
-use crate::parse::ParseIntError;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -357,12 +356,6 @@ impl ParseError {
             InvalidInteger { source, .. } => Some(source),
             Conversion(_) => None,
         }
-    }
-}
-
-impl From<ParseIntError> for ParseError {
-    fn from(value: ParseIntError) -> Self {
-        Self::InvalidInteger { source: value.source, input: value.input }
     }
 }
 
