@@ -4,6 +4,7 @@
 //!
 //! This library provides basic types used by the Rust Bitcoin ecosystem.
 
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 // Coding conventions.
@@ -13,7 +14,6 @@
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
-#![no_std]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
