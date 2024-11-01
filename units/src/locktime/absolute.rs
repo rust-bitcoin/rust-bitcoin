@@ -2,8 +2,6 @@
 
 //! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
-#[cfg(feature = "alloc")]
-use alloc::{boxed::Box, string::String};
 use core::fmt;
 
 use internals::error::InputString;
