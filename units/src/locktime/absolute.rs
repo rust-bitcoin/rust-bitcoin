@@ -6,7 +6,7 @@
 use alloc::{boxed::Box, string::String};
 use core::fmt;
 
-use internals::write_err;
+use internals::error::InputString;
 
 use crate::parse::ParseIntError;
 #[cfg(feature = "alloc")]
@@ -221,7 +221,7 @@ impl From<ParseError> for ParseTimeError {
 fn parser<T, E, S, F>(f: F) -> impl FnOnce(S) -> Result<T, E>
 where
     E: From<ParseError>,
-    S: AsRef<str> + Into<String>,
+    S: AsRef<str> + Into<InputString>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
     move |s| {
@@ -234,7 +234,7 @@ where
 fn parse_hex<T, E, S, F>(s: S, f: F) -> Result<T, E>
 where
     E: From<ParseError>,
-    S: AsRef<str> + Into<String>,
+    S: AsRef<str> + Into<InputString>,
     F: FnOnce(u32) -> Result<T, ConversionError>,
 {
     let n = i64::from_str_radix(parse::hex_remove_optional_prefix(s.as_ref()), 16)
@@ -310,7 +310,7 @@ enum ParseError {
 internals::impl_from_infallible!(ParseError);
 
 impl ParseError {
-    fn invalid_int<S: Into<String>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
+    fn invalid_int<S: Into<InputString>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
         move |source| Self::ParseInt(ParseIntError { input: s.into(), bits: 32, is_signed: true , source })
     }
 
@@ -327,13 +327,15 @@ impl ParseError {
 
         match self {
             ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::PosOverflow => {
-                write!(f, "{} {} is above limit {}", subject, input, upper_bound)
+                // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is above limit <upper_bound>)"
+                write!(f, "{} ({} is above limit {})", input.display_cannot_parse("absolute Height/Time"), subject, upper_bound)
             }
             ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::NegOverflow => {
-                write!(f, "{} {} is below limit {}", subject, input, lower_bound)
+                // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is below limit <lower_bound>)"
+                write!(f, "{} ({} is below limit {})", input.display_cannot_parse("absolute Height/Time"), subject, lower_bound)
             }
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) => {
-                write_err!(f, "failed to parse {} as {}", input, subject; source)
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
+                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Time"), subject)
             }
             Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
