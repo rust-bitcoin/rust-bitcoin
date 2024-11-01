@@ -54,7 +54,7 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
     let key = key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
-    assert_eq!(actual.to_vec(), key.to_bytes());
+    assert_eq!(actual.to_vec(), key.to_vec());
 }
 
 #[test]
@@ -109,7 +109,7 @@ fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
     let key = compressed_key_str.parse::<PublicKey>().unwrap();
     let p2pk = Script::builder().push_key(key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_pubkey_bytes().unwrap();
-    assert_eq!(actual.to_vec(), key.to_bytes());
+    assert_eq!(actual.to_vec(), key.to_vec());
 }
 
 #[test]

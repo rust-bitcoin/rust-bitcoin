@@ -690,7 +690,7 @@ impl BeneficiaryWallet {
                 script_witness.push(signature.to_vec());
             }
             for (control_block, (script, _)) in input.tap_scripts.iter() {
-                script_witness.push(script.to_bytes());
+                script_witness.push(script.to_vec());
                 script_witness.push(control_block.serialize());
             }
             input.final_script_witness = Some(script_witness);
