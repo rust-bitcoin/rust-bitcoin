@@ -204,7 +204,7 @@ pub struct ParseTimeError(ParseError);
 
 impl fmt::Display for ParseTimeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.display(f, "block height", LOCK_TIME_THRESHOLD, u32::MAX)
+        self.0.display(f, "block time", LOCK_TIME_THRESHOLD, u32::MAX)
     }
 }
 
