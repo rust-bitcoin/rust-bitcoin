@@ -8,6 +8,7 @@ use core::fmt;
 
 use internals::write_err;
 
+use crate::parse::ParseIntError;
 #[cfg(feature = "alloc")]
 use crate::parse;
 
@@ -300,7 +301,7 @@ impl fmt::Display for LockTimeUnit {
 /// Internal - common representation for height and time.
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum ParseError {
-    InvalidInteger { source: core::num::ParseIntError, input: String },
+    ParseInt(ParseIntError),
     // unit implied by outer type
     // we use i64 to have nicer messages for negative values
     Conversion(i64),
@@ -310,7 +311,7 @@ internals::impl_from_infallible!(ParseError);
 
 impl ParseError {
     fn invalid_int<S: Into<String>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
-        move |source| Self::InvalidInteger { source, input: s.into() }
+        move |source| Self::ParseInt(ParseIntError { input: s.into(), bits: 32, is_signed: true , source })
     }
 
     fn display(
@@ -325,13 +326,13 @@ impl ParseError {
         use ParseError::*;
 
         match self {
-            InvalidInteger { source, input } if *source.kind() == IntErrorKind::PosOverflow => {
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::PosOverflow => {
                 write!(f, "{} {} is above limit {}", subject, input, upper_bound)
             }
-            InvalidInteger { source, input } if *source.kind() == IntErrorKind::NegOverflow => {
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::NegOverflow => {
                 write!(f, "{} {} is below limit {}", subject, input, lower_bound)
             }
-            InvalidInteger { source, input } => {
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) => {
                 write_err!(f, "failed to parse {} as {}", input, subject; source)
             }
             Conversion(value) if *value < i64::from(lower_bound) => {
@@ -351,9 +352,9 @@ impl ParseError {
         use ParseError::*;
 
         match self {
-            InvalidInteger { source, .. } if *source.kind() == IntErrorKind::PosOverflow => None,
-            InvalidInteger { source, .. } if *source.kind() == IntErrorKind::NegOverflow => None,
-            InvalidInteger { source, .. } => Some(source),
+            ParseInt(ParseIntError { source, .. }) if *source.kind() == IntErrorKind::PosOverflow => None,
+            ParseInt(ParseIntError { source, .. }) if *source.kind() == IntErrorKind::NegOverflow => None,
+            ParseInt(ParseIntError { source, .. }) => Some(source),
             Conversion(_) => None,
         }
     }

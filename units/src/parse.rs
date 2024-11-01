@@ -22,11 +22,11 @@ use internals::write_err;
 pub struct ParseIntError {
     pub(crate) input: String,
     // for displaying - see Display impl with nice error message below
-    bits: u8,
+    pub(crate) bits: u8,
     // We could represent this as a single bit but it wouldn't actually derease the cost of moving
     // the struct because String contains pointers so there will be padding of bits at least
     // pointer_size - 1 bytes: min 1B in practice.
-    is_signed: bool,
+    pub(crate) is_signed: bool,
     pub(crate) source: core::num::ParseIntError,
 }
 
