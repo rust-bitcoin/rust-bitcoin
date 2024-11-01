@@ -46,7 +46,7 @@ impl Height {
         parse_hex(s, Self::from_consensus)
     }
 
-    /// Constructs a new block height.
+    /// Creates a [`Height`] from a consensus `u32`.
     ///
     /// # Errors
     ///
@@ -142,7 +142,7 @@ impl Time {
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }
 
-    /// Constructs a new block time.
+    /// Creates a [`Time`] from a consensus `u32`.
     ///
     /// # Errors
     ///

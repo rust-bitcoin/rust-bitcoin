@@ -22,7 +22,7 @@ impl Height {
     /// The maximum relative block height.
     pub const MAX: Self = Height(u16::MAX);
 
-    /// Create a [`Height`] using a count of blocks.
+    /// Creates [`Height`] using a count of blocks.
     #[inline]
     pub const fn from_height(blocks: u16) -> Self { Height(blocks) }
 
