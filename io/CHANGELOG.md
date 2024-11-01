@@ -1,3 +1,8 @@
+# 0.1.3 - 2024-11-02
+
+* Backport IO improvements [#3181](https://github.com/rust-bitcoin/rust-bitcoin/pull/3181)
+  (Original PR: [#3176](https://github.com/rust-bitcoin/rust-bitcoin/pull/3176))
+
 # 0.1.2 - 2024-03-14
 
 * Implement `From<core::convert::Infallible>` for Errors [#2516](https://github.com/rust-bitcoin/rust-bitcoin/pull/2516)
