@@ -22,23 +22,16 @@ extern crate alloc;
 extern crate std;
 
 pub mod amount;
-#[cfg(feature = "alloc")]
 pub mod block;
-#[cfg(feature = "alloc")]
 pub mod fee_rate;
-#[cfg(feature = "alloc")]
 pub mod locktime;
-#[cfg(feature = "alloc")]
 pub mod parse;
-#[cfg(feature = "alloc")]
 pub mod weight;
 
 #[doc(inline)]
-pub use self::amount::{Amount, SignedAmount};
-#[cfg(feature = "alloc")]
-#[doc(inline)]
 #[rustfmt::skip]
 pub use self::{
+    amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
     weight::Weight
