@@ -133,9 +133,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
-        $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
-        $crate::borrow_slice_impl!($newtype);
+        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, <$newtype as $crate::Hash>::DISPLAY_BACKWARD);
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
@@ -192,96 +190,84 @@ macro_rules! hash_newtype {
 
             fn as_byte_array(&self) -> &Self::Bytes { self.as_byte_array() }
         }
-
-        impl $crate::_export::_core::str::FromStr for $newtype {
-            type Err = $crate::hex::HexToArrayError;
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::{hex::FromHex};
-
-                let mut bytes = <[u8; <Self as $crate::Hash>::LEN]>::from_hex(s)?;
-                if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    bytes.reverse();
-                };
-                Ok($newtype(<$hash>::from_byte_array(bytes)))
-            }
-        }
-
-        impl $crate::_export::_core::convert::AsRef<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
-            fn as_ref(&self) -> &[u8; <$hash as $crate::Hash>::LEN] {
-                AsRef::<[u8; <$hash as $crate::Hash>::LEN]>::as_ref(&self.0)
-            }
-        }
         )+
     };
 }
 
-/// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
+/// Adds trait impls to a bytelike type.
+///
+/// Implements:
+///
+/// * `str::FromStr`
+/// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`.
+/// * `fmt::{Display, Debug}` by calling `LowerHex`
+/// * `serde::{Deserialize, Serialize}`
+/// * `AsRef[u8; $len]`
+/// * `AsRef[u8]`
+/// * `Borrow<[u8; $len]>`
+/// * `Borrow<[u8]>`
+///
+/// Requires:
+///
+/// * [`hex-conservative`] to publicly available as `$crate::hex`.
+/// * `$ty` must implement `IntoIterator<Item=Borrow<u8>>`.
+///
+/// (See also [`hex-conservative::fmt_hex_exact`].)
+///
+/// ## Parameters
+///
+/// * `ty` - The bytelike type to implement the traits on.
+/// * `$len` - The number of bytes this type has.
+/// * `$reverse` - `true` if the type should be displayed backwards, `false` otherwise.
+/// * `$gen: $gent` - generic type(s) and trait bound(s).
+///
+/// [`hex-conservative`]: <https://crates.io/crates/hex-conservative>
 #[doc(hidden)]
 #[macro_export]
-macro_rules! hex_fmt_impl(
-    ($reverse:expr, $len:expr, $ty:ident) => (
-        $crate::hex_fmt_impl!($reverse, $len, $ty, );
-    );
-    ($reverse:expr, $len:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+macro_rules! impl_bytelike_traits {
+    ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
+            type Err = $crate::hex::HexToArrayError;
+
+            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
+                use $crate::hex::FromHex;
+
+                let mut bytes = <[u8; { $len }]>::from_hex(s)?;
                 if $reverse {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self).iter().rev(), $crate::hex::Case::Lower)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self), $crate::hex::Case::Lower)
+                    bytes.reverse();
                 }
+                Ok(Self::from_byte_array(bytes))
             }
         }
 
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+        $crate::hex::impl_fmt_traits! {
+            #[display_backward($reverse)]
+            impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
+                const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
+            }
+        }
+
+        $crate::serde_impl!($ty, $len $(, $gen: $gent)*);
+
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
             #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                if $reverse {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self).iter().rev(), $crate::hex::Case::Upper)
-                } else {
-                    $crate::hex::fmt_hex_exact!(f, $len, <Self as $crate::Hash>::as_byte_array(&self), $crate::hex::Case::Upper)
-                }
-            }
+            fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
         }
 
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*> {
             #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
-            }
+            fn as_ref(&self) -> &[u8] { self.as_byte_array() }
         }
 
-        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
-            #[inline]
-            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                write!(f, "{}", self)
-            }
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8; { $len }] {  self.as_byte_array() }
         }
-    );
-);
 
-/// Adds slicing traits implementations to a given type `$ty`
-#[doc(hidden)]
-#[macro_export]
-macro_rules! borrow_slice_impl(
-    ($ty:ident) => (
-        $crate::borrow_slice_impl!($ty, );
-    );
-    ($ty:ident, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8] {
-                self.as_byte_array()
-            }
+            fn borrow(&self) -> &[u8] {  self.as_byte_array() }
         }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
-            fn as_ref(&self) -> &[u8] {
-                self.as_byte_array()
-            }
-        }
-    )
-);
+    }
+}
 
 // Generates the struct only (no impls)
 //
