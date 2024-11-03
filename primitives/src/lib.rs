@@ -55,7 +55,7 @@ pub use units::{
 
 #[doc(inline)]
 pub use self::{
-    block::{BlockHash, WitnessCommitment},
+    block::{BlockHash, Header as BlockHeader, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
     sequence::Sequence,
