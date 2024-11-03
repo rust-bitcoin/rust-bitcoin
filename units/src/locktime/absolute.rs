@@ -307,7 +307,9 @@ internals::impl_from_infallible!(ParseError);
 
 impl ParseError {
     fn invalid_int<S: Into<InputString>>(s: S) -> impl FnOnce(core::num::ParseIntError) -> Self {
-        move |source| Self::ParseInt(ParseIntError { input: s.into(), bits: 32, is_signed: true , source })
+        move |source| {
+            Self::ParseInt(ParseIntError { input: s.into(), bits: 32, is_signed: true, source })
+        }
     }
 
     fn display(
@@ -322,13 +324,29 @@ impl ParseError {
         use ParseError::*;
 
         match self {
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::PosOverflow => {
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+                if *source.kind() == IntErrorKind::PosOverflow =>
+            {
                 // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is above limit <upper_bound>)"
-                write!(f, "{} ({} is above limit {})", input.display_cannot_parse("absolute Height/Time"), subject, upper_bound)
+                write!(
+                    f,
+                    "{} ({} is above limit {})",
+                    input.display_cannot_parse("absolute Height/Time"),
+                    subject,
+                    upper_bound
+                )
             }
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source }) if *source.kind() == IntErrorKind::NegOverflow => {
+            ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+                if *source.kind() == IntErrorKind::NegOverflow =>
+            {
                 // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is below limit <lower_bound>)"
-                write!(f, "{} ({} is below limit {})", input.display_cannot_parse("absolute Height/Time"), subject, lower_bound)
+                write!(
+                    f,
+                    "{} ({} is below limit {})",
+                    input.display_cannot_parse("absolute Height/Time"),
+                    subject,
+                    lower_bound
+                )
             }
             ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
                 write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Time"), subject)
@@ -350,8 +368,12 @@ impl ParseError {
         use ParseError::*;
 
         match self {
-            ParseInt(ParseIntError { source, .. }) if *source.kind() == IntErrorKind::PosOverflow => None,
-            ParseInt(ParseIntError { source, .. }) if *source.kind() == IntErrorKind::NegOverflow => None,
+            ParseInt(ParseIntError { source, .. })
+                if *source.kind() == IntErrorKind::PosOverflow =>
+                None,
+            ParseInt(ParseIntError { source, .. })
+                if *source.kind() == IntErrorKind::NegOverflow =>
+                None,
             ParseInt(ParseIntError { source, .. }) => Some(source),
             Conversion(_) => None,
         }

@@ -66,7 +66,7 @@ pub use self::{
 #[cfg(feature = "alloc")]
 pub use self::{
     locktime::{absolute, relative},
-    transaction::{TxIn, TxOut, Transaction},
+    transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };
 

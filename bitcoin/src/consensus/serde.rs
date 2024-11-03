@@ -74,7 +74,9 @@ pub mod hex {
     pub struct Encoder<C: Case>(BufEncoder<{ HEX_BUF_SIZE }>, PhantomData<C>);
 
     impl<C: Case> From<super::Hex<C>> for Encoder<C> {
-        fn from(_: super::Hex<C>) -> Self { Encoder(BufEncoder::new(C::INTERNAL_CASE), Default::default()) }
+        fn from(_: super::Hex<C>) -> Self {
+            Encoder(BufEncoder::new(C::INTERNAL_CASE), Default::default())
+        }
     }
 
     impl<C: Case> super::EncodeBytes for Encoder<C> {

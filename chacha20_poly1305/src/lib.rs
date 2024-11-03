@@ -150,6 +150,7 @@ fn encode_lengths(aad_len: u64, content_len: u64) -> [u8; 16] {
 #[cfg(feature = "alloc")]
 mod tests {
     use alloc::vec::Vec;
+
     use hex::prelude::*;
 
     use super::*;
