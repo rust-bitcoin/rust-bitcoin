@@ -224,6 +224,7 @@ fn _print_acc(num: &[u32; 5]) {
 #[cfg(feature = "alloc")]
 mod tests {
     use alloc::vec::Vec;
+
     use hex::prelude::*;
 
     use super::*;

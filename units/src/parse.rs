@@ -5,8 +5,8 @@
 use core::fmt;
 use core::str::FromStr;
 
-use internals::write_err;
 use internals::error::InputString;
+use internals::write_err;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
 ///

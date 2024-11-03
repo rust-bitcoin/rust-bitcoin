@@ -145,7 +145,7 @@ internals::impl_from_infallible!(InvalidCharacterError);
 internals::impl_from_infallible!(InvalidCharacterErrorInner);
 
 impl InvalidCharacterError {
-    pub(super) fn new(invalid: u8) -> Self { Self(InvalidCharacterErrorInner{ invalid }) }
+    pub(super) fn new(invalid: u8) -> Self { Self(InvalidCharacterErrorInner { invalid }) }
 
     /// Returns the invalid base58 character.
     pub fn invalid_character(&self) -> u8 { self.0.invalid }

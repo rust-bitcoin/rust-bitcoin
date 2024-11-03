@@ -446,7 +446,6 @@ impl PrivateKey {
         }
     }
 
-
     /// Serializes the private key to bytes.
     #[deprecated(since = "TBD", note = "use to_vec instead")]
     pub fn to_bytes(self) -> Vec<u8> { self.to_vec() }

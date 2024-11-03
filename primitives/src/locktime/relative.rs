@@ -12,9 +12,9 @@ use core::{cmp, convert, fmt};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
+use crate::Sequence;
 #[cfg(all(doc, feature = "alloc"))]
 use crate::{relative, TxIn};
-use crate::Sequence;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
