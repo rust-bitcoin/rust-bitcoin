@@ -161,6 +161,9 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 
 /// Returns minimally encoded scriptint as a byte vector.
 pub fn scriptint_vec(n: i64) -> Vec<u8> {
+    if n == 0 {
+        return vec![0u8];
+    }
     let mut buf = [0u8; 8];
     let len = write_scriptint(&mut buf, n);
     buf[0..len].to_vec()
