@@ -113,6 +113,18 @@ impl Transaction {
     /// Maximum transaction weight for Bitcoin Core 25.0.
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
 
+    /// Returns a reference to the transaction inputs.
+    pub fn inputs(&self) -> &[TxIn] { &self.input }
+
+    /// Returns a mutable reference to the transaction inputs.
+    pub fn inputs_mut(&mut self) -> &mut [TxIn] { &mut self.input }
+
+    /// Returns a reference to the transaction outputs.
+    pub fn outputs(&self) -> &[TxOut] { &self.output }
+
+    /// Returns a mutable reference to the transaction outputs.
+    pub fn outputs_mut(&mut self) -> &mut [TxOut] { &mut self.output }
+
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
     /// This gives a way to identify a transaction that is "the same" as
