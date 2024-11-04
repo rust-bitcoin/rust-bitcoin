@@ -65,13 +65,13 @@ fn from_str_zero_without_denomination() {
 
 #[test]
 fn from_int_btc() {
-    let amt = Amount::from_int_btc(2);
+    let amt = Amount::from_int_btc_const(2);
     assert_eq!(Amount::from_sat(200_000_000), amt);
 }
 
 #[should_panic]
 #[test]
-fn from_int_btc_panic() { Amount::from_int_btc(u64::MAX); }
+fn from_int_btc_panic() { Amount::from_int_btc_const(u64::MAX); }
 
 #[test]
 fn test_signed_amount_try_from_amount() {
