@@ -129,7 +129,10 @@ macro_rules! hash_type_no_default {
                 sl: &[u8],
             ) -> $crate::_export::_core::result::Result<Hash, $crate::FromSliceError> {
                 if sl.len() != $bits / 8 {
-                    Err($crate::FromSliceError { expected: $bits / 8, got: sl.len() })
+                    Err($crate::FromSliceError($crate::error::FromSliceErrorInner {
+                        expected: $bits / 8,
+                        got: sl.len(),
+                    }))
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);
