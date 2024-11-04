@@ -491,10 +491,10 @@ impl HashEngine {
     fn process_block(&mut self) {
         #[cfg(all(feature = "std", any(target_arch = "x86", target_arch = "x86_64")))]
         {
-            if is_x86_feature_detected!("sse4.1")
-                && is_x86_feature_detected!("sha")
-                && is_x86_feature_detected!("sse2")
-                && is_x86_feature_detected!("ssse3")
+            if std::is_x86_feature_detected!("sse4.1")
+                && std::is_x86_feature_detected!("sha")
+                && std::is_x86_feature_detected!("sse2")
+                && std::is_x86_feature_detected!("ssse3")
             {
                 return unsafe { self.process_block_simd_x86_intrinsics() };
             }

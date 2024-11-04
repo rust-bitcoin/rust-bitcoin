@@ -50,7 +50,7 @@
 //! # }
 //! ```
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
@@ -69,6 +69,9 @@
 extern crate alloc;
 
 extern crate core;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "bitcoin-io")]
 extern crate bitcoin_io as io;
