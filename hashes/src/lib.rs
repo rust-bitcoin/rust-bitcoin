@@ -128,7 +128,7 @@ use core::{convert, fmt, hash};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::FromSliceError,
+    error::{FromSliceError, HexToArrayError},
     hkdf::Hkdf,
     hmac::{Hmac, HmacEngine},
 };

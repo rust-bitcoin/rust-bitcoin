@@ -227,12 +227,18 @@ macro_rules! hash_newtype {
 macro_rules! impl_bytelike_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
+            type Err = $crate::error::HexError;
 
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
                 use $crate::hex::FromHex;
 
-                let mut bytes = <[u8; { $len }]>::from_hex(s)?;
+                let mut bytes = <[u8; { $len }]>::from_hex(s).map_err(|e| {
+                    match e {
+                        hex::HexToArrayError::InvalidChar(e) => $crate::HexError::new_invalid_char(e.invalid_char(), e.pos()),
+                        hex::HexToArrayError::InvalidLength(e) => $crate::HexError::new_invalid_length(e.invalid, e.expected),
+                    }
+                })?;
+
                 if $reverse {
                     bytes.reverse();
                 }
