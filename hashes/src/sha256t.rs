@@ -45,8 +45,10 @@ where
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
     pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
+        use crate::error::FromSliceErrorInner;
+
         if sl.len() != 32 {
-            Err(FromSliceError { expected: 32, got: sl.len() })
+            Err(FromSliceError(FromSliceErrorInner { expected: 32, got: sl.len() }))
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);
