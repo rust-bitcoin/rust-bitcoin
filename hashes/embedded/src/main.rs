@@ -11,7 +11,6 @@ extern crate bitcoin_hashes;
 
 use bitcoin_hashes::{sha256, HashEngine};
 use bitcoin_io::Write;
-use core::str::FromStr;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};
 use panic_halt as _;
