@@ -54,7 +54,7 @@ pub(crate) use impl_consensus_encoding;
 macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
-            /// Creates `Self` from a hex string.
+            /// Constructs `Self` from a hex string.
             pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
                 Ok($t($crate::hex::FromHex::from_hex(s)?))
             }
@@ -282,7 +282,7 @@ pub(crate) use define_extension_trait;
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:literal) => {
         impl $thing {
-            /// Creates `Self` by wrapping `bytes`.
+            /// Constructs `Self` by wrapping `bytes`.
             #[inline]
             pub fn from_byte_array(bytes: [u8; $len]) -> Self { Self(bytes) }
 

@@ -22,7 +22,7 @@ impl Height {
     /// The maximum relative block height.
     pub const MAX: Self = Height(u16::MAX);
 
-    /// Create a [`Height`] using a count of blocks.
+    /// Construct a [`Height`] using a count of blocks.
     #[inline]
     pub const fn from_height(blocks: u16) -> Self { Height(blocks) }
 
@@ -66,13 +66,13 @@ impl Time {
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
     pub const MAX: Self = Time(u16::MAX);
 
-    /// Creates a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
+    /// Constructs a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
     pub const fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
 
-    /// Creates a [`Time`] from seconds, converting the seconds into 512 second interval with
+    /// Constructs a [`Time`] from seconds, converting the seconds into 512 second interval with
     /// truncating division.
     ///
     /// # Errors
@@ -89,7 +89,7 @@ impl Time {
         }
     }
 
-    /// Creates a [`Time`] from seconds, converting the seconds into 512 second intervals with
+    /// Constructs a [`Time`] from seconds, converting the seconds into 512 second intervals with
     /// ceiling division.
     ///
     /// # Errors
@@ -133,7 +133,7 @@ pub struct TimeOverflowError {
 }
 
 impl TimeOverflowError {
-    /// Creates a new `TimeOverflowError` using `seconds`.
+    /// Constructs a new `TimeOverflowError` using `seconds`.
     ///
     /// # Panics
     ///

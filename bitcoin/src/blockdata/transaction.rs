@@ -68,7 +68,7 @@ const SEGWIT_FLAG: u8 = 0x01;
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`OutPoint`] type.
     pub trait OutPointExt impl for OutPoint {
-        /// Creates a new [`OutPoint`].
+        /// Constructs a new [`OutPoint`].
         #[inline]
         #[deprecated(since = "TBD", note = "use struct initialization syntax instead")]
         #[allow(clippy::new-ret-no-self)]
@@ -174,7 +174,7 @@ crate::internal_macros::define_extension_trait! {
         /// There is no difference between base size vs total size for outputs.
         fn size(&self) -> usize { size_from_script_pubkey(&self.script_pubkey) }
 
-        /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
+        /// Constructs a `TxOut` with given script and the smallest possible `value` that is **not** dust
         /// per current Core policy.
         ///
         /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
@@ -187,7 +187,7 @@ crate::internal_macros::define_extension_trait! {
             TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
-        /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
+        /// Constructs a `TxOut` with given script and the smallest possible `value` that is **not** dust
         /// per current Core policy.
         ///
         /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to.
@@ -639,7 +639,7 @@ impl std::error::Error for IndexOutOfBoundsError {
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Version`] type.
     pub trait VersionExt impl for Version {
-        /// Creates a non-standard transaction version.
+        /// Constructs a non-standard transaction version.
         fn non_standard(version: i32) -> Version { Self(version) }
 
         /// Returns true if this transaction version number is considered standard.

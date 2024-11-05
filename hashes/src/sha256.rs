@@ -62,7 +62,7 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Creates a new SHA256 hash engine.
+    /// Constructs a new SHA256 hash engine.
     pub const fn new() -> Self {
         Self {
             h: [
@@ -74,7 +74,7 @@ impl HashEngine {
         }
     }
 
-    /// Creates a new [`HashEngine`] from a [`Midstate`].
+    /// Constructs a new [`HashEngine`] from a [`Midstate`].
     ///
     /// Please see docs on [`Midstate`] before using this function.
     pub fn from_midstate(midstate: Midstate) -> HashEngine {
@@ -198,7 +198,7 @@ impl Midstate {
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
     pub const fn to_parts(self) -> ([u8; 32], u64) { (self.bytes, self.bytes_hashed) }
 
-    /// Creates midstate for tagged hashes.
+    /// Constructs midstate for tagged hashes.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     ///

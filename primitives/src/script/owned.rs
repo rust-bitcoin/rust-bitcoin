@@ -22,7 +22,7 @@ use crate::prelude::{Box, Vec};
 pub struct ScriptBuf(pub(in crate::script) Vec<u8>);
 
 impl ScriptBuf {
-    /// Creates a new empty script.
+    /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { ScriptBuf(Vec::new()) }
 
@@ -56,7 +56,7 @@ impl ScriptBuf {
         unsafe { Box::from_raw(rw) }
     }
 
-    /// Creates a new empty script with pre-allocated capacity.
+    /// Constructs a new empty script with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self { ScriptBuf(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.

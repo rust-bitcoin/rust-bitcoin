@@ -56,7 +56,7 @@ impl Amount {
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
-    /// Creates an [`Amount`] with satoshi precision and the given number of satoshis.
+    /// Constructs an [`Amount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
@@ -160,7 +160,7 @@ impl Amount {
         Amount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Creates an object that implements [`fmt::Display`] using specified denomination.
+    /// Constructs an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.to_sat(),
@@ -169,7 +169,7 @@ impl Amount {
         }
     }
 
-    /// Creates an object that implements [`fmt::Display`] dynamically selecting denomination.
+    /// Constructs an object that implements [`fmt::Display`] dynamically selecting denomination.
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.

@@ -45,7 +45,7 @@ mod primitive {
     pub struct PushBytes([u8]);
 
     impl PushBytes {
-        /// Creates `&PushBytes` without checking the length.
+        /// Constructs `&PushBytes` without checking the length.
         ///
         /// The caller is responsible for checking that the length is less than the 2^32.
         fn from_slice_unchecked(bytes: &[u8]) -> &Self {
@@ -54,7 +54,7 @@ mod primitive {
             unsafe { &*(bytes as *const [u8] as *const PushBytes) }
         }
 
-        /// Creates `&mut PushBytes` without checking the length.
+        /// Constructs `&mut PushBytes` without checking the length.
         ///
         /// The caller is responsible for checking that the length is less than the 2^32.
         fn from_mut_slice_unchecked(bytes: &mut [u8]) -> &mut Self {
@@ -63,7 +63,7 @@ mod primitive {
             unsafe { &mut *(bytes as *mut [u8] as *mut PushBytes) }
         }
 
-        /// Creates an empty `&PushBytes`.
+        /// Constructs an empty `&PushBytes`.
         pub fn empty() -> &'static Self {
             Self::from_slice_unchecked(&[])
         }
@@ -200,11 +200,11 @@ mod primitive {
     pub struct PushBytesBuf(Vec<u8>);
 
     impl PushBytesBuf {
-        /// Creates a new empty `PushBytesBuf`.
+        /// Constructs a new empty `PushBytesBuf`.
         #[inline]
         pub const fn new() -> Self { PushBytesBuf(Vec::new()) }
 
-        /// Creates a new empty `PushBytesBuf` with reserved capacity.
+        /// Constructs a new empty `PushBytesBuf` with reserved capacity.
         pub fn with_capacity(capacity: usize) -> Self { PushBytesBuf(Vec::with_capacity(capacity)) }
 
         /// Reserve capacity for `additional_capacity` bytes.

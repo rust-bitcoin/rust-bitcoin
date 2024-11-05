@@ -63,7 +63,7 @@ impl ToOwned for Script {
 }
 
 impl Script {
-    /// Creates a new empty script.
+    /// Constructs a new empty script.
     #[inline]
     pub fn new() -> &'static Script { Script::from_bytes(&[]) }
 

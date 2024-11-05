@@ -49,13 +49,13 @@ pub struct Witness {
 }
 
 impl Witness {
-    /// Creates a new empty [`Witness`].
+    /// Constructs a new empty [`Witness`].
     #[inline]
     pub const fn new() -> Self {
         Witness { content: Vec::new(), witness_elements: 0, indices_start: 0 }
     }
 
-    /// Creates a new [`Witness`] from inner parts.
+    /// Constructs a new [`Witness`] from inner parts.
     ///
     /// This function leaks implementation details of the `Witness`, as such it is unstable and
     /// should not be relied upon (it is primarily provided for use in `rust-bitcoin`).
@@ -72,7 +72,7 @@ impl Witness {
         Witness { content, witness_elements, indices_start }
     }
 
-    /// Creates a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    /// Constructs a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
         let index_size = witness_elements * 4;

@@ -18,7 +18,7 @@ const CHACHA_BLOCKSIZE: usize = 64;
 pub struct Key([u8; 32]);
 
 impl Key {
-    /// Create a new key.
+    /// Construct a new key.
     pub const fn new(key: [u8; 32]) -> Self { Key(key) }
 }
 
@@ -27,7 +27,7 @@ impl Key {
 pub struct Nonce([u8; 12]);
 
 impl Nonce {
-    /// Create a new nonce.
+    /// Construct a new nonce.
     pub const fn new(nonce: [u8; 12]) -> Self { Nonce(nonce) }
 }
 

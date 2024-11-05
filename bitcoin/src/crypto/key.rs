@@ -438,7 +438,7 @@ impl PrivateKey {
         PrivateKey { compressed: false, network: network.into(), inner: key }
     }
 
-    /// Creates a public key from this private key.
+    /// Constructs a public key from this private key.
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             compressed: self.compressed,
@@ -845,7 +845,7 @@ impl TweakedPublicKey {
         TweakedPublicKey(xonly)
     }
 
-    /// Creates a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
+    /// Constructs a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
@@ -866,7 +866,7 @@ impl TweakedPublicKey {
 }
 
 impl TweakedKeypair {
-    /// Creates a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
+    /// Constructs a new [`TweakedKeypair`] from a [`Keypair`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedKeypair`] instead of using this constructor.
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.

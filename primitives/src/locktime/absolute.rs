@@ -92,13 +92,13 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Creates a `LockTime` from a prefixed hex string.
+    /// Constructs a `LockTime` from a prefixed hex string.
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Creates a `LockTime` from an unprefixed hex string.
+    /// Constructs a `LockTime` from an unprefixed hex string.
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))

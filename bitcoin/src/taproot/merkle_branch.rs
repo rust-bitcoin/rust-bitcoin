@@ -63,7 +63,7 @@ impl TaprootMerkleBranch {
         }
     }
 
-    /// Creates a Merkle proof from list of hashes.
+    /// Constructs a Merkle proof from list of hashes.
     ///
     /// # Errors
     ///
@@ -121,7 +121,7 @@ macro_rules! impl_try_from {
         impl TryFrom<$from> for TaprootMerkleBranch {
             type Error = InvalidMerkleTreeDepthError;
 
-            /// Creates a Merkle proof from list of hashes.
+            /// Constructs a Merkle proof from list of hashes.
             ///
             /// # Errors
             ///

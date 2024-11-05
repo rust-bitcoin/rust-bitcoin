@@ -15,7 +15,7 @@ use crate::Sequence;
 pub struct Builder(ScriptBuf, Option<Opcode>);
 
 impl Builder {
-    /// Creates a new empty script.
+    /// Constructs a new empty script.
     #[inline]
     pub const fn new() -> Self { Builder(ScriptBuf::new(), None) }
 
@@ -137,7 +137,7 @@ impl Default for Builder {
     fn default() -> Builder { Builder::new() }
 }
 
-/// Creates a new builder from an existing vector.
+/// Constructs a new builder from an existing vector.
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = ScriptBuf::from(v);

@@ -20,7 +20,7 @@ crate::internal_macros::general_hash_type! {
 pub struct HashEngine(sha256::HashEngine);
 
 impl HashEngine {
-    /// Creates a new HASH160 hash engine.
+    /// Constructs a new HASH160 hash engine.
     pub const fn new() -> Self { Self(sha256::HashEngine::new()) }
 }
 

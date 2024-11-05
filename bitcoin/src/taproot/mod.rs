@@ -34,7 +34,7 @@ pub use primitives::taproot::{
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`TapTweakHash`] type.
     pub trait TapTweakHashExt impl for TapTweakHash {
-        /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
+        /// Constructs a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
         /// `P` is the internal key and `R` is the Merkle root.
         fn from_key_and_tweak(
             internal_key: UntweakedPublicKey,
@@ -181,7 +181,7 @@ pub struct TaprootSpendInfo {
 }
 
 impl TaprootSpendInfo {
-    /// Creates a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
+    /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
     ///
     /// See [`TaprootBuilder::with_huffman_tree`] for more detailed documentation.
@@ -198,7 +198,7 @@ impl TaprootSpendInfo {
         Ok(builder.finalize(secp, internal_key).expect("Huffman tree is always complete"))
     }
 
-    /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
+    /// Constructs a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
     /// the `merkle_root` if there is no script path.
     ///
     /// *Note*: As per BIP341
@@ -355,17 +355,17 @@ pub struct TaprootBuilder {
 }
 
 impl TaprootBuilder {
-    /// Creates a new instance of [`TaprootBuilder`].
+    /// Constructs a new instance of [`TaprootBuilder`].
     pub fn new() -> Self { TaprootBuilder { branch: vec![] } }
 
-    /// Creates a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
+    /// Constructs a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
     ///
     /// The size here should be maximum depth of the tree.
     pub fn with_capacity(size: usize) -> Self {
         TaprootBuilder { branch: Vec::with_capacity(size) }
     }
 
-    /// Creates a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
+    /// Constructs a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
     ///
     /// The weights represent the probability of each branch being taken. If probabilities/weights
@@ -501,7 +501,7 @@ impl TaprootBuilder {
         self.branch.iter().flatten().any(|node| node.has_hidden_nodes)
     }
 
-    /// Creates a [`TaprootSpendInfo`] with the given internal key.
+    /// Constructs a [`TaprootSpendInfo`] with the given internal key.
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
@@ -810,12 +810,12 @@ impl core::hash::Hash for NodeInfo {
 impl Eq for NodeInfo {}
 
 impl NodeInfo {
-    /// Creates a new [`NodeInfo`] with omitted/hidden info.
+    /// Constructs a new [`NodeInfo`] with omitted/hidden info.
     pub fn new_hidden_node(hash: TapNodeHash) -> Self {
         Self { hash, leaves: vec![], has_hidden_nodes: true }
     }
 
-    /// Creates a new leaf [`NodeInfo`] with given [`ScriptBuf`] and [`LeafVersion`].
+    /// Constructs a new leaf [`NodeInfo`] with given [`ScriptBuf`] and [`LeafVersion`].
     pub fn new_leaf_with_ver(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self {
             hash: TapNodeHash::from_script(&script, ver),
@@ -971,12 +971,12 @@ pub struct LeafNode {
 }
 
 impl LeafNode {
-    /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
+    /// Constructs an new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
     pub fn new_script(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self { leaf: TapLeaf::Script(script, ver), merkle_branch: Default::default() }
     }
 
-    /// Creates an new [`ScriptLeaf`] from `hash` and no Merkle branch.
+    /// Constructs an new [`ScriptLeaf`] from `hash` and no Merkle branch.
     pub fn new_hidden(hash: TapNodeHash) -> Self {
         Self { leaf: TapLeaf::Hidden(hash), merkle_branch: Default::default() }
     }
@@ -1213,7 +1213,7 @@ pub enum LeafVersion {
 }
 
 impl LeafVersion {
-    /// Creates a [`LeafVersion`] from consensus byte representation.
+    /// Constructs a [`LeafVersion`] from consensus byte representation.
     ///
     /// # Errors
     ///

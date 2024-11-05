@@ -192,7 +192,7 @@ impl Encodable for HeaderAndShortIds {
 }
 
 impl HeaderAndShortIds {
-    /// Creates a new [`HeaderAndShortIds`] from a full block.
+    /// Constructs a new [`HeaderAndShortIds`] from a full block.
     ///
     /// The version number must be either 1 or 2.
     ///

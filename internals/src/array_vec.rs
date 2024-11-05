@@ -22,10 +22,10 @@ mod safety_boundary {
     }
 
     impl<T: Copy, const CAP: usize> ArrayVec<T, CAP> {
-        /// Creates an empty `ArrayVec`.
+        /// Constructs an empty `ArrayVec`.
         pub const fn new() -> Self { Self { len: 0, data: [MaybeUninit::uninit(); CAP] } }
 
-        /// Creates an `ArrayVec` initialized with the contets of `slice`.
+        /// Constructs an `ArrayVec` initialized with the contets of `slice`.
         ///
         /// # Panics
         ///

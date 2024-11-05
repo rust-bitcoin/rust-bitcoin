@@ -124,7 +124,7 @@ impl<'de> Deserialize<'de> for Network {
 }
 
 impl Network {
-    /// Creates a `Network` from the magic bytes.
+    /// Constructs a `Network` from the magic bytes.
     ///
     /// # Examples
     ///
@@ -207,7 +207,7 @@ impl Network {
     /// ```
     pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block_const(self) }
 
-    /// Creates a `Network` from the chain hash (genesis block hash).
+    /// Constructs a `Network` from the chain hash (genesis block hash).
     ///
     /// # Examples
     ///

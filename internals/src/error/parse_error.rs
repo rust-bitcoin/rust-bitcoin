@@ -25,7 +25,7 @@ macro_rules! parse_error_type {
         }
 
         impl $name {
-            /// Creates `Self`.
+            /// Constructs `Self`.
             fn new<T: Into<$crate::error::InputString>>(input: T, source: $source) -> Self {
                 $name {
                     input: input.into(),

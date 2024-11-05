@@ -58,7 +58,7 @@ pub trait Read {
         Ok(())
     }
 
-    /// Creates an adapter which will read at most `limit` bytes.
+    /// Constructs an adapter which will read at most `limit` bytes.
     #[inline]
     fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
 
@@ -195,7 +195,7 @@ pub struct Cursor<T> {
 }
 
 impl<T: AsRef<[u8]>> Cursor<T> {
-    /// Creates a `Cursor` by wrapping `inner`.
+    /// Constructs a `Cursor` by wrapping `inner`.
     #[inline]
     pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
 

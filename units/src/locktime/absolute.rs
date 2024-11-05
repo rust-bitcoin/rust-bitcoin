@@ -35,7 +35,7 @@ impl Height {
     /// The maximum absolute block height.
     pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
 
-    /// Creates a [`Height`] from a hex string.
+    /// Constructs a [`Height`] from a hex string.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
@@ -133,7 +133,7 @@ impl Time {
     /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Time(u32::MAX);
 
-    /// Creates a [`Time`] from a hex string.
+    /// Constructs a [`Time`] from a hex string.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }

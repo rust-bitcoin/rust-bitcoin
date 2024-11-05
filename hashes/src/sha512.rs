@@ -51,7 +51,7 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Creates a new SHA512 hash engine.
+    /// Constructs a new SHA512 hash engine.
     #[rustfmt::skip]
     pub const fn new() -> Self {
         Self {

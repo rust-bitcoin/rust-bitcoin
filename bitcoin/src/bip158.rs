@@ -122,7 +122,7 @@ impl FilterHash {
 }
 
 impl BlockFilter {
-    /// Creates a new filter from pre-computed data.
+    /// Constructs a new filter from pre-computed data.
     pub fn new(content: &[u8]) -> BlockFilter { BlockFilter { content: content.to_vec() } }
 
     /// Computes a SCRIPT_FILTER that contains spent and output scripts.
@@ -182,7 +182,7 @@ pub struct BlockFilterWriter<'a, W> {
 }
 
 impl<'a, W: Write> BlockFilterWriter<'a, W> {
-    /// Creates a new [`BlockFilterWriter`] from `block`.
+    /// Constructs a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
@@ -237,7 +237,7 @@ pub struct BlockFilterReader {
 }
 
 impl BlockFilterReader {
-    /// Creates a new [`BlockFilterReader`] from `block_hash`.
+    /// Constructs a new [`BlockFilterReader`] from `block_hash`.
     pub fn new(block_hash: BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
@@ -273,7 +273,7 @@ pub struct GcsFilterReader {
 }
 
 impl GcsFilterReader {
-    /// Creates a new [`GcsFilterReader`] with specific seed to siphash.
+    /// Constructs a new [`GcsFilterReader`] with specific seed to siphash.
     pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterReader {
         GcsFilterReader { filter: GcsFilter::new(k0, k1, p), m }
     }
@@ -378,7 +378,7 @@ pub struct GcsFilterWriter<'a, W> {
 }
 
 impl<'a, W: Write> GcsFilterWriter<'a, W> {
-    /// Creates a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
+    /// Constructs a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
     pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
         GcsFilterWriter { filter: GcsFilter::new(k0, k1, p), writer, elements: BTreeSet::new(), m }
     }
@@ -425,7 +425,7 @@ struct GcsFilter {
 }
 
 impl GcsFilter {
-    /// Creates a new [`GcsFilter`].
+    /// Constructs a new [`GcsFilter`].
     fn new(k0: u64, k1: u64, p: u8) -> GcsFilter { GcsFilter { k0, k1, p } }
 
     /// Golomb-Rice encodes a number `n` to a bit stream (parameter 2^k).
@@ -476,7 +476,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
 }
 
 impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
-    /// Creates a new [`BitStreamReader`] that reads bitwise from a given `reader`.
+    /// Constructs a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }
     }
@@ -524,7 +524,7 @@ pub struct BitStreamWriter<'a, W> {
 }
 
 impl<'a, W: Write> BitStreamWriter<'a, W> {
-    /// Creates a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
+    /// Constructs a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
     pub fn new(writer: &'a mut W) -> BitStreamWriter<'a, W> {
         BitStreamWriter { buffer: [0u8], writer, offset: 0 }
     }

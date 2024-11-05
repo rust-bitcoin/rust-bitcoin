@@ -340,13 +340,13 @@ impl_to_hex_from_lower_hex!(Target, |_| 64);
 define_extension_trait! {
     /// Extension functionality for the [`CompactTarget`] type.
     pub trait CompactTargetExt impl for CompactTarget {
-        /// Creates a `CompactTarget` from a prefixed hex string.
+        /// Constructs a `CompactTarget` from a prefixed hex string.
         fn from_hex(s: &str) -> Result<CompactTarget, PrefixedHexError> {
             let target = parse::hex_u32_prefixed(s)?;
             Ok(Self::from_consensus(target))
         }
 
-        /// Creates a `CompactTarget` from an unprefixed hex string.
+        /// Constructs a `CompactTarget` from an unprefixed hex string.
         fn from_unprefixed_hex(s: &str) -> Result<CompactTarget, UnprefixedHexError> {
             let target = parse::hex_u32_unprefixed(s)?;
             Ok(Self::from_consensus(target))
@@ -466,13 +466,13 @@ impl U256 {
 
     const ONE: U256 = U256(0, 1);
 
-    /// Creates a `U256` from a prefixed hex string.
+    /// Constructs a `U256` from a prefixed hex string.
     fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let checked = parse::hex_remove_prefix(s)?;
         Ok(U256::from_hex_internal(checked)?)
     }
 
-    /// Creates a `U256` from an unprefixed hex string.
+    /// Constructs a `U256` from an unprefixed hex string.
     fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let checked = parse::hex_check_unprefixed(s)?;
         Ok(U256::from_hex_internal(checked)?)
@@ -496,7 +496,7 @@ impl U256 {
         Ok(U256(high, low))
     }
 
-    /// Creates `U256` from a big-endian array of `u8`s.
+    /// Constructs `U256` from a big-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn from_be_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
@@ -505,7 +505,7 @@ impl U256 {
         U256(big, little)
     }
 
-    /// Creates a `U256` from a little-endian array of `u8`s.
+    /// Constructs a `U256` from a little-endian array of `u8`s.
     #[cfg_attr(all(test, mutate), mutate)]
     fn from_le_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
@@ -1105,7 +1105,7 @@ mod tests {
     }
 
     impl U256 {
-        /// Creates a U256 from a big-endian array of u64's
+        /// Constructs a U256 from a big-endian array of u64's
         fn from_array(a: [u64; 4]) -> Self {
             let mut ret = U256::ZERO;
             ret.0 = (a[0] as u128) << 64 ^ (a[1] as u128);

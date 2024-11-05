@@ -138,7 +138,7 @@ impl ChildNumber {
     /// Hardened child number with index 1.
     pub const ONE_HARDENED: Self = ChildNumber::Hardened { index: 1 };
 
-    /// Create a [`Normal`] from an index, returns an error if the index is not within
+    /// Construct a [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
@@ -150,7 +150,7 @@ impl ChildNumber {
         }
     }
 
-    /// Create a [`Hardened`] from an index, returns an error if the index is not within
+    /// Construct a [`Hardened`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
@@ -387,7 +387,7 @@ impl DerivationPath {
     /// is empty). True for `m` path.
     pub fn is_master(&self) -> bool { self.0.is_empty() }
 
-    /// Create a new [DerivationPath] that is a child of this one.
+    /// Construct a new [DerivationPath] that is a child of this one.
     pub fn child(&self, cn: ChildNumber) -> DerivationPath {
         let mut path = self.0.clone();
         path.push(cn);
@@ -451,7 +451,7 @@ impl DerivationPath {
     /// ```
     pub fn to_u32_vec(&self) -> Vec<u32> { self.into_iter().map(|&el| el.into()).collect() }
 
-    /// Creates a derivation path from a slice of u32s.
+    /// Constructs a derivation path from a slice of u32s.
     /// ```
     /// use bitcoin::bip32::DerivationPath;
     ///
@@ -600,7 +600,7 @@ impl Xpriv {
         PrivateKey { compressed: true, network: self.network, inner: self.private_key }
     }
 
-    /// Creates new extended public key from this extended private key.
+    /// Constructs new extended public key from this extended private key.
     pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Xpub {
         Xpub::from_xpriv(secp, self)
     }
@@ -730,13 +730,13 @@ impl Xpriv {
 }
 
 impl Xpub {
-    /// Creates extended public key from an extended private key.
+    /// Constructs extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
         Self::from_xpriv(secp, sk)
     }
 
-    /// Creates extended public key from an extended private key.
+    /// Constructs extended public key from an extended private key.
     pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Xpub {
         Xpub {
             network: xpriv.network,

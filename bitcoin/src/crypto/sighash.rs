@@ -319,11 +319,11 @@ impl std::error::Error for PrevoutsIndexError {
 }
 
 impl<'s> ScriptPath<'s> {
-    /// Creates a new `ScriptPath` structure.
+    /// Constructs a new `ScriptPath` structure.
     pub fn new(script: &'s Script, leaf_version: LeafVersion) -> Self {
         ScriptPath { script, leaf_version }
     }
-    /// Creates a new `ScriptPath` structure using default leaf version value.
+    /// Constructs a new `ScriptPath` structure using default leaf version value.
     pub fn with_defaults(script: &'s Script) -> Self { Self::new(script, LeafVersion::TapScript) }
     /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
@@ -418,7 +418,7 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
+    /// Constructs a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
@@ -449,7 +449,7 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
+    /// Constructs a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// # Errors
     ///
@@ -1156,7 +1156,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
 pub struct Annex<'a>(&'a [u8]);
 
 impl<'a> Annex<'a> {
-    /// Creates a new `Annex` struct checking the first byte is `0x50`.
+    /// Constructs a new `Annex` struct checking the first byte is `0x50`.
     pub fn new(annex_bytes: &'a [u8]) -> Result<Self, AnnexError> {
         use AnnexError::*;
 
