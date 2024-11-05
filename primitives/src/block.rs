@@ -48,7 +48,10 @@ impl Header {
     // Serialized length of fields (version, prev_blockhash, merkle_root, time, bits, nonce)
     pub const SIZE: usize = 4 + 32 + 32 + 4 + 4 + 4; // 80
 
-    /// Returns the block hash.
+    /// Computes the block hash.
+    ///
+    /// The block hash is defined as the a sha256d hash of the consensus encoding of each of the
+    /// fields of the header.
     // This is the same as `Encodable` but done manually because `Encodable` isn't in `primitives`.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = sha256d::Hash::engine();

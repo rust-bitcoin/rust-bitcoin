@@ -113,7 +113,10 @@ pub struct Block {
 impl_consensus_encoding!(Block, header, txdata);
 
 impl Block {
-    /// Returns the block hash.
+    /// Computes the block hash.
+    ///
+    /// The block hash is defined as the a sha256d hash of the consensus encoding of each of the
+    /// fields of the block's header.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 
     /// Checks if Merkle root of header matches Merkle root of the transaction list.
