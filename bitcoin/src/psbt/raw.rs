@@ -172,7 +172,7 @@ impl<Subtype> ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    /// Constructs full [Key] corresponding to this proprietary key type
+    /// Constructs a new full [Key] corresponding to this proprietary key type
     pub fn to_key(&self) -> Key { Key { type_value: 0xFC, key_data: serialize(self) } }
 }
 
@@ -182,7 +182,7 @@ where
 {
     type Error = Error;
 
-    /// Constructs a [`ProprietaryKey`] from a [`Key`].
+    /// Constructs a new [`ProprietaryKey`] from a [`Key`].
     ///
     /// # Errors
     ///

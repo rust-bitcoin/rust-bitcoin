@@ -198,7 +198,7 @@ impl Midstate {
     /// Deconstructs the [`Midstate`], returning the underlying byte array and number of bytes hashed.
     pub const fn to_parts(self) -> ([u8; 32], u64) { (self.bytes, self.bytes_hashed) }
 
-    /// Constructs midstate for tagged hashes.
+    /// Constructs a new midstate for tagged hashes.
     ///
     /// Warning: this function is inefficient. It should be only used in `const` context.
     ///

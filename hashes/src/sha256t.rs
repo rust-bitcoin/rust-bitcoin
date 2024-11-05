@@ -25,7 +25,7 @@ where
 {
     const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
 
-    /// Constructs a hash from the underlying byte array.
+    /// Constructs a new hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
 
     /// Zero cost conversion between a fixed length byte array shared reference and

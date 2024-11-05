@@ -279,7 +279,7 @@ pub trait Hash:
     /// For some reason Satoshi decided this should be true for `Sha256dHash`, so here we are.
     const DISPLAY_BACKWARD: bool = false;
 
-    /// Constructs a hash from the underlying byte array.
+    /// Constructs a new hash from the underlying byte array.
     fn from_byte_array(bytes: Self::Bytes) -> Self;
 
     /// Copies a byte slice into a hash object.

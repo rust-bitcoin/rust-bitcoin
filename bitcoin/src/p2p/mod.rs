@@ -228,7 +228,7 @@ impl Magic {
     /// Bitcoin regtest network magic bytes.
     pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
 
-    /// Construct network magic from bytes.
+    /// Construct a new network magic from bytes.
     pub const fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
 
     /// Get network magic bytes.

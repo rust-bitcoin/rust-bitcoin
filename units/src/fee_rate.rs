@@ -44,10 +44,10 @@ impl FeeRate {
     /// Fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
 
-    /// Constructs [`FeeRate`] from satoshis per 1000 weight units.
+    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
     pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
 
-    /// Constructs [`FeeRate`] from satoshis per virtual bytes.
+    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
     ///
     /// # Errors
     ///
@@ -59,7 +59,7 @@ impl FeeRate {
         Some(FeeRate(sat_vb.checked_mul(1000 / 4)?))
     }
 
-    /// Constructs [`FeeRate`] from satoshis per virtual bytes without overflow check.
+    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes without overflow check.
     pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate(sat_vb * (1000 / 4)) }
 
     /// Returns raw fee rate.

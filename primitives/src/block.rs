@@ -120,7 +120,7 @@ impl Version {
     /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
     const USE_VERSION_BITS: u32 = 0x2000_0000;
 
-    /// Constructs a [`Version`] from a signed 32 bit integer value.
+    /// Constructs a new [`Version`] from a signed 32 bit integer value.
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
     #[inline]

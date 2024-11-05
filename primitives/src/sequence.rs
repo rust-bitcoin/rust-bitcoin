@@ -126,25 +126,25 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
-    /// Constructs a `Sequence` from a prefixed hex string.
+    /// Constructs a new `Sequence` from a prefixed hex string.
     #[cfg(feature = "alloc")]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a `Sequence` from an unprefixed hex string.
+    /// Constructs a new `Sequence` from an unprefixed hex string.
     #[cfg(feature = "alloc")]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a relative lock-time using block height.
+    /// Constructs a new relative lock-time using block height.
     #[inline]
     pub fn from_height(height: u16) -> Self { Sequence(u32::from(height)) }
 
-    /// Constructs a relative lock-time using time intervals where each interval is equivalent
+    /// Constructs a new relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin
@@ -153,7 +153,7 @@ impl Sequence {
         Sequence(u32::from(intervals) | Sequence::LOCK_TYPE_MASK)
     }
 
-    /// Constructs a relative lock-time from seconds, converting the seconds into 512 second
+    /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
     /// interval with floor division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
@@ -167,7 +167,7 @@ impl Sequence {
         }
     }
 
-    /// Constructs a relative lock-time from seconds, converting the seconds into 512 second
+    /// Constructs a new relative lock-time from seconds, converting the seconds into 512 second
     /// interval with ceiling division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
@@ -181,7 +181,7 @@ impl Sequence {
         }
     }
 
-    /// Constructs a sequence from a u32 value.
+    /// Constructs a new sequence from a u32 value.
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Sequence(n) }
 
@@ -189,7 +189,7 @@ impl Sequence {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
 
-    /// Constructs a [`relative::LockTime`] from this [`Sequence`] number.
+    /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     #[cfg(feature = "alloc")]
     pub fn to_relative_lock_time(&self) -> Option<relative::LockTime> {

@@ -103,7 +103,7 @@ impl Psbt {
         Ok(())
     }
 
-    /// Constructs a PSBT from an unsigned transaction.
+    /// Constructs a new PSBT from an unsigned transaction.
     ///
     /// # Errors
     ///

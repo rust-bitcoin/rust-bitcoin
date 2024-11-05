@@ -23,7 +23,7 @@ use core::fmt;
 pub struct CompactTarget(u32);
 
 impl CompactTarget {
-    /// Constructs a [`CompactTarget`] from a consensus encoded `u32`.
+    /// Constructs a new [`CompactTarget`] from a consensus encoded `u32`.
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].

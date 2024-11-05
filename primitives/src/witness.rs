@@ -72,7 +72,7 @@ impl Witness {
         Witness { content, witness_elements, indices_start }
     }
 
-    /// Constructs a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    /// Constructs a new [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();
         let index_size = witness_elements * 4;

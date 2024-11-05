@@ -35,7 +35,7 @@ pub struct MerkleBlock {
 }
 
 impl MerkleBlock {
-    /// Construct a MerkleBlock from a block, that contains proofs for specific txids.
+    /// Constructs a new MerkleBlock from a block, that contains proofs for specific txids.
     ///
     /// The `block` is a full block containing the header and transactions and `match_txids` is a
     /// function that returns true for the ids that should be included in the partial Merkle tree.
@@ -60,7 +60,7 @@ impl MerkleBlock {
     ///     5d35549d88ac00000000").unwrap();
     /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
     ///
-    /// // Construct a Merkle block containing a single transaction
+    /// // Constructs a new Merkle block containing a single transaction
     /// let txid = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap();
     /// let match_txids: Vec<Txid> = vec![txid].into_iter().collect();
     /// let mb = MerkleBlock::from_block_with_predicate(&block, |t| match_txids.contains(t));
@@ -79,7 +79,7 @@ impl MerkleBlock {
         Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
     }
 
-    /// Construct a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
+    /// Constructs a new MerkleBlock from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a function that returns true for the ids that should be included in the partial Merkle tree.
@@ -185,7 +185,7 @@ impl PartialMerkleTree {
     /// Returns the transaction ids and internal hashes of the partial Merkle tree.
     pub fn hashes(&self) -> &Vec<TxMerkleNode> { &self.hashes }
 
-    /// Construct a partial Merkle tree
+    /// Constructs a new partial Merkle tree
     /// The `txids` are the transaction hashes of the block and the `matches` is the contains flags
     /// wherever a tx hash should be included in the proof.
     ///
@@ -653,7 +653,7 @@ mod tests {
         assert_eq!(mb_hex, encode::serialize(&mb).to_lower_hex_string().as_str());
     }
 
-    /// Construct a CMerkleBlock using a list of txids which will be found in the
+    /// Constructs a new CMerkleBlock using a list of txids which will be found in the
     /// given block.
     #[test]
     fn merkleblock_construct_from_txids_found() {
@@ -692,7 +692,7 @@ mod tests {
         assert_eq!(index[1], 8);
     }
 
-    /// Construct a CMerkleBlock using a list of txids which will not be found in the given block
+    /// Constructs a new CMerkleBlock using a list of txids which will not be found in the given block
     #[test]
     fn merkleblock_construct_from_txids_not_found() {
         let block = get_block_13b8a();

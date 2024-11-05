@@ -38,12 +38,12 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key.
+    /// Constructs a new compressed ECDSA public key from the provided generic Secp256k1 public key.
     pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: true, inner: key.into() }
     }
 
-    /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
+    /// Constructs a new uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
     /// public key.
     pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey { compressed: false, inner: key.into() }
@@ -416,20 +416,20 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    /// Constructs new compressed ECDSA private key using the secp256k1 algorithm and
+    /// Constructs a new compressed ECDSA private key using the secp256k1 algorithm and
     /// a secure random number generator.
     #[cfg(feature = "rand-std")]
     pub fn generate(network: impl Into<NetworkKind>) -> PrivateKey {
         let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
         PrivateKey::new(secret_key, network.into())
     }
-    /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
+    /// Constructs a new compressed ECDSA private key from the provided generic Secp256k1 private key
     /// and the specified network.
     pub fn new(key: secp256k1::SecretKey, network: impl Into<NetworkKind>) -> PrivateKey {
         PrivateKey { compressed: true, network: network.into(), inner: key }
     }
 
-    /// Constructs uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
+    /// Constructs a new uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
     /// private key and the specified network.
     pub fn new_uncompressed(
         key: secp256k1::SecretKey,
@@ -438,7 +438,7 @@ impl PrivateKey {
         PrivateKey { compressed: false, network: network.into(), inner: key }
     }
 
-    /// Constructs a public key from this private key.
+    /// Constructs a new public key from this private key.
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             compressed: self.compressed,

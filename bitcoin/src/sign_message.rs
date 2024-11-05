@@ -92,7 +92,7 @@ mod message_signing {
     }
 
     impl MessageSignature {
-        /// Construct a new [MessageSignature].
+        /// Constructs a new [MessageSignature].
         pub fn new(signature: RecoverableSignature, compressed: bool) -> MessageSignature {
             MessageSignature { signature, compressed }
         }
@@ -106,7 +106,7 @@ mod message_signing {
             serialized
         }
 
-        /// Constructs a `MessageSignature` from a fixed-length array.
+        /// Constructs a new `MessageSignature` from a fixed-length array.
         pub fn from_byte_array(bytes: &[u8; 65]) -> Result<MessageSignature, secp256k1::Error> {
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
@@ -119,7 +119,7 @@ mod message_signing {
             })
         }
 
-        /// Construct a `MessageSignature` from a byte slice.
+        /// Constructs a new `MessageSignature` from a byte slice.
         #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
         pub fn from_slice(bytes: &[u8]) -> Result<MessageSignature, MessageSignatureError> {
             let byte_array: [u8; 65] =

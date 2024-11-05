@@ -52,7 +52,7 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Constructs a `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
+    /// Constructs a new `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
     ///
     /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
     /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
@@ -88,7 +88,7 @@ impl LockTime {
         }
     }
 
-    /// Constructs a `LockTime` from the sequence number of a Bitcoin input.
+    /// Constructs a new `LockTime` from the sequence number of a Bitcoin input.
     ///
     /// This method will **not** round-trip with [`Self::to_sequence`]. See the
     /// docs for [`Self::from_consensus`] for more information.
@@ -101,11 +101,11 @@ impl LockTime {
     #[inline]
     pub fn to_sequence(&self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
 
-    /// Constructs a `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
+    /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
     pub const fn from_height(n: u16) -> Self { LockTime::Blocks(Height::from_height(n)) }
 
-    /// Constructs a `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
+    /// Constructs a new `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
     ///
     /// This function is a little awkward to use, and users may wish to instead use
     /// [`Self::from_seconds_floor`] or [`Self::from_seconds_ceil`].
@@ -114,7 +114,7 @@ impl LockTime {
         LockTime::Time(Time::from_512_second_intervals(intervals))
     }
 
-    /// Construct a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// Construct a new [`LockTime`] from seconds, converting the seconds into 512 second interval
     /// with truncating division.
     ///
     /// # Errors
@@ -128,7 +128,7 @@ impl LockTime {
         }
     }
 
-    /// Construct a [`LockTime`] from seconds, converting the seconds into 512 second interval
+    /// Construct a new [`LockTime`] from seconds, converting the seconds into 512 second interval
     /// with ceiling division.
     ///
     /// # Errors

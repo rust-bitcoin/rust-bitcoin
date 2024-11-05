@@ -46,7 +46,7 @@ impl SignedAmount {
     /// The maximum value of an amount.
     pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
-    /// Constructs a [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
@@ -154,7 +154,7 @@ impl SignedAmount {
         SignedAmount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Constructs an object that implements [`fmt::Display`] using specified denomination.
+    /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.unsigned_abs().to_sat(),
@@ -163,7 +163,7 @@ impl SignedAmount {
         }
     }
 
-    /// Constructs an object that implements [`fmt::Display`] dynamically selecting denomination.
+    /// Constructs a new object that implements [`fmt::Display`] dynamically selecting denomination.
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.

@@ -282,7 +282,7 @@ impl TaprootSpendInfo {
         info
     }
 
-    /// Constructs a [`ControlBlock`] for particular script with the given version.
+    /// Constructs a new [`ControlBlock`] for particular script with the given version.
     ///
     /// # Returns
     ///
@@ -501,7 +501,7 @@ impl TaprootBuilder {
         self.branch.iter().flatten().any(|node| node.has_hidden_nodes)
     }
 
-    /// Constructs a [`TaprootSpendInfo`] with the given internal key.
+    /// Constructs a new [`TaprootSpendInfo`] with the given internal key.
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
@@ -702,7 +702,7 @@ impl TapTree {
 impl TryFrom<TaprootBuilder> for TapTree {
     type Error = IncompleteBuilderError;
 
-    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
+    /// Constructs a new [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
     /// # Returns
     ///
@@ -714,7 +714,7 @@ impl TryFrom<TaprootBuilder> for TapTree {
 impl TryFrom<NodeInfo> for TapTree {
     type Error = HiddenNodesError;
 
-    /// Constructs [`TapTree`] from a [`NodeInfo`] if it is complete binary tree.
+    /// Constructs a new [`TapTree`] from a [`NodeInfo`] if it is complete binary tree.
     ///
     /// # Returns
     ///
@@ -971,12 +971,12 @@ pub struct LeafNode {
 }
 
 impl LeafNode {
-    /// Constructs an new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
+    /// Constructs a new [`ScriptLeaf`] from `script` and `ver` and no Merkle branch.
     pub fn new_script(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self { leaf: TapLeaf::Script(script, ver), merkle_branch: Default::default() }
     }
 
-    /// Constructs an new [`ScriptLeaf`] from `hash` and no Merkle branch.
+    /// Constructs a new [`ScriptLeaf`] from `hash` and no Merkle branch.
     pub fn new_hidden(hash: TapNodeHash) -> Self {
         Self { leaf: TapLeaf::Hidden(hash), merkle_branch: Default::default() }
     }
@@ -1213,7 +1213,7 @@ pub enum LeafVersion {
 }
 
 impl LeafVersion {
-    /// Constructs a [`LeafVersion`] from consensus byte representation.
+    /// Constructs a new [`LeafVersion`] from consensus byte representation.
     ///
     /// # Errors
     ///

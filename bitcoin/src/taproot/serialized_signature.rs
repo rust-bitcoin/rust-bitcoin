@@ -131,7 +131,7 @@ impl<'a> TryFrom<&'a SerializedSignature> for Signature {
 }
 
 impl SerializedSignature {
-    /// Constructs `SerializedSignature` from data and length.
+    /// Constructs new `SerializedSignature` from data and length.
     ///
     /// # Panics
     ///
@@ -159,7 +159,7 @@ impl SerializedSignature {
         Signature::from_slice(self)
     }
 
-    /// Construct a SerializedSignature from a Signature.
+    /// Constructs a new SerializedSignature from a Signature.
     /// (this serializes it)
     #[inline]
     pub fn from_signature(sig: Signature) -> SerializedSignature { sig.serialize() }

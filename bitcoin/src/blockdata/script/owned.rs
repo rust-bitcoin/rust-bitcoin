@@ -26,7 +26,7 @@ crate::internal_macros::define_extension_trait! {
             Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
         }
 
-        /// Constructs a [`ScriptBuf`] from a hex string.
+        /// Constructs a new [`ScriptBuf`] from a hex string.
         fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
             let v = Vec::from_hex(s)?;
             Ok(ScriptBuf::from_bytes(v))

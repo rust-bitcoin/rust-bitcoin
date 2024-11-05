@@ -28,7 +28,7 @@ pub struct Address {
 const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
-    /// Construct an address message for a socket
+    /// Construct a new address message for a socket
     pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Address {
         let (address, port) = match *socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),

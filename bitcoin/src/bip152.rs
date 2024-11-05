@@ -378,7 +378,7 @@ pub struct BlockTransactions {
 impl_consensus_encoding!(BlockTransactions, block_hash, transactions);
 
 impl BlockTransactions {
-    /// Constructs a [`BlockTransactions`] from a [`BlockTransactionsRequest`] and
+    /// Constructs a new [`BlockTransactions`] from a [`BlockTransactionsRequest`] and
     /// the corresponding full [`Block`] by providing all requested transactions.
     pub fn from_request(
         request: &BlockTransactionsRequest,

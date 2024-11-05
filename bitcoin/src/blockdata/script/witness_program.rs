@@ -56,38 +56,38 @@ impl WitnessProgram {
         Ok(WitnessProgram { version, program })
     }
 
-    /// Constructs a [`WitnessProgram`] from a 20 byte pubkey hash.
+    /// Constructs a new [`WitnessProgram`] from a 20 byte pubkey hash.
     fn new_p2wpkh(program: [u8; 20]) -> Self {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Constructs a [`WitnessProgram`] from a 32 byte script hash.
+    /// Constructs a new [`WitnessProgram`] from a 32 byte script hash.
     fn new_p2wsh(program: [u8; 32]) -> Self {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Constructs a [`WitnessProgram`] from a 32 byte serialize Taproot xonly pubkey.
+    /// Constructs a new [`WitnessProgram`] from a 32 byte serialize Taproot xonly pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
         WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Constructs a [`WitnessProgram`] from `pk` for a P2WPKH output.
+    /// Constructs a new [`WitnessProgram`] from `pk` for a P2WPKH output.
     pub fn p2wpkh(pk: CompressedPublicKey) -> Self {
         let hash = pk.wpubkey_hash();
         WitnessProgram::new_p2wpkh(hash.to_byte_array())
     }
 
-    /// Constructs a [`WitnessProgram`] from `script` for a P2WSH output.
+    /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh(script: &Script) -> Result<Self, WitnessScriptSizeError> {
         script.wscript_hash().map(Self::p2wsh_from_hash)
     }
 
-    /// Constructs a [`WitnessProgram`] from `script` for a P2WSH output.
+    /// Constructs a new [`WitnessProgram`] from `script` for a P2WSH output.
     pub fn p2wsh_from_hash(hash: WScriptHash) -> Self {
         WitnessProgram::new_p2wsh(hash.to_byte_array())
     }
 
-    /// Constructs a pay to Taproot address from an untweaked key.
+    /// Constructs a new pay to Taproot address from an untweaked key.
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -98,7 +98,7 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    /// Constructs a pay to Taproot address from a pre-tweaked output key.
+    /// Constructs a new pay to Taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         let pubkey = output_key.to_inner().serialize();
         WitnessProgram::new_p2tr(pubkey)

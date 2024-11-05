@@ -229,7 +229,7 @@ impl PsbtSighashType {
         }
     }
 
-    /// Constructs a [`PsbtSighashType`] from a raw `u32`.
+    /// Constructs a new [`PsbtSighashType`] from a raw `u32`.
     ///
     /// Allows construction of a non-standard or non-valid sighash flag
     /// ([`EcdsaSighashType`], [`TapSighashType`] respectively).

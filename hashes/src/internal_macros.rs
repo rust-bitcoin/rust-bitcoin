@@ -105,7 +105,7 @@ macro_rules! hash_type_no_default {
         impl Hash {
             const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
-            /// Constructs a hash from the underlying byte array.
+            /// Constructs a new hash from the underlying byte array.
             pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
                 Self::internal_new(bytes)
             }

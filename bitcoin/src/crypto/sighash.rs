@@ -418,7 +418,7 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Constructs a [`EcdsaSighashType`] from a raw `u32`.
+    /// Constructs a new [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
@@ -449,7 +449,7 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Constructs a [`EcdsaSighashType`] from a raw `u32`.
+    /// Constructs a new [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// # Errors
     ///
@@ -506,7 +506,7 @@ impl TapSighashType {
         }
     }
 
-    /// Constructs a [`TapSighashType`] from a raw `u8`.
+    /// Constructs a new [`TapSighashType`] from a raw `u8`.
     pub fn from_consensus_u8(sighash_type: u8) -> Result<Self, InvalidSighashTypeError> {
         use TapSighashType::*;
 

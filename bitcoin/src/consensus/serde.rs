@@ -319,7 +319,7 @@ pub trait ByteDecoder<'a> {
     /// The decoder state.
     type Decoder: Iterator<Item = Result<u8, Self::DecodeError>>;
 
-    /// Constructs the decoder from string.
+    /// Constructs a new decoder from string.
     fn from_str(s: &'a str) -> Result<Self::Decoder, Self::InitError>;
 }
 

@@ -137,7 +137,7 @@ macro_rules! hash_newtype {
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
-            /// Constructs a hash from the underlying byte array.
+            /// Constructs a new hash from the underlying byte array.
             pub const fn from_byte_array(bytes: <$hash as $crate::Hash>::Bytes) -> Self {
                 $newtype(<$hash>::from_byte_array(bytes))
             }
