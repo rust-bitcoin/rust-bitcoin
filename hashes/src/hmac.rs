@@ -289,8 +289,8 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn hmac_sha512_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 

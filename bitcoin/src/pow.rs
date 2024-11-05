@@ -1643,8 +1643,8 @@ mod tests {
         assert_eq!(got, want);
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
     fn u256_serde() {
         let check = |uint, hex| {
             let json = format!("\"{}\"", hex);
@@ -1932,8 +1932,8 @@ mod tests {
         assert_eq!(back, target)
     }
 
-    #[cfg(feature = "std")]
     #[test]
+    #[cfg(feature = "std")]
     fn work_log2() {
         // Compare work log2 to historical Bitcoin Core values found in Core logs.
         let tests: &[(u128, f64)] = &[
