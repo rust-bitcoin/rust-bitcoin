@@ -110,8 +110,6 @@ pub struct Block {
     pub txdata: Vec<Transaction>,
 }
 
-impl_consensus_encoding!(Block, header, txdata);
-
 impl Block {
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
@@ -270,6 +268,37 @@ impl From<Block> for BlockHash {
 
 impl From<&Block> for BlockHash {
     fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
+
+impl Encodable for Block {
+    #[inline]
+    fn consensus_encode<R: io::Write + ?Sized>(&self, r: &mut R) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.header.consensus_encode(r)?;
+        len += self.txdata.consensus_encode(r)?;
+        Ok(len)
+    }
+}
+
+impl Decodable for Block {
+    #[inline]
+    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Block, encode::Error> {
+        Ok(Block {
+            header: Decodable::consensus_decode_from_finite_reader(r)?,
+            txdata: Decodable::consensus_decode_from_finite_reader(r)?,
+        })
+    }
+
+    #[inline]
+    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Block, encode::Error> {
+        let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
+        Ok(Block {
+            header: Decodable::consensus_decode(&mut r)?,
+            txdata: Decodable::consensus_decode(&mut r)?,
+        })
+    }
 }
 
 /// An error when looking up a BIP34 block height.
