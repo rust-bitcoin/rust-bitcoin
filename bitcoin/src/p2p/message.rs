@@ -301,7 +301,7 @@ impl NetworkMessage {
 }
 
 impl RawNetworkMessage {
-    /// Creates a [RawNetworkMessage]
+    /// Constructs a new [RawNetworkMessage]
     pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
         let mut engine = sha256d::Hash::engine();
         let payload_len = payload.consensus_encode(&mut engine).expect("engine doesn't error");

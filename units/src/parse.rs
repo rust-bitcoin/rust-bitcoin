@@ -378,7 +378,7 @@ pub struct MissingPrefixError {
 }
 
 impl MissingPrefixError {
-    /// Creates an error from the string with the missing prefix.
+    /// Constructs a new error from the string with the missing prefix.
     pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
 }
 
@@ -398,7 +398,7 @@ pub struct ContainsPrefixError {
 }
 
 impl ContainsPrefixError {
-    /// Creates an error from the string that contains the prefix.
+    /// Constructs a new error from the string that contains the prefix.
     pub(crate) fn new(hex: &str) -> Self { Self { hex: hex.into() } }
 }
 

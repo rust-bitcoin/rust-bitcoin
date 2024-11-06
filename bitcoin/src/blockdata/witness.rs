@@ -112,7 +112,7 @@ impl Encodable for Witness {
 crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Witness`] type.
     pub trait WitnessExt impl for Witness {
-        /// Creates a witness required to spend a P2WPKH output.
+        /// Constructs a new witness required to spend a P2WPKH output.
         ///
         /// The witness will be made up of the DER encoded signature + sighash_type followed by the
         /// serialized public key. Also useful for spending a P2SH-P2WPKH output.
@@ -125,7 +125,7 @@ crate::internal_macros::define_extension_trait! {
             witness
         }
 
-        /// Creates a witness required to do a key path spend of a P2TR output.
+        /// Constructs a new witness required to do a key path spend of a P2TR output.
         fn p2tr_key_spend(signature: &taproot::Signature) -> Witness {
             let mut witness = Witness::new();
             witness.push(signature.serialize());

@@ -51,7 +51,7 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Creates a new SHA512 hash engine.
+    /// Constructs a new SHA512 hash engine.
     #[rustfmt::skip]
     pub const fn new() -> Self {
         Self {
@@ -86,7 +86,7 @@ impl HashEngine {
         ret
     }
 
-    /// Constructs a hash engine suitable for use constructing a `sha512_256::HashEngine`.
+    /// Constructs a new hash engine suitable for use constructing a `sha512_256::HashEngine`.
     #[rustfmt::skip]
     pub(crate) const fn sha512_256() -> Self {
         HashEngine {
@@ -99,7 +99,7 @@ impl HashEngine {
         }
     }
 
-    /// Constructs a hash engine suitable for constructing `sha384::HashEngine`.
+    /// Constructs a new hash engine suitable for constructing a `sha384::HashEngine`.
     #[rustfmt::skip]
     pub(crate) const fn sha384() -> Self {
         HashEngine {

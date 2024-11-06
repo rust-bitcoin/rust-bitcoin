@@ -332,7 +332,7 @@ pub struct CheckedData {
 }
 
 impl CheckedData {
-    /// Creates a new `CheckedData` computing the checksum of given data.
+    /// Constructs a new `CheckedData` computing the checksum of given data.
     pub fn new(data: Vec<u8>) -> Self {
         let checksum = sha2_checksum(&data);
         Self { data, checksum }

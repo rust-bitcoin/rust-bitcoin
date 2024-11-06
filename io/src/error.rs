@@ -18,7 +18,7 @@ pub struct Error {
 }
 
 impl Error {
-    /// Creates a new I/O error.
+    /// Constructs a new I/O error.
     #[cfg(feature = "std")]
     pub fn new<E>(kind: ErrorKind, error: E) -> Error
     where
@@ -27,7 +27,7 @@ impl Error {
         Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }
     }
 
-    /// Creates a new I/O error.
+    /// Constructs a new I/O error.
     #[cfg(all(feature = "alloc", not(feature = "std")))]
     pub fn new<E: sealed::IntoBoxDynDebug>(kind: ErrorKind, error: E) -> Error {
         Self { kind, _not_unwind_safe: core::marker::PhantomData, error: Some(error.into()) }

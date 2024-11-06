@@ -45,21 +45,21 @@ impl Weight {
     /// The minimum transaction weight for a valid serialized transaction.
     pub const MIN_TRANSACTION: Weight = Weight(Self::WITNESS_SCALE_FACTOR * 60);
 
-    /// Directly constructs [`Weight`] from weight units.
+    /// Constructs a new [`Weight`] from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
-    /// Directly constructs [`Weight`] from usize weight units.
+    /// Constructs a new [`Weight`] from usize weight units.
     pub const fn from_wu_usize(wu: usize) -> Self { Weight(wu as u64) }
 
-    /// Constructs [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
+    /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
-    /// Constructs [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
+    /// Constructs a new [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
     pub fn from_vb(vb: u64) -> Option<Self> {
         vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
     }
 
-    /// Constructs [`Weight`] from virtual bytes panicking if an overflow occurred.
+    /// Constructs a new [`Weight`] from virtual bytes panicking if an overflow occurred.
     ///
     /// # Panics
     ///
@@ -71,13 +71,13 @@ impl Weight {
         }
     }
 
-    /// Constructs [`Weight`] from virtual bytes without an overflow check.
+    /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
-    /// Constructs [`Weight`] from witness size.
+    /// Constructs a new [`Weight`] from witness size.
     pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight(witness_size) }
 
-    /// Constructs [`Weight`] from non-witness size.
+    /// Constructs a new [`Weight`] from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
         Weight(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }

@@ -495,7 +495,7 @@ macro_rules! ordinary_opcode {
                 }
             }
 
-            /// Try to create a [`Ordinary`] from an [`Opcode`].
+            /// Constructs a new [`Ordinary`] from an [`Opcode`].
             pub fn from_opcode(b: Opcode) -> Option<Self> {
                 match b {
                     $( $op => { Some(Ordinary::$op) } ),*

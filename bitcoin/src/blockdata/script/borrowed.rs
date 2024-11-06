@@ -28,7 +28,7 @@ crate::internal_macros::define_extension_trait! {
         #[inline]
         fn bytes(&self) -> Bytes<'_> { Bytes(self.as_bytes().iter().copied()) }
 
-        /// Creates a new script builder
+        /// Constructs a new script builder
         fn builder() -> Builder { Builder::new() }
 
         /// Returns 160-bit hash of the script for P2SH outputs.

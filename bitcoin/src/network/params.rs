@@ -24,7 +24,7 @@
 //! }
 //!
 //! impl CustomParams {
-//!     /// Creates a new custom params.
+//!     /// Constructs a new custom params.
 //!     pub fn new() -> Self {
 //!         let mut params = Params::new(Network::Signet);
 //!         params.pow_target_spacing = POW_TARGET_SPACING;

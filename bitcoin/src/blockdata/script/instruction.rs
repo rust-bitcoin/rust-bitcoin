@@ -220,7 +220,7 @@ impl<'a> InstructionIndices<'a> {
     #[inline]
     pub fn as_script(&self) -> &'a Script { self.instructions.as_script() }
 
-    /// Creates `Self` setting `pos` to 0.
+    /// Constructs a new `Self` setting `pos` to 0.
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {
         InstructionIndices { instructions, pos: 0 }
     }

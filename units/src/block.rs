@@ -41,7 +41,7 @@ impl BlockHeight {
     /// The maximum block height.
     pub const MAX: Self = BlockHeight(u32::MAX);
 
-    /// Creates a block height from a `u32`.
+    /// Constructs a new block height from a `u32`.
     // Because From<u32> is not const.
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
@@ -108,7 +108,7 @@ impl BlockInterval {
     /// The maximum block interval.
     pub const MAX: Self = BlockInterval(u32::MAX);
 
-    /// Creates a block interval from a `u32`.
+    /// Constructs a new block interval from a `u32`.
     // Because From<u32> is not const.
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 

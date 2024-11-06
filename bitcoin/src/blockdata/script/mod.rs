@@ -95,7 +95,7 @@ hashes::hash_newtype! {
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
 impl ScriptHash {
-    /// Creates a `ScriptHash` after first checking the script size.
+    /// Constructs a new `ScriptHash` after first checking the script size.
     ///
     /// # 520-byte limitation on serialized script size
     ///
@@ -113,7 +113,7 @@ impl ScriptHash {
         Ok(ScriptHash(hash160::Hash::hash(redeem_script.as_bytes())))
     }
 
-    /// Creates a `ScriptHash` from any script irrespective of script size.
+    /// Constructs a new `ScriptHash` from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 520 bytes in size and use it to create a P2SH output
     /// then the output will be unspendable (see [BIP-16]).
@@ -125,7 +125,7 @@ impl ScriptHash {
 }
 
 impl WScriptHash {
-    /// Creates a `WScriptHash` after first checking the script size.
+    /// Constructs a new `WScriptHash` after first checking the script size.
     ///
     /// # 10,000-byte limit on the witness script
     ///
@@ -141,7 +141,7 @@ impl WScriptHash {
         Ok(WScriptHash(sha256::Hash::hash(witness_script.as_bytes())))
     }
 
-    /// Creates a `WScriptHash` from any script irrespective of script size.
+    /// Constructs a new `WScriptHash` from any script irrespective of script size.
     ///
     /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
     /// output then the output will be unspendable (see [BIP-141]).
@@ -200,7 +200,7 @@ impl TryFrom<&Script> for WScriptHash {
     }
 }
 
-/// Creates the script code used for spending a P2WPKH output.
+/// Constructs a new [`ScriptBuf`] containing the script code used for spending a P2WPKH output.
 ///
 /// The `scriptCode` is described in [BIP143].
 ///

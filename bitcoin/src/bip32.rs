@@ -138,7 +138,7 @@ impl ChildNumber {
     /// Hardened child number with index 1.
     pub const ONE_HARDENED: Self = ChildNumber::Hardened { index: 1 };
 
-    /// Create a [`Normal`] from an index, returns an error if the index is not within
+    /// Constructs a new [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
@@ -150,7 +150,7 @@ impl ChildNumber {
         }
     }
 
-    /// Create a [`Hardened`] from an index, returns an error if the index is not within
+    /// Constructs a new [`Hardened`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
@@ -387,7 +387,7 @@ impl DerivationPath {
     /// is empty). True for `m` path.
     pub fn is_master(&self) -> bool { self.0.is_empty() }
 
-    /// Create a new [DerivationPath] that is a child of this one.
+    /// Constructs a new [DerivationPath] that is a child of this one.
     pub fn child(&self, cn: ChildNumber) -> DerivationPath {
         let mut path = self.0.clone();
         path.push(cn);
@@ -451,7 +451,7 @@ impl DerivationPath {
     /// ```
     pub fn to_u32_vec(&self) -> Vec<u32> { self.into_iter().map(|&el| el.into()).collect() }
 
-    /// Creates a derivation path from a slice of u32s.
+    /// Constructs a new derivation path from a slice of u32s.
     /// ```
     /// use bitcoin::bip32::DerivationPath;
     ///
@@ -575,7 +575,7 @@ impl From<InvalidBase58PayloadLengthError> for Error {
 }
 
 impl Xpriv {
-    /// Construct a new master key from a seed value
+    /// Constructs a new master key from a seed value
     pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Result<Xpriv, Error> {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
         hmac_engine.input(seed);
@@ -591,21 +591,21 @@ impl Xpriv {
         })
     }
 
-    /// Constructs ECDSA compressed private key matching internal secret key representation.
+    /// Constructs a new ECDSA compressed private key matching internal secret key representation.
     #[deprecated(since = "TBD", note = "use `to_private_key()` instead")]
     pub fn to_priv(self) -> PrivateKey { self.to_private_key() }
 
-    /// Constructs ECDSA compressed private key matching internal secret key representation.
+    /// Constructs a new ECDSA compressed private key matching internal secret key representation.
     pub fn to_private_key(self) -> PrivateKey {
         PrivateKey { compressed: true, network: self.network, inner: self.private_key }
     }
 
-    /// Creates new extended public key from this extended private key.
+    /// Constructs a new extended public key from this extended private key.
     pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Xpub {
         Xpub::from_xpriv(secp, self)
     }
 
-    /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
+    /// Constructs a new BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Keypair {
         Keypair::from_seckey_slice(secp, &self.private_key[..])
@@ -730,13 +730,13 @@ impl Xpriv {
 }
 
 impl Xpub {
-    /// Creates extended public key from an extended private key.
+    /// Constructs a new extended public key from an extended private key.
     #[deprecated(since = "TBD", note = "use `from_xpriv()` instead")]
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &Xpriv) -> Xpub {
         Self::from_xpriv(secp, sk)
     }
 
-    /// Creates extended public key from an extended private key.
+    /// Constructs a new extended public key from an extended private key.
     pub fn from_xpriv<C: secp256k1::Signing>(secp: &Secp256k1<C>, xpriv: &Xpriv) -> Xpub {
         Xpub {
             network: xpriv.network,
@@ -748,19 +748,19 @@ impl Xpub {
         }
     }
 
-    /// Constructs ECDSA compressed public key matching internal public key representation.
+    /// Constructs a new ECDSA compressed public key matching internal public key representation.
     #[deprecated(since = "TBD", note = "use `to_public_key()` instead")]
     pub fn to_pub(self) -> CompressedPublicKey { self.to_public_key() }
 
-    /// Constructs ECDSA compressed public key matching internal public key representation.
+    /// Constructs a new ECDSA compressed public key matching internal public key representation.
     pub fn to_public_key(self) -> CompressedPublicKey { CompressedPublicKey(self.public_key) }
 
-    /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// Constructs a new BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
     #[deprecated(since = "TBD", note = "use `to_x_only_public_key()` instead")]
     pub fn to_x_only_pub(self) -> XOnlyPublicKey { self.to_x_only_public_key() }
 
-    /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// Constructs a new BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
     pub fn to_x_only_public_key(self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
