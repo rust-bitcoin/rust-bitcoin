@@ -99,6 +99,7 @@ pub mod _export {
 mod internal_macros;
 
 pub mod cmp;
+pub mod error;
 pub mod hash160;
 pub mod hkdf;
 pub mod hmac;
@@ -130,6 +131,7 @@ use core::{convert, fmt, hash};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
+    error::FromSliceError,
     hkdf::Hkdf,
     hmac::{Hmac, HmacEngine},
 };
@@ -319,30 +321,6 @@ fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
     // After modulo operation we know cast u64 to usize as ok.
     (eng.n_bytes_hashed() % block_size) as usize
 }
-
-/// Attempted to create a hash from an invalid length slice.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FromSliceError {
-    expected: usize,
-    got: usize,
-}
-
-impl FromSliceError {
-    /// Returns the expected slice length.
-    pub fn expected_length(&self) -> usize { self.expected }
-
-    /// Returns the invalid slice length.
-    pub fn invalid_length(&self) -> usize { self.got }
-}
-
-impl fmt::Display for FromSliceError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid slice length {} (expected {})", self.got, self.expected)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for FromSliceError {}
 
 #[cfg(test)]
 mod tests {
