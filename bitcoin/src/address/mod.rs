@@ -202,7 +202,7 @@ pub enum KnownHrp {
 }
 
 impl KnownHrp {
-    /// Constructs a new `KnownHrp` from `network`.
+    /// Constructs a new [`KnownHrp`] from [`Network`].
     fn from_network(network: Network) -> Self {
         use Network::*;
 
@@ -213,7 +213,7 @@ impl KnownHrp {
         }
     }
 
-    /// Constructs a new `KnownHrp` from a [`bech32::Hrp`].
+    /// Constructs a new [`KnownHrp`] from a [`bech32::Hrp`].
     fn from_hrp(hrp: Hrp) -> Result<Self, UnknownHrpError> {
         if hrp == bech32::hrp::BC {
             Ok(Self::Mainnet)
@@ -387,7 +387,7 @@ impl<V: NetworkValidation> Address<V> {
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
 impl Address {
-    /// Constructs a new pay to (compressed) public key hash address from a public key.
+    /// Constructs a new pay-to-public-key-hash (P2PKH) [`Address`] from a public key.
     ///
     /// This is the preferred non-witness type address.
     #[inline]
@@ -396,7 +396,7 @@ impl Address {
         Self(AddressInner::P2pkh { hash, network: network.into() }, PhantomData)
     }
 
-    /// Constructs a new pay to script hash P2SH address from a script.
+    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script.
     ///
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
     /// these days.
@@ -409,7 +409,7 @@ impl Address {
         Ok(Address::p2sh_from_hash(hash, network))
     }
 
-    /// Constructs a new pay to script hash P2SH address from a script hash.
+    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script hash.
     ///
     /// # Warning
     ///
@@ -419,7 +419,7 @@ impl Address {
         Self(AddressInner::P2sh { hash, network: network.into() }, PhantomData)
     }
 
-    /// Constructs a new witness pay to public key address from a public key.
+    /// Constructs a new pay-to-witness-public-key-hash (P2WPKH) [`Address`] from a public key.
     ///
     /// This is the native segwit address type for an output redeemable with a single signature.
     pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
@@ -427,7 +427,8 @@ impl Address {
         Address::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new pay to script address that embeds a witness pay to public key.
+    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
+    /// pay-to-witness-public-key-hash (P2WPKH).
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
@@ -436,7 +437,7 @@ impl Address {
         Address::p2sh_from_hash(script_hash, network)
     }
 
-    /// Constructs a new witness pay to script hash address.
+    /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script.
     pub fn p2wsh(
         witness_script: &Script,
         hrp: impl Into<KnownHrp>,
@@ -445,13 +446,14 @@ impl Address {
         Ok(Address::from_witness_program(program, hrp))
     }
 
-    /// Constructs a new witness pay to script hash address.
+    /// Constructs a new pay-to-witness-script-hash (P2WSH) [`Address`] from a witness script hash.
     pub fn p2wsh_from_hash(hash: WScriptHash, hrp: impl Into<KnownHrp>) -> Address {
         let program = WitnessProgram::p2wsh_from_hash(hash);
         Address::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new pay to script address that embeds a witness pay to script hash address.
+    /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
+    /// pay-to-witness-script-hash (P2WSH).
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(
@@ -464,7 +466,7 @@ impl Address {
         Ok(Address::p2sh_from_hash(script_hash, network))
     }
 
-    /// Constructs a new pay to Taproot address from an untweaked key.
+    /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -475,13 +477,13 @@ impl Address {
         Address::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new pay to Taproot address from a pre-tweaked output key.
+    /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, hrp: impl Into<KnownHrp>) -> Address {
         let program = WitnessProgram::p2tr_tweaked(output_key);
         Address::from_witness_program(program, hrp)
     }
 
-    /// Constructs a new address from an arbitrary witness program.
+    /// Constructs a new [`Address`] from an arbitrary [`WitnessProgram`].
     ///
     /// This only exists to support future witness versions. If you are doing normal mainnet things
     /// then you likely do not need this constructor.
@@ -490,7 +492,7 @@ impl Address {
         Address(inner, PhantomData)
     }
 
-    /// Gets the address type of the address.
+    /// Gets the address type of the [`Address`].
     ///
     /// # Returns
     ///
