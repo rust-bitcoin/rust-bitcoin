@@ -73,11 +73,6 @@ crate::internal_macros::define_extension_trait! {
     }
 }
 
-mod sealed {
-    pub trait Sealed {}
-    impl Sealed for super::Header {}
-}
-
 impl Encodable for Version {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.to_consensus().consensus_encode(w)
@@ -299,6 +294,11 @@ impl Decodable for Block {
             txdata: Decodable::consensus_decode(&mut r)?,
         })
     }
+}
+
+mod sealed {
+    pub trait Sealed {}
+    impl Sealed for super::Header {}
 }
 
 /// An error when looking up a BIP34 block height.
