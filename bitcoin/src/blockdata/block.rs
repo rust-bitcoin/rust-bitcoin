@@ -249,20 +249,14 @@ impl Block {
 
         let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
         let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
-        let push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)?;
-        match push.map_err(|_| Bip34Error::NotPresent)? {
-            script::Instruction::PushBytes(b) => {
-                // Check that the number is encoded in the minimal way.
-                let h = b
-                    .read_scriptint()
-                    .map_err(|_e| Bip34Error::UnexpectedPush(b.as_bytes().to_vec()))?;
-                if h < 0 {
-                    Err(Bip34Error::NegativeHeight)
-                } else {
-                    Ok(h as u64)
-                }
-            }
-            _ => Err(Bip34Error::NotPresent),
+        let push = input.script_sig.instructions_minimal()
+            .next()
+            .ok_or(Bip34Error::NotPresent)?
+            .map_err(to_bip34_error)?;
+        match (push.script_num(), push.push_bytes().map(|b| b.read_scriptint())) {
+            (Some(num), Some(Ok(_)) | None) => Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
+            (_, Some(Err(err))) => Err(to_bip34_error(err)),
+            (None, _) => Err(Bip34Error::NotPresent),
         }
     }
 }
@@ -283,8 +277,8 @@ pub enum Bip34Error {
     Unsupported,
     /// No push was present where the BIP34 push was expected.
     NotPresent,
-    /// The BIP34 push was larger than 8 bytes.
-    UnexpectedPush(Vec<u8>),
+    /// The BIP34 push was not minimally encoded.
+    NonMinimalPush,
     /// The BIP34 push was negative.
     NegativeHeight,
 }
@@ -298,9 +292,7 @@ impl fmt::Display for Bip34Error {
         match *self {
             Unsupported => write!(f, "block doesn't support BIP34"),
             NotPresent => write!(f, "BIP34 push not present in block's coinbase"),
-            UnexpectedPush(ref p) => {
-                write!(f, "unexpected byte push of > 8 bytes: {:?}", p)
-            }
+            NonMinimalPush => write!(f, "byte push not minimally encoded"),
             NegativeHeight => write!(f, "negative BIP34 height"),
         }
     }
@@ -312,8 +304,16 @@ impl std::error::Error for Bip34Error {
         use Bip34Error::*;
 
         match *self {
-            Unsupported | NotPresent | UnexpectedPush(_) | NegativeHeight => None,
+            Unsupported | NotPresent | NonMinimalPush | NegativeHeight => None,
         }
+    }
+}
+
+#[inline]
+fn to_bip34_error(err: script::Error) -> Bip34Error {
+    match err {
+        script::Error::NonMinimalPush => Bip34Error::NonMinimalPush,
+        _ => Bip34Error::NotPresent,
     }
 }
 
@@ -360,7 +360,7 @@ impl<'a> Arbitrary<'a> for Block {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::test_hex_unwrap as hex;
     use internals::ToU64 as _;
 
     use super::*;
@@ -378,12 +378,36 @@ mod tests {
 
         assert_eq!(block.bip34_block_height(), Ok(100_000));
 
-        // block with 9-byte bip34 push
-        const BAD_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3d09a08601112233445566000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
+        // block with 3-byte bip34 push for height 0x03010000 (non-minimal 1)
+        const BAD_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703010000000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
         let bad: Block = deserialize(&hex!(BAD_HEX)).unwrap();
 
-        let push = Vec::<u8>::from_hex("a08601112233445566").unwrap();
-        assert_eq!(bad.bip34_block_height(), Err(super::Bip34Error::UnexpectedPush(push)));
+        assert_eq!(bad.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
+
+        // Block 15 on Testnet4 has height of 0x5f (15 PUSHNUM)
+        const BLOCK_HEX_SMALL_HEIGHT_15: &str = "000000200fd8c4c1e88f313b561b2724542ff9be1bc54a7dab8db8ef6359d48a00000000705bf9145e6d3c413702cc61f32e4e7bfe3117b1eb928071a59adcf75694a3fb07d83866ffff001dcf4c5e8401010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff095f00062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
+        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_15)).unwrap();
+
+        assert_eq!(block.bip34_block_height(), Ok(15));
+
+        // Block 42 on Testnet4 has height of 0x012a (42)
+        const BLOCK_HEX_SMALL_HEIGHT_42: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff09012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
+        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42)).unwrap();
+
+        assert_eq!(block.bip34_block_height(), Ok(42));
+
+        // Block 42 on Testnet4 using OP_PUSHDATA1 0x4c012a (42) instead of 0x012a (42)
+        const BLOCK_HEX_SMALL_HEIGHT_42_WRONG: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0a4c012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
+        let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42_WRONG)).unwrap();
+
+        assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
+
+        // Block with a 5 byte height properly minimally encoded
+        // this is an overflow for ScriptNum (i32) parsing
+        const BLOCK_HEX_5_BYTE_HEIGHT: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0d052a2a2a2a2a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
+        let block: Block = deserialize(&hex!(BLOCK_HEX_5_BYTE_HEIGHT)).unwrap();
+
+        assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NotPresent));
     }
 
     #[test]
