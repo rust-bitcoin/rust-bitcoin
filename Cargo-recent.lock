@@ -186,7 +186,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chacha20-poly1305"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex-conservative 0.3.0",
 ]
