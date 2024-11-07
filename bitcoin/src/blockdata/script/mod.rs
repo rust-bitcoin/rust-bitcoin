@@ -65,11 +65,11 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use io::{BufRead, Write};
+use io::Write;
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{encode::{self, Reader}, Decodable, DecodableExt, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::prelude::*;
 use crate::OutPoint;
@@ -591,10 +591,9 @@ impl Encodable for ScriptBuf {
 
 impl Decodable for ScriptBuf {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
-        r: &mut R,
-    ) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
+    fn consensus_decode_unbuffered_any<'a, R: Reader<'a>>(r: R) -> Result<Self, encode::Error> {
+        let r = &mut r.require_finite();
+        Ok(ScriptBuf(DecodableExt::consensus_decode_unbuffered_from_finite_reader(r)?))
     }
 }
 
