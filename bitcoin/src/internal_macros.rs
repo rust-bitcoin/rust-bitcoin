@@ -8,12 +8,12 @@ macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
         impl $crate::consensus::Encodable for $thing {
             #[inline]
-            fn consensus_encode<R: $crate::io::Write + ?Sized>(
+            fn consensus_encode<W: $crate::io::Write + ?Sized>(
                 &self,
-                r: &mut R,
+                w: &mut W,
             ) -> core::result::Result<usize, $crate::io::Error> {
                 let mut len = 0;
-                $(len += self.$field.consensus_encode(r)?;)+
+                $(len += self.$field.consensus_encode(w)?;)+
                 Ok(len)
             }
         }
