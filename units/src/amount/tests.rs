@@ -21,7 +21,7 @@ use crate::{FeeRate, Weight};
 fn from_str_zero() {
     let denoms = ["BTC", "mBTC", "uBTC", "bits", "sats"];
     for denom in denoms {
-        for v in &["0", "000"] {
+        for v in &["0", "000", "0_0"] {
             let s = format!("{} {}", v, denom);
             match s.parse::<Amount>() {
                 Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),

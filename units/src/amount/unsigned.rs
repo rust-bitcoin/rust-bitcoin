@@ -117,7 +117,8 @@ impl Amount {
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        Amount::from_str_in(amt, denom).map_err(Into::into)
+        let sanitized = &amt.replace("_", "");
+        Amount::from_str_in(sanitized, denom).map_err(Into::into)
     }
 
     /// Expresses this [`Amount`] as a floating-point value in the given denomination.
