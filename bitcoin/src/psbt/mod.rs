@@ -14,13 +14,14 @@ pub mod raw;
 pub mod serialize;
 
 use core::{cmp, fmt};
+use std::cmp::Ordering;
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
-
+use std::hash::{Hash, Hasher};
 use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
-use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
+use crate::bip32::{self, ChainCode, ChildNumber, DerivationPath, Fingerprint, KeySource, Xpriv, Xpub};
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
@@ -28,7 +29,7 @@ use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
-use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};
+use crate::{Amount, FeeRate, NetworkKind, TapLeafHash, TapSighashType};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -780,6 +781,76 @@ impl GetKey for Xpriv {
     }
 }
 
+// New GetKey implementation for Vec<Xpriv>
+impl GetKey for Vec<Xpriv> {
+    type Error = GetKeyError;
+
+    fn get_key<C: Signing>(
+        &self,
+        key_request: &KeyRequest,
+        secp: &Secp256k1<C>,
+    ) -> Result<Option<PrivateKey>, Self::Error> {
+        // Iterate over the Vec and call get_key on each Xpriv
+        self.iter()
+            .find_map(|xpriv| xpriv.get_key(key_request, secp).transpose())
+            .transpose()
+    }
+}
+
+
+impl PartialEq for Xpriv {
+    fn eq(&self, other: &Self) -> bool {
+        // Example: compare based on the fingerprint or another unique property
+        self.fingerprint(&()) == other.fingerprint(&())
+    }
+}
+
+
+
+
+// Optionally, if you need to use HashSet or BTreeSet, implement Hash and Ord for Xpriv
+impl Hash for Xpriv {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.fingerprint(&()).hash(state);
+    }
+}
+
+impl Ord for Xpriv {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.fingerprint(&()).cmp(&other.fingerprint(&()))
+    }
+}
+
+impl PartialOrd for Xpriv { // I'm facing an error, and I don't know how to resolve it
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+
+
+// Example usage of Vec<Xpriv> (no need for HashSet/BTreeSet anymore)
+fn example_usage(
+    network: NetworkKind,
+    depth: u8,
+    parent_fingerprint: Fingerprint,
+    child_number: ChildNumber,
+    private_key: secp256k1::SecretKey,
+    chain_code: ChainCode,
+) {
+    let mut xpriv_vec: Vec<Xpriv> = Vec::new();
+    let xpriv = Xpriv::new(network, depth, parent_fingerprint, child_number, private_key, chain_code);
+
+    xpriv_vec.push(xpriv.clone());
+
+    // Now, you can use Vec<Xpriv> with the GetKey trait
+    let key_request = KeyRequest::Bip32((parent_fingerprint , some_path)); // where some_path is a placeholder for the derivation path used to request a specific key from the Xpriv.
+                                                                            // with a form like m/44'/0'/0'/0/0
+    let secp = Secp256k1::new();
+
+    let result = xpriv_vec.get_key(&key_request, &secp);
+}
+
 /// Map of input index -> signing key for that input (see [`SigningKeys`]).
 pub type SigningKeysMap = BTreeMap<usize, SigningKeys>;
 
@@ -817,6 +888,7 @@ impl GetKey for $set<Xpriv> {
             .transpose()
     }
 }}}
+
 impl_get_key_for_set!(Vec);
 impl_get_key_for_set!(BTreeSet);
 #[cfg(feature = "std")]

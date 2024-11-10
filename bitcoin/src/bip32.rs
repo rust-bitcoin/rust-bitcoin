@@ -75,6 +75,39 @@ pub struct Xpriv {
     /// Chain code
     pub chain_code: ChainCode,
 }
+
+impl PartialEq<Self> for Xpriv {
+    fn eq(&self, other: &Self) -> bool {
+        self.network == other.network
+            && self.depth == other.depth
+            && self.parent_fingerprint == other.parent_fingerprint
+            && self.child_number == other.child_number
+            && self.private_key == other.private_key
+            && self.chain_code == other.chain_code
+    }
+}
+
+
+impl Xpriv {
+    // Constructor function to create a new Xpriv instance, needed for "exemple_usage" function
+    pub fn new(
+        network: NetworkKind,
+        depth: u8,
+        parent_fingerprint: Fingerprint,
+        child_number: ChildNumber,
+        private_key: secp256k1::SecretKey,
+        chain_code: ChainCode,
+    ) -> Self {
+        Xpriv {
+            network,
+            depth,
+            parent_fingerprint,
+            child_number,
+            private_key,
+            chain_code,
+        }
+    }
+}
 #[cfg(feature = "serde")]
 internals::serde_string_impl!(Xpriv, "a BIP-32 extended private key");
 
