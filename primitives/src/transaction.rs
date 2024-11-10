@@ -172,7 +172,9 @@ impl Transaction {
 
 #[cfg(feature = "alloc")]
 impl cmp::PartialOrd for Transaction {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -188,22 +190,30 @@ impl cmp::Ord for Transaction {
 
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Txid {
-    fn from(tx: Transaction) -> Txid { tx.compute_txid() }
+    fn from(tx: Transaction) -> Txid {
+        tx.compute_txid()
+    }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Txid {
-    fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
+    fn from(tx: &Transaction) -> Txid {
+        tx.compute_txid()
+    }
 }
 
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Wtxid {
-    fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
+    fn from(tx: Transaction) -> Wtxid {
+        tx.compute_wtxid()
+    }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Wtxid {
-    fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
+    fn from(tx: &Transaction) -> Wtxid {
+        tx.compute_wtxid()
+    }
 }
 
 // Duplicated in `bitcoin`.
@@ -477,6 +487,14 @@ hashes::hash_newtype! {
 }
 
 impl Txid {
+  /// The `pretty_str` function returns a formatted string representation of a value.
+  /// 
+  /// Returns:
+  /// A formatted string representation of the value stored in the field `self.0` is being returned.
+    pub fn pretty_str(&self) -> String {
+        format!("{}", self.0)
+    }
+
     /// The `Txid` used in a coinbase prevout.
     ///
     /// This is used as the "txid" of the dummy input of a coinbase transaction. This is not a real
@@ -485,6 +503,15 @@ impl Txid {
 }
 
 impl Wtxid {
+   /// The `pretty_str` function returns a formatted string representation of the value stored
+   /// in the struct.
+   /// 
+   /// Returns:
+   /// A formatted string representation of the value stored in the field `self.0` is being returned.
+    pub fn pretty_str(&self) -> String {
+        format!("{}", self.0)
+    }
+
     /// The `Wtxid` of a coinbase transaction.
     ///
     /// This is used as the wTXID for the coinbase transaction when constructing blocks (in the
@@ -519,7 +546,9 @@ impl Version {
 }
 
 impl fmt::Display for Version {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -583,5 +612,26 @@ impl<'a> Arbitrary<'a> for Txid {
         let arbitrary_bytes = u.arbitrary()?;
         let t = sha256d::Hash::from_byte_array(arbitrary_bytes);
         Ok(Txid(t))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*; 
+
+    #[test]
+    fn test_txid_pretty_string() {
+        let txid = Txid::from_byte_array([1; 32]); // Create a sample Txid
+        let result = txid.pretty_str();
+        println!("Txid: {}", result);
+        assert!(result.chars().all(|c| c != 'x'), "Output contains '0x' prefix");
+    }
+
+    #[test]
+    fn test_wtxid_pretty_string() {
+        let wtxid = Wtxid::from_byte_array([2; 32]); // Create a sample Wtxid
+        let result = wtxid.pretty_str();
+        println!("Wtxid: {}", result);
+        assert!(result.chars().all(|c| c != 'x'), "Output contains '0x' prefix");
     }
 }
