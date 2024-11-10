@@ -159,10 +159,12 @@ crate::internal_macros::define_extension_trait! {
               return None;
             }
 
+            let last = self.len() - 1;
+
             let tapscript_index = if has_annex {
-              self.len() - 3
+              last - 2
             } else {
-              self.len() - 2
+              last - 1
             };
 
 
@@ -189,10 +191,12 @@ crate::internal_macros::define_extension_trait! {
               return None;
             }
 
+            let last = self.len() - 1;
+
             let control_block_index = if has_annex {
-              self.len() - 2
+              last - 1
             } else {
-              self.len() - 1
+              last
             };
 
             Some(self.nth(control_block_index).unwrap())
