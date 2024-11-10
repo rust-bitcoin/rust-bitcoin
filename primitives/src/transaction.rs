@@ -33,6 +33,9 @@ use crate::sequence::Sequence;
 #[cfg(feature = "alloc")]
 use crate::witness::Witness;
 
+#[cfg(feature = "alloc")]
+use alloc::{format, string::String};
+
 /// Bitcoin transaction.
 ///
 /// An authenticated movement of coins.
@@ -486,6 +489,7 @@ hashes::hash_newtype! {
     pub struct Wtxid(sha256d::Hash);
 }
 
+#[cfg(feature = "alloc")]
 impl Txid {
   /// The `pretty_str` function returns a formatted string representation of a value.
   /// 
@@ -502,6 +506,7 @@ impl Txid {
     pub const COINBASE_PREVOUT: Self = Self::from_byte_array([0; 32]);
 }
 
+#[cfg(feature = "alloc")]
 impl Wtxid {
    /// The `pretty_str` function returns a formatted string representation of the value stored
    /// in the struct.
