@@ -147,19 +147,26 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
         fn tapscript(&self) -> Option<&Script> {
-            self.last().and_then(|last| {
-                // From BIP341:
-                // If there are at least two witness elements, and the first byte of
-                // the last element is 0x50, this last element is called annex a
-                // and is removed from the witness stack.
-                if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                    self.nth(self.len() - 3).map(Script::from_bytes)
-                } else if self.len() >= 2 {
-                    self.nth(self.len() - 2).map(Script::from_bytes)
-                } else {
-                    None
-                }
-            })
+            let has_annex = self.taproot_annex().is_some();
+
+            let minimum_script_path_spend_size = if has_annex {
+              3
+            } else {
+              2
+            };
+
+            if self.len() < minimum_script_path_spend_size {
+              return None;
+            }
+
+            let tapscript_index = if has_annex {
+              self.len() - 3
+            } else {
+              self.len() - 2
+            };
+
+
+            Some(Script::from_bytes(self.nth(tapscript_index).unwrap()))
         }
 
         /// Get the taproot control block following BIP341 rules.
@@ -170,19 +177,25 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
         fn taproot_control_block(&self) -> Option<&[u8]> {
-            self.last().and_then(|last| {
-                // From BIP341:
-                // If there are at least two witness elements, and the first byte of
-                // the last element is 0x50, this last element is called annex a
-                // and is removed from the witness stack.
-                if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                    self.nth(self.len() - 2)
-                } else if self.len() >= 2 {
-                    Some(last)
-                } else {
-                    None
-                }
-            })
+            let has_annex = self.taproot_annex().is_some();
+
+            let minimum_script_path_spend_size = if has_annex {
+              3
+            } else {
+              2
+            };
+
+            if self.len() < minimum_script_path_spend_size {
+              return None;
+            }
+
+            let control_block_index = if has_annex {
+              self.len() - 2
+            } else {
+              self.len() - 1
+            };
+
+            Some(self.nth(control_block_index).unwrap())
         }
 
         /// Get the taproot annex following BIP341 rules.
@@ -191,17 +204,18 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
         fn taproot_annex(&self) -> Option<&[u8]> {
-            self.last().and_then(|last| {
-                // From BIP341:
-                // If there are at least two witness elements, and the first byte of
-                // the last element is 0x50, this last element is called annex a
-                // and is removed from the witness stack.
-                if self.len() >= 2 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                    Some(last)
-                } else {
-                    None
-                }
-            })
+            // From BIP341:
+            // If there are at least two witness elements, and the first byte of
+            // the last element is 0x50, this last element is called annex a
+            // and is removed from the witness stack.
+
+            if self.len() < 2 {
+              return None;
+            }
+
+            let last = self.last().unwrap();
+
+            (last.first().copied() == Some(TAPROOT_ANNEX_PREFIX)).then_some(last)
         }
 
         /// Get the p2wsh witness script following BIP141 rules.
@@ -312,6 +326,26 @@ mod test {
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
         assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
+    }
+
+    #[test]
+    fn test_get_tapscript_from_keypath() {
+        let signature = hex!("deadbeef");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![signature.clone()];
+        let witness_vec_annex = vec![signature.clone(), annex];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, no tapscript should be returned.
+        assert_eq!(witness.tapscript(), None);
+        assert_eq!(witness_annex.tapscript(), None);
     }
 
     #[test]
