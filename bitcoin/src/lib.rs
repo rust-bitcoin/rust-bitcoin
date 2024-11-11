@@ -114,7 +114,27 @@ pub mod psbt;
 pub mod sign_message;
 pub mod taproot;
 
-#[rustfmt::skip]                // Keep public re-exports separate.
+// Re-export the type from where it is defined but the module from the highest place up the stack
+// that it is available in the event that we add some functionality there.
+#[doc(inline)]
+pub use primitives::{
+    block::{BlockHash, WitnessCommitment, Header as BlockHeader},
+    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
+    opcodes::Opcode,
+    pow::CompactTarget, // No `pow` module outside of `primitives`.
+    script::{Script, ScriptBuf},
+    sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
+    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
+    witness::Witness,
+};
+#[doc(inline)]
+pub use units::{
+    amount::{Amount, Denomination, SignedAmount},
+    block::{BlockHeight, BlockInterval},
+    fee_rate::FeeRate,
+    weight::Weight,
+};
+
 #[doc(inline)]
 pub use crate::{
     address::{Address, AddressType, KnownHrp},
@@ -134,32 +154,16 @@ pub use crate::{
 // Re-export all modules from `blockdata`, users should never need to use `blockdata` directly.
 #[doc(inline)]
 pub use crate::{
-    // These modules also re-export all the respective `primitives` types.
-    blockdata::{block, constants, fee_rate, locktime, opcodes, script, transaction, weight, witness},
-    // And re-export types and modules from `blockdata` that don't come from `primitives`.
-    blockdata::block::Block, // TODO: Move this down below after it is in primitives.
+    // Also, re-export types and modules from `blockdata` that don't come from `primitives`.
+    blockdata::block::Block, // TODO: Move this after `Block` is in primitives.
     blockdata::locktime::{absolute, relative},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
     blockdata::script::{ScriptHash, WScriptHash}, // TODO: Move these down below after they are in primitives.
-};
-#[doc(inline)]
-pub use primitives::{
-    block::{BlockHash, WitnessCommitment, Header as BlockHeader},
-    merkle_tree::{TxMerkleNode, WitnessMerkleNode},
-    opcodes::Opcode,
-    pow::CompactTarget,
-    script::{Script, ScriptBuf},
-    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
-    witness::Witness,
-    sequence::Sequence,
-};
-#[doc(inline)]
-pub use units::{
-    amount::{Amount, Denomination, SignedAmount},
-    block::{BlockHeight, BlockInterval},
-    fee_rate::FeeRate,
-    weight::Weight
+    // These modules also re-export all the respective `primitives` types.
+    blockdata::{
+        block, constants, fee_rate, locktime, opcodes, script, transaction, weight, witness,
+    },
 };
 
 #[rustfmt::skip]
