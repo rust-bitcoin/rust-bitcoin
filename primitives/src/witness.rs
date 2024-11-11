@@ -192,6 +192,15 @@ impl Witness {
         }
     }
 
+    /// Returns the third-to-last element in the witness, if any.
+    pub fn third_to_last(&self) -> Option<&[u8]> {
+        if self.witness_elements <= 2 {
+            None
+        } else {
+            self.nth(self.witness_elements - 3)
+        }
+    }
+
     /// Return the nth element in the witness, if any
     pub fn nth(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
