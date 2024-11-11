@@ -44,7 +44,7 @@ pub mod transaction;
 pub mod witness;
 
 #[doc(inline)]
-pub use units::amount::{Amount, SignedAmount};
+pub use units::amount::{self, Amount, SignedAmount};
 #[cfg(feature = "alloc")]
 #[doc(inline)]
 pub use units::{

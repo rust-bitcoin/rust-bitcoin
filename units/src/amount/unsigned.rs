@@ -77,10 +77,7 @@ impl Amount {
     pub fn from_int_btc(btc: u64) -> Result<Amount, OutOfRangeError> {
         match btc.checked_mul(100_000_000) {
             Some(amount) => Ok(Amount::from_sat(amount)),
-            None => Err(OutOfRangeError {
-                is_signed: false,
-                is_greater_than_max: true,
-            })
+            None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
         }
     }
 
