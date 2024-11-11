@@ -249,12 +249,15 @@ impl Block {
 
         let cb = self.coinbase().ok_or(Bip34Error::NotPresent)?;
         let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
-        let push = input.script_sig.instructions_minimal()
+        let push = input
+            .script_sig
+            .instructions_minimal()
             .next()
             .ok_or(Bip34Error::NotPresent)?
             .map_err(to_bip34_error)?;
         match (push.script_num(), push.push_bytes().map(|b| b.read_scriptint())) {
-            (Some(num), Some(Ok(_)) | None) => Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
+            (Some(num), Some(Ok(_)) | None) =>
+                Ok(num.try_into().map_err(|_| Bip34Error::NegativeHeight)?),
             (_, Some(Err(err))) => Err(to_bip34_error(err)),
             (None, _) => Err(Bip34Error::NotPresent),
         }

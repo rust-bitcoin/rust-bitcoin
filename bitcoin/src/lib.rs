@@ -118,7 +118,7 @@ pub mod taproot;
 // that it is available in the event that we add some functionality there.
 #[doc(inline)]
 pub use primitives::{
-    block::{BlockHash, WitnessCommitment, Header as BlockHeader},
+    block::{BlockHash, Header as BlockHeader, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
     pow::CompactTarget, // No `pow` module outside of `primitives`.
@@ -141,11 +141,13 @@ pub use crate::{
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
-    crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, CompressedPublicKey, WPubkeyHash, XOnlyPublicKey},
+    crypto::key::{
+        self, CompressedPublicKey, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
+    },
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
-    network::{Network, NetworkKind, TestnetVersion},
     network::params::{self, Params},
+    network::{Network, NetworkKind, TestnetVersion},
     pow::{Target, Work},
     psbt::Psbt,
     sighash::{EcdsaSighashType, TapSighashType},
