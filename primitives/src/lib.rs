@@ -54,6 +54,16 @@ pub use units::{
 };
 
 #[doc(inline)]
+#[cfg(feature = "alloc")]
+pub use self::{
+    block::{
+        Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
+    },
+    locktime::{absolute, relative},
+    transaction::{Transaction, TxIn, TxOut},
+    witness::Witness,
+};
+#[doc(inline)]
 pub use self::{
     block::{BlockHash, Header as BlockHeader, WitnessCommitment},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
@@ -61,13 +71,6 @@ pub use self::{
     sequence::Sequence,
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
     transaction::{Txid, Wtxid},
-};
-#[doc(inline)]
-#[cfg(feature = "alloc")]
-pub use self::{
-    locktime::{absolute, relative},
-    transaction::{Transaction, TxIn, TxOut},
-    witness::Witness,
 };
 
 #[rustfmt::skip]

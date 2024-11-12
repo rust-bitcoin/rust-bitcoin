@@ -8,13 +8,146 @@
 //! these blocks and the blockchain.
 
 use core::fmt;
+#[cfg(feature = "alloc")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
 
 use crate::merkle_tree::TxMerkleNode;
+#[cfg(feature = "alloc")]
+use crate::merkle_tree::WitnessMerkleNode;
 use crate::pow::CompactTarget;
+#[cfg(feature = "alloc")]
+use crate::prelude::Vec;
+#[cfg(feature = "alloc")]
+use crate::transaction::Transaction;
+
+/// Marker for whether or not a block has been validated.
+///
+/// We define valid as:
+///
+/// * The Merkle root of the header matches Merkle root of the transaction list.
+/// * The witness commitment in coinbase matches the transaction list.
+///
+/// See `bitcoin::block::BlockUncheckedExt::validate()`.
+#[cfg(feature = "alloc")]
+pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
+    /// Indicates whether this `Validation` is `Checked` or not.
+    const IS_CHECKED: bool;
+}
+
+/// Bitcoin block.
+///
+/// A collection of transactions with an attached proof of work.
+///
+/// See [Bitcoin Wiki: Block][wiki-block] for more information.
+///
+/// [wiki-block]: https://en.bitcoin.it/wiki/Block
+///
+/// ### Bitcoin Core References
+///
+/// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
+#[cfg(feature = "alloc")]
+#[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Block<V = Unchecked>
+where
+    V: Validation,
+{
+    /// The block header
+    header: Header,
+    /// List of transactions contained in the block
+    transactions: Vec<Transaction>,
+    /// Cached witness root if its been computed.
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
+    witness_root: Option<WitnessMerkleNode>,
+    /// Validation marker.
+    marker: PhantomData<V>,
+}
+
+#[cfg(feature = "alloc")]
+impl Block<Unchecked> {
+    /// Constructs a new `Block` without doing any validation.
+    pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Block<Unchecked> {
+        Block { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
+    }
+
+    /// Ignores block validation logic and just assumes you know what you are doing.
+    ///
+    /// You should only use this function if you trust the block i.e., it comes from a trusted node.
+    pub fn assume_checked(self, witness_root: Option<WitnessMerkleNode>) -> Block<Checked> {
+        Block {
+            header: self.header,
+            transactions: self.transactions,
+            witness_root,
+            marker: PhantomData::<Checked>,
+        }
+    }
+
+    /// Decomposes block into its constituent parts.
+    pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
+}
+
+#[cfg(feature = "alloc")]
+impl Block<Checked> {
+    /// Gets a reference to the block header.
+    pub fn header(&self) -> &Header { &self.header }
+
+    /// Gets a reference to the block's list of transactions.
+    pub fn transactions(&self) -> &[Transaction] { &self.transactions }
+
+    /// Returns the cached witness root if one is present.
+    ///
+    /// It is assumed that a block will have the witness root calculated and cached as part of the
+    /// validation process.
+    pub fn cached_witness_root(&self) -> Option<WitnessMerkleNode> { self.witness_root }
+}
+
+#[cfg(feature = "alloc")]
+impl<V: Validation> Block<V> {
+    /// Returns the block hash.
+    pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
+}
+
+#[cfg(feature = "alloc")]
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash { block.block_hash() }
+}
+
+#[cfg(feature = "alloc")]
+impl From<&Block> for BlockHash {
+    fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
+
+/// Marker that the block's merkle root has been successfully validated.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg(feature = "alloc")]
+pub enum Checked {}
+
+#[cfg(feature = "alloc")]
+impl Validation for Checked {
+    const IS_CHECKED: bool = true;
+}
+
+/// Marker that the block's merkle root has not been validated.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg(feature = "alloc")]
+pub enum Unchecked {}
+
+#[cfg(feature = "alloc")]
+impl Validation for Unchecked {
+    const IS_CHECKED: bool = false;
+}
+
+#[cfg(feature = "alloc")]
+mod sealed {
+    /// Seals the block validation marker traits.
+    pub trait Validation {}
+    impl Validation for super::Checked {}
+    impl Validation for super::Unchecked {}
+}
 
 /// Bitcoin block header.
 ///
@@ -165,6 +298,16 @@ hashes::hash_newtype! {
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);
+}
+
+#[cfg(feature = "arbitrary")]
+#[cfg(feature = "alloc")]
+impl<'a> Arbitrary<'a> for Block {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let header = Header::arbitrary(u)?;
+        let transactions = Vec::<Transaction>::arbitrary(u)?;
+        Ok(Block::new_unchecked(header, transactions))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
