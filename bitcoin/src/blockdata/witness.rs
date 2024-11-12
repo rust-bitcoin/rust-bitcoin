@@ -307,6 +307,26 @@ mod test {
     }
 
     #[test]
+    fn test_get_tapscript_from_keypath() {
+        let signature = hex!("deadbeef");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![signature.clone()];
+        let witness_vec_annex = vec![signature.clone(), annex];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, no tapscript should be returned.
+        assert_eq!(witness.tapscript(), None);
+        assert_eq!(witness_annex.tapscript(), None);
+    }
+
+    #[test]
     fn test_get_control_block() {
         let tapscript = hex!("deadbeef");
         let control_block = hex!("02");
