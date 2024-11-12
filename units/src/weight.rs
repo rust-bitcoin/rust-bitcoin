@@ -68,6 +68,7 @@ impl Weight {
     /// # Panics
     ///
     /// If the conversion from virtual bytes overflows.
+    #[deprecated(since = "TBD", note = "use `from_vb_unchecked` instead")]
     pub const fn from_vb_unwrap(vb: u64) -> Weight {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
             Some(weight) => Weight(weight),
@@ -246,12 +247,6 @@ mod tests {
 
         let w = Weight::from_vb(u64::MAX);
         assert_eq!(None, w);
-    }
-
-    #[test]
-    fn from_vb_const() {
-        const WU: Weight = Weight::from_vb_unwrap(1);
-        assert_eq!(Weight(4), WU);
     }
 
     #[test]
