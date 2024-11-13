@@ -18,6 +18,7 @@ hash_newtype! {
     pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapLeafHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapLeafHash);
 
@@ -32,6 +33,7 @@ hash_newtype! {
     pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapNodeHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapNodeHash);
 
@@ -46,6 +48,7 @@ hash_newtype! {
     pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapTweakHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapTweakHash);
 

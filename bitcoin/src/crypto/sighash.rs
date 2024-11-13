@@ -56,6 +56,7 @@ hash_newtype! {
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
 
+hashes::impl_hex_for_newtype!(LegacySighash, SegwitV0Sighash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(LegacySighash, SegwitV0Sighash);
 
@@ -85,6 +86,7 @@ hash_newtype! {
     pub struct TapSighash(sha256t::Hash<TapSighashTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapSighash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapSighash);
 

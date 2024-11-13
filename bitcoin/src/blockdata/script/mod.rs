@@ -93,6 +93,7 @@ hashes::hash_newtype! {
     pub struct WScriptHash(sha256::Hash);
 }
 
+hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
 

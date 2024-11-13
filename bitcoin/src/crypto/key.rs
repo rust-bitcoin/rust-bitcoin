@@ -265,6 +265,7 @@ hashes::hash_newtype! {
     pub struct WPubkeyHash(hash160::Hash);
 }
 
+hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
 

@@ -4,6 +4,7 @@
 //!
 //! - [`sha256t_tag`](crate::sha256t_tag)
 //! - [`hash_newtype`](crate::hash_newtype)
+//! - [`impl_hex_for_newtype`](crate::impl_hex_for_newtype)
 //! - [`impl_serde_for_newtype`](crate::impl_serde_for_newtype)
 
 /// Macro used to define a tag.
@@ -133,7 +134,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, <$newtype as $crate::Hash>::DISPLAY_BACKWARD);
+        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN });
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
@@ -194,17 +195,67 @@ macro_rules! hash_newtype {
     };
 }
 
+/// Implements string functions using hex for a new type crated with [`crate::hash_newtype`] macro.
+///
+/// Implements:
+///
+/// * `str::FromStr`
+/// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`
+/// * `fmt::{Display, Debug}` by calling `LowerHex`
+#[macro_export]
+macro_rules! impl_hex_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::impl_hex_string_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, { <$newtype as $crate::Hash>::DISPLAY_BACKWARD });
+        )*
+    }
+}
+
 /// Adds trait impls to a bytelike type.
+///
+/// Implements:
+///
+/// * `AsRef[u8; $len]`
+/// * `AsRef[u8]`
+/// * `Borrow<[u8; $len]>`
+/// * `Borrow<[u8]>`
+///
+/// ## Parameters
+///
+/// * `ty` - The bytelike type to implement the traits on.
+/// * `$len` - The number of bytes this type has.
+/// * `$gen: $gent` - generic type(s) and trait bound(s).
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_bytelike_traits {
+    ($ty:ident, $len:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
+            #[inline]
+            fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*> {
+            #[inline]
+            fn as_ref(&self) -> &[u8] { self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8; { $len }] {  self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8] {  self.as_byte_array() }
+        }
+    }
+}
+
+/// Adds hex string trait impls to a bytelike type using hex.
 ///
 /// Implements:
 ///
 /// * `str::FromStr`
 /// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`.
 /// * `fmt::{Display, Debug}` by calling `LowerHex`
-/// * `AsRef[u8; $len]`
-/// * `AsRef[u8]`
-/// * `Borrow<[u8; $len]>`
-/// * `Borrow<[u8]>`
 ///
 /// Requires:
 ///
@@ -223,7 +274,7 @@ macro_rules! hash_newtype {
 /// [`hex-conservative`]: <https://crates.io/crates/hex-conservative>
 #[doc(hidden)]
 #[macro_export]
-macro_rules! impl_bytelike_traits {
+macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
@@ -244,24 +295,6 @@ macro_rules! impl_bytelike_traits {
             impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
             }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
-            #[inline]
-            fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*> {
-            #[inline]
-            fn as_ref(&self) -> &[u8] { self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8; { $len }] {  self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8] {  self.as_byte_array() }
         }
     }
 }
@@ -509,6 +542,7 @@ mod test {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
     }
+    crate::impl_hex_for_newtype!(TestHash);
 
     impl TestHash {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }

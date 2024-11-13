@@ -321,6 +321,7 @@ mod tests {
         #[hash_newtype(backward)]
         struct NewTypeHashBackward(sha256t::Hash<NewTypeTagBackward>);
     }
+    crate::impl_hex_for_newtype!(NewTypeHashBackward);
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -344,6 +345,7 @@ mod tests {
         #[hash_newtype(forward)]
         struct NewTypeHashForward(sha256t::Hash<NewTypeTagForward>);
     }
+    crate::impl_hex_for_newtype!(NewTypeHashForward);
 
     #[test]
     #[cfg(feature = "alloc")]

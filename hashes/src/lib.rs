@@ -126,7 +126,7 @@ pub mod serde_macros {
     }
 }
 
-use core::{convert, fmt, hash};
+use core::{convert, hash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -261,20 +261,10 @@ pub trait GeneralHash: Hash {
 
 /// Trait which applies to hashes of all types.
 pub trait Hash:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + hash::Hash
-    + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
-    + convert::AsRef<[u8]>
+    Copy + Clone + PartialEq + Eq + PartialOrd + Ord + hash::Hash + convert::AsRef<[u8]>
 {
     /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy + IsByteArray;
+    type Bytes: Copy + IsByteArray;
 
     /// Length of the hash, in bytes.
     const LEN: usize = Self::Bytes::LEN;
@@ -334,6 +324,8 @@ mod tests {
         /// A test newtype
         struct TestNewtype2(sha256d::Hash);
     }
+
+    crate::impl_hex_for_newtype!(TestNewtype, TestNewtype2);
 
     #[test]
     #[cfg(feature = "alloc")]
