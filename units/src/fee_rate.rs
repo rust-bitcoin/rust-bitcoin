@@ -331,6 +331,12 @@ mod tests {
     }
 
     #[test]
+    fn fee_rate_from_sat_per_kvb() {
+        let fee_rate = FeeRate::from_sat_per_kvb(10);
+        assert_eq!(FeeRate(2), fee_rate);
+    }
+
+    #[test]
     fn fee_rate_from_sat_per_vb_overflow() {
         let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
         assert!(fee_rate.is_none());
