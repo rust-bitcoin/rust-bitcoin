@@ -7,7 +7,7 @@
 
 #![allow(non_camel_case_types)]
 
-use core::fmt;
+use core::{fmt, str};
 
 use internals::debug_from_display;
 
@@ -68,6 +68,40 @@ macro_rules! all_opcodes {
                    $(
                         $op => core::fmt::Display::fmt(stringify!($op), f),
                     )+
+                }
+            }
+        }
+
+        impl str::FromStr for Opcode {
+            type Err = ();
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s {
+                    "OP_0" => Ok(OP_0),
+                    "OP_TRUE" | "TRUE" => Ok(OP_TRUE),
+                    "OP_FALSE" | "FALSE" => Ok(OP_FALSE),
+                    "OP_NOP2" | "NOP2" => Ok(OP_NOP2),
+                    "OP_NOP3" | "NOP3" => Ok(OP_NOP3),
+                    "OP_1" => Ok(OP_PUSHNUM_1),
+                    "OP_2" => Ok(OP_PUSHNUM_2),
+                    "OP_3" => Ok(OP_PUSHNUM_3),
+                    "OP_4" => Ok(OP_PUSHNUM_4),
+                    "OP_5" => Ok(OP_PUSHNUM_5),
+                    "OP_6" => Ok(OP_PUSHNUM_6),
+                    "OP_7" => Ok(OP_PUSHNUM_7),
+                    "OP_8" => Ok(OP_PUSHNUM_8),
+                    "OP_9" => Ok(OP_PUSHNUM_9),
+                    "OP_10" => Ok(OP_PUSHNUM_10),
+                    "OP_11" => Ok(OP_PUSHNUM_11),
+                    "OP_12" => Ok(OP_PUSHNUM_12),
+                    "OP_13" => Ok(OP_PUSHNUM_13),
+                    "OP_14" => Ok(OP_PUSHNUM_14),
+                    "OP_15" => Ok(OP_PUSHNUM_15),
+                    "OP_16" => Ok(OP_PUSHNUM_16),
+                    $(
+                        // NB all opcodes begin with OP_
+                        s if s == stringify!($op) || s == &stringify!($op)[3..] => Ok($op),
+                    )+
+                    _ => Err(()),
                 }
             }
         }
@@ -549,7 +583,13 @@ mod tests {
             assert_eq!($op, Opcode::from($op.to_u8()));
 
             let s1 = format!("{}", $op);
+            let parsed = s1.parse::<Opcode>().expect("failed to parse opcode (Display)");
+            assert_eq!(parsed, $op);
+
             let s2 = format!("{:?}", $op);
+            let parsed = s1.parse::<Opcode>().expect("failed to parse opcode (Debug)");
+            assert_eq!(parsed, $op);
+
             assert_eq!(s1, s2);
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
