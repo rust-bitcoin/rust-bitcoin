@@ -55,8 +55,12 @@ impl Weight {
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
     /// Constructs a new [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
-    pub fn from_vb(vb: u64) -> Option<Self> {
-        vb.checked_mul(Self::WITNESS_SCALE_FACTOR).map(Weight::from_wu)
+    pub const fn from_vb(vb: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
+            Some(wu) => Some(Weight::from_wu(wu)),
+            None => None,
+        }
     }
 
     /// Constructs a new [`Weight`] from virtual bytes panicking if an overflow occurred.
