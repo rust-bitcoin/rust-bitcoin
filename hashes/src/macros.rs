@@ -4,6 +4,7 @@
 //!
 //! - [`sha256t_tag`](crate::sha256t_tag)
 //! - [`hash_newtype`](crate::hash_newtype)
+//! - [`impl_serde_for_newtype`](crate::impl_serde_for_newtype)
 
 /// Macro used to define a tag.
 ///
@@ -71,8 +72,7 @@ macro_rules! sha256t_tag {
 ///
 /// You can add arbitrary doc comments or other attributes to the struct or it's field. Note that
 /// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
-/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`]. With the `serde` feature on, this also adds
-/// `Serialize` and `Deserialize` implementations.
+/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`].
 ///
 /// You can also define multiple newtypes within one macro call:
 ///
@@ -201,7 +201,6 @@ macro_rules! hash_newtype {
 /// * `str::FromStr`
 /// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`.
 /// * `fmt::{Display, Debug}` by calling `LowerHex`
-/// * `serde::{Deserialize, Serialize}`
 /// * `AsRef[u8; $len]`
 /// * `AsRef[u8]`
 /// * `Borrow<[u8; $len]>`
@@ -246,8 +245,6 @@ macro_rules! impl_bytelike_traits {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
             }
         }
-
-        $crate::serde_impl!($ty, $len $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
             #[inline]
@@ -430,6 +427,17 @@ pub mod serde_details {
 
             Ok(<Self::Value as crate::Hash>::from_byte_array(bytes))
         }
+    }
+}
+
+/// Implements `Serialize` and `Deserialize` for a new type created with [`crate::hash_newtype`] macro.
+#[macro_export]
+#[cfg(feature = "serde")]
+macro_rules! impl_serde_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
+        )*
     }
 }
 

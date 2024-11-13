@@ -162,6 +162,9 @@ hashes::hash_newtype! {
     pub struct WitnessCommitment(sha256d::Hash);
 }
 
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(BlockHash, WitnessCommitment);
+
 impl BlockHash {
     /// Dummy hash used as the previous blockhash of the genesis block.
     pub const GENESIS_PREVIOUS_BLOCK_HASH: Self = Self::from_byte_array([0; 32]);

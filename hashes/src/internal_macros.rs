@@ -28,6 +28,9 @@ macro_rules! hash_trait_impls {
             fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
         }
 
+        #[cfg(feature = "serde")]
+        $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
+
         impl<$($gen: $gent),*> $crate::Hash for Hash<$($gen),*> {
             type Bytes = [u8; $bits / 8];
 

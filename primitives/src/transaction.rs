@@ -476,6 +476,9 @@ hashes::hash_newtype! {
     pub struct Wtxid(sha256d::Hash);
 }
 
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(Txid, Wtxid);
+
 impl Txid {
     /// The `Txid` used in a coinbase prevout.
     ///

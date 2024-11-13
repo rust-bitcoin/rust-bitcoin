@@ -58,6 +58,9 @@ hash_newtype! {
     pub struct XKeyIdentifier(hash160::Hash);
 }
 
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(XKeyIdentifier);
+
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Debug))]

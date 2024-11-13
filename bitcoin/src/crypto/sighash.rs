@@ -56,6 +56,9 @@ hash_newtype! {
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
 
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(LegacySighash, SegwitV0Sighash);
+
 impl_message_from_hash!(LegacySighash);
 impl_message_from_hash!(SegwitV0Sighash);
 
@@ -81,6 +84,9 @@ hash_newtype! {
     /// This hash type is used for computing Taproot signature hash."
     pub struct TapSighash(sha256t::Hash<TapSighashTag>);
 }
+
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(TapSighash);
 
 impl_message_from_hash!(TapSighash);
 
