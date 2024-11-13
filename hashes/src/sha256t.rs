@@ -321,10 +321,14 @@ mod tests {
         #[hash_newtype(backward)]
         struct NewTypeHashBackward(sha256t::Hash<NewTypeTagBackward>);
     }
+    #[cfg(feature = "hex")]
     crate::impl_hex_for_newtype!(NewTypeHashBackward);
+    #[cfg(not(feature = "hex"))]
+    crate::impl_debug_only_for_newtype!(NewTypeHashBackward);
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn macro_created_sha256t_hash_type_backward() {
         use alloc::string::ToString;
 
@@ -345,10 +349,14 @@ mod tests {
         #[hash_newtype(forward)]
         struct NewTypeHashForward(sha256t::Hash<NewTypeTagForward>);
     }
+    #[cfg(feature = "hex")]
     crate::impl_hex_for_newtype!(NewTypeHashForward);
+    #[cfg(not(feature = "hex"))]
+    crate::impl_debug_only_for_newtype!(NewTypeHashForward);
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn macro_created_sha256t_hash_type_prints_forward() {
         use alloc::string::ToString;
 

@@ -253,8 +253,10 @@ jobs:
         run: cd bitcoin/embedded && cargo run --target thumbv7m-none-eabi
       - name: "Run hashes/embedded no alloc"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi
-      - name: "Run hashes/embedded with alloc"
+      - name: "Run hashes/embedded with alloc and no hex"
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc
+      - name: "Run hashes/embedded with alloc and hex"
+        run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi --features=alloc,hex
 
   ASAN:                         # hashes crate only.
     name: ASAN - nightly toolchain

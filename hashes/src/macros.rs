@@ -203,10 +203,23 @@ macro_rules! hash_newtype {
 /// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`
 /// * `fmt::{Display, Debug}` by calling `LowerHex`
 #[macro_export]
+#[cfg(feature = "hex")]
 macro_rules! impl_hex_for_newtype {
     ($($newtype:ident),*) => {
         $(
             $crate::impl_hex_string_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, { <$newtype as $crate::Hash>::DISPLAY_BACKWARD });
+        )*
+    }
+}
+
+/// Implements `fmt::Debug` using hex for a new type crated with [`crate::hash_newtype`] macro.
+///
+/// This is provided in case you do not want to use the `hex` feature.
+#[macro_export]
+macro_rules! impl_debug_only_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::impl_debug_only!($newtype, { <$newtype as $crate::Hash>::LEN }, { <$newtype as $crate::Hash>::DISPLAY_BACKWARD });
         )*
     }
 }
@@ -274,6 +287,7 @@ macro_rules! impl_bytelike_traits {
 /// [`hex-conservative`]: <https://crates.io/crates/hex-conservative>
 #[doc(hidden)]
 #[macro_export]
+#[cfg(feature = "hex")]
 macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
@@ -294,6 +308,20 @@ macro_rules! impl_hex_string_traits {
             #[display_backward($reverse)]
             impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
+            }
+        }
+    }
+}
+
+/// Implements `fmt::Debug` using hex.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_debug_only {
+    ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::debug_hex(self.as_byte_array(), f)
             }
         }
     }
@@ -542,14 +570,29 @@ mod test {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
     }
+    #[cfg(feature = "hex")]
     crate::impl_hex_for_newtype!(TestHash);
+    #[cfg(not(feature = "hex"))]
+    crate::impl_debug_only_for_newtype!(TestHash);
 
     impl TestHash {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
     }
 
+    // NB: This runs with and without `hex` feature enabled, testing different code paths for each.
     #[test]
     #[cfg(feature = "alloc")]
+    fn debug() {
+        use alloc::format;
+
+        let want = "0000000000000000000000000000000000000000000000000000000000000000";
+        let got = format!("{:?}", TestHash::all_zeros());
+        assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn display() {
         use alloc::format;
 
@@ -560,6 +603,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn display_alternate() {
         use alloc::format;
 
@@ -570,6 +614,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn lower_hex() {
         use alloc::format;
 
@@ -580,6 +625,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn lower_hex_alternate() {
         use alloc::format;
 

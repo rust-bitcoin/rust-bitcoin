@@ -21,7 +21,10 @@
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         $crate::impl_bytelike_traits!(Hash, { $bits / 8 } $(, $gen: $gent)*);
+        #[cfg(feature = "hex")]
         $crate::impl_hex_string_traits!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
+        #[cfg(not(feature = "hex"))]
+        $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
