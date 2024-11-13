@@ -316,7 +316,7 @@ mod tests {
     }
 
     #[test]
-    fn fee_rate_const_test() {
+    fn fee_rate_const() {
         assert_eq!(0, FeeRate::ZERO.to_sat_per_kwu());
         assert_eq!(u64::MIN, FeeRate::MIN.to_sat_per_kwu());
         assert_eq!(u64::MAX, FeeRate::MAX.to_sat_per_kwu());
@@ -325,19 +325,19 @@ mod tests {
     }
 
     #[test]
-    fn fee_rate_from_sat_per_vb_test() {
+    fn fee_rate_from_sat_per_vb() {
         let fee_rate = FeeRate::from_sat_per_vb(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate(2500), fee_rate);
     }
 
     #[test]
-    fn fee_rate_from_sat_per_vb_overflow_test() {
+    fn fee_rate_from_sat_per_vb_overflow() {
         let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
         assert!(fee_rate.is_none());
     }
 
     #[test]
-    fn from_sat_per_vb_unchecked_test() {
+    fn from_sat_per_vb_unchecked() {
         let fee_rate = FeeRate::from_sat_per_vb_unchecked(10);
         assert_eq!(FeeRate(2500), fee_rate);
     }
@@ -345,10 +345,10 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic]
-    fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
+    fn from_sat_per_vb_unchecked_panic() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 
     #[test]
-    fn raw_feerate_test() {
+    fn raw_feerate() {
         let fee_rate = FeeRate(333);
         assert_eq!(333, fee_rate.to_sat_per_kwu());
         assert_eq!(1, fee_rate.to_sat_per_vb_floor());
@@ -356,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_mul_test() {
+    fn checked_mul() {
         let fee_rate = FeeRate(10).checked_mul(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate(100), fee_rate);
 
@@ -365,7 +365,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_weight_mul_test() {
+    fn checked_weight_mul() {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
             .unwrap()
@@ -390,7 +390,7 @@ mod tests {
     }
 
     #[test]
-    fn checked_div_test() {
+    fn checked_div() {
         let fee_rate = FeeRate(10).checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate(1), fee_rate);
 
