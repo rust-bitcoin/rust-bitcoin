@@ -1077,21 +1077,36 @@ impl kani::Arbitrary for U256 {
     }
 }
 
+/// In test code, U256s are a pain to work with, so we just convert Rust primitives in many places
+#[cfg(test)]
+pub mod test_utils {
+    use crate::pow::{Target, Work, U256};
+
+    /// Converts a `u64` to a [`Work`]
+    pub fn u64_to_work(u: u64) -> Work {
+        Work(U256::from(u))
+    }
+
+    /// Converts a `u128` to a [`Work`]
+    pub fn u128_to_work(u: u128) -> Work {
+        Work(U256::from(u))
+    }
+
+    /// Converts a `u32` to a [`Target`]
+    pub fn u32_to_target(u: u32) -> Target {
+        Target(U256::from(u))
+    }
+
+    /// Converts a `u64` to a [`Target`]
+    pub fn u64_to_target(u: u64) -> Target {
+        Target(U256::from(u))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    impl From<u64> for Target {
-        fn from(x: u64) -> Self { Self(U256::from(x)) }
-    }
-
-    impl From<u32> for Target {
-        fn from(x: u32) -> Self { Self(U256::from(x)) }
-    }
-
-    impl<T: Into<u128>> From<T> for Work {
-        fn from(x: T) -> Self { Self(U256::from(x)) }
-    }
+    use crate::pow::test_utils::{u128_to_work, u32_to_target, u64_to_target};
 
     impl U256 {
         fn bit_at(&self, index: usize) -> bool {
@@ -1102,9 +1117,7 @@ mod tests {
             let word = if index < 128 { self.1 } else { self.0 };
             (word & (1 << (index % 128))) != 0
         }
-    }
 
-    impl U256 {
         /// Constructs a new U256 from a big-endian array of u64's
         fn from_array(a: [u64; 4]) -> Self {
             let mut ret = U256::ZERO;
@@ -1865,7 +1878,7 @@ mod tests {
         ];
 
         for (n_bits, target) in tests {
-            let want = Target::from(target);
+            let want = u64_to_target(target);
             let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
             assert_eq!(got, want);
         }
@@ -1926,7 +1939,7 @@ mod tests {
 
     #[test]
     fn roundtrip_target_work() {
-        let target = Target::from(0xdeadbeef_u32);
+        let target = u32_to_target(0xdeadbeef_u32);
         let work = target.to_work();
         let back = work.to_target();
         assert_eq!(back, target)
@@ -1947,7 +1960,7 @@ mod tests {
 
         for &(chainwork, core_log2) in tests {
             // Core log2 in the logs is rounded to 6 decimal places.
-            let log2 = (Work::from(chainwork).log2() * 1e6).round() / 1e6;
+            let log2 = (u128_to_work(chainwork).log2() * 1e6).round() / 1e6;
             assert_eq!(log2, core_log2)
         }
 
