@@ -543,7 +543,7 @@ mod tests {
     }
 
     #[test]
-    fn compact_roundrtip() {
+    fn compact_roundtrip() {
         let header = header();
         assert_eq!(header.bits, header.target().to_compact_lossy());
     }

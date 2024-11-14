@@ -682,7 +682,7 @@ fn test_bitcoinconsensus() {
 }
 
 #[test]
-fn defult_dust_value() {
+fn default_dust_value() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
     let script_p2wpkh = Builder::new().push_int_unchecked(0).push_slice([42; 20]).into_script();
