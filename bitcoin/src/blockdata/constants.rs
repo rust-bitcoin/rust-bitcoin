@@ -8,7 +8,7 @@
 
 use hashes::sha256d;
 
-use crate::block::{self, Block};
+use crate::block::{self, Block, Checked};
 use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
 use crate::locktime::absolute;
 use crate::network::{Network, Params};
@@ -119,15 +119,16 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
 }
 
 /// Constructs and returns the genesis block.
-pub fn genesis_block(params: impl AsRef<Params>) -> Block {
+pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
     let params = params.as_ref();
-    let txdata = vec![bitcoin_genesis_tx(params)];
-    let hash: sha256d::Hash = txdata[0].compute_txid().into();
+    let transactions = vec![bitcoin_genesis_tx(params)];
+    let hash: sha256d::Hash = transactions[0].compute_txid().into();
     let merkle_root: crate::TxMerkleNode = hash.into();
+    let witness_root = block::compute_witness_root(&transactions);
 
     match params.network {
-        Network::Bitcoin => Block {
-            header: block::Header {
+        Network::Bitcoin => Block::new_unchecked(
+            block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
@@ -135,10 +136,11 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 2083236893,
             },
-            txdata,
-        },
-        Network::Testnet(TestnetVersion::V3) => Block {
-            header: block::Header {
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Testnet(TestnetVersion::V3) => Block::new_unchecked(
+            block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
@@ -146,10 +148,11 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 414098458,
             },
-            txdata,
-        },
-        Network::Testnet(TestnetVersion::V4) => Block {
-            header: block::Header {
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Testnet(TestnetVersion::V4) => Block::new_unchecked(
+            block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
@@ -157,10 +160,11 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 393743547,
             },
-            txdata,
-        },
-        Network::Signet => Block {
-            header: block::Header {
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Signet => Block::new_unchecked(
+            block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
@@ -168,10 +172,11 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 bits: CompactTarget::from_consensus(0x1e0377ae),
                 nonce: 52613770,
             },
-            txdata,
-        },
-        Network::Regtest => Block {
-            header: block::Header {
+            transactions,
+        )
+        .assume_checked(witness_root),
+        Network::Regtest => Block::new_unchecked(
+            block::Header {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
@@ -179,8 +184,9 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block {
                 bits: CompactTarget::from_consensus(0x207fffff),
                 nonce: 2,
             },
-            txdata,
-        },
+            transactions,
+        )
+        .assume_checked(witness_root),
     }
 }
 
@@ -307,18 +313,18 @@ mod test {
     fn bitcoin_genesis_full_block() {
         let gen = genesis_block(&params::MAINNET);
 
-        assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
+        assert_eq!(gen.header().version, block::Version::ONE);
+        assert_eq!(gen.header().prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
-            gen.header.merkle_root.to_string(),
+            gen.header().merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
 
-        assert_eq!(gen.header.time, 1231006505);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
-        assert_eq!(gen.header.nonce, 2083236893);
+        assert_eq!(gen.header().time, 1231006505);
+        assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1d00ffff));
+        assert_eq!(gen.header().nonce, 2083236893);
         assert_eq!(
-            gen.header.block_hash().to_string(),
+            gen.header().block_hash().to_string(),
             "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
         );
     }
@@ -326,17 +332,17 @@ mod test {
     #[test]
     fn testnet_genesis_full_block() {
         let gen = genesis_block(&params::TESTNET3);
-        assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
+        assert_eq!(gen.header().version, block::Version::ONE);
+        assert_eq!(gen.header().prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
-            gen.header.merkle_root.to_string(),
+            gen.header().merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
-        assert_eq!(gen.header.time, 1296688602);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
-        assert_eq!(gen.header.nonce, 414098458);
+        assert_eq!(gen.header().time, 1296688602);
+        assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1d00ffff));
+        assert_eq!(gen.header().nonce, 414098458);
         assert_eq!(
-            gen.header.block_hash().to_string(),
+            gen.header().block_hash().to_string(),
             "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
         );
     }
@@ -344,17 +350,17 @@ mod test {
     #[test]
     fn signet_genesis_full_block() {
         let gen = genesis_block(&params::SIGNET);
-        assert_eq!(gen.header.version, block::Version::ONE);
-        assert_eq!(gen.header.prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
+        assert_eq!(gen.header().version, block::Version::ONE);
+        assert_eq!(gen.header().prev_blockhash, BlockHash::GENESIS_PREVIOUS_BLOCK_HASH);
         assert_eq!(
-            gen.header.merkle_root.to_string(),
+            gen.header().merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
-        assert_eq!(gen.header.time, 1598918400);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1e0377ae));
-        assert_eq!(gen.header.nonce, 52613770);
+        assert_eq!(gen.header().time, 1598918400);
+        assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1e0377ae));
+        assert_eq!(gen.header().nonce, 52613770);
         assert_eq!(
-            gen.header.block_hash().to_string(),
+            gen.header().block_hash().to_string(),
             "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
         );
     }

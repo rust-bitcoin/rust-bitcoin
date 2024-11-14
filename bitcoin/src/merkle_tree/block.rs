@@ -15,7 +15,7 @@ use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use self::MerkleBlockError::*;
-use crate::block::{self, Block};
+use crate::block::{self, Block, Checked};
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::merkle_tree::{MerkleNode as _, TxMerkleNode};
 use crate::prelude::Vec;
@@ -43,9 +43,9 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::block::BlockUncheckedExt as _;
     /// use bitcoin::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
+    /// use bitcoin::{Block, MerkleBlock, Txid};
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
@@ -59,6 +59,7 @@ impl MerkleBlock {
     ///     5d6cc8d25c6b241501ffffffff0100f2052a010000001976a914404371705fa9bd789a2fcd52d2c580b6\
     ///     5d35549d88ac00000000").unwrap();
     /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
+    /// let block = block.validate().expect("valid block");
     ///
     /// // Constructs a new Merkle block containing a single transaction
     /// let txid = "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap();
@@ -71,12 +72,13 @@ impl MerkleBlock {
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
     /// ```
-    pub fn from_block_with_predicate<F>(block: &Block, match_txids: F) -> Self
+    pub fn from_block_with_predicate<F>(block: &Block<Checked>, match_txids: F) -> Self
     where
         F: Fn(&Txid) -> bool,
     {
-        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::compute_txid).collect();
-        Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
+        let block_txids: Vec<_> =
+            block.transactions().iter().map(Transaction::compute_txid).collect();
+        Self::from_header_txids_with_predicate(block.header(), &block_txids, match_txids)
     }
 
     /// Constructs a new MerkleBlock from the block's header and txids, that contain proofs for specific txids.
@@ -511,6 +513,7 @@ mod tests {
     use {core::cmp, secp256k1::rand::prelude::*};
 
     use super::*;
+    use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
     use crate::hash_types::Txid;
     use crate::hex::{test_hex_unwrap as hex, DisplayHex, FromHex};
@@ -673,14 +676,14 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
-        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.clone().block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
 
         assert_eq!(
             merkle_block.txn.extract_matches(&mut matches, &mut index).unwrap(),
-            block.header.merkle_root
+            block.header().merkle_root
         );
         assert_eq!(matches.len(), 2);
 
@@ -703,14 +706,14 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
-        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.clone().block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
 
         assert_eq!(
             merkle_block.txn.extract_matches(&mut matches, &mut index).unwrap(),
-            block.header.merkle_root
+            block.header().merkle_root
         );
         assert_eq!(matches.len(), 0);
         assert_eq!(index.len(), 0);
@@ -731,9 +734,11 @@ mod tests {
 
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
-    fn get_block_13b8a() -> Block {
+    fn get_block_13b8a() -> Block<Checked> {
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
-        encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
+        let block: Block<Unchecked> =
+            encode::deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap();
+        block.validate().expect("block should be valid")
     }
 
     macro_rules! check_calc_tree_width {

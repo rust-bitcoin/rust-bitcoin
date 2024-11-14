@@ -1784,7 +1784,7 @@ mod tests {
         use crate::constants::genesis_block;
         use crate::TxMerkleNode;
         let params = Params::new(crate::Network::Signet);
-        let epoch_start = genesis_block(&params).header;
+        let epoch_start = *genesis_block(&params).header();
 
         // Block 2015, the only information used are `bits` and `time`
         let current = Header {

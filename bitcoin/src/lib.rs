@@ -118,7 +118,10 @@ pub mod taproot;
 // that it is available in the event that we add some functionality there.
 #[doc(inline)]
 pub use primitives::{
-    block::{BlockHash, Header as BlockHeader, WitnessCommitment},
+    block::{
+        Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
+        Unchecked as BockUnchecked, Validation as BlockValidation, WitnessCommitment,
+    },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
     pow::CompactTarget, // No `pow` module outside of `primitives`.
@@ -157,7 +160,6 @@ pub use crate::{
 #[doc(inline)]
 pub use crate::{
     // Also, re-export types and modules from `blockdata` that don't come from `primitives`.
-    blockdata::block::Block, // TODO: Move this after `Block` is in primitives.
     blockdata::locktime::{absolute, relative},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},

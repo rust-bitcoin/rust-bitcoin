@@ -44,7 +44,7 @@ use hashes::{sha256d, siphash24, HashEngine as _};
 use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 
-use crate::block::{Block, BlockHash};
+use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::{BTreeSet, Borrow, Vec};
@@ -126,7 +126,10 @@ impl BlockFilter {
     pub fn new(content: &[u8]) -> BlockFilter { BlockFilter { content: content.to_vec() } }
 
     /// Computes a SCRIPT_FILTER that contains spent and output scripts.
-    pub fn new_script_filter<M, S>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
+    pub fn new_script_filter<M, S>(
+        block: &Block<Checked>,
+        script_for_coin: M,
+    ) -> Result<BlockFilter, Error>
     where
         M: Fn(&OutPoint) -> Result<S, Error>,
         S: Borrow<Script>,
@@ -177,13 +180,13 @@ impl BlockFilter {
 
 /// Compiles and writes a block filter.
 pub struct BlockFilterWriter<'a, W> {
-    block: &'a Block,
+    block: &'a Block<Checked>,
     writer: GcsFilterWriter<'a, W>,
 }
 
 impl<'a, W: Write> BlockFilterWriter<'a, W> {
     /// Constructs a new [`BlockFilterWriter`] from `block`.
-    pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
+    pub fn new(writer: &'a mut W, block: &'a Block<Checked>) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
         let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
@@ -193,7 +196,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
 
     /// Adds output scripts of the block to filter (excluding OP_RETURN scripts).
     pub fn add_output_scripts(&mut self) {
-        for transaction in &self.block.txdata {
+        for transaction in self.block.transactions() {
             for output in &transaction.output {
                 if !output.script_pubkey.is_op_return() {
                     self.add_element(output.script_pubkey.as_bytes());
@@ -210,7 +213,7 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     {
         for script in self
             .block
-            .txdata
+            .transactions()
             .iter()
             .skip(1) // skip coinbase
             .flat_map(|t| t.input.iter().map(|i| &i.previous_output))
@@ -583,6 +586,7 @@ mod test {
         for t in testdata.iter().skip(1) {
             let block_hash = t.get(1).unwrap().as_str().unwrap().parse::<BlockHash>().unwrap();
             let block: Block = deserialize(&hex!(t.get(2).unwrap().as_str().unwrap())).unwrap();
+            let block = block.assume_checked(None);
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_header =
@@ -593,7 +597,7 @@ mod test {
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
-            for tx in block.txdata.iter().skip(1) {
+            for tx in block.transactions().iter().skip(1) {
                 for input in tx.input.iter() {
                     txmap.insert(
                         input.previous_output,

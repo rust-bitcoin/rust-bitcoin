@@ -1,3 +1,4 @@
+use bitcoin::block::{self, Block, BlockCheckedExt as _};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
@@ -9,12 +10,18 @@ fn do_test(data: &[u8]) {
         Ok(block) => {
             let ser = bitcoin::consensus::encode::serialize(&block);
             assert_eq!(&ser[..], data);
-            let _ = block.bip34_block_height();
-            block.block_hash();
-            block.check_merkle_root();
-            block.check_witness_commitment();
-            block.weight();
-            block.witness_root();
+
+            // Manually call all compute functions with unchecked block data.
+            let (header, transactions) = block.into_parts();
+            block::compute_merkle_root(&transactions);
+            block::compute_witness_commitment(&transactions, &[]); // TODO: Is empty slice ok?
+            block::compute_witness_root(&transactions);
+
+            if let Ok(block) = Block::new_checked(header, transactions) {
+                let _ = block.bip34_block_height();
+                block.block_hash();
+                block.weight();
+            }
         }
     }
 }

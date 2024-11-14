@@ -18,7 +18,7 @@ use crate::internal_macros::{
 };
 use crate::prelude::Vec;
 use crate::transaction::TxIdentifier;
-use crate::{block, consensus, Block, BlockHash, Transaction};
+use crate::{block, consensus, Block, BlockChecked, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -203,7 +203,7 @@ impl HeaderAndShortIds {
     ///
     /// > Nodes SHOULD NOT use the same nonce across multiple different blocks.
     pub fn from_block(
-        block: &Block,
+        block: &Block<BlockChecked>,
         nonce: u64,
         version: u32,
         mut prefill: &[usize],
@@ -212,12 +212,12 @@ impl HeaderAndShortIds {
             return Err(Error::UnknownVersion);
         }
 
-        let siphash_keys = ShortId::calculate_siphash_keys(&block.header, nonce);
+        let siphash_keys = ShortId::calculate_siphash_keys(block.header(), nonce);
 
         let mut prefilled = Vec::with_capacity(prefill.len() + 1); // +1 for coinbase tx
-        let mut short_ids = Vec::with_capacity(block.txdata.len() - prefill.len());
+        let mut short_ids = Vec::with_capacity(block.transactions().len() - prefill.len());
         let mut last_prefill = 0;
-        for (idx, tx) in block.txdata.iter().enumerate() {
+        for (idx, tx) in block.transactions().iter().enumerate() {
             // Check if we should prefill this tx.
             let prefill_tx = if prefill.first() == Some(&idx) {
                 prefill = &prefill[1..];
@@ -263,7 +263,7 @@ impl HeaderAndShortIds {
         }
 
         Ok(HeaderAndShortIds {
-            header: block.header,
+            header: *block.header(),
             nonce,
             // Provide coinbase prefilled.
             prefilled_txs: prefilled,
@@ -382,17 +382,17 @@ impl BlockTransactions {
     /// the corresponding full [`Block`] by providing all requested transactions.
     pub fn from_request(
         request: &BlockTransactionsRequest,
-        block: &Block,
+        block: &Block<BlockChecked>,
     ) -> Result<BlockTransactions, TxIndexOutOfRangeError> {
         Ok(BlockTransactions {
             block_hash: request.block_hash,
             transactions: {
                 let mut txs = Vec::with_capacity(request.indexes.len());
                 for idx in &request.indexes {
-                    if *idx >= block.txdata.len().to_u64() {
+                    if *idx >= block.transactions().len().to_u64() {
                         return Err(TxIndexOutOfRangeError(*idx));
                     }
-                    txs.push(block.txdata[*idx as usize].clone());
+                    txs.push(block.transactions()[*idx as usize].clone());
                 }
                 txs
             },
@@ -410,8 +410,8 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
-        Witness,
+        transaction, Amount, BlockChecked, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn,
+        TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -429,18 +429,17 @@ mod test {
         }
     }
 
-    fn dummy_block() -> Block {
-        Block {
-            header: block::Header {
-                version: block::Version::ONE,
-                prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
-                merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
-                time: 2,
-                bits: CompactTarget::from_consensus(3),
-                nonce: 4,
-            },
-            txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],
-        }
+    fn dummy_block() -> Block<BlockChecked> {
+        let header = block::Header {
+            version: block::Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
+            time: 2,
+            bits: CompactTarget::from_consensus(3),
+            nonce: 4,
+        };
+        let transactions = vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])];
+        Block::new_unchecked(header, transactions).assume_checked(None)
     }
 
     #[test]
@@ -452,7 +451,7 @@ mod test {
         assert_eq!(compact.short_ids.len(), 2);
         assert_eq!(compact.prefilled_txs.len(), 1);
         assert_eq!(compact.prefilled_txs[0].idx, 0);
-        assert_eq!(&compact.prefilled_txs[0].tx, &block.txdata[0]);
+        assert_eq!(&compact.prefilled_txs[0].tx, &block.transactions()[0]);
 
         let compact = HeaderAndShortIds::from_block(&block, 42, 2, &[0, 1, 2]).unwrap();
         let idxs = compact.prefilled_txs.iter().map(|t| t.idx).collect::<Vec<_>>();
@@ -470,6 +469,7 @@ mod test {
         let raw_compact = Vec::<u8>::from_hex("000000206c750a364035aefd5f81508a08769975116d9195312ee4520dceac39e1fdc62c4dc67473b8e354358c1e610afeaff7410858bd45df43e2940f8a62bd3d5e3ac943c2975cffff7f2000000000a4df3c3744da89fa010a6979e971450100020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff04016b0101ffffffff020006062a0100000001510000000000000000266a24aa21a9ed4a3d9f3343dafcc0d6f6d4310f2ee5ce273ed34edca6c75db3a73e7f368734200120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
 
         let block: Block = deserialize(&raw_block).unwrap();
+        let block = block.assume_checked(None);
         let nonce = 18053200567810711460;
         let compact = HeaderAndShortIds::from_block(&block, nonce, 2, &[]).unwrap();
         let compact_expected = deserialize(&raw_compact).unwrap();
