@@ -563,7 +563,7 @@ mod test {
     fn hash(slice: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_slice(&slice).unwrap() }
 
     #[test]
-    fn full_round_ser_der_raw_network_message_test() {
+    fn full_round_ser_der_raw_network_message() {
         let version_msg: VersionMessage = deserialize(&hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001")).unwrap();
         let tx: Transaction = deserialize(&hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000")).unwrap();
         let block: Block = deserialize(&include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw")[..]).unwrap();
@@ -676,7 +676,7 @@ mod test {
     }
 
     #[test]
-    fn commandstring_test() {
+    fn commandstring() {
         // Test converting.
         assert_eq!(
             CommandString::try_from_static("AndrewAndrew").unwrap().as_ref(),
@@ -702,7 +702,7 @@ mod test {
 
     #[test]
     #[rustfmt::skip]
-    fn serialize_verack_test() {
+    fn serialize_verack() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::Verack)),
                        [0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x61,
                         0x63, 0x6B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -711,7 +711,7 @@ mod test {
 
     #[test]
     #[rustfmt::skip]
-    fn serialize_ping_test() {
+    fn serialize_ping() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::Ping(100))),
                        [0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -721,7 +721,7 @@ mod test {
 
     #[test]
     #[rustfmt::skip]
-    fn serialize_mempool_test() {
+    fn serialize_mempool() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::MemPool)),
                        [0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70,
                         0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -730,7 +730,7 @@ mod test {
 
     #[test]
     #[rustfmt::skip]
-    fn serialize_getaddr_test() {
+    fn serialize_getaddr() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::GetAddr)),
                        [0xf9, 0xbe, 0xb4, 0xd9, 0x67, 0x65, 0x74, 0x61,
                         0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -738,7 +738,7 @@ mod test {
     }
 
     #[test]
-    fn deserialize_getaddr_test() {
+    fn deserialize_getaddr() {
         #[rustfmt::skip]
         let msg = deserialize(&[
             0xf9, 0xbe, 0xb4, 0xd9, 0x67, 0x65, 0x74, 0x61,
@@ -753,7 +753,7 @@ mod test {
     }
 
     #[test]
-    fn deserialize_version_test() {
+    fn deserialize_version() {
         #[rustfmt::skip]
         let msg = deserialize::<RawNetworkMessage>(&[
             0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
@@ -797,7 +797,7 @@ mod test {
     }
 
     #[test]
-    fn deserialize_partial_message_test() {
+    fn deserialize_partial_message() {
         #[rustfmt::skip]
         let data = [
             0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,

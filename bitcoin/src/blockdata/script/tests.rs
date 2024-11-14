@@ -384,7 +384,7 @@ fn script_hashes() {
 }
 
 #[test]
-fn provably_unspendable_test() {
+fn provably_unspendable() {
     // p2pk
     assert!(!ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
     assert!(!ScriptBuf::from_hex("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
@@ -398,7 +398,7 @@ fn provably_unspendable_test() {
 }
 
 #[test]
-fn op_return_test() {
+fn op_return() {
     assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
         .unwrap()
         .is_op_return());
@@ -409,7 +409,7 @@ fn op_return_test() {
 }
 
 #[test]
-fn standard_op_return_test() {
+fn standard_op_return() {
     assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
         .unwrap()
         .is_standard_op_return());
@@ -682,7 +682,7 @@ fn test_bitcoinconsensus() {
 }
 
 #[test]
-fn defult_dust_value_tests() {
+fn defult_dust_value() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
     let script_p2wpkh = Builder::new().push_int_unchecked(0).push_slice([42; 20]).into_script();

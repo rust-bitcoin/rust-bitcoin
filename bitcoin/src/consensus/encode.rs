@@ -769,7 +769,7 @@ mod tests {
     use crate::p2p::{message_blockdata::Inventory, Address};
 
     #[test]
-    fn serialize_int_test() {
+    fn serialize_int() {
         // bool
         assert_eq!(serialize(&false), [0u8]);
         assert_eq!(serialize(&true), [1u8]);
@@ -825,7 +825,7 @@ mod tests {
     }
 
     #[test]
-    fn serialize_varint_test() {
+    fn serialize_varint() {
         fn encode(v: u64) -> Vec<u8> {
             let mut buf = Vec::new();
             buf.emit_compact_size(v).unwrap();
@@ -925,23 +925,23 @@ mod tests {
     }
 
     #[test]
-    fn serialize_checkeddata_test() {
+    fn serialize_checkeddata() {
         let cd = CheckedData::new(vec![1u8, 2, 3, 4, 5]);
         assert_eq!(serialize(&cd), [5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
     }
 
     #[test]
-    fn serialize_vector_test() {
+    fn serialize_vector() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), [3u8, 1, 2, 3]);
     }
 
     #[test]
-    fn serialize_strbuf_test() {
+    fn serialize_strbuf() {
         assert_eq!(serialize(&"Andrew".to_string()), [6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
     }
 
     #[test]
-    fn deserialize_int_test() {
+    fn deserialize_int() {
         // bool
         assert!((deserialize(&[58u8, 0]) as Result<bool, _>).is_err());
         assert_eq!(deserialize(&[58u8]).ok(), Some(true));
@@ -1024,7 +1024,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_vec_test() {
+    fn deserialize_vec() {
         assert_eq!(deserialize(&[3u8, 2, 3, 4]).ok(), Some(vec![2u8, 3, 4]));
         assert!((deserialize(&[4u8, 2, 3, 4, 5, 6]) as Result<Vec<u8>, _>).is_err());
         // found by cargo fuzz
@@ -1067,7 +1067,7 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_strbuf_test() {
+    fn deserialize_strbuf() {
         assert_eq!(
             deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(),
             Some("Andrew".to_string())
@@ -1079,14 +1079,14 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_checkeddata_test() {
+    fn deserialize_checkeddata() {
         let cd: Result<CheckedData, _> =
             deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData::new(vec![1u8, 2, 3, 4, 5])));
     }
 
     #[test]
-    fn limit_read_test() {
+    fn limit_read() {
         let witness = vec![vec![0u8; 3_999_999]; 2];
         let ser = serialize(&witness);
         let mut reader = io::Cursor::new(ser);

@@ -307,7 +307,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
-    fn serialize_address_test() {
+    fn serialize_address() {
         assert_eq!(
             serialize(&Address {
                 services: ServiceFlags::NETWORK,
@@ -322,7 +322,7 @@ mod test {
     }
 
     #[test]
-    fn debug_format_test() {
+    fn debug_format() {
         let mut flags = ServiceFlags::NETWORK;
         assert_eq!(
             format!("The address is: {:?}", Address {
@@ -344,7 +344,7 @@ mod test {
     }
 
     #[test]
-    fn deserialize_address_test() {
+    fn deserialize_address() {
         let mut addr: Result<Address, _> = deserialize(&[
             1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1,
             0x20, 0x8d,
@@ -378,7 +378,7 @@ mod test {
     }
 
     #[test]
-    fn onion_test() {
+    fn onion() {
         let onionaddr = SocketAddr::new(
             IpAddr::V6("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca".parse::<Ipv6Addr>().unwrap()),
             1111,
@@ -388,7 +388,7 @@ mod test {
     }
 
     #[test]
-    fn serialize_addrv2_test() {
+    fn serialize_addrv2() {
         // Taken from https://github.com/bitcoin/bitcoin/blob/12a1c3ad1a43634d2a98717e49e3f02c4acea2fe/src/test/net_tests.cpp#L348
 
         let ip = AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4));
@@ -427,7 +427,7 @@ mod test {
     }
 
     #[test]
-    fn deserialize_addrv2_test() {
+    fn deserialize_addrv2() {
         // Taken from https://github.com/bitcoin/bitcoin/blob/12a1c3ad1a43634d2a98717e49e3f02c4acea2fe/src/test/net_tests.cpp#L386
 
         // Valid IPv4.
@@ -525,7 +525,7 @@ mod test {
     }
 
     #[test]
-    fn addrv2message_test() {
+    fn addrv2message() {
         let raw = hex!("0261bc6649019902abab208d79627683fd4804010409090909208d");
         let addresses: Vec<AddrV2Message> = deserialize(&raw).unwrap();
 
