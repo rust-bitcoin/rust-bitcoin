@@ -11,8 +11,8 @@ use core::{default, fmt, ops};
 use arbitrary::{Arbitrary, Unstructured};
 
 use super::{
-    fmt_satoshi_in, parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination,
-    Display, DisplayStyle, FormatOptions, OutOfRangeError, ParseAmountError, ParseError,
+    parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination,
+    Display, DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
 };
 
 /// A signed amount.
@@ -170,15 +170,6 @@ impl SignedAmount {
             is_negative: self.is_negative(),
             style: DisplayStyle::DynamicDenomination,
         }
-    }
-
-    /// Formats the value of this [`SignedAmount`] in the given denomination.
-    ///
-    /// Does not include the denomination.
-    #[rustfmt::skip]
-    #[deprecated(since = "TBD", note = "use `display_in()` instead")]
-    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.unsigned_abs().to_sat(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
 
     /// Returns a formatted string representing this [`SignedAmount`] in the given denomination.
