@@ -13,8 +13,8 @@ use ::serde::{Deserialize, Serialize};
 use arbitrary::{Arbitrary, Unstructured};
 
 use super::{
-    fmt_satoshi_in, parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display,
-    DisplayStyle, FormatOptions, OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
+    parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display,
+    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
@@ -176,15 +176,6 @@ impl Amount {
             is_negative: false,
             style: DisplayStyle::DynamicDenomination,
         }
-    }
-
-    /// Formats the value of this [`Amount`] in the given denomination.
-    ///
-    /// Does not include the denomination.
-    #[rustfmt::skip]
-    #[deprecated(since = "TBD", note = "use `display_in()` instead")]
-    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
 
     /// Returns a formatted string representing this [`Amount`] in the given denomination.
