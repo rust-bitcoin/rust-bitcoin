@@ -2,7 +2,7 @@
 name = "bitcoin-primitives"
 # Arbitrary high version number so as to not clash with the original
 # `bitcoin-primitives` crate that we replaced `v0.1.16-alpha`.
-version = "0.100.0"
+version = "0.101.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin"

@@ -4,7 +4,8 @@
 //!
 //! Primitive data types that are used throughout the [`rust-bitcoin`] ecosystem.
 //!
-//! This crate can be used in a no-std environment but requires an allocator.
+//! This crate can be used in a no-std environment but a lot of the functionality requires an
+//! allocator i.e., requires the `alloc` feature to be enabled.
 //!
 //! [`rust-bitcoin`]: <https://github.com/rust-bitcoin>
 
@@ -45,14 +46,13 @@ pub mod witness;
 
 #[doc(inline)]
 pub use units::amount::{self, Amount, SignedAmount};
-#[cfg(feature = "alloc")]
 #[doc(inline)]
+#[cfg(feature = "alloc")]
 pub use units::{
     block::{BlockHeight, BlockInterval},
     fee_rate::{self, FeeRate},
     weight::{self, Weight},
 };
-
 #[doc(inline)]
 #[cfg(feature = "alloc")]
 pub use self::{
