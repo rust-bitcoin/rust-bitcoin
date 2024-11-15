@@ -96,15 +96,15 @@ impl<T: GeneralHash> HashEngine for HmacEngine<T> {
     fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
 }
 
-impl<T: GeneralHash> fmt::Debug for Hmac<T> {
+impl<T: GeneralHash + fmt::Debug> fmt::Debug for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
 }
 
-impl<T: GeneralHash> fmt::Display for Hmac<T> {
+impl<T: GeneralHash + fmt::Display> fmt::Display for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-impl<T: GeneralHash> fmt::LowerHex for Hmac<T> {
+impl<T: GeneralHash + fmt::LowerHex> fmt::LowerHex for Hmac<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
 

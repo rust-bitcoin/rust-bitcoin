@@ -4,6 +4,8 @@
 //!
 //! - [`sha256t_tag`](crate::sha256t_tag)
 //! - [`hash_newtype`](crate::hash_newtype)
+//! - [`impl_hex_for_newtype`](crate::impl_hex_for_newtype)
+//! - [`impl_serde_for_newtype`](crate::impl_serde_for_newtype)
 
 /// Macro used to define a tag.
 ///
@@ -71,8 +73,7 @@ macro_rules! sha256t_tag {
 ///
 /// You can add arbitrary doc comments or other attributes to the struct or it's field. Note that
 /// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
-/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`]. With the `serde` feature on, this also adds
-/// `Serialize` and `Deserialize` implementations.
+/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`].
 ///
 /// You can also define multiple newtypes within one macro call:
 ///
@@ -133,7 +134,7 @@ macro_rules! hash_newtype {
             $({ $($type_attrs)* })*
         }
 
-        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, <$newtype as $crate::Hash>::DISPLAY_BACKWARD);
+        $crate::impl_bytelike_traits!($newtype, { <$newtype as $crate::Hash>::LEN });
 
         #[allow(unused)] // Private wrapper types may not need all functions.
         impl $newtype {
@@ -194,18 +195,80 @@ macro_rules! hash_newtype {
     };
 }
 
+/// Implements string functions using hex for a new type crated with [`crate::hash_newtype`] macro.
+///
+/// Implements:
+///
+/// * `str::FromStr`
+/// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`
+/// * `fmt::{Display, Debug}` by calling `LowerHex`
+#[macro_export]
+#[cfg(feature = "hex")]
+macro_rules! impl_hex_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::impl_hex_string_traits!($newtype, { <$newtype as $crate::Hash>::LEN }, { <$newtype as $crate::Hash>::DISPLAY_BACKWARD });
+        )*
+    }
+}
+
+/// Implements `fmt::Debug` using hex for a new type crated with [`crate::hash_newtype`] macro.
+///
+/// This is provided in case you do not want to use the `hex` feature.
+#[macro_export]
+macro_rules! impl_debug_only_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::impl_debug_only!($newtype, { <$newtype as $crate::Hash>::LEN }, { <$newtype as $crate::Hash>::DISPLAY_BACKWARD });
+        )*
+    }
+}
+
 /// Adds trait impls to a bytelike type.
+///
+/// Implements:
+///
+/// * `AsRef[u8; $len]`
+/// * `AsRef[u8]`
+/// * `Borrow<[u8; $len]>`
+/// * `Borrow<[u8]>`
+///
+/// ## Parameters
+///
+/// * `ty` - The bytelike type to implement the traits on.
+/// * `$len` - The number of bytes this type has.
+/// * `$gen: $gent` - generic type(s) and trait bound(s).
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_bytelike_traits {
+    ($ty:ident, $len:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
+            #[inline]
+            fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*> {
+            #[inline]
+            fn as_ref(&self) -> &[u8] { self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8; { $len }] {  self.as_byte_array() }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
+            fn borrow(&self) -> &[u8] {  self.as_byte_array() }
+        }
+    }
+}
+
+/// Adds hex string trait impls to a bytelike type using hex.
 ///
 /// Implements:
 ///
 /// * `str::FromStr`
 /// * `fmt::{LowerHex, UpperHex}` using `hex-conservative`.
 /// * `fmt::{Display, Debug}` by calling `LowerHex`
-/// * `serde::{Deserialize, Serialize}`
-/// * `AsRef[u8; $len]`
-/// * `AsRef[u8]`
-/// * `Borrow<[u8; $len]>`
-/// * `Borrow<[u8]>`
 ///
 /// Requires:
 ///
@@ -224,7 +287,8 @@ macro_rules! hash_newtype {
 /// [`hex-conservative`]: <https://crates.io/crates/hex-conservative>
 #[doc(hidden)]
 #[macro_export]
-macro_rules! impl_bytelike_traits {
+#[cfg(feature = "hex")]
+macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
             type Err = $crate::hex::HexToArrayError;
@@ -246,25 +310,19 @@ macro_rules! impl_bytelike_traits {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness
             }
         }
+    }
+}
 
-        $crate::serde_impl!($ty, $len $(, $gen: $gent)*);
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; { $len }]> for $ty<$($gen),*> {
+/// Implements `fmt::Debug` using hex.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_debug_only {
+    ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
             #[inline]
-            fn as_ref(&self) -> &[u8; { $len }] { self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*> {
-            #[inline]
-            fn as_ref(&self) -> &[u8] { self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8; { $len }]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8; { $len }] {  self.as_byte_array() }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8] {  self.as_byte_array() }
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::debug_hex(self.as_byte_array(), f)
+            }
         }
     }
 }
@@ -433,6 +491,17 @@ pub mod serde_details {
     }
 }
 
+/// Implements `Serialize` and `Deserialize` for a new type created with [`crate::hash_newtype`] macro.
+#[macro_export]
+#[cfg(feature = "serde")]
+macro_rules! impl_serde_for_newtype {
+    ($($newtype:ident),*) => {
+        $(
+            $crate::serde_impl!($newtype, { <$newtype as $crate::Hash>::LEN });
+        )*
+    }
+}
+
 /// Implements `Serialize` and `Deserialize` for a type `$t` which
 /// represents a newtype over a byte-slice over length `$len`.
 #[doc(hidden)]
@@ -501,13 +570,29 @@ mod test {
         /// Test hash.
         struct TestHash(crate::sha256d::Hash);
     }
+    #[cfg(feature = "hex")]
+    crate::impl_hex_for_newtype!(TestHash);
+    #[cfg(not(feature = "hex"))]
+    crate::impl_debug_only_for_newtype!(TestHash);
 
     impl TestHash {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
     }
 
+    // NB: This runs with and without `hex` feature enabled, testing different code paths for each.
     #[test]
     #[cfg(feature = "alloc")]
+    fn debug() {
+        use alloc::format;
+
+        let want = "0000000000000000000000000000000000000000000000000000000000000000";
+        let got = format!("{:?}", TestHash::all_zeros());
+        assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn display() {
         use alloc::format;
 
@@ -518,6 +603,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn display_alternate() {
         use alloc::format;
 
@@ -528,6 +614,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn lower_hex() {
         use alloc::format;
 
@@ -538,6 +625,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn lower_hex_alternate() {
         use alloc::format;
 

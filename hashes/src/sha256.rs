@@ -8,8 +8,6 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 use core::{cmp, convert, fmt};
 
-use hex::DisplayHex;
-
 use crate::{incomplete_block_len, sha256d, HashEngine as _};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
@@ -218,8 +216,15 @@ impl Midstate {
 
 impl fmt::Debug for Midstate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        struct Encoder<'a> {
+            bytes: &'a [u8; 32],
+        }
+        impl fmt::Debug for Encoder<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { crate::debug_hex(self.bytes, f) }
+        }
+
         f.debug_struct("Midstate")
-            .field("bytes", &self.bytes.as_hex())
+            .field("bytes", &Encoder { bytes: &self.bytes })
             .field("length", &self.bytes_hashed)
             .finish()
     }

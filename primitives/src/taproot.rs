@@ -18,6 +18,10 @@ hash_newtype! {
     pub struct TapLeafHash(sha256t::Hash<TapLeafTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapLeafHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(TapLeafHash);
+
 sha256t_tag! {
     pub struct TapBranchTag = hash_str("TapBranch");
 }
@@ -29,6 +33,10 @@ hash_newtype! {
     pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
 }
 
+hashes::impl_hex_for_newtype!(TapNodeHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(TapNodeHash);
+
 sha256t_tag! {
     pub struct TapTweakTag = hash_str("TapTweak");
 }
@@ -39,6 +47,10 @@ hash_newtype! {
     /// This hash type is used while computing the tweaked public key.
     pub struct TapTweakHash(sha256t::Hash<TapTweakTag>);
 }
+
+hashes::impl_hex_for_newtype!(TapTweakHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(TapTweakHash);
 
 impl From<TapLeafHash> for TapNodeHash {
     fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }

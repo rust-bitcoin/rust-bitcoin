@@ -264,6 +264,11 @@ hashes::hash_newtype! {
     /// SegWit version of a public key hash.
     pub struct WPubkeyHash(hash160::Hash);
 }
+
+hashes::impl_hex_for_newtype!(PubkeyHash, WPubkeyHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(PubkeyHash, WPubkeyHash);
+
 impl_asref_push_bytes!(PubkeyHash, WPubkeyHash);
 
 impl From<PublicKey> for PubkeyHash {

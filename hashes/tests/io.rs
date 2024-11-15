@@ -3,6 +3,7 @@
 //! Test the `bitcoin-io` implementations.
 
 #![cfg(feature = "bitcoin-io")]
+#![cfg(feature = "hex")]
 
 use bitcoin_hashes::{
     hash160, hmac, ripemd160, sha1, sha256, sha256d, sha384, sha512, sha512_256, siphash24,

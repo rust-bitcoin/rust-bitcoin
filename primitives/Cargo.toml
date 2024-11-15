@@ -22,7 +22,7 @@ serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
 
 [dependencies]
-hashes = { package = "bitcoin_hashes", version = "0.15.0", default-features = false, features = ["bitcoin-io"] }
+hashes = { package = "bitcoin_hashes", version = "0.15.0", default-features = false, features = ["bitcoin-io", "hex"] }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.4.0" }
 io = { package = "bitcoin-io", version = "0.2.0", default-features = false }

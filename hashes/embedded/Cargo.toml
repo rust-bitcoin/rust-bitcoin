@@ -11,6 +11,7 @@ members = ["."]
 
 [features]
 alloc = ["alloc-cortex-m", "bitcoin_hashes/alloc"]
+hex = ["bitcoin_hashes/hex"]
 
 [dependencies]
 cortex-m = "0.6.0"

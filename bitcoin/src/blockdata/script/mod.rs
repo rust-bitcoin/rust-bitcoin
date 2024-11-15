@@ -92,6 +92,11 @@ hashes::hash_newtype! {
     /// SegWit version of a Bitcoin Script bytecode hash.
     pub struct WScriptHash(sha256::Hash);
 }
+
+hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
+
 impl_asref_push_bytes!(ScriptHash, WScriptHash);
 
 impl ScriptHash {

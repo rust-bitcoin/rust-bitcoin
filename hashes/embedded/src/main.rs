@@ -12,12 +12,19 @@ extern crate bitcoin_hashes;
 use bitcoin_hashes::{sha256, HashEngine};
 use bitcoin_io::Write;
 use cortex_m_rt::entry;
-use cortex_m_semihosting::{debug, hprintln};
+use cortex_m_semihosting::debug;
+#[cfg(feature = "hex")]
+use cortex_m_semihosting::hprintln;
 use panic_halt as _;
 
 hash_newtype! {
     struct TestType(sha256::Hash);
 }
+
+#[cfg(feature = "hex")]
+bitcoin_hashes::impl_hex_for_newtype!(TestType);
+#[cfg(not(feature = "hex"))]
+bitcoin_hashes::impl_debug_only_for_newtype!(TestType);
 
 // this is the allocator the application will use
 #[cfg(feature = "alloc")]
@@ -34,16 +41,19 @@ fn main() -> ! {
 
     let mut engine = sha256::Hash::engine();
     engine.write_all(b"abc").unwrap();
+    #[cfg(feature = "hex")]
     check_result(engine);
 
     let mut engine = sha256::Hash::engine();
     engine.input(b"abc");
+    #[cfg(feature = "hex")]
     check_result(engine);
 
     debug::exit(debug::EXIT_SUCCESS);
     loop {}
 }
 
+#[cfg(feature = "hex")]
 fn check_result(engine: sha256::HashEngine) {
     let hash = TestType(sha256::Hash::from_engine(engine));
 

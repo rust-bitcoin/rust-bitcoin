@@ -86,6 +86,7 @@ extern crate serde_test;
 extern crate test;
 
 /// Re-export the `hex-conservative` crate.
+#[cfg(feature = "hex")]
 pub extern crate hex;
 
 #[doc(hidden)]
@@ -126,7 +127,8 @@ pub mod serde_macros {
     }
 }
 
-use core::{convert, fmt, hash};
+use core::fmt::{self, Write as _};
+use core::{convert, hash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -261,20 +263,10 @@ pub trait GeneralHash: Hash {
 
 /// Trait which applies to hashes of all types.
 pub trait Hash:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + hash::Hash
-    + fmt::Debug
-    + fmt::Display
-    + fmt::LowerHex
-    + convert::AsRef<[u8]>
+    Copy + Clone + PartialEq + Eq + PartialOrd + Ord + hash::Hash + convert::AsRef<[u8]>
 {
     /// The byte array that represents the hash internally.
-    type Bytes: hex::FromHex + Copy + IsByteArray;
+    type Bytes: Copy + IsByteArray;
 
     /// Length of the hash, in bytes.
     const LEN: usize = Self::Bytes::LEN;
@@ -322,6 +314,22 @@ fn incomplete_block_len<H: HashEngine>(eng: &H) -> usize {
     (eng.n_bytes_hashed() % block_size) as usize
 }
 
+/// Writes `bytes` as a `hex` string to the formatter.
+///
+/// For when we cannot rely on having the `hex` feature enabled. Ignores formatter options and just
+/// writes with plain old `f.write_char()`.
+pub fn debug_hex(bytes: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
+    const HEX_TABLE: [u8; 16] = *b"0123456789abcdef";
+
+    for &b in bytes {
+        let lower = HEX_TABLE[usize::from(b >> 4)];
+        let upper = HEX_TABLE[usize::from(b & 0b00001111)];
+        f.write_char(char::from(lower))?;
+        f.write_char(char::from(upper))?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -334,6 +342,11 @@ mod tests {
         /// A test newtype
         struct TestNewtype2(sha256d::Hash);
     }
+
+    #[cfg(feature = "hex")]
+    crate::impl_hex_for_newtype!(TestNewtype, TestNewtype2);
+    #[cfg(not(feature = "hex"))]
+    crate::impl_debug_only_for_newtype!(TestNewtype, TestNewtype2);
 
     #[test]
     #[cfg(feature = "alloc")]

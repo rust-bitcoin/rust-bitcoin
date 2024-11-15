@@ -10,3 +10,7 @@ hashes::hash_newtype! {
     /// A hash corresponding to the Merkle tree root for witness data.
     pub struct WitnessMerkleNode(sha256d::Hash);
 }
+
+hashes::impl_hex_for_newtype!(TxMerkleNode, WitnessMerkleNode);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(TxMerkleNode, WitnessMerkleNode);
