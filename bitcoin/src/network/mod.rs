@@ -367,7 +367,7 @@ mod tests {
     use crate::p2p::ServiceFlags;
 
     #[test]
-    fn serialize_test() {
+    fn serialize_deserialize() {
         assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
         assert_eq!(
             serialize(&Network::Testnet(TestnetVersion::V3).magic()),
@@ -394,7 +394,7 @@ mod tests {
     }
 
     #[test]
-    fn string_test() {
+    fn string() {
         assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
         assert_eq!(Network::Testnet(TestnetVersion::V3).to_string(), "testnet");
         assert_eq!(Network::Testnet(TestnetVersion::V4).to_string(), "testnet4");
@@ -410,7 +410,7 @@ mod tests {
     }
 
     #[test]
-    fn service_flags_test() {
+    fn service_flags() {
         let all = [
             ServiceFlags::NETWORK,
             ServiceFlags::GETUTXO,
