@@ -79,12 +79,24 @@ impl FeeRate {
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
+    pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match self.0.checked_mul(rhs) {
+            Some(res) => Some(Self(res)),
+            None => None,
+        }
+    }
 
     /// Checked division.
     ///
     /// Computes `self / rhs` returning [`None`] if `rhs == 0`.
-    pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+    pub const fn checked_div(self, rhs: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match self.0.checked_div(rhs) {
+            Some(res) => Some(Self(res)),
+            None => None,
+        }
+    }
 
     /// Checked weight multiplication.
     ///
@@ -94,20 +106,38 @@ impl FeeRate {
     /// rounded down.
     ///
     /// [`None`] is returned if an overflow occurred.
-    pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
-        let sats = self.0.checked_mul(rhs.to_wu())?.checked_add(999)? / 1000;
-        Some(Amount::from_sat(sats))
+    pub const fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
+        // No `?` operator in const context.
+        match self.0.checked_mul(rhs.to_wu()) {
+            Some(mul_res) => match mul_res.checked_add(999) {
+                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
+                None => None,
+            },
+            None => None,
+        }
     }
 
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning [`None`] if overflow occured.
-    pub fn checked_add(self, rhs: u64) -> Option<Self> { self.0.checked_add(rhs).map(Self) }
+    pub const fn checked_add(self, rhs: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match self.0.checked_add(rhs) {
+            Some(res) => Some(Self(res)),
+            None => None,
+        }
+    }
 
     /// Checked subtraction.
     ///
     /// Computes `self - rhs` returning [`None`] if overflow occured.
-    pub fn checked_sub(self, rhs: u64) -> Option<Self> { self.0.checked_sub(rhs).map(Self) }
+    pub const fn checked_sub(self, rhs: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match self.0.checked_sub(rhs) {
+            Some(res) => Some(Self(res)),
+            None => None,
+        }
+    }
 
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
