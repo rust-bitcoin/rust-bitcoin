@@ -1083,24 +1083,16 @@ pub mod test_utils {
     use crate::pow::{Target, Work, U256};
 
     /// Converts a `u64` to a [`Work`]
-    pub fn u64_to_work(u: u64) -> Work {
-        Work(U256::from(u))
-    }
+    pub fn u64_to_work(u: u64) -> Work { Work(U256::from(u)) }
 
     /// Converts a `u128` to a [`Work`]
-    pub fn u128_to_work(u: u128) -> Work {
-        Work(U256::from(u))
-    }
+    pub fn u128_to_work(u: u128) -> Work { Work(U256::from(u)) }
 
     /// Converts a `u32` to a [`Target`]
-    pub fn u32_to_target(u: u32) -> Target {
-        Target(U256::from(u))
-    }
+    pub fn u32_to_target(u: u32) -> Target { Target(U256::from(u)) }
 
     /// Converts a `u64` to a [`Target`]
-    pub fn u64_to_target(u: u64) -> Target {
-        Target(U256::from(u))
-    }
+    pub fn u64_to_target(u: u64) -> Target { Target(U256::from(u)) }
 }
 
 #[cfg(test)]
