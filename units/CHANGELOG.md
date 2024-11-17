@@ -12,6 +12,7 @@
 * Error instead of panic when `Time::from_second_ceil` input is too large [#3052](https://github.com/rust-bitcoin/rust-bitcoin/pull/3052)
 * Remove re-export of `ParseIntError` [#3069](https://github.com/rust-bitcoin/rust-bitcoin/pull/3069)
 * Add `FeeRate` addition and subtraction traits [#3381](https://github.com/rust-bitcoin/rust-bitcoin/pull/3381)
+* Add `BlockHeight` and `BlockInterval` types [#2615](https://github.com/rust-bitcoin/rust-bitcoin/pull/2615)
 
 ## Additional test infrastructure:`Arbitrary`
 

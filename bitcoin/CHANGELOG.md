@@ -1,6 +1,107 @@
-# 0.33.0-alpha - TODO: Set date
+# 0.33.0-alpha.0 - 2024-11-18
 
-- Enforce script size limit when hashing scripts [#2794](https://github.com/rust-bitcoin/rust-bitcoin/pull/2794)
+This series of alpha releases is meant for two things:
+
+1. To facilitate testing of `primitives 0.101`.
+2. To allow testing of upcoming `1.0` releases of:
+
+   - `bitcoin_hashes`
+   - `hex`
+   - `bitcoin-io`
+   - `primitives`
+   - `units`
+   - `ordered`
+
+You likely want to explicitly set the version if doing testing. `cargo` can be surprising when there
+is a `-` in the version number.
+
+We do not currently intend on releasing `bitcoin 0.33.0` until the `1.0` releases above are done.
+
+For changes to our dependencies included in this release see:
+
+- `bitcoin_hashes 0.15`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
+- `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
+- `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
+- `bitcoin-primitives: 0.101`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md))
+- `bitcoin-units 0.2`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md))
+- `bitcoinconsensus: 0.106.0+26`: [changelog](https://github.com/rust-bitcoin/rust-bitcoinconsensus/blob/master/CHANGELOG.md)
+
+## Changes
+
+- Fix psbt fuzz crash [#3667](https://github.com/rust-bitcoin/rust-bitcoin/pull/3667)
+- Update `from_next_work_required` to take an `i64` for timespan [#3660](https://github.com/rust-bitcoin/rust-bitcoin/pull/3660)
+- Account for data pushing opcodes in `is_standard_op_return` [#3643](https://github.com/rust-bitcoin/rust-bitcoin/pull/3643)
+- Add p2wpkh address creation example [#3642](https://github.com/rust-bitcoin/rust-bitcoin/pull/3642)
+- Add `Address::into_unchecked` [#3640](https://github.com/rust-bitcoin/rust-bitcoin/pull/3640)
+- Mark `checked_` functions as const [#3636](https://github.com/rust-bitcoin/rust-bitcoin/pull/3636)
+- Mark functions const in `fee_rate` [#3627](https://github.com/rust-bitcoin/rust-bitcoin/pull/3627)
+- Mark funtions const [#3608](https://github.com/rust-bitcoin/rust-bitcoin/pull/3608)
+- Add constructor to `FeeRate` [#3604](https://github.com/rust-bitcoin/rust-bitcoin/pull/3604)
+- Fix bug in witness stack getters [#3601](https://github.com/rust-bitcoin/rust-bitcoin/pull/3601)
+- Split `checked_div_by_weight` into floor and ceiling version [#3587](https://github.com/rust-bitcoin/rust-bitcoin/pull/3587)
+- script: remove `unsafe` marker from slice-to-script conversions [#3569](https://github.com/rust-bitcoin/rust-bitcoin/pull/3569)
+- io: Bump version to `0.1.3` [#3566](https://github.com/rust-bitcoin/rust-bitcoin/pull/3566)
+- Re-export `block::Header` as `BlockHeader` [#3562](https://github.com/rust-bitcoin/rust-bitcoin/pull/3562)
+- Bump `hex-conservative` to `0.3.0` [#3543](https://github.com/rust-bitcoin/rust-bitcoin/pull/3543)
+- Re-organise the `amount` module [#3541](https://github.com/rust-bitcoin/rust-bitcoin/pull/3541)
+- Improve the `amount` module [#3539](https://github.com/rust-bitcoin/rust-bitcoin/pull/3539)
+- base58: Close all errors [#3533](https://github.com/rust-bitcoin/rust-bitcoin/pull/3533)
+- psbt: Fix bug in `Subtype` consensus_encode [#3519](https://github.com/rust-bitcoin/rust-bitcoin/pull/3519)
+- Explicitly re-export stuff from crates down the stack [#3497](https://github.com/rust-bitcoin/rust-bitcoin/pull/3497)
+- Expose `units::amount::ParseError` [#3496](https://github.com/rust-bitcoin/rust-bitcoin/pull/3496)
+- Make `Amount::to_sat and SignedAmount::to_sat` const [#3493](https://github.com/rust-bitcoin/rust-bitcoin/pull/3493)
+- Decode an address string based on prefix [#3481](https://github.com/rust-bitcoin/rust-bitcoin/pull/3481)
+- Replace `ENABLE_RBF_NO_LOCKTIME` with `ENABLE_LOCKTIME_AND_RBF` [#3459](https://github.com/rust-bitcoin/rust-bitcoin/pull/3459)
+- Add version three variant to transaction version [#3450](https://github.com/rust-bitcoin/rust-bitcoin/pull/3450)
+- Input weight prediction helpers for nested P2WPKH [#3443](https://github.com/rust-bitcoin/rust-bitcoin/pull/3443)
+- Clarify sequence constant name and add `FINAL` [#3439](https://github.com/rust-bitcoin/rust-bitcoin/pull/3439)
+- Add checked div by weight to amount [#3430](https://github.com/rust-bitcoin/rust-bitcoin/pull/3430)
+- Rename `Midstate::into_parts` to `Midstate::to_parts` since it derives `Copy` [#3429](https://github.com/rust-bitcoin/rust-bitcoin/pull/3429)
+- Const locktime constructors [#3421](https://github.com/rust-bitcoin/rust-bitcoin/pull/3421)
+- Fix script number overflow check for `push_int` [#3392](https://github.com/rust-bitcoin/rust-bitcoin/pull/3392)
+- transaction: Remove `Default` implementations [#3386](https://github.com/rust-bitcoin/rust-bitcoin/pull/3386)
+- Add `FeeRate` addition and subtraction traits [#3381](https://github.com/rust-bitcoin/rust-bitcoin/pull/3381)
+- Add `Xpriv::to_xpub` and improve related method names [#3358](https://github.com/rust-bitcoin/rust-bitcoin/pull/3358)
+- Support `impl AsRef<[#u8]>` in `signed_msg_hash` [3357](https://github.com/rust-bitcoin/rust-bitcoin/pull/u8)
+- Fix `GetKey` for sets (plus some related changes) [#3356](https://github.com/rust-bitcoin/rust-bitcoin/pull/3356)
+- Add a condition for parsing zero from string when not denominated [#3346](https://github.com/rust-bitcoin/rust-bitcoin/pull/3346)
+- Add basic `miri` checks [#3328](https://github.com/rust-bitcoin/rust-bitcoin/pull/3328)
+- Add coinbase associated consts [#3308](https://github.com/rust-bitcoin/rust-bitcoin/pull/3308)
+- Fix bug in `ArrayVec::extend_from_slice` [#3272](https://github.com/rust-bitcoin/rust-bitcoin/pull/3272)
+- Change `T::from_str(s)` to `s.parse::<T>()` in examples, docs and tests [#3262](https://github.com/rust-bitcoin/rust-bitcoin/pull/3262)
+- Add `Arbitrary` to `Weight` [#3257](https://github.com/rust-bitcoin/rust-bitcoin/pull/3257)
+- Bump `units` version [#3248](https://github.com/rust-bitcoin/rust-bitcoin/pull/3248)
+- Rename key field in Key to key_data [#3048](https://github.com/rust-bitcoin/rust-bitcoin/pull/3048)
+- Optimize `base58` on small inputs [#3002](https://github.com/rust-bitcoin/rust-bitcoin/pull/3002)
+- Add `TxIdentifier` trait [#2987](https://github.com/rust-bitcoin/rust-bitcoin/pull/2987)
+- Fix `Amount` decimals handling [#2951](https://github.com/rust-bitcoin/rust-bitcoin/pull/2951)
+- `OP_RETURN` standardness check [#2949](https://github.com/rust-bitcoin/rust-bitcoin/pull/2949)
+- Support Testnet4 Network [#2945](https://github.com/rust-bitcoin/rust-bitcoin/pull/2945)
+- Remove `VarInt` and use `ReadExt` and `WriteExt` trait methods instead [#2931](https://github.com/rust-bitcoin/rust-bitcoin/pull/2931)
+- bip32: Add `From<&'a [#u32]>` for `DerivationPath` [2909](https://github.com/rust-bitcoin/rust-bitcoin/pull/u32)
+- psbt: Encode keytype as a compact size unsigned integer [#2906](https://github.com/rust-bitcoin/rust-bitcoin/pull/2906)
+- Pass sigs and associated types by value [#2899](https://github.com/rust-bitcoin/rust-bitcoin/pull/2899)
+- Re-export `UnprefixedHexError` in the bitcoin crate root [#2895](https://github.com/rust-bitcoin/rust-bitcoin/pull/2895)
+- taproot: Split errors up [#2886](https://github.com/rust-bitcoin/rust-bitcoin/pull/2886)
+- Remove usage of `blockdata` from paths [#2885](https://github.com/rust-bitcoin/rust-bitcoin/pull/2885)
+- Update `PushBytes::read_scriptint(x)` to `x.read_scriptint()` [#2872](https://github.com/rust-bitcoin/rust-bitcoin/pull/2872)
+- Remove `Denomination::MilliSatoshi` [#2870](https://github.com/rust-bitcoin/rust-bitcoin/pull/2870)
+- Pass keys by value [#2868](https://github.com/rust-bitcoin/rust-bitcoin/pull/2868)
+- Clarify the meaning of `Height` & `Time` based locktime [#2858](https://github.com/rust-bitcoin/rust-bitcoin/pull/2858)
+- Add API for extracting the inner payload of `RawNetworkMessage` [#2839](https://github.com/rust-bitcoin/rust-bitcoin/pull/2839)
+- Update `bitcoinconsensus` version to `0.106.0+26` [#2833] (https://github.com/rust-bitcoin/rust-bitcoin/pull/2833)
+- Make `difficulty_float` general to all networks [#2816](https://github.com/rust-bitcoin/rust-bitcoin/pull/2816)
+- Add const modifier to `Magic::from_bytes` [#2815](https://github.com/rust-bitcoin/rust-bitcoin/pull/2815)
+- Add an `AddressData` type [#2808](https://github.com/rust-bitcoin/rust-bitcoin/pull/2808)
+- Make `Address:p2sh_from_hash` public [#2795](https://github.com/rust-bitcoin/rust-bitcoin/pull/2795)
+- Enable getting the witness program from an address [#2796](https://github.com/rust-bitcoin/rust-bitcoin/pull/2796)
+- Enforce script size limit when hashing scripts [##2794](https://github.com/rust-bitcoin/rust-bitcoin/pull/2794https://github.com/rust-bitcoin/rust-bitcoin/pull/#2794)
+- Deprecate `to_vec` in favour of `to_bytes` [#2768](https://github.com/rust-bitcoin/rust-bitcoin/pull/2768)
+- Flesh out hex unit parsing API [#2765](https://github.com/rust-bitcoin/rust-bitcoin/pull/2765)
+- Bench `base58` encoding and remove `SmallVec` to improve perf [#2759](https://github.com/rust-bitcoin/rust-bitcoin/pull/2759)
+- Add difficulty adjustment calculation [#2740](https://github.com/rust-bitcoin/rust-bitcoin/pull/2740)
+- Upgrade `base64` dependency [#2721](https://github.com/rust-bitcoin/rust-bitcoin/pull/2721)
+- Some additional inspectors on `Script` and `Witness` [#2646](https://github.com/rust-bitcoin/rust-bitcoin/pull/2646)
 
 ## Upgrade notes
 
