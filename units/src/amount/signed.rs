@@ -11,8 +11,8 @@ use core::{default, fmt, ops};
 use arbitrary::{Arbitrary, Unstructured};
 
 use super::{
-    parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination,
-    Display, DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
+    parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
+    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
 };
 
 /// A signed amount.

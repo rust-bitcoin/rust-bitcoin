@@ -13,8 +13,8 @@ use ::serde::{Deserialize, Serialize};
 use arbitrary::{Arbitrary, Unstructured};
 
 use super::{
-    parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display,
-    DisplayStyle, OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
+    parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
+    OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};

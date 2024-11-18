@@ -110,7 +110,7 @@ impl Weight {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
             Some(wu) => Some(Weight::from_wu(wu)),
-            None => None
+            None => None,
         }
     }
 
@@ -121,7 +121,7 @@ impl Weight {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
             Some(wu) => Some(Weight::from_wu(wu)),
-            None => None
+            None => None,
         }
     }
 
@@ -132,7 +132,7 @@ impl Weight {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
             Some(wu) => Some(Weight::from_wu(wu)),
-            None => None
+            None => None,
         }
     }
 
@@ -143,7 +143,7 @@ impl Weight {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
             Some(wu) => Some(Weight::from_wu(wu)),
-            None => None
+            None => None,
         }
     }
 }
