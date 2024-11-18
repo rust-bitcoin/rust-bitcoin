@@ -380,6 +380,15 @@ impl Witness {
         }
     }
 
+    /// Returns the third-to-last element in the witness, if any.
+    pub fn third_to_last(&self) -> Option<&[u8]> {
+        if self.witness_elements <= 2 {
+            None
+        } else {
+            self.nth(self.witness_elements - 3)
+        }
+    }
+
     /// Return the nth element in the witness, if any
     pub fn nth(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
@@ -394,19 +403,15 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
-        self.last().and_then(|last| {
-            // From BIP341:
-            // If there are at least two witness elements, and the first byte of
-            // the last element is 0x50, this last element is called annex a
-            // and is removed from the witness stack.
-            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                self.nth(self.len() - 3).map(Script::from_bytes)
-            } else if self.len() >= 2 {
-                self.nth(self.len() - 2).map(Script::from_bytes)
-            } else {
-                None
+            if self.is_empty() {
+                return None;
             }
-        })
+
+            if self.taproot_annex().is_some() {
+                self.third_to_last().map(Script::from_bytes)
+            } else {
+                self.second_to_last().map(Script::from_bytes)
+            }
     }
 
     /// Get the taproot control block following BIP341 rules.
@@ -417,19 +422,15 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn taproot_control_block(&self) -> Option<&[u8]> {
-        self.last().and_then(|last| {
-            // From BIP341:
-            // If there are at least two witness elements, and the first byte of
-            // the last element is 0x50, this last element is called annex a
-            // and is removed from the witness stack.
-            if self.len() >= 3 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                self.nth(self.len() - 2)
-            } else if self.len() >= 2 {
-                Some(last)
-            } else {
-                None
+            if self.is_empty() {
+                return None;
             }
-        })
+
+            if self.taproot_annex().is_some() {
+                self.second_to_last()
+            } else {
+                self.last()
+            }
     }
 
     /// Get the taproot annex following BIP341 rules.
@@ -754,6 +755,26 @@ mod test {
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
         assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
+    }
+
+    #[test]
+    fn test_get_tapscript_from_keypath() {
+        let signature = hex!("deadbeef");
+        // annex starting with 0x50 causes the branching logic.
+        let annex = hex!("50");
+
+        let witness_vec = vec![signature.clone()];
+        let witness_vec_annex = vec![signature.clone(), annex];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
+        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+
+        // With or without annex, no tapscript should be returned.
+        assert_eq!(witness.tapscript(), None);
+        assert_eq!(witness_annex.tapscript(), None);
     }
 
     #[test]
