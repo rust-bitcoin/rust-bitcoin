@@ -217,27 +217,45 @@ impl SignedAmount {
     /// Consider using `unsigned_abs` which is often more practical.
     ///
     /// Returns [`None`] if overflow occurred. (`self == MIN`)
-    pub fn checked_abs(self) -> Option<SignedAmount> { self.0.checked_abs().map(SignedAmount) }
+    pub const fn checked_abs(self) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_abs() {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
+    }
 
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
-        self.0.checked_add(rhs.0).map(SignedAmount)
+    pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_add(rhs.0) {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
     }
 
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
-        self.0.checked_sub(rhs.0).map(SignedAmount)
+    pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_sub(rhs.0) {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
     }
 
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
-        self.0.checked_mul(rhs).map(SignedAmount)
+    pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_mul(rhs) {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
     }
 
     /// Checked integer division.
@@ -245,15 +263,23 @@ impl SignedAmount {
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
-        self.0.checked_div(rhs).map(SignedAmount)
+    pub const fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_div(rhs) {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
     }
 
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
-        self.0.checked_rem(rhs).map(SignedAmount)
+    pub const fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
+        // No `map()` in const context.
+        match self.0.checked_rem(rhs) {
+            Some(res) => Some(SignedAmount(res)),
+            None => None,
+        }
     }
 
     /// Unchecked addition.

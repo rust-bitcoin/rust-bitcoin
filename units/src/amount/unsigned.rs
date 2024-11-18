@@ -196,28 +196,48 @@ impl Amount {
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_add(self, rhs: Amount) -> Option<Amount> {
-        self.0.checked_add(rhs.0).map(Amount)
+    pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
+        // No `map()` in const context.
+        match self.0.checked_add(rhs.0) {
+            Some(res) => Some(Amount(res)),
+            None => None,
+        }
     }
 
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_sub(self, rhs: Amount) -> Option<Amount> {
-        self.0.checked_sub(rhs.0).map(Amount)
+    pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
+        // No `map()` in const context.
+        match self.0.checked_sub(rhs.0) {
+            Some(res) => Some(Amount(res)),
+            None => None,
+        }
     }
 
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Amount> { self.0.checked_mul(rhs).map(Amount) }
+    pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
+        // No `map()` in const context.
+        match self.0.checked_mul(rhs) {
+            Some(res) => Some(Amount(res)),
+            None => None,
+        }
+    }
 
     /// Checked integer division.
     ///
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_div(self, rhs: u64) -> Option<Amount> { self.0.checked_div(rhs).map(Amount) }
+    pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
+        // No `map()` in const context.
+        match self.0.checked_div(rhs) {
+            Some(res) => Some(Amount(res)),
+            None => None,
+        }
+    }
 
     /// Checked weight ceiling division.
     ///
@@ -227,12 +247,19 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
-    pub fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
-        let sats = self.0.checked_mul(1_000)?;
+    pub const fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
         let wu = rhs.to_wu();
-
-        let fee_rate = sats.checked_add(wu.checked_sub(1)?)?.checked_div(wu)?;
-        Some(FeeRate::from_sat_per_kwu(fee_rate))
+        // No `?` operator in const context.
+        if let Some(sats) = self.0.checked_mul(1_000) {
+            if let Some(wu_minus_one) = wu.checked_sub(1) {
+                if let Some(sats_plus_wu_minus_one) = sats.checked_add(wu_minus_one) {
+                    if let Some(fee_rate) = sats_plus_wu_minus_one.checked_div(wu) {
+                        return Some(FeeRate::from_sat_per_kwu(fee_rate));
+                    }
+                }
+            }
+        }
+        None
     }
 
     /// Checked weight floor division.
@@ -242,15 +269,27 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
-    pub fn checked_div_by_weight_floor(self, rhs: Weight) -> Option<FeeRate> {
-        let fee_rate = self.0.checked_mul(1_000)?.checked_div(rhs.to_wu())?;
-        Some(FeeRate::from_sat_per_kwu(fee_rate))
+    pub const fn checked_div_by_weight_floor(self, rhs: Weight) -> Option<FeeRate> {
+        // No `?` operator in const context.
+        match self.0.checked_mul(1_000) {
+            Some(res) => match res.checked_div(rhs.to_wu()) {
+                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
+                None => None,
+            },
+            None => None,
+        }
     }
 
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub fn checked_rem(self, rhs: u64) -> Option<Amount> { self.0.checked_rem(rhs).map(Amount) }
+    pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
+        // No `map()` in const context.
+        match self.0.checked_rem(rhs) {
+            Some(res) => Some(Amount(res)),
+            None => None,
+        }
+    }
 
     /// Unchecked addition.
     ///
