@@ -627,8 +627,11 @@ impl Psbt {
 
     /// Gets the input at `input_index` after checking that it is a valid index.
     fn checked_input(&self, input_index: usize) -> Result<&Input, IndexOutOfBoundsError> {
-        self.check_index_is_within_bounds(input_index)?;
-        Ok(&self.inputs[input_index])
+        // No `?` operator in const context.
+        match self.check_index_is_within_bounds(input_index) {
+            Ok(_) => Ok(&self.inputs[input_index]),
+            Err(e) => Err(e),
+        }
     }
 
     /// Checks `input_index` is within bounds for the PSBT `inputs` array and
