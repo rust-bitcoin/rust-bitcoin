@@ -147,6 +147,18 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// Total size includes the witness data (for base size see [`Self::base_size`]).
         fn total_size(&self) -> usize { self.base_size() + self.witness.size() }
+
+        /// Retruns the [`Amount`] this input contributes towards a new transaction target.
+        ///
+        /// It's not possible to know the corresponding output_value without having access to the
+        /// deseralized transaction, therefore the parameter output_value is required.  The
+        /// transaction can be found over RPC using the [`Txid`] from the previous_output field of
+        /// this [`TxIn`].
+        fn effective_value(&self, fee_rate: FeeRate, output_value: Amount) -> Option<SignedAmount> {
+            let weight = Weight::from_vb(self.total_size() as u64)?;
+            let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
+            output_value.to_signed().ok()?.checked_sub(signed_input_fee)
+        }
     }
 }
 
@@ -793,6 +805,7 @@ impl Decodable for Transaction {
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `satisfaction_weight` - satisfied spending conditions weight.
+#[deprecated(since = "TBD", note = "Use `TxIn.effective_value()` instead")]
 pub fn effective_value(
     fee_rate: FeeRate,
     satisfaction_weight: Weight,
