@@ -14,7 +14,7 @@
     <a href="https://docs.rs/bitcoin"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-bitcoin-green"/></a>
     <a href="https://blog.rust-lang.org/2021/11/01/Rust-1.63.0.html"><img alt="Rustc Version 1.63.0+" src="https://img.shields.io/badge/rustc-1.63.0%2B-lightgrey.svg"/></a>
     <a href="https://gnusha.org/bitcoin-rust/"><img alt="Chat on IRC" src="https://img.shields.io/badge/irc-%23bitcoin--rust%20on%20libera.chat-blue"></a>
-    <a href="https://github.com/model-checking/kani"><imp alt="kani" src="https://github.com/rust-bitcoin/rust-bitcoin/actions/workflows/kani.yaml/badge.svg"></a>
+    <a href="https://github.com/model-checking/kani"><img alt="kani" src="https://github.com/rust-bitcoin/rust-bitcoin/workflows/Kani%20CI/badge.svg"></a>
   </p>
 </div>
 
@@ -49,7 +49,7 @@ are no plans to do so. Of course, patches to fix specific consensus incompatibil
 
 ### Support for 16-bit pointer sizes
 
-16-bit pointer sizes are not supported and we can't promise they will be. If you care about them
+16-bit pointer sizes are not supported, and we can't promise they will be. If you care about them
 please let us know, so we can know how large the interest is and possibly decide to support them.
 
 ### Semver compliance
@@ -103,13 +103,6 @@ current stable one (see MSRV section).
 
 ## Building
 
-The cargo feature `std` is enabled by default. At least one of the features `std` or `no-std` or
-both must be enabled.
-
-Enabling the `no-std` feature does not disable `std`. To disable the `std` feature you must disable
-default features. The `no-std` feature only enables additional features required for this crate to
-be usable without `std`. Both can be enabled without conflict.
-
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
 
 ```
@@ -126,6 +119,15 @@ cargo test
 
 Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more
 detailed instructions.
+
+### No-std support
+
+The `std` cargo feature is enabled by default. To build this project without the Rust standard
+library, use the `--no-default-features` flag or set `default-features = false` in your dependency
+declaration when adding it to your project.
+
+For embedded device examples, see [`bitcoin/embedded`](https://github.com/rust-bitcoin/rust-bitcoin/tree/master/bitcoin/embedded)
+or [`hashes/embedded`](https://github.com/rust-bitcoin/rust-bitcoin/tree/master/hashes/embedded).
 
 ### Just
 
