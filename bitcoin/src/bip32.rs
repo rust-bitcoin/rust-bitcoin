@@ -880,7 +880,7 @@ impl Xpub {
         ret
     }
 
-    /// Returns the HASH160 of the chaincode
+    /// Returns the HASH160 of the public key component of the xpub
     pub fn identifier(&self) -> XKeyIdentifier {
         XKeyIdentifier(hash160::Hash::hash(&self.public_key.serialize()))
     }
