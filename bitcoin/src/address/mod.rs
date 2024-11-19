@@ -383,6 +383,9 @@ impl<V: NetworkValidation> Address<V> {
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
         unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
     }
+
+    /// Marks the network of this address as unchecked.
+    pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address(self.0, PhantomData) }
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
