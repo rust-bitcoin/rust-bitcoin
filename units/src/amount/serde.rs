@@ -24,7 +24,7 @@ use core::fmt;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[cfg(feature = "alloc")]
+#[cfg(feature = "alloc")] // This is because `to_float_in` uses `to_string`.
 use super::Denomination;
 use super::{Amount, ParseAmountError, SignedAmount};
 
