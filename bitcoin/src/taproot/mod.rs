@@ -68,7 +68,7 @@ crate::internal_macros::define_extension_trait! {
             let mut eng = sha256t::Hash::<TapLeafTag>::engine();
             ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
             script.consensus_encode(&mut eng).expect("engines don't error");
-            let inner = sha256t::Hash::<TapTweakTag>::from_engine(eng);
+            let inner = sha256t::Hash::<TapLeafTag>::from_engine(eng);
             TapLeafHash::from_byte_array(inner.to_byte_array())
         }
     }
