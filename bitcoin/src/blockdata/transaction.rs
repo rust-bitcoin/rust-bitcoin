@@ -863,7 +863,7 @@ where
         |(count, partial_input_weight, inputs_with_witnesses), prediction| {
             (
                 count + 1,
-                partial_input_weight + prediction.weight().to_wu() as usize,
+                partial_input_weight + prediction.witness_weight().to_wu() as usize,
                 inputs_with_witnesses + (prediction.witness_size > 0) as usize,
             )
         },
@@ -937,7 +937,7 @@ pub const fn predict_weight_from_slices(
     let mut i = 0;
     while i < inputs.len() {
         let prediction = inputs[i];
-        partial_input_weight += prediction.weight().to_wu() as usize;
+        partial_input_weight += prediction.witness_weight().to_wu() as usize;
         inputs_with_witnesses += (prediction.witness_size > 0) as usize;
         i += 1;
     }
@@ -1142,7 +1142,16 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    #[deprecated(since = "TBD", note = "use `InputWeightPrediction::witness_weight()` instead")]
     pub const fn weight(&self) -> Weight {
+        Self::witness_weight(self)
+    }
+
+    /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
+    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    ///
+    /// See also [`InputWeightPrediction::total_weight`]
+    pub const fn witness_weight(&self) -> Weight {
         Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
     }
 }
@@ -1941,16 +1950,16 @@ mod tests {
 
         // Confirm signature grinding input weight predictions are aligned with constants.
         assert_eq!(
-            InputWeightPrediction::ground_p2wpkh(0).weight(),
-            InputWeightPrediction::P2WPKH_MAX.weight()
+            InputWeightPrediction::ground_p2wpkh(0).witness_weight(),
+            InputWeightPrediction::P2WPKH_MAX.witness_weight()
         );
         assert_eq!(
-            InputWeightPrediction::ground_nested_p2wpkh(0).weight(),
-            InputWeightPrediction::NESTED_P2WPKH_MAX.weight()
+            InputWeightPrediction::ground_nested_p2wpkh(0).witness_weight(),
+            InputWeightPrediction::NESTED_P2WPKH_MAX.witness_weight()
         );
         assert_eq!(
-            InputWeightPrediction::ground_p2pkh_compressed(0).weight(),
-            InputWeightPrediction::P2PKH_COMPRESSED_MAX.weight()
+            InputWeightPrediction::ground_p2pkh_compressed(0).witness_weight(),
+            InputWeightPrediction::P2PKH_COMPRESSED_MAX.witness_weight()
         );
     }
 
