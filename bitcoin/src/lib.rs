@@ -64,6 +64,9 @@ pub extern crate base64;
 /// Bitcoin base58 encoding and decoding.
 pub extern crate base58;
 
+/// Re-export the `bech32` crate.
+pub extern crate bech32;
+
 /// Rust implementation of cryptographic hash function algorithms.
 pub extern crate hashes;
 
