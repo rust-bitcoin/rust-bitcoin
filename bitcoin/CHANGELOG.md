@@ -1,3 +1,10 @@
+# 0.32.5 - 2024-11-27
+
+- Backport - Re-export `bech32` crate [#3662](https://github.com/rust-bitcoin/rust-bitcoin/pull/3662)
+- Backport - Add API for extracting the inner payload of `RawNetworkMessage` [#3523](https://github.com/rust-bitcoin/rust-bitcoin/pull/3523)
+- Backport - Fix bug in witness stack getters [#3626](https://github.com/rust-bitcoin/rust-bitcoin/pull/3626)
+- Backport - address: Add `Address::into_unchecked` [#3655](https://github.com/rust-bitcoin/rust-bitcoin/pull/3655)
+
 # 0.32.4 - 2024-10-24
 
 - Bound decode methods on `Read`, rather than `BufRead` [#3173](https://github.com/rust-bitcoin/rust-bitcoin/pull/3173)
