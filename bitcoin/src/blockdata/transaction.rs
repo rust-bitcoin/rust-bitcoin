@@ -1965,6 +1965,21 @@ mod tests {
     }
 
     #[test]
+    fn weight_prediction_const_from_slices() {
+        let predict = [
+            InputWeightPrediction::P2WPKH_MAX,
+            InputWeightPrediction::NESTED_P2WPKH_MAX,
+            InputWeightPrediction::P2PKH_COMPRESSED_MAX,
+            InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX,
+            InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH,
+            InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH
+        ];
+
+        let weight = predict_weight_from_slices(&predict, &[1]);
+        assert_eq!(weight, Weight::from_wu(2493));
+    }
+
+    #[test]
     fn sequence_debug_output() {
         let seq = Sequence::from_seconds_floor(1000);
         println!("{:?}", seq)
