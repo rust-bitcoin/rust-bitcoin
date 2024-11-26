@@ -851,19 +851,13 @@ where
     I: IntoIterator<Item = InputWeightPrediction>,
     O: IntoIterator<Item = usize>,
 {
-    // This fold() does three things:
-    // 1) Counts the inputs and returns the sum as `input_count`.
-    // 2) Sums all of the input weights and returns the sum as `partial_input_weight`
-    //    For every input: script_size * 4 + witness_size
-    //    Since script_size is non-witness data, it gets a 4x multiplier.
-    // 3) Counts the number of inputs that have a witness data and returns the count as
-    //    `num_inputs_with_witnesses`.
-    let (input_count, partial_input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
+    // sum input_weights, input_count and count of inputs with witness data
+    let (input_count, input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
         (0, 0, 0),
-        |(count, partial_input_weight, inputs_with_witnesses), prediction| {
+        |(count, input_weight, inputs_with_witnesses), prediction| {
             (
                 count + 1,
-                partial_input_weight + prediction.weight().to_wu() as usize,
+                input_weight + prediction.total_weight().to_wu() as usize,
                 inputs_with_witnesses + (prediction.witness_size > 0) as usize,
             )
         },
@@ -882,7 +876,7 @@ where
     );
     predict_weight_internal(
         input_count,
-        partial_input_weight,
+        input_weight,
         inputs_with_witnesses,
         output_count,
         output_scripts_size,
@@ -891,15 +885,11 @@ where
 
 const fn predict_weight_internal(
     input_count: usize,
-    partial_input_weight: usize,
+    input_weight: usize,
     inputs_with_witnesses: usize,
     output_count: usize,
     output_scripts_size: usize,
 ) -> Weight {
-    // Lengths of txid, index and sequence: (32, 4, 4).
-    // Multiply the lengths by 4 since the fields are all non-witness fields.
-    let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
-
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
     let non_input_size =
@@ -937,7 +927,7 @@ pub const fn predict_weight_from_slices(
     let mut i = 0;
     while i < inputs.len() {
         let prediction = inputs[i];
-        partial_input_weight += prediction.weight().to_wu() as usize;
+        partial_input_weight += prediction.witness_weight().to_wu() as usize;
         inputs_with_witnesses += (prediction.witness_size > 0) as usize;
         i += 1;
     }
@@ -1142,7 +1132,27 @@ impl InputWeightPrediction {
 
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    #[deprecated(since = "TBD", note = "use `InputWeightPrediction::witness_weight()` instead")]
     pub const fn weight(&self) -> Weight {
+        Self::witness_weight(self)
+    }
+
+    /// Computes the signature, prevout (txid, index), and sequence weights of this weight
+    /// prediction.
+    ///
+    /// See also [`InputWeightPrediction::witness_weight`]
+    pub const fn total_weight(&self) -> Weight {
+        // `impl const Trait` is currently unavailable: rust/issues/67792
+        // Convert to u64s because we can't use `Add` in const context.
+        let weight = TX_IN_BASE_WEIGHT.to_wu() + Self::witness_weight(self).to_wu();
+        Weight::from_wu(weight)
+    }
+
+    /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
+    /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
+    ///
+    /// See also [`InputWeightPrediction::total_weight`]
+    pub const fn witness_weight(&self) -> Weight {
         Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
     }
 }
@@ -1941,16 +1951,16 @@ mod tests {
 
         // Confirm signature grinding input weight predictions are aligned with constants.
         assert_eq!(
-            InputWeightPrediction::ground_p2wpkh(0).weight(),
-            InputWeightPrediction::P2WPKH_MAX.weight()
+            InputWeightPrediction::ground_p2wpkh(0).witness_weight(),
+            InputWeightPrediction::P2WPKH_MAX.witness_weight()
         );
         assert_eq!(
-            InputWeightPrediction::ground_nested_p2wpkh(0).weight(),
-            InputWeightPrediction::NESTED_P2WPKH_MAX.weight()
+            InputWeightPrediction::ground_nested_p2wpkh(0).witness_weight(),
+            InputWeightPrediction::NESTED_P2WPKH_MAX.witness_weight()
         );
         assert_eq!(
-            InputWeightPrediction::ground_p2pkh_compressed(0).weight(),
-            InputWeightPrediction::P2PKH_COMPRESSED_MAX.weight()
+            InputWeightPrediction::ground_p2pkh_compressed(0).witness_weight(),
+            InputWeightPrediction::P2PKH_COMPRESSED_MAX.witness_weight()
         );
     }
 
