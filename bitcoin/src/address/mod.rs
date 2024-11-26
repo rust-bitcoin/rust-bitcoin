@@ -382,6 +382,9 @@ impl<V: NetworkValidation> Address<V> {
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
         unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
     }
+
+    /// Marks the network of this address as unchecked.
+    pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address(self.0, PhantomData) }
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
@@ -773,16 +776,7 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn assume_checked(self) -> Address {
-        use AddressInner::*;
-
-        let inner = match self.0 {
-            P2pkh { hash, network } => P2pkh { hash, network },
-            P2sh { hash, network } => P2sh { hash, network },
-            Segwit { program, hrp } => Segwit { program, hrp },
-        };
-        Address(inner, PhantomData)
-    }
+    pub fn assume_checked(self) -> Address { Address(self.0, PhantomData) }
 }
 
 impl From<Address> for script::ScriptBuf {
