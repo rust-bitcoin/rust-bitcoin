@@ -920,14 +920,14 @@ pub const fn predict_weight_from_slices(
     inputs: &[InputWeightPrediction],
     output_script_lens: &[usize],
 ) -> Weight {
-    let mut partial_input_weight = 0;
+    let mut input_weight = 0;
     let mut inputs_with_witnesses = 0;
 
     // for loops not supported in const fn
     let mut i = 0;
     while i < inputs.len() {
         let prediction = inputs[i];
-        partial_input_weight += prediction.witness_weight().to_wu() as usize;
+        input_weight += prediction.total_weight().to_wu() as usize;
         inputs_with_witnesses += (prediction.witness_size > 0) as usize;
         i += 1;
     }
@@ -943,7 +943,7 @@ pub const fn predict_weight_from_slices(
 
     predict_weight_internal(
         inputs.len(),
-        partial_input_weight,
+        input_weight,
         inputs_with_witnesses,
         output_script_lens.len(),
         output_scripts_size,
