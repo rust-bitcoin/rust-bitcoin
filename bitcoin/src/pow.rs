@@ -371,12 +371,14 @@ define_extension_trait! {
         /// Take the example of the first difficulty adjustment. Block 2016 introduces a new [`CompactTarget`],
         /// which takes the net timespan between Block 2015 and Block 0, and recomputes the difficulty.
         ///
+        /// To calculate the timespan, users should first convert their u32 timestamps to i64s before subtracting them
+        ///
         /// # Returns
         ///
         /// The expected [`CompactTarget`] recalculation.
         fn from_next_work_required(
             last: CompactTarget,
-            timespan: u64,
+            timespan: i64,
             params: impl AsRef<Params>,
         ) -> CompactTarget {
             let params = params.as_ref();
@@ -387,11 +389,11 @@ define_extension_trait! {
             // ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
             let min_timespan = params.pow_target_timespan >> 2; // Lines 56/57
             let max_timespan = params.pow_target_timespan << 2; // Lines 58/59
-            let actual_timespan = timespan.clamp(min_timespan, max_timespan);
+            let actual_timespan = timespan.clamp(min_timespan.into(), max_timespan.into());
             let prev_target: Target = last.into();
             let maximum_retarget = prev_target.max_transition_threshold(params); // bnPowLimit
             let retarget = prev_target.0; // bnNew
-            let retarget = retarget.mul(actual_timespan.into());
+            let retarget = retarget.mul(u128::try_from(actual_timespan).expect("clamped value won't be negative").into());
             let retarget = retarget.div(params.pow_target_timespan.into());
             let retarget = Target(retarget);
             if retarget.ge(&maximum_retarget) {
@@ -1750,8 +1752,8 @@ mod tests {
     fn compact_target_from_upwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
-        let start_time: u64 = 1598918400; // Genesis block unix time
-        let end_time: u64 = 1599332177; // Block 2015 unix time
+        let start_time: i64 = 1598918400; // Genesis block unix time
+        let end_time: i64 = 1599332177; // Block 2015 unix time
         let timespan = end_time - start_time; // Faster than expected
         let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
@@ -1762,8 +1764,8 @@ mod tests {
     fn compact_target_from_downwards_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
-        let start_time: u64 = 1599332844; // Block 2016 unix time
-        let end_time: u64 = 1600591200; // Block 4031 unix time
+        let start_time: i64 = 1599332844; // Block 2016 unix time
+        let end_time: i64 = 1600591200; // Block 4031 unix time
         let timespan = end_time - start_time; // Slower than expected
         let adjustment = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
         let adjustment_bits = CompactTarget::from_consensus(503397348); // Block 4032 compact target
@@ -1829,7 +1831,18 @@ mod tests {
     fn compact_target_from_maximum_upward_difficulty_adjustment() {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503403001);
-        let timespan = (0.2 * params.pow_target_timespan as f64) as u64;
+        let timespan = params.pow_target_timespan / 5;
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), params);
+        let want =
+            Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn compact_target_from_maximum_upward_difficulty_adjustment_with_negative_timespan() {
+        let params = Params::new(crate::Network::Signet);
+        let starting_bits = CompactTarget::from_consensus(503403001);
+        let timespan: i64 = -i64::from(params.pow_target_timespan);
         let got = CompactTarget::from_next_work_required(starting_bits, timespan, params);
         let want =
             Target::from_compact(starting_bits).min_transition_threshold().to_compact_lossy();
@@ -1841,7 +1854,7 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(403403001); // High difficulty for Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want =
             Target::from_compact(starting_bits).max_transition_threshold(params).to_compact_lossy();
         assert_eq!(got, want);
@@ -1852,7 +1865,7 @@ mod tests {
         let params = Params::new(crate::Network::Signet);
         let starting_bits = CompactTarget::from_consensus(503543726); // Genesis compact target on Signet
         let timespan = 5 * params.pow_target_timespan; // Really slow.
-        let got = CompactTarget::from_next_work_required(starting_bits, timespan, &params);
+        let got = CompactTarget::from_next_work_required(starting_bits, timespan.into(), &params);
         let want = params.max_attainable_target.to_compact_lossy();
         assert_eq!(got, want);
     }
