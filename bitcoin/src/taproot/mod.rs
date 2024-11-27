@@ -7,7 +7,7 @@
 pub mod merkle_branch;
 pub mod serialized_signature;
 
-use core::cmp::Reverse;
+use core::cmp::{Ordering, Reverse};
 use core::fmt;
 use core::iter::FusedIterator;
 
@@ -789,7 +789,7 @@ impl DoubleEndedIterator for LeafNodes<'_> {
 ///
 /// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the Merkle
 /// root [`NodeInfo`].
-#[derive(Debug, Clone, PartialOrd, Ord)]
+#[derive(Debug, Clone)]
 pub struct NodeInfo {
     /// Merkle hash for this node.
     pub(crate) hash: TapNodeHash,
@@ -797,6 +797,24 @@ pub struct NodeInfo {
     pub(crate) leaves: Vec<LeafNode>,
     /// Tracks information on hidden nodes below this node.
     pub(crate) has_hidden_nodes: bool,
+}
+
+/// Explicitly implement Ord so future changes to NodeInfo (e.g. adding a new field) won't result in
+/// potentially changing addresses out from under users
+impl Ord for NodeInfo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.hash.cmp(&other.hash) {
+            Ordering::Equal => match self.leaves.cmp(&other.leaves) {
+                Ordering::Equal => self.has_hidden_nodes.cmp(&other.has_hidden_nodes),
+                other => other,
+            },
+            other => other,
+        }
+    }
+}
+
+impl PartialOrd for NodeInfo {
+    fn partial_cmp(&self, other: &NodeInfo) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 
 impl PartialEq for NodeInfo {
