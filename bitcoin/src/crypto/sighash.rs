@@ -1862,6 +1862,7 @@ mod tests {
             #[serde(rename = "scriptPubKey")]
             script_pubkey: ScriptBuf,
             #[serde(rename = "amountSats")]
+            #[serde(with = "crate::amount::serde::as_sat")]
             value: Amount,
         }
 
