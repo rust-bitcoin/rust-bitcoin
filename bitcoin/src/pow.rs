@@ -357,7 +357,7 @@ define_extension_trait! {
         /// ref: <https://github.com/bitcoin/bitcoin/blob/0503cbea9aab47ec0a87d34611e5453158727169/src/pow.cpp>
         ///
         /// Given the previous Target, represented as a [`CompactTarget`], the difficulty is adjusted
-        /// by taking the timespan between them, and multipling the current [`CompactTarget`] by a factor
+        /// by taking the timespan between them, and multiplying the current [`CompactTarget`] by a factor
         /// of the net timespan and expected timespan. The [`CompactTarget`] may not adjust by more than
         /// a factor of 4, or adjust beyond the maximum threshold for the network.
         ///
