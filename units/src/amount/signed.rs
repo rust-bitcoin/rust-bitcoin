@@ -10,6 +10,7 @@ use core::{default, fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
     DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
@@ -92,12 +93,14 @@ impl SignedAmount {
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
             // (negative, amount)
-            (false, sat) if sat > i64::MAX as u64 =>
-                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_big(true))),
+            (false, sat) if sat > i64::MAX as u64 => Err(ParseAmountError(
+                ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
+            )),
             (false, sat) => Ok(SignedAmount(sat as i64)),
             (true, sat) if sat == i64::MIN.unsigned_abs() => Ok(SignedAmount(i64::MIN)),
-            (true, sat) if sat > i64::MIN.unsigned_abs() =>
-                Err(ParseAmountError::OutOfRange(OutOfRangeError::too_small())),
+            (true, sat) if sat > i64::MIN.unsigned_abs() => Err(ParseAmountError(
+                ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small()),
+            )),
             (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
@@ -415,7 +418,7 @@ impl FromStr for SignedAmount {
         let result = SignedAmount::from_str_with_denomination(s);
 
         match result {
-            Err(ParseError::MissingDenomination(_)) => {
+            Err(ParseError(ParseErrorInner::MissingDenomination(_))) => {
                 let d = SignedAmount::from_str_in(s, Denomination::Satoshi);
 
                 if d == Ok(SignedAmount::ZERO) {

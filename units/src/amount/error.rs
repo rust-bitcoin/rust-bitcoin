@@ -11,8 +11,10 @@ use super::INPUT_STRING_LEN_LIMIT;
 
 /// An error during amount parsing amount with denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum ParseError {
+pub struct ParseError(pub(crate) ParseErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ParseErrorInner {
     /// Invalid amount.
     Amount(ParseAmountError),
     /// Invalid denomination.
@@ -22,42 +24,43 @@ pub enum ParseError {
 }
 
 internals::impl_from_infallible!(ParseError);
+internals::impl_from_infallible!(ParseErrorInner);
 
 impl From<ParseAmountError> for ParseError {
-    fn from(e: ParseAmountError) -> Self { Self::Amount(e) }
+    fn from(e: ParseAmountError) -> Self { Self(ParseErrorInner::Amount(e)) }
 }
 
 impl From<ParseDenominationError> for ParseError {
-    fn from(e: ParseDenominationError) -> Self { Self::Denomination(e) }
+    fn from(e: ParseDenominationError) -> Self { Self(ParseErrorInner::Denomination(e)) }
 }
 
 impl From<OutOfRangeError> for ParseError {
-    fn from(e: OutOfRangeError) -> Self { Self::Amount(e.into()) }
+    fn from(e: OutOfRangeError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
 impl From<TooPreciseError> for ParseError {
-    fn from(e: TooPreciseError) -> Self { Self::Amount(e.into()) }
+    fn from(e: TooPreciseError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
 impl From<MissingDigitsError> for ParseError {
-    fn from(e: MissingDigitsError) -> Self { Self::Amount(e.into()) }
+    fn from(e: MissingDigitsError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
 impl From<InputTooLargeError> for ParseError {
-    fn from(e: InputTooLargeError) -> Self { Self::Amount(e.into()) }
+    fn from(e: InputTooLargeError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
 impl From<InvalidCharacterError> for ParseError {
-    fn from(e: InvalidCharacterError) -> Self { Self::Amount(e.into()) }
+    fn from(e: InvalidCharacterError) -> Self { Self(ParseErrorInner::Amount(e.into())) }
 }
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ParseError::Amount(error) => write_err!(f, "invalid amount"; error),
-            ParseError::Denomination(error) => write_err!(f, "invalid denomination"; error),
+        match self.0 {
+            ParseErrorInner::Amount(ref e) => write_err!(f, "invalid amount"; e),
+            ParseErrorInner::Denomination(ref e) => write_err!(f, "invalid denomination"; e),
             // We consider this to not be a source because it currently doesn't contain useful info.
-            ParseError::MissingDenomination(_) =>
+            ParseErrorInner::MissingDenomination(_) =>
                 f.write_str("the input doesn't contain a denomination"),
         }
     }
@@ -66,19 +69,21 @@ impl fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            ParseError::Amount(error) => Some(error),
-            ParseError::Denomination(error) => Some(error),
+        match self.0 {
+            ParseErrorInner::Amount(ref e) => Some(e),
+            ParseErrorInner::Denomination(ref e) => Some(e),
             // We consider this to not be a source because it currently doesn't contain useful info.
-            ParseError::MissingDenomination(_) => None,
+            ParseErrorInner::MissingDenomination(_) => None,
         }
     }
 }
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum ParseAmountError {
+pub struct ParseAmountError(pub(crate) ParseAmountErrorInner);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ParseAmountErrorInner {
     /// The amount is too big or too small.
     OutOfRange(OutOfRangeError),
     /// Amount has higher precision than supported by the type.
@@ -92,28 +97,31 @@ pub enum ParseAmountError {
 }
 
 impl From<TooPreciseError> for ParseAmountError {
-    fn from(value: TooPreciseError) -> Self { Self::TooPrecise(value) }
+    fn from(value: TooPreciseError) -> Self { Self(ParseAmountErrorInner::TooPrecise(value)) }
 }
 
 impl From<MissingDigitsError> for ParseAmountError {
-    fn from(value: MissingDigitsError) -> Self { Self::MissingDigits(value) }
+    fn from(value: MissingDigitsError) -> Self { Self(ParseAmountErrorInner::MissingDigits(value)) }
 }
 
 impl From<InputTooLargeError> for ParseAmountError {
-    fn from(value: InputTooLargeError) -> Self { Self::InputTooLarge(value) }
+    fn from(value: InputTooLargeError) -> Self { Self(ParseAmountErrorInner::InputTooLarge(value)) }
 }
 
 impl From<InvalidCharacterError> for ParseAmountError {
-    fn from(value: InvalidCharacterError) -> Self { Self::InvalidCharacter(value) }
+    fn from(value: InvalidCharacterError) -> Self {
+        Self(ParseAmountErrorInner::InvalidCharacter(value))
+    }
 }
 
 internals::impl_from_infallible!(ParseAmountError);
+internals::impl_from_infallible!(ParseAmountErrorInner);
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseAmountError::*;
+        use ParseAmountErrorInner::*;
 
-        match *self {
+        match self.0 {
             OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
             TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
             MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
@@ -126,9 +134,9 @@ impl fmt::Display for ParseAmountError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseAmountError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseAmountError::*;
+        use ParseAmountErrorInner::*;
 
-        match *self {
+        match self.0 {
             TooPrecise(ref error) => Some(error),
             InputTooLarge(ref error) => Some(error),
             OutOfRange(ref error) => Some(error),
@@ -195,7 +203,9 @@ impl fmt::Display for OutOfRangeError {
 impl std::error::Error for OutOfRangeError {}
 
 impl From<OutOfRangeError> for ParseAmountError {
-    fn from(value: OutOfRangeError) -> Self { ParseAmountError::OutOfRange(value) }
+    fn from(value: OutOfRangeError) -> Self {
+        ParseAmountError(ParseAmountErrorInner::OutOfRange(value))
+    }
 }
 
 /// Error returned when the input string has higher precision than satoshis.

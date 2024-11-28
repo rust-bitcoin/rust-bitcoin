@@ -12,6 +12,7 @@ use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use super::error::{ParseAmountErrorInner, ParseErrorInner};
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
@@ -103,7 +104,9 @@ impl Amount {
         let (negative, satoshi) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
         if negative {
-            return Err(ParseAmountError::OutOfRange(OutOfRangeError::negative()));
+            return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
+                OutOfRangeError::negative(),
+            )));
         }
         Ok(Amount::from_sat(satoshi))
     }
@@ -405,7 +408,7 @@ impl FromStr for Amount {
         let result = Amount::from_str_with_denomination(s);
 
         match result {
-            Err(ParseError::MissingDenomination(_)) => {
+            Err(ParseError(ParseErrorInner::MissingDenomination(_))) => {
                 let d = Amount::from_str_in(s, Denomination::Satoshi);
 
                 if d == Ok(Amount::ZERO) {

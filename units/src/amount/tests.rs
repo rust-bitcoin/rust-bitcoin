@@ -33,7 +33,9 @@ fn from_str_zero() {
         match s.parse::<Amount>() {
             Err(e) => assert_eq!(
                 e,
-                ParseError::Amount(ParseAmountError::OutOfRange(OutOfRangeError::negative()))
+                ParseError(ParseErrorInner::Amount(ParseAmountError(
+                    ParseAmountErrorInner::OutOfRange(OutOfRangeError::negative())
+                )))
             ),
             Ok(_) => panic!("unsigned amount from {}", s),
         }
@@ -321,7 +323,7 @@ fn parsing() {
     // more than 50 chars.
     assert_eq!(
         p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin),
-        Err(E::InputTooLarge(InputTooLargeError { len: 51 }))
+        Err(E(ParseAmountErrorInner::InputTooLarge(InputTooLargeError { len: 51 })))
     );
 }
 
@@ -731,10 +733,10 @@ fn serde_as_btc() {
     // errors
     let t: Result<T, serde_json::Error> =
         serde_json::from_str("{\"amt\": 1000000.000000001, \"samt\": 1}");
-    assert!(t
-        .unwrap_err()
-        .to_string()
-        .contains(&ParseAmountError::TooPrecise(TooPreciseError { position: 16 }).to_string()));
+    assert!(t.unwrap_err().to_string().contains(
+        &ParseAmountError(ParseAmountErrorInner::TooPrecise(TooPreciseError { position: 16 }))
+            .to_string()
+    ));
     let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -1, \"samt\": 1}");
     assert!(t.unwrap_err().to_string().contains(&OutOfRangeError::negative().to_string()));
 }
