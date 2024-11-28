@@ -432,6 +432,16 @@ impl core::iter::Sum for Amount {
     }
 }
 
+impl<'a> core::iter::Sum<&'a Amount> for Amount {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Amount>,
+    {
+        let sats: u64 = iter.map(|amt| amt.0).sum();
+        Amount::from_sat(sats)
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

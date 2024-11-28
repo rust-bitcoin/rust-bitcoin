@@ -825,8 +825,8 @@ fn serde_as_sat_opt() {
 
 #[test]
 fn sum_amounts() {
-    assert_eq!(Amount::from_sat(0), [].into_iter().sum::<Amount>());
-    assert_eq!(SignedAmount::from_sat(0), [].into_iter().sum::<SignedAmount>());
+    assert_eq!(Amount::from_sat(0), [].iter().sum::<Amount>());
+    assert_eq!(SignedAmount::from_sat(0), [].iter().sum::<SignedAmount>());
 
     let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
     let sum = amounts.into_iter().sum::<Amount>();
