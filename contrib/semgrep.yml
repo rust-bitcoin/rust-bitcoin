@@ -1,0 +1,13 @@
+rules:
+
+- id: consume-self-must-use
+  patterns:
+    - pattern: |-
+        pub fn $F(self, ...)
+    - pattern-not-regex: '\#\[must_use'
+  message: Use must_use on all functions that consume `self`.
+  paths:
+    exclude: ["units/src/amount/serde.rs"]
+  languages:
+    - rust
+  severity: ERROR

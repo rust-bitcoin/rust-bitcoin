@@ -565,6 +565,7 @@ enum DisplayStyle {
 pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
     /// happen it returns [`None`].
+    // nosemgrep: consume-self-must-use (doesn't work with trait methods).
     fn checked_sum(self) -> Option<R>;
 }
 
@@ -572,6 +573,7 @@ impl<T> CheckedSum<Amount> for T
 where
     T: Iterator<Item = Amount>,
 {
+    #[must_use = "`self` will be dropped if the result is not used"]
     fn checked_sum(mut self) -> Option<Amount> {
         let first = Some(self.next().unwrap_or_default());
 

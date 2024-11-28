@@ -199,6 +199,7 @@ impl SignedAmount {
     /// Returns a formatted string representing this [`Amount`] in the given denomination, suffixed
     /// with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
     }
@@ -206,9 +207,11 @@ impl SignedAmount {
     // Some arithmetic that doesn't fit in [`core::ops`] traits.
 
     /// Get the absolute value of this [`SignedAmount`].
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [`SignedAmount`].
@@ -216,18 +219,21 @@ impl SignedAmount {
     /// - `0` if the amount is zero
     /// - `1` if the amount is positive
     /// - `-1` if the amount is negative
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn signum(self) -> i64 { self.0.signum() }
 
     /// Checks if this [`SignedAmount`] is positive.
     ///
     /// Returns `true` if this [`SignedAmount`] is positive and `false` if
     /// this [`SignedAmount`] is zero or negative.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn is_positive(self) -> bool { self.0.is_positive() }
 
     /// Checks if this [`SignedAmount`] is negative.
     ///
     /// Returns `true` if this [`SignedAmount`] is negative and `false` if
     /// this [`SignedAmount`] is zero or positive.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn is_negative(self) -> bool { self.0.is_negative() }
 
     /// Returns the absolute value of this [`SignedAmount`].
@@ -235,6 +241,7 @@ impl SignedAmount {
     /// Consider using `unsigned_abs` which is often more practical.
     ///
     /// Returns [`None`] if overflow occurred. (`self == MIN`)
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_abs(self) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_abs() {
@@ -246,6 +253,7 @@ impl SignedAmount {
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
@@ -257,6 +265,7 @@ impl SignedAmount {
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
@@ -268,6 +277,7 @@ impl SignedAmount {
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
@@ -281,6 +291,7 @@ impl SignedAmount {
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
@@ -292,6 +303,7 @@ impl SignedAmount {
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub const fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
@@ -307,6 +319,7 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -316,11 +329,13 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
     ///
     /// Returns [`None`] if either `self`, `rhs` or the result is strictly negative.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn positive_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         if self.is_negative() || rhs.is_negative() || rhs > self {
             None
@@ -330,6 +345,7 @@ impl SignedAmount {
     }
 
     /// Converts to an unsigned amount.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
         if self.is_negative() {
             Err(OutOfRangeError::negative())

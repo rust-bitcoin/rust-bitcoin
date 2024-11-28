@@ -47,3 +47,7 @@ githooks-install:
 # Remove githooks
 githooks-remove:
   ./contrib/copy-githooks.sh -r
+
+# run `semgrep`
+semgrep:
+  semgrep scan units --error --no-rewrite-rule-ids --config units/contrib/semgrep.yml
