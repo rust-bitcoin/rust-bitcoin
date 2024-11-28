@@ -56,8 +56,7 @@ impl fmt::Display for ParseError {
         match self {
             ParseError::Amount(error) => write_err!(f, "invalid amount"; error),
             ParseError::Denomination(error) => write_err!(f, "invalid denomination"; error),
-            // We consider this to not be a source because it currently doesn't contain useful
-            // information
+            // We consider this to not be a source because it currently doesn't contain useful info.
             ParseError::MissingDenomination(_) =>
                 f.write_str("the input doesn't contain a denomination"),
         }
@@ -70,8 +69,7 @@ impl std::error::Error for ParseError {
         match self {
             ParseError::Amount(error) => Some(error),
             ParseError::Denomination(error) => Some(error),
-            // We consider this to not be a source because it currently doesn't contain useful
-            // information
+            // We consider this to not be a source because it currently doesn't contain useful info.
             ParseError::MissingDenomination(_) => None,
         }
     }
