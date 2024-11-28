@@ -9,11 +9,6 @@
 
 use core::fmt;
 
-use internals::debug_from_display;
-
-#[cfg(feature = "serde")]
-use crate::prelude::ToString;
-
 /// A script Opcode.
 ///
 /// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
@@ -28,6 +23,7 @@ use crate::prelude::ToString;
 ///   in contexts where only pushes are supposed to be allowed.
 /// </details>
 #[derive(Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Opcode {
     code: u8,
 }
@@ -61,16 +57,6 @@ macro_rules! all_opcodes {
         pub static OP_NOP2: Opcode = OP_CLTV;
         /// Previously called OP_NOP3.
         pub static OP_NOP3: Opcode = OP_CSV;
-
-        impl fmt::Display for Opcode {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                 match *self {
-                   $(
-                        $op => core::fmt::Display::fmt(stringify!($op), f),
-                    )+
-                }
-            }
-        }
     }
 }
 
@@ -439,15 +425,9 @@ impl From<u8> for Opcode {
     fn from(b: u8) -> Opcode { Opcode { code: b } }
 }
 
-debug_from_display!(Opcode);
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Opcode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
+impl fmt::Debug for Opcode {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        fmt::LowerHex::fmt(&self.code, f)
     }
 }
 
@@ -491,7 +471,7 @@ macro_rules! ordinary_opcode {
             fn with(b: Opcode) -> Self {
                 match b {
                     $( $op => { Ordinary::$op } ),*
-                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
+                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {:?}", b),
                 }
             }
 
@@ -544,23 +524,13 @@ mod tests {
 
     use super::*;
 
-    macro_rules! roundtrip {
+    macro_rules! check_debug_and_unique {
         ($unique:expr, $op:ident) => {
             assert_eq!($op, Opcode::from($op.to_u8()));
 
-            let s1 = format!("{}", $op);
-            let s2 = format!("{:?}", $op);
-            assert_eq!(s1, s2);
-            assert_eq!(s1, stringify!($op));
-            assert!($unique.insert(s1));
+            let s = format!("{:?}", $op);
+            assert!($unique.insert(s));
         };
-    }
-
-    #[test]
-    fn formatting_works() {
-        let op = all::OP_NOP;
-        let s = format!("{:>10}", op);
-        assert_eq!(s, "    OP_NOP");
     }
 
     #[test]
@@ -630,264 +600,264 @@ mod tests {
     }
 
     #[test]
-    fn str_roundtrip() {
+    fn debug_and_unique() {
         let mut unique = HashSet::new();
-        roundtrip!(unique, OP_PUSHBYTES_0);
-        roundtrip!(unique, OP_PUSHBYTES_1);
-        roundtrip!(unique, OP_PUSHBYTES_2);
-        roundtrip!(unique, OP_PUSHBYTES_3);
-        roundtrip!(unique, OP_PUSHBYTES_4);
-        roundtrip!(unique, OP_PUSHBYTES_5);
-        roundtrip!(unique, OP_PUSHBYTES_6);
-        roundtrip!(unique, OP_PUSHBYTES_7);
-        roundtrip!(unique, OP_PUSHBYTES_8);
-        roundtrip!(unique, OP_PUSHBYTES_9);
-        roundtrip!(unique, OP_PUSHBYTES_10);
-        roundtrip!(unique, OP_PUSHBYTES_11);
-        roundtrip!(unique, OP_PUSHBYTES_12);
-        roundtrip!(unique, OP_PUSHBYTES_13);
-        roundtrip!(unique, OP_PUSHBYTES_14);
-        roundtrip!(unique, OP_PUSHBYTES_15);
-        roundtrip!(unique, OP_PUSHBYTES_16);
-        roundtrip!(unique, OP_PUSHBYTES_17);
-        roundtrip!(unique, OP_PUSHBYTES_18);
-        roundtrip!(unique, OP_PUSHBYTES_19);
-        roundtrip!(unique, OP_PUSHBYTES_20);
-        roundtrip!(unique, OP_PUSHBYTES_21);
-        roundtrip!(unique, OP_PUSHBYTES_22);
-        roundtrip!(unique, OP_PUSHBYTES_23);
-        roundtrip!(unique, OP_PUSHBYTES_24);
-        roundtrip!(unique, OP_PUSHBYTES_25);
-        roundtrip!(unique, OP_PUSHBYTES_26);
-        roundtrip!(unique, OP_PUSHBYTES_27);
-        roundtrip!(unique, OP_PUSHBYTES_28);
-        roundtrip!(unique, OP_PUSHBYTES_29);
-        roundtrip!(unique, OP_PUSHBYTES_30);
-        roundtrip!(unique, OP_PUSHBYTES_31);
-        roundtrip!(unique, OP_PUSHBYTES_32);
-        roundtrip!(unique, OP_PUSHBYTES_33);
-        roundtrip!(unique, OP_PUSHBYTES_34);
-        roundtrip!(unique, OP_PUSHBYTES_35);
-        roundtrip!(unique, OP_PUSHBYTES_36);
-        roundtrip!(unique, OP_PUSHBYTES_37);
-        roundtrip!(unique, OP_PUSHBYTES_38);
-        roundtrip!(unique, OP_PUSHBYTES_39);
-        roundtrip!(unique, OP_PUSHBYTES_40);
-        roundtrip!(unique, OP_PUSHBYTES_41);
-        roundtrip!(unique, OP_PUSHBYTES_42);
-        roundtrip!(unique, OP_PUSHBYTES_43);
-        roundtrip!(unique, OP_PUSHBYTES_44);
-        roundtrip!(unique, OP_PUSHBYTES_45);
-        roundtrip!(unique, OP_PUSHBYTES_46);
-        roundtrip!(unique, OP_PUSHBYTES_47);
-        roundtrip!(unique, OP_PUSHBYTES_48);
-        roundtrip!(unique, OP_PUSHBYTES_49);
-        roundtrip!(unique, OP_PUSHBYTES_50);
-        roundtrip!(unique, OP_PUSHBYTES_51);
-        roundtrip!(unique, OP_PUSHBYTES_52);
-        roundtrip!(unique, OP_PUSHBYTES_53);
-        roundtrip!(unique, OP_PUSHBYTES_54);
-        roundtrip!(unique, OP_PUSHBYTES_55);
-        roundtrip!(unique, OP_PUSHBYTES_56);
-        roundtrip!(unique, OP_PUSHBYTES_57);
-        roundtrip!(unique, OP_PUSHBYTES_58);
-        roundtrip!(unique, OP_PUSHBYTES_59);
-        roundtrip!(unique, OP_PUSHBYTES_60);
-        roundtrip!(unique, OP_PUSHBYTES_61);
-        roundtrip!(unique, OP_PUSHBYTES_62);
-        roundtrip!(unique, OP_PUSHBYTES_63);
-        roundtrip!(unique, OP_PUSHBYTES_64);
-        roundtrip!(unique, OP_PUSHBYTES_65);
-        roundtrip!(unique, OP_PUSHBYTES_66);
-        roundtrip!(unique, OP_PUSHBYTES_67);
-        roundtrip!(unique, OP_PUSHBYTES_68);
-        roundtrip!(unique, OP_PUSHBYTES_69);
-        roundtrip!(unique, OP_PUSHBYTES_70);
-        roundtrip!(unique, OP_PUSHBYTES_71);
-        roundtrip!(unique, OP_PUSHBYTES_72);
-        roundtrip!(unique, OP_PUSHBYTES_73);
-        roundtrip!(unique, OP_PUSHBYTES_74);
-        roundtrip!(unique, OP_PUSHBYTES_75);
-        roundtrip!(unique, OP_PUSHDATA1);
-        roundtrip!(unique, OP_PUSHDATA2);
-        roundtrip!(unique, OP_PUSHDATA4);
-        roundtrip!(unique, OP_PUSHNUM_NEG1);
-        roundtrip!(unique, OP_RESERVED);
-        roundtrip!(unique, OP_PUSHNUM_1);
-        roundtrip!(unique, OP_PUSHNUM_2);
-        roundtrip!(unique, OP_PUSHNUM_3);
-        roundtrip!(unique, OP_PUSHNUM_4);
-        roundtrip!(unique, OP_PUSHNUM_5);
-        roundtrip!(unique, OP_PUSHNUM_6);
-        roundtrip!(unique, OP_PUSHNUM_7);
-        roundtrip!(unique, OP_PUSHNUM_8);
-        roundtrip!(unique, OP_PUSHNUM_9);
-        roundtrip!(unique, OP_PUSHNUM_10);
-        roundtrip!(unique, OP_PUSHNUM_11);
-        roundtrip!(unique, OP_PUSHNUM_12);
-        roundtrip!(unique, OP_PUSHNUM_13);
-        roundtrip!(unique, OP_PUSHNUM_14);
-        roundtrip!(unique, OP_PUSHNUM_15);
-        roundtrip!(unique, OP_PUSHNUM_16);
-        roundtrip!(unique, OP_NOP);
-        roundtrip!(unique, OP_VER);
-        roundtrip!(unique, OP_IF);
-        roundtrip!(unique, OP_NOTIF);
-        roundtrip!(unique, OP_VERIF);
-        roundtrip!(unique, OP_VERNOTIF);
-        roundtrip!(unique, OP_ELSE);
-        roundtrip!(unique, OP_ENDIF);
-        roundtrip!(unique, OP_VERIFY);
-        roundtrip!(unique, OP_RETURN);
-        roundtrip!(unique, OP_TOALTSTACK);
-        roundtrip!(unique, OP_FROMALTSTACK);
-        roundtrip!(unique, OP_2DROP);
-        roundtrip!(unique, OP_2DUP);
-        roundtrip!(unique, OP_3DUP);
-        roundtrip!(unique, OP_2OVER);
-        roundtrip!(unique, OP_2ROT);
-        roundtrip!(unique, OP_2SWAP);
-        roundtrip!(unique, OP_IFDUP);
-        roundtrip!(unique, OP_DEPTH);
-        roundtrip!(unique, OP_DROP);
-        roundtrip!(unique, OP_DUP);
-        roundtrip!(unique, OP_NIP);
-        roundtrip!(unique, OP_OVER);
-        roundtrip!(unique, OP_PICK);
-        roundtrip!(unique, OP_ROLL);
-        roundtrip!(unique, OP_ROT);
-        roundtrip!(unique, OP_SWAP);
-        roundtrip!(unique, OP_TUCK);
-        roundtrip!(unique, OP_CAT);
-        roundtrip!(unique, OP_SUBSTR);
-        roundtrip!(unique, OP_LEFT);
-        roundtrip!(unique, OP_RIGHT);
-        roundtrip!(unique, OP_SIZE);
-        roundtrip!(unique, OP_INVERT);
-        roundtrip!(unique, OP_AND);
-        roundtrip!(unique, OP_OR);
-        roundtrip!(unique, OP_XOR);
-        roundtrip!(unique, OP_EQUAL);
-        roundtrip!(unique, OP_EQUALVERIFY);
-        roundtrip!(unique, OP_RESERVED1);
-        roundtrip!(unique, OP_RESERVED2);
-        roundtrip!(unique, OP_1ADD);
-        roundtrip!(unique, OP_1SUB);
-        roundtrip!(unique, OP_2MUL);
-        roundtrip!(unique, OP_2DIV);
-        roundtrip!(unique, OP_NEGATE);
-        roundtrip!(unique, OP_ABS);
-        roundtrip!(unique, OP_NOT);
-        roundtrip!(unique, OP_0NOTEQUAL);
-        roundtrip!(unique, OP_ADD);
-        roundtrip!(unique, OP_SUB);
-        roundtrip!(unique, OP_MUL);
-        roundtrip!(unique, OP_DIV);
-        roundtrip!(unique, OP_MOD);
-        roundtrip!(unique, OP_LSHIFT);
-        roundtrip!(unique, OP_RSHIFT);
-        roundtrip!(unique, OP_BOOLAND);
-        roundtrip!(unique, OP_BOOLOR);
-        roundtrip!(unique, OP_NUMEQUAL);
-        roundtrip!(unique, OP_NUMEQUALVERIFY);
-        roundtrip!(unique, OP_NUMNOTEQUAL);
-        roundtrip!(unique, OP_LESSTHAN);
-        roundtrip!(unique, OP_GREATERTHAN);
-        roundtrip!(unique, OP_LESSTHANOREQUAL);
-        roundtrip!(unique, OP_GREATERTHANOREQUAL);
-        roundtrip!(unique, OP_MIN);
-        roundtrip!(unique, OP_MAX);
-        roundtrip!(unique, OP_WITHIN);
-        roundtrip!(unique, OP_RIPEMD160);
-        roundtrip!(unique, OP_SHA1);
-        roundtrip!(unique, OP_SHA256);
-        roundtrip!(unique, OP_HASH160);
-        roundtrip!(unique, OP_HASH256);
-        roundtrip!(unique, OP_CODESEPARATOR);
-        roundtrip!(unique, OP_CHECKSIG);
-        roundtrip!(unique, OP_CHECKSIGVERIFY);
-        roundtrip!(unique, OP_CHECKMULTISIG);
-        roundtrip!(unique, OP_CHECKMULTISIGVERIFY);
-        roundtrip!(unique, OP_NOP1);
-        roundtrip!(unique, OP_CLTV);
-        roundtrip!(unique, OP_CSV);
-        roundtrip!(unique, OP_NOP4);
-        roundtrip!(unique, OP_NOP5);
-        roundtrip!(unique, OP_NOP6);
-        roundtrip!(unique, OP_NOP7);
-        roundtrip!(unique, OP_NOP8);
-        roundtrip!(unique, OP_NOP9);
-        roundtrip!(unique, OP_NOP10);
-        roundtrip!(unique, OP_CHECKSIGADD);
-        roundtrip!(unique, OP_RETURN_187);
-        roundtrip!(unique, OP_RETURN_188);
-        roundtrip!(unique, OP_RETURN_189);
-        roundtrip!(unique, OP_RETURN_190);
-        roundtrip!(unique, OP_RETURN_191);
-        roundtrip!(unique, OP_RETURN_192);
-        roundtrip!(unique, OP_RETURN_193);
-        roundtrip!(unique, OP_RETURN_194);
-        roundtrip!(unique, OP_RETURN_195);
-        roundtrip!(unique, OP_RETURN_196);
-        roundtrip!(unique, OP_RETURN_197);
-        roundtrip!(unique, OP_RETURN_198);
-        roundtrip!(unique, OP_RETURN_199);
-        roundtrip!(unique, OP_RETURN_200);
-        roundtrip!(unique, OP_RETURN_201);
-        roundtrip!(unique, OP_RETURN_202);
-        roundtrip!(unique, OP_RETURN_203);
-        roundtrip!(unique, OP_RETURN_204);
-        roundtrip!(unique, OP_RETURN_205);
-        roundtrip!(unique, OP_RETURN_206);
-        roundtrip!(unique, OP_RETURN_207);
-        roundtrip!(unique, OP_RETURN_208);
-        roundtrip!(unique, OP_RETURN_209);
-        roundtrip!(unique, OP_RETURN_210);
-        roundtrip!(unique, OP_RETURN_211);
-        roundtrip!(unique, OP_RETURN_212);
-        roundtrip!(unique, OP_RETURN_213);
-        roundtrip!(unique, OP_RETURN_214);
-        roundtrip!(unique, OP_RETURN_215);
-        roundtrip!(unique, OP_RETURN_216);
-        roundtrip!(unique, OP_RETURN_217);
-        roundtrip!(unique, OP_RETURN_218);
-        roundtrip!(unique, OP_RETURN_219);
-        roundtrip!(unique, OP_RETURN_220);
-        roundtrip!(unique, OP_RETURN_221);
-        roundtrip!(unique, OP_RETURN_222);
-        roundtrip!(unique, OP_RETURN_223);
-        roundtrip!(unique, OP_RETURN_224);
-        roundtrip!(unique, OP_RETURN_225);
-        roundtrip!(unique, OP_RETURN_226);
-        roundtrip!(unique, OP_RETURN_227);
-        roundtrip!(unique, OP_RETURN_228);
-        roundtrip!(unique, OP_RETURN_229);
-        roundtrip!(unique, OP_RETURN_230);
-        roundtrip!(unique, OP_RETURN_231);
-        roundtrip!(unique, OP_RETURN_232);
-        roundtrip!(unique, OP_RETURN_233);
-        roundtrip!(unique, OP_RETURN_234);
-        roundtrip!(unique, OP_RETURN_235);
-        roundtrip!(unique, OP_RETURN_236);
-        roundtrip!(unique, OP_RETURN_237);
-        roundtrip!(unique, OP_RETURN_238);
-        roundtrip!(unique, OP_RETURN_239);
-        roundtrip!(unique, OP_RETURN_240);
-        roundtrip!(unique, OP_RETURN_241);
-        roundtrip!(unique, OP_RETURN_242);
-        roundtrip!(unique, OP_RETURN_243);
-        roundtrip!(unique, OP_RETURN_244);
-        roundtrip!(unique, OP_RETURN_245);
-        roundtrip!(unique, OP_RETURN_246);
-        roundtrip!(unique, OP_RETURN_247);
-        roundtrip!(unique, OP_RETURN_248);
-        roundtrip!(unique, OP_RETURN_249);
-        roundtrip!(unique, OP_RETURN_250);
-        roundtrip!(unique, OP_RETURN_251);
-        roundtrip!(unique, OP_RETURN_252);
-        roundtrip!(unique, OP_RETURN_253);
-        roundtrip!(unique, OP_RETURN_254);
-        roundtrip!(unique, OP_INVALIDOPCODE);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_0);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_1);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_2);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_3);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_4);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_5);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_6);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_7);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_8);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_9);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_10);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_11);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_12);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_13);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_14);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_15);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_16);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_17);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_18);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_19);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_20);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_21);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_22);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_23);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_24);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_25);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_26);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_27);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_28);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_29);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_30);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_31);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_32);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_33);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_34);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_35);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_36);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_37);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_38);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_39);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_40);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_41);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_42);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_43);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_44);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_45);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_46);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_47);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_48);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_49);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_50);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_51);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_52);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_53);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_54);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_55);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_56);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_57);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_58);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_59);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_60);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_61);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_62);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_63);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_64);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_65);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_66);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_67);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_68);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_69);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_70);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_71);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_72);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_73);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_74);
+        check_debug_and_unique!(unique, OP_PUSHBYTES_75);
+        check_debug_and_unique!(unique, OP_PUSHDATA1);
+        check_debug_and_unique!(unique, OP_PUSHDATA2);
+        check_debug_and_unique!(unique, OP_PUSHDATA4);
+        check_debug_and_unique!(unique, OP_PUSHNUM_NEG1);
+        check_debug_and_unique!(unique, OP_RESERVED);
+        check_debug_and_unique!(unique, OP_PUSHNUM_1);
+        check_debug_and_unique!(unique, OP_PUSHNUM_2);
+        check_debug_and_unique!(unique, OP_PUSHNUM_3);
+        check_debug_and_unique!(unique, OP_PUSHNUM_4);
+        check_debug_and_unique!(unique, OP_PUSHNUM_5);
+        check_debug_and_unique!(unique, OP_PUSHNUM_6);
+        check_debug_and_unique!(unique, OP_PUSHNUM_7);
+        check_debug_and_unique!(unique, OP_PUSHNUM_8);
+        check_debug_and_unique!(unique, OP_PUSHNUM_9);
+        check_debug_and_unique!(unique, OP_PUSHNUM_10);
+        check_debug_and_unique!(unique, OP_PUSHNUM_11);
+        check_debug_and_unique!(unique, OP_PUSHNUM_12);
+        check_debug_and_unique!(unique, OP_PUSHNUM_13);
+        check_debug_and_unique!(unique, OP_PUSHNUM_14);
+        check_debug_and_unique!(unique, OP_PUSHNUM_15);
+        check_debug_and_unique!(unique, OP_PUSHNUM_16);
+        check_debug_and_unique!(unique, OP_NOP);
+        check_debug_and_unique!(unique, OP_VER);
+        check_debug_and_unique!(unique, OP_IF);
+        check_debug_and_unique!(unique, OP_NOTIF);
+        check_debug_and_unique!(unique, OP_VERIF);
+        check_debug_and_unique!(unique, OP_VERNOTIF);
+        check_debug_and_unique!(unique, OP_ELSE);
+        check_debug_and_unique!(unique, OP_ENDIF);
+        check_debug_and_unique!(unique, OP_VERIFY);
+        check_debug_and_unique!(unique, OP_RETURN);
+        check_debug_and_unique!(unique, OP_TOALTSTACK);
+        check_debug_and_unique!(unique, OP_FROMALTSTACK);
+        check_debug_and_unique!(unique, OP_2DROP);
+        check_debug_and_unique!(unique, OP_2DUP);
+        check_debug_and_unique!(unique, OP_3DUP);
+        check_debug_and_unique!(unique, OP_2OVER);
+        check_debug_and_unique!(unique, OP_2ROT);
+        check_debug_and_unique!(unique, OP_2SWAP);
+        check_debug_and_unique!(unique, OP_IFDUP);
+        check_debug_and_unique!(unique, OP_DEPTH);
+        check_debug_and_unique!(unique, OP_DROP);
+        check_debug_and_unique!(unique, OP_DUP);
+        check_debug_and_unique!(unique, OP_NIP);
+        check_debug_and_unique!(unique, OP_OVER);
+        check_debug_and_unique!(unique, OP_PICK);
+        check_debug_and_unique!(unique, OP_ROLL);
+        check_debug_and_unique!(unique, OP_ROT);
+        check_debug_and_unique!(unique, OP_SWAP);
+        check_debug_and_unique!(unique, OP_TUCK);
+        check_debug_and_unique!(unique, OP_CAT);
+        check_debug_and_unique!(unique, OP_SUBSTR);
+        check_debug_and_unique!(unique, OP_LEFT);
+        check_debug_and_unique!(unique, OP_RIGHT);
+        check_debug_and_unique!(unique, OP_SIZE);
+        check_debug_and_unique!(unique, OP_INVERT);
+        check_debug_and_unique!(unique, OP_AND);
+        check_debug_and_unique!(unique, OP_OR);
+        check_debug_and_unique!(unique, OP_XOR);
+        check_debug_and_unique!(unique, OP_EQUAL);
+        check_debug_and_unique!(unique, OP_EQUALVERIFY);
+        check_debug_and_unique!(unique, OP_RESERVED1);
+        check_debug_and_unique!(unique, OP_RESERVED2);
+        check_debug_and_unique!(unique, OP_1ADD);
+        check_debug_and_unique!(unique, OP_1SUB);
+        check_debug_and_unique!(unique, OP_2MUL);
+        check_debug_and_unique!(unique, OP_2DIV);
+        check_debug_and_unique!(unique, OP_NEGATE);
+        check_debug_and_unique!(unique, OP_ABS);
+        check_debug_and_unique!(unique, OP_NOT);
+        check_debug_and_unique!(unique, OP_0NOTEQUAL);
+        check_debug_and_unique!(unique, OP_ADD);
+        check_debug_and_unique!(unique, OP_SUB);
+        check_debug_and_unique!(unique, OP_MUL);
+        check_debug_and_unique!(unique, OP_DIV);
+        check_debug_and_unique!(unique, OP_MOD);
+        check_debug_and_unique!(unique, OP_LSHIFT);
+        check_debug_and_unique!(unique, OP_RSHIFT);
+        check_debug_and_unique!(unique, OP_BOOLAND);
+        check_debug_and_unique!(unique, OP_BOOLOR);
+        check_debug_and_unique!(unique, OP_NUMEQUAL);
+        check_debug_and_unique!(unique, OP_NUMEQUALVERIFY);
+        check_debug_and_unique!(unique, OP_NUMNOTEQUAL);
+        check_debug_and_unique!(unique, OP_LESSTHAN);
+        check_debug_and_unique!(unique, OP_GREATERTHAN);
+        check_debug_and_unique!(unique, OP_LESSTHANOREQUAL);
+        check_debug_and_unique!(unique, OP_GREATERTHANOREQUAL);
+        check_debug_and_unique!(unique, OP_MIN);
+        check_debug_and_unique!(unique, OP_MAX);
+        check_debug_and_unique!(unique, OP_WITHIN);
+        check_debug_and_unique!(unique, OP_RIPEMD160);
+        check_debug_and_unique!(unique, OP_SHA1);
+        check_debug_and_unique!(unique, OP_SHA256);
+        check_debug_and_unique!(unique, OP_HASH160);
+        check_debug_and_unique!(unique, OP_HASH256);
+        check_debug_and_unique!(unique, OP_CODESEPARATOR);
+        check_debug_and_unique!(unique, OP_CHECKSIG);
+        check_debug_and_unique!(unique, OP_CHECKSIGVERIFY);
+        check_debug_and_unique!(unique, OP_CHECKMULTISIG);
+        check_debug_and_unique!(unique, OP_CHECKMULTISIGVERIFY);
+        check_debug_and_unique!(unique, OP_NOP1);
+        check_debug_and_unique!(unique, OP_CLTV);
+        check_debug_and_unique!(unique, OP_CSV);
+        check_debug_and_unique!(unique, OP_NOP4);
+        check_debug_and_unique!(unique, OP_NOP5);
+        check_debug_and_unique!(unique, OP_NOP6);
+        check_debug_and_unique!(unique, OP_NOP7);
+        check_debug_and_unique!(unique, OP_NOP8);
+        check_debug_and_unique!(unique, OP_NOP9);
+        check_debug_and_unique!(unique, OP_NOP10);
+        check_debug_and_unique!(unique, OP_CHECKSIGADD);
+        check_debug_and_unique!(unique, OP_RETURN_187);
+        check_debug_and_unique!(unique, OP_RETURN_188);
+        check_debug_and_unique!(unique, OP_RETURN_189);
+        check_debug_and_unique!(unique, OP_RETURN_190);
+        check_debug_and_unique!(unique, OP_RETURN_191);
+        check_debug_and_unique!(unique, OP_RETURN_192);
+        check_debug_and_unique!(unique, OP_RETURN_193);
+        check_debug_and_unique!(unique, OP_RETURN_194);
+        check_debug_and_unique!(unique, OP_RETURN_195);
+        check_debug_and_unique!(unique, OP_RETURN_196);
+        check_debug_and_unique!(unique, OP_RETURN_197);
+        check_debug_and_unique!(unique, OP_RETURN_198);
+        check_debug_and_unique!(unique, OP_RETURN_199);
+        check_debug_and_unique!(unique, OP_RETURN_200);
+        check_debug_and_unique!(unique, OP_RETURN_201);
+        check_debug_and_unique!(unique, OP_RETURN_202);
+        check_debug_and_unique!(unique, OP_RETURN_203);
+        check_debug_and_unique!(unique, OP_RETURN_204);
+        check_debug_and_unique!(unique, OP_RETURN_205);
+        check_debug_and_unique!(unique, OP_RETURN_206);
+        check_debug_and_unique!(unique, OP_RETURN_207);
+        check_debug_and_unique!(unique, OP_RETURN_208);
+        check_debug_and_unique!(unique, OP_RETURN_209);
+        check_debug_and_unique!(unique, OP_RETURN_210);
+        check_debug_and_unique!(unique, OP_RETURN_211);
+        check_debug_and_unique!(unique, OP_RETURN_212);
+        check_debug_and_unique!(unique, OP_RETURN_213);
+        check_debug_and_unique!(unique, OP_RETURN_214);
+        check_debug_and_unique!(unique, OP_RETURN_215);
+        check_debug_and_unique!(unique, OP_RETURN_216);
+        check_debug_and_unique!(unique, OP_RETURN_217);
+        check_debug_and_unique!(unique, OP_RETURN_218);
+        check_debug_and_unique!(unique, OP_RETURN_219);
+        check_debug_and_unique!(unique, OP_RETURN_220);
+        check_debug_and_unique!(unique, OP_RETURN_221);
+        check_debug_and_unique!(unique, OP_RETURN_222);
+        check_debug_and_unique!(unique, OP_RETURN_223);
+        check_debug_and_unique!(unique, OP_RETURN_224);
+        check_debug_and_unique!(unique, OP_RETURN_225);
+        check_debug_and_unique!(unique, OP_RETURN_226);
+        check_debug_and_unique!(unique, OP_RETURN_227);
+        check_debug_and_unique!(unique, OP_RETURN_228);
+        check_debug_and_unique!(unique, OP_RETURN_229);
+        check_debug_and_unique!(unique, OP_RETURN_230);
+        check_debug_and_unique!(unique, OP_RETURN_231);
+        check_debug_and_unique!(unique, OP_RETURN_232);
+        check_debug_and_unique!(unique, OP_RETURN_233);
+        check_debug_and_unique!(unique, OP_RETURN_234);
+        check_debug_and_unique!(unique, OP_RETURN_235);
+        check_debug_and_unique!(unique, OP_RETURN_236);
+        check_debug_and_unique!(unique, OP_RETURN_237);
+        check_debug_and_unique!(unique, OP_RETURN_238);
+        check_debug_and_unique!(unique, OP_RETURN_239);
+        check_debug_and_unique!(unique, OP_RETURN_240);
+        check_debug_and_unique!(unique, OP_RETURN_241);
+        check_debug_and_unique!(unique, OP_RETURN_242);
+        check_debug_and_unique!(unique, OP_RETURN_243);
+        check_debug_and_unique!(unique, OP_RETURN_244);
+        check_debug_and_unique!(unique, OP_RETURN_245);
+        check_debug_and_unique!(unique, OP_RETURN_246);
+        check_debug_and_unique!(unique, OP_RETURN_247);
+        check_debug_and_unique!(unique, OP_RETURN_248);
+        check_debug_and_unique!(unique, OP_RETURN_249);
+        check_debug_and_unique!(unique, OP_RETURN_250);
+        check_debug_and_unique!(unique, OP_RETURN_251);
+        check_debug_and_unique!(unique, OP_RETURN_252);
+        check_debug_and_unique!(unique, OP_RETURN_253);
+        check_debug_and_unique!(unique, OP_RETURN_254);
+        check_debug_and_unique!(unique, OP_INVALIDOPCODE);
         assert_eq!(unique.len(), 256);
     }
 }
