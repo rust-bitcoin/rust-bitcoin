@@ -15,10 +15,8 @@ use super::INPUT_STRING_LEN_LIMIT;
 pub enum ParseError {
     /// Invalid amount.
     Amount(ParseAmountError),
-
     /// Invalid denomination.
     Denomination(ParseDenominationError),
-
     /// The denomination was not identified.
     MissingDenomination(MissingDenominationError),
 }
