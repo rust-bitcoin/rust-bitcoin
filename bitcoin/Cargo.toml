@@ -72,6 +72,10 @@ name = "ecdsa-psbt-simple"
 required-features = ["rand-std"]
 
 [[example]]
+name = "create-p2wpkh-address"
+required-features = ["rand-std"]
+
+[[example]]
 name = "sign-tx-segwit-v0"
 required-features = ["rand-std"]
 
