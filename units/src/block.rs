@@ -231,6 +231,23 @@ impl ops::SubAssign<BlockInterval> for BlockInterval {
     fn sub_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() - rhs.to_u32(); }
 }
 
+impl core::iter::Sum for BlockInterval {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let sum = iter.map(|interval| interval.0).sum();
+        BlockInterval::from_u32(sum)
+    }
+}
+
+impl<'a> core::iter::Sum<&'a BlockInterval> for BlockInterval {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a BlockInterval>,
+    {
+        let sum = iter.map(|interval| interval.0).sum();
+        BlockInterval::from_u32(sum)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
