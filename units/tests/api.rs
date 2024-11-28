@@ -113,8 +113,6 @@ struct Errors {
     z: locktime::absolute::ParseHeightError,
     _a: locktime::absolute::ParseTimeError,
     _b: locktime::relative::TimeOverflowError,
-    _c: parse::ContainsPrefixError,
-    _d: parse::MissingPrefixError,
     _e: parse::ParseIntError,
     _f: parse::PrefixedHexError,
     _g: parse::UnprefixedHexError,
@@ -174,8 +172,7 @@ fn api_can_use_all_types_from_module_locktime_relative() {
 #[test]
 fn api_can_use_all_types_from_module_parse() {
     use bitcoin_units::parse::{
-        ContainsPrefixError, MissingPrefixError, ParseIntError, PrefixedHexError,
-        UnprefixedHexError,
+        ParseIntError, PrefixedHexError, UnprefixedHexError,
     };
 }
 

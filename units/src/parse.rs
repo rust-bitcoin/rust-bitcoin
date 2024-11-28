@@ -293,18 +293,25 @@ pub(crate) fn hex_remove_optional_prefix(s: &str) -> &str {
 
 /// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum PrefixedHexError {
+pub struct PrefixedHexError(PrefixedHexErrorInner);
+
+/// Error returned when parsing an integer from a hex string that is supposed to contain a prefix.
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum PrefixedHexErrorInner {
     /// Hex string is missing prefix.
     MissingPrefix(MissingPrefixError),
     /// Error parsing integer from hex string.
     ParseInt(ParseIntError),
 }
 
+internals::impl_from_infallible!(PrefixedHexError);
+internals::impl_from_infallible!(PrefixedHexErrorInner);
+
 impl fmt::Display for PrefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use PrefixedHexError::*;
+        use PrefixedHexErrorInner::*;
 
-        match *self {
+        match self.0 {
             MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
             ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
         }
@@ -314,9 +321,9 @@ impl fmt::Display for PrefixedHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for PrefixedHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use PrefixedHexError::*;
+        use PrefixedHexErrorInner::*;
 
-        match *self {
+        match self.0 {
             MissingPrefix(ref e) => Some(e),
             ParseInt(ref e) => Some(e),
         }
@@ -324,27 +331,37 @@ impl std::error::Error for PrefixedHexError {
 }
 
 impl From<MissingPrefixError> for PrefixedHexError {
-    fn from(e: MissingPrefixError) -> Self { Self::MissingPrefix(e) }
+    fn from(e: MissingPrefixError) -> Self {
+        Self(PrefixedHexErrorInner::MissingPrefix(e))
+    }
 }
 
 impl From<ParseIntError> for PrefixedHexError {
-    fn from(e: ParseIntError) -> Self { Self::ParseInt(e) }
+    fn from(e: ParseIntError) -> Self {
+        Self(PrefixedHexErrorInner::ParseInt(e))
+    }
 }
 
 /// Error returned when parsing an integer from a hex string that is not supposed to contain a prefix.
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum UnprefixedHexError {
+pub struct UnprefixedHexError(UnprefixedHexErrorInner);
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+enum UnprefixedHexErrorInner {
     /// Hex string contains prefix.
     ContainsPrefix(ContainsPrefixError),
     /// Error parsing integer from string.
     ParseInt(ParseIntError),
 }
 
+internals::impl_from_infallible!(UnprefixedHexError);
+internals::impl_from_infallible!(UnprefixedHexErrorInner);
+
 impl fmt::Display for UnprefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use UnprefixedHexError::*;
+        use UnprefixedHexErrorInner::*;
 
-        match *self {
+        match self.0 {
             ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
             ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
         }
@@ -354,9 +371,9 @@ impl fmt::Display for UnprefixedHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for UnprefixedHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use UnprefixedHexError::*;
+        use UnprefixedHexErrorInner::*;
 
-        match *self {
+        match self.0 {
             ContainsPrefix(ref e) => Some(e),
             ParseInt(ref e) => Some(e),
         }
@@ -364,16 +381,20 @@ impl std::error::Error for UnprefixedHexError {
 }
 
 impl From<ContainsPrefixError> for UnprefixedHexError {
-    fn from(e: ContainsPrefixError) -> Self { Self::ContainsPrefix(e) }
+    fn from(e: ContainsPrefixError) -> Self {
+        Self(UnprefixedHexErrorInner::ContainsPrefix(e))
+    }
 }
 
 impl From<ParseIntError> for UnprefixedHexError {
-    fn from(e: ParseIntError) -> Self { Self::ParseInt(e) }
+    fn from(e: ParseIntError) -> Self {
+        Self(UnprefixedHexErrorInner::ParseInt(e))
+    }
 }
 
 /// Error returned when a hex string is missing a prefix (e.g. `0x`).
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MissingPrefixError {
+struct MissingPrefixError {
     hex: InputString,
 }
 
@@ -393,7 +414,7 @@ impl std::error::Error for MissingPrefixError {}
 
 /// Error when hex string contains a prefix (e.g. 0x).
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct ContainsPrefixError {
+struct ContainsPrefixError {
     hex: InputString,
 }
 
