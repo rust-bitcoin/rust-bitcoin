@@ -7,8 +7,6 @@ use alloc::string::{String, ToString};
 use core::str::FromStr;
 use core::{default, fmt, ops};
 
-#[cfg(feature = "serde")]
-use ::serde::{Deserialize, Serialize};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
@@ -21,9 +19,9 @@ use crate::{FeeRate, Weight};
 
 /// An amount.
 ///
-/// The [`Amount`] type can be used to express Bitcoin amounts that support
-/// arithmetic and conversion to various denominations.
-///
+/// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
+/// conversion to various denominations. The `Amount` type does not implement `serde` traits but we
+/// do provide modules for serializing as satoshis or bitcoin.
 ///
 /// Warning!
 ///
@@ -36,8 +34,22 @@ use crate::{FeeRate, Weight};
 /// zero is considered an underflow and will cause a panic if you're not using
 /// the checked arithmetic methods.
 ///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "serde")] {
+/// use serde::{Serialize, Deserialize};
+/// use bitcoin_units::Amount;
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct Foo {
+///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
+///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
+///     amount: Amount,
+/// }
+/// # }
+/// ```
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Amount(u64);
 
 impl Amount {

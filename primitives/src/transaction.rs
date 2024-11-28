@@ -343,6 +343,7 @@ impl TxIn {
 #[cfg(feature = "alloc")]
 pub struct TxOut {
     /// The value of the output, in satoshis.
+    #[cfg_attr(feature = "serde", serde(with = "crate::amount::serde::as_sat"))]
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,

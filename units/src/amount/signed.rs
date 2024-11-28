@@ -17,9 +17,9 @@ use super::{
 
 /// A signed amount.
 ///
-/// The [`SignedAmount`] type can be used to express Bitcoin amounts that support
-/// arithmetic and conversion to various denominations.
-///
+/// The [`SignedAmount`] type can be used to express Bitcoin amounts that support arithmetic and
+/// conversion to various denominations. The `Amount` type does not implement `serde` traits but we
+/// do provide modules for serializing as satoshis or bitcoin.
 ///
 /// Warning!
 ///
@@ -29,6 +29,21 @@ use super::{
 /// start with `checked_`.  The operations from [`core::ops`] that [`Amount`]
 /// implements will panic when overflow or underflow occurs.
 ///
+/// # Examples
+///
+/// ```
+/// # #[cfg(feature = "serde")] {
+/// use serde::{Serialize, Deserialize};
+/// use bitcoin_units::SignedAmount;
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct Foo {
+///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
+///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
+///     amount: SignedAmount,
+/// }
+/// # }
+/// ```
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SignedAmount(i64);
 
