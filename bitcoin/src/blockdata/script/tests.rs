@@ -489,10 +489,6 @@ fn script_asm() {
         ScriptBuf::from_hex("6363636363686868686800").unwrap().to_string(),
         "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0"
     );
-    assert_eq!(
-        ScriptBuf::from_hex("6363636363686868686800").unwrap().to_string(),
-        "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0"
-    );
     assert_eq!(ScriptBuf::from_hex("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").unwrap().to_string(),
                "OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG");
     // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
