@@ -113,7 +113,7 @@ pub struct Params {
     /// Expected amount of time to mine one block.
     pub pow_target_spacing: u64,
     /// Difficulty recalculation interval.
-    pub pow_target_timespan: u64,
+    pub pow_target_timespan: u32,
     /// Determines whether minimal difficulty may be used for blocks or not.
     pub allow_min_difficulty_blocks: bool,
     /// Determines whether retargeting is disabled for this network or not.
@@ -261,7 +261,7 @@ impl Params {
 
     /// Calculates the number of blocks between difficulty adjustments.
     pub fn difficulty_adjustment_interval(&self) -> u64 {
-        self.pow_target_timespan / self.pow_target_spacing
+        u64::from(self.pow_target_timespan) / self.pow_target_spacing
     }
 }
 
