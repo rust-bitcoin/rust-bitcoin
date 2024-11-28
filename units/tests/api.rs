@@ -81,6 +81,31 @@ impl Types {
     fn new() -> Self { Self { a: Enums::new(), b: Structs::max() } }
 }
 
+/// A struct that includes all public non-error non-helper structs.
+// C-COMMON-TRAITS excluding `Default` and `Display`. `Display` is done in `./str.rs`.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct CommonTraits {
+    a: Amount,
+    c: SignedAmount,
+    d: BlockHeight,
+    e: BlockInterval,
+    f: FeeRate,
+    g: absolute::Height,
+    h: absolute::Time,
+    i: relative::Height,
+    j: relative::Time,
+    k: Weight,
+}
+
+/// A struct that includes all types that implement `Default`.
+#[derive(Default)]              // C-COMMON-TRAITS: `Default`
+struct Default {
+    a: Amount,
+    b: SignedAmount,
+    c: relative::Height,
+    d: relative::Time,
+}
+
 /// A struct that includes all public error types.
 // These derives are the policy of `rust-bitcoin` not Rust API guidelines.
 #[derive(Debug, Clone, PartialEq, Eq)] // All public types implement Debug (C-DEBUG).
