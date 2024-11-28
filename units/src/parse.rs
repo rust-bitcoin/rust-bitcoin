@@ -160,7 +160,6 @@ macro_rules! impl_parse_str_from_int_infallible {
                 $crate::parse::int::<$inner, &str>(s).map($to::$fn)
             }
         }
-
     }
 }
 
