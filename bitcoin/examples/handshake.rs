@@ -1,5 +1,3 @@
-extern crate bitcoin;
-
 use std::io::{BufReader, Write};
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};

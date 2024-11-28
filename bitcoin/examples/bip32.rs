@@ -1,5 +1,3 @@
-extern crate bitcoin;
-
 use std::{env, process};
 
 use bitcoin::address::{Address, KnownHrp};
