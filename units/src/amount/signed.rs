@@ -457,6 +457,16 @@ impl core::iter::Sum for SignedAmount {
     }
 }
 
+impl<'a> core::iter::Sum<&'a SignedAmount> for SignedAmount {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a SignedAmount>,
+    {
+        let sats: i64 = iter.map(|amt| amt.0).sum();
+        SignedAmount::from_sat(sats)
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for SignedAmount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {

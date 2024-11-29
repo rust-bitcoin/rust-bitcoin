@@ -267,6 +267,24 @@ impl SubAssign<&FeeRate> for FeeRate {
     fn sub_assign(&mut self, rhs: &FeeRate) { self.0 -= rhs.0 }
 }
 
+impl core::iter::Sum for FeeRate {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        FeeRate::from_sat_per_kwu(iter.map(FeeRate::to_sat_per_kwu).sum())
+    }
+}
+
+impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a FeeRate>,
+    {
+        FeeRate::from_sat_per_kwu(iter.map(|f| FeeRate::to_sat_per_kwu(*f)).sum())
+    }
+}
+
 crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
