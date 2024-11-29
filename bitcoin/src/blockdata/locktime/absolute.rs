@@ -8,16 +8,18 @@
 
 use core::cmp::Ordering;
 use core::fmt;
+use core::str::FromStr;
 
 use io::{Read, Write};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse;
+use units::parse::{self, ParseIntError};
 
 #[cfg(doc)]
 use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::{ContainsPrefixError, MissingPrefixError, PrefixedHexError, UnprefixedHexError};
+use crate::prelude::{Box, String};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -284,7 +286,37 @@ impl LockTime {
     }
 }
 
-units::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+impl FromStr for LockTime {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse::int::<u32, &str>(s).map(LockTime::from_consensus)
+    }
+}
+
+impl TryFrom<&str> for LockTime {
+    type Error = ParseIntError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        LockTime::from_str(s)
+    }
+}
+
+impl TryFrom<String> for LockTime {
+    type Error = ParseIntError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        LockTime::from_str(&s)
+    }
+}
+
+impl TryFrom<Box<str>> for LockTime {
+    type Error = ParseIntError;
+
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
+        LockTime::from_str(&s)
+    }
+}
 
 impl From<Height> for LockTime {
     #[inline]

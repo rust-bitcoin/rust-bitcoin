@@ -11,12 +11,13 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use core::{cmp, fmt, str};
+use core::{cmp, fmt};
+use core::str::FromStr;
 
 use hashes::{sha256d, Hash};
 use internals::write_err;
 use io::{Read, Write};
-use units::parse;
+use units::parse::{self, ParseIntError};
 
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
@@ -527,7 +528,37 @@ impl fmt::Debug for Sequence {
     }
 }
 
-units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+impl FromStr for Sequence {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse::int::<u32, &str>(s).map(Sequence::from_consensus)
+    }
+}
+
+impl TryFrom<&str> for Sequence {
+    type Error = ParseIntError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Sequence::from_str(s)
+    }
+}
+
+impl TryFrom<String> for Sequence {
+    type Error = ParseIntError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Sequence::from_str(&s)
+    }
+}
+
+impl TryFrom<Box<str>> for Sequence {
+    type Error = ParseIntError;
+
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
+        Sequence::from_str(&s)
+    }
+}
 
 /// Bitcoin transaction output.
 ///

@@ -149,10 +149,9 @@ macro_rules! impl_tryfrom_str_from_int_infallible {
 #[macro_export]
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
-        #[cfg(all(feature = "alloc", not(feature = "std")))]
-        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; alloc::string::String, $to, $inner, $fn; alloc::boxed::Box<str>, $to, $inner, $fn);
-        #[cfg(feature = "std")]
-        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; std::string::String, $to, $inner, $fn; std::boxed::Box<str>, $to, $inner, $fn);
+        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn);
+        #[cfg(feature = "alloc")]
+        $crate::impl_tryfrom_str_from_int_infallible!(alloc::string::String, $to, $inner, $fn; alloc::boxed::Box<str>, $to, $inner, $fn);
 
         impl core::str::FromStr for $to {
             type Err = $crate::parse::ParseIntError;
@@ -161,7 +160,6 @@ macro_rules! impl_parse_str_from_int_infallible {
                 $crate::parse::int::<$inner, &str>(s).map($to::$fn)
             }
         }
-
     }
 }
 
