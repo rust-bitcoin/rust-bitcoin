@@ -5,7 +5,7 @@
 //! This library implements the hash functions needed by Bitcoin. As an ancillary thing, it exposes
 //! hexadecimal serialization and deserialization, since these are needed to display hashes.
 //!
-//! ## Commonly used operations
+//! # Examples
 //!
 //! Hashing a single byte slice or a string:
 //!
@@ -26,7 +26,7 @@
 //!
 //! let mut reader: &[u8] = b"hello"; // In real code, this could be a `File` or `TcpStream`.
 //! let mut engine = Sha256::engine();
-//! std::io::copy(&mut reader, &mut engine).unwrap();
+//! std::io::copy(&mut reader, &mut engine).expect("engine writes don't error");
 //! let _hash = Sha256::from_engine(engine);
 //! # }
 //! ```
