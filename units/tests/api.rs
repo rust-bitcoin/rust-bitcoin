@@ -98,7 +98,7 @@ struct CommonTraits {
 }
 
 /// A struct that includes all types that implement `Default`.
-#[derive(Default)]              // C-COMMON-TRAITS: `Default`
+#[derive(Default)] // C-COMMON-TRAITS: `Default`
 struct Default {
     a: Amount,
     b: SignedAmount,
@@ -196,9 +196,7 @@ fn api_can_use_all_types_from_module_locktime_relative() {
 
 #[test]
 fn api_can_use_all_types_from_module_parse() {
-    use bitcoin_units::parse::{
-        ParseIntError, PrefixedHexError, UnprefixedHexError,
-    };
+    use bitcoin_units::parse::{ParseIntError, PrefixedHexError, UnprefixedHexError};
 }
 
 #[test]

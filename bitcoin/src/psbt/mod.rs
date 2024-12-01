@@ -256,8 +256,7 @@ impl Psbt {
                     {
                         continue;
                     } else if derivation2.len() <= derivation1.len()
-                        && derivation2[..]
-                                == derivation1[derivation1.len() - derivation2.len()..]
+                        && derivation2[..] == derivation1[derivation1.len() - derivation2.len()..]
                     {
                         entry.insert((fingerprint1, derivation1));
                         continue;
@@ -2117,14 +2116,16 @@ mod tests {
         assert_eq!(psbt1, psbt2);
     }
 
-
     // https://github.com/rust-bitcoin/rust-bitcoin/issues/3628
     #[test]
     fn test_combine_psbt_fuzz_3628() {
         let mut psbt1 = hex_psbt(include_str!("../../tests/data/psbt_fuzz1.hex")).unwrap();
         let psbt2 = hex_psbt(include_str!("../../tests/data/psbt_fuzz2.hex")).unwrap();
 
-        assert!(matches!(psbt1.combine(psbt2).unwrap_err(), Error::CombineInconsistentKeySources(_)));
+        assert!(matches!(
+            psbt1.combine(psbt2).unwrap_err(),
+            Error::CombineInconsistentKeySources(_)
+        ));
     }
 
     #[cfg(feature = "rand-std")]
