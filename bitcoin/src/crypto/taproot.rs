@@ -49,9 +49,8 @@ impl Signature {
     /// Note: this allocates on the heap, prefer [`serialize`](Self::serialize) if vec is not needed.
     pub fn to_vec(self) -> Vec<u8> {
         let mut ser_sig = self.signature.as_ref().to_vec();
-        if self.sighash_type == TapSighashType::Default {
-            // default sighash type, don't add extra sighash byte
-        } else {
+        // If default sighash type, don't add extra sighash byte
+        if self.sighash_type != TapSighashType::Default {
             ser_sig.push(self.sighash_type as u8);
         }
         ser_sig
