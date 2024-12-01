@@ -331,15 +331,11 @@ impl std::error::Error for PrefixedHexError {
 }
 
 impl From<MissingPrefixError> for PrefixedHexError {
-    fn from(e: MissingPrefixError) -> Self {
-        Self(PrefixedHexErrorInner::MissingPrefix(e))
-    }
+    fn from(e: MissingPrefixError) -> Self { Self(PrefixedHexErrorInner::MissingPrefix(e)) }
 }
 
 impl From<ParseIntError> for PrefixedHexError {
-    fn from(e: ParseIntError) -> Self {
-        Self(PrefixedHexErrorInner::ParseInt(e))
-    }
+    fn from(e: ParseIntError) -> Self { Self(PrefixedHexErrorInner::ParseInt(e)) }
 }
 
 /// Error returned when parsing an integer from a hex string that is not supposed to contain a prefix.
@@ -381,15 +377,11 @@ impl std::error::Error for UnprefixedHexError {
 }
 
 impl From<ContainsPrefixError> for UnprefixedHexError {
-    fn from(e: ContainsPrefixError) -> Self {
-        Self(UnprefixedHexErrorInner::ContainsPrefix(e))
-    }
+    fn from(e: ContainsPrefixError) -> Self { Self(UnprefixedHexErrorInner::ContainsPrefix(e)) }
 }
 
 impl From<ParseIntError> for UnprefixedHexError {
-    fn from(e: ParseIntError) -> Self {
-        Self(UnprefixedHexErrorInner::ParseInt(e))
-    }
+    fn from(e: ParseIntError) -> Self { Self(UnprefixedHexErrorInner::ParseInt(e)) }
 }
 
 /// Error returned when a hex string is missing a prefix (e.g. `0x`).

@@ -1133,9 +1133,7 @@ impl InputWeightPrediction {
     /// Computes the **signature weight** added to a transaction by an input with this weight prediction,
     /// not counting the prevout (txid, index), sequence, potential witness flag bytes or the witness count varint.
     #[deprecated(since = "TBD", note = "use `InputWeightPrediction::witness_weight()` instead")]
-    pub const fn weight(&self) -> Weight {
-        Self::witness_weight(self)
-    }
+    pub const fn weight(&self) -> Weight { Self::witness_weight(self) }
 
     /// Computes the signature, prevout (txid, index), and sequence weights of this weight
     /// prediction.
@@ -1972,7 +1970,7 @@ mod tests {
             InputWeightPrediction::P2PKH_COMPRESSED_MAX,
             InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX,
             InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH,
-            InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH
+            InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH,
         ];
 
         let weight = predict_weight_from_slices(&predict, &[1]);
