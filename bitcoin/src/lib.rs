@@ -123,7 +123,7 @@ pub mod taproot;
 pub use primitives::{
     block::{
         Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
-        Unchecked as BockUnchecked, Validation as BlockValidation, WitnessCommitment,
+        Unchecked as BlockUnchecked, Validation as BlockValidation, WitnessCommitment,
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
