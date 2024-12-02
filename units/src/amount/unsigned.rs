@@ -54,29 +54,51 @@ use crate::{FeeRate, Weight};
 pub struct Amount(u64);
 
 impl Amount {
+    /// This is used in a "null txout" in consensus signing code.
+    pub const NULL: Amount = Amount(0xffffffffffffffff);
     /// The zero amount.
     pub const ZERO: Amount = Amount(0);
     /// Exactly one satoshi.
     pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Amount = Self::from_int_btc_const(1);
+    pub const ONE_BTC: Amount = Amount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Amount = Self::from_int_btc_const(21_000_000);
+    pub const MAX_MONEY: Amount = Amount(2_100_000_000_000_000);
     /// The minimum value of an amount.
-    pub const MIN: Amount = Amount::ZERO;
+    pub const MIN: Amount = Amount(0);
     /// The maximum value of an amount.
     pub const MAX: Amount = Amount::MAX_MONEY;
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
-    pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
+    pub const fn from_sat(satoshi: u64) -> Option<Amount> {
+        if satoshi <= Self::MAX.0 {
+            Some(Amount(satoshi))
+        } else {
+            None
+        }
+    }
+
+    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// # Panics
+    /// 
+    /// On values exceeding [`Amount::MAX`].
+    pub const fn from_sat_unchecked(satoshi: u64) -> Amount {
+        if satoshi <= Self::MAX.0 {
+            Amount(satoshi)
+        } else {
+            panic!("Exceeds Amount::MAX")
+        }
+    }
 
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
     #[cfg(feature = "alloc")]
+    /// TODO
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
     }
@@ -87,9 +109,10 @@ impl Amount {
     ///
     /// The function errors if the argument multiplied by the number of sats
     /// per bitcoin overflows a `u64` type.
+    /// TODO
     pub fn from_int_btc(btc: u64) -> Result<Amount, OutOfRangeError> {
         match btc.checked_mul(100_000_000) {
-            Some(amount) => Ok(Amount::from_sat(amount)),
+            Some(amount) => Ok(Amount::from_sat(amount).unwrap()),
             None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
         }
     }
@@ -101,7 +124,9 @@ impl Amount {
     ///
     /// The function panics if the argument multiplied by the number of sats
     /// per bitcoin overflows a `u64` type.
-    pub const fn from_int_btc_const(btc: u64) -> Amount {
+    /// TODO
+    ///
+    pub const fn from_int_btc_const(btc: u64) -> Option<Amount> {
         match btc.checked_mul(100_000_000) {
             Some(amount) => Amount::from_sat(amount),
             None => panic!("checked_mul overflowed"),
@@ -112,6 +137,7 @@ impl Amount {
     ///
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [`FromStr`].
+    /// TODO
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
         let (negative, satoshi) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
@@ -125,13 +151,14 @@ impl Amount {
                 OutOfRangeError::too_big(false),
             )));
         }
-        Ok(Amount::from_sat(satoshi))
+        Ok(Amount::from_sat_unchecked(satoshi))
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
     /// or with [`fmt::Display`].
     ///
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
+    /// TODO
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Amount::from_str_in(amt, denom).map_err(Into::into)
@@ -457,7 +484,7 @@ impl TryFrom<SignedAmount> for Amount {
 impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Amount::from_sat(sats).unwrap()
     }
 }
 
@@ -467,7 +494,7 @@ impl<'a> core::iter::Sum<&'a Amount> for Amount {
         I: Iterator<Item = &'a Amount>,
     {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Amount::from_sat(sats).unwrap()
     }
 }
 

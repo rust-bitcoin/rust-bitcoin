@@ -79,7 +79,9 @@ impl SerdeAmount for Amount {
         u64::serialize(&self.to_sat(), s)
     }
     fn des_sat<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
-        Ok(Amount::from_sat(u64::deserialize(d)?))
+        use serde::de::Error;
+        let des = u64::deserialize(d)?;
+        Amount::from_sat(des).ok_or(<D as Deserializer>::Error::custom("exceeds MAX_MONEY"))
     }
     #[cfg(feature = "alloc")]
     fn ser_btc<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {

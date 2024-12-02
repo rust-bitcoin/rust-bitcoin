@@ -273,7 +273,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
         fn minimal_non_dust(&self) -> crate::Amount {
-            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
+            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into()).unwrap()
         }
 
         /// Returns the minimum value an output with this script should have in order to be
@@ -288,7 +288,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
         fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
-            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
+            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4).unwrap()
         }
 
         /// Counts the sigops for this Script using accurate counting.
@@ -394,7 +394,7 @@ mod sealed {
 
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
-        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> crate::Amount {
+        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Option<crate::Amount> {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
             let sats = dust_relay_fee

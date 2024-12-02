@@ -720,7 +720,9 @@ impl Psbt {
         for out in &self.unsigned_tx.output {
             outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
         }
-        inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
+
+        let fee = inputs.checked_sub(outputs).ok_or(Error::NegativeFee);
+        Amount::from_sat(fee?).ok_or(Error::FeeOverflow)
     }
 }
 

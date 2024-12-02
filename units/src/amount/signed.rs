@@ -170,9 +170,13 @@ impl SignedAmount {
     }
 
     /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    ///
+    /// # Panics
+    ///
+    /// On values greater than [`Amount::MAX_MONEY`].
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
-            sats_abs: self.unsigned_abs().to_sat(),
+            sats_abs: self.unsigned_abs().unwrap().to_sat(),
             is_negative: self.is_negative(),
             style: DisplayStyle::FixedDenomination { denomination, show_denomination: false },
         }
@@ -182,9 +186,13 @@ impl SignedAmount {
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
+    ///
+    /// # Panics
+    ///
+    /// On values greater than [`Amount::MAX_MONEY`].
     pub fn display_dynamic(self) -> Display {
         Display {
-            sats_abs: self.unsigned_abs().to_sat(),
+            sats_abs: self.unsigned_abs().unwrap().to_sat(),
             is_negative: self.is_negative(),
             style: DisplayStyle::DynamicDenomination,
         }
@@ -209,7 +217,7 @@ impl SignedAmount {
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
-    pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
+    pub fn unsigned_abs(self) -> Option<Amount> { Amount::from_sat(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [`SignedAmount`].
     ///
@@ -334,7 +342,7 @@ impl SignedAmount {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64))
+            Amount::from_sat(self.to_sat() as u64).ok_or(OutOfRangeError::too_big(true))
         }
     }
 }

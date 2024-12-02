@@ -353,7 +353,7 @@ pub struct TxOut {
 impl TxOut {
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+        TxOut { value: Amount::NULL, script_pubkey: ScriptBuf::new() };
 }
 
 /// A reference to a transaction output.
