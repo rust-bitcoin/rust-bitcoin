@@ -385,3 +385,70 @@ pub mod as_str {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_serde_as_sat() {
+        #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+        pub struct HasAmount {
+            #[serde(with = "crate::amount::serde::as_sat")]
+            pub amount: Amount,
+        }
+
+        let orig = HasAmount {
+            amount: Amount::ONE_BTC,
+        };
+
+        let json = serde_json::to_string(&orig).expect("failed to ser");
+        let want = "{\"amount\":100000000}";
+        assert_eq!(json, want);
+
+        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(rinsed, orig)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn can_serde_as_btc() {
+        #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+        pub struct HasAmount {
+            #[serde(with = "crate::amount::serde::as_btc")]
+            pub amount: Amount,
+        }
+
+        let orig = HasAmount {
+            amount: Amount::ONE_BTC,
+        };
+
+        let json = serde_json::to_string(&orig).expect("failed to ser");
+        let want = "{\"amount\":1.0}";
+        assert_eq!(json, want);
+
+        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(rinsed, orig)
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn can_serde_as_str() {
+        #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+        pub struct HasAmount {
+            #[serde(with = "crate::amount::serde::as_str")]
+            pub amount: Amount,
+        }
+
+        let orig = HasAmount {
+            amount: Amount::ONE_BTC,
+        };
+
+        let json = serde_json::to_string(&orig).expect("failed to ser");
+        let want = "{\"amount\":\"1\"}";
+        assert_eq!(json, want);
+
+        let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
+        assert_eq!(rinsed, orig);
+    }
+}
