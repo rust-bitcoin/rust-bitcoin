@@ -20,7 +20,7 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::str::FromStr;
 
-use self::error::MissingDigitsKind;
+use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -297,10 +297,12 @@ impl InnerParseError {
         match self {
             Self::Overflow { is_negative } =>
                 OutOfRangeError { is_signed, is_greater_than_max: !is_negative }.into(),
-            Self::TooPrecise(error) => ParseAmountError::TooPrecise(error),
-            Self::MissingDigits(error) => ParseAmountError::MissingDigits(error),
-            Self::InputTooLarge(len) => ParseAmountError::InputTooLarge(InputTooLargeError { len }),
-            Self::InvalidCharacter(error) => ParseAmountError::InvalidCharacter(error),
+            Self::TooPrecise(e) => ParseAmountError(ParseAmountErrorInner::TooPrecise(e)),
+            Self::MissingDigits(e) => ParseAmountError(ParseAmountErrorInner::MissingDigits(e)),
+            Self::InputTooLarge(len) =>
+                ParseAmountError(ParseAmountErrorInner::InputTooLarge(InputTooLargeError { len })),
+            Self::InvalidCharacter(e) =>
+                ParseAmountError(ParseAmountErrorInner::InvalidCharacter(e)),
         }
     }
 }
@@ -311,7 +313,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     } else {
         let i = s
             .find(|c: char| c.is_alphabetic())
-            .ok_or(ParseError::MissingDenomination(MissingDenominationError))?;
+            .ok_or(ParseError(ParseErrorInner::MissingDenomination(MissingDenominationError)))?;
         (i, i)
     };
     Ok((&s[..i], s[j..].parse()?))
