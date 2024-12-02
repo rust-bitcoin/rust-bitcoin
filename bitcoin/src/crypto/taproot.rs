@@ -27,7 +27,7 @@ pub struct Signature {
 
 impl Signature {
     /// Deserializes the signature from a slice.
-    pub fn from_slice(sl: &[u8]) -> Result<Self, SigFromSliceError> {
+    pub fn from_slice(sl: &[u8]) -> Result<Self, DecodeError> {
         match sl.len() {
             64 => {
                 // default type
@@ -40,7 +40,7 @@ impl Signature {
                 let signature = secp256k1::schnorr::Signature::from_slice(signature)?;
                 Ok(Signature { signature, sighash_type })
             }
-            len => Err(SigFromSliceError::InvalidSignatureSize(len)),
+            len => Err(DecodeError::InvalidSignatureSize(len)),
         }
     }
 
@@ -87,7 +87,7 @@ impl Signature {
 /// [`taproot::Signature`]: crate::crypto::taproot::Signature
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum SigFromSliceError {
+pub enum DecodeError {
     /// Invalid signature hash type.
     SighashType(InvalidSighashTypeError),
     /// A secp256k1 error.
@@ -96,11 +96,11 @@ pub enum SigFromSliceError {
     InvalidSignatureSize(usize),
 }
 
-internals::impl_from_infallible!(SigFromSliceError);
+internals::impl_from_infallible!(DecodeError);
 
-impl fmt::Display for SigFromSliceError {
+impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use SigFromSliceError::*;
+        use DecodeError::*;
 
         match *self {
             SighashType(ref e) => write_err!(f, "sighash"; e),
@@ -111,9 +111,9 @@ impl fmt::Display for SigFromSliceError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for SigFromSliceError {
+impl std::error::Error for DecodeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use SigFromSliceError::*;
+        use DecodeError::*;
 
         match *self {
             Secp256k1(ref e) => Some(e),
@@ -123,11 +123,11 @@ impl std::error::Error for SigFromSliceError {
     }
 }
 
-impl From<secp256k1::Error> for SigFromSliceError {
+impl From<secp256k1::Error> for DecodeError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<InvalidSighashTypeError> for SigFromSliceError {
+impl From<InvalidSighashTypeError> for DecodeError {
     fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
 }
 
