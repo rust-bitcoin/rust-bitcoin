@@ -1,3 +1,5 @@
+set positional-arguments
+
 default:
   @just --list
 
@@ -39,6 +41,10 @@ sane: lint
 # Check for API changes.
 check-api:
  contrib/check-for-api-changes.sh
+
+# Query the current API.
+@query-api crate command:
+ contrib/api.sh $1 $2
 
 # Update the recent and minimal lock files.
 update-lock-files:
