@@ -43,7 +43,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
-        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
+        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat_unchecked(value), sig.sighash_type)
         .expect("failed to compute sighash");
     println!("Segwit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from(sighash);
@@ -128,7 +128,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
             .p2wsh_signature_hash(
                 inp_idx,
                 witness_script,
-                Amount::from_sat(value),
+                Amount::from_sat_unchecked(value),
                 sig.sighash_type,
             )
             .expect("failed to compute sighash");

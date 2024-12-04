@@ -112,7 +112,7 @@ impl Amount {
     /// TODO
     pub fn from_int_btc(btc: u64) -> Result<Amount, OutOfRangeError> {
         match btc.checked_mul(100_000_000) {
-            Some(amount) => Ok(Amount::from_sat(amount).unwrap()),
+            Some(amount) => Ok(Amount::from_sat_unchecked(amount)),
             None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
         }
     }
@@ -126,9 +126,9 @@ impl Amount {
     /// per bitcoin overflows a `u64` type.
     /// TODO
     ///
-    pub const fn from_int_btc_const(btc: u64) -> Option<Amount> {
+    pub const fn from_int_btc_const(btc: u64) -> Amount {
         match btc.checked_mul(100_000_000) {
-            Some(amount) => Amount::from_sat(amount),
+            Some(amount) => Amount::from_sat_unchecked(amount),
             None => panic!("checked_mul overflowed"),
         }
     }
@@ -180,7 +180,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
     #[cfg(feature = "alloc")]
