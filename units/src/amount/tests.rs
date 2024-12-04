@@ -80,10 +80,6 @@ fn test_signed_amount_try_from_amount() {
     let ua_positive = Amount::from_sat(123);
     let sa_positive = SignedAmount::try_from(ua_positive).unwrap();
     assert_eq!(sa_positive, SignedAmount::from_sat(123));
-
-    let ua_max = Amount::MAX;
-    let result = SignedAmount::try_from(ua_max);
-    assert_eq!(result, Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }));
 }
 
 #[test]
@@ -154,9 +150,6 @@ fn amount_checked_div_by_weight_ceil() {
     // round up to 864
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
 
-    let fee_rate = Amount::MAX.checked_div_by_weight_ceil(weight);
-    assert!(fee_rate.is_none());
-
     let fee_rate = Amount::ONE_SAT.checked_div_by_weight_ceil(Weight::ZERO);
     assert!(fee_rate.is_none());
 }
@@ -174,9 +167,6 @@ fn amount_checked_div_by_weight_floor() {
     // 329 sats / 381 wu = 863.5 sats/kwu
     // round down to 863
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
-
-    let fee_rate = Amount::MAX.checked_div_by_weight_floor(weight);
-    assert!(fee_rate.is_none());
 
     let fee_rate = Amount::ONE_SAT.checked_div_by_weight_floor(Weight::ZERO);
     assert!(fee_rate.is_none());
@@ -230,9 +220,6 @@ fn floating_point() {
     assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
     assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
 
-    // Amount can be grater than the max SignedAmount.
-    assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
-
     assert_eq!(
         f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
         Err(OutOfRangeError::too_big(false).into())
@@ -283,7 +270,7 @@ fn parsing() {
         Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 }))
     );
     #[cfg(feature = "alloc")]
-    let more_than_max = format!("1{}", Amount::MAX);
+    let more_than_max = format!("{}", Amount::MAX.to_sat() + 1);
     #[cfg(feature = "alloc")]
     assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
     assert_eq!(p("0.000000042", btc), Err(TooPreciseError { position: 10 }.into()));
@@ -300,20 +287,9 @@ fn parsing() {
     assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
     assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
     assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
-    assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
-    // Should this even pass?
-    assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
-    assert_eq!(p("12345678901.12345678", btc), Ok(Amount::from_sat(12_345_678_901__123_456_78)));
-
-    // make sure satoshi > i64::MAX is checked.
-    #[cfg(feature = "alloc")]
-    {
-        let amount = Amount::from_sat(i64::MAX as u64);
-        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
-        assert!(SignedAmount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat)
-            .is_err());
-        assert!(Amount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_ok());
-    }
+    assert_eq!(p("2100000000000000", sat), Ok(Amount::from_sat(21_000_000__000_000_00)));
+    assert_eq!(p("2100000000000000.", sat), Ok(Amount::from_sat(21_000_000__000_000_00)));
+    assert_eq!(p("21000000", btc), Ok(Amount::from_sat(21_000_000__000_000_00)));
 
     // exactly 50 chars.
     assert_eq!(
@@ -523,14 +499,14 @@ check_format_non_negative_show_denom! {
 fn test_unsigned_signed_conversion() {
     let sa = SignedAmount::from_sat;
     let ua = Amount::from_sat;
+    let max_sats: u64 = Amount::MAX.to_sat();
 
-    assert_eq!(Amount::MAX.to_signed(), Err(OutOfRangeError::too_big(true)));
-    assert_eq!(ua(i64::MAX as u64).to_signed(), Ok(sa(i64::MAX)));
+    assert_eq!(ua(max_sats).to_signed(), Ok(sa(max_sats as i64)));
     assert_eq!(ua(i64::MAX as u64 + 1).to_signed(), Err(OutOfRangeError::too_big(true)));
 
-    assert_eq!(sa(i64::MAX).to_unsigned(), Ok(ua(i64::MAX as u64)));
+    assert_eq!(sa(max_sats as i64).to_unsigned(), Ok(ua(max_sats)));
 
-    assert_eq!(sa(i64::MAX).to_unsigned().unwrap().to_signed(), Ok(sa(i64::MAX)));
+    assert_eq!(sa(max_sats as i64).to_unsigned().unwrap().to_signed(), Ok(sa(max_sats as i64)));
 }
 
 #[test]
@@ -638,7 +614,7 @@ fn to_from_string_in() {
         ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
         Ok(ua_sat(1_000_000_000_000))
     );
-    assert!(ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
 
     assert_eq!(sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sa_sat(-1)));
 
@@ -718,12 +694,12 @@ fn serde_as_btc() {
     }
 
     let orig = T {
-        amt: Amount::from_sat(21_000_000__000_000_01),
-        samt: SignedAmount::from_sat(-21_000_000__000_000_01),
+        amt: Amount::from_sat(20_000_000__000_000_01),
+        samt: SignedAmount::from_sat(-20_000_000__000_000_01),
     };
 
-    let json = "{\"amt\": 21000000.00000001, \
-                \"samt\": -21000000.00000001}";
+    let json = "{\"amt\": 20000000.00000001, \
+                \"samt\": -20000000.00000001}";
     let t: T = serde_json::from_str(json).unwrap();
     assert_eq!(t, orig);
 
