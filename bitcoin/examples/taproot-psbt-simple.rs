@@ -50,7 +50,7 @@ const DUMMY_UTXO_AMOUNT_INPUT_2: Amount = Amount::from_sat_unchecked(10_000_000)
 
 // The amounts we are sending to someone, and receiving back as change.
 const SPEND_AMOUNT: Amount = Amount::from_sat_unchecked(25_000_000);
-const CHANGE_AMOUNT: Amount = Amount::from_sat_unchecked(4_990_000);
+const CHANGE_AMOUNT: Amount = Amount::from_sat_unchecked(4_990_000); // 10_000 sat fee.
 
 // Derive the external address xpriv.
 fn get_external_address_xpriv<C: Signing>(

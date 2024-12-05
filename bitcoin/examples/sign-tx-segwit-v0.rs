@@ -14,7 +14,7 @@ use bitcoin::{
 
 const DUMMY_UTXO_AMOUNT: Amount = Amount::from_sat_unchecked(20_000_000);
 const SPEND_AMOUNT: Amount = Amount::from_sat_unchecked(5_000_000);
-const CHANGE_AMOUNT: Amount = Amount::from_sat_unchecked(14_999_000);
+const CHANGE_AMOUNT: Amount = Amount::from_sat_unchecked(14_999_000); // 1000 sat fee.
 
 fn main() {
     let secp = Secp256k1::new();
