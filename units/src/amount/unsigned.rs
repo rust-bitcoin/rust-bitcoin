@@ -65,7 +65,7 @@ impl Amount {
     /// The minimum value of an amount.
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
-    pub const MAX: Amount = Amount(u64::MAX);
+    pub const MAX: Amount = Amount::MAX_MONEY;
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
@@ -118,6 +118,11 @@ impl Amount {
         if negative {
             return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
                 OutOfRangeError::negative(),
+            )));
+        }
+        if satoshi > Self::MAX.0 {
+            return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
+                OutOfRangeError::too_big(false),
             )));
         }
         Ok(Amount::from_sat(satoshi))
@@ -214,7 +219,7 @@ impl Amount {
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
-            Some(res) => Some(Amount(res)),
+            Some(res) => Amount(res).check_max(),
             None => None,
         }
     }
@@ -236,7 +241,7 @@ impl Amount {
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => Some(Amount(res)),
+            Some(res) => Amount(res).check_max(),
             None => None,
         }
     }
@@ -330,6 +335,15 @@ impl Amount {
             Err(OutOfRangeError::too_big(true))
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
+        }
+    }
+
+    /// Checks if the amount is below the maximum value.  Returns `None` if it is above.
+    const fn check_max(self) -> Option<Amount> {
+        if self.0 > Self::MAX.0 {
+            None
+        } else {
+            Some(self)
         }
     }
 }
