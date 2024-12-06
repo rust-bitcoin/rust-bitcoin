@@ -63,14 +63,20 @@ impl SignedAmount {
     pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
-    #[deprecated(since = "TBD", note = "use `SignedAmount::from_sat_unchecked` instead")]
-    pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+    #[allow(clippy::absurd_extreme_comparisons)]
+    pub const fn from_sat(satoshi: i64) -> Option<SignedAmount> {
+        if satoshi <= Self::MAX.0 {
+            Some(SignedAmount(satoshi))
+        } else {
+            None
+        }
+    }
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     ///
     /// # Panics
     ///
-    /// On values exceeding [`Amount::MAX`].
+    /// On values exceeding [`SignedAmount::MAX`].
     #[allow(clippy::absurd_extreme_comparisons)]
     pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount {
         if satoshi <= Self::MAX.0 {
