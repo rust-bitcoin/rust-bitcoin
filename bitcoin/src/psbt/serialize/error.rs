@@ -4,10 +4,12 @@ use core::fmt;
 
 use internals::write_err;
 
+use super::{raw, PsbtInvalidError};
 use crate::bip32::Xpub;
 use crate::consensus::encode;
+use crate::locktime::absolute;
 use crate::prelude::Box;
-use crate::psbt::raw;
+use crate::psbt::UnsupportedVersionError;
 use crate::transaction::Transaction;
 
 /// Enum for marking psbt hash error.
@@ -105,6 +107,17 @@ pub enum Error {
     PartialDataConsumption,
     /// I/O error.
     Io(io::Error),
+    /// Value was not the correct length (got, want).
+    // TODO: Use struct instead of tuple.
+    ValueWrongLength(usize, usize),
+    /// Key should not contain data.
+    InvalidKeyDataNotEmpty(raw::Key),
+    /// Failed to convert `u32` to an absolute height/time value.
+    AbsoluteLockTime(absolute::ConversionError),
+    /// Unsupported version (we only support v0 and v2).
+    UnsupportedVersion(UnsupportedVersionError),
+    /// The PSBT is not valid v0 or v2.
+    PsbtInvalid(PsbtInvalidError),
 }
 
 internals::impl_from_infallible!(Error);
@@ -165,6 +178,13 @@ impl fmt::Display for Error {
             PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
             Io(ref e) => write_err!(f, "I/O error"; e),
+            ValueWrongLength(got, want) =>
+                write!(f, "value (keyvalue pair) wrong length (got, want) {} {}", got, want),
+            InvalidKeyDataNotEmpty(ref key) => write!(f, "key should not contain data: {}", key),
+            AbsoluteLockTime(ref e) =>
+                write_err!(f, "failed to convert `u32` to an absolute height/time value"; e),
+            UnsupportedVersion(ref e) => write_err!(f, "unsupported version"; e),
+            PsbtInvalid(ref e) => write_err!(f, "psbt invalid"; e),
         }
     }
 }
@@ -180,6 +200,9 @@ impl std::error::Error for Error {
             ConsensusDeserialize(ref e) => Some(e),
             ConsensusParse(ref e) => Some(e),
             Io(ref e) => Some(e),
+            AbsoluteLockTime(ref e) => Some(e),
+            UnsupportedVersion(ref e) => Some(e),
+            PsbtInvalid(ref e) => Some(e),
             InvalidMagic
             | MissingUtxo
             | InvalidSeparator
@@ -208,7 +231,9 @@ impl std::error::Error for Error {
             | TapTree(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption => None,
+            | PartialDataConsumption
+            | ValueWrongLength(..)
+            | InvalidKeyDataNotEmpty(_) => None,
         }
     }
 }
@@ -231,4 +256,16 @@ impl From<encode::ParseError> for Error {
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self { Error::Io(e) }
+}
+
+impl From<absolute::ConversionError> for Error {
+    fn from(e: absolute::ConversionError) -> Self { Error::AbsoluteLockTime(e) }
+}
+
+impl From<UnsupportedVersionError> for Error {
+    fn from(e: UnsupportedVersionError) -> Self { Self::UnsupportedVersion(e) }
+}
+
+impl From<PsbtInvalidError> for Error {
+    fn from(e: PsbtInvalidError) -> Self { Self::PsbtInvalid(e) }
 }
