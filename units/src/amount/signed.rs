@@ -63,7 +63,22 @@ impl SignedAmount {
     pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    #[deprecated(since = "TBD", note = "use `SignedAmount::from_sat_unchecked` instead")]
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// # Panics
+    ///
+    /// On values exceeding [`Amount::MAX`].
+    #[allow(clippy::absurd_extreme_comparisons)]
+    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount {
+        if satoshi <= Self::MAX.0 {
+            SignedAmount(satoshi)
+        } else {
+            panic!("Exceeds SignedAmount::MAX")
+        }
+    }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
     pub const fn to_sat(self) -> i64 { self.0 }
@@ -82,7 +97,7 @@ impl SignedAmount {
     /// per bitcoin overflows an `i64` type.
     pub fn from_int_btc(btc: i64) -> Result<SignedAmount, OutOfRangeError> {
         match btc.checked_mul(100_000_000) {
-            Some(amount) => Ok(SignedAmount::from_sat(amount)),
+            Some(amount) => Ok(SignedAmount::from_sat_unchecked(amount)),
             None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
         }
     }
@@ -96,7 +111,7 @@ impl SignedAmount {
     /// per bitcoin overflows an `i64` type.
     pub const fn from_int_btc_const(btc: i64) -> SignedAmount {
         match btc.checked_mul(100_000_000) {
-            Some(amount) => SignedAmount::from_sat(amount),
+            Some(amount) => SignedAmount::from_sat_unchecked(amount),
             None => panic!("checked_mul overflowed"),
         }
     }
@@ -145,7 +160,7 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(100_000);
+    /// let amount = SignedAmount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
     #[cfg(feature = "alloc")]
@@ -456,7 +471,7 @@ impl TryFrom<Amount> for SignedAmount {
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
+        SignedAmount::from_sat_unchecked(sats)
     }
 }
 
@@ -466,7 +481,7 @@ impl<'a> core::iter::Sum<&'a SignedAmount> for SignedAmount {
         I: Iterator<Item = &'a SignedAmount>,
     {
         let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
+        SignedAmount::from_sat_unchecked(sats)
     }
 }
 
