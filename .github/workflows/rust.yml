@@ -305,3 +305,23 @@ jobs:
         with:
           args: "--only-codegen"
 
+  API:
+    name: API - nightly toolchain
+    needs: Prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ needs.Prepare.outputs.nightly_version }}
+      - name: "Install cargo-public-api"
+        # Pin version so that updates don't introduce changes to the text files.
+        run: cargo +stable install --locked cargo-public-api@0.42.0
+      - name: "Run API checker script"
+        run: ./contrib/check-for-api-changes.sh
