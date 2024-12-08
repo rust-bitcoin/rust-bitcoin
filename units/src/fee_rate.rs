@@ -79,6 +79,7 @@ impl FeeRate {
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
@@ -90,6 +91,7 @@ impl FeeRate {
     /// Checked division.
     ///
     /// Computes `self / rhs` returning [`None`] if `rhs == 0`.
+    #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
@@ -106,6 +108,7 @@ impl FeeRate {
     /// rounded down.
     ///
     /// [`None`] is returned if an overflow occurred.
+    #[must_use]
     pub const fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
         // No `?` operator in const context.
         match self.0.checked_mul(rhs.to_wu()) {
@@ -120,6 +123,7 @@ impl FeeRate {
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning [`None`] if overflow occured.
+    #[must_use]
     pub const fn checked_add(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_add(rhs) {
@@ -131,6 +135,7 @@ impl FeeRate {
     /// Checked subtraction.
     ///
     /// Computes `self - rhs` returning [`None`] if overflow occured.
+    #[must_use]
     pub const fn checked_sub(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs) {
@@ -143,6 +148,7 @@ impl FeeRate {
     /// if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
+    #[must_use]
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
@@ -150,6 +156,7 @@ impl FeeRate {
     ///
     /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
     /// `Self::fee_wu(weight)`.
+    #[must_use]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
     }

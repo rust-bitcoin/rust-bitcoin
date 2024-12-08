@@ -178,6 +178,7 @@ impl Amount {
     }
 
     /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.to_sat(),
@@ -190,6 +191,7 @@ impl Amount {
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
+    #[must_use]
     pub fn display_dynamic(self) -> Display {
         Display {
             sats_abs: self.to_sat(),
@@ -216,6 +218,7 @@ impl Amount {
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
@@ -227,6 +230,7 @@ impl Amount {
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
@@ -238,6 +242,7 @@ impl Amount {
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
@@ -251,6 +256,7 @@ impl Amount {
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
@@ -267,6 +273,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub const fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
         let wu = rhs.to_wu();
         // No `?` operator in const context.
@@ -289,6 +296,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub const fn checked_div_by_weight_floor(self, rhs: Weight) -> Option<FeeRate> {
         // No `?` operator in const context.
         match self.0.checked_mul(1_000) {
@@ -303,6 +311,7 @@ impl Amount {
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
