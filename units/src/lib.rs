@@ -26,7 +26,7 @@
 #![warn(clippy::cast_ptr_alignment)]
 #![allow(clippy::cast_sign_loss)] // TODO: Still needs considering.
 #![warn(clippy::checked_conversions)]
-#![allow(clippy::cloned_instead_of_copied)] // TODO: Still needs considering.
+#![warn(clippy::cloned_instead_of_copied)]
 #![warn(clippy::copy_iterator)]
 #![warn(clippy::default_trait_access)]
 #![warn(clippy::doc_link_with_quotes)]

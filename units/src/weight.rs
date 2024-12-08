@@ -233,7 +233,7 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     where
         I: Iterator<Item = &'a Weight>,
     {
-        iter.cloned().sum()
+        iter.copied().sum()
     }
 }
 
