@@ -320,6 +320,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
 }
 
 /// Options given by `fmt::Formatter`
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct FormatOptions {
     fill: char,
     align: Option<fmt::Alignment>,
