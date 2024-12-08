@@ -65,6 +65,16 @@ impl SignedAmount {
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    #[allow(clippy::absurd_extreme_comparisons)]
+    pub const fn from_sat_checked(satoshi: i64) -> Option<SignedAmount> {
+        if satoshi <= Self::MAX.0 {
+            Some(SignedAmount(satoshi))
+        } else {
+            None
+        }
+    }
+
     /// Gets the number of satoshis in this [`SignedAmount`].
     pub const fn to_sat(self) -> i64 { self.0 }
 
