@@ -69,7 +69,7 @@
 #![warn(clippy::manual_string_new)]
 #![warn(clippy::many_single_char_names)]
 #![warn(clippy::map_unwrap_or)]
-// #![warn(clippy::match_bool)]
+#![warn(clippy::match_bool)]
 #![warn(clippy::match_on_vec_items)]
 #![warn(clippy::match_same_arms)]
 #![warn(clippy::match_wild_err_arm)]
