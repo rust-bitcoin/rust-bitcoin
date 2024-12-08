@@ -23,7 +23,7 @@
 #![warn(clippy::cast_ptr_alignment)]
 // #![warn(clippy::cast_sign_loss)]
 #![warn(clippy::checked_conversions)]
-// #![warn(clippy::cloned_instead_of_copied)]
+#![warn(clippy::cloned_instead_of_copied)]
 #![warn(clippy::copy_iterator)]
 #![warn(clippy::default_trait_access)]
 #![warn(clippy::doc_link_with_quotes)]
