@@ -125,7 +125,7 @@ impl Denomination {
 }
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
+/// If any of these forms are used, an error type `PossiblyConfusingDenomination` is returned.
 const CONFUSING_FORMS: [&str; 6] = ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {

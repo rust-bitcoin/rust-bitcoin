@@ -30,7 +30,7 @@
 #![warn(clippy::copy_iterator)]
 #![warn(clippy::default_trait_access)]
 #![warn(clippy::doc_link_with_quotes)]
-#![allow(clippy::doc_markdown)] // TODO: Still needs considering.
+#![warn(clippy::doc_markdown)]
 #![warn(clippy::empty_enum)]
 #![allow(clippy::enum_glob_use)] // TODO: Still needs considering.
 #![warn(clippy::expl_impl_clone_on_copy)]
