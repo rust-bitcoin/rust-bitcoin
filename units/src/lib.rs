@@ -122,7 +122,6 @@
 // #![warn(clippy::uninlined_format_args)]
 #![warn(clippy::unnecessary_box_returns)]
 #![warn(clippy::unnecessary_join)]
-// #![warn(clippy::unnecessary_literal_bound)]
 #![warn(clippy::unnecessary_wraps)]
 #![warn(clippy::unnested_or_patterns)]
 #![warn(clippy::unreadable_literal)]
