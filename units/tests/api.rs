@@ -235,3 +235,17 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let debug = format!("{:?}", t.b.k);
     assert!(!debug.is_empty());
 }
+
+#[test]
+fn test_send() {
+    fn assert_send<T: Send>() {}
+    assert_send::<Types>();
+    assert_send::<Errors>();
+}
+
+#[test]
+fn test_sync() {
+    fn assert_sync<T: Sync>() {}
+    assert_sync::<Types>();
+    assert_sync::<Errors>();
+}
