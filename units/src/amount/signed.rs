@@ -111,11 +111,11 @@ impl SignedAmount {
             (false, sat) if sat > SignedAmount::MAX.to_sat() as u64 => Err(ParseAmountError(
                 ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
             )),
-            (false, sat) => Ok(SignedAmount(sat as i64)),
+            (false, sat) => Ok(SignedAmount(sat as i64)), // Cast ok, value in this arm does not wrap.
             (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(
                 ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
             ),
-            (true, sat) => Ok(SignedAmount(-(sat as i64))),
+            (true, sat) => Ok(SignedAmount(-(sat as i64))), // Cast ok, value in this arm does not wrap.
         }
     }
 
@@ -349,7 +349,7 @@ impl SignedAmount {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64))
+            Ok(Amount::from_sat(self.to_sat() as u64)) // Cast ok, checked not negative above.
         }
     }
 

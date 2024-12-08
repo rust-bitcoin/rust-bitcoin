@@ -285,11 +285,13 @@ enum LockTimeUnit {
 
 impl fmt::Display for LockTimeUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LockTimeUnit::*;
+        use LockTimeUnit as L;
 
         match *self {
-            Blocks => write!(f, "expected lock-by-blockheight (must be < {})", LOCK_TIME_THRESHOLD),
-            Seconds => write!(f, "expected lock-by-blocktime (must be >= {})", LOCK_TIME_THRESHOLD),
+            L::Blocks =>
+                write!(f, "expected lock-by-blockheight (must be < {})", LOCK_TIME_THRESHOLD),
+            L::Seconds =>
+                write!(f, "expected lock-by-blocktime (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }
@@ -321,10 +323,10 @@ impl ParseError {
     ) -> fmt::Result {
         use core::num::IntErrorKind;
 
-        use ParseError::*;
+        use ParseError as E;
 
         match self {
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
                 // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is above limit <upper_bound>)"
@@ -336,7 +338,7 @@ impl ParseError {
                     upper_bound
                 )
             }
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
+            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::NegOverflow =>
             {
                 // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is below limit <lower_bound>)"
@@ -348,13 +350,13 @@ impl ParseError {
                     lower_bound
                 )
             }
-            ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
+            E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
                 write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Time"), subject)
             }
-            Conversion(value) if *value < i64::from(lower_bound) => {
+            E::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
             }
-            Conversion(value) => {
+            E::Conversion(value) => {
                 write!(f, "{} {} is above limit {}", subject, value, upper_bound)
             }
         }
@@ -365,17 +367,17 @@ impl ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use core::num::IntErrorKind;
 
-        use ParseError::*;
+        use ParseError as E;
 
         match self {
-            ParseInt(ParseIntError { source, .. })
+            E::ParseInt(ParseIntError { source, .. })
                 if *source.kind() == IntErrorKind::PosOverflow =>
                 None,
-            ParseInt(ParseIntError { source, .. })
+            E::ParseInt(ParseIntError { source, .. })
                 if *source.kind() == IntErrorKind::NegOverflow =>
                 None,
-            ParseInt(ParseIntError { source, .. }) => Some(source),
-            Conversion(_) => None,
+            E::ParseInt(ParseIntError { source, .. }) => Some(source),
+            E::Conversion(_) => None,
         }
     }
 }
@@ -394,14 +396,14 @@ mod tests {
     #[test]
     fn time_from_str_hex_happy_path() {
         let actual = Time::from_hex("0x6289C350").unwrap();
-        let expected = Time::from_consensus(0x6289C350).unwrap();
+        let expected = Time::from_consensus(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
         let time = Time::from_hex("6289C350").unwrap();
-        assert_eq!(time, Time(0x6289C350));
+        assert_eq!(time, Time(0x6289_C350));
     }
 
     #[test]

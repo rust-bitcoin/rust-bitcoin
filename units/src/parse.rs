@@ -318,11 +318,11 @@ internals::impl_from_infallible!(PrefixedHexErrorInner);
 
 impl fmt::Display for PrefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use PrefixedHexErrorInner::*;
+        use PrefixedHexErrorInner as E;
 
         match self.0 {
-            MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
-            ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
+            E::MissingPrefix(ref e) => write_err!(f, "hex string is missing prefix"; e),
+            E::ParseInt(ref e) => write_err!(f, "prefixed hex string invalid int"; e),
         }
     }
 }
@@ -330,11 +330,11 @@ impl fmt::Display for PrefixedHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for PrefixedHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use PrefixedHexErrorInner::*;
+        use PrefixedHexErrorInner as E;
 
         match self.0 {
-            MissingPrefix(ref e) => Some(e),
-            ParseInt(ref e) => Some(e),
+            E::MissingPrefix(ref e) => Some(e),
+            E::ParseInt(ref e) => Some(e),
         }
     }
 }
@@ -364,11 +364,11 @@ internals::impl_from_infallible!(UnprefixedHexErrorInner);
 
 impl fmt::Display for UnprefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use UnprefixedHexErrorInner::*;
+        use UnprefixedHexErrorInner as E;
 
         match self.0 {
-            ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
-            ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
+            E::ContainsPrefix(ref e) => write_err!(f, "hex string is contains prefix"; e),
+            E::ParseInt(ref e) => write_err!(f, "hex string parse int"; e),
         }
     }
 }
@@ -376,11 +376,11 @@ impl fmt::Display for UnprefixedHexError {
 #[cfg(feature = "std")]
 impl std::error::Error for UnprefixedHexError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use UnprefixedHexErrorInner::*;
+        use UnprefixedHexErrorInner as E;
 
         match self.0 {
-            ContainsPrefix(ref e) => Some(e),
-            ParseInt(ref e) => Some(e),
+            E::ContainsPrefix(ref e) => Some(e),
+            E::ParseInt(ref e) => Some(e),
         }
     }
 }
@@ -453,14 +453,14 @@ mod tests {
 
     #[test]
     fn parse_u128_from_hex_prefixed() {
-        let want = 3735928559;
+        let want = 3_735_928_559;
         let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
         assert_eq!(got, want);
     }
 
     #[test]
     fn parse_u128_from_hex_no_prefix() {
-        let want = 3735928559;
+        let want = 3_735_928_559;
         let got = hex_u128("deadbeef").expect("failed to parse non-prefixed hex");
         assert_eq!(got, want);
     }

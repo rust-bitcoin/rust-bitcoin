@@ -119,14 +119,15 @@ internals::impl_from_infallible!(ParseAmountErrorInner);
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseAmountErrorInner::*;
+        use ParseAmountErrorInner as E;
 
         match self.0 {
-            OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
-            TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
-            MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
-            InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
-            InvalidCharacter(ref error) => write_err!(f, "invalid character in the input"; error),
+            E::OutOfRange(ref error) => write_err!(f, "amount out of range"; error),
+            E::TooPrecise(ref error) => write_err!(f, "amount has a too high precision"; error),
+            E::MissingDigits(ref error) => write_err!(f, "the input has too few digits"; error),
+            E::InputTooLarge(ref error) => write_err!(f, "the input is too large"; error),
+            E::InvalidCharacter(ref error) =>
+                write_err!(f, "invalid character in the input"; error),
         }
     }
 }
@@ -134,14 +135,14 @@ impl fmt::Display for ParseAmountError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseAmountError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseAmountErrorInner::*;
+        use ParseAmountErrorInner as E;
 
         match self.0 {
-            TooPrecise(ref error) => Some(error),
-            InputTooLarge(ref error) => Some(error),
-            OutOfRange(ref error) => Some(error),
-            MissingDigits(ref error) => Some(error),
-            InvalidCharacter(ref error) => Some(error),
+            E::TooPrecise(ref error) => Some(error),
+            E::InputTooLarge(ref error) => Some(error),
+            E::OutOfRange(ref error) => Some(error),
+            E::MissingDigits(ref error) => Some(error),
+            E::InvalidCharacter(ref error) => Some(error),
         }
     }
 }
@@ -157,7 +158,7 @@ impl OutOfRangeError {
     /// Returns the minimum and maximum allowed values for the type that was parsed.
     ///
     /// This can be used to give a hint to the user which values are allowed.
-    pub fn valid_range(&self) -> (i64, u64) {
+    pub fn valid_range(self) -> (i64, u64) {
         match self.is_signed {
             true => (i64::MIN, i64::MAX as u64),
             false => (0, u64::MAX),
@@ -165,10 +166,10 @@ impl OutOfRangeError {
     }
 
     /// Returns true if the input value was large than the maximum allowed value.
-    pub fn is_above_max(&self) -> bool { self.is_greater_than_max }
+    pub fn is_above_max(self) -> bool { self.is_greater_than_max }
 
     /// Returns true if the input value was smaller than the minimum allowed value.
-    pub fn is_below_min(&self) -> bool { !self.is_greater_than_max }
+    pub fn is_below_min(self) -> bool { !self.is_greater_than_max }
 
     pub(crate) fn too_big(is_signed: bool) -> Self { Self { is_signed, is_greater_than_max: true } }
 
@@ -321,11 +322,11 @@ internals::impl_from_infallible!(ParseDenominationError);
 
 impl fmt::Display for ParseDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseDenominationError::*;
+        use ParseDenominationError as E;
 
         match *self {
-            Unknown(ref e) => write_err!(f, "denomination parse error"; e),
-            PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
+            E::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
+            E::PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
         }
     }
 }
@@ -333,10 +334,10 @@ impl fmt::Display for ParseDenominationError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseDenominationError::*;
+        use ParseDenominationError as E;
 
         match *self {
-            Unknown(_) | PossiblyConfusing(_) => None,
+            E::Unknown(_) | E::PossiblyConfusing(_) => None,
         }
     }
 }

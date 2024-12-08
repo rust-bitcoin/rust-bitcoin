@@ -228,7 +228,7 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     where
         I: Iterator<Item = &'a Weight>,
     {
-        iter.cloned().sum()
+        iter.copied().sum()
     }
 }
 
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic = "attempt to multiply with overflow"]
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]
