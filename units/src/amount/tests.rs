@@ -236,7 +236,7 @@ fn floating_point() {
     assert_eq!(btc(2.5).to_float_in(D::Satoshi), 250000000.0);
 
     let btc = move |f| Amount::from_btc(f).unwrap();
-    assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012")
+    assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012");
 }
 
 #[test]
