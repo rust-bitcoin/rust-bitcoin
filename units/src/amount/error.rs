@@ -158,9 +158,10 @@ impl OutOfRangeError {
     ///
     /// This can be used to give a hint to the user which values are allowed.
     pub fn valid_range(&self) -> (i64, u64) {
-        match self.is_signed {
-            true => (i64::MIN, i64::MAX as u64),
-            false => (0, u64::MAX),
+        if self.is_signed {
+            (i64::MIN, i64::MAX as u64)
+        } else {
+            (0, u64::MAX)
         }
     }
 

@@ -91,8 +91,7 @@ impl Denomination {
             Denomination::Bitcoin => -8,
             Denomination::CentiBitcoin => -6,
             Denomination::MilliBitcoin => -5,
-            Denomination::MicroBitcoin => -2,
-            Denomination::Bit => -2,
+            Denomination::MicroBitcoin | Denomination::Bit => -2,
             Denomination::Satoshi => 0,
         }
     }
@@ -125,7 +124,7 @@ impl Denomination {
 }
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
+/// If any of these forms are used, an error type `PossiblyConfusingDenomination` is returned.
 const CONFUSING_FORMS: [&str; 6] = ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
@@ -320,6 +319,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
 }
 
 /// Options given by `fmt::Formatter`
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct FormatOptions {
     fill: char,
     align: Option<fmt::Alignment>,
@@ -425,7 +425,7 @@ fn fmt_satoshi_in(
                 norm_nb_decimals = usize::from(precision);
                 while num_after_decimal_point % 10 == 0 {
                     norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10
+                    num_after_decimal_point /= 10;
                 }
             }
             // compute requested precision
@@ -527,6 +527,7 @@ pub struct Display {
 
 impl Display {
     /// Makes subsequent calls to `Display::fmt` display denomination.
+    #[must_use = "`self` will be dropped if the result is not used"]
     pub fn show_denomination(mut self) -> Self {
         match &mut self.style {
             DisplayStyle::FixedDenomination { show_denomination, .. } => *show_denomination = true,
