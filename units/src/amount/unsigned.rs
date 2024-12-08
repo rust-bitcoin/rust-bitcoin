@@ -318,6 +318,7 @@ impl Amount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -327,6 +328,7 @@ impl Amount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.

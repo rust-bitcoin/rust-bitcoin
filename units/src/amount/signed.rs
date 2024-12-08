@@ -206,6 +206,7 @@ impl SignedAmount {
     // Some arithmetic that doesn't fit in [`core::ops`] traits.
 
     /// Get the absolute value of this [`SignedAmount`].
+    #[must_use]
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
@@ -307,6 +308,7 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -316,6 +318,7 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
