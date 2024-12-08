@@ -108,7 +108,9 @@ impl SerdeAmount for SignedAmount {
         i64::serialize(&self.to_sat(), s)
     }
     fn des_sat<'d, D: Deserializer<'d>>(d: D, _: private::Token) -> Result<Self, D::Error> {
-        Ok(SignedAmount::from_sat(i64::deserialize(d)?))
+        use serde::de::Error;
+        let des = i64::deserialize(d)?;
+        SignedAmount::from_sat_checked(des).ok_or(<D as Deserializer>::Error::custom("exceeds MAX"))
     }
     #[cfg(feature = "alloc")]
     fn ser_btc<S: Serializer>(self, s: S, _: private::Token) -> Result<S::Ok, S::Error> {
