@@ -106,6 +106,7 @@ impl Weight {
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning [`None`] if an overflow occurred.
+    #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
@@ -117,6 +118,7 @@ impl Weight {
     /// Checked subtraction.
     ///
     /// Computes `self - rhs` returning [`None`] if an overflow occurred.
+    #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
@@ -128,6 +130,7 @@ impl Weight {
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if an overflow occurred.
+    #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
@@ -139,6 +142,7 @@ impl Weight {
     /// Checked division.
     ///
     /// Computes `self / rhs` returning [`None`] if `rhs == 0`.
+    #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
