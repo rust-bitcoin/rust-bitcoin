@@ -71,7 +71,7 @@
 #![warn(clippy::map_unwrap_or)]
 // #![warn(clippy::match_bool)]
 #![warn(clippy::match_on_vec_items)]
-// #![warn(clippy::match_same_arms)]
+#![warn(clippy::match_same_arms)]
 #![warn(clippy::match_wild_err_arm)]
 #![warn(clippy::match_wildcard_for_single_variants)]
 #![warn(clippy::maybe_infinite_iter)]

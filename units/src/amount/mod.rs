@@ -91,8 +91,7 @@ impl Denomination {
             Denomination::Bitcoin => -8,
             Denomination::CentiBitcoin => -6,
             Denomination::MilliBitcoin => -5,
-            Denomination::MicroBitcoin => -2,
-            Denomination::Bit => -2,
+            Denomination::MicroBitcoin | Denomination::Bit => -2,
             Denomination::Satoshi => 0,
         }
     }
