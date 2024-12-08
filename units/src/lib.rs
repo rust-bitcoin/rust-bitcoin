@@ -104,7 +104,7 @@
 #![warn(clippy::ref_option_ref)]
 #![warn(clippy::return_self_not_must_use)]
 #![warn(clippy::same_functions_in_if_condition)]
-// #![warn(clippy::semicolon_if_nothing_returned)]
+#![warn(clippy::semicolon_if_nothing_returned)]
 #![warn(clippy::should_panic_without_expect)]
 // #![warn(clippy::similar_names)]
 #![warn(clippy::single_char_pattern)]

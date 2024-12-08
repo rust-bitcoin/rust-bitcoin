@@ -425,7 +425,7 @@ fn fmt_satoshi_in(
                 norm_nb_decimals = usize::from(precision);
                 while num_after_decimal_point % 10 == 0 {
                     norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10
+                    num_after_decimal_point /= 10;
                 }
             }
             // compute requested precision
