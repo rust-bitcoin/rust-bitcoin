@@ -48,7 +48,7 @@ impl ScriptBuf {
     /// when they are equal. If you know beforehand that you need to create a script of exact size
     /// use [`reserve_exact`](Self::reserve_exact) before adding data to the script so that the
     /// reallocation can be avoided.
-    #[must_use = "`self` will be dropped if the result is not used"]
+    #[must_use]
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script> {
         // Copied from PathBuf::into_boxed_path

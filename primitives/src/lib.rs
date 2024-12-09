@@ -16,6 +16,9 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
+// Pedantic lints that we enforce.
+// #![warn(clippy::must_use_candidate)]
+#![warn(clippy::return_self_not_must_use)]
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
