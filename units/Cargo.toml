@@ -15,7 +15,7 @@ exclude = ["tests", "contrib"]
 [features]
 default = ["std"]
 std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+alloc = ["internals/alloc","serde?/alloc"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.4.0" }
