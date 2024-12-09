@@ -58,6 +58,8 @@
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
 #![doc(test(attr(warn(unused))))]
+// Pedantic lints that we enforce.
+#![warn(clippy::return_self_not_must_use)]
 // Instead of littering the codebase for non-fuzzing and bench code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
 #![cfg_attr(bench, allow(dead_code, unused_imports))]
