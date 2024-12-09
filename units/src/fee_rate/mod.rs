@@ -2,13 +2,14 @@
 
 //! Implements `FeeRate` and assoctiated features.
 
+#[cfg(feature = "serde")]
+pub mod serde;
+
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 use crate::amount::Amount;
 use crate::weight::Weight;
@@ -18,8 +19,6 @@ use crate::weight::Weight;
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct FeeRate(u64);
 
 impl FeeRate {
