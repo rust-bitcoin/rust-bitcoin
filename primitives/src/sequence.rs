@@ -20,12 +20,9 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "alloc")]
 use units::locktime::relative::TimeOverflowError;
-#[cfg(feature = "alloc")]
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
-#[cfg(feature = "alloc")]
 use crate::locktime::relative;
 #[cfg(all(doc, feature = "alloc"))]
 use crate::transaction::Transaction;
@@ -127,14 +124,12 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
-    #[cfg(feature = "alloc")]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
     /// Constructs a new `Sequence` from an unprefixed hex string.
-    #[cfg(feature = "alloc")]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
@@ -158,7 +153,6 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    #[cfg(feature = "alloc")]
     pub fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
@@ -172,7 +166,6 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    #[cfg(feature = "alloc")]
     pub fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
@@ -191,7 +184,6 @@ impl Sequence {
 
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
-    #[cfg(feature = "alloc")]
     pub fn to_relative_lock_time(&self) -> Option<relative::LockTime> {
         use crate::locktime::relative::{Height, LockTime, Time};
 
@@ -211,7 +203,6 @@ impl Sequence {
     /// Returns the low 16 bits from sequence number.
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
-    #[cfg(feature = "alloc")]
     fn low_u16(&self) -> u16 { self.0 as u16 }
 }
 
