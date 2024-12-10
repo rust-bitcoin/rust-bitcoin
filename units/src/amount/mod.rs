@@ -527,6 +527,7 @@ pub struct Display {
 
 impl Display {
     /// Makes subsequent calls to `Display::fmt` display denomination.
+    #[must_use]
     pub fn show_denomination(mut self) -> Self {
         match &mut self.style {
             DisplayStyle::FixedDenomination { show_denomination, .. } => *show_denomination = true,

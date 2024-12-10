@@ -170,6 +170,7 @@ impl SignedAmount {
     }
 
     /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.unsigned_abs().to_sat(),
@@ -182,6 +183,7 @@ impl SignedAmount {
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
+    #[must_use]
     pub fn display_dynamic(self) -> Display {
         Display {
             sats_abs: self.unsigned_abs().to_sat(),
@@ -206,9 +208,11 @@ impl SignedAmount {
     // Some arithmetic that doesn't fit in [`core::ops`] traits.
 
     /// Get the absolute value of this [`SignedAmount`].
+    #[must_use]
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
+    #[must_use]
     pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
 
     /// Returns a number representing sign of this [`SignedAmount`].
@@ -216,6 +220,7 @@ impl SignedAmount {
     /// - `0` if the amount is zero
     /// - `1` if the amount is positive
     /// - `-1` if the amount is negative
+    #[must_use]
     pub fn signum(self) -> i64 { self.0.signum() }
 
     /// Checks if this [`SignedAmount`] is positive.
@@ -235,6 +240,7 @@ impl SignedAmount {
     /// Consider using `unsigned_abs` which is often more practical.
     ///
     /// Returns [`None`] if overflow occurred. (`self == MIN`)
+    #[must_use]
     pub const fn checked_abs(self) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_abs() {
@@ -246,6 +252,7 @@ impl SignedAmount {
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
@@ -257,6 +264,7 @@ impl SignedAmount {
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
@@ -268,6 +276,7 @@ impl SignedAmount {
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
@@ -281,6 +290,7 @@ impl SignedAmount {
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
@@ -292,6 +302,7 @@ impl SignedAmount {
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
@@ -307,6 +318,7 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -316,11 +328,13 @@ impl SignedAmount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
     ///
     /// Returns [`None`] if either `self`, `rhs` or the result is strictly negative.
+    #[must_use]
     pub fn positive_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         if self.is_negative() || rhs.is_negative() || rhs > self {
             None
