@@ -31,7 +31,6 @@ extern crate std;
 extern crate serde;
 
 pub mod block;
-#[cfg(feature = "alloc")]
 pub mod locktime;
 pub mod merkle_tree;
 pub mod opcodes;
@@ -45,10 +44,8 @@ pub mod transaction;
 pub mod witness;
 
 #[doc(inline)]
-pub use units::amount::{self, Amount, SignedAmount};
-#[doc(inline)]
-#[cfg(feature = "alloc")]
 pub use units::{
+    amount::{self, Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::{self, FeeRate},
     weight::{self, Weight},
@@ -60,13 +57,13 @@ pub use self::{
     block::{
         Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
     },
-    locktime::{absolute, relative},
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };
 #[doc(inline)]
 pub use self::{
     block::{BlockHash, Header as BlockHeader, WitnessCommitment},
+    locktime::{absolute, relative},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     pow::CompactTarget,
     sequence::Sequence,
