@@ -52,7 +52,7 @@
 #![warn(clippy::inline_always)]
 #![warn(clippy::into_iter_without_iter)]
 #![warn(clippy::invalid_upcast_comparisons)]
-#![allow(clippy::items_after_statements)] // TODO: Still needs considering.
+#![warn(clippy::items_after_statements)]
 #![warn(clippy::iter_filter_is_ok)]
 #![warn(clippy::iter_filter_is_some)]
 #![warn(clippy::iter_not_returning_iterator)]

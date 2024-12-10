@@ -518,6 +518,7 @@ fn test_unsigned_signed_conversion() {
 
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+#[allow(clippy::items_after_statements)]     // Define functions where we use them.
 fn from_str() {
     use ParseDenominationError::*;
 
