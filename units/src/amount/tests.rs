@@ -203,6 +203,12 @@ fn unchecked_signed_amount_subtract() {
 #[cfg(feature = "alloc")]
 #[test]
 fn floating_point() {
+    /// Compare two float values within a tolerance of 0.1 sats.
+    fn is_equal_within_tolerance(x: f64, y: f64) -> bool {
+        const ALLOWED_ERROR_IN_CONVERSION: f64 = 0.000_000_001;
+        (x - y).abs() < ALLOWED_ERROR_IN_CONVERSION
+    }
+
     use super::Denomination as D;
     let f = Amount::from_float_in;
     let sf = SignedAmount::from_float_in;
@@ -231,9 +237,10 @@ fn floating_point() {
     );
 
     let btc = move |f| SignedAmount::from_btc(f).unwrap();
-    assert_eq!(btc(2.5).to_float_in(D::Bitcoin), 2.5);
-    assert_eq!(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0);
-    assert_eq!(btc(2.5).to_float_in(D::Satoshi), 250000000.0);
+
+    assert!(is_equal_within_tolerance(btc(2.5).to_float_in(D::Bitcoin), 2.5));
+    assert!(is_equal_within_tolerance(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0));
+    assert!(is_equal_within_tolerance(btc(2.5).to_float_in(D::Satoshi), 250000000.0));
 
     let btc = move |f| Amount::from_btc(f).unwrap();
     assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012");

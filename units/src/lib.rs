@@ -39,7 +39,7 @@
 #![warn(clippy::explicit_iter_loop)]
 #![warn(clippy::filter_map_next)]
 #![warn(clippy::flat_map_option)]
-#![allow(clippy::float_cmp)] // TODO: Still needs considering.
+#![warn(clippy::float_cmp)]
 #![warn(clippy::fn_params_excessive_bools)]
 #![warn(clippy::from_iter_instead_of_collect)]
 #![warn(clippy::if_not_else)]
