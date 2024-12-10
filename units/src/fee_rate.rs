@@ -108,13 +108,15 @@ impl FeeRate {
     /// [`None`] is returned if an overflow occurred.
     pub const fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
         // No `?` operator in const context.
-        match self.0.checked_mul(rhs.to_wu()) {
-            Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
-                None => None,
-            },
-            None => None,
+        if let Some(mul) = self.0.checked_mul(rhs.to_wu()) {
+            if let Some(add) = mul.checked_add(999) {
+                if let Some(amt) = Amount::from_sat(add / 1000) {
+                    return Some(amt)
+                }
+            }
         }
+
+        None
     }
 
     /// Checked addition.
@@ -231,7 +233,7 @@ impl Mul<FeeRate> for Weight {
     type Output = Amount;
 
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
+        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000).unwrap()
     }
 }
 
@@ -341,7 +343,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        let fee_rate = Amount::from_sat_unchecked(329) / Weight::from_wu(381);
         assert_eq!(fee_rate, FeeRate(863));
     }
 
@@ -425,7 +427,7 @@ mod tests {
             .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
-        assert_eq!(Amount::from_sat(100), fee);
+        assert_eq!(Amount::from_sat_unchecked(100), fee);
 
         let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
@@ -433,14 +435,14 @@ mod tests {
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
-        assert_eq!(Amount::from_sat(9), fee);
+        assert_eq!(Amount::from_sat_unchecked(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
-        assert_eq!(fee, Amount::from_sat(330));
+        assert_eq!(fee, Amount::from_sat_unchecked(330));
     }
 
     #[test]
