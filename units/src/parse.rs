@@ -444,14 +444,14 @@ mod tests {
 
     #[test]
     fn parse_u128_from_hex_prefixed() {
-        let want = 3735928559;
+        let want = 3_735_928_559;
         let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
         assert_eq!(got, want);
     }
 
     #[test]
     fn parse_u128_from_hex_no_prefix() {
-        let want = 3735928559;
+        let want = 3_735_928_559;
         let got = hex_u128("deadbeef").expect("failed to parse non-prefixed hex");
         assert_eq!(got, want);
     }

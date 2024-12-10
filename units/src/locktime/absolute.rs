@@ -396,14 +396,14 @@ mod tests {
     #[test]
     fn time_from_str_hex_happy_path() {
         let actual = Time::from_hex("0x6289C350").unwrap();
-        let expected = Time::from_consensus(0x6289C350).unwrap();
+        let expected = Time::from_consensus(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
         let time = Time::from_hex("6289C350").unwrap();
-        assert_eq!(time, Time(0x6289C350));
+        assert_eq!(time, Time(0x6289_C350));
     }
 
     #[test]

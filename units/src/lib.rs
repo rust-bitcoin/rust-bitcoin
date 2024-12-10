@@ -128,7 +128,7 @@
 #![warn(clippy::unnecessary_literal_bound)]
 #![warn(clippy::unnecessary_wraps)]
 #![warn(clippy::unnested_or_patterns)]
-#![allow(clippy::unreadable_literal)] // TODO: Still needs considering.
+#![warn(clippy::unreadable_literal)]
 #![warn(clippy::unsafe_derive_deserialize)]
 #![warn(clippy::unused_async)]
 #![warn(clippy::unused_self)]
