@@ -263,10 +263,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn kilo_weight_constructor_panic() {
-        Weight::from_kwu(u64::MAX).expect("expected weight unit");
-    }
+    fn kilo_weight_constructor_overflow() { assert!(Weight::from_kwu(u64::MAX).is_none()) }
 
     #[test]
     fn from_vb() {
@@ -285,7 +282,7 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic = "attempt to multiply with overflow"]
     fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]

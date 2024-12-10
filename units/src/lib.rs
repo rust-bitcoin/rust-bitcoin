@@ -108,7 +108,7 @@
 #![warn(clippy::return_self_not_must_use)]
 #![warn(clippy::same_functions_in_if_condition)]
 #![warn(clippy::semicolon_if_nothing_returned)]
-#![allow(clippy::should_panic_without_expect)] // TODO: Still needs considering.
+#![warn(clippy::should_panic_without_expect)]
 #![allow(clippy::similar_names)] // TODO: Still needs considering.
 #![warn(clippy::single_char_pattern)]
 #![warn(clippy::single_match_else)]

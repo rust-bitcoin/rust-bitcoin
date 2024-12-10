@@ -71,7 +71,7 @@ fn from_int_btc() {
     assert_eq!(Amount::from_sat(200_000_000), amt);
 }
 
-#[should_panic]
+#[should_panic = "checked_mul overflow"]
 #[test]
 fn from_int_btc_panic() { Amount::from_int_btc_const(u64::MAX); }
 
@@ -518,7 +518,7 @@ fn test_unsigned_signed_conversion() {
 
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
-#[allow(clippy::items_after_statements)]     // Define functions where we use them.
+#[allow(clippy::items_after_statements)] // Define functions where we use them.
 fn from_str() {
     use ParseDenominationError::*;
 
