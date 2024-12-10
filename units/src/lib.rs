@@ -122,7 +122,7 @@
 #![warn(clippy::trivially_copy_pass_by_ref)]
 #![warn(clippy::unchecked_duration_subtraction)]
 #![warn(clippy::unicode_not_nfc)]
-#![allow(clippy::uninlined_format_args)] // TODO: Still needs considering.
+#![allow(clippy::uninlined_format_args)] // ALLOW: This is a subjective style choice.
 #![warn(clippy::unnecessary_box_returns)]
 #![warn(clippy::unnecessary_join)]
 #![warn(clippy::unnecessary_literal_bound)]
