@@ -1,3 +1,7 @@
+#[non_exhaustive] pub struct bitcoin_primitives::locktime::relative::IncompatibleHeightError
+#[non_exhaustive] pub struct bitcoin_primitives::locktime::relative::IncompatibleTimeError
+#[non_exhaustive] pub struct bitcoin_primitives::relative::IncompatibleHeightError
+#[non_exhaustive] pub struct bitcoin_primitives::relative::IncompatibleTimeError
 impl bitcoin_hashes::Hash for bitcoin_primitives::block::BlockHash
 impl bitcoin_hashes::Hash for bitcoin_primitives::block::WitnessCommitment
 impl bitcoin_hashes::Hash for bitcoin_primitives::merkle_tree::TxMerkleNode
@@ -14,6 +18,9 @@ impl bitcoin_primitives::block::BlockHash
 impl bitcoin_primitives::block::Header
 impl bitcoin_primitives::block::Version
 impl bitcoin_primitives::block::WitnessCommitment
+impl bitcoin_primitives::locktime::absolute::LockTime
+impl bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl bitcoin_primitives::locktime::relative::LockTime
 impl bitcoin_primitives::merkle_tree::TxMerkleNode
 impl bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl bitcoin_primitives::opcodes::Opcode
@@ -48,6 +55,11 @@ impl core::clone::Clone for bitcoin_primitives::block::BlockHash
 impl core::clone::Clone for bitcoin_primitives::block::Header
 impl core::clone::Clone for bitcoin_primitives::block::Version
 impl core::clone::Clone for bitcoin_primitives::block::WitnessCommitment
+impl core::clone::Clone for bitcoin_primitives::locktime::absolute::LockTime
+impl core::clone::Clone for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::clone::Clone for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::clone::Clone for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::clone::Clone for bitcoin_primitives::locktime::relative::LockTime
 impl core::clone::Clone for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::clone::Clone for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::clone::Clone for bitcoin_primitives::opcodes::Class
@@ -69,6 +81,11 @@ impl core::cmp::Eq for bitcoin_primitives::block::BlockHash
 impl core::cmp::Eq for bitcoin_primitives::block::Header
 impl core::cmp::Eq for bitcoin_primitives::block::Version
 impl core::cmp::Eq for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Eq for bitcoin_primitives::locktime::absolute::LockTime
+impl core::cmp::Eq for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::cmp::Eq for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::cmp::Eq for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::cmp::Eq for bitcoin_primitives::locktime::relative::LockTime
 impl core::cmp::Eq for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::Eq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::Eq for bitcoin_primitives::opcodes::Class
@@ -109,6 +126,11 @@ impl core::cmp::PartialEq for bitcoin_primitives::block::BlockHash
 impl core::cmp::PartialEq for bitcoin_primitives::block::Header
 impl core::cmp::PartialEq for bitcoin_primitives::block::Version
 impl core::cmp::PartialEq for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::PartialEq for bitcoin_primitives::locktime::absolute::LockTime
+impl core::cmp::PartialEq for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::cmp::PartialEq for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::cmp::PartialEq for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::cmp::PartialEq for bitcoin_primitives::locktime::relative::LockTime
 impl core::cmp::PartialEq for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::PartialEq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::PartialEq for bitcoin_primitives::opcodes::Class
@@ -130,6 +152,8 @@ impl core::cmp::PartialOrd for bitcoin_primitives::block::BlockHash
 impl core::cmp::PartialOrd for bitcoin_primitives::block::Header
 impl core::cmp::PartialOrd for bitcoin_primitives::block::Version
 impl core::cmp::PartialOrd for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::PartialOrd for bitcoin_primitives::locktime::absolute::LockTime
+impl core::cmp::PartialOrd for bitcoin_primitives::locktime::relative::LockTime
 impl core::cmp::PartialOrd for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::PartialOrd for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::PartialOrd for bitcoin_primitives::opcodes::ClassifyContext
@@ -176,6 +200,7 @@ impl core::convert::From<bitcoin_hashes::sha256t::Hash<bitcoin_primitives::tapro
 impl core::convert::From<bitcoin_primitives::block::BlockHash> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin_primitives::block::Header> for bitcoin_primitives::block::BlockHash
 impl core::convert::From<bitcoin_primitives::block::WitnessCommitment> for bitcoin_hashes::sha256d::Hash
+impl core::convert::From<bitcoin_primitives::locktime::relative::LockTime> for bitcoin_primitives::sequence::Sequence
 impl core::convert::From<bitcoin_primitives::merkle_tree::TxMerkleNode> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin_primitives::merkle_tree::WitnessMerkleNode> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin_primitives::sequence::Sequence> for u32
@@ -185,7 +210,13 @@ impl core::convert::From<bitcoin_primitives::taproot::TapNodeHash> for bitcoin_h
 impl core::convert::From<bitcoin_primitives::taproot::TapTweakHash> for bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapTweakTag>
 impl core::convert::From<bitcoin_primitives::transaction::Txid> for bitcoin_hashes::sha256d::Hash
 impl core::convert::From<bitcoin_primitives::transaction::Wtxid> for bitcoin_hashes::sha256d::Hash
+impl core::convert::From<bitcoin_units::locktime::absolute::Height> for bitcoin_primitives::locktime::absolute::LockTime
+impl core::convert::From<bitcoin_units::locktime::absolute::Time> for bitcoin_primitives::locktime::absolute::LockTime
+impl core::convert::From<bitcoin_units::locktime::relative::Height> for bitcoin_primitives::locktime::relative::LockTime
+impl core::convert::From<bitcoin_units::locktime::relative::Time> for bitcoin_primitives::locktime::relative::LockTime
 impl core::convert::From<u8> for bitcoin_primitives::opcodes::Opcode
+impl core::convert::TryFrom<&str> for bitcoin_primitives::locktime::absolute::LockTime
+impl core::convert::TryFrom<bitcoin_primitives::sequence::Sequence> for bitcoin_primitives::locktime::relative::LockTime
 impl core::default::Default for bitcoin_primitives::block::Version
 impl core::default::Default for bitcoin_primitives::pow::CompactTarget
 impl core::default::Default for bitcoin_primitives::sequence::Sequence
@@ -196,6 +227,11 @@ impl core::fmt::Debug for bitcoin_primitives::block::BlockHash
 impl core::fmt::Debug for bitcoin_primitives::block::Header
 impl core::fmt::Debug for bitcoin_primitives::block::Version
 impl core::fmt::Debug for bitcoin_primitives::block::WitnessCommitment
+impl core::fmt::Debug for bitcoin_primitives::locktime::absolute::LockTime
+impl core::fmt::Debug for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::fmt::Debug for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::fmt::Debug for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::fmt::Debug for bitcoin_primitives::locktime::relative::LockTime
 impl core::fmt::Debug for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::fmt::Debug for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::fmt::Debug for bitcoin_primitives::opcodes::Class
@@ -212,6 +248,11 @@ impl core::fmt::Debug for bitcoin_primitives::transaction::Version
 impl core::fmt::Debug for bitcoin_primitives::transaction::Wtxid
 impl core::fmt::Display for bitcoin_primitives::block::BlockHash
 impl core::fmt::Display for bitcoin_primitives::block::WitnessCommitment
+impl core::fmt::Display for bitcoin_primitives::locktime::absolute::LockTime
+impl core::fmt::Display for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::fmt::Display for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::fmt::Display for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::fmt::Display for bitcoin_primitives::locktime::relative::LockTime
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::fmt::Display for bitcoin_primitives::opcodes::Opcode
@@ -249,6 +290,8 @@ impl core::hash::Hash for bitcoin_primitives::block::BlockHash
 impl core::hash::Hash for bitcoin_primitives::block::Header
 impl core::hash::Hash for bitcoin_primitives::block::Version
 impl core::hash::Hash for bitcoin_primitives::block::WitnessCommitment
+impl core::hash::Hash for bitcoin_primitives::locktime::absolute::LockTime
+impl core::hash::Hash for bitcoin_primitives::locktime::relative::LockTime
 impl core::hash::Hash for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::hash::Hash for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::hash::Hash for bitcoin_primitives::opcodes::ClassifyContext
@@ -268,6 +311,8 @@ impl core::marker::Copy for bitcoin_primitives::block::BlockHash
 impl core::marker::Copy for bitcoin_primitives::block::Header
 impl core::marker::Copy for bitcoin_primitives::block::Version
 impl core::marker::Copy for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Copy for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::Copy for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::Copy for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::Copy for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::Copy for bitcoin_primitives::opcodes::Class
@@ -289,6 +334,11 @@ impl core::marker::Freeze for bitcoin_primitives::block::BlockHash
 impl core::marker::Freeze for bitcoin_primitives::block::Header
 impl core::marker::Freeze for bitcoin_primitives::block::Version
 impl core::marker::Freeze for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Freeze for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::Freeze for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::marker::Freeze for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::marker::Freeze for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::marker::Freeze for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::Freeze for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::Freeze for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::Freeze for bitcoin_primitives::opcodes::Class
@@ -310,6 +360,11 @@ impl core::marker::Send for bitcoin_primitives::block::BlockHash
 impl core::marker::Send for bitcoin_primitives::block::Header
 impl core::marker::Send for bitcoin_primitives::block::Version
 impl core::marker::Send for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Send for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::Send for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::marker::Send for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::marker::Send for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::marker::Send for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::Send for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::Send for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::Send for bitcoin_primitives::opcodes::Class
@@ -331,6 +386,11 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::block::BlockHash
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Header
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::Version
 impl core::marker::StructuralPartialEq for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::StructuralPartialEq for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::StructuralPartialEq for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::marker::StructuralPartialEq for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::StructuralPartialEq for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::StructuralPartialEq for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::Class
@@ -352,6 +412,11 @@ impl core::marker::Sync for bitcoin_primitives::block::BlockHash
 impl core::marker::Sync for bitcoin_primitives::block::Header
 impl core::marker::Sync for bitcoin_primitives::block::Version
 impl core::marker::Sync for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Sync for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::Sync for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::marker::Sync for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::marker::Sync for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::marker::Sync for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::Sync for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::Sync for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::Sync for bitcoin_primitives::opcodes::Class
@@ -373,6 +438,11 @@ impl core::marker::Unpin for bitcoin_primitives::block::BlockHash
 impl core::marker::Unpin for bitcoin_primitives::block::Header
 impl core::marker::Unpin for bitcoin_primitives::block::Version
 impl core::marker::Unpin for bitcoin_primitives::block::WitnessCommitment
+impl core::marker::Unpin for bitcoin_primitives::locktime::absolute::LockTime
+impl core::marker::Unpin for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::marker::Unpin for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::marker::Unpin for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::marker::Unpin for bitcoin_primitives::locktime::relative::LockTime
 impl core::marker::Unpin for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::marker::Unpin for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::marker::Unpin for bitcoin_primitives::opcodes::Class
@@ -394,6 +464,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Bloc
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Header
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::block::WitnessCommitment
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::locktime::absolute::LockTime
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::locktime::relative::LockTime
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::opcodes::Class
@@ -415,6 +490,11 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::BlockHa
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Header
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::Version
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::block::WitnessCommitment
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::locktime::absolute::LockTime
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::locktime::relative::DisabledLockTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::locktime::relative::IncompatibleHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::locktime::relative::IncompatibleTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::locktime::relative::LockTime
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::opcodes::Class
@@ -434,6 +514,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::V
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::transaction::Wtxid
 impl core::str::traits::FromStr for bitcoin_primitives::block::BlockHash
 impl core::str::traits::FromStr for bitcoin_primitives::block::WitnessCommitment
+impl core::str::traits::FromStr for bitcoin_primitives::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::taproot::TapLeafHash
@@ -447,12 +528,22 @@ pub bitcoin_primitives::BlockHeader::nonce: u32
 pub bitcoin_primitives::BlockHeader::prev_blockhash: bitcoin_primitives::block::BlockHash
 pub bitcoin_primitives::BlockHeader::time: u32
 pub bitcoin_primitives::BlockHeader::version: bitcoin_primitives::block::Version
+pub bitcoin_primitives::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
+pub bitcoin_primitives::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::Time)
 pub bitcoin_primitives::block::Header::bits: bitcoin_primitives::pow::CompactTarget
 pub bitcoin_primitives::block::Header::merkle_root: bitcoin_primitives::merkle_tree::TxMerkleNode
 pub bitcoin_primitives::block::Header::nonce: u32
 pub bitcoin_primitives::block::Header::prev_blockhash: bitcoin_primitives::block::BlockHash
 pub bitcoin_primitives::block::Header::time: u32
 pub bitcoin_primitives::block::Header::version: bitcoin_primitives::block::Version
+pub bitcoin_primitives::locktime::absolute::LockTime::Blocks(bitcoin_units::locktime::absolute::Height)
+pub bitcoin_primitives::locktime::absolute::LockTime::Seconds(bitcoin_units::locktime::absolute::Time)
+pub bitcoin_primitives::locktime::relative::IncompatibleHeightError::height: bitcoin_units::locktime::relative::Height
+pub bitcoin_primitives::locktime::relative::IncompatibleHeightError::time: bitcoin_units::locktime::relative::Time
+pub bitcoin_primitives::locktime::relative::IncompatibleTimeError::height: bitcoin_units::locktime::relative::Height
+pub bitcoin_primitives::locktime::relative::IncompatibleTimeError::time: bitcoin_units::locktime::relative::Time
+pub bitcoin_primitives::locktime::relative::LockTime::Blocks(bitcoin_units::locktime::relative::Height)
+pub bitcoin_primitives::locktime::relative::LockTime::Time(bitcoin_units::locktime::relative::Time)
 pub bitcoin_primitives::opcodes::Class::IllegalOp
 pub bitcoin_primitives::opcodes::Class::NoOp
 pub bitcoin_primitives::opcodes::Class::Ordinary(Ordinary)
@@ -462,6 +553,12 @@ pub bitcoin_primitives::opcodes::Class::ReturnOp
 pub bitcoin_primitives::opcodes::Class::SuccessOp
 pub bitcoin_primitives::opcodes::ClassifyContext::Legacy
 pub bitcoin_primitives::opcodes::ClassifyContext::TapScript
+pub bitcoin_primitives::relative::IncompatibleHeightError::height: bitcoin_units::locktime::relative::Height
+pub bitcoin_primitives::relative::IncompatibleHeightError::time: bitcoin_units::locktime::relative::Time
+pub bitcoin_primitives::relative::IncompatibleTimeError::height: bitcoin_units::locktime::relative::Height
+pub bitcoin_primitives::relative::IncompatibleTimeError::time: bitcoin_units::locktime::relative::Time
+pub bitcoin_primitives::relative::LockTime::Blocks(bitcoin_units::locktime::relative::Height)
+pub bitcoin_primitives::relative::LockTime::Time(bitcoin_units::locktime::relative::Time)
 pub bitcoin_primitives::transaction::OutPoint::txid: bitcoin_primitives::transaction::Txid
 pub bitcoin_primitives::transaction::OutPoint::vout: u32
 pub const bitcoin_primitives::block::BlockHash::DISPLAY_BACKWARD: bool
@@ -471,6 +568,10 @@ pub const bitcoin_primitives::block::Version::NO_SOFT_FORK_SIGNALLING: Self
 pub const bitcoin_primitives::block::Version::ONE: Self
 pub const bitcoin_primitives::block::Version::TWO: Self
 pub const bitcoin_primitives::block::WitnessCommitment::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::locktime::absolute::LockTime::SIZE: usize
+pub const bitcoin_primitives::locktime::absolute::LockTime::ZERO: bitcoin_primitives::locktime::absolute::LockTime
+pub const bitcoin_primitives::locktime::relative::LockTime::SIZE: usize
+pub const bitcoin_primitives::locktime::relative::LockTime::ZERO: bitcoin_primitives::locktime::relative::LockTime
 pub const bitcoin_primitives::merkle_tree::TxMerkleNode::DISPLAY_BACKWARD: bool
 pub const bitcoin_primitives::merkle_tree::WitnessMerkleNode::DISPLAY_BACKWARD: bool
 pub const bitcoin_primitives::opcodes::all::OP_0NOTEQUAL: bitcoin_primitives::opcodes::Opcode
@@ -755,6 +856,16 @@ pub const fn bitcoin_primitives::block::Version::from_consensus(v: i32) -> Self
 pub const fn bitcoin_primitives::block::WitnessCommitment::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin_primitives::block::WitnessCommitment::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
 pub const fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::locktime::absolute::LockTime::is_block_height(&self) -> bool
+pub const fn bitcoin_primitives::locktime::absolute::LockTime::is_block_time(&self) -> bool
+pub const fn bitcoin_primitives::locktime::absolute::LockTime::is_same_unit(&self, other: bitcoin_primitives::locktime::absolute::LockTime) -> bool
+pub const fn bitcoin_primitives::locktime::relative::LockTime::from_512_second_intervals(intervals: u16) -> Self
+pub const fn bitcoin_primitives::locktime::relative::LockTime::from_height(n: u16) -> Self
+pub const fn bitcoin_primitives::locktime::relative::LockTime::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_primitives::locktime::relative::LockTime::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_primitives::locktime::relative::LockTime::is_block_height(&self) -> bool
+pub const fn bitcoin_primitives::locktime::relative::LockTime::is_block_time(&self) -> bool
+pub const fn bitcoin_primitives::locktime::relative::LockTime::is_same_unit(&self, other: bitcoin_primitives::locktime::relative::LockTime) -> bool
 pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
 pub const fn bitcoin_primitives::merkle_tree::TxMerkleNode::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
@@ -778,8 +889,12 @@ pub const fn bitcoin_primitives::transaction::Txid::to_byte_array(self) -> <bitc
 pub const fn bitcoin_primitives::transaction::Wtxid::as_byte_array(&self) -> &<bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin_primitives::transaction::Wtxid::from_byte_array(bytes: <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
 pub const fn bitcoin_primitives::transaction::Wtxid::to_byte_array(self) -> <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
+pub enum bitcoin_primitives::absolute::LockTime
+pub enum bitcoin_primitives::locktime::absolute::LockTime
+pub enum bitcoin_primitives::locktime::relative::LockTime
 pub enum bitcoin_primitives::opcodes::Class
 pub enum bitcoin_primitives::opcodes::ClassifyContext
+pub enum bitcoin_primitives::relative::LockTime
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::block::BlockHash) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::block::WitnessCommitment) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::merkle_tree::TxMerkleNode) -> bitcoin_hashes::sha256d::Hash
@@ -839,6 +954,50 @@ pub fn bitcoin_primitives::block::WitnessCommitment::from_str(s: &str) -> core::
 pub fn bitcoin_primitives::block::WitnessCommitment::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::block::WitnessCommitment::partial_cmp(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::locktime::absolute::LockTime::clone(&self) -> bitcoin_primitives::locktime::absolute::LockTime
+pub fn bitcoin_primitives::locktime::absolute::LockTime::eq(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> bool
+pub fn bitcoin_primitives::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from(h: bitcoin_units::locktime::absolute::Height) -> Self
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from(t: bitcoin_units::locktime::absolute::Time) -> Self
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_consensus(n: u32) -> Self
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_height(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_time(n: u32) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ConversionError>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::locktime::absolute::LockTime::is_implied_by(&self, other: bitcoin_primitives::locktime::absolute::LockTime) -> bool
+pub fn bitcoin_primitives::locktime::absolute::LockTime::is_satisfied_by(&self, height: bitcoin_units::locktime::absolute::Height, time: bitcoin_units::locktime::absolute::Time) -> bool
+pub fn bitcoin_primitives::locktime::absolute::LockTime::partial_cmp(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::locktime::absolute::LockTime::to_consensus_u32(self) -> u32
+pub fn bitcoin_primitives::locktime::absolute::LockTime::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::locktime::relative::DisabledLockTimeError::clone(&self) -> bitcoin_primitives::locktime::relative::DisabledLockTimeError
+pub fn bitcoin_primitives::locktime::relative::DisabledLockTimeError::disabled_locktime_value(&self) -> u32
+pub fn bitcoin_primitives::locktime::relative::DisabledLockTimeError::eq(&self, other: &bitcoin_primitives::locktime::relative::DisabledLockTimeError) -> bool
+pub fn bitcoin_primitives::locktime::relative::DisabledLockTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::locktime::relative::IncompatibleHeightError::clone(&self) -> bitcoin_primitives::locktime::relative::IncompatibleHeightError
+pub fn bitcoin_primitives::locktime::relative::IncompatibleHeightError::eq(&self, other: &bitcoin_primitives::locktime::relative::IncompatibleHeightError) -> bool
+pub fn bitcoin_primitives::locktime::relative::IncompatibleHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::locktime::relative::IncompatibleTimeError::clone(&self) -> bitcoin_primitives::locktime::relative::IncompatibleTimeError
+pub fn bitcoin_primitives::locktime::relative::IncompatibleTimeError::eq(&self, other: &bitcoin_primitives::locktime::relative::IncompatibleTimeError) -> bool
+pub fn bitcoin_primitives::locktime::relative::IncompatibleTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::locktime::relative::LockTime::clone(&self) -> bitcoin_primitives::locktime::relative::LockTime
+pub fn bitcoin_primitives::locktime::relative::LockTime::eq(&self, other: &bitcoin_primitives::locktime::relative::LockTime) -> bool
+pub fn bitcoin_primitives::locktime::relative::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::locktime::relative::LockTime::from(h: bitcoin_units::locktime::relative::Height) -> Self
+pub fn bitcoin_primitives::locktime::relative::LockTime::from(t: bitcoin_units::locktime::relative::Time) -> Self
+pub fn bitcoin_primitives::locktime::relative::LockTime::from_consensus(n: u32) -> core::result::Result<Self, bitcoin_primitives::locktime::relative::DisabledLockTimeError>
+pub fn bitcoin_primitives::locktime::relative::LockTime::from_sequence(n: bitcoin_primitives::sequence::Sequence) -> core::result::Result<Self, bitcoin_primitives::locktime::relative::DisabledLockTimeError>
+pub fn bitcoin_primitives::locktime::relative::LockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::locktime::relative::LockTime::is_implied_by(&self, other: bitcoin_primitives::locktime::relative::LockTime) -> bool
+pub fn bitcoin_primitives::locktime::relative::LockTime::is_implied_by_sequence(&self, other: bitcoin_primitives::sequence::Sequence) -> bool
+pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by(&self, h: bitcoin_units::locktime::relative::Height, t: bitcoin_units::locktime::relative::Time) -> bool
+pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_height(&self, height: bitcoin_units::locktime::relative::Height) -> core::result::Result<bool, bitcoin_primitives::locktime::relative::IncompatibleHeightError>
+pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_time(&self, time: bitcoin_units::locktime::relative::Time) -> core::result::Result<bool, bitcoin_primitives::locktime::relative::IncompatibleTimeError>
+pub fn bitcoin_primitives::locktime::relative::LockTime::partial_cmp(&self, other: &bitcoin_primitives::locktime::relative::LockTime) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_consensus_u32(&self) -> u32
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_sequence(&self) -> bitcoin_primitives::sequence::Sequence
+pub fn bitcoin_primitives::locktime::relative::LockTime::try_from(seq: bitcoin_primitives::sequence::Sequence) -> core::result::Result<bitcoin_primitives::locktime::relative::LockTime, bitcoin_primitives::locktime::relative::DisabledLockTimeError>
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8]
@@ -901,9 +1060,14 @@ pub fn bitcoin_primitives::sequence::Sequence::default() -> Self
 pub fn bitcoin_primitives::sequence::Sequence::enables_absolute_lock_time(&self) -> bool
 pub fn bitcoin_primitives::sequence::Sequence::eq(&self, other: &bitcoin_primitives::sequence::Sequence) -> bool
 pub fn bitcoin_primitives::sequence::Sequence::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::sequence::Sequence::from(lt: bitcoin_primitives::locktime::relative::LockTime) -> bitcoin_primitives::sequence::Sequence
 pub fn bitcoin_primitives::sequence::Sequence::from_512_second_intervals(intervals: u16) -> Self
 pub fn bitcoin_primitives::sequence::Sequence::from_consensus(n: u32) -> Self
 pub fn bitcoin_primitives::sequence::Sequence::from_height(height: u16) -> Self
+pub fn bitcoin_primitives::sequence::Sequence::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_primitives::sequence::Sequence::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub fn bitcoin_primitives::sequence::Sequence::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub fn bitcoin_primitives::sequence::Sequence::from_unprefixed_hex(s: &str) -> core::result::Result<Self, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin_primitives::sequence::Sequence::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::sequence::Sequence::is_final(&self) -> bool
 pub fn bitcoin_primitives::sequence::Sequence::is_height_locked(&self) -> bool
@@ -912,6 +1076,7 @@ pub fn bitcoin_primitives::sequence::Sequence::is_relative_lock_time(&self) -> b
 pub fn bitcoin_primitives::sequence::Sequence::is_time_locked(&self) -> bool
 pub fn bitcoin_primitives::sequence::Sequence::partial_cmp(&self, other: &bitcoin_primitives::sequence::Sequence) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::sequence::Sequence::to_consensus_u32(self) -> u32
+pub fn bitcoin_primitives::sequence::Sequence::to_relative_lock_time(&self) -> core::option::Option<bitcoin_primitives::locktime::relative::LockTime>
 pub fn bitcoin_primitives::taproot::TapBranchTag::clone(&self) -> bitcoin_primitives::taproot::TapBranchTag
 pub fn bitcoin_primitives::taproot::TapBranchTag::cmp(&self, other: &bitcoin_primitives::taproot::TapBranchTag) -> core::cmp::Ordering
 pub fn bitcoin_primitives::taproot::TapBranchTag::default() -> bitcoin_primitives::taproot::TapBranchTag
@@ -1028,11 +1193,16 @@ pub fn bitcoin_primitives::transaction::Wtxid::partial_cmp(&self, other: &bitcoi
 pub fn bitcoin_primitives::transaction::Wtxid::to_byte_array(self) -> Self::Bytes
 pub fn u32::from(sequence: bitcoin_primitives::sequence::Sequence) -> u32
 pub mod bitcoin_primitives
+pub mod bitcoin_primitives::absolute
 pub mod bitcoin_primitives::block
+pub mod bitcoin_primitives::locktime
+pub mod bitcoin_primitives::locktime::absolute
+pub mod bitcoin_primitives::locktime::relative
 pub mod bitcoin_primitives::merkle_tree
 pub mod bitcoin_primitives::opcodes
 pub mod bitcoin_primitives::opcodes::all
 pub mod bitcoin_primitives::pow
+pub mod bitcoin_primitives::relative
 pub mod bitcoin_primitives::sequence
 pub mod bitcoin_primitives::taproot
 pub mod bitcoin_primitives::transaction
@@ -1060,10 +1230,12 @@ pub struct bitcoin_primitives::block::BlockHash(_)
 pub struct bitcoin_primitives::block::Header
 pub struct bitcoin_primitives::block::Version(_)
 pub struct bitcoin_primitives::block::WitnessCommitment(_)
+pub struct bitcoin_primitives::locktime::relative::DisabledLockTimeError(_)
 pub struct bitcoin_primitives::merkle_tree::TxMerkleNode(_)
 pub struct bitcoin_primitives::merkle_tree::WitnessMerkleNode(_)
 pub struct bitcoin_primitives::opcodes::Opcode
 pub struct bitcoin_primitives::pow::CompactTarget(_)
+pub struct bitcoin_primitives::relative::DisabledLockTimeError(_)
 pub struct bitcoin_primitives::sequence::Sequence(pub u32)
 pub struct bitcoin_primitives::taproot::TapBranchTag
 pub struct bitcoin_primitives::taproot::TapLeafHash(_)
@@ -1079,6 +1251,9 @@ pub type bitcoin_primitives::block::BlockHash::Bytes = <bitcoin_hashes::sha256d:
 pub type bitcoin_primitives::block::BlockHash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin_primitives::block::WitnessCommitment::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin_primitives::block::WitnessCommitment::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::locktime::absolute::LockTime::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_primitives::locktime::absolute::LockTime::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_primitives::locktime::relative::LockTime::Error = bitcoin_primitives::locktime::relative::DisabledLockTimeError
 pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
@@ -1094,5 +1269,29 @@ pub type bitcoin_primitives::transaction::Txid::Err = hex_conservative::error::H
 pub type bitcoin_primitives::transaction::Wtxid::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin_primitives::transaction::Wtxid::Err = hex_conservative::error::HexToArrayError
 pub use bitcoin_primitives::Amount
+pub use bitcoin_primitives::BlockHeight
+pub use bitcoin_primitives::BlockInterval
+pub use bitcoin_primitives::FeeRate
 pub use bitcoin_primitives::SignedAmount
+pub use bitcoin_primitives::Weight
+pub use bitcoin_primitives::absolute::ConversionError
+pub use bitcoin_primitives::absolute::Height
+pub use bitcoin_primitives::absolute::LOCK_TIME_THRESHOLD
+pub use bitcoin_primitives::absolute::ParseHeightError
+pub use bitcoin_primitives::absolute::ParseTimeError
+pub use bitcoin_primitives::absolute::Time
 pub use bitcoin_primitives::amount
+pub use bitcoin_primitives::fee_rate
+pub use bitcoin_primitives::locktime::absolute::ConversionError
+pub use bitcoin_primitives::locktime::absolute::Height
+pub use bitcoin_primitives::locktime::absolute::LOCK_TIME_THRESHOLD
+pub use bitcoin_primitives::locktime::absolute::ParseHeightError
+pub use bitcoin_primitives::locktime::absolute::ParseTimeError
+pub use bitcoin_primitives::locktime::absolute::Time
+pub use bitcoin_primitives::locktime::relative::Height
+pub use bitcoin_primitives::locktime::relative::Time
+pub use bitcoin_primitives::locktime::relative::TimeOverflowError
+pub use bitcoin_primitives::relative::Height
+pub use bitcoin_primitives::relative::Time
+pub use bitcoin_primitives::relative::TimeOverflowError
+pub use bitcoin_primitives::weight
