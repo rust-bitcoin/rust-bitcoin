@@ -22,7 +22,7 @@ For changes to our dependencies included in this release see:
 - `bitcoin_hashes 0.15`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
 - `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 - `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
-- `bitcoin-primitives: 0.101`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md))
+- `bitcoin-primitives: 0.101`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
 - `bitcoin-units 0.2`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md))
 - `bitcoinconsensus: 0.106.0+26`: [changelog](https://github.com/rust-bitcoin/rust-bitcoinconsensus/blob/master/CHANGELOG.md)
 
