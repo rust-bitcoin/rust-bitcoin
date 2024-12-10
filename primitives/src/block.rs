@@ -77,6 +77,7 @@ impl Block<Unchecked> {
     /// Ignores block validation logic and just assumes you know what you are doing.
     ///
     /// You should only use this function if you trust the block i.e., it comes from a trusted node.
+    #[must_use]
     pub fn assume_checked(self, witness_root: Option<WitnessMerkleNode>) -> Block<Checked> {
         Block {
             header: self.header,

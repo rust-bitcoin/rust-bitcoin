@@ -351,6 +351,7 @@ pub enum ClassifyContext {
 impl Opcode {
     /// Classifies an Opcode into a broad class.
     #[inline]
+    #[must_use]
     pub fn classify(self, ctx: ClassifyContext) -> Class {
         match (self, ctx) {
             // 3 opcodes illegal in all contexts
@@ -424,6 +425,7 @@ impl Opcode {
     ///
     /// Returns `None` if `self` is not a PUSHNUM.
     #[inline]
+    #[must_use]
     pub const fn decode_pushnum(self) -> Option<u8> {
         const START: u8 = OP_PUSHNUM_1.code;
         const END: u8 = OP_PUSHNUM_16.code;
