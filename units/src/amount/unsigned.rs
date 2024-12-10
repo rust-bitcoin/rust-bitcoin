@@ -178,6 +178,7 @@ impl Amount {
     }
 
     /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
             sats_abs: self.to_sat(),
@@ -190,6 +191,7 @@ impl Amount {
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
+    #[must_use]
     pub fn display_dynamic(self) -> Display {
         Display {
             sats_abs: self.to_sat(),
@@ -216,10 +218,11 @@ impl Amount {
     /// Checked addition.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
-            Some(res) => Amount(res).check_max(),
+            Some(result) => Amount(result).check_max(),
             None => None,
         }
     }
@@ -227,10 +230,11 @@ impl Amount {
     /// Checked subtraction.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }
@@ -238,10 +242,11 @@ impl Amount {
     /// Checked multiplication.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => Amount(res).check_max(),
+            Some(result) => Amount(result).check_max(),
             None => None,
         }
     }
@@ -251,10 +256,11 @@ impl Amount {
     /// Be aware that integer division loses the remainder if no exact division can be made.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }
@@ -267,6 +273,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub const fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
         let wu = rhs.to_wu();
         // No `?` operator in const context.
@@ -289,10 +296,11 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub const fn checked_div_by_weight_floor(self, rhs: Weight) -> Option<FeeRate> {
         // No `?` operator in const context.
         match self.0.checked_mul(1_000) {
-            Some(res) => match res.checked_div(rhs.to_wu()) {
+            Some(result) => match result.checked_div(rhs.to_wu()) {
                 Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
                 None => None,
             },
@@ -303,10 +311,11 @@ impl Amount {
     /// Checked remainder.
     ///
     /// Returns [`None`] if overflow occurred.
+    #[must_use]
     pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }
@@ -318,6 +327,7 @@ impl Amount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -327,14 +337,16 @@ impl Amount {
     /// # Panics
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
+    #[must_use]
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.
+    #[rustfmt::skip] // Moves code comments to the wrong line.
     pub fn to_signed(self) -> Result<SignedAmount, OutOfRangeError> {
-        if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
+        if self.to_sat() > SignedAmount::MAX.to_sat() as u64 { // Cast ok, signed max is positive and fits in u64.
             Err(OutOfRangeError::too_big(true))
         } else {
-            Ok(SignedAmount::from_sat(self.to_sat() as i64))
+            Ok(SignedAmount::from_sat(self.to_sat() as i64)) // Cast ok, checked not too big above.
         }
     }
 

@@ -71,7 +71,7 @@ fn from_int_btc() {
     assert_eq!(Amount::from_sat(200_000_000), amt);
 }
 
-#[should_panic]
+#[should_panic = "checked_mul overflow"]
 #[test]
 fn from_int_btc_panic() { Amount::from_int_btc_const(u64::MAX); }
 
@@ -94,6 +94,7 @@ fn test_amount_try_from_signed_amount() {
 }
 
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn mul_div() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
@@ -118,11 +119,12 @@ fn test_overflows() {
     // panic on overflow
     let result = panic::catch_unwind(|| Amount::MAX + Amount::from_sat(1));
     assert!(result.is_err());
-    let result = panic::catch_unwind(|| Amount::from_sat(8446744073709551615) * 3);
+    let result = panic::catch_unwind(|| Amount::from_sat(8_446_744_073_709_551_615) * 3);
     assert!(result.is_err());
 }
 
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn checked_arithmetic() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
@@ -202,23 +204,33 @@ fn unchecked_signed_amount_subtract() {
 
 #[cfg(feature = "alloc")]
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn floating_point() {
+    /// Compare two float values within a tolerance of 0.1 sats.
+    fn is_equal_within_tolerance(x: f64, y: f64) -> bool {
+        const ALLOWED_ERROR_IN_CONVERSION: f64 = 0.000_000_001;
+        (x - y).abs() < ALLOWED_ERROR_IN_CONVERSION
+    }
+
     use super::Denomination as D;
     let f = Amount::from_float_in;
     let sf = SignedAmount::from_float_in;
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(f(11.22, D::Bitcoin), Ok(sat(1122000000)));
-    assert_eq!(sf(-11.22, D::MilliBitcoin), Ok(ssat(-1122000)));
+    assert_eq!(f(11.22, D::Bitcoin), Ok(sat(1_122_000_000)));
+    assert_eq!(sf(-11.22, D::MilliBitcoin), Ok(ssat(-1_122_000)));
     assert_eq!(f(11.22, D::Bit), Ok(sat(1122)));
-    assert_eq!(f(0.0001234, D::Bitcoin), Ok(sat(12340)));
-    assert_eq!(sf(-0.00012345, D::Bitcoin), Ok(ssat(-12345)));
+    assert_eq!(f(0.000_123_4, D::Bitcoin), Ok(sat(12_340)));
+    assert_eq!(sf(-0.000_123_45, D::Bitcoin), Ok(ssat(-12_345)));
 
     assert_eq!(f(11.22, D::Satoshi), Err(TooPreciseError { position: 3 }.into()));
-    assert_eq!(f(42.123456781, D::Bitcoin), Err(TooPreciseError { position: 11 }.into()));
-    assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
-    assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(OutOfRangeError::too_big(false).into()));
+    assert_eq!(f(42.123_456_781, D::Bitcoin), Err(TooPreciseError { position: 11 }.into()));
+    assert_eq!(sf(-184_467_440_738.0, D::Bitcoin), Err(OutOfRangeError::too_small().into()));
+    assert_eq!(
+        f(18_446_744_073_709_551_617.0, D::Satoshi),
+        Err(OutOfRangeError::too_big(false).into())
+    );
 
     assert_eq!(
         f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
@@ -231,12 +243,13 @@ fn floating_point() {
     );
 
     let btc = move |f| SignedAmount::from_btc(f).unwrap();
-    assert_eq!(btc(2.5).to_float_in(D::Bitcoin), 2.5);
-    assert_eq!(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0);
-    assert_eq!(btc(2.5).to_float_in(D::Satoshi), 250000000.0);
+
+    assert!(is_equal_within_tolerance(btc(2.5).to_float_in(D::Bitcoin), 2.5));
+    assert!(is_equal_within_tolerance(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0));
+    assert!(is_equal_within_tolerance(btc(2.5).to_float_in(D::Satoshi), 250_000_000.0));
 
     let btc = move |f| Amount::from_btc(f).unwrap();
-    assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012")
+    assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012");
 }
 
 #[test]
@@ -511,6 +524,7 @@ fn test_unsigned_signed_conversion() {
 
 #[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+#[allow(clippy::items_after_statements)] // Define functions where we use them.
 fn from_str() {
     use ParseDenominationError::*;
 
@@ -576,7 +590,7 @@ fn from_str() {
 
     ok_case(".5 bits", Amount::from_sat(50));
     ok_scase("-.5 bits", SignedAmount::from_sat(-50));
-    ok_case("0.00253583 BTC", Amount::from_sat(253583));
+    ok_case("0.00253583 BTC", Amount::from_sat(253_583));
     ok_scase("-5 satoshi", SignedAmount::from_sat(-5));
     ok_case("0.10000000 BTC", Amount::from_sat(100_000_00));
     ok_scase("-100 bits", SignedAmount::from_sat(-10_000));
@@ -596,7 +610,7 @@ fn to_from_string_in() {
 
     assert_eq!("0.5", Amount::from_sat(50).to_string_in(D::Bit));
     assert_eq!("-0.5", SignedAmount::from_sat(-50).to_string_in(D::Bit));
-    assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
+    assert_eq!("0.00253583", Amount::from_sat(253_583).to_string_in(D::Bitcoin));
     assert_eq!("-5", SignedAmount::from_sat(-5).to_string_in(D::Satoshi));
     assert_eq!("0.1", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
     assert_eq!("-100", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
@@ -614,7 +628,8 @@ fn to_from_string_in() {
         ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
         Ok(ua_sat(1_000_000_000_000))
     );
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin).is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin)
+        .is_ok());
 
     assert_eq!(sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sa_sat(-1)));
 
@@ -666,13 +681,13 @@ fn serde_as_sat() {
     }
 
     serde_test::assert_tokens(
-        &T { amt: Amount::from_sat(123456789), samt: SignedAmount::from_sat(-123456789) },
+        &T { amt: Amount::from_sat(123_456_789), samt: SignedAmount::from_sat(-123_456_789) },
         &[
             serde_test::Token::Struct { name: "T", len: 2 },
             serde_test::Token::Str("amt"),
-            serde_test::Token::U64(123456789),
+            serde_test::Token::U64(123_456_789),
             serde_test::Token::Str("samt"),
-            serde_test::Token::I64(-123456789),
+            serde_test::Token::I64(-123_456_789),
             serde_test::Token::StructEnd,
         ],
     );
@@ -739,10 +754,10 @@ fn serde_as_btc_opt() {
     let without = T { amt: None, samt: None };
 
     // Test Roundtripping
-    for s in [&with, &without].iter() {
+    for s in [&with, &without] {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
-        assert_eq!(w, **s);
+        assert_eq!(w, *s);
     }
 
     let t: T = serde_json::from_str("{\"amt\": 2.5, \"samt\": -2.5}").unwrap();
@@ -781,10 +796,10 @@ fn serde_as_sat_opt() {
     let without = T { amt: None, samt: None };
 
     // Test Roundtripping
-    for s in [&with, &without].iter() {
+    for s in [&with, &without] {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
-        assert_eq!(w, **s);
+        assert_eq!(w, *s);
     }
 
     let t: T = serde_json::from_str("{\"amt\": 250000000, \"samt\": -250000000}").unwrap();
@@ -852,7 +867,7 @@ fn denomination_string_acceptable_forms() {
         "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS", "satoshis",
         "SAT", "sat", "SATS", "sats", "bit", "bits",
     ];
-    for denom in valid.iter() {
+    for denom in valid {
         assert!(denom.parse::<Denomination>().is_ok());
     }
 }
@@ -860,7 +875,7 @@ fn denomination_string_acceptable_forms() {
 #[test]
 fn disallow_confusing_forms() {
     let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
-    for denom in confusing.iter() {
+    for denom in confusing {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
             Err(ParseDenominationError::PossiblyConfusing(_)) => {}
@@ -873,7 +888,7 @@ fn disallow_confusing_forms() {
 fn disallow_unknown_denomination() {
     // Non-exhaustive list of unknown forms.
     let unknown = ["NBTC", "ABC", "abc", "mSat", "msat"];
-    for denom in unknown.iter() {
+    for denom in unknown {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
             Err(ParseDenominationError::Unknown(_)) => (),
@@ -885,7 +900,7 @@ fn disallow_unknown_denomination() {
 #[test]
 #[cfg(feature = "alloc")]
 fn trailing_zeros_for_amount() {
-    assert_eq!(format!("{}", Amount::from_sat(1000000)), "0.01 BTC");
+    assert_eq!(format!("{}", Amount::from_sat(1_000_000)), "0.01 BTC");
     assert_eq!(format!("{}", Amount::ONE_SAT), "0.00000001 BTC");
     assert_eq!(format!("{}", Amount::ONE_BTC), "1 BTC");
     assert_eq!(format!("{}", Amount::from_sat(1)), "0.00000001 BTC");
