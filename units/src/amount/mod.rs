@@ -218,7 +218,7 @@ fn parse_signed_to_satoshi(
                     Ok(0) => return Ok((is_negative, 0)),
                     _ =>
                         return Err(InnerParseError::TooPrecise(TooPreciseError {
-                            position: position + is_negative as usize,
+                            position: position + usize::from(is_negative),
                         })),
                 }
             }
@@ -237,7 +237,7 @@ fn parse_signed_to_satoshi(
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_u64.checked_mul(value) {
                     None => return Err(InnerParseError::Overflow { is_negative }),
-                    Some(val) => match val.checked_add((c as u8 - b'0') as u64) {
+                    Some(val) => match val.checked_add(u64::from(c as u8 - b'0')) {
                         None => return Err(InnerParseError::Overflow { is_negative }),
                         Some(val) => value = val,
                     },
@@ -248,7 +248,7 @@ fn parse_signed_to_satoshi(
                     Some(d) if d < max_decimals => Some(d + 1),
                     _ =>
                         return Err(InnerParseError::TooPrecise(TooPreciseError {
-                            position: i + is_negative as usize,
+                            position: i + usize::from(is_negative),
                         })),
                 };
             }
@@ -259,13 +259,13 @@ fn parse_signed_to_satoshi(
                 _ =>
                     return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
                         invalid_char: '.',
-                        position: i + is_negative as usize,
+                        position: i + usize::from(is_negative),
                     })),
             },
             c =>
                 return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
                     invalid_char: c,
-                    position: i + is_negative as usize,
+                    position: i + usize::from(is_negative),
                 })),
         }
     }
