@@ -144,15 +144,15 @@ impl FromStr for Denomination {
     ///
     /// - If an unknown denomination is used, an [`UnknownDenominationError`] is returned.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::ParseDenominationError::*;
+        use self::ParseDenominationError as E;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
+            return Err(E::PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
         };
 
         let form = self::Denomination::forms(s);
 
-        form.ok_or_else(|| Unknown(UnknownDenominationError(s.into())))
+        form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
     }
 }
 

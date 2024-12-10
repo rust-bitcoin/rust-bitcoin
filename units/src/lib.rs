@@ -32,7 +32,7 @@
 #![warn(clippy::doc_link_with_quotes)]
 #![warn(clippy::doc_markdown)]
 #![warn(clippy::empty_enum)]
-#![allow(clippy::enum_glob_use)] // TODO: Still needs considering.
+#![warn(clippy::enum_glob_use)]
 #![warn(clippy::expl_impl_clone_on_copy)]
 #![warn(clippy::explicit_deref_methods)]
 #![warn(clippy::explicit_into_iter_loop)]
