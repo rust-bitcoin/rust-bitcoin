@@ -222,7 +222,7 @@ impl Amount {
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
-            Some(res) => Amount(res).check_max(),
+            Some(result) => Amount(result).check_max(),
             None => None,
         }
     }
@@ -234,7 +234,7 @@ impl Amount {
     pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }
@@ -246,7 +246,7 @@ impl Amount {
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => Amount(res).check_max(),
+            Some(result) => Amount(result).check_max(),
             None => None,
         }
     }
@@ -260,7 +260,7 @@ impl Amount {
     pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }
@@ -300,7 +300,7 @@ impl Amount {
     pub const fn checked_div_by_weight_floor(self, rhs: Weight) -> Option<FeeRate> {
         // No `?` operator in const context.
         match self.0.checked_mul(1_000) {
-            Some(res) => match res.checked_div(rhs.to_wu()) {
+            Some(result) => match result.checked_div(rhs.to_wu()) {
                 Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
                 None => None,
             },
@@ -315,7 +315,7 @@ impl Amount {
     pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
-            Some(res) => Some(Amount(res)),
+            Some(result) => Some(Amount(result)),
             None => None,
         }
     }

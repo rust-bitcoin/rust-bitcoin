@@ -256,7 +256,7 @@ impl SignedAmount {
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
-            Some(res) => Some(SignedAmount(res)),
+            Some(result) => Some(SignedAmount(result)),
             None => None,
         }
     }
@@ -268,7 +268,7 @@ impl SignedAmount {
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
-            Some(res) => Some(SignedAmount(res)),
+            Some(result) => Some(SignedAmount(result)),
             None => None,
         }
     }
@@ -280,7 +280,7 @@ impl SignedAmount {
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => Some(SignedAmount(res)),
+            Some(result) => Some(SignedAmount(result)),
             None => None,
         }
     }
@@ -294,7 +294,7 @@ impl SignedAmount {
     pub const fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
-            Some(res) => Some(SignedAmount(res)),
+            Some(result) => Some(SignedAmount(result)),
             None => None,
         }
     }
@@ -306,7 +306,7 @@ impl SignedAmount {
     pub const fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_rem(rhs) {
-            Some(res) => Some(SignedAmount(res)),
+            Some(result) => Some(SignedAmount(result)),
             None => None,
         }
     }

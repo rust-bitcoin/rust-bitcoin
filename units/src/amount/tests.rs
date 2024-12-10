@@ -94,6 +94,7 @@ fn test_amount_try_from_signed_amount() {
 }
 
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn mul_div() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
@@ -123,6 +124,7 @@ fn test_overflows() {
 }
 
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn checked_arithmetic() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
@@ -202,6 +204,7 @@ fn unchecked_signed_amount_subtract() {
 
 #[cfg(feature = "alloc")]
 #[test]
+#[allow(clippy::similar_names)] // sat and ssat is clear enough.
 fn floating_point() {
     /// Compare two float values within a tolerance of 0.1 sats.
     fn is_equal_within_tolerance(x: f64, y: f64) -> bool {

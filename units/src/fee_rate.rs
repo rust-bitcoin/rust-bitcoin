@@ -83,7 +83,7 @@ impl FeeRate {
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => Some(Self(res)),
+            Some(result) => Some(Self(result)),
             None => None,
         }
     }
@@ -95,7 +95,7 @@ impl FeeRate {
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
-            Some(res) => Some(Self(res)),
+            Some(result) => Some(Self(result)),
             None => None,
         }
     }
@@ -127,7 +127,7 @@ impl FeeRate {
     pub const fn checked_add(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_add(rhs) {
-            Some(res) => Some(Self(res)),
+            Some(result) => Some(Self(result)),
             None => None,
         }
     }
@@ -139,7 +139,7 @@ impl FeeRate {
     pub const fn checked_sub(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs) {
-            Some(res) => Some(Self(res)),
+            Some(result) => Some(Self(result)),
             None => None,
         }
     }
