@@ -28,6 +28,7 @@ impl Height {
 
     /// Returns the inner `u16` value.
     #[inline]
+    #[must_use]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
@@ -83,7 +84,7 @@ impl Time {
     pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let interval = seconds / 512;
         if interval <= u16::MAX as u32 { // infallible cast, needed by const code
-            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -100,7 +101,7 @@ impl Time {
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         if seconds <= u16::MAX as u32 * 512 {
             let interval = (seconds + 511) / 512;
-            Ok(Time::from_512_second_intervals(interval as u16)) // cast checked above, needed by const code
+            Ok(Time::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -108,6 +109,7 @@ impl Time {
 
     /// Returns the inner `u16` value.
     #[inline]
+    #[must_use]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or

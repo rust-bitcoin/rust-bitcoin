@@ -148,10 +148,10 @@ impl TryFrom<BlockInterval> for relative::Height {
     /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn try_from(h: BlockInterval) -> Result<Self, Self::Error> {
         let h = h.to_u32();
-        if h > u16::MAX as u32 {
+        if h > u32::from(u16::MAX) {
             return Err(TooBigForRelativeBlockHeightError(h));
         }
-        Ok(relative::Height::from(h as u16)) // Cast ok, value checked above
+        Ok(relative::Height::from(h as u16)) // Cast ok, value checked above.
     }
 }
 

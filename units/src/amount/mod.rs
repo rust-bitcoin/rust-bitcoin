@@ -125,7 +125,7 @@ impl Denomination {
 }
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
-/// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
+/// If any of these forms are used, an error type `PossiblyConfusingDenomination` is returned.
 const CONFUSING_FORMS: [&str; 6] = ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
@@ -144,15 +144,15 @@ impl FromStr for Denomination {
     ///
     /// - If an unknown denomination is used, an [`UnknownDenominationError`] is returned.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::ParseDenominationError::*;
+        use self::ParseDenominationError as E;
 
         if CONFUSING_FORMS.contains(&s) {
-            return Err(PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
+            return Err(E::PossiblyConfusing(PossiblyConfusingDenominationError(s.into())));
         };
 
         let form = self::Denomination::forms(s);
 
-        form.ok_or_else(|| Unknown(UnknownDenominationError(s.into())))
+        form.ok_or_else(|| E::Unknown(UnknownDenominationError(s.into())))
     }
 }
 
@@ -218,7 +218,7 @@ fn parse_signed_to_satoshi(
                     Ok(0) => return Ok((is_negative, 0)),
                     _ =>
                         return Err(InnerParseError::TooPrecise(TooPreciseError {
-                            position: position + is_negative as usize,
+                            position: position + usize::from(is_negative),
                         })),
                 }
             }
@@ -237,7 +237,7 @@ fn parse_signed_to_satoshi(
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_u64.checked_mul(value) {
                     None => return Err(InnerParseError::Overflow { is_negative }),
-                    Some(val) => match val.checked_add((c as u8 - b'0') as u64) {
+                    Some(val) => match val.checked_add(u64::from(c as u8 - b'0')) {
                         None => return Err(InnerParseError::Overflow { is_negative }),
                         Some(val) => value = val,
                     },
@@ -248,7 +248,7 @@ fn parse_signed_to_satoshi(
                     Some(d) if d < max_decimals => Some(d + 1),
                     _ =>
                         return Err(InnerParseError::TooPrecise(TooPreciseError {
-                            position: i + is_negative as usize,
+                            position: i + usize::from(is_negative),
                         })),
                 };
             }
@@ -259,13 +259,13 @@ fn parse_signed_to_satoshi(
                 _ =>
                     return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
                         invalid_char: '.',
-                        position: i + is_negative as usize,
+                        position: i + usize::from(is_negative),
                     })),
             },
             c =>
                 return Err(InnerParseError::InvalidCharacter(InvalidCharacterError {
                     invalid_char: c,
-                    position: i + is_negative as usize,
+                    position: i + usize::from(is_negative),
                 })),
         }
     }
@@ -320,6 +320,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
 }
 
 /// Options given by `fmt::Formatter`
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 struct FormatOptions {
     fill: char,
     align: Option<fmt::Alignment>,
@@ -395,7 +396,7 @@ fn fmt_satoshi_in(
         // We add the number of zeroes to the end
         Ordering::Greater => {
             if satoshi > 0 {
-                exp = precision as usize;
+                exp = precision as usize; // Cast ok, checked not negative above.
             }
             trailing_decimal_zeros = options.precision.unwrap_or(0);
         }
@@ -407,7 +408,7 @@ fn fmt_satoshi_in(
                 if usize::from(precision) > format_precision {
                     // precision is u8 so in this branch options.precision() < 255 which fits in u32
                     let rounding_divisor =
-                        10u64.pow(u32::from(precision) - format_precision as u32);
+                        10u64.pow(u32::from(precision) - format_precision as u32); // Cast ok, commented above.
                     let remainder = satoshi % rounding_divisor;
                     satoshi -= remainder;
                     if remainder / (rounding_divisor / 10) >= 5 {
@@ -425,7 +426,7 @@ fn fmt_satoshi_in(
                 norm_nb_decimals = usize::from(precision);
                 while num_after_decimal_point % 10 == 0 {
                     norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10
+                    num_after_decimal_point /= 10;
                 }
             }
             // compute requested precision
@@ -527,6 +528,7 @@ pub struct Display {
 
 impl Display {
     /// Makes subsequent calls to `Display::fmt` display denomination.
+    #[must_use]
     pub fn show_denomination(mut self) -> Self {
         match &mut self.style {
             DisplayStyle::FixedDenomination { show_denomination, .. } => *show_denomination = true,
