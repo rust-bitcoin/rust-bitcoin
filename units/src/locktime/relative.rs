@@ -109,7 +109,7 @@ impl Time {
 
     /// Returns the inner `u16` value.
     #[inline]
-    #[must_use]    
+    #[must_use]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
