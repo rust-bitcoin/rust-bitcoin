@@ -345,7 +345,7 @@ impl Amount {
         if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
             Err(OutOfRangeError::too_big(true))
         } else {
-            Ok(SignedAmount::from_sat(self.to_sat() as i64))
+            Ok(SignedAmount::from_sat(self.to_sat() as i64)) // Cast ok, checked not too big above.
         }
     }
 

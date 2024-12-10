@@ -21,7 +21,7 @@
 #![warn(clippy::case_sensitive_file_extension_comparisons)]
 #![warn(clippy::cast_lossless)]
 #![allow(clippy::cast_possible_truncation)] // ALLOW: All casts should include a code comment (except test code).
-#![allow(clippy::cast_possible_wrap)] // TODO: Still needs considering.
+#![allow(clippy::cast_possible_wrap)] // ALLOW: Same as above re code comment.
 #![warn(clippy::cast_precision_loss)]
 #![warn(clippy::cast_ptr_alignment)]
 #![allow(clippy::cast_sign_loss)] // TODO: Still needs considering.
