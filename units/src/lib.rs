@@ -36,7 +36,7 @@
 #![warn(clippy::expl_impl_clone_on_copy)]
 #![warn(clippy::explicit_deref_methods)]
 #![warn(clippy::explicit_into_iter_loop)]
-#![allow(clippy::explicit_iter_loop)] // TODO: Still needs considering.
+#![warn(clippy::explicit_iter_loop)]
 #![warn(clippy::filter_map_next)]
 #![warn(clippy::flat_map_option)]
 #![allow(clippy::float_cmp)] // TODO: Still needs considering.

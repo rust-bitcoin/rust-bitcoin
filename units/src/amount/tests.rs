@@ -740,10 +740,10 @@ fn serde_as_btc_opt() {
     let without = T { amt: None, samt: None };
 
     // Test Roundtripping
-    for s in [&with, &without].iter() {
+    for s in [&with, &without] {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
-        assert_eq!(w, **s);
+        assert_eq!(w, *s);
     }
 
     let t: T = serde_json::from_str("{\"amt\": 2.5, \"samt\": -2.5}").unwrap();
@@ -782,10 +782,10 @@ fn serde_as_sat_opt() {
     let without = T { amt: None, samt: None };
 
     // Test Roundtripping
-    for s in [&with, &without].iter() {
+    for s in [&with, &without] {
         let v = serde_json::to_string(s).unwrap();
         let w: T = serde_json::from_str(&v).unwrap();
-        assert_eq!(w, **s);
+        assert_eq!(w, *s);
     }
 
     let t: T = serde_json::from_str("{\"amt\": 250000000, \"samt\": -250000000}").unwrap();
@@ -853,7 +853,7 @@ fn denomination_string_acceptable_forms() {
         "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS", "satoshis",
         "SAT", "sat", "SATS", "sats", "bit", "bits",
     ];
-    for denom in valid.iter() {
+    for denom in valid {
         assert!(denom.parse::<Denomination>().is_ok());
     }
 }
@@ -861,7 +861,7 @@ fn denomination_string_acceptable_forms() {
 #[test]
 fn disallow_confusing_forms() {
     let confusing = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
-    for denom in confusing.iter() {
+    for denom in confusing {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
             Err(ParseDenominationError::PossiblyConfusing(_)) => {}
@@ -874,7 +874,7 @@ fn disallow_confusing_forms() {
 fn disallow_unknown_denomination() {
     // Non-exhaustive list of unknown forms.
     let unknown = ["NBTC", "ABC", "abc", "mSat", "msat"];
-    for denom in unknown.iter() {
+    for denom in unknown {
         match denom.parse::<Denomination>() {
             Ok(_) => panic!("from_str should error for {}", denom),
             Err(ParseDenominationError::Unknown(_)) => (),
