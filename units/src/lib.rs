@@ -20,7 +20,7 @@
 #![warn(clippy::borrow_as_ptr)]
 #![warn(clippy::case_sensitive_file_extension_comparisons)]
 #![warn(clippy::cast_lossless)]
-#![allow(clippy::cast_possible_truncation)] // TODO: Still needs considering.
+#![allow(clippy::cast_possible_truncation)] // ALLOW: All casts should include a code comment (except test code).
 #![allow(clippy::cast_possible_wrap)] // TODO: Still needs considering.
 #![warn(clippy::cast_precision_loss)]
 #![warn(clippy::cast_ptr_alignment)]

@@ -151,7 +151,7 @@ impl TryFrom<BlockInterval> for relative::Height {
         if h > u32::from(u16::MAX) {
             return Err(TooBigForRelativeBlockHeightError(h));
         }
-        Ok(relative::Height::from(h as u16)) // Cast ok, value checked above
+        Ok(relative::Height::from(h as u16)) // Cast ok, value checked above.
     }
 }
 

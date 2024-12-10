@@ -408,7 +408,7 @@ fn fmt_satoshi_in(
                 if usize::from(precision) > format_precision {
                     // precision is u8 so in this branch options.precision() < 255 which fits in u32
                     let rounding_divisor =
-                        10u64.pow(u32::from(precision) - format_precision as u32);
+                        10u64.pow(u32::from(precision) - format_precision as u32); // Cast ok, commented above.
                     let remainder = satoshi % rounding_divisor;
                     satoshi -= remainder;
                     if remainder / (rounding_divisor / 10) >= 5 {
