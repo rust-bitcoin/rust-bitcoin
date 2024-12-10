@@ -1,4 +1,4 @@
-# 0.33.0-alpha.0 - 2024-11-18
+# 0.33.0-alpha.0 - 2024-12-10
 
 This series of alpha releases is meant for two things:
 
@@ -22,12 +22,16 @@ For changes to our dependencies included in this release see:
 - `bitcoin_hashes 0.15`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/hashes/CHANGELOG.md)
 - `hex-conservative 0.3`: [changelog](https://github.com/rust-bitcoin/hex-conservative/blob/master/CHANGELOG.md)
 - `bitcoin-io 0.2`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/io/CHANGELOG.md)
-- `bitcoin-primitives: 0.101`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md))
+- `bitcoin-primitives: 0.101`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/primitives/CHANGELOG.md)
 - `bitcoin-units 0.2`: [changelog]((https://github.com/rust-bitcoin/rust-bitcoin/blob/master/units/CHANGELOG.md))
 - `bitcoinconsensus: 0.106.0+26`: [changelog](https://github.com/rust-bitcoin/rust-bitcoinconsensus/blob/master/CHANGELOG.md)
+- `base58ck: 0.2.0`: [changelog](https://github.com/rust-bitcoin/rust-bitcoin/blob/master/base58/CHANGELOG.md)
 
 ## Changes
 
+- base58ck: Bump version to `0.2.0` [#3717](https://github.com/rust-bitcoin/rust-bitcoin/pull/3717)
+- Explicitly define `Ord` for `NodeInfo` [#3699](https://github.com/rust-bitcoin/rust-bitcoin/pull/3699)
+- Change `Amount::MAX` from `u64::MAX` to `Amount::MAX_MONEY` [#3693](https://github.com/rust-bitcoin/rust-bitcoin/pull/3693)
 - Fix psbt fuzz crash [#3667](https://github.com/rust-bitcoin/rust-bitcoin/pull/3667)
 - Update `from_next_work_required` to take an `i64` for timespan [#3660](https://github.com/rust-bitcoin/rust-bitcoin/pull/3660)
 - Account for data pushing opcodes in `is_standard_op_return` [#3643](https://github.com/rust-bitcoin/rust-bitcoin/pull/3643)
