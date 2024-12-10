@@ -99,22 +99,22 @@ main() {
 
 # Print all public structs and enums.
 structs_and_enums() {
-    grep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| )' "$file" | sed "s/^${crate_full_name}:://"
+    ggrep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| )' "$file" | sed "s/^${crate_full_name}:://"
 }
 
 # Print all public structs and enums excluding error types.
 structs_and_enums_no_err() {
-    grep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| )' "$file" | sed "s/^${crate_full_name}:://" | grep -v Error
+    ggrep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| )' "$file" | sed "s/^${crate_full_name}:://" | ggrep -v Error
 }
 
 # Print all public traits.
 traits() {
-    grep -oP '^pub trait \K[\w:]+' "$file" | sed "s/^${crate_full_name}:://" | sed 's/:$//'
+    ggrep -oP '^pub trait \K[\w:]+' "$file" | sed "s/^${crate_full_name}:://" | sed 's/:$//'
 }
 
 # Check all the commands we use are present in the current environment.
 check_required_commands() {
-    need_cmd grep
+    need_cmd ggrep
 }
 
 say() {
