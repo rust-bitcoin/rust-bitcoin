@@ -24,7 +24,7 @@
 #![allow(clippy::cast_possible_wrap)] // ALLOW: Same as above re code comment.
 #![warn(clippy::cast_precision_loss)]
 #![warn(clippy::cast_ptr_alignment)]
-#![allow(clippy::cast_sign_loss)] // TODO: Still needs considering.
+#![allow(clippy::cast_sign_loss)] // ALLOW: All casts should include a code comment (except in test code).
 #![warn(clippy::checked_conversions)]
 #![warn(clippy::cloned_instead_of_copied)]
 #![warn(clippy::copy_iterator)]

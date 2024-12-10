@@ -396,7 +396,7 @@ fn fmt_satoshi_in(
         // We add the number of zeroes to the end
         Ordering::Greater => {
             if satoshi > 0 {
-                exp = precision as usize;
+                exp = precision as usize; // Cast ok, checked not negative above.
             }
             trailing_decimal_zeros = options.precision.unwrap_or(0);
         }
