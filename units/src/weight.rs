@@ -171,20 +171,16 @@ impl ops::Add for Weight {
 
     fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
 }
-
-impl ops::AddAssign for Weight {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
-}
+crate::internal_macros::impl_add_for_references!(Weight);
+crate::internal_macros::impl_add_assign!(Weight);
 
 impl ops::Sub for Weight {
     type Output = Weight;
 
     fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
 }
-
-impl ops::SubAssign for Weight {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
-}
+crate::internal_macros::impl_sub_for_references!(Weight);
+crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::Mul<u64> for Weight {
     type Output = Weight;
