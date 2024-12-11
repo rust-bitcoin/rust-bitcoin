@@ -977,3 +977,99 @@ fn trailing_zeros_for_amount() {
     assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.0000001 BTC");
     assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
 }
+
+#[test]
+#[allow(clippy::op_ref)]
+fn unsigned_addition() {
+    let one = Amount::from_sat(1);
+    let two = Amount::from_sat(2);
+    let three = Amount::from_sat(3);
+
+    assert!(one + two == three);
+    assert!(&one + two == three);
+    assert!(one + &two == three);
+    assert!(&one + &two == three);
+}
+
+#[test]
+#[allow(clippy::op_ref)]
+fn unsigned_subtract() {
+    let one = Amount::from_sat(1);
+    let two = Amount::from_sat(2);
+    let three = Amount::from_sat(3);
+
+    assert!(three - two == one);
+    assert!(&three - two == one);
+    assert!(three - &two == one);
+    assert!(&three - &two == one);
+}
+
+#[test]
+fn unsigned_add_assign() {
+    let mut f = Amount::from_sat(1);
+    f += Amount::from_sat(2);
+    assert_eq!(f, Amount::from_sat(3));
+
+    let mut f = Amount::from_sat(1);
+    f += &Amount::from_sat(2);
+    assert_eq!(f, Amount::from_sat(3));
+}
+
+#[test]
+fn unsigned_sub_assign() {
+    let mut f = Amount::from_sat(3);
+    f -= Amount::from_sat(2);
+    assert_eq!(f, Amount::from_sat(1));
+
+    let mut f = Amount::from_sat(3);
+    f -= &Amount::from_sat(2);
+    assert_eq!(f, Amount::from_sat(1));
+}
+
+#[test]
+#[allow(clippy::op_ref)]
+fn signed_addition() {
+    let one = SignedAmount::from_sat(1);
+    let two = SignedAmount::from_sat(2);
+    let three = SignedAmount::from_sat(3);
+
+    assert!(one + two == three);
+    assert!(&one + two == three);
+    assert!(one + &two == three);
+    assert!(&one + &two == three);
+}
+
+#[test]
+#[allow(clippy::op_ref)]
+fn signed_subtract() {
+    let one = SignedAmount::from_sat(1);
+    let two = SignedAmount::from_sat(2);
+    let three = SignedAmount::from_sat(3);
+
+    assert!(three - two == one);
+    assert!(&three - two == one);
+    assert!(three - &two == one);
+    assert!(&three - &two == one);
+}
+
+#[test]
+fn signed_add_assign() {
+    let mut f = SignedAmount::from_sat(1);
+    f += SignedAmount::from_sat(2);
+    assert_eq!(f, SignedAmount::from_sat(3));
+
+    let mut f = SignedAmount::from_sat(1);
+    f += &SignedAmount::from_sat(2);
+    assert_eq!(f, SignedAmount::from_sat(3));
+}
+
+#[test]
+fn signed_sub_assign() {
+    let mut f = SignedAmount::from_sat(3);
+    f -= SignedAmount::from_sat(2);
+    assert_eq!(f, SignedAmount::from_sat(1));
+
+    let mut f = SignedAmount::from_sat(3);
+    f -= &SignedAmount::from_sat(2);
+    assert_eq!(f, SignedAmount::from_sat(1));
+}
