@@ -2063,7 +2063,7 @@ mod tests {
         ).unwrap();
 
         let spk = ScriptBuf::from_hex("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1").unwrap();
-        let value = Amount::from_sat(600_000_000);
+        let value = Amount::from_sat_unchecked(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -2104,7 +2104,7 @@ mod tests {
 
         let redeem_script =
             ScriptBuf::from_hex("001479091972186c449eb1ded22b78e40d009bdf0089").unwrap();
-        let value = Amount::from_sat(1_000_000_000);
+        let value = Amount::from_sat_unchecked(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -2154,7 +2154,7 @@ mod tests {
         )
         .unwrap();
 
-        let value = Amount::from_sat(987_654_321);
+        let value = Amount::from_sat_unchecked(987_654_321);
         (tx, witness_script, value)
     }
 
