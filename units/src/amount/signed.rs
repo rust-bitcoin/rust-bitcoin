@@ -390,7 +390,7 @@ impl ops::Add for SignedAmount {
 }
 
 impl ops::AddAssign for SignedAmount {
-    fn add_assign(&mut self, other: SignedAmount) { *self = *self + other }
+    fn add_assign(&mut self, rhs: SignedAmount) { *self = *self + rhs }
 }
 
 impl ops::Sub for SignedAmount {
@@ -402,7 +402,7 @@ impl ops::Sub for SignedAmount {
 }
 
 impl ops::SubAssign for SignedAmount {
-    fn sub_assign(&mut self, other: SignedAmount) { *self = *self - other }
+    fn sub_assign(&mut self, rhs: SignedAmount) { *self = *self - rhs }
 }
 
 impl ops::Rem<i64> for SignedAmount {

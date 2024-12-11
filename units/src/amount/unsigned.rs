@@ -459,7 +459,7 @@ impl ops::Add for Amount {
 }
 
 impl ops::AddAssign for Amount {
-    fn add_assign(&mut self, other: Amount) { *self = *self + other }
+    fn add_assign(&mut self, rhs: Amount) { *self = *self + rhs }
 }
 
 impl ops::Sub for Amount {
@@ -471,7 +471,7 @@ impl ops::Sub for Amount {
 }
 
 impl ops::SubAssign for Amount {
-    fn sub_assign(&mut self, other: Amount) { *self = *self - other }
+    fn sub_assign(&mut self, rhs: Amount) { *self = *self - rhs }
 }
 
 impl ops::Rem<u64> for Amount {
