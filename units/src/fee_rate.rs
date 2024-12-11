@@ -178,7 +178,7 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
-impl Add for FeeRate {
+impl Add<FeeRate> for FeeRate {
     type Output = FeeRate;
 
     fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
@@ -202,7 +202,7 @@ impl<'a> Add<&'a FeeRate> for &FeeRate {
     fn add(self, other: &'a FeeRate) -> Self::Output { FeeRate(self.0 + other.0) }
 }
 
-impl Sub for FeeRate {
+impl Sub<FeeRate> for FeeRate {
     type Output = FeeRate;
 
     fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
@@ -251,16 +251,16 @@ impl Div<Weight> for Amount {
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
-impl AddAssign for FeeRate {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
+impl AddAssign<FeeRate> for FeeRate {
+    fn add_assign(&mut self, rhs: FeeRate) { self.0 += rhs.0 }
 }
 
 impl AddAssign<&FeeRate> for FeeRate {
     fn add_assign(&mut self, rhs: &FeeRate) { self.0 += rhs.0 }
 }
 
-impl SubAssign for FeeRate {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
+impl SubAssign<FeeRate> for FeeRate {
+    fn sub_assign(&mut self, rhs: FeeRate) { self.0 -= rhs.0 }
 }
 
 impl SubAssign<&FeeRate> for FeeRate {
