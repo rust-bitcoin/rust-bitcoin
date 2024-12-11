@@ -342,4 +342,52 @@ mod tests {
         let result = Weight(2).checked_div(0);
         assert_eq!(None, result);
     }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn addition() {
+        let one = Weight(1);
+        let two = Weight(2);
+        let three = Weight(3);
+
+        assert!(one + two == three);
+        assert!(&one + two == three);
+        assert!(one + &two == three);
+        assert!(&one + &two == three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn subtract() {
+        let one = Weight(1);
+        let two = Weight(2);
+        let three = Weight(3);
+
+        assert!(three - two == one);
+        assert!(&three - two == one);
+        assert!(three - &two == one);
+        assert!(&three - &two == one);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut f = Weight(1);
+        f += Weight(2);
+        assert_eq!(f, Weight(3));
+
+        let mut f = Weight(1);
+        f += &Weight(2);
+        assert_eq!(f, Weight(3));
+    }
+
+    #[test]
+    fn sub_assign() {
+        let mut f = Weight(3);
+        f -= Weight(2);
+        assert_eq!(f, Weight(1));
+
+        let mut f = Weight(3);
+        f -= &Weight(2);
+        assert_eq!(f, Weight(1));
+    }
 }
