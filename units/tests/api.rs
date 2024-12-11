@@ -98,12 +98,13 @@ struct CommonTraits {
 }
 
 /// A struct that includes all types that implement `Default`.
-#[derive(Default)] // C-COMMON-TRAITS: `Default`
+#[derive(Debug, Default, PartialEq, Eq)] // C-COMMON-TRAITS: `Default`
 struct Default {
     a: Amount,
     b: SignedAmount,
-    c: relative::Height,
-    d: relative::Time,
+    c: BlockInterval,
+    d: relative::Height,
+    e: relative::Time,
 }
 
 /// A struct that includes all public error types.
@@ -248,4 +249,17 @@ fn test_sync() {
     fn assert_sync<T: Sync>() {}
     assert_sync::<Types>();
     assert_sync::<Errors>();
+}
+
+#[test]
+fn regression_default() {
+    let got: Default = Default::default();
+    let want = Default {
+        a: Amount::ZERO,
+        b: SignedAmount::ZERO,
+        c: BlockInterval::ZERO,
+        d: relative::Height::ZERO,
+        e: relative::Time::ZERO,
+    };
+    assert_eq!(got, want);
 }
