@@ -388,10 +388,8 @@ impl ops::Add for SignedAmount {
         self.checked_add(rhs).expect("SignedAmount addition error")
     }
 }
-
-impl ops::AddAssign for SignedAmount {
-    fn add_assign(&mut self, rhs: SignedAmount) { *self = *self + rhs }
-}
+crate::internal_macros::impl_add_for_references!(SignedAmount);
+crate::internal_macros::impl_add_assign!(SignedAmount);
 
 impl ops::Sub for SignedAmount {
     type Output = SignedAmount;
@@ -400,10 +398,8 @@ impl ops::Sub for SignedAmount {
         self.checked_sub(rhs).expect("SignedAmount subtraction error")
     }
 }
-
-impl ops::SubAssign for SignedAmount {
-    fn sub_assign(&mut self, rhs: SignedAmount) { *self = *self - rhs }
-}
+crate::internal_macros::impl_sub_for_references!(SignedAmount);
+crate::internal_macros::impl_sub_assign!(SignedAmount);
 
 impl ops::Rem<i64> for SignedAmount {
     type Output = SignedAmount;
