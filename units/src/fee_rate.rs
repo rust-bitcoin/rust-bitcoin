@@ -190,6 +190,7 @@ impl ops::Add for FeeRate {
     fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
 crate::internal_macros::impl_add_for_references!(FeeRate);
+crate::internal_macros::impl_add_assign!(FeeRate);
 
 impl ops::Sub for FeeRate {
     type Output = FeeRate;
@@ -197,6 +198,7 @@ impl ops::Sub for FeeRate {
     fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
 crate::internal_macros::impl_sub_for_references!(FeeRate);
+crate::internal_macros::impl_sub_assign!(FeeRate);
 
 /// Computes the ceiling so that the fee computation is conservative.
 impl ops::Mul<FeeRate> for Weight {
@@ -221,22 +223,6 @@ impl ops::Div<Weight> for Amount {
     /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
     /// `checked_div_by_weight` instead.
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
-}
-
-impl ops::AddAssign for FeeRate {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
-}
-
-impl ops::AddAssign<&FeeRate> for FeeRate {
-    fn add_assign(&mut self, rhs: &FeeRate) { self.0 += rhs.0 }
-}
-
-impl ops::SubAssign for FeeRate {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
-}
-
-impl ops::SubAssign<&FeeRate> for FeeRate {
-    fn sub_assign(&mut self, rhs: &FeeRate) { self.0 -= rhs.0 }
 }
 
 impl core::iter::Sum for FeeRate {
