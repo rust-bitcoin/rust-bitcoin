@@ -2,8 +2,7 @@
 
 //! Implements `FeeRate` and assoctiated features.
 
-use core::fmt;
-use core::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -178,56 +177,24 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
-impl Add for FeeRate {
+impl ops::Add<FeeRate> for FeeRate {
     type Output = FeeRate;
 
     fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
+crate::internal_macros::impl_add_for_references!(FeeRate);
+crate::internal_macros::impl_add_assign!(FeeRate);
 
-impl Add<FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, other: FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
-}
-
-impl Add<&FeeRate> for FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
-}
-
-impl<'a> Add<&'a FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 + other.0) }
-}
-
-impl Sub for FeeRate {
+impl ops::Sub<FeeRate> for FeeRate {
     type Output = FeeRate;
 
     fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
-
-impl Sub<FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, other: FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
-}
-
-impl Sub<&FeeRate> for FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, other: &FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
-}
-
-impl<'a> Sub<&'a FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, other: &'a FeeRate) -> <FeeRate as Add>::Output { FeeRate(self.0 - other.0) }
-}
+crate::internal_macros::impl_sub_for_references!(FeeRate);
+crate::internal_macros::impl_sub_assign!(FeeRate);
 
 /// Computes the ceiling so that the fee computation is conservative.
-impl Mul<FeeRate> for Weight {
+impl ops::Mul<FeeRate> for Weight {
     type Output = Amount;
 
     fn mul(self, rhs: FeeRate) -> Self::Output {
@@ -235,13 +202,13 @@ impl Mul<FeeRate> for Weight {
     }
 }
 
-impl Mul<Weight> for FeeRate {
+impl ops::Mul<Weight> for FeeRate {
     type Output = Amount;
 
     fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
 }
 
-impl Div<Weight> for Amount {
+impl ops::Div<Weight> for Amount {
     type Output = FeeRate;
 
     /// Truncating integer division.
@@ -249,22 +216,6 @@ impl Div<Weight> for Amount {
     /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
     /// `checked_div_by_weight` instead.
     fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
-}
-
-impl AddAssign for FeeRate {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
-}
-
-impl AddAssign<&FeeRate> for FeeRate {
-    fn add_assign(&mut self, rhs: &FeeRate) { self.0 += rhs.0 }
-}
-
-impl SubAssign for FeeRate {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
-}
-
-impl SubAssign<&FeeRate> for FeeRate {
-    fn sub_assign(&mut self, rhs: &FeeRate) { self.0 -= rhs.0 }
 }
 
 impl core::iter::Sum for FeeRate {
