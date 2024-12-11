@@ -63,7 +63,19 @@ impl SignedAmount {
     pub const MAX: Self = SignedAmount::MAX_MONEY;
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
-    pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+    ///
+    /// # Errors
+    ///
+    /// On values exceeding [`SignedAmount::MAX`] or less than [`SignedAmount::MIN`]
+    pub const fn from_sat(satoshi: i64) -> Result<SignedAmount, OutOfRangeError> {
+        if satoshi < Self::MIN.0 {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+        } else if satoshi > Self::MAX.0 {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+        } else {
+            Ok(SignedAmount(satoshi))
+        }
+    }
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     ///
@@ -92,7 +104,7 @@ impl SignedAmount {
     /// per bitcoin overflows an `i64` type.
     pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
         match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(SignedAmount::from_sat(amount)),
+            Some(amount) => SignedAmount::from_sat(amount),
             None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
         }
     }
@@ -106,7 +118,12 @@ impl SignedAmount {
     /// per bitcoin overflows an `i64` type or if the value is out of range.
     pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
         match whole_bitcoin.checked_mul(100_000_000) {
-            Some(amount) => SignedAmount::from_sat(amount),
+            Some(amount) => {
+                match SignedAmount::from_sat(amount) {
+                    Ok(sa) => sa,
+                    Err(_) => panic!("out of range")
+                }
+            }
             None => panic!("checked_mul overflowed"),
         }
     }
