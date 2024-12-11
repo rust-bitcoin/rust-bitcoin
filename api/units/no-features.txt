@@ -661,7 +661,7 @@ pub const fn bitcoin_units::SignedAmount::checked_mul(self, rhs: i64) -> core::o
 pub const fn bitcoin_units::SignedAmount::checked_rem(self, rhs: i64) -> core::option::Option<bitcoin_units::SignedAmount>
 pub const fn bitcoin_units::SignedAmount::checked_sub(self, rhs: bitcoin_units::SignedAmount) -> core::option::Option<bitcoin_units::SignedAmount>
 pub const fn bitcoin_units::SignedAmount::from_int_btc_const(whole_bitcoin: i64) -> bitcoin_units::SignedAmount
-pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> core::result::Result<bitcoin_units::SignedAmount, bitcoin_units::amount::error::OutOfRangeError>
 pub const fn bitcoin_units::SignedAmount::from_sat_unchecked(satoshi: i64) -> bitcoin_units::SignedAmount
 pub const fn bitcoin_units::SignedAmount::to_sat(self) -> i64
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
