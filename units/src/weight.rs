@@ -48,9 +48,6 @@ impl Weight {
     /// Constructs a new [`Weight`] from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
-    /// Constructs a new [`Weight`] from usize weight units.
-    pub const fn from_wu_usize(wu: usize) -> Self { Weight(wu as u64) }
-
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
@@ -254,7 +251,6 @@ mod tests {
     #[test]
     fn weight_constructor() {
         assert_eq!(Weight::ZERO, Weight::from_wu(0));
-        assert_eq!(Weight::ZERO, Weight::from_wu_usize(0_usize));
     }
 
     #[test]
