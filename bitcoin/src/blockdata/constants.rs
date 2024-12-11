@@ -38,9 +38,9 @@ pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
 /// Test (tesnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
 /// The maximum allowed redeem script size for a P2SH output.
-pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
+pub const MAX_REDEEM_SCRIPT_SIZE: usize = primitives::script::MAX_REDEEM_SCRIPT_SIZE; // 520
 /// The maximum allowed redeem script size of the witness script.
-pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
+pub const MAX_WITNESS_SCRIPT_SIZE: usize = primitives::script::MAX_WITNESS_SCRIPT_SIZE; // 10_000
 /// The maximum allowed size of any single witness stack element.
 pub const MAX_STACK_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.

@@ -11,6 +11,7 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+use hashes::{hash160, sha256};
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
@@ -27,6 +28,164 @@ pub use self::{
     borrowed::Script,
     owned::ScriptBuf,
 };
+
+/// The maximum allowed redeem script size for a P2SH output.
+pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
+/// The maximum allowed redeem script size of the witness script.
+pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
+
+hashes::hash_newtype! {
+    /// A hash of Bitcoin Script bytecode.
+    pub struct ScriptHash(hash160::Hash);
+    /// SegWit version of a Bitcoin Script bytecode hash.
+    pub struct WScriptHash(sha256::Hash);
+}
+
+hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
+#[cfg(feature = "serde")]
+hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
+
+impl ScriptHash {
+    /// Constructs a new `ScriptHash` after first checking the script size.
+    ///
+    /// # 520-byte limitation on serialized script size
+    ///
+    /// > As a consequence of the requirement for backwards compatibility the serialized script is
+    /// > itself subject to the same rules as any other PUSHDATA operation, including the rule that
+    /// > no data greater than 520 bytes may be pushed to the stack. Thus it is not possible to
+    /// > spend a P2SH output if the redemption script it refers to is >520 bytes in length.
+    ///
+    /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
+    pub fn from_script(redeem_script: &Script) -> Result<Self, RedeemScriptSizeError> {
+        if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
+            return Err(RedeemScriptSizeError { size: redeem_script.len() });
+        }
+
+        Ok(ScriptHash(hash160::Hash::hash(redeem_script.as_bytes())))
+    }
+
+    /// Constructs a new `ScriptHash` from any script irrespective of script size.
+    ///
+    /// If you hash a script that exceeds 520 bytes in size and use it to create a P2SH output
+    /// then the output will be unspendable (see [BIP-16]).
+    ///
+    /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
+    pub fn from_script_unchecked(script: &Script) -> Self {
+        ScriptHash(hash160::Hash::hash(script.as_bytes()))
+    }
+}
+
+impl WScriptHash {
+    /// Constructs a new `WScriptHash` after first checking the script size.
+    ///
+    /// # 10,000-byte limit on the witness script
+    ///
+    /// > The witnessScript (≤ 10,000 bytes) is popped off the initial witness stack. SHA256 of the
+    /// > witnessScript must match the 32-byte witness program.
+    ///
+    /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    pub fn from_script(witness_script: &Script) -> Result<Self, WitnessScriptSizeError> {
+        if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
+            return Err(WitnessScriptSizeError { size: witness_script.len() });
+        }
+
+        Ok(WScriptHash(sha256::Hash::hash(witness_script.as_bytes())))
+    }
+
+    /// Constructs a new `WScriptHash` from any script irrespective of script size.
+    ///
+    /// If you hash a script that exceeds 10,000 bytes in size and use it to create a Segwit
+    /// output then the output will be unspendable (see [BIP-141]).
+    ///
+    /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    pub fn from_script_unchecked(script: &Script) -> Self {
+        WScriptHash(sha256::Hash::hash(script.as_bytes()))
+    }
+}
+
+impl TryFrom<ScriptBuf> for ScriptHash {
+    type Error = RedeemScriptSizeError;
+
+    fn try_from(redeem_script: ScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(&redeem_script)
+    }
+}
+
+impl TryFrom<&ScriptBuf> for ScriptHash {
+    type Error = RedeemScriptSizeError;
+
+    fn try_from(redeem_script: &ScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(redeem_script)
+    }
+}
+
+impl TryFrom<&Script> for ScriptHash {
+    type Error = RedeemScriptSizeError;
+
+    fn try_from(redeem_script: &Script) -> Result<Self, Self::Error> {
+        Self::from_script(redeem_script)
+    }
+}
+
+impl TryFrom<ScriptBuf> for WScriptHash {
+    type Error = WitnessScriptSizeError;
+
+    fn try_from(witness_script: ScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(&witness_script)
+    }
+}
+
+impl TryFrom<&ScriptBuf> for WScriptHash {
+    type Error = WitnessScriptSizeError;
+
+    fn try_from(witness_script: &ScriptBuf) -> Result<Self, Self::Error> {
+        Self::from_script(witness_script)
+    }
+}
+
+impl TryFrom<&Script> for WScriptHash {
+    type Error = WitnessScriptSizeError;
+
+    fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
+        Self::from_script(witness_script)
+    }
+}
+
+/// Error while hashing a redeem script.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RedeemScriptSizeError {
+    /// Invalid redeem script size (cannot exceed 520 bytes).
+    pub size: usize,
+}
+
+internals::impl_from_infallible!(RedeemScriptSizeError);
+
+impl fmt::Display for RedeemScriptSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "redeem script size exceeds {} bytes: {}", MAX_REDEEM_SCRIPT_SIZE, self.size)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for RedeemScriptSizeError {}
+
+/// Error while hashing a witness script.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WitnessScriptSizeError {
+    /// Invalid witness script size (cannot exceed 10,000 bytes).
+    pub size: usize,
+}
+
+internals::impl_from_infallible!(WitnessScriptSizeError);
+
+impl fmt::Display for WitnessScriptSizeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "witness script size exceeds {} bytes: {}", MAX_WITNESS_SCRIPT_SIZE, self.size)
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for WitnessScriptSizeError {}
 
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
 
