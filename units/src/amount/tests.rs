@@ -720,6 +720,31 @@ fn serde_as_btc() {
 #[cfg(feature = "serde")]
 #[cfg(feature = "alloc")]
 #[test]
+fn serde_as_str() {
+    #[derive(Serialize, Deserialize, PartialEq, Debug)]
+    struct T {
+        #[serde(with = "crate::amount::serde::as_str")]
+        pub amt: Amount,
+        #[serde(with = "crate::amount::serde::as_str")]
+        pub samt: SignedAmount,
+    }
+
+    serde_test::assert_tokens(
+        &T { amt: Amount::from_sat(123456789), samt: SignedAmount::from_sat(-123456789) },
+        &[
+            serde_test::Token::Struct { name: "T", len: 2 },
+            serde_test::Token::String("amt"),
+            serde_test::Token::String("1.23456789"),
+            serde_test::Token::String("samt"),
+            serde_test::Token::String("-1.23456789"),
+            serde_test::Token::StructEnd,
+        ],
+    );
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn serde_as_btc_opt() {
     use serde_json;
@@ -795,6 +820,49 @@ fn serde_as_sat_opt() {
 
     let value_with: serde_json::Value =
         serde_json::from_str("{\"amt\": 250000000, \"samt\": -250000000}").unwrap();
+    assert_eq!(with, serde_json::from_value(value_with).unwrap());
+
+    let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+    assert_eq!(without, serde_json::from_value(value_without).unwrap());
+}
+
+#[cfg(feature = "serde")]
+#[cfg(feature = "alloc")]
+#[test]
+#[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+fn serde_as_str_opt() {
+    use serde_json;
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
+    struct T {
+        #[serde(default, with = "crate::amount::serde::as_str::opt")]
+        pub amt: Option<Amount>,
+        #[serde(default, with = "crate::amount::serde::as_str::opt")]
+        pub samt: Option<SignedAmount>,
+    }
+
+    let with = T {
+        amt: Some(Amount::from_sat(123456789)),
+        samt: Some(SignedAmount::from_sat(-123456789)),
+    };
+    let without = T { amt: None, samt: None };
+
+    // Test Roundtripping
+    for s in [&with, &without].iter() {
+        let v = serde_json::to_string(s).unwrap();
+        let w: T = serde_json::from_str(&v).unwrap();
+        assert_eq!(w, **s);
+    }
+
+    let t: T =
+        serde_json::from_str("{\"amt\": \"1.23456789\", \"samt\": \"-1.23456789\"}").unwrap();
+    assert_eq!(t, with);
+
+    let t: T = serde_json::from_str("{}").unwrap();
+    assert_eq!(t, without);
+
+    let value_with: serde_json::Value =
+        serde_json::from_str("{\"amt\": \"1.23456789\", \"samt\": \"-1.23456789\"}").unwrap();
     assert_eq!(with, serde_json::from_value(value_with).unwrap());
 
     let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
