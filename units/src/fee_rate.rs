@@ -190,48 +190,14 @@ impl Add for FeeRate {
 
     fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
-
-impl Add<FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
-}
-
-impl Add<&FeeRate> for FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, rhs: &FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
-}
-
-impl<'a> Add<&'a FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn add(self, rhs: &'a FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
-}
+crate::internal_macros::impl_add_for_references!(FeeRate);
 
 impl Sub for FeeRate {
     type Output = FeeRate;
 
     fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
-
-impl Sub<FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
-}
-
-impl Sub<&FeeRate> for FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, rhs: &FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
-}
-
-impl<'a> Sub<&'a FeeRate> for &FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, rhs: &'a FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
-}
+crate::internal_macros::impl_sub_for_references!(FeeRate);
 
 /// Computes the ceiling so that the fee computation is conservative.
 impl Mul<FeeRate> for Weight {
