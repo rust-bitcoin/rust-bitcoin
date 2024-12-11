@@ -21,6 +21,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod internal_macros;
+
 pub mod amount;
 pub mod block;
 pub mod fee_rate;
