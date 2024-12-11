@@ -1401,6 +1401,7 @@ impl<E> EncodeSigningDataResult<E> {
     ///     // use the hash from `writer`
     /// }
     /// ```
+    #[allow(clippy::wrong_self_convention)] // Consume self so we can take the error.
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {
         match self {
             EncodeSigningDataResult::SighashSingleBug => Ok(true),
