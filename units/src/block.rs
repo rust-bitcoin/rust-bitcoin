@@ -47,7 +47,7 @@ impl BlockHeight {
 
     /// Returns block height as a `u32`.
     // Because type inference doesn't always work using `Into`.
-    pub const fn to_u32(&self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for BlockHeight {
@@ -114,7 +114,7 @@ impl BlockInterval {
 
     /// Returns block interval as a `u32`.
     // Because type inference doesn't always work using `Into`.
-    pub const fn to_u32(&self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for BlockInterval {

@@ -605,8 +605,8 @@ impl Xpriv {
     }
 
     /// Constructs a new extended public key from this extended private key.
-    pub fn to_xpub<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Xpub {
-        Xpub::from_xpriv(secp, self)
+    pub fn to_xpub<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> Xpub {
+        Xpub::from_xpriv(secp, &self)
     }
 
     /// Constructs a new BIP340 keypair for Schnorr signatures and Taproot use matching the internal

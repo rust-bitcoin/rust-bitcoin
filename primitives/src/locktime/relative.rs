@@ -81,7 +81,7 @@ impl LockTime {
     /// Locktimes are not ordered by the natural ordering on `u32`. If you want to
     /// compare locktimes, use [`Self::is_implied_by`] or similar methods.
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
+    pub fn to_consensus_u32(self) -> u32 {
         match self {
             LockTime::Blocks(ref h) => h.to_consensus_u32(),
             LockTime::Time(ref t) => t.to_consensus_u32(),
@@ -99,7 +99,7 @@ impl LockTime {
 
     /// Encodes the locktime as a sequence number.
     #[inline]
-    pub fn to_sequence(&self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
+    pub fn to_sequence(self) -> Sequence { Sequence::from_consensus(self.to_consensus_u32()) }
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
