@@ -187,19 +187,19 @@ impl Add<FeeRate> for FeeRate {
 impl Add<FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: FeeRate) -> Self::Output { FeeRate(self.0 + other.0) }
+    fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
 
 impl Add<&FeeRate> for FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: &FeeRate) -> Self::Output { FeeRate(self.0 + other.0) }
+    fn add(self, rhs: &FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
 
 impl<'a> Add<&'a FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn add(self, other: &'a FeeRate) -> Self::Output { FeeRate(self.0 + other.0) }
+    fn add(self, rhs: &'a FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
 }
 
 impl Sub<FeeRate> for FeeRate {
@@ -211,19 +211,19 @@ impl Sub<FeeRate> for FeeRate {
 impl Sub<FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: FeeRate) -> Self::Output { FeeRate(self.0 - other.0) }
+    fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
 
 impl Sub<&FeeRate> for FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: &FeeRate) -> Self::Output { FeeRate(self.0 - other.0) }
+    fn sub(self, rhs: &FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
 
 impl<'a> Sub<&'a FeeRate> for &FeeRate {
     type Output = FeeRate;
 
-    fn sub(self, other: &'a FeeRate) -> Self::Output { FeeRate(self.0 - other.0) }
+    fn sub(self, rhs: &'a FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
 }
 
 /// Computes the ceiling so that the fee computation is conservative.
