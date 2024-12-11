@@ -81,7 +81,7 @@ pub use self::{
     push_bytes::{PushBytes, PushBytesBuf, PushBytesError, PushBytesErrorReport},
 };
 #[doc(inline)]
-pub use primitives::script::*;
+pub use primitives::script::{Script, ScriptBuf};
 
 pub(crate) use self::borrowed::ScriptExtPriv;
 pub(crate) use self::owned::ScriptBufExtPriv;
