@@ -135,6 +135,7 @@ impl crate::HashEngine for HashEngine {
 
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
+    #[must_use]
     pub fn hash_again(&self) -> sha256d::Hash {
         crate::Hash::from_byte_array(<Self as crate::GeneralHash>::hash(&self.0).0)
     }
@@ -202,6 +203,7 @@ impl Midstate {
     ///
     /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in [`sha256t`]. It's
     /// provided for use with [`sha256t`].
+    #[must_use]
     pub const fn hash_tag(tag: &[u8]) -> Self {
         let hash = Hash::hash_unoptimized(tag);
         let mut buf = [0u8; 64];
