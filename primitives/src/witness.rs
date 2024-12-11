@@ -103,6 +103,7 @@ impl Witness {
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`].
+    #[must_use = "returned iterator should be used"]
     pub fn iter(&self) -> Iter {
         Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }

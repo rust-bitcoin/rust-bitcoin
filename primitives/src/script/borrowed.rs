@@ -115,7 +115,7 @@ impl Script {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
-    #[must_use = "`self` will be dropped if the result is not used"]
+    #[must_use]
     pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
