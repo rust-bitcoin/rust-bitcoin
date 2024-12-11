@@ -25,7 +25,7 @@ secp-recovery = ["secp256k1/recovery"]
 arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
 
 [dependencies]
-base58 = { package = "base58ck", version = "0.1.0", default-features = false, features = ["alloc"] }
+base58 = { package = "base58ck", version = "0.2.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", version = "0.15.0", default-features = false, features = ["alloc", "bitcoin-io", "hex"] }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
