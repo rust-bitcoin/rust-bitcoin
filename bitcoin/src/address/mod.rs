@@ -2,28 +2,25 @@
 
 //! Bitcoin addresses.
 //!
-//! Support for ordinary base58 Bitcoin addresses and private keys.
+//! Support for segwit and legacy addresses (bech32 and base58 respectively).
 //!
-//! # Example: creating a new address from a randomly-generated key pair
+//! # Examples
+//!
+//! ### Creating a new address from a randomly-generated key pair.
 //!
 //! ```rust
-//! # #[cfg(feature = "rand-std")] {
-//! use bitcoin::{Address, PublicKey, Network};
+//! #[cfg(feature = "rand-std")] {
 //! use bitcoin::secp256k1::{rand, Secp256k1};
+//! use bitcoin::{Address, Network, PublicKey};
 //!
 //! // Generate random key pair.
-//! let s = Secp256k1::new();
-//! let public_key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
+//! let secp = Secp256k1::new();
+//! let (_sk, pk) = secp.generate_keypair(&mut rand::thread_rng());
+//! let public_key = PublicKey::new(pk); // Or `PublicKey::from(pk)`.
 //!
-//! // Generate pay-to-pubkey-hash address.
+//! // Generate a mainnet pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
-//! # }
-//! ```
-//!
-//! # Note: creating a new address requires the rand-std feature flag
-//!
-//! ```toml
-//! bitcoin = { version = "...", features = ["rand-std"] }
+//! }
 //! ```
 
 pub mod error;
