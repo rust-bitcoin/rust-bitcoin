@@ -65,6 +65,16 @@ impl SignedAmount {
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Warning, it's possible to violate the [`SignedAmount`] range invariant.  If the value
+    /// passed is lower than [`SignedAmount::MIN`] or greater than [`SignedAmount::MAX`], your code
+    /// will misbehave in unspecified ways.  If you wish to represent values outside this range,
+    /// you should use a different type.
+    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount {
+        SignedAmount(satoshi)
+    }
+
     /// Gets the number of satoshis in this [`SignedAmount`].
     pub const fn to_sat(self) -> i64 { self.0 }
 
@@ -93,7 +103,7 @@ impl SignedAmount {
     /// # Panics
     ///
     /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
+    /// per bitcoin overflows an `i64` type or if the value is out of range.
     pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
         match whole_bitcoin.checked_mul(100_000_000) {
             Some(amount) => SignedAmount::from_sat(amount),
@@ -144,7 +154,7 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(100_000);
+    /// let amount = SignedAmount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
     #[cfg(feature = "alloc")]
@@ -476,7 +486,7 @@ impl TryFrom<Amount> for SignedAmount {
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
+        SignedAmount::from_sat_unchecked(sats)
     }
 }
 
@@ -486,7 +496,7 @@ impl<'a> core::iter::Sum<&'a SignedAmount> for SignedAmount {
         I: Iterator<Item = &'a SignedAmount>,
     {
         let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
+        SignedAmount::from_sat_unchecked(sats)
     }
 }
 

@@ -52,24 +52,24 @@ fn s_amount_homomorphic() {
     // Assume we don't overflow in the actual tests.
     kani::assume(n1.checked_add(n2).is_some()); // Adding i64s doesn't overflow.
     kani::assume(n1.checked_sub(n2).is_some()); // Subbing i64s doesn't overflow.
-    let a1 = SignedAmount::from_sat(n1); // TODO: If from_sat enforces invariant assume this `is_ok()`.
-    let a2 = SignedAmount::from_sat(n2);
+    let a1 = SignedAmount::from_sat_unchecked(n1); // TODO: If from_sat enforces invariant assume this `is_ok()`.
+    let a2 = SignedAmount::from_sat_unchecked(n2);
     kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
     kani::assume(a1.checked_sub(a2).is_some()); // Subbing amounts doesn't overflow.
 
     assert_eq!(
-        SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 + n2)
+        SignedAmount::from_sat_unchecked(n1) + SignedAmount::from_sat_unchecked(n2),
+        SignedAmount::from_sat_unchecked(n1 + n2)
     );
     assert_eq!(
-        SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 - n2)
+        SignedAmount::from_sat_unchecked(n1) - SignedAmount::from_sat_unchecked(n2),
+        SignedAmount::from_sat_unchecked(n1 - n2)
     );
 
-    let mut amt = SignedAmount::from_sat(n1);
-    amt += SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 + n2));
-    let mut amt = SignedAmount::from_sat(n1);
-    amt -= SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
+    let mut amt = SignedAmount::from_sat_unchecked(n1);
+    amt += SignedAmount::from_sat_unchecked(n2);
+    assert_eq!(amt, SignedAmount::from_sat_unchecked(n1 + n2));
+    let mut amt = SignedAmount::from_sat_unchecked(n1);
+    amt -= SignedAmount::from_sat_unchecked(n2);
+    assert_eq!(amt, SignedAmount::from_sat_unchecked(n1 - n2));
 }
