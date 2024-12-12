@@ -851,29 +851,20 @@ where
     I: IntoIterator<Item = InputWeightPrediction>,
     O: IntoIterator<Item = usize>,
 {
-    // sum input_weights, input_count and count of inputs with witness data
-    let (input_count, input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
-        (0, 0, 0),
-        |(count, input_weight, inputs_with_witnesses), prediction| {
+    let (input_count, input_weight, inputs_with_witnesses) =
+        inputs.into_iter().fold((0, 0, 0), |(count, weight, with_witnesses), prediction| {
             (
                 count + 1,
-                input_weight + prediction.total_weight().to_wu() as usize,
-                inputs_with_witnesses + (prediction.witness_size > 0) as usize,
+                weight + prediction.total_weight().to_wu() as usize,
+                with_witnesses + (prediction.witness_size > 0) as usize,
             )
-        },
-    );
+        });
 
-    // This fold() does two things:
-    // 1) Counts the outputs and returns the sum as `output_count`.
-    // 2) Sums the output script sizes and returns the sum as `output_scripts_size`.
-    //    script_len + the length of a VarInt struct that stores the value of script_len
-    let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
-        (0, 0),
-        |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + compact_size::encoded_size(script_len);
-            (output_count + 1, total_scripts_size + script_size)
-        },
-    );
+    let (output_count, output_scripts_size) =
+        output_script_lens.into_iter().fold((0, 0), |(count, scripts_size), script_len| {
+            (count + 1, scripts_size + script_len + compact_size::encoded_size(script_len))
+        });
+
     predict_weight_internal(
         input_count,
         input_weight,
