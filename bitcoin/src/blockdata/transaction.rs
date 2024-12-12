@@ -883,15 +883,11 @@ const fn predict_weight_internal(
 ) -> Weight {
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
-    let non_input_size =
-    // version:
-        4 +
-    // count varints:
-        compact_size::encoded_size_const(input_count as u64) +
-        compact_size::encoded_size_const(output_count as u64) +
-        output_size +
-    // lock_time
-        4;
+    let non_input_size = 4 // version
+        + compact_size::encoded_size_const(input_count as u64) // Can't use ToU64 in const context.
+        + compact_size::encoded_size_const(output_count as u64)
+        + output_size
+        + 4; // locktime
     let weight = if inputs_with_witnesses == 0 {
         non_input_size * 4 + input_weight
     } else {
