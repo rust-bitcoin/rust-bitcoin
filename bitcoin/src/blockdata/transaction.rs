@@ -799,7 +799,7 @@ pub fn effective_value(
     value: Amount,
 ) -> Option<SignedAmount> {
     let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
-    let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
+    let signed_input_fee = fee_rate.fee(weight)?.to_signed().ok()?;
     value.to_signed().ok()?.checked_sub(signed_input_fee)
 }
 

@@ -140,17 +140,17 @@ fn checked_arithmetic() {
 #[test]
 fn amount_checked_div_by_weight_ceil() {
     let weight = Weight::from_kwu(1).unwrap();
-    let fee_rate = Amount::from_sat(1).checked_div_by_weight_ceil(weight).unwrap();
+    let fee_rate = Amount::from_sat(1).fee_rate_ceil(weight).unwrap();
     // 1 sats / 1,000 wu = 1 sats/kwu
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
 
     let weight = Weight::from_wu(381);
-    let fee_rate = Amount::from_sat(329).checked_div_by_weight_ceil(weight).unwrap();
+    let fee_rate = Amount::from_sat(329).fee_rate_ceil(weight).unwrap();
     // 329 sats / 381 wu = 863.5 sats/kwu
     // round up to 864
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
 
-    let fee_rate = Amount::ONE_SAT.checked_div_by_weight_ceil(Weight::ZERO);
+    let fee_rate = Amount::ONE_SAT.fee_rate_ceil(Weight::ZERO);
     assert!(fee_rate.is_none());
 }
 
@@ -158,17 +158,17 @@ fn amount_checked_div_by_weight_ceil() {
 #[test]
 fn amount_checked_div_by_weight_floor() {
     let weight = Weight::from_kwu(1).unwrap();
-    let fee_rate = Amount::from_sat(1).checked_div_by_weight_floor(weight).unwrap();
+    let fee_rate = Amount::from_sat(1).fee_rate_floor(weight).unwrap();
     // 1 sats / 1,000 wu = 1 sats/kwu
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(1));
 
     let weight = Weight::from_wu(381);
-    let fee_rate = Amount::from_sat(329).checked_div_by_weight_floor(weight).unwrap();
+    let fee_rate = Amount::from_sat(329).fee_rate_floor(weight).unwrap();
     // 329 sats / 381 wu = 863.5 sats/kwu
     // round down to 863
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
 
-    let fee_rate = Amount::ONE_SAT.checked_div_by_weight_floor(Weight::ZERO);
+    let fee_rate = Amount::ONE_SAT.fee_rate_floor(Weight::ZERO);
     assert!(fee_rate.is_none());
 }
 

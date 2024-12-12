@@ -43,7 +43,7 @@ pub mod fee_rate {
 
             let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
 
-            assert_eq!(rate.fee_vb(tx.vsize().to_u64()), rate.fee_wu(tx.weight()));
+            assert_eq!(rate.fee_vb(tx.vsize().to_u64()), rate.fee(tx.weight()));
         }
     }
 }
