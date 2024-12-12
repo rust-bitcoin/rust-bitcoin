@@ -93,7 +93,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
 ///
 /// This type is not meant for constructing relative height based timelocks, this is a general
 /// purpose block interval abstraction. For locktimes please see [`locktime::relative::Height`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 // Public to try and make it really clear that there are no invariants.
 pub struct BlockInterval(pub u32);
