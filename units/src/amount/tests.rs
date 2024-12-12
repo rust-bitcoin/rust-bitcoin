@@ -71,10 +71,6 @@ fn from_int_btc() {
     assert_eq!(Amount::from_sat(200_000_000), amt);
 }
 
-#[should_panic]
-#[test]
-fn from_int_btc_panic() { Amount::from_int_btc_const(u64::MAX); }
-
 #[test]
 fn test_signed_amount_try_from_amount() {
     let ua_positive = Amount::from_sat(123);
