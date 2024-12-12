@@ -126,7 +126,7 @@ impl Denomination {
 
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
-const CONFUSING_FORMS: [&str; 6] = ["MBTC", "Mbtc", "CBTC", "Cbtc", "UBTC", "Ubtc"];
+const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
 
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_str()) }
@@ -139,10 +139,9 @@ impl FromStr for Denomination {
     ///
     /// # Errors
     ///
-    /// - If the denomination begins with a capital `M` a [`PossiblyConfusingDenominationError`] is
-    ///   returned.
-    ///
-    /// - If an unknown denomination is used, an [`UnknownDenominationError`] is returned.
+    /// - [`ParseDenominationError::PossiblyConfusing`]: If the denomination begins with a capital
+    ///   letter that could be confused with centi, milli, or micro-bitcoin.
+    /// - [`ParseDenominationError::Unknown`]: If an unknown denomination is used.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseDenominationError::*;
 
