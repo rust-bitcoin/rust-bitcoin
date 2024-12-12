@@ -657,9 +657,9 @@ pub const fn bitcoin_units::SignedAmount::from_int_btc_const(btc: i64) -> bitcoi
 pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::SignedAmount
 pub const fn bitcoin_units::SignedAmount::to_sat(self) -> i64
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
-pub const fn bitcoin_units::block::BlockHeight::to_u32(&self) -> u32
+pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32
 pub const fn bitcoin_units::block::BlockInterval::from_u32(inner: u32) -> Self
-pub const fn bitcoin_units::block::BlockInterval::to_u32(&self) -> u32
+pub const fn bitcoin_units::block::BlockInterval::to_u32(self) -> u32
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_add(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_div(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul(self, rhs: u64) -> core::option::Option<Self>
@@ -678,12 +678,12 @@ pub const fn bitcoin_units::locktime::absolute::Time::to_consensus_u32(self) -> 
 pub const fn bitcoin_units::locktime::absolute::is_block_height(n: u32) -> bool
 pub const fn bitcoin_units::locktime::absolute::is_block_time(n: u32) -> bool
 pub const fn bitcoin_units::locktime::relative::Height::from_height(blocks: u16) -> Self
-pub const fn bitcoin_units::locktime::relative::Height::to_consensus_u32(&self) -> u32
+pub const fn bitcoin_units::locktime::relative::Height::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::Height::value(self) -> u16
 pub const fn bitcoin_units::locktime::relative::Time::from_512_second_intervals(intervals: u16) -> Self
 pub const fn bitcoin_units::locktime::relative::Time::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
 pub const fn bitcoin_units::locktime::relative::Time::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
-pub const fn bitcoin_units::locktime::relative::Time::to_consensus_u32(&self) -> u32
+pub const fn bitcoin_units::locktime::relative::Time::to_consensus_u32(self) -> u32
 pub const fn bitcoin_units::locktime::relative::Time::value(self) -> u16
 pub const fn bitcoin_units::weight::Weight::checked_add(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::checked_div(self, rhs: u64) -> core::option::Option<Self>

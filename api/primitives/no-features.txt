@@ -995,8 +995,8 @@ pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by(&self, 
 pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_height(&self, height: bitcoin_units::locktime::relative::Height) -> core::result::Result<bool, bitcoin_primitives::locktime::relative::IncompatibleHeightError>
 pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_time(&self, time: bitcoin_units::locktime::relative::Time) -> core::result::Result<bool, bitcoin_primitives::locktime::relative::IncompatibleTimeError>
 pub fn bitcoin_primitives::locktime::relative::LockTime::partial_cmp(&self, other: &bitcoin_primitives::locktime::relative::LockTime) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_primitives::locktime::relative::LockTime::to_consensus_u32(&self) -> u32
-pub fn bitcoin_primitives::locktime::relative::LockTime::to_sequence(&self) -> bitcoin_primitives::sequence::Sequence
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_consensus_u32(self) -> u32
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_sequence(self) -> bitcoin_primitives::sequence::Sequence
 pub fn bitcoin_primitives::locktime::relative::LockTime::try_from(seq: bitcoin_primitives::sequence::Sequence) -> core::result::Result<bitcoin_primitives::locktime::relative::LockTime, bitcoin_primitives::locktime::relative::DisabledLockTimeError>
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
@@ -1076,7 +1076,7 @@ pub fn bitcoin_primitives::sequence::Sequence::is_relative_lock_time(&self) -> b
 pub fn bitcoin_primitives::sequence::Sequence::is_time_locked(&self) -> bool
 pub fn bitcoin_primitives::sequence::Sequence::partial_cmp(&self, other: &bitcoin_primitives::sequence::Sequence) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::sequence::Sequence::to_consensus_u32(self) -> u32
-pub fn bitcoin_primitives::sequence::Sequence::to_relative_lock_time(&self) -> core::option::Option<bitcoin_primitives::locktime::relative::LockTime>
+pub fn bitcoin_primitives::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_primitives::locktime::relative::LockTime>
 pub fn bitcoin_primitives::taproot::TapBranchTag::clone(&self) -> bitcoin_primitives::taproot::TapBranchTag
 pub fn bitcoin_primitives::taproot::TapBranchTag::cmp(&self, other: &bitcoin_primitives::taproot::TapBranchTag) -> core::cmp::Ordering
 pub fn bitcoin_primitives::taproot::TapBranchTag::default() -> bitcoin_primitives::taproot::TapBranchTag

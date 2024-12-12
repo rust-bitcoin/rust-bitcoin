@@ -1376,8 +1376,8 @@ pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_height(
 pub fn bitcoin_primitives::locktime::relative::LockTime::is_satisfied_by_time(&self, time: bitcoin_units::locktime::relative::Time) -> core::result::Result<bool, bitcoin_primitives::locktime::relative::IncompatibleTimeError>
 pub fn bitcoin_primitives::locktime::relative::LockTime::partial_cmp(&self, other: &bitcoin_primitives::locktime::relative::LockTime) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::locktime::relative::LockTime::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
-pub fn bitcoin_primitives::locktime::relative::LockTime::to_consensus_u32(&self) -> u32
-pub fn bitcoin_primitives::locktime::relative::LockTime::to_sequence(&self) -> bitcoin_primitives::sequence::Sequence
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_consensus_u32(self) -> u32
+pub fn bitcoin_primitives::locktime::relative::LockTime::to_sequence(self) -> bitcoin_primitives::sequence::Sequence
 pub fn bitcoin_primitives::locktime::relative::LockTime::try_from(seq: bitcoin_primitives::sequence::Sequence) -> core::result::Result<bitcoin_primitives::locktime::relative::LockTime, bitcoin_primitives::locktime::relative::DisabledLockTimeError>
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_primitives::merkle_tree::TxMerkleNode::as_ref(&self) -> &[u8; 32]
@@ -1533,7 +1533,7 @@ pub fn bitcoin_primitives::sequence::Sequence::partial_cmp(&self, other: &bitcoi
 pub fn bitcoin_primitives::sequence::Sequence::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin_primitives::sequence::Sequence::to_consensus_u32(self) -> u32
 pub fn bitcoin_primitives::sequence::Sequence::to_hex(&self) -> alloc::string::String
-pub fn bitcoin_primitives::sequence::Sequence::to_relative_lock_time(&self) -> core::option::Option<bitcoin_primitives::locktime::relative::LockTime>
+pub fn bitcoin_primitives::sequence::Sequence::to_relative_lock_time(self) -> core::option::Option<bitcoin_primitives::locktime::relative::LockTime>
 pub fn bitcoin_primitives::sequence::Sequence::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::sequence::Sequence::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_primitives::sequence::Sequence::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
