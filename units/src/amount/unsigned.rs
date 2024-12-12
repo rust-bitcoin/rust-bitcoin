@@ -70,6 +70,14 @@ impl Amount {
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// let amount = Amount::from_sat(100_000);
+    /// assert_eq!(amount.to_sat(), 100_000);
+    /// ```
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
@@ -146,6 +154,15 @@ impl Amount {
     /// # Errors
     ///
     /// If the amount is too big, too precise or negative.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::{amount, Amount};
+    /// let amount = Amount::from_str_with_denomination("0.1 BTC")?;
+    /// assert_eq!(amount, Amount::from_sat(10_000_000));
+    /// # Ok::<_, amount::ParseError>(())
+    /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Amount::from_str_in(amt, denom).map_err(Into::into)
@@ -154,6 +171,14 @@ impl Amount {
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(100_000);
+    /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
@@ -218,11 +243,27 @@ impl Amount {
     /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`].
     ///
     /// Returned string does not include the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
     /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`],
     /// suffixed with the abbreviation for the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
@@ -287,6 +328,16 @@ impl Amount {
     /// sufficient.  See also [`Amount::checked_div_by_weight_floor`].
     ///
     /// Returns [`None`] if overflow occurred.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::{Amount, FeeRate, Weight};
+    /// let amount = Amount::from_sat(10);
+    /// let weight = Weight::from_wu(300);
+    /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// ```
     #[cfg(feature = "alloc")]
     #[must_use]
     pub const fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
