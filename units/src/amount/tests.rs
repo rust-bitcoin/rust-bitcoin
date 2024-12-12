@@ -283,7 +283,7 @@ fn parsing() {
     assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
     assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
     #[cfg(feature = "alloc")]
-    assert_eq!(sp(&i64::MIN.to_string(), sat), Ok(SignedAmount::from_sat(i64::MIN)));
+    assert_eq!(sp(&SignedAmount::MIN.to_sat().to_string(), sat), Ok(SignedAmount::MIN));
     assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
     assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
     assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
@@ -571,7 +571,11 @@ fn from_str() {
     scase("-0.1 satoshi", Err(TooPreciseError { position: 3 }));
     case("0.123456 mBTC", Err(TooPreciseError { position: 7 }));
     scase("-1.001 bits", Err(TooPreciseError { position: 5 }));
-    scase("-200000000000 BTC", Err(OutOfRangeError::too_small()));
+    scase("-21000001 BTC", Err(OutOfRangeError::too_small()));
+    scase("21000001 BTC", Err(OutOfRangeError::too_big(true)));
+    scase("-2100000000000001 SAT", Err(OutOfRangeError::too_small()));
+    scase("2100000000000001 SAT", Err(OutOfRangeError::too_big(true)));
+    case("21000001 BTC", Err(OutOfRangeError::too_big(false)));
     case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
 
     ok_case(".5 bits", Amount::from_sat(50));
@@ -580,8 +584,9 @@ fn from_str() {
     ok_scase("-5 satoshi", SignedAmount::from_sat(-5));
     ok_case("0.10000000 BTC", Amount::from_sat(100_000_00));
     ok_scase("-100 bits", SignedAmount::from_sat(-10_000));
-    #[cfg(feature = "alloc")]
-    ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
+    ok_case("21000000 BTC", Amount::MAX);
+    ok_scase("21000000 BTC", SignedAmount::MAX);
+    ok_scase("-21000000 BTC", SignedAmount::MIN);
 }
 
 #[cfg(feature = "alloc")]
