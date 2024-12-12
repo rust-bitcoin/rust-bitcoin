@@ -21,8 +21,8 @@ use crate::{FeeRate, Weight};
 /// An amount.
 ///
 /// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
-/// conversion to various denominations. The `Amount` type does not implement `serde` traits but we
-/// do provide modules for serializing as satoshis or bitcoin.
+/// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
+/// but we do provide modules for serializing as satoshis or bitcoin.
 ///
 /// Warning!
 ///
@@ -75,7 +75,7 @@ impl Amount {
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
 
-    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
+    /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
@@ -108,10 +108,10 @@ impl Amount {
         }
     }
 
-    /// Parses a decimal string as a value in the given denomination.
+    /// Parses a decimal string as a value in the given [`Denomination`].
     ///
-    /// Note: This only parses the value string.  If you want to parse a value
-    /// with denomination, use [`FromStr`].
+    /// Note: This only parses the value string.  If you want to parse a string
+    /// containing the value with denomination, use [`FromStr`].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
         let (negative, satoshi) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
@@ -137,7 +137,7 @@ impl Amount {
         Amount::from_str_in(amt, denom).map_err(Into::into)
     }
 
-    /// Expresses this [`Amount`] as a floating-point value in the given denomination.
+    /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
@@ -159,8 +159,8 @@ impl Amount {
     #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
-    /// Converts this [`Amount`] in floating-point notation with a given
-    /// denomination.
+    /// Converts this [`Amount`] in floating-point notation in the given
+    /// [`Denomination`].
     ///
     /// # Errors
     ///
@@ -177,7 +177,7 @@ impl Amount {
         Amount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
     #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
@@ -187,7 +187,8 @@ impl Amount {
         }
     }
 
-    /// Constructs a new object that implements [`fmt::Display`] dynamically selecting denomination.
+    /// Constructs a new object that implements [`fmt::Display`] dynamically selecting
+    /// [`Denomination`].
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
@@ -200,14 +201,14 @@ impl Amount {
         }
     }
 
-    /// Returns a formatted string representing this [`Amount`] in the given denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`].
     ///
-    /// Does not include the denomination.
+    /// Returned string does not include the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
-    /// Returns a formatted string representing this [`Amount`] in the given denomination, suffixed
-    /// with the abbreviation for the denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`],
+    /// suffixed with the abbreviation for the denomination.
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
@@ -217,7 +218,7 @@ impl Amount {
 
     /// Checked addition.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the sum is larger than [`Amount::MAX`].
     #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
@@ -241,7 +242,7 @@ impl Amount {
 
     /// Checked multiplication.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the product is larger than [`Amount::MAX`].
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
