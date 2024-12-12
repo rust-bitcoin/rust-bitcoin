@@ -594,7 +594,6 @@ fn to_from_string_in() {
     let ua_str = Amount::from_str_in;
     let ua_sat = Amount::from_sat;
     let sa_str = SignedAmount::from_str_in;
-    let sa_sat = SignedAmount::from_sat;
 
     assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
     assert_eq!("-0.00253583", SignedAmount::from_sat(-253583).to_string_in(D::Bitcoin));
@@ -651,12 +650,12 @@ fn to_from_string_in() {
     assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok());
 
     assert_eq!(
-        sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
         Err(OutOfRangeError::too_big(true).into())
     );
     // Test an overflow bug in `abs()`
     assert_eq!(
-        sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MIN.to_string_in(D::Satoshi), D::MicroBitcoin),
         Err(OutOfRangeError::too_small().into())
     );
 }
@@ -931,12 +930,12 @@ fn checked_sum_amounts() {
     assert_eq!(None, sum);
 
     let amounts =
-        [SignedAmount::from_sat(i64::MIN), SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
+        [SignedAmount::MIN, SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
     let amounts =
-        [SignedAmount::from_sat(i64::MAX), SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
+        [SignedAmount::MAX, SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
