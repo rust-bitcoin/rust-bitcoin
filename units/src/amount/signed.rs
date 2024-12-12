@@ -50,17 +50,17 @@ pub struct SignedAmount(i64);
 
 impl SignedAmount {
     /// The zero amount.
-    pub const ZERO: SignedAmount = SignedAmount(0);
+    pub const ZERO: Self = SignedAmount(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: SignedAmount = SignedAmount(1);
+    pub const ONE_SAT: Self = SignedAmount(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
+    pub const ONE_BTC: Self = SignedAmount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
+    pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
-    pub const MIN: SignedAmount = SignedAmount(i64::MIN);
+    pub const MIN: Self = SignedAmount(i64::MIN);
     /// The maximum value of an amount.
-    pub const MAX: SignedAmount = SignedAmount(i64::MAX);
+    pub const MAX: Self = SignedAmount(i64::MAX);
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
