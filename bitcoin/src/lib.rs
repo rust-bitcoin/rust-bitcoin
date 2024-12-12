@@ -199,7 +199,7 @@ mod prelude {
 pub mod amount {
     //! Bitcoin amounts.
     //!
-    //! This module mainly introduces the [Amount] and [SignedAmount] types.
+    //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
     //! We refer to the documentation on the types for more information.
 
     use crate::consensus::{encode, Decodable, Encodable};
