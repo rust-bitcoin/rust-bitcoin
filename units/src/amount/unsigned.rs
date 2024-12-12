@@ -320,23 +320,25 @@ impl Amount {
         }
     }
 
-    /// Unchecked addition.
+    /// Unchecked addition - computes `self + rhs`.
     ///
-    /// Computes `self + rhs`.
+    /// Provided for performance reasons, this may be faster than calling `a.checked_add(b).unwrap()`.
     ///
     /// # Panics
     ///
-    /// On overflow, panics in debug mode, wraps in release mode.
+    /// Uses stdlib integer addition. As such if overflow occurs panics in debug mode and wraps
+    /// in release mode.
     #[must_use]
     pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
 
-    /// Unchecked subtraction.
+    /// Unchecked subtraction - computes `self - rhs`.
     ///
-    /// Computes `self - rhs`.
+    /// Provided for performance reasons, this may be faster than calling `a.checked_add(b).unwrap()`.
     ///
     /// # Panics
     ///
-    /// On overflow, panics in debug mode, wraps in release mode.
+    /// Uses stdlib integer subtraction. As such if overflow occurs panics in debug mode and wraps
+    /// in release mode.
     #[must_use]
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
