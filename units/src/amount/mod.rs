@@ -563,7 +563,7 @@ enum DisplayStyle {
 }
 
 /// Calculates the sum over the iterator using checked arithmetic.
-pub trait CheckedSum<R>: private::SumSeal<R> {
+pub trait CheckedSum<R>: sealed::Sealed<R> {
     /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
     /// happen it returns [`None`].
     fn checked_sum(self) -> Option<R>;
@@ -591,12 +591,12 @@ where
     }
 }
 
-mod private {
+mod sealed {
     use super::{Amount, SignedAmount};
 
     /// Used to seal the `CheckedSum` trait
-    pub trait SumSeal<A> {}
+    pub trait Sealed<A> {}
 
-    impl<T> SumSeal<Amount> for T where T: Iterator<Item = Amount> {}
-    impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
+    impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}
+    impl<T> Sealed<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
 }
