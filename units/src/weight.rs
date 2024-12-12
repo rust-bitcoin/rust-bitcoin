@@ -251,35 +251,37 @@ impl<'a> Arbitrary<'a> for Weight {
 mod tests {
     use super::*;
 
+    const ONE: Weight = Weight(1);
+    const TWO: Weight = Weight(2);
+    const FOUR: Weight = Weight(4);
+
     #[test]
-    fn weight_constructor() {
-        assert_eq!(Weight::ZERO, Weight::from_wu(0));
+    fn from_kwu() {
+        let got = Weight::from_kwu(1).unwrap();
+        let want = Weight(1_000);
+        assert_eq!(got, want);
     }
 
     #[test]
-    fn kilo_weight_constructor() {
-        assert_eq!(Weight(1_000), Weight::from_kwu(1).expect("expected weight unit"));
-    }
-
-    #[test]
-    #[should_panic]
-    fn kilo_weight_constructor_panic() {
-        Weight::from_kwu(u64::MAX).expect("expected weight unit");
-    }
+    fn from_kwu_overflows() { assert!(Weight::from_kwu(u64::MAX).is_none()) }
 
     #[test]
     fn from_vb() {
-        let w = Weight::from_vb(1).expect("expected weight unit");
-        assert_eq!(Weight(4), w);
+        let got = Weight::from_vb(1).unwrap();
+        let want = Weight(4);
+        assert_eq!(got, want);
+    }
 
-        let w = Weight::from_vb(u64::MAX);
-        assert_eq!(None, w);
+    #[test]
+    fn from_vb_overflows() {
+        assert!(Weight::from_vb(u64::MAX).is_none());
     }
 
     #[test]
     fn from_vb_unchecked() {
-        let w = Weight::from_vb_unchecked(1);
-        assert_eq!(Weight(4), w);
+        let got = Weight::from_vb_unchecked(1);
+        let want = Weight(4);
+        assert_eq!(got, want);
     }
 
     #[test]
@@ -290,71 +292,74 @@ mod tests {
     #[test]
     fn from_witness_data_size() {
         let witness_data_size = 1;
-        assert_eq!(Weight(witness_data_size), Weight::from_witness_data_size(witness_data_size));
+        let got = Weight::from_witness_data_size(witness_data_size);
+        let want = Weight(witness_data_size);
+        assert_eq!(got, want);
     }
 
     #[test]
     fn from_non_witness_data_size() {
-        assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
+        let non_witness_data_size = 1;
+        let got = Weight::from_non_witness_data_size(non_witness_data_size);
+        let want = Weight(non_witness_data_size * 4);
+        assert_eq!(got, want);
     }
 
     #[test]
     fn to_kwu_floor() {
-        assert_eq!(1, Weight(1_000).to_kwu_floor());
-        assert_eq!(1, Weight(1_999).to_kwu_floor());
+        assert_eq!(Weight(1_000).to_kwu_floor(), 1);
+        assert_eq!(Weight(1_999).to_kwu_floor(), 1);
     }
 
     #[test]
     fn to_kwu_ceil() {
-        assert_eq!(1, Weight(1_000).to_kwu_ceil());
-        assert_eq!(2, Weight(1_001).to_kwu_ceil());
+        assert_eq!(Weight(1_000).to_kwu_ceil(), 1);
+        assert_eq!(Weight(1_001).to_kwu_ceil(), 2);
     }
 
     #[test]
     fn to_vb_floor() {
-        assert_eq!(1, Weight(4).to_vbytes_floor());
-        assert_eq!(1, Weight(5).to_vbytes_floor());
+        assert_eq!(Weight(4).to_vbytes_floor(), 1);
+        assert_eq!(Weight(5).to_vbytes_floor(), 1);
     }
 
     #[test]
     fn to_vb_ceil() {
-        assert_eq!(1, Weight(4).to_vbytes_ceil());
-        assert_eq!(2, Weight(5).to_vbytes_ceil());
+        assert_eq!(Weight(4).to_vbytes_ceil(), 1);
+        assert_eq!(Weight(5).to_vbytes_ceil(), 2);
     }
 
     #[test]
     fn checked_add() {
-        let result = Weight(1).checked_add(Weight(1)).expect("expected weight unit");
-        assert_eq!(Weight(2), result);
-
-        let result = Weight::MAX.checked_add(Weight(1));
-        assert_eq!(None, result);
+        assert_eq!(ONE.checked_add(ONE).unwrap(), TWO);
     }
+
+    #[test]
+    fn checked_add_overflows() { assert!(Weight::MAX.checked_add(ONE).is_none()) }
 
     #[test]
     fn checked_sub() {
-        let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
-        assert_eq!(Weight::ZERO, result);
-
-        let result = Weight::MIN.checked_sub(Weight(1));
-        assert_eq!(None, result);
+        assert_eq!(TWO.checked_sub(ONE).unwrap(), ONE);
     }
+
+    #[test]
+    fn checked_sub_overflows() { assert!(Weight::ZERO.checked_sub(ONE).is_none()) }
 
     #[test]
     fn checked_mul() {
-        let result = Weight(2).checked_mul(2).expect("expected weight unit");
-        assert_eq!(Weight(4), result);
-
-        let result = Weight::MAX.checked_mul(2);
-        assert_eq!(None, result);
+        assert_eq!(TWO.checked_mul(1).unwrap(), TWO);
+        assert_eq!(TWO.checked_mul(2).unwrap(), FOUR);
     }
 
     #[test]
-    fn checked_div() {
-        let result = Weight(2).checked_div(2).expect("expected weight unit");
-        assert_eq!(Weight(1), result);
+    fn checked_mul_overflows() { assert!(Weight::MAX.checked_mul(2).is_none()) }
 
-        let result = Weight(2).checked_div(0);
-        assert_eq!(None, result);
+    #[test]
+    fn checked_div() {
+        assert_eq!(FOUR.checked_div(2).unwrap(), TWO);
+        assert_eq!(TWO.checked_div(1).unwrap(), TWO);
     }
+
+    #[test]
+    fn checked_div_overflows() { assert!(TWO.checked_div(0).is_none()) }
 }
