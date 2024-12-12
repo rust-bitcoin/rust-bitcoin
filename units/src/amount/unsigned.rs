@@ -76,6 +76,12 @@ impl Amount {
     pub const fn to_sat(self) -> u64 { self.0 }
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
@@ -112,6 +118,10 @@ impl Amount {
     ///
     /// Note: This only parses the value string.  If you want to parse a string
     /// containing the value with denomination, use [`FromStr`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
         let (negative, satoshi) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
@@ -132,6 +142,10 @@ impl Amount {
     /// or with [`fmt::Display`].
     ///
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Amount::from_str_in(amt, denom).map_err(Into::into)
@@ -342,6 +356,10 @@ impl Amount {
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big.
     pub fn to_signed(self) -> Result<SignedAmount, OutOfRangeError> {
         if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
             Err(OutOfRangeError::too_big(true))
