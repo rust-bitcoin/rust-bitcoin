@@ -92,6 +92,9 @@ impl Weight {
     /// Converts to kilo weight units rounding down.
     pub const fn to_kwu_floor(self) -> u64 { self.0 / 1000 }
 
+    /// Converts to kilo weight units rounding up.
+    pub const fn to_kwu_ceil(self) -> u64 { (self.0 + 999) / 1000 }
+
     /// Converts to vB rounding down.
     pub const fn to_vbytes_floor(self) -> u64 { self.0 / Self::WITNESS_SCALE_FACTOR }
 
@@ -298,6 +301,13 @@ mod tests {
     #[test]
     fn to_kwu_floor() {
         assert_eq!(1, Weight(1_000).to_kwu_floor());
+        assert_eq!(1, Weight(1_999).to_kwu_floor());
+    }
+
+    #[test]
+    fn to_kwu_ceil() {
+        assert_eq!(1, Weight(1_000).to_kwu_ceil());
+        assert_eq!(2, Weight(1_001).to_kwu_ceil());
     }
 
     #[test]
