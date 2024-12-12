@@ -213,23 +213,14 @@ fn size_from_script_pubkey(script_pubkey: &Script) -> usize {
 /// Extension functionality for the [`Transaction`] type.
 pub trait TransactionExt: sealed::Sealed {
     /// Computes a "normalized TXID" which does not include any signatures.
-    ///
-    /// This method is deprecated.  `ntxid` has been renamed to `compute_ntxid` to note that it's
-    /// computationally expensive.  Use `compute_ntxid` instead.
     #[deprecated(since = "0.31.0", note = "use `compute_ntxid()` instead")]
     fn ntxid(&self) -> sha256d::Hash;
 
     /// Computes the [`Txid`].
-    ///
-    /// This method is deprecated.  `txid` has been renamed to `compute_txid` to note that it's
-    /// computationally expensive.  Use `compute_txid` instead.
     #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
     fn txid(&self) -> Txid;
 
     /// Computes the segwit version of the transaction id.
-    ///
-    /// This method is deprecated.  `wtxid` has been renamed to `compute_wtxid` to note that it's
-    /// computationally expensive.  Use `compute_wtxid` instead.
     #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
     fn wtxid(&self) -> Wtxid;
 
