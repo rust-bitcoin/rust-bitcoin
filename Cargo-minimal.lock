@@ -25,7 +25,7 @@ name = "base58ck"
 version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
- "bitcoin_hashes 0.15.0",
+ "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
 ]
 
@@ -64,7 +64,7 @@ dependencies = [
  "bitcoin-io",
  "bitcoin-primitives",
  "bitcoin-units",
- "bitcoin_hashes 0.15.0",
+ "bitcoin_hashes 0.16.0",
  "bitcoinconsensus",
  "hex-conservative 0.3.0",
  "hex_lit",
@@ -116,7 +116,7 @@ dependencies = [
  "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
- "bitcoin_hashes 0.15.0",
+ "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
  "mutagen",
  "ordered",
@@ -146,7 +146,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hashes"
-version = "0.15.0"
+version = "0.16.0"
 dependencies = [
  "bitcoin-io",
  "hex-conservative 0.3.0",

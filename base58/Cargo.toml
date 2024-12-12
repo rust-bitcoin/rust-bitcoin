@@ -18,7 +18,7 @@ std = ["alloc", "hashes/std", "internals/std"]
 alloc = ["hashes/alloc", "internals/alloc"]
 
 [dependencies]
-hashes = { package = "bitcoin_hashes", version = "0.15.0", default-features = false }
+hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.4.0" }
 
 [dev-dependencies]
