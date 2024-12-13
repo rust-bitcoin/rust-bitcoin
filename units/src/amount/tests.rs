@@ -920,10 +920,10 @@ fn checked_sum_amounts() {
 
 #[test]
 fn denomination_string_acceptable_forms() {
-    // Non-exhaustive list of valid forms.
+    // Exhaustive list of valid forms.
     let valid = [
-        "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS", "satoshis",
-        "SAT", "sat", "SATS", "sats", "bit", "bits",
+        "BTC", "btc", "cBTC", "cbtc", "mBTC", "mbtc", "uBTC", "ubtc", "bit", "bits", "BIT", "BITS",
+        "SATOSHI", "satoshi", "SATOSHIS", "satoshis", "SAT", "sat", "SATS", "sats",
     ];
     for denom in valid.iter() {
         assert!(denom.parse::<Denomination>().is_ok());
