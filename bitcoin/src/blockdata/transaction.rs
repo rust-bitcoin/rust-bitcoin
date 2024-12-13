@@ -343,7 +343,7 @@ impl TransactionExt for Transaction {
     fn weight(&self) -> Weight {
         // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
         let wu = self.base_size() * 3 + self.total_size();
-        Weight::from_wu_usize(wu)
+        Weight::from_wu(wu.to_u64())
     }
 
     fn base_size(&self) -> usize {
@@ -1142,7 +1142,9 @@ impl InputWeightPrediction {
     ///
     /// See also [`InputWeightPrediction::total_weight`]
     pub const fn witness_weight(&self) -> Weight {
-        Weight::from_wu_usize(self.script_size * 4 + self.witness_size)
+        let wu = self.script_size * 4 + self.witness_size;
+        let wu = wu as u64; // Can't use `ToU64` in const context.
+        Weight::from_wu(wu)
     }
 }
 

@@ -10,7 +10,7 @@
 use core::fmt;
 
 use hashes::{sha256d, HashEngine};
-use internals::compact_size;
+use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 
 use super::Weight;
@@ -263,7 +263,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn weight(&self) -> Weight {
         // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
         let wu = block_base_size(self.transactions()) * 3 + self.total_size();
-        Weight::from_wu_usize(wu)
+        Weight::from_wu(wu.to_u64())
     }
 
     fn total_size(&self) -> usize {
