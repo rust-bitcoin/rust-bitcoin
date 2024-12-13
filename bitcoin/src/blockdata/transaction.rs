@@ -162,7 +162,7 @@ crate::internal_macros::define_extension_trait! {
         /// # Panics
         ///
         /// If output size * 4 overflows, this should never happen under normal conditions. Use
-        /// `Weght::from_vb_checked(self.size().to_u64())` if you are concerned.
+        /// `Weght::from_vb_checked(self.size() as u64)` if you are concerned.
         fn weight(&self) -> Weight {
             // Size is equivalent to virtual size since all bytes of a TxOut are non-witness bytes.
             Weight::from_vb(self.size().to_u64())
