@@ -842,29 +842,20 @@ where
     I: IntoIterator<Item = InputWeightPrediction>,
     O: IntoIterator<Item = usize>,
 {
-    // sum input_weights, input_count and count of inputs with witness data
-    let (input_count, input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
-        (0, 0, 0),
-        |(count, input_weight, inputs_with_witnesses), prediction| {
+    let (input_count, input_weight, inputs_with_witnesses) =
+        inputs.into_iter().fold((0, 0, 0), |(count, weight, with_witnesses), prediction| {
             (
                 count + 1,
-                input_weight + prediction.total_weight().to_wu() as usize,
-                inputs_with_witnesses + (prediction.witness_size > 0) as usize,
+                weight + prediction.total_weight().to_wu() as usize,
+                with_witnesses + (prediction.witness_size > 0) as usize,
             )
-        },
-    );
+        });
 
-    // This fold() does two things:
-    // 1) Counts the outputs and returns the sum as `output_count`.
-    // 2) Sums the output script sizes and returns the sum as `output_scripts_size`.
-    //    script_len + the length of a VarInt struct that stores the value of script_len
-    let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
-        (0, 0),
-        |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + compact_size::encoded_size(script_len);
-            (output_count + 1, total_scripts_size + script_size)
-        },
-    );
+    let (output_count, output_scripts_size) =
+        output_script_lens.into_iter().fold((0, 0), |(count, scripts_size), script_len| {
+            (count + 1, scripts_size + script_len + compact_size::encoded_size(script_len))
+        });
+
     predict_weight_internal(
         input_count,
         input_weight,
@@ -883,15 +874,11 @@ const fn predict_weight_internal(
 ) -> Weight {
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
-    let non_input_size =
-    // version:
-        4 +
-    // count varints:
-        compact_size::encoded_size_const(input_count as u64) +
-        compact_size::encoded_size_const(output_count as u64) +
-        output_size +
-    // lock_time
-        4;
+    let non_input_size = 4 // version
+        + compact_size::encoded_size_const(input_count as u64) // Can't use ToU64 in const context.
+        + compact_size::encoded_size_const(output_count as u64)
+        + output_size
+        + 4; // locktime
     let weight = if inputs_with_witnesses == 0 {
         non_input_size * 4 + input_weight
     } else {
