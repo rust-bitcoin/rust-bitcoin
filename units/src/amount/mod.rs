@@ -44,7 +44,7 @@ pub use self::{
 ///
 /// # Note
 ///
-/// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.  It is
+/// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'. It is
 /// more important to protect users from incorrectly using a capital M to mean milli than to
 /// allow Megabitcoin which is not a realistic denomination, and Megasatoshi which is
 /// equivalent to cBTC which is allowed.
@@ -124,7 +124,7 @@ impl Denomination {
     }
 }
 
-/// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
+/// These form are ambigous and could have many meanings. For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
 const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
 

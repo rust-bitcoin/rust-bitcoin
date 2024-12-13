@@ -773,11 +773,11 @@ impl Decodable for Transaction {
 
 /// Computes the value of an output accounting for the cost of spending it.
 ///
-/// The effective value is the value of an output value minus the amount to spend it.  That is, the
+/// The effective value is the value of an output value minus the amount to spend it. That is, the
 /// effective_value can be calculated as: value - (fee_rate * weight).
 ///
 /// Note: the effective value of a [`Transaction`] may increase less than the effective value of
-/// a [`TxOut`] when adding another [`TxOut`] to the transaction.  This happens when the new
+/// a [`TxOut`] when adding another [`TxOut`] to the transaction. This happens when the new
 /// [`TxOut`] added causes the output length `VarInt` to increase its encoding length.
 ///
 /// # Parameters

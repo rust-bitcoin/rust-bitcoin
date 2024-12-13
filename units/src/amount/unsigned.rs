@@ -29,8 +29,8 @@ use crate::{FeeRate, Weight};
 /// This type implements several arithmetic operations from [`core::ops`].
 /// To prevent errors due to overflow or underflow when using these operations,
 /// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [`core::ops`] that [`Amount`]
-/// implements will panic when overflow or underflow occurs.  Also note that
+/// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
+/// implements will panic when overflow or underflow occurs. Also note that
 /// since the internal representation of amounts is unsigned, subtracting below
 /// zero is considered an underflow and will cause a panic if you're not using
 /// the checked arithmetic methods.
@@ -125,7 +125,7 @@ impl Amount {
 
     /// Parses a decimal string as a value in the given [`Denomination`].
     ///
-    /// Note: This only parses the value string.  If you want to parse a string
+    /// Note: This only parses the value string. If you want to parse a string
     /// containing the value with denomination, use [`FromStr`].
     ///
     /// # Errors
@@ -325,8 +325,8 @@ impl Amount {
     /// Checked weight ceiling division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
-    /// can be made.  This method rounds up ensuring the transaction fee-rate is
-    /// sufficient.  See also [`Amount::checked_div_by_weight_floor`].
+    /// can be made. This method rounds up ensuring the transaction fee-rate is
+    /// sufficient. See also [`Amount::checked_div_by_weight_floor`].
     ///
     /// Returns [`None`] if overflow occurred.
     ///
@@ -359,7 +359,7 @@ impl Amount {
     /// Checked weight floor division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
-    /// can be made.  See also [`Amount::checked_div_by_weight_ceil`].
+    /// can be made. See also [`Amount::checked_div_by_weight_ceil`].
     ///
     /// Returns [`None`] if overflow occurred.
     #[cfg(feature = "alloc")]
@@ -422,7 +422,7 @@ impl Amount {
         }
     }
 
-    /// Checks if the amount is below the maximum value.  Returns `None` if it is above.
+    /// Checks if the amount is below the maximum value. Returns `None` if it is above.
     const fn check_max(self) -> Option<Amount> {
         if self.0 > Self::MAX.0 {
             None
