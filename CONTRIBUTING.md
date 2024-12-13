@@ -157,6 +157,9 @@ running `just check-api`.
 - `primitives`
 - `units`
 
+Check the [API text files](api/README.md) for more information
+on how to install the dependencies and create the text files.
+
 ### Repository maintainers
 
 Pull request merge requirements:
