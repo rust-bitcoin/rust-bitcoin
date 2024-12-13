@@ -22,6 +22,7 @@ export LC_ALL=C
 
 main() {
     need_nightly
+    need_cargo_public_api
 
     generate_api_files "hashes"
     generate_api_files "io"
@@ -79,6 +80,13 @@ need_nightly() {
     if echo "$cargo_ver" | grep -q -v nightly; then
         err "Need a nightly compiler; have $cargo_ver"
     fi
+}
+
+need_cargo_public_api() {
+    if command -v cargo-public-api > /dev/null; then
+        return
+    fi
+    err "cargo-public-api is not installed; please run 'cargo +nightly install cargo-public-api --locked'"
 }
 
 err() {
