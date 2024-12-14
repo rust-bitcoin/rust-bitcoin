@@ -40,11 +40,7 @@ fn u_amount_homomorphic() {
 
     assert_eq!(
         Amount::from_sat(n1).to_signed(),
-        if n1 <= i64::MAX as u64 {
-            Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
-        } else {
-            Err(OutOfRangeError::too_big(true))
-        },
+        SignedAmount::from_sat(n1.try_into().unwrap())
     );
 }
 
