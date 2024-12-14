@@ -566,12 +566,6 @@ impl FromStr for SignedAmount {
     }
 }
 
-impl TryFrom<Amount> for SignedAmount {
-    type Error = OutOfRangeError;
-
-    fn try_from(value: Amount) -> Result<Self, Self::Error> { value.to_signed() }
-}
-
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
