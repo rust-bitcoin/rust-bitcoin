@@ -182,12 +182,12 @@ impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::Time
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::Height
 impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::Time
 impl core::convert::TryFrom<&str> for bitcoin_units::weight::Weight
-impl core::convert::TryFrom<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
 impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
 impl core::convert::TryFrom<bitcoin_units::block::BlockInterval> for bitcoin_units::locktime::relative::Height
 impl core::default::Default for bitcoin_units::Amount
 impl core::default::Default for bitcoin_units::SignedAmount
+impl core::default::Default for bitcoin_units::block::BlockInterval
 impl core::default::Default for bitcoin_units::locktime::relative::Height
 impl core::default::Default for bitcoin_units::locktime::relative::Time
 impl core::fmt::Debug for bitcoin_units::Amount
@@ -677,7 +677,6 @@ pub const fn bitcoin_units::weight::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::weight::Weight
 pub const fn bitcoin_units::weight::Weight::from_witness_data_size(witness_size: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_wu(wu: u64) -> Self
-pub const fn bitcoin_units::weight::Weight::from_wu_usize(wu: usize) -> Self
 pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
@@ -714,7 +713,7 @@ pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Out
 pub fn bitcoin_units::Amount::sub_assign(&mut self, other: bitcoin_units::Amount)
 pub fn bitcoin_units::Amount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
 pub fn bitcoin_units::Amount::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::Amount>
-pub fn bitcoin_units::Amount::to_signed(self) -> core::result::Result<bitcoin_units::SignedAmount, bitcoin_units::amount::error::OutOfRangeError>
+pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::Amount::unchecked_add(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::unchecked_sub(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
@@ -750,7 +749,6 @@ pub fn bitcoin_units::SignedAmount::sub_assign(&mut self, other: bitcoin_units::
 pub fn bitcoin_units::SignedAmount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
 pub fn bitcoin_units::SignedAmount::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::SignedAmount>
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
-pub fn bitcoin_units::SignedAmount::try_from(value: bitcoin_units::Amount) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::SignedAmount::unchecked_add(self, rhs: bitcoin_units::SignedAmount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::unchecked_sub(self, rhs: bitcoin_units::SignedAmount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
@@ -831,6 +829,7 @@ pub fn bitcoin_units::block::BlockInterval::add(self, rhs: bitcoin_units::block:
 pub fn bitcoin_units::block::BlockInterval::add_assign(&mut self, rhs: bitcoin_units::block::BlockInterval)
 pub fn bitcoin_units::block::BlockInterval::clone(&self) -> bitcoin_units::block::BlockInterval
 pub fn bitcoin_units::block::BlockInterval::cmp(&self, other: &bitcoin_units::block::BlockInterval) -> core::cmp::Ordering
+pub fn bitcoin_units::block::BlockInterval::default() -> bitcoin_units::block::BlockInterval
 pub fn bitcoin_units::block::BlockInterval::eq(&self, other: &bitcoin_units::block::BlockInterval) -> bool
 pub fn bitcoin_units::block::BlockInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::block::BlockInterval::from(h: bitcoin_units::locktime::relative::Height) -> Self
@@ -1023,15 +1022,14 @@ pub struct bitcoin_units::locktime::relative::TimeOverflowError
 pub struct bitcoin_units::parse::PrefixedHexError(_)
 pub struct bitcoin_units::parse::UnprefixedHexError(_)
 pub struct bitcoin_units::weight::Weight(_)
-pub trait bitcoin_units::amount::CheckedSum<R>: private::SumSeal<R>
-pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized
+pub trait bitcoin_units::amount::CheckedSum<R>: sealed::Sealed<R>
+pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + sealed::Sealed
 pub type &bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::fee_rate::FeeRate
 pub type bitcoin_units::Amount::Err = bitcoin_units::amount::error::ParseError
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub type bitcoin_units::Amount::Output = bitcoin_units::Amount
 pub type bitcoin_units::Amount::Output = bitcoin_units::fee_rate::FeeRate
 pub type bitcoin_units::SignedAmount::Err = bitcoin_units::amount::error::ParseError
-pub type bitcoin_units::SignedAmount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub type bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::error::ParseDenominationError
 pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse::ParseIntError
