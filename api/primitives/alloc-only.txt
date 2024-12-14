@@ -10,6 +10,8 @@ impl bitcoin_hashes::Hash for bitcoin_primitives::block::BlockHash
 impl bitcoin_hashes::Hash for bitcoin_primitives::block::WitnessCommitment
 impl bitcoin_hashes::Hash for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl bitcoin_hashes::Hash for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl bitcoin_hashes::Hash for bitcoin_primitives::script::ScriptHash
+impl bitcoin_hashes::Hash for bitcoin_primitives::script::WScriptHash
 impl bitcoin_hashes::Hash for bitcoin_primitives::taproot::TapLeafHash
 impl bitcoin_hashes::Hash for bitcoin_primitives::taproot::TapNodeHash
 impl bitcoin_hashes::Hash for bitcoin_primitives::taproot::TapTweakHash
@@ -35,6 +37,8 @@ impl bitcoin_primitives::opcodes::Opcode
 impl bitcoin_primitives::pow::CompactTarget
 impl bitcoin_primitives::script::Script
 impl bitcoin_primitives::script::ScriptBuf
+impl bitcoin_primitives::script::ScriptHash
+impl bitcoin_primitives::script::WScriptHash
 impl bitcoin_primitives::sequence::Sequence
 impl bitcoin_primitives::taproot::TapLeafHash
 impl bitcoin_primitives::taproot::TapNodeHash
@@ -47,10 +51,12 @@ impl bitcoin_primitives::transaction::Txid
 impl bitcoin_primitives::transaction::Version
 impl bitcoin_primitives::transaction::Wtxid
 impl bitcoin_primitives::witness::Witness
+impl core::borrow::Borrow<[u8; 20]> for bitcoin_primitives::script::ScriptHash
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::block::BlockHash
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::block::WitnessCommitment
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::script::WScriptHash
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::taproot::TapLeafHash
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::taproot::TapNodeHash
 impl core::borrow::Borrow<[u8; 32]> for bitcoin_primitives::taproot::TapTweakHash
@@ -60,6 +66,8 @@ impl core::borrow::Borrow<[u8]> for bitcoin_primitives::block::BlockHash
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::block::WitnessCommitment
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::script::ScriptHash
+impl core::borrow::Borrow<[u8]> for bitcoin_primitives::script::WScriptHash
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::taproot::TapLeafHash
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::taproot::TapNodeHash
 impl core::borrow::Borrow<[u8]> for bitcoin_primitives::taproot::TapTweakHash
@@ -84,7 +92,11 @@ impl core::clone::Clone for bitcoin_primitives::opcodes::Class
 impl core::clone::Clone for bitcoin_primitives::opcodes::ClassifyContext
 impl core::clone::Clone for bitcoin_primitives::opcodes::Opcode
 impl core::clone::Clone for bitcoin_primitives::pow::CompactTarget
+impl core::clone::Clone for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::clone::Clone for bitcoin_primitives::script::ScriptBuf
+impl core::clone::Clone for bitcoin_primitives::script::ScriptHash
+impl core::clone::Clone for bitcoin_primitives::script::WScriptHash
+impl core::clone::Clone for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::clone::Clone for bitcoin_primitives::sequence::Sequence
 impl core::clone::Clone for bitcoin_primitives::taproot::TapBranchTag
 impl core::clone::Clone for bitcoin_primitives::taproot::TapLeafHash
@@ -118,8 +130,12 @@ impl core::cmp::Eq for bitcoin_primitives::opcodes::Class
 impl core::cmp::Eq for bitcoin_primitives::opcodes::ClassifyContext
 impl core::cmp::Eq for bitcoin_primitives::opcodes::Opcode
 impl core::cmp::Eq for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::Eq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::Eq for bitcoin_primitives::script::Script
 impl core::cmp::Eq for bitcoin_primitives::script::ScriptBuf
+impl core::cmp::Eq for bitcoin_primitives::script::ScriptHash
+impl core::cmp::Eq for bitcoin_primitives::script::WScriptHash
+impl core::cmp::Eq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::cmp::Eq for bitcoin_primitives::sequence::Sequence
 impl core::cmp::Eq for bitcoin_primitives::taproot::TapBranchTag
 impl core::cmp::Eq for bitcoin_primitives::taproot::TapLeafHash
@@ -148,6 +164,8 @@ impl core::cmp::Ord for bitcoin_primitives::opcodes::ClassifyContext
 impl core::cmp::Ord for bitcoin_primitives::pow::CompactTarget
 impl core::cmp::Ord for bitcoin_primitives::script::Script
 impl core::cmp::Ord for bitcoin_primitives::script::ScriptBuf
+impl core::cmp::Ord for bitcoin_primitives::script::ScriptHash
+impl core::cmp::Ord for bitcoin_primitives::script::WScriptHash
 impl core::cmp::Ord for bitcoin_primitives::sequence::Sequence
 impl core::cmp::Ord for bitcoin_primitives::taproot::TapBranchTag
 impl core::cmp::Ord for bitcoin_primitives::taproot::TapLeafHash
@@ -180,8 +198,12 @@ impl core::cmp::PartialEq for bitcoin_primitives::opcodes::Class
 impl core::cmp::PartialEq for bitcoin_primitives::opcodes::ClassifyContext
 impl core::cmp::PartialEq for bitcoin_primitives::opcodes::Opcode
 impl core::cmp::PartialEq for bitcoin_primitives::pow::CompactTarget
+impl core::cmp::PartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::cmp::PartialEq for bitcoin_primitives::script::Script
 impl core::cmp::PartialEq for bitcoin_primitives::script::ScriptBuf
+impl core::cmp::PartialEq for bitcoin_primitives::script::ScriptHash
+impl core::cmp::PartialEq for bitcoin_primitives::script::WScriptHash
+impl core::cmp::PartialEq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::cmp::PartialEq for bitcoin_primitives::sequence::Sequence
 impl core::cmp::PartialEq for bitcoin_primitives::taproot::TapBranchTag
 impl core::cmp::PartialEq for bitcoin_primitives::taproot::TapLeafHash
@@ -214,6 +236,8 @@ impl core::cmp::PartialOrd for bitcoin_primitives::opcodes::ClassifyContext
 impl core::cmp::PartialOrd for bitcoin_primitives::pow::CompactTarget
 impl core::cmp::PartialOrd for bitcoin_primitives::script::Script
 impl core::cmp::PartialOrd for bitcoin_primitives::script::ScriptBuf
+impl core::cmp::PartialOrd for bitcoin_primitives::script::ScriptHash
+impl core::cmp::PartialOrd for bitcoin_primitives::script::WScriptHash
 impl core::cmp::PartialOrd for bitcoin_primitives::sequence::Sequence
 impl core::cmp::PartialOrd for bitcoin_primitives::taproot::TapBranchTag
 impl core::cmp::PartialOrd for bitcoin_primitives::taproot::TapLeafHash
@@ -235,10 +259,12 @@ impl core::convert::AsMut<[u8]> for bitcoin_primitives::script::Script
 impl core::convert::AsMut<[u8]> for bitcoin_primitives::script::ScriptBuf
 impl core::convert::AsMut<bitcoin_primitives::script::Script> for bitcoin_primitives::script::Script
 impl core::convert::AsMut<bitcoin_primitives::script::Script> for bitcoin_primitives::script::ScriptBuf
+impl core::convert::AsRef<[u8; 20]> for bitcoin_primitives::script::ScriptHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::block::BlockHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::block::WitnessCommitment
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::script::WScriptHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::taproot::TapLeafHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::taproot::TapNodeHash
 impl core::convert::AsRef<[u8; 32]> for bitcoin_primitives::taproot::TapTweakHash
@@ -250,6 +276,8 @@ impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::TxMerkleNod
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::Script
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::ScriptBuf
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::ScriptHash
+impl core::convert::AsRef<[u8]> for bitcoin_primitives::script::WScriptHash
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::taproot::TapLeafHash
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::taproot::TapNodeHash
 impl core::convert::AsRef<[u8]> for bitcoin_primitives::taproot::TapTweakHash
@@ -266,6 +294,8 @@ impl core::convert::From<&bitcoin_primitives::transaction::Transaction> for bitc
 impl core::convert::From<alloc::vec::Vec<&[u8]>> for bitcoin_primitives::witness::Witness
 impl core::convert::From<alloc::vec::Vec<alloc::vec::Vec<u8>>> for bitcoin_primitives::witness::Witness
 impl core::convert::From<alloc::vec::Vec<u8>> for bitcoin_primitives::script::ScriptBuf
+impl core::convert::From<bitcoin_hashes::hash160::Hash> for bitcoin_primitives::script::ScriptHash
+impl core::convert::From<bitcoin_hashes::sha256::Hash> for bitcoin_primitives::script::WScriptHash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin_primitives::block::BlockHash
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin_primitives::block::WitnessCommitment
 impl core::convert::From<bitcoin_hashes::sha256d::Hash> for bitcoin_primitives::merkle_tree::TxMerkleNode
@@ -285,6 +315,8 @@ impl core::convert::From<bitcoin_primitives::merkle_tree::WitnessMerkleNode> for
 impl core::convert::From<bitcoin_primitives::script::ScriptBuf> for alloc::borrow::Cow<'_, bitcoin_primitives::script::Script>
 impl core::convert::From<bitcoin_primitives::script::ScriptBuf> for alloc::boxed::Box<bitcoin_primitives::script::Script>
 impl core::convert::From<bitcoin_primitives::script::ScriptBuf> for alloc::vec::Vec<u8>
+impl core::convert::From<bitcoin_primitives::script::ScriptHash> for bitcoin_hashes::hash160::Hash
+impl core::convert::From<bitcoin_primitives::script::WScriptHash> for bitcoin_hashes::sha256::Hash
 impl core::convert::From<bitcoin_primitives::sequence::Sequence> for u32
 impl core::convert::From<bitcoin_primitives::taproot::TapLeafHash> for bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapLeafTag>
 impl core::convert::From<bitcoin_primitives::taproot::TapLeafHash> for bitcoin_primitives::taproot::TapNodeHash
@@ -298,14 +330,22 @@ impl core::convert::From<bitcoin_units::locktime::absolute::Height> for bitcoin_
 impl core::convert::From<bitcoin_units::locktime::absolute::Time> for bitcoin_primitives::locktime::absolute::LockTime
 impl core::convert::From<bitcoin_units::locktime::relative::Height> for bitcoin_primitives::locktime::relative::LockTime
 impl core::convert::From<bitcoin_units::locktime::relative::Time> for bitcoin_primitives::locktime::relative::LockTime
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::RedeemScriptSizeError
+impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::convert::From<core::convert::Infallible> for bitcoin_primitives::transaction::ParseOutPointError
 impl core::convert::From<u8> for bitcoin_primitives::opcodes::Opcode
+impl core::convert::TryFrom<&bitcoin_primitives::script::Script> for bitcoin_primitives::script::ScriptHash
+impl core::convert::TryFrom<&bitcoin_primitives::script::Script> for bitcoin_primitives::script::WScriptHash
+impl core::convert::TryFrom<&bitcoin_primitives::script::ScriptBuf> for bitcoin_primitives::script::ScriptHash
+impl core::convert::TryFrom<&bitcoin_primitives::script::ScriptBuf> for bitcoin_primitives::script::WScriptHash
 impl core::convert::TryFrom<&str> for bitcoin_primitives::locktime::absolute::LockTime
 impl core::convert::TryFrom<&str> for bitcoin_primitives::sequence::Sequence
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::locktime::absolute::LockTime
 impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_primitives::sequence::Sequence
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::locktime::absolute::LockTime
 impl core::convert::TryFrom<alloc::string::String> for bitcoin_primitives::sequence::Sequence
+impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf> for bitcoin_primitives::script::ScriptHash
+impl core::convert::TryFrom<bitcoin_primitives::script::ScriptBuf> for bitcoin_primitives::script::WScriptHash
 impl core::convert::TryFrom<bitcoin_primitives::sequence::Sequence> for bitcoin_primitives::locktime::relative::LockTime
 impl core::default::Default for bitcoin_primitives::block::Version
 impl core::default::Default for bitcoin_primitives::pow::CompactTarget
@@ -332,8 +372,12 @@ impl core::fmt::Debug for bitcoin_primitives::opcodes::Class
 impl core::fmt::Debug for bitcoin_primitives::opcodes::ClassifyContext
 impl core::fmt::Debug for bitcoin_primitives::opcodes::Opcode
 impl core::fmt::Debug for bitcoin_primitives::pow::CompactTarget
+impl core::fmt::Debug for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Debug for bitcoin_primitives::script::Script
 impl core::fmt::Debug for bitcoin_primitives::script::ScriptBuf
+impl core::fmt::Debug for bitcoin_primitives::script::ScriptHash
+impl core::fmt::Debug for bitcoin_primitives::script::WScriptHash
+impl core::fmt::Debug for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::fmt::Debug for bitcoin_primitives::sequence::Sequence
 impl core::fmt::Debug for bitcoin_primitives::taproot::TapLeafHash
 impl core::fmt::Debug for bitcoin_primitives::taproot::TapNodeHash
@@ -357,8 +401,12 @@ impl core::fmt::Display for bitcoin_primitives::locktime::relative::LockTime
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::fmt::Display for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::fmt::Display for bitcoin_primitives::opcodes::Opcode
+impl core::fmt::Display for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::script::Script
 impl core::fmt::Display for bitcoin_primitives::script::ScriptBuf
+impl core::fmt::Display for bitcoin_primitives::script::ScriptHash
+impl core::fmt::Display for bitcoin_primitives::script::WScriptHash
+impl core::fmt::Display for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::fmt::Display for bitcoin_primitives::sequence::Sequence
 impl core::fmt::Display for bitcoin_primitives::taproot::TapLeafHash
 impl core::fmt::Display for bitcoin_primitives::taproot::TapNodeHash
@@ -375,6 +423,8 @@ impl core::fmt::LowerHex for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::fmt::LowerHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::LowerHex for bitcoin_primitives::script::Script
 impl core::fmt::LowerHex for bitcoin_primitives::script::ScriptBuf
+impl core::fmt::LowerHex for bitcoin_primitives::script::ScriptHash
+impl core::fmt::LowerHex for bitcoin_primitives::script::WScriptHash
 impl core::fmt::LowerHex for bitcoin_primitives::sequence::Sequence
 impl core::fmt::LowerHex for bitcoin_primitives::taproot::TapLeafHash
 impl core::fmt::LowerHex for bitcoin_primitives::taproot::TapNodeHash
@@ -388,6 +438,8 @@ impl core::fmt::UpperHex for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::fmt::UpperHex for bitcoin_primitives::pow::CompactTarget
 impl core::fmt::UpperHex for bitcoin_primitives::script::Script
 impl core::fmt::UpperHex for bitcoin_primitives::script::ScriptBuf
+impl core::fmt::UpperHex for bitcoin_primitives::script::ScriptHash
+impl core::fmt::UpperHex for bitcoin_primitives::script::WScriptHash
 impl core::fmt::UpperHex for bitcoin_primitives::sequence::Sequence
 impl core::fmt::UpperHex for bitcoin_primitives::taproot::TapLeafHash
 impl core::fmt::UpperHex for bitcoin_primitives::taproot::TapNodeHash
@@ -408,6 +460,8 @@ impl core::hash::Hash for bitcoin_primitives::opcodes::ClassifyContext
 impl core::hash::Hash for bitcoin_primitives::pow::CompactTarget
 impl core::hash::Hash for bitcoin_primitives::script::Script
 impl core::hash::Hash for bitcoin_primitives::script::ScriptBuf
+impl core::hash::Hash for bitcoin_primitives::script::ScriptHash
+impl core::hash::Hash for bitcoin_primitives::script::WScriptHash
 impl core::hash::Hash for bitcoin_primitives::sequence::Sequence
 impl core::hash::Hash for bitcoin_primitives::taproot::TapBranchTag
 impl core::hash::Hash for bitcoin_primitives::taproot::TapLeafHash
@@ -436,6 +490,8 @@ impl core::marker::Copy for bitcoin_primitives::opcodes::Class
 impl core::marker::Copy for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::Copy for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Copy for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Copy for bitcoin_primitives::script::ScriptHash
+impl core::marker::Copy for bitcoin_primitives::script::WScriptHash
 impl core::marker::Copy for bitcoin_primitives::sequence::Sequence
 impl core::marker::Copy for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::Copy for bitcoin_primitives::taproot::TapLeafHash
@@ -464,8 +520,12 @@ impl core::marker::Freeze for bitcoin_primitives::opcodes::Class
 impl core::marker::Freeze for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::Freeze for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Freeze for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Freeze for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Freeze for bitcoin_primitives::script::Script
 impl core::marker::Freeze for bitcoin_primitives::script::ScriptBuf
+impl core::marker::Freeze for bitcoin_primitives::script::ScriptHash
+impl core::marker::Freeze for bitcoin_primitives::script::WScriptHash
+impl core::marker::Freeze for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Freeze for bitcoin_primitives::sequence::Sequence
 impl core::marker::Freeze for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::Freeze for bitcoin_primitives::taproot::TapLeafHash
@@ -499,8 +559,12 @@ impl core::marker::Send for bitcoin_primitives::opcodes::Class
 impl core::marker::Send for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::Send for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Send for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Send for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Send for bitcoin_primitives::script::Script
 impl core::marker::Send for bitcoin_primitives::script::ScriptBuf
+impl core::marker::Send for bitcoin_primitives::script::ScriptHash
+impl core::marker::Send for bitcoin_primitives::script::WScriptHash
+impl core::marker::Send for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Send for bitcoin_primitives::sequence::Sequence
 impl core::marker::Send for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::Send for bitcoin_primitives::taproot::TapLeafHash
@@ -534,8 +598,12 @@ impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::Class
 impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::StructuralPartialEq for bitcoin_primitives::opcodes::Opcode
 impl core::marker::StructuralPartialEq for bitcoin_primitives::pow::CompactTarget
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::Script
 impl core::marker::StructuralPartialEq for bitcoin_primitives::script::ScriptBuf
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::ScriptHash
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::WScriptHash
+impl core::marker::StructuralPartialEq for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::StructuralPartialEq for bitcoin_primitives::sequence::Sequence
 impl core::marker::StructuralPartialEq for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::StructuralPartialEq for bitcoin_primitives::taproot::TapLeafHash
@@ -569,8 +637,12 @@ impl core::marker::Sync for bitcoin_primitives::opcodes::Class
 impl core::marker::Sync for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::Sync for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Sync for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Sync for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Sync for bitcoin_primitives::script::Script
 impl core::marker::Sync for bitcoin_primitives::script::ScriptBuf
+impl core::marker::Sync for bitcoin_primitives::script::ScriptHash
+impl core::marker::Sync for bitcoin_primitives::script::WScriptHash
+impl core::marker::Sync for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Sync for bitcoin_primitives::sequence::Sequence
 impl core::marker::Sync for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::Sync for bitcoin_primitives::taproot::TapLeafHash
@@ -604,8 +676,12 @@ impl core::marker::Unpin for bitcoin_primitives::opcodes::Class
 impl core::marker::Unpin for bitcoin_primitives::opcodes::ClassifyContext
 impl core::marker::Unpin for bitcoin_primitives::opcodes::Opcode
 impl core::marker::Unpin for bitcoin_primitives::pow::CompactTarget
+impl core::marker::Unpin for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::marker::Unpin for bitcoin_primitives::script::Script
 impl core::marker::Unpin for bitcoin_primitives::script::ScriptBuf
+impl core::marker::Unpin for bitcoin_primitives::script::ScriptHash
+impl core::marker::Unpin for bitcoin_primitives::script::WScriptHash
+impl core::marker::Unpin for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::marker::Unpin for bitcoin_primitives::sequence::Sequence
 impl core::marker::Unpin for bitcoin_primitives::taproot::TapBranchTag
 impl core::marker::Unpin for bitcoin_primitives::taproot::TapLeafHash
@@ -649,8 +725,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::opcodes::Cl
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::opcodes::ClassifyContext
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::opcodes::Opcode
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::pow::CompactTarget
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::Script
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::ScriptBuf
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::ScriptHash
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::WScriptHash
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::sequence::Sequence
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::taproot::TapBranchTag
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_primitives::taproot::TapLeafHash
@@ -684,8 +764,12 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::opcodes::Class
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::opcodes::ClassifyContext
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::opcodes::Opcode
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::pow::CompactTarget
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::RedeemScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::Script
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptBuf
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::ScriptHash
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::WScriptHash
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::script::WitnessScriptSizeError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::sequence::Sequence
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::taproot::TapBranchTag
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_primitives::taproot::TapLeafHash
@@ -707,6 +791,8 @@ impl core::str::traits::FromStr for bitcoin_primitives::block::WitnessCommitment
 impl core::str::traits::FromStr for bitcoin_primitives::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
+impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::sequence::Sequence
 impl core::str::traits::FromStr for bitcoin_primitives::taproot::TapLeafHash
 impl core::str::traits::FromStr for bitcoin_primitives::taproot::TapNodeHash
@@ -788,6 +874,8 @@ pub bitcoin_primitives::relative::IncompatibleTimeError::height: bitcoin_units::
 pub bitcoin_primitives::relative::IncompatibleTimeError::time: bitcoin_units::locktime::relative::Time
 pub bitcoin_primitives::relative::LockTime::Blocks(bitcoin_units::locktime::relative::Height)
 pub bitcoin_primitives::relative::LockTime::Time(bitcoin_units::locktime::relative::Time)
+pub bitcoin_primitives::script::RedeemScriptSizeError::size: usize
+pub bitcoin_primitives::script::WitnessScriptSizeError::size: usize
 pub bitcoin_primitives::transaction::OutPoint::txid: bitcoin_primitives::transaction::Txid
 pub bitcoin_primitives::transaction::OutPoint::vout: u32
 pub bitcoin_primitives::transaction::ParseOutPointError::Format
@@ -1078,6 +1166,10 @@ pub const bitcoin_primitives::opcodes::all::OP_VERIFY: bitcoin_primitives::opcod
 pub const bitcoin_primitives::opcodes::all::OP_VERNOTIF: bitcoin_primitives::opcodes::Opcode
 pub const bitcoin_primitives::opcodes::all::OP_WITHIN: bitcoin_primitives::opcodes::Opcode
 pub const bitcoin_primitives::opcodes::all::OP_XOR: bitcoin_primitives::opcodes::Opcode
+pub const bitcoin_primitives::script::MAX_REDEEM_SCRIPT_SIZE: usize
+pub const bitcoin_primitives::script::MAX_WITNESS_SCRIPT_SIZE: usize
+pub const bitcoin_primitives::script::ScriptHash::DISPLAY_BACKWARD: bool
+pub const bitcoin_primitives::script::WScriptHash::DISPLAY_BACKWARD: bool
 pub const bitcoin_primitives::sequence::Sequence::ENABLE_LOCKTIME_AND_RBF: Self
 pub const bitcoin_primitives::sequence::Sequence::ENABLE_LOCKTIME_NO_RBF: Self
 pub const bitcoin_primitives::sequence::Sequence::ENABLE_RBF_NO_LOCKTIME: Self
@@ -1126,6 +1218,12 @@ pub const fn bitcoin_primitives::merkle_tree::WitnessMerkleNode::to_byte_array(s
 pub const fn bitcoin_primitives::opcodes::Opcode::decode_pushnum(self) -> core::option::Option<u8>
 pub const fn bitcoin_primitives::opcodes::Opcode::to_u8(self) -> u8
 pub const fn bitcoin_primitives::script::ScriptBuf::new() -> Self
+pub const fn bitcoin_primitives::script::ScriptHash::as_byte_array(&self) -> &<bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::script::ScriptHash::from_byte_array(bytes: <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::script::ScriptHash::to_byte_array(self) -> <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::script::WScriptHash::as_byte_array(&self) -> &<bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
+pub const fn bitcoin_primitives::script::WScriptHash::from_byte_array(bytes: <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes) -> Self
+pub const fn bitcoin_primitives::script::WScriptHash::to_byte_array(self) -> <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin_primitives::taproot::TapLeafHash::as_byte_array(&self) -> &<bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes
 pub const fn bitcoin_primitives::taproot::TapLeafHash::from_byte_array(bytes: <bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes) -> Self
 pub const fn bitcoin_primitives::taproot::TapLeafHash::to_byte_array(self) -> <bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes
@@ -1161,6 +1259,8 @@ pub fn alloc::boxed::Box<bitcoin_primitives::script::Script>::from(value: alloc:
 pub fn alloc::rc::Rc<bitcoin_primitives::script::Script>::from(value: &'a bitcoin_primitives::script::Script) -> Self
 pub fn alloc::sync::Arc<bitcoin_primitives::script::Script>::from(value: &'a bitcoin_primitives::script::Script) -> Self
 pub fn alloc::vec::Vec<u8>::from(v: bitcoin_primitives::script::ScriptBuf) -> Self
+pub fn bitcoin_hashes::hash160::Hash::from(hashtype: bitcoin_primitives::script::ScriptHash) -> bitcoin_hashes::hash160::Hash
+pub fn bitcoin_hashes::sha256::Hash::from(hashtype: bitcoin_primitives::script::WScriptHash) -> bitcoin_hashes::sha256::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::block::BlockHash) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::block::WitnessCommitment) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_hashes::sha256d::Hash::from(hashtype: bitcoin_primitives::merkle_tree::TxMerkleNode) -> bitcoin_hashes::sha256d::Hash
@@ -1347,6 +1447,10 @@ pub fn bitcoin_primitives::pow::CompactTarget::hash<__H: core::hash::Hasher>(&se
 pub fn bitcoin_primitives::pow::CompactTarget::partial_cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::pow::CompactTarget::to_consensus(self) -> u32
 pub fn bitcoin_primitives::pow::CompactTarget::to_hex(&self) -> alloc::string::String
+pub fn bitcoin_primitives::script::RedeemScriptSizeError::clone(&self) -> bitcoin_primitives::script::RedeemScriptSizeError
+pub fn bitcoin_primitives::script::RedeemScriptSizeError::eq(&self, other: &bitcoin_primitives::script::RedeemScriptSizeError) -> bool
+pub fn bitcoin_primitives::script::RedeemScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::RedeemScriptSizeError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::script::Script::as_bytes(&self) -> &[u8]
 pub fn bitcoin_primitives::script::Script::as_mut(&mut self) -> &mut [u8]
 pub fn bitcoin_primitives::script::Script::as_mut(&mut self) -> &mut bitcoin_primitives::script::Script
@@ -1406,6 +1510,52 @@ pub fn bitcoin_primitives::script::ScriptBuf::reserve(&mut self, additional_len:
 pub fn bitcoin_primitives::script::ScriptBuf::reserve_exact(&mut self, additional_len: usize)
 pub fn bitcoin_primitives::script::ScriptBuf::to_hex(&self) -> alloc::string::String
 pub fn bitcoin_primitives::script::ScriptBuf::with_capacity(capacity: usize) -> Self
+pub fn bitcoin_primitives::script::ScriptHash::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8; 20]
+pub fn bitcoin_primitives::script::ScriptHash::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::script::ScriptHash::borrow(&self) -> &[u8; 20]
+pub fn bitcoin_primitives::script::ScriptHash::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::script::ScriptHash::clone(&self) -> bitcoin_primitives::script::ScriptHash
+pub fn bitcoin_primitives::script::ScriptHash::cmp(&self, other: &bitcoin_primitives::script::ScriptHash) -> core::cmp::Ordering
+pub fn bitcoin_primitives::script::ScriptHash::eq(&self, other: &bitcoin_primitives::script::ScriptHash) -> bool
+pub fn bitcoin_primitives::script::ScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::ScriptHash::from(inner: bitcoin_hashes::hash160::Hash) -> bitcoin_primitives::script::ScriptHash
+pub fn bitcoin_primitives::script::ScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::script::ScriptHash::from_script(redeem_script: &bitcoin_primitives::script::Script) -> core::result::Result<Self, bitcoin_primitives::script::RedeemScriptSizeError>
+pub fn bitcoin_primitives::script::ScriptHash::from_script_unchecked(script: &bitcoin_primitives::script::Script) -> Self
+pub fn bitcoin_primitives::script::ScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin_primitives::script::ScriptHash, bitcoin_hashes::error::FromSliceError>
+pub fn bitcoin_primitives::script::ScriptHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_primitives::script::ScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::script::ScriptHash::partial_cmp(&self, other: &bitcoin_primitives::script::ScriptHash) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::script::ScriptHash::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: &bitcoin_primitives::script::Script) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: &bitcoin_primitives::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::ScriptHash::try_from(redeem_script: bitcoin_primitives::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::WScriptHash::as_byte_array(&self) -> &Self::Bytes
+pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::script::WScriptHash::as_ref(&self) -> &[u8]
+pub fn bitcoin_primitives::script::WScriptHash::borrow(&self) -> &[u8; 32]
+pub fn bitcoin_primitives::script::WScriptHash::borrow(&self) -> &[u8]
+pub fn bitcoin_primitives::script::WScriptHash::clone(&self) -> bitcoin_primitives::script::WScriptHash
+pub fn bitcoin_primitives::script::WScriptHash::cmp(&self, other: &bitcoin_primitives::script::WScriptHash) -> core::cmp::Ordering
+pub fn bitcoin_primitives::script::WScriptHash::eq(&self, other: &bitcoin_primitives::script::WScriptHash) -> bool
+pub fn bitcoin_primitives::script::WScriptHash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::WScriptHash::from(inner: bitcoin_hashes::sha256::Hash) -> bitcoin_primitives::script::WScriptHash
+pub fn bitcoin_primitives::script::WScriptHash::from_byte_array(bytes: Self::Bytes) -> Self
+pub fn bitcoin_primitives::script::WScriptHash::from_script(witness_script: &bitcoin_primitives::script::Script) -> core::result::Result<Self, bitcoin_primitives::script::WitnessScriptSizeError>
+pub fn bitcoin_primitives::script::WScriptHash::from_script_unchecked(script: &bitcoin_primitives::script::Script) -> Self
+pub fn bitcoin_primitives::script::WScriptHash::from_slice(sl: &[u8]) -> core::result::Result<bitcoin_primitives::script::WScriptHash, bitcoin_hashes::error::FromSliceError>
+pub fn bitcoin_primitives::script::WScriptHash::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_primitives::script::WScriptHash::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_primitives::script::WScriptHash::partial_cmp(&self, other: &bitcoin_primitives::script::WScriptHash) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::script::WScriptHash::to_byte_array(self) -> Self::Bytes
+pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::Script) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: &bitcoin_primitives::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::WScriptHash::try_from(witness_script: bitcoin_primitives::script::ScriptBuf) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_primitives::script::WitnessScriptSizeError::clone(&self) -> bitcoin_primitives::script::WitnessScriptSizeError
+pub fn bitcoin_primitives::script::WitnessScriptSizeError::eq(&self, other: &bitcoin_primitives::script::WitnessScriptSizeError) -> bool
+pub fn bitcoin_primitives::script::WitnessScriptSizeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_primitives::script::WitnessScriptSizeError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::sequence::Sequence::clone(&self) -> bitcoin_primitives::sequence::Sequence
 pub fn bitcoin_primitives::sequence::Sequence::cmp(&self, other: &bitcoin_primitives::sequence::Sequence) -> core::cmp::Ordering
 pub fn bitcoin_primitives::sequence::Sequence::default() -> Self
@@ -1661,7 +1811,11 @@ pub struct bitcoin_primitives::merkle_tree::WitnessMerkleNode(_)
 pub struct bitcoin_primitives::opcodes::Opcode
 pub struct bitcoin_primitives::pow::CompactTarget(_)
 pub struct bitcoin_primitives::relative::DisabledLockTimeError(_)
+pub struct bitcoin_primitives::script::RedeemScriptSizeError
 pub struct bitcoin_primitives::script::ScriptBuf(_)
+pub struct bitcoin_primitives::script::ScriptHash(_)
+pub struct bitcoin_primitives::script::WScriptHash(_)
+pub struct bitcoin_primitives::script::WitnessScriptSizeError
 pub struct bitcoin_primitives::sequence::Sequence(pub u32)
 pub struct bitcoin_primitives::taproot::TapBranchTag
 pub struct bitcoin_primitives::taproot::TapLeafHash(_)
@@ -1696,6 +1850,12 @@ pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Err = hex_conservat
 pub type bitcoin_primitives::script::Script::Output = bitcoin_primitives::script::Script
 pub type bitcoin_primitives::script::Script::Owned = bitcoin_primitives::script::ScriptBuf
 pub type bitcoin_primitives::script::ScriptBuf::Target = bitcoin_primitives::script::Script
+pub type bitcoin_primitives::script::ScriptHash::Bytes = <bitcoin_hashes::hash160::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::script::ScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::script::ScriptHash::Error = bitcoin_primitives::script::RedeemScriptSizeError
+pub type bitcoin_primitives::script::WScriptHash::Bytes = <bitcoin_hashes::sha256::Hash as bitcoin_hashes::Hash>::Bytes
+pub type bitcoin_primitives::script::WScriptHash::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::script::WScriptHash::Error = bitcoin_primitives::script::WitnessScriptSizeError
 pub type bitcoin_primitives::sequence::Sequence::Err = bitcoin_units::parse::ParseIntError
 pub type bitcoin_primitives::sequence::Sequence::Error = bitcoin_units::parse::ParseIntError
 pub type bitcoin_primitives::taproot::TapLeafHash::Bytes = <bitcoin_hashes::sha256t::Hash<bitcoin_primitives::taproot::TapLeafTag> as bitcoin_hashes::Hash>::Bytes
