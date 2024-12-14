@@ -61,8 +61,8 @@ extern crate test;
 #[macro_use]
 extern crate alloc;
 
-#[cfg(feature = "base64")]
 /// Encodes and decodes base64 as bytes or utf8.
+#[cfg(feature = "base64")]
 pub extern crate base64;
 
 /// Bitcoin base58 encoding and decoding.
@@ -84,7 +84,9 @@ pub extern crate io;
 #[cfg(feature = "ordered")]
 pub extern crate ordered;
 
-/// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
+/// Re-export the `rust-secp256k1` crate.
+///
+/// Rust wrapper library for Pieter Wuille's libsecp256k1. Implements ECDSA and BIP-340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
 
