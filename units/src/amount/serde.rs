@@ -398,9 +398,7 @@ mod tests {
             pub amount: Amount,
         }
 
-        let orig = HasAmount {
-            amount: Amount::ONE_BTC,
-        };
+        let orig = HasAmount { amount: Amount::ONE_BTC };
 
         let json = serde_json::to_string(&orig).expect("failed to ser");
         let want = "{\"amount\":100000000}";
@@ -419,9 +417,7 @@ mod tests {
             pub amount: Amount,
         }
 
-        let orig = HasAmount {
-            amount: Amount::ONE_BTC,
-        };
+        let orig = HasAmount { amount: Amount::ONE_BTC };
 
         let json = serde_json::to_string(&orig).expect("failed to ser");
         let want = "{\"amount\":1.0}";
@@ -440,9 +436,7 @@ mod tests {
             pub amount: Amount,
         }
 
-        let orig = HasAmount {
-            amount: Amount::ONE_BTC,
-        };
+        let orig = HasAmount { amount: Amount::ONE_BTC };
 
         let json = serde_json::to_string(&orig).expect("failed to ser");
         let want = "{\"amount\":\"1\"}";

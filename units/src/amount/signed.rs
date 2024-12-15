@@ -112,9 +112,9 @@ impl SignedAmount {
                 ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
             )),
             (false, sat) => Ok(SignedAmount(sat as i64)),
-            (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(ParseAmountError(
-                ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small()),
-            )),
+            (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(
+                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
+            ),
             (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
