@@ -21,8 +21,8 @@ use crate::{FeeRate, Weight};
 /// An amount.
 ///
 /// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
-/// conversion to various denominations. The `Amount` type does not implement `serde` traits but we
-/// do provide modules for serializing as satoshis or bitcoin.
+/// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
+/// but we do provide modules for serializing as satoshis or bitcoin.
 ///
 /// Warning!
 ///
@@ -70,12 +70,26 @@ impl Amount {
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
     /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// let amount = Amount::from_sat(100_000);
+    /// assert_eq!(amount.to_sat(), 100_000);
+    /// ```
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
 
-    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
+    /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
@@ -108,10 +122,14 @@ impl Amount {
         }
     }
 
-    /// Parses a decimal string as a value in the given denomination.
+    /// Parses a decimal string as a value in the given [`Denomination`].
     ///
-    /// Note: This only parses the value string.  If you want to parse a value
-    /// with denomination, use [`FromStr`].
+    /// Note: This only parses the value string.  If you want to parse a string
+    /// containing the value with denomination, use [`FromStr`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
         let (negative, satoshi) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
@@ -132,14 +150,35 @@ impl Amount {
     /// or with [`fmt::Display`].
     ///
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big, too precise or negative.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::{amount, Amount};
+    /// let amount = Amount::from_str_with_denomination("0.1 BTC")?;
+    /// assert_eq!(amount, Amount::from_sat(10_000_000));
+    /// # Ok::<_, amount::ParseError>(())
+    /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Amount::from_str_in(amt, denom).map_err(Into::into)
     }
 
-    /// Expresses this [`Amount`] as a floating-point value in the given denomination.
+    /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(100_000);
+    /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
@@ -159,8 +198,8 @@ impl Amount {
     #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
 
-    /// Converts this [`Amount`] in floating-point notation with a given
-    /// denomination.
+    /// Converts this [`Amount`] in floating-point notation in the given
+    /// [`Denomination`].
     ///
     /// # Errors
     ///
@@ -177,7 +216,7 @@ impl Amount {
         Amount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Constructs a new object that implements [`fmt::Display`] using specified denomination.
+    /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
     #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
@@ -187,7 +226,8 @@ impl Amount {
         }
     }
 
-    /// Constructs a new object that implements [`fmt::Display`] dynamically selecting denomination.
+    /// Constructs a new object that implements [`fmt::Display`] dynamically selecting
+    /// [`Denomination`].
     ///
     /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
     /// avoid confusion the denomination is always shown.
@@ -200,14 +240,30 @@ impl Amount {
         }
     }
 
-    /// Returns a formatted string representing this [`Amount`] in the given denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`].
     ///
-    /// Does not include the denomination.
+    /// Returned string does not include the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
-    /// Returns a formatted string representing this [`Amount`] in the given denomination, suffixed
-    /// with the abbreviation for the denomination.
+    /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`],
+    /// suffixed with the abbreviation for the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// let amount = Amount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
@@ -217,7 +273,7 @@ impl Amount {
 
     /// Checked addition.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the sum is larger than [`Amount::MAX`].
     #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
@@ -241,7 +297,7 @@ impl Amount {
 
     /// Checked multiplication.
     ///
-    /// Returns [`None`] if overflow occurred.
+    /// Returns [`None`] if the product is larger than [`Amount::MAX`].
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
@@ -272,6 +328,16 @@ impl Amount {
     /// sufficient.  See also [`Amount::checked_div_by_weight_floor`].
     ///
     /// Returns [`None`] if overflow occurred.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::{Amount, FeeRate, Weight};
+    /// let amount = Amount::from_sat(10);
+    /// let weight = Weight::from_wu(300);
+    /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// ```
     #[cfg(feature = "alloc")]
     #[must_use]
     pub const fn checked_div_by_weight_ceil(self, rhs: Weight) -> Option<FeeRate> {
@@ -341,6 +407,10 @@ impl Amount {
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big.
     pub fn to_signed(self) -> Result<SignedAmount, OutOfRangeError> {
         if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
             Err(OutOfRangeError::too_big(true))
