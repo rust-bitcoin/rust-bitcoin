@@ -29,7 +29,8 @@ use crate::prelude::ToString;
 /// </details>
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Opcode {
-    code: u8,
+    /// The opcode value.
+    pub code: u8,
 }
 
 use self::all::*;
