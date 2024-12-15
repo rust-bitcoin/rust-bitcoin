@@ -52,7 +52,10 @@ impl AsRef<core::num::ParseIntError> for ParseIntError {
 
 /// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
-pub trait Integer: FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized + sealed::Sealed {}
+pub trait Integer:
+    FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized + sealed::Sealed
+{
+}
 
 macro_rules! impl_integer {
     ($($type:ty),* $(,)?) => {
