@@ -797,6 +797,7 @@ impl core::str::traits::FromStr for bitcoin_primitives::block::WitnessCommitment
 impl core::str::traits::FromStr for bitcoin_primitives::locktime::absolute::LockTime
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::str::traits::FromStr for bitcoin_primitives::merkle_tree::WitnessMerkleNode
+impl core::str::traits::FromStr for bitcoin_primitives::opcodes::Opcode
 impl core::str::traits::FromStr for bitcoin_primitives::script::ScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::script::WScriptHash
 impl core::str::traits::FromStr for bitcoin_primitives::sequence::Sequence
@@ -942,6 +943,7 @@ pub bitcoin_primitives::opcodes::Class::ReturnOp
 pub bitcoin_primitives::opcodes::Class::SuccessOp
 pub bitcoin_primitives::opcodes::ClassifyContext::Legacy
 pub bitcoin_primitives::opcodes::ClassifyContext::TapScript
+pub bitcoin_primitives::opcodes::Opcode::code: u8
 pub bitcoin_primitives::relative::IncompatibleHeightError::height: bitcoin_units::locktime::relative::Height
 pub bitcoin_primitives::relative::IncompatibleHeightError::time: bitcoin_units::locktime::relative::Time
 pub bitcoin_primitives::relative::IncompatibleTimeError::height: bitcoin_units::locktime::relative::Height
@@ -1536,6 +1538,7 @@ pub fn bitcoin_primitives::opcodes::Opcode::eq(&self, other: &bitcoin_primitives
 pub fn bitcoin_primitives::opcodes::Opcode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::opcodes::Opcode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_primitives::opcodes::Opcode::from(b: u8) -> bitcoin_primitives::opcodes::Opcode
+pub fn bitcoin_primitives::opcodes::Opcode::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_primitives::opcodes::Opcode::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
 pub fn bitcoin_primitives::pow::CompactTarget::clone(&self) -> bitcoin_primitives::pow::CompactTarget
 pub fn bitcoin_primitives::pow::CompactTarget::cmp(&self, other: &bitcoin_primitives::pow::CompactTarget) -> core::cmp::Ordering
@@ -1990,6 +1993,7 @@ pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Bytes = <bitcoin_hashes:
 pub type bitcoin_primitives::merkle_tree::TxMerkleNode::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
 pub type bitcoin_primitives::merkle_tree::WitnessMerkleNode::Err = hex_conservative::error::HexToArrayError
+pub type bitcoin_primitives::opcodes::Opcode::Err = ()
 pub type bitcoin_primitives::script::Script::Output = bitcoin_primitives::script::Script
 pub type bitcoin_primitives::script::Script::Owned = bitcoin_primitives::script::ScriptBuf
 pub type bitcoin_primitives::script::ScriptBuf::Target = bitcoin_primitives::script::Script
