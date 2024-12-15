@@ -6,7 +6,7 @@ enabled. To create these files run `../contrib/check-for-api-changes.sh`:
 Requires `cargo-public-api`, install with:
 
 ```
-cargo +stable install cargo-public-api --locked
+cargo +nightly install cargo-public-api --locked
 ```
 
 ref: https://github.com/enselic/cargo-public-api
