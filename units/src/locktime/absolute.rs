@@ -4,6 +4,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use internals::write_err;
 
 use crate::parse::{self, ParseIntError};
@@ -364,6 +366,40 @@ impl From<ParseIntError> for ParseError {
 
 impl From<ConversionError> for ParseError {
     fn from(value: ConversionError) -> Self { Self::Conversion(value.input.into()) }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Height {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(Height::MIN),
+            1 => Ok(Height::MAX),
+            _ => {
+                let min = Height::MIN.to_consensus_u32();
+                let max = Height::MAX.to_consensus_u32();
+                let h = u.int_in_range(min..=max)?;
+                Ok(Height::from_consensus(h).unwrap())
+            }
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Time {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(Time::MIN),
+            1 => Ok(Time::MAX),
+            _ => {
+                let min = Time::MIN.to_consensus_u32();
+                let max = Time::MAX.to_consensus_u32();
+                let t = u.int_in_range(min..=max)?;
+                Ok(Time::from_consensus(t).unwrap())
+            }
+        }
+    }
 }
 
 #[cfg(test)]
