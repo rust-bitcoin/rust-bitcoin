@@ -80,8 +80,8 @@ impl SignedAmount {
     ///
     /// The function errors if the argument multiplied by the number of sats
     /// per bitcoin overflows an `i64` type.
-    pub fn from_int_btc(btc: i64) -> Result<SignedAmount, OutOfRangeError> {
-        match btc.checked_mul(100_000_000) {
+    pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
+        match whole_bitcoin.into().checked_mul(100_000_000) {
             Some(amount) => Ok(SignedAmount::from_sat(amount)),
             None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
         }
@@ -94,8 +94,8 @@ impl SignedAmount {
     ///
     /// The function panics if the argument multiplied by the number of sats
     /// per bitcoin overflows an `i64` type.
-    pub const fn from_int_btc_const(btc: i64) -> SignedAmount {
-        match btc.checked_mul(100_000_000) {
+    pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
+        match whole_bitcoin.checked_mul(100_000_000) {
             Some(amount) => SignedAmount::from_sat(amount),
             None => panic!("checked_mul overflowed"),
         }
