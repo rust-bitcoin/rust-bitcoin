@@ -394,6 +394,7 @@ impl Amount {
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
+    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
     pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -404,6 +405,7 @@ impl Amount {
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
+    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.

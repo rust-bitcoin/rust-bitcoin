@@ -318,6 +318,7 @@ impl SignedAmount {
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
+    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
     pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
 
     /// Unchecked subtraction.
@@ -328,6 +329,7 @@ impl SignedAmount {
     ///
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
+    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
     pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
