@@ -593,19 +593,19 @@ pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_uni
 pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
 pub bitcoin_units::amount::error::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::error::PossiblyConfusingDenominationError)
 pub bitcoin_units::amount::error::ParseDenominationError::Unknown(bitcoin_units::amount::error::UnknownDenominationError)
-pub const bitcoin_units::Amount::MAX: bitcoin_units::Amount
-pub const bitcoin_units::Amount::MAX_MONEY: bitcoin_units::Amount
-pub const bitcoin_units::Amount::MIN: bitcoin_units::Amount
-pub const bitcoin_units::Amount::ONE_BTC: bitcoin_units::Amount
-pub const bitcoin_units::Amount::ONE_SAT: bitcoin_units::Amount
+pub const bitcoin_units::Amount::MAX: Self
+pub const bitcoin_units::Amount::MAX_MONEY: Self
+pub const bitcoin_units::Amount::MIN: Self
+pub const bitcoin_units::Amount::ONE_BTC: Self
+pub const bitcoin_units::Amount::ONE_SAT: Self
 pub const bitcoin_units::Amount::SIZE: usize
-pub const bitcoin_units::Amount::ZERO: bitcoin_units::Amount
-pub const bitcoin_units::SignedAmount::MAX: bitcoin_units::SignedAmount
-pub const bitcoin_units::SignedAmount::MAX_MONEY: bitcoin_units::SignedAmount
-pub const bitcoin_units::SignedAmount::MIN: bitcoin_units::SignedAmount
-pub const bitcoin_units::SignedAmount::ONE_BTC: bitcoin_units::SignedAmount
-pub const bitcoin_units::SignedAmount::ONE_SAT: bitcoin_units::SignedAmount
-pub const bitcoin_units::SignedAmount::ZERO: bitcoin_units::SignedAmount
+pub const bitcoin_units::Amount::ZERO: Self
+pub const bitcoin_units::SignedAmount::MAX: Self
+pub const bitcoin_units::SignedAmount::MAX_MONEY: Self
+pub const bitcoin_units::SignedAmount::MIN: Self
+pub const bitcoin_units::SignedAmount::ONE_BTC: Self
+pub const bitcoin_units::SignedAmount::ONE_SAT: Self
+pub const bitcoin_units::SignedAmount::ZERO: Self
 pub const bitcoin_units::amount::Denomination::BTC: Self
 pub const bitcoin_units::amount::Denomination::SAT: Self
 pub const bitcoin_units::block::BlockHeight::MAX: Self
