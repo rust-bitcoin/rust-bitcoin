@@ -20,6 +20,9 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::str::FromStr;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use self::error::{MissingDigitsKind, ParseAmountErrorInner, ParseErrorInner};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -598,4 +601,19 @@ mod sealed {
 
     impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}
     impl<T> Sealed<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Denomination {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=5)?;
+        match choice {
+            0 => Ok(Denomination::Bitcoin),
+            1 => Ok(Denomination::CentiBitcoin),
+            2 => Ok(Denomination::MilliBitcoin),
+            3 => Ok(Denomination::MicroBitcoin),
+            4 => Ok(Denomination::Bit),
+            _ => Ok(Denomination::Satoshi),
+        }
+    }
 }
