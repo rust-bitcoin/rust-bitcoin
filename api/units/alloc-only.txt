@@ -696,6 +696,7 @@ pub const fn bitcoin_units::weight::Weight::from_vb_unchecked(vb: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::weight::Weight
 pub const fn bitcoin_units::weight::Weight::from_witness_data_size(witness_size: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_wu(wu: u64) -> Self
+pub const fn bitcoin_units::weight::Weight::to_kwu_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
