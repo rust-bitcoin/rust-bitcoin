@@ -13,6 +13,8 @@
 
 use core::{fmt, ops};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -245,6 +247,30 @@ impl<'a> core::iter::Sum<&'a BlockInterval> for BlockInterval {
     {
         let sum = iter.map(|interval| interval.0).sum();
         BlockInterval::from_u32(sum)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BlockHeight {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(BlockHeight::MIN),
+            1 => Ok(BlockHeight::MAX),
+            _ => Ok(BlockHeight::from_u32(u32::arbitrary(u)?)),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for BlockInterval {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+        match choice {
+            0 => Ok(BlockInterval::MIN),
+            1 => Ok(BlockInterval::MAX),
+            _ => Ok(BlockInterval::from_u32(u32::arbitrary(u)?)),
+        }
     }
 }
 
