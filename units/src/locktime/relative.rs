@@ -4,6 +4,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -152,3 +154,29 @@ impl fmt::Display for TimeOverflowError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for TimeOverflowError {}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Height {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+
+        match choice {
+            0 => Ok(Height::MIN),
+            1 => Ok(Height::MAX),
+            _ => Ok(Height::from_height(u16::arbitrary(u)?)),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Time {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=2)?;
+
+        match choice {
+            0 => Ok(Time::MIN),
+            1 => Ok(Time::MAX),
+            _ => Ok(Time::from_512_second_intervals(u16::arbitrary(u)?)),
+        }
+    }
+}

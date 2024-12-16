@@ -1886,6 +1886,29 @@ impl<'a> Arbitrary<'a> for Amount {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Denomination {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let choice = u.int_in_range(0..=5)?;
+        match choice {
+            0 => Ok(Denomination::Bitcoin),
+            1 => Ok(Denomination::CentiBitcoin),
+            2 => Ok(Denomination::MilliBitcoin),
+            3 => Ok(Denomination::MicroBitcoin),
+            4 => Ok(Denomination::Bit),
+            _ => Ok(Denomination::Satoshi),
+        }
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for SignedAmount {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let s = i64::arbitrary(u)?;
+        Ok(SignedAmount(s))
+    }
+}
+
 #[cfg(kani)]
 mod verification {
     use std::cmp;

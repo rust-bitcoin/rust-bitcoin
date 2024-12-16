@@ -150,8 +150,14 @@ crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let f = u64::arbitrary(u)?;
-        Ok(FeeRate(f))
+        let choice = u.int_in_range(0..=4)?;
+        match choice {
+            0 => Ok(FeeRate::MIN),
+            1 => Ok(FeeRate::BROADCAST_MIN),
+            2 => Ok(FeeRate::DUST),
+            3 => Ok(FeeRate::MAX),
+            _ => Ok(FeeRate(u64::arbitrary(u)?)),
+        }
     }
 }
 
