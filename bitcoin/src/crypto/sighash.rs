@@ -1273,7 +1273,7 @@ impl fmt::Display for P2wpkhError {
         use P2wpkhError::*;
 
         match *self {
-            Sighash(ref e) => write_err!(f, "error encoding segwit v0 signing data"; e),
+            Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
             NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
         }
     }

@@ -184,7 +184,7 @@ impl fmt::Display for ParseError {
             NonMinimalVarInt => write!(f, "non-minimal varint"),
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
-                write!(f, "unsupported segwit version: {}", swflag),
+                write!(f, "unsupported SegWit version: {}", swflag),
         }
     }
 }

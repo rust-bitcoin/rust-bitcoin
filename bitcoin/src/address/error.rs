@@ -182,7 +182,7 @@ impl fmt::Display for Bech32Error {
         use Bech32Error::*;
 
         match *self {
-            ParseBech32(ref e) => write_err!(f, "segwit parsing error"; e),
+            ParseBech32(ref e) => write_err!(f, "SegWit parsing error"; e),
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             UnknownHrp(ref e) => write_err!(f, "unknown hrp error"; e),
