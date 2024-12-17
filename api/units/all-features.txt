@@ -917,9 +917,9 @@ pub fn bitcoin_units::amount::error::MissingDigitsError::fmt(&self, f: &mut core
 pub fn bitcoin_units::amount::error::OutOfRangeError::clone(&self) -> bitcoin_units::amount::error::OutOfRangeError
 pub fn bitcoin_units::amount::error::OutOfRangeError::eq(&self, other: &bitcoin_units::amount::error::OutOfRangeError) -> bool
 pub fn bitcoin_units::amount::error::OutOfRangeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::amount::error::OutOfRangeError::is_above_max(&self) -> bool
-pub fn bitcoin_units::amount::error::OutOfRangeError::is_below_min(&self) -> bool
-pub fn bitcoin_units::amount::error::OutOfRangeError::valid_range(&self) -> (i64, u64)
+pub fn bitcoin_units::amount::error::OutOfRangeError::is_above_max(self) -> bool
+pub fn bitcoin_units::amount::error::OutOfRangeError::is_below_min(self) -> bool
+pub fn bitcoin_units::amount::error::OutOfRangeError::valid_range(self) -> (i64, u64)
 pub fn bitcoin_units::amount::error::ParseAmountError::clone(&self) -> bitcoin_units::amount::error::ParseAmountError
 pub fn bitcoin_units::amount::error::ParseAmountError::eq(&self, other: &bitcoin_units::amount::error::ParseAmountError) -> bool
 pub fn bitcoin_units::amount::error::ParseAmountError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
