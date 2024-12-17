@@ -69,11 +69,11 @@ const PSBT_IN_PROPRIETARY: u64 = 0xFC;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
     /// The non-witness transaction this input spends from. Should only be
-    /// `Option::Some` for inputs which spend non-segwit outputs or
-    /// if it is unknown whether an input spends a segwit output.
+    /// `Option::Some` for inputs which spend non-SegWit outputs or
+    /// if it is unknown whether an input spends a SegWit output.
     pub non_witness_utxo: Option<Transaction>,
     /// The transaction output this input spends from. Should only be
-    /// `Option::Some` for inputs which spend segwit outputs,
+    /// `Option::Some` for inputs which spend SegWit outputs,
     /// including P2SH embedded ones.
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be

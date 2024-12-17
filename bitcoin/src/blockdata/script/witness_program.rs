@@ -31,7 +31,7 @@ pub const MAX_SIZE: usize = 40;
 /// number, therefore we carry the version number around along with the program bytes.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessProgram {
-    /// The segwit version associated with this witness program.
+    /// The SegWit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
     program: ArrayVec<u8, MAX_SIZE>,
@@ -47,7 +47,7 @@ impl WitnessProgram {
             return Err(InvalidLength(program_len));
         }
 
-        // Specific segwit v0 check. These addresses can never spend funds sent to them.
+        // Specific SegWit v0 check. These addresses can never spend funds sent to them.
         if version == WitnessVersion::V0 && (program_len != 20 && program_len != 32) {
             return Err(InvalidSegwitV0Length(program_len));
         }

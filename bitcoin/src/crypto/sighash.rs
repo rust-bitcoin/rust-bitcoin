@@ -51,7 +51,7 @@ hash_newtype! {
     #[hash_newtype(forward)]
     pub struct LegacySighash(sha256d::Hash);
 
-    /// Hash of a transaction according to the segwit version 0 signature algorithm.
+    /// Hash of a transaction according to the SegWit version 0 signature algorithm.
     #[hash_newtype(forward)]
     pub struct SegwitV0Sighash(sha256d::Hash);
 }
@@ -92,7 +92,7 @@ hashes::impl_serde_for_newtype!(TapSighash);
 
 impl_message_from_hash!(TapSighash);
 
-/// Efficiently calculates signature hash message for legacy, segwit and Taproot inputs.
+/// Efficiently calculates signature hash message for legacy, SegWit and Taproot inputs.
 #[derive(Debug)]
 pub struct SighashCache<T: Borrow<Transaction>> {
     /// Access to transaction required for transaction introspection. Moreover, type
@@ -100,17 +100,17 @@ pub struct SighashCache<T: Borrow<Transaction>> {
     /// the latter in particular is necessary for [`SighashCache::witness_mut`].
     tx: T,
 
-    /// Common cache for Taproot and segwit inputs, `None` for legacy inputs.
+    /// Common cache for Taproot and SegWit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
-    /// Cache for segwit v0 inputs (the result of another round of sha256 on `common_cache`).
+    /// Cache for SegWit v0 inputs (the result of another round of sha256 on `common_cache`).
     segwit_cache: Option<SegwitCache>,
 
     /// Cache for Taproot v1 inputs.
     taproot_cache: Option<TaprootCache>,
 }
 
-/// Common values cached between segwit and Taproot inputs.
+/// Common values cached between SegWit and Taproot inputs.
 #[derive(Debug)]
 struct CommonCache {
     prevouts: sha256::Hash,
@@ -121,7 +121,7 @@ struct CommonCache {
     outputs: sha256::Hash,
 }
 
-/// Values cached for segwit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.
+/// Values cached for SegWit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.
 #[derive(Debug)]
 struct SegwitCache {
     prevouts: sha256d::Hash,
@@ -859,8 +859,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
 
     /// Computes the BIP143 sighash to spend a p2wpkh transaction for any flag type.
     ///
-    /// `script_pubkey` is the `scriptPubkey` (native segwit) of the spend transaction
-    /// ([`TxOut::script_pubkey`]) or the `redeemScript` (wrapped segwit).
+    /// `script_pubkey` is the `scriptPubkey` (native SegWit) of the spend transaction
+    /// ([`TxOut::script_pubkey`]) or the `redeemScript` (wrapped SegWit).
     pub fn p2wpkh_signature_hash(
         &mut self,
         input_index: usize,
@@ -1150,9 +1150,9 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// *sighasher.witness_mut(input_index).unwrap() = Witness::p2wpkh(&signature, &pk);
     /// ```
     ///
-    /// For full signing code see the [`segwit v0`] and [`taproot`] signing examples.
+    /// For full signing code see the [`SegWit v0`] and [`taproot`] signing examples.
     ///
-    /// [`segwit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
+    /// [`SegWit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
     /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
@@ -1273,7 +1273,7 @@ impl fmt::Display for P2wpkhError {
         use P2wpkhError::*;
 
         match *self {
-            Sighash(ref e) => write_err!(f, "error encoding segwit v0 signing data"; e),
+            Sighash(ref e) => write_err!(f, "error encoding SegWit v0 signing data"; e),
             NotP2wpkhScript => write!(f, "script is not a script pubkey for a p2wpkh output"),
         }
     }

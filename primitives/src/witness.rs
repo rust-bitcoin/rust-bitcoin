@@ -13,7 +13,7 @@ use internals::compact_size;
 
 use crate::prelude::Vec;
 
-/// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
+/// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
 /// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
 /// in that format. You can convert between this type and `Vec<Vec<u8>>` by using [`Witness::from_slice`]
@@ -22,7 +22,7 @@ use crate::prelude::Vec;
 /// For serialization and deserialization performance it is stored internally as a single `Vec`,
 /// saving some allocations.
 ///
-/// [segwit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
+/// [SegWit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization.

@@ -13,7 +13,7 @@ use hex_lit::hex;
 
 //run with: cargo run --example sighash
 
-/// Computes segwit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
+/// Computes SegWit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
 ///
 /// # Parameters
 ///
@@ -45,7 +45,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
     let sighash = cache
         .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
         .expect("failed to compute sighash");
-    println!("Segwit p2wpkh sighash: {:x}", sighash);
+    println!("SegWit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from(sighash);
     println!("Message is {:x}", msg);
     let secp = secp256k1::Secp256k1::verification_only();
@@ -98,7 +98,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
     }
 }
 
-/// Computes sighash for a segwit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
+/// Computes sighash for a SegWit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
 ///
 /// # Parameters
 ///
@@ -132,7 +132,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
                 sig.sighash_type,
             )
             .expect("failed to compute sighash");
-        println!("Segwit p2wsh sighash: {:x} ({})", sighash, sig.sighash_type);
+        println!("SegWit p2wsh sighash: {:x} ({})", sighash, sig.sighash_type);
     }
 }
 

@@ -48,7 +48,7 @@ use crate::witness::Witness;
 /// ### Serialization notes
 ///
 /// If any inputs have nonempty witnesses, the entire transaction is serialized
-/// in the post-BIP141 Segwit format which includes a list of witnesses. If all
+/// in the post-BIP141 SegWit format which includes a list of witnesses. If all
 /// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
 /// format.
 ///
@@ -58,22 +58,22 @@ use crate::witness::Witness;
 /// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
 /// are always unsigned and therefore their inputs have empty witnesses.)
 ///
-/// The specific ambiguity is that Segwit uses the flag bytes `0001` where an old
+/// The specific ambiguity is that SegWit uses the flag bytes `0001` where an old
 /// serializer would read the number of transaction inputs. The old serializer
 /// would interpret this as "no inputs, one output", which means the transaction
-/// is invalid, and simply reject it. Segwit further specifies that this encoding
+/// is invalid, and simply reject it. SegWit further specifies that this encoding
 /// should *only* be used when some input has a nonempty witness; that is,
 /// witness-less transactions should be encoded in the traditional format.
 ///
 /// However, in protocols where transactions may legitimately have 0 inputs, e.g.
-/// when parties are cooperatively funding a transaction, the "00 means Segwit"
-/// heuristic does not work. Since Segwit requires such a transaction be encoded
+/// when parties are cooperatively funding a transaction, the "00 means SegWit"
+/// heuristic does not work. Since SegWit requires such a transaction be encoded
 /// in the original transaction format (since it has no inputs and therefore
 /// no input witnesses), a traditionally encoded transaction may have the `0001`
-/// Segwit flag in it, which confuses most Segwit parsers including the one in
+/// SegWit flag in it, which confuses most SegWit parsers including the one in
 /// Bitcoin Core.
 ///
-/// We therefore deviate from the spec by always using the Segwit witness encoding
+/// We therefore deviate from the spec by always using the SegWit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
 ///
 /// ### A note on ordering
@@ -150,8 +150,8 @@ impl Transaction {
 
     /// Computes the [`Txid`].
     ///
-    /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
-    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// Hashes the transaction **excluding** the SegWit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
     /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
     pub fn compute_txid(&self) -> Txid {
@@ -159,10 +159,10 @@ impl Transaction {
         Txid::from_byte_array(hash.to_byte_array())
     }
 
-    /// Computes the segwit version of the transaction id.
+    /// Computes the SegWit version of the transaction id.
     ///
-    /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
-    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// Hashes the transaction **including** all SegWit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
     /// this will be equal to [`Transaction::compute_txid()`].
     #[doc(alias = "wtxid")]
     pub fn compute_wtxid(&self) -> Wtxid {
@@ -235,7 +235,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     enc.input(&tx.version.0.to_le_bytes()); // Same as `encode::emit_i32`.
 
     if uses_segwit_serialization {
-        // BIP-141 (segwit) transaction serialization also includes marker and flag.
+        // BIP-141 (SegWit) transaction serialization also includes marker and flag.
         enc.input(&[SEGWIT_MARKER]);
         enc.input(&[SEGWIT_FLAG]);
     }
@@ -268,7 +268,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     }
 
     if uses_segwit_serialization {
-        // BIP-141 (segwit) transaction serialization also includes the witness data.
+        // BIP-141 (SegWit) transaction serialization also includes the witness data.
         for input in &tx.input {
             // Same as `Encodable for Witness`.
             enc.input(compact_size::encode(input.witness.len()).as_slice());

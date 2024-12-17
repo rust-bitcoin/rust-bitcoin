@@ -669,7 +669,7 @@ impl Psbt {
         let utxo = self.spend_utxo(input_index)?;
         let spk = utxo.script_pubkey.clone();
 
-        // Anything that is not segwit and is not p2sh is `Bare`.
+        // Anything that is not SegWit and is not p2sh is `Bare`.
         if !(spk.is_witness_program() || spk.is_p2sh()) {
             return Ok(OutputType::Bare);
         }
@@ -897,11 +897,11 @@ pub enum OutputType {
     Wpkh,
     /// A pay-to-witness-script-hash output (P2WSH).
     Wsh,
-    /// A nested segwit output, pay-to-witness-pubkey-hash nested in a pay-to-script-hash.
+    /// A nested SegWit output, pay-to-witness-pubkey-hash nested in a pay-to-script-hash.
     ShWpkh,
-    /// A nested segwit output, pay-to-witness-script-hash nested in a pay-to-script-hash.
+    /// A nested SegWit output, pay-to-witness-script-hash nested in a pay-to-script-hash.
     ShWsh,
-    /// A pay-to-script-hash output excluding wrapped segwit (P2SH).
+    /// A pay-to-script-hash output excluding wrapped SegWit (P2SH).
     Sh,
     /// A Taproot output (P2TR).
     Tr,
@@ -954,7 +954,7 @@ pub enum SignError {
     NotEcdsa,
     /// The `scriptPubkey` is not a P2WPKH script.
     NotWpkh,
-    /// Sighash computation error (segwit v0 input).
+    /// Sighash computation error (SegWit v0 input).
     SegwitV0Sighash(transaction::InputsIndexError),
     /// Sighash computation error (p2wpkh input).
     P2wpkhSighash(sighash::P2wpkhError),
@@ -986,7 +986,7 @@ impl fmt::Display for SignError {
             MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
             NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
-            SegwitV0Sighash(ref e) => write_err!(f, "segwit v0 sighash"; e),
+            SegwitV0Sighash(ref e) => write_err!(f, "SegWit v0 sighash"; e),
             P2wpkhSighash(ref e) => write_err!(f, "p2wpkh sighash"; e),
             TaprootError(ref e) => write_err!(f, "Taproot sighash"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),

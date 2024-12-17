@@ -172,7 +172,7 @@ crate::internal_macros::define_extension_trait! {
             instructions.next().is_none()
         }
 
-        /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
+        /// Checks whether a script pubkey is a Segregated Witness (SegWit) program.
         #[inline]
         fn is_witness_program(&self) -> bool { self.witness_version().is_some() }
 
