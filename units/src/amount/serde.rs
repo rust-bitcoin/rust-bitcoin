@@ -405,7 +405,7 @@ mod tests {
         assert_eq!(json, want);
 
         let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
-        assert_eq!(rinsed, orig)
+        assert_eq!(rinsed, orig);
     }
 
     #[test]
@@ -424,7 +424,7 @@ mod tests {
         assert_eq!(json, want);
 
         let rinsed: HasAmount = serde_json::from_str(&json).expect("failed to deser");
-        assert_eq!(rinsed, orig)
+        assert_eq!(rinsed, orig);
     }
 
     #[test]
