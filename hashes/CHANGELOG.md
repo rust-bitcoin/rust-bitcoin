@@ -1,3 +1,9 @@
+# 0.16.0 - 2024-12-12
+
+* Make `hex-conservative` an optional dependency [#3611](https://github.com/rust-bitcoin/rust-bitcoin/pull/3611)
+* Bump `hex-conservative` to `v0.3.0` [#3543](https://github.com/rust-bitcoin/rust-bitcoin/pull/3543)
+* Hide error internals [#3579](https://github.com/rust-bitcoin/rust-bitcoin/pull/3579)
+
 # 0.15.0 - 2024-10-16
 
 This release is massive. The biggest visable changes are to the `Hash` trait, which has mostly been replaced
