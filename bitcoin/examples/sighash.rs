@@ -13,7 +13,7 @@ use hex_lit::hex;
 
 //run with: cargo run --example sighash
 
-/// Computes segwit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
+/// Computes SegWit sighash for a transaction input that spends a p2wpkh output with "witness_v0_keyhash" scriptPubKey.type
 ///
 /// # Parameters
 ///
@@ -98,7 +98,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
     }
 }
 
-/// Computes sighash for a segwit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
+/// Computes sighash for a SegWit multisig transaction input that spends a p2wsh output with "witness_v0_scripthash" scriptPubKey.type
 ///
 /// # Parameters
 ///

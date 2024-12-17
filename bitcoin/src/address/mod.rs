@@ -254,7 +254,7 @@ pub enum AddressData {
         /// The script hash used to encumber outputs to this address.
         script_hash: ScriptHash,
     },
-    /// Data encoded by a Segwit address.
+    /// Data encoded by a SegWit address.
     Segwit {
         /// The witness program used to encumber outputs to this address.
         witness_program: WitnessProgram,
@@ -421,7 +421,7 @@ impl Address {
 
     /// Constructs a new pay-to-witness-public-key-hash (P2WPKH) [`Address`] from a public key.
     ///
-    /// This is the native segwit address type for an output redeemable with a single signature.
+    /// This is the native SegWit address type for an output redeemable with a single signature.
     pub fn p2wpkh(pk: CompressedPublicKey, hrp: impl Into<KnownHrp>) -> Self {
         let program = WitnessProgram::p2wpkh(pk);
         Address::from_witness_program(program, hrp)
@@ -430,7 +430,7 @@ impl Address {
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
     /// pay-to-witness-public-key-hash (P2WPKH).
     ///
-    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
+    /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwpkh(pk: CompressedPublicKey, network: impl Into<NetworkKind>) -> Address {
         let builder = script::Builder::new().push_int_unchecked(0).push_slice(pk.wpubkey_hash());
         let script_hash = builder.as_script().script_hash().expect("script is less than 520 bytes");
@@ -455,7 +455,7 @@ impl Address {
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] that embeds a
     /// pay-to-witness-script-hash (P2WSH).
     ///
-    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
+    /// This is a SegWit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(
         witness_script: &Script,
         network: impl Into<NetworkKind>,
@@ -546,7 +546,7 @@ impl Address {
         }
     }
 
-    /// Gets the witness program for this address if this is a segwit address.
+    /// Gets the witness program for this address if this is a SegWit address.
     pub fn witness_program(&self) -> Option<WitnessProgram> {
         use AddressInner::*;
 
@@ -642,7 +642,7 @@ impl Address {
     /// Returns true if the given pubkey is directly related to the address payload.
     ///
     /// This is determined by directly comparing the address payload with either the
-    /// hash of the given public key or the segwit redeem hash generated from the
+    /// hash of the given public key or the SegWit redeem hash generated from the
     /// given key. For Taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
@@ -684,7 +684,7 @@ impl Address {
     ///
     /// - For p2sh, the payload is the script hash.
     /// - For p2pkh, the payload is the pubkey hash.
-    /// - For segwit addresses, the payload is the witness program.
+    /// - For SegWit addresses, the payload is the witness program.
     fn payload_as_bytes(&self) -> &[u8] {
         use AddressInner::*;
         match self.0 {
@@ -868,18 +868,18 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 
 /// Address can be parsed only with `NetworkUnchecked`.
 ///
-/// Only segwit bech32 addresses prefixed with `bc`, `bcrt` or `tb` and legacy base58 addresses
+/// Only SegWit bech32 addresses prefixed with `bc`, `bcrt` or `tb` and legacy base58 addresses
 /// prefixed with `1`, `2, `3`, `m` or `n` are supported.
 ///
 /// # Errors
 ///
-/// - [`ParseError::Bech32`] if the segwit address begins with a `bc`, `bcrt` or `tb` and is not a
+/// - [`ParseError::Bech32`] if the SegWit address begins with a `bc`, `bcrt` or `tb` and is not a
 ///   valid bech32 address.
 ///
 /// - [`ParseError::Base58`] if the legacy address begins with a `1`, `2`, `3`, `m` or `n` and is
 ///   not a valid base58 address.
 ///
-/// - [`UnknownHrpError`] if the address does not begin with one of the above segwit or
+/// - [`UnknownHrpError`] if the address does not begin with one of the above SegWit or
 ///   legacy prifixes.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = ParseError;
@@ -899,7 +899,7 @@ impl FromStr for Address<NetworkUnchecked> {
     }
 }
 
-/// Convert a byte array of a pubkey hash into a segwit redeem hash
+/// Convert a byte array of a pubkey hash into a SegWit redeem hash
 fn segwit_redeem_hash(pubkey_hash: PubkeyHash) -> hash160::Hash {
     let mut sha_engine = hash160::Hash::engine();
     sha_engine.input(&[0, 20]);
@@ -1099,9 +1099,9 @@ mod tests {
                 Some(AddressType::P2tr),
             ),
             // Related to future extensions, addresses are valid but have no type
-            // segwit v1 and len != 32
+            // SegWit v1 and len != 32
             ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", None),
-            // segwit v2
+            // SegWit v2
             ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", None),
         ];
         for (address, expected_type) in &addresses {

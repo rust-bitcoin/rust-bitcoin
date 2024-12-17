@@ -115,8 +115,8 @@ crate::internal_macros::define_extension_trait! {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
         }
 
-        /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
-        /// having at least one segwit input).
+        /// The weight of the TxIn when it's included in a SegWit transaction (i.e., a transaction
+        /// having at least one SegWit input).
         ///
         /// This always takes into account the witness, even when empty, in which
         /// case 1WU for the witness length varint (`00`) is included.
@@ -125,7 +125,7 @@ crate::internal_macros::define_extension_trait! {
         /// might increase more than `TxIn::segwit_weight`. This happens when:
         /// - the new input added causes the input length `VarInt` to increase its encoding length
         /// - the new input is the first segwit input added - this will add an additional 2WU to the
-        ///   transaction weight to take into account the segwit marker
+        ///   transaction weight to take into account the SegWit marker
         fn segwit_weight(&self) -> Weight {
             Weight::from_non_witness_data_size(self.base_size().to_u64())
                 + Weight::from_witness_data_size(self.witness.size().to_u64())
@@ -220,7 +220,7 @@ pub trait TransactionExt: sealed::Sealed {
     #[deprecated(since = "0.31.0", note = "use `compute_txid()` instead")]
     fn txid(&self) -> Txid;
 
-    /// Computes the segwit version of the transaction id.
+    /// Computes the SegWit version of the transaction id.
     #[deprecated(since = "0.31.0", note = "use `compute_wtxid()` instead")]
     fn wtxid(&self) -> Wtxid;
 
@@ -234,13 +234,13 @@ pub trait TransactionExt: sealed::Sealed {
     /// multiplied by three plus the with-witness consensus-serialized size.
     ///
     /// For transactions with no inputs, this function will return a value 2 less than the actual
-    /// weight of the serialized transaction. The reason is that zero-input transactions, post-segwit,
+    /// weight of the serialized transaction. The reason is that zero-input transactions, post-SegWit,
     /// cannot be unambiguously serialized; we make a choice that adds two extra bytes. For more
     /// details see [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-    /// which uses a "input count" of `0x00` as a `marker` for a Segwit-encoded transaction.
+    /// which uses a "input count" of `0x00` as a `marker` for a SegWit-encoded transaction.
     ///
     /// If you need to use 0-input transactions, we strongly recommend you do so using the PSBT
-    /// API. The unsigned transaction encoded within PSBT is always a non-segwit transaction
+    /// API. The unsigned transaction encoded within PSBT is always a non-SegWit transaction
     /// and can therefore avoid this ambiguity.
     fn weight(&self) -> Weight;
 
@@ -320,7 +320,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// The `spent` parameter is a closure/function that looks up the output being spent by each input
     /// It takes in an [`OutPoint`] and returns a [`TxOut`]. If you can't provide this, a placeholder of
     /// `|_| None` can be used. Without access to the previous [`TxOut`], any sigops in a redeemScript (P2SH)
-    /// as well as any segwit sigops will not be counted for that input.
+    /// as well as any SegWit sigops will not be counted for that input.
     fn total_sigop_cost<S>(&self, spent: S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>;
@@ -452,12 +452,12 @@ trait TransactionExtPriv {
     /// `count_p2sh_sigops` and `count_witness_sigops` respectively).
     fn count_p2pk_p2pkh_sigops(&self) -> usize;
 
-    /// Does not include wrapped segwit (see `count_witness_sigops`).
+    /// Does not include wrapped SegWit (see `count_witness_sigops`).
     fn count_p2sh_sigops<S>(&self, spent: &mut S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>;
 
-    /// Includes wrapped segwit (returns 0 for Taproot spends).
+    /// Includes wrapped SegWit (returns 0 for Taproot spends).
     fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>;
@@ -471,7 +471,7 @@ impl TransactionExtPriv for Transaction {
     fn count_p2pk_p2pkh_sigops(&self) -> usize {
         let mut count: usize = 0;
         for input in &self.input {
-            // 0 for p2wpkh, p2wsh, and p2sh (including wrapped segwit).
+            // 0 for p2wpkh, p2wsh, and p2sh (including wrapped SegWit).
             count = count.saturating_add(input.script_sig.count_sigops_legacy());
         }
         for output in &self.output {
@@ -480,7 +480,7 @@ impl TransactionExtPriv for Transaction {
         count
     }
 
-    /// Does not include wrapped segwit (see `count_witness_sigops`).
+    /// Does not include wrapped SegWit (see `count_witness_sigops`).
     fn count_p2sh_sigops<S>(&self, spent: &mut S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
@@ -505,7 +505,7 @@ impl TransactionExtPriv for Transaction {
         count
     }
 
-    /// Includes wrapped segwit (returns 0 for Taproot spends).
+    /// Includes wrapped SegWit (returns 0 for Taproot spends).
     fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
@@ -712,7 +712,7 @@ impl Encodable for Transaction {
             len += self.input.consensus_encode(w)?;
             len += self.output.consensus_encode(w)?;
         } else {
-            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
+            // BIP-141 (SegWit) transaction serialization also includes marker, flag, and witness data.
             len += SEGWIT_MARKER.consensus_encode(w)?;
             len += SEGWIT_FLAG.consensus_encode(w)?;
             len += self.input.consensus_encode(w)?;
@@ -732,7 +732,7 @@ impl Decodable for Transaction {
     ) -> Result<Self, encode::Error> {
         let version = Version::consensus_decode_from_finite_reader(r)?;
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-        // segwit
+        // SegWit
         if input.is_empty() {
             let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
             match segwit_flag {
@@ -759,7 +759,7 @@ impl Decodable for Transaction {
                 // We don't support anything else
                 x => Err(encode::ParseError::UnsupportedSegwitFlag(x).into()),
             }
-        // non-segwit
+        // non-SegWit
         } else {
             Ok(Transaction {
                 version,
@@ -1416,7 +1416,7 @@ mod tests {
 
     #[test]
     fn txid() {
-        // segwit tx from Liquid integration tests, txid/hash from Core decoderawtransaction
+        // SegWit tx from Liquid integration tests, txid/hash from Core decoderawtransaction
         let tx_bytes = hex!(
             "01000000000102ff34f95a672bb6a4f6ff4a7e90fa8c7b3be7e70ffc39bc99be3bda67942e836c00000000\
              23220020cde476664d3fa347b8d54ef3aee33dcb686a65ced2b5207cbf4ec5eda6b9b46e4f414d4c934ad8\
@@ -1460,7 +1460,7 @@ mod tests {
         assert_eq!(format!("{:.10x}", tx.compute_txid()), "9652aa62b0");
         assert_eq!(tx.weight(), Weight::from_wu(2718));
 
-        // non-segwit tx from my mempool
+        // non-SegWit tx from my mempool
         let tx_bytes = hex!(
             "01000000010c7196428403d8b0c88fcb3ee8d64f56f55c8973c9ab7dd106bb4f3527f5888d000000006a47\
              30440220503a696f55f2c00eee2ac5e65b17767cd88ed04866b5637d3c1d5d996a70656d02202c9aff698f\
@@ -1551,7 +1551,7 @@ mod tests {
         use crate::consensus_validation::{TransactionExt as _, TxVerifyError};
         use crate::witness::Witness;
 
-        // a random recent segwit transaction from blockchain using both old and segwit inputs
+        // a random recent SegWit transaction from blockchain using both old and SegWit inputs
         let mut spending: Transaction = deserialize(hex!("020000000001031cfbc8f54fbfa4a33a30068841371f80dbfe166211242213188428f437445c91000000006a47304402206fbcec8d2d2e740d824d3d36cc345b37d9f65d665a99f5bd5c9e8d42270a03a8022013959632492332200c2908459547bf8dbf97c65ab1a28dec377d6f1d41d3d63e012103d7279dfb90ce17fe139ba60a7c41ddf605b25e1c07a4ddcb9dfef4e7d6710f48feffffff476222484f5e35b3f0e43f65fc76e21d8be7818dd6a989c160b1e5039b7835fc00000000171600140914414d3c94af70ac7e25407b0689e0baa10c77feffffffa83d954a62568bbc99cc644c62eb7383d7c2a2563041a0aeb891a6a4055895570000000017160014795d04cc2d4f31480d9a3710993fbd80d04301dffeffffff06fef72f000000000017a91476fd7035cd26f1a32a5ab979e056713aac25796887a5000f00000000001976a914b8332d502a529571c6af4be66399cd33379071c588ac3fda0500000000001976a914fc1d692f8de10ae33295f090bea5fe49527d975c88ac522e1b00000000001976a914808406b54d1044c429ac54c0e189b0d8061667e088ac6eb68501000000001976a914dfab6085f3a8fb3e6710206a5a959313c5618f4d88acbba20000000000001976a914eb3026552d7e3f3073457d0bee5d4757de48160d88ac0002483045022100bee24b63212939d33d513e767bc79300051f7a0d433c3fcf1e0e3bf03b9eb1d70220588dc45a9ce3a939103b4459ce47500b64e23ab118dfc03c9caa7d6bfc32b9c601210354fd80328da0f9ae6eef2b3a81f74f9a6f66761fadf96f1d1d22b1fd6845876402483045022100e29c7e3a5efc10da6269e5fc20b6a1cb8beb92130cc52c67e46ef40aaa5cac5f0220644dd1b049727d991aece98a105563416e10a5ac4221abac7d16931842d5c322012103960b87412d6e169f30e12106bdf70122aabb9eb61f455518322a18b920a4dfa887d30700")
             .as_slice()).unwrap();
         let spent1: Transaction = deserialize(hex!("020000000001040aacd2c49f5f3c0968cfa8caf9d5761436d95385252e3abb4de8f5dcf8a582f20000000017160014bcadb2baea98af0d9a902e53a7e9adff43b191e9feffffff96cd3c93cac3db114aafe753122bd7d1afa5aa4155ae04b3256344ecca69d72001000000171600141d9984579ceb5c67ebfbfb47124f056662fe7adbfeffffffc878dd74d3a44072eae6178bb94b9253177db1a5aaa6d068eb0e4db7631762e20000000017160014df2a48cdc53dae1aba7aa71cb1f9de089d75aac3feffffffe49f99275bc8363f5f593f4eec371c51f62c34ff11cc6d8d778787d340d6896c0100000017160014229b3b297a0587e03375ab4174ef56eeb0968735feffffff03360d0f00000000001976a9149f44b06f6ee92ddbc4686f71afe528c09727a5c788ac24281b00000000001976a9140277b4f68ff20307a2a9f9b4487a38b501eb955888ac227c0000000000001976a9148020cd422f55eef8747a9d418f5441030f7c9c7788ac0247304402204aa3bd9682f9a8e101505f6358aacd1749ecf53a62b8370b97d59243b3d6984f02200384ad449870b0e6e89c92505880411285ecd41cf11e7439b973f13bad97e53901210205b392ffcb83124b1c7ce6dd594688198ef600d34500a7f3552d67947bbe392802473044022033dfd8d190a4ae36b9f60999b217c775b96eb10dee3a1ff50fb6a75325719106022005872e4e36d194e49ced2ebcf8bb9d843d842e7b7e0eb042f4028396088d292f012103c9d7cbf369410b090480de2aa15c6c73d91b9ffa7d88b90724614b70be41e98e0247304402207d952de9e59e4684efed069797e3e2d993e9f98ec8a9ccd599de43005fe3f713022076d190cc93d9513fc061b1ba565afac574e02027c9efbfa1d7b71ab8dbb21e0501210313ad44bc030cc6cb111798c2bf3d2139418d751c1e79ec4e837ce360cc03b97a024730440220029e75edb5e9413eb98d684d62a077b17fa5b7cc19349c1e8cc6c4733b7b7452022048d4b9cae594f03741029ff841e35996ef233701c1ea9aa55c301362ea2e2f68012103590657108a72feb8dc1dec022cf6a230bb23dc7aaa52f4032384853b9f8388baf9d20700")
@@ -1693,15 +1693,15 @@ mod tests {
     fn txin_txout_weight() {
         // [(is_segwit, tx_hex, expected_weight)]
         let txs = [
-                // one segwit input (P2WPKH)
+                // one SegWit input (P2WPKH)
                 (true, "020000000001018a763b78d3e17acea0625bf9e52b0dc1beb2241b2502185348ba8ff4a253176e0100000000ffffffff0280d725000000000017a914c07ed639bd46bf7087f2ae1dfde63b815a5f8b488767fda20300000000160014869ec8520fa2801c8a01bfdd2e82b19833cd0daf02473044022016243edad96b18c78b545325aaff80131689f681079fb107a67018cb7fb7830e02205520dae761d89728f73f1a7182157f6b5aecf653525855adb7ccb998c8e6143b012103b9489bde92afbcfa85129a82ffa512897105d1a27ad9806bded27e0532fc84e700000000", Weight::from_wu(565)),
-                // one segwit input (P2WSH)
+                // one SegWit input (P2WSH)
                 (true, "01000000000101a3ccad197118a2d4975fadc47b90eacfdeaf8268adfdf10ed3b4c3b7e1ad14530300000000ffffffff0200cc5501000000001976a91428ec6f21f4727bff84bb844e9697366feeb69f4d88aca2a5100d00000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220548f11130353b3a8f943d2f14260345fc7c20bde91704c9f1cbb5456355078cd0220383ed4ed39b079b618bcb279bbc1f2ca18cb028c4641cb522c9c5868c52a0dc20147304402203c332ecccb3181ca82c0600520ee51fee80d3b4a6ab110945e59475ec71e44ac0220679a11f3ca9993b04ccebda3c834876f353b065bb08f50076b25f5bb93c72ae1016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000", Weight::from_wu(766)),
-                // one segwit input (P2WPKH) and two legacy inputs (P2PKH)
+                // one SegWit input (P2WPKH) and two legacy inputs (P2PKH)
                 (true, "010000000001036b6b6ac7e34e97c53c1cc74c99c7948af2e6aac75d8778004ae458d813456764000000006a473044022001deec7d9075109306320b3754188f81a8236d0d232b44bc69f8309115638b8f02204e17a5194a519cf994d0afeea1268740bdc10616b031a521113681cc415e815c012103488d3272a9fad78ee887f0684cb8ebcfc06d0945e1401d002e590c7338b163feffffffffc75bd7aa6424aee972789ec28ba181254ee6d8311b058d165bd045154d7660b0000000006b483045022100c8641bcbee3e4c47a00417875015d8c5d5ea918fb7e96f18c6ffe51bc555b401022074e2c46f5b1109cd79e39a9aa203eadd1d75356415e51d80928a5fb5feb0efee0121033504b4c6dfc3a5daaf7c425aead4c2dbbe4e7387ce8e6be2648805939ecf7054ffffffff494df3b205cd9430a26f8e8c0dc0bb80496fbc555a524d6ea307724bc7e60eee0100000000ffffffff026d861500000000001976a9145c54ed1360072ebaf56e87693b88482d2c6a101588ace407000000000000160014761e31e2629c6e11936f2f9888179d60a5d4c1f900000247304402201fa38a67a63e58b67b6cfffd02f59121ca1c8a1b22e1efe2573ae7e4b4f06c2b022002b9b431b58f6e36b3334fb14eaecee7d2f06967a77ef50d8d5f90dda1057f0c01210257dc6ce3b1100903306f518ee8fa113d778e403f118c080b50ce079fba40e09a00000000", Weight::from_wu(1755)),
                 // three legacy inputs (P2PKH)
                 (false, "0100000003e4d7be4314204a239d8e00691128dca7927e19a7339c7948bde56f669d27d797010000006b483045022100b988a858e2982e2daaf0755b37ad46775d6132057934877a5badc91dee2f66ff022020b967c1a2f0916007662ec609987e951baafa6d4fda23faaad70715611d6a2501210254a2dccd8c8832d4677dc6f0e562eaaa5d11feb9f1de2c50a33832e7c6190796ffffffff9e22eb1b3f24c260187d716a8a6c2a7efb5af14a30a4792a6eeac3643172379c000000006a47304402207df07f0cd30dca2cf7bed7686fa78d8a37fe9c2254dfdca2befed54e06b779790220684417b8ff9f0f6b480546a9e90ecee86a625b3ea1e4ca29b080da6bd6c5f67e01210254a2dccd8c8832d4677dc6f0e562eaaa5d11feb9f1de2c50a33832e7c6190796ffffffff1123df3bfb503b59769731da103d4371bc029f57979ebce68067768b958091a1000000006a47304402207a016023c2b0c4db9a7d4f9232fcec2193c2f119a69125ad5bcedcba56dd525e02206a734b3a321286c896759ac98ebfd9d808df47f1ce1fbfbe949891cc3134294701210254a2dccd8c8832d4677dc6f0e562eaaa5d11feb9f1de2c50a33832e7c6190796ffffffff0200c2eb0b000000001976a914e5eb3e05efad136b1405f5c2f9adb14e15a35bb488ac88cfff1b000000001976a9144846db516db3130b7a3c92253599edec6bc9630b88ac00000000", Weight::from_wu(2080)),
-                // one segwit input (P2TR)
+                // one SegWit input (P2TR)
                 (true, "01000000000101b5cee87f1a60915c38bb0bc26aaf2b67be2b890bbc54bb4be1e40272e0d2fe0b0000000000ffffffff025529000000000000225120106daad8a5cb2e6fc74783714273bad554a148ca2d054e7a19250e9935366f3033760000000000002200205e6d83c44f57484fd2ef2a62b6d36cdcd6b3e06b661e33fd65588a28ad0dbe060141df9d1bfce71f90d68bf9e9461910b3716466bfe035c7dbabaa7791383af6c7ef405a3a1f481488a91d33cd90b098d13cb904323a3e215523aceaa04e1bb35cdb0100000000", Weight::from_wu(617)),
                 // one legacy input (P2PKH)
                 (false, "0100000001c336895d9fa674f8b1e294fd006b1ac8266939161600e04788c515089991b50a030000006a47304402204213769e823984b31dcb7104f2c99279e74249eacd4246dabcf2575f85b365aa02200c3ee89c84344ae326b637101a92448664a8d39a009c8ad5d147c752cbe112970121028b1b44b4903c9103c07d5a23e3c7cf7aeb0ba45ddbd2cfdce469ab197381f195fdffffff040000000000000000536a4c5058325bb7b7251cf9e36cac35d691bd37431eeea426d42cbdecca4db20794f9a4030e6cb5211fabf887642bcad98c9994430facb712da8ae5e12c9ae5ff314127d33665000bb26c0067000bb0bf00322a50c300000000000017a9145ca04fdc0a6d2f4e3f67cfeb97e438bb6287725f8750c30000000000001976a91423086a767de0143523e818d4273ddfe6d9e4bbcc88acc8465003000000001976a914c95cbacc416f757c65c942f9b6b8a20038b9b12988ac00000000", Weight::from_wu(1396)),
@@ -1724,7 +1724,7 @@ mod tests {
                 + tx.input.iter().fold(Weight::ZERO, |sum, i| sum + txin_weight(i))
                 + tx.output.iter().fold(Weight::ZERO, |sum, o| sum + o.weight());
 
-            // The empty tx uses segwit serialization but a legacy tx does not.
+            // The empty tx uses SegWit serialization but a legacy tx does not.
             if !tx.uses_segwit_serialization() {
                 calculated_weight -= Weight::from_wu(2);
             }

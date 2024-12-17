@@ -1093,7 +1093,7 @@ impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
     fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
 }
 
-/// Segwit public keys must always be compressed.
+/// SegWit public keys must always be compressed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct UncompressedPublicKeyError;

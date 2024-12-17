@@ -78,7 +78,7 @@ impl std::error::Error for UnknownAddressTypeError {
 pub enum ParseError {
     /// Base58 legacy decoding error.
     Base58(Base58Error),
-    /// Bech32 segwit decoding error.
+    /// Bech32 SegWit decoding error.
     Bech32(Bech32Error),
     /// Address's network differs from required one.
     NetworkValidation(NetworkValidationError),
@@ -165,7 +165,7 @@ impl std::error::Error for NetworkValidationError {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Bech32Error {
-    /// Parse segwit Bech32 error.
+    /// Parse SegWit Bech32 error.
     ParseBech32(ParseBech32Error),
     /// A witness version conversion/parsing error.
     WitnessVersion(witness_version::TryFromError),

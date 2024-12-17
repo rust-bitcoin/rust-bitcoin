@@ -16,7 +16,7 @@ fn do_test(data: &[u8]) {
             }
             let no_witness_len = bitcoin::consensus::encode::serialize(&tx).len();
             // For 0-input transactions, `no_witness_len` will be incorrect because
-            // we serialize as segwit even after "stripping the witnesses". We need
+            // we serialize as SegWit even after "stripping the witnesses". We need
             // to drop two bytes (i.e. eight weight). Similarly, calculated_weight is
             // incorrect and needs 2 wu removing for the marker/flag bytes.
             if tx.input.is_empty() {

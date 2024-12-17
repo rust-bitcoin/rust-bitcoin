@@ -165,7 +165,7 @@ pub enum ParseError {
     NonMinimalVarInt,
     /// Parsing error.
     ParseFailed(&'static str),
-    /// Unsupported Segwit flag.
+    /// Unsupported SegWit flag.
     UnsupportedSegwitFlag(u8),
 }
 
