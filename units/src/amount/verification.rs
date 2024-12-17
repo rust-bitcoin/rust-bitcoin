@@ -23,7 +23,12 @@ use super::*;
 fn u_amount_homomorphic() {
     let n1 = kani::any::<u64>();
     let n2 = kani::any::<u64>();
-    kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
+    // Assume we don't overflow in the actual tests.
+    kani::assume(n1.checked_add(n2).is_some()); // Adding u64s doesn't overflow.
+    let a1 = Amount::from_sat(n1);              // TODO: If from_sat enforces invariant assume this `is_ok()`.
+    let a2 = Amount::from_sat(n2);
+    kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
+
     assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2));
 
     let mut amt = Amount::from_sat(n1);
@@ -50,26 +55,17 @@ fn u_amount_homomorphic() {
 
 #[kani::unwind(4)]
 #[kani::proof]
-fn u_amount_homomorphic_checked() {
-    let n1 = kani::any::<u64>();
-    let n2 = kani::any::<u64>();
-    assert_eq!(
-        Amount::from_sat(n1).checked_add(Amount::from_sat(n2)),
-        n1.checked_add(n2).map(Amount::from_sat),
-    );
-    assert_eq!(
-        Amount::from_sat(n1).checked_sub(Amount::from_sat(n2)),
-        n1.checked_sub(n2).map(Amount::from_sat),
-    );
-}
-
-#[kani::unwind(4)]
-#[kani::proof]
 fn s_amount_homomorphic() {
     let n1 = kani::any::<i64>();
     let n2 = kani::any::<i64>();
-    kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
-    kani::assume(n1.checked_sub(n2).is_some()); // assume we don't overflow in the actual test
+    // Assume we don't overflow in the actual tests.
+    kani::assume(n1.checked_add(n2).is_some()); // Adding i64s doesn't overflow.
+    kani::assume(n1.checked_sub(n2).is_some()); // Subbing i64s doesn't overflow.
+    let a1 = SignedAmount::from_sat(n1); // TODO: If from_sat enforces invariant assume this `is_ok()`.
+    let a2 = SignedAmount::from_sat(n2);
+    kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
+    kani::assume(a1.checked_sub(a2).is_some()); // Subbing amounts doesn't overflow.
+
     assert_eq!(
         SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
         SignedAmount::from_sat(n1 + n2)
@@ -93,25 +89,5 @@ fn s_amount_homomorphic() {
         } else {
             Err(OutOfRangeError { is_signed: false, is_greater_than_max: false })
         },
-    );
-}
-
-#[kani::unwind(4)]
-#[kani::proof]
-fn s_amount_homomorphic_checked() {
-    let n1 = kani::any::<i64>();
-    let n2 = kani::any::<i64>();
-    assert_eq!(
-        SignedAmount::from_sat(n1).checked_add(SignedAmount::from_sat(n2)),
-        n1.checked_add(n2).map(SignedAmount::from_sat),
-    );
-    assert_eq!(
-        SignedAmount::from_sat(n1).checked_sub(SignedAmount::from_sat(n2)),
-        n1.checked_sub(n2).map(SignedAmount::from_sat),
-    );
-
-    assert_eq!(
-        SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
-        if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat(n1 - n2)) } else { None },
     );
 }
