@@ -455,15 +455,24 @@ impl core::ops::arith::Add for bitcoin_units::SignedAmount
 impl core::ops::arith::Add for bitcoin_units::block::BlockInterval
 impl core::ops::arith::Add for bitcoin_units::fee_rate::FeeRate
 impl core::ops::arith::Add for bitcoin_units::weight::Weight
+impl core::ops::arith::Add<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::Add<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
 impl core::ops::arith::Add<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Add<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Add<bitcoin_units::Amount> for &bitcoin_units::Amount
+impl core::ops::arith::Add<bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
 impl core::ops::arith::Add<bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
 impl core::ops::arith::Add<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Add<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
 impl core::ops::arith::AddAssign for bitcoin_units::Amount
 impl core::ops::arith::AddAssign for bitcoin_units::SignedAmount
 impl core::ops::arith::AddAssign for bitcoin_units::block::BlockInterval
 impl core::ops::arith::AddAssign for bitcoin_units::fee_rate::FeeRate
 impl core::ops::arith::AddAssign for bitcoin_units::weight::Weight
+impl core::ops::arith::AddAssign<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::AddAssign<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
 impl core::ops::arith::AddAssign<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::AddAssign<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
 impl core::ops::arith::Div for bitcoin_units::weight::Weight
 impl core::ops::arith::Div<bitcoin_units::weight::Weight> for bitcoin_units::Amount
 impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount
@@ -492,15 +501,24 @@ impl core::ops::arith::Sub for bitcoin_units::block::BlockHeight
 impl core::ops::arith::Sub for bitcoin_units::block::BlockInterval
 impl core::ops::arith::Sub for bitcoin_units::fee_rate::FeeRate
 impl core::ops::arith::Sub for bitcoin_units::weight::Weight
+impl core::ops::arith::Sub<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::Sub<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
 impl core::ops::arith::Sub<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Sub<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Sub<bitcoin_units::Amount> for &bitcoin_units::Amount
+impl core::ops::arith::Sub<bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
 impl core::ops::arith::Sub<bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
 impl core::ops::arith::Sub<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Sub<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
 impl core::ops::arith::SubAssign for bitcoin_units::Amount
 impl core::ops::arith::SubAssign for bitcoin_units::SignedAmount
 impl core::ops::arith::SubAssign for bitcoin_units::block::BlockInterval
 impl core::ops::arith::SubAssign for bitcoin_units::fee_rate::FeeRate
 impl core::ops::arith::SubAssign for bitcoin_units::weight::Weight
+impl core::ops::arith::SubAssign<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::SubAssign<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
 impl core::ops::arith::SubAssign<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::SubAssign<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Amount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::SignedAmount
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
@@ -579,8 +597,14 @@ impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::SignedAmount> for bit
 impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
 impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
 impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::Amount> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
 impl<'a> core::ops::arith::Add<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::Amount> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
 impl<'a> core::ops::arith::Sub<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
 impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::Amount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::Amount>
 impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::SignedAmount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::SignedAmount>
 pub bitcoin_units::amount::Denomination::Bit
@@ -701,14 +725,28 @@ pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
 pub const fn bitcoin_units::weight::Weight::to_wu(self) -> u64
-pub fn &bitcoin_units::fee_rate::FeeRate::add(self, other: &'a bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
-pub fn &bitcoin_units::fee_rate::FeeRate::add(self, other: bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
-pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, other: &'a bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
-pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, other: bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
+pub fn &bitcoin_units::Amount::add(self, rhs: &'a bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: &'a bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: &'a bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: &'a bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::add(self, rhs: &'a bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::add(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, rhs: &'a bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::add(self, rhs: &'a bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::sub(self, rhs: &'a bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::sub(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::Amount>
 pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::SignedAmount>
+pub fn bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
-pub fn bitcoin_units::Amount::add_assign(&mut self, other: bitcoin_units::Amount)
+pub fn bitcoin_units::Amount::add_assign(&mut self, rhs: &bitcoin_units::Amount)
+pub fn bitcoin_units::Amount::add_assign(&mut self, rhs: bitcoin_units::Amount)
 pub fn bitcoin_units::Amount::clone(&self) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::cmp(&self, other: &bitcoin_units::Amount) -> core::cmp::Ordering
 pub fn bitcoin_units::Amount::default() -> Self
@@ -731,8 +769,10 @@ pub fn bitcoin_units::Amount::mul_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::Amount::partial_cmp(&self, other: &bitcoin_units::Amount) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::Amount::rem(self, modulus: u64) -> Self
 pub fn bitcoin_units::Amount::rem_assign(&mut self, modulus: u64)
+pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
-pub fn bitcoin_units::Amount::sub_assign(&mut self, other: bitcoin_units::Amount)
+pub fn bitcoin_units::Amount::sub_assign(&mut self, rhs: &bitcoin_units::Amount)
+pub fn bitcoin_units::Amount::sub_assign(&mut self, rhs: bitcoin_units::Amount)
 pub fn bitcoin_units::Amount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
 pub fn bitcoin_units::Amount::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::Amount>
 pub fn bitcoin_units::Amount::to_btc(self) -> f64
@@ -744,8 +784,10 @@ pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> co
 pub fn bitcoin_units::Amount::unchecked_add(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::unchecked_sub(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
 pub fn bitcoin_units::SignedAmount::abs(self) -> bitcoin_units::SignedAmount
+pub fn bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
-pub fn bitcoin_units::SignedAmount::add_assign(&mut self, other: bitcoin_units::SignedAmount)
+pub fn bitcoin_units::SignedAmount::add_assign(&mut self, rhs: &bitcoin_units::SignedAmount)
+pub fn bitcoin_units::SignedAmount::add_assign(&mut self, rhs: bitcoin_units::SignedAmount)
 pub fn bitcoin_units::SignedAmount::clone(&self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::cmp(&self, other: &bitcoin_units::SignedAmount) -> core::cmp::Ordering
 pub fn bitcoin_units::SignedAmount::default() -> Self
@@ -772,8 +814,10 @@ pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: bitcoin_units::Signe
 pub fn bitcoin_units::SignedAmount::rem(self, modulus: i64) -> Self
 pub fn bitcoin_units::SignedAmount::rem_assign(&mut self, modulus: i64)
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
-pub fn bitcoin_units::SignedAmount::sub_assign(&mut self, other: bitcoin_units::SignedAmount)
+pub fn bitcoin_units::SignedAmount::sub_assign(&mut self, rhs: &bitcoin_units::SignedAmount)
+pub fn bitcoin_units::SignedAmount::sub_assign(&mut self, rhs: bitcoin_units::SignedAmount)
 pub fn bitcoin_units::SignedAmount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
 pub fn bitcoin_units::SignedAmount::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::SignedAmount>
 pub fn bitcoin_units::SignedAmount::to_btc(self) -> f64
@@ -882,10 +926,10 @@ pub fn bitcoin_units::block::BlockInterval::try_from(s: alloc::string::String) -
 pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::clone(&self) -> bitcoin_units::block::TooBigForRelativeBlockHeightError
 pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::eq(&self, other: &bitcoin_units::block::TooBigForRelativeBlockHeightError) -> bool
 pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-pub fn bitcoin_units::fee_rate::FeeRate::add(self, other: &bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
+pub fn bitcoin_units::fee_rate::FeeRate::add(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
 pub fn bitcoin_units::fee_rate::FeeRate::add(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
 pub fn bitcoin_units::fee_rate::FeeRate::add_assign(&mut self, rhs: &bitcoin_units::fee_rate::FeeRate)
-pub fn bitcoin_units::fee_rate::FeeRate::add_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::fee_rate::FeeRate::add_assign(&mut self, rhs: bitcoin_units::fee_rate::FeeRate)
 pub fn bitcoin_units::fee_rate::FeeRate::clone(&self) -> bitcoin_units::fee_rate::FeeRate
 pub fn bitcoin_units::fee_rate::FeeRate::cmp(&self, other: &bitcoin_units::fee_rate::FeeRate) -> core::cmp::Ordering
 pub fn bitcoin_units::fee_rate::FeeRate::eq(&self, other: &bitcoin_units::fee_rate::FeeRate) -> bool
@@ -897,10 +941,10 @@ pub fn bitcoin_units::fee_rate::FeeRate::from_str(s: &str) -> core::result::Resu
 pub fn bitcoin_units::fee_rate::FeeRate::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_units::fee_rate::FeeRate::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::fee_rate::FeeRate::partial_cmp(&self, other: &bitcoin_units::fee_rate::FeeRate) -> core::option::Option<core::cmp::Ordering>
-pub fn bitcoin_units::fee_rate::FeeRate::sub(self, other: &bitcoin_units::fee_rate::FeeRate) -> <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
+pub fn bitcoin_units::fee_rate::FeeRate::sub(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
 pub fn bitcoin_units::fee_rate::FeeRate::sub(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
 pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: &bitcoin_units::fee_rate::FeeRate)
-pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: bitcoin_units::fee_rate::FeeRate)
 pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::fee_rate::FeeRate>
 pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: &str) -> core::result::Result<Self, Self::Error>
@@ -991,8 +1035,10 @@ pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u
 pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
 pub fn bitcoin_units::parse::int<T: bitcoin_units::parse::Integer, S: core::convert::AsRef<str> + core::convert::Into<bitcoin_internals::error::input_string::InputString>>(s: S) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::weight::Weight::add(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
-pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: bitcoin_units::weight::Weight)
 pub fn bitcoin_units::weight::Weight::clone(&self) -> bitcoin_units::weight::Weight
 pub fn bitcoin_units::weight::Weight::cmp(&self, other: &bitcoin_units::weight::Weight) -> core::cmp::Ordering
 pub fn bitcoin_units::weight::Weight::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
@@ -1007,8 +1053,10 @@ pub fn bitcoin_units::weight::Weight::mul(self, rhs: bitcoin_units::fee_rate::Fe
 pub fn bitcoin_units::weight::Weight::mul(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::weight::Weight::mul_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::weight::Weight::partial_cmp(&self, other: &bitcoin_units::weight::Weight) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::weight::Weight::sub(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::sub(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
-pub fn bitcoin_units::weight::Weight::sub_assign(&mut self, rhs: Self)
+pub fn bitcoin_units::weight::Weight::sub_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::sub_assign(&mut self, rhs: bitcoin_units::weight::Weight)
 pub fn bitcoin_units::weight::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::weight::Weight>
 pub fn bitcoin_units::weight::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
 pub fn bitcoin_units::weight::Weight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
@@ -1073,7 +1121,10 @@ pub struct bitcoin_units::parse::UnprefixedHexError(_)
 pub struct bitcoin_units::weight::Weight(_)
 pub trait bitcoin_units::amount::CheckedSum<R>: sealed::Sealed<R>
 pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + sealed::Sealed
+pub type &bitcoin_units::Amount::Output = bitcoin_units::Amount
+pub type &bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type &bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::fee_rate::FeeRate
+pub type &bitcoin_units::weight::Weight::Output = bitcoin_units::weight::Weight
 pub type bitcoin_units::Amount::Err = bitcoin_units::amount::error::ParseError
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::error::OutOfRangeError
 pub type bitcoin_units::Amount::Output = bitcoin_units::Amount

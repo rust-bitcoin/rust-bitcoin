@@ -23,6 +23,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod internal_macros;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of core::*

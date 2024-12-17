@@ -457,10 +457,8 @@ impl ops::Add for Amount {
         self.checked_add(rhs).expect("Amount addition error")
     }
 }
-
-impl ops::AddAssign for Amount {
-    fn add_assign(&mut self, other: Amount) { *self = *self + other }
-}
+crate::internal_macros::impl_add_for_references!(Amount);
+crate::internal_macros::impl_add_assign!(Amount);
 
 impl ops::Sub for Amount {
     type Output = Amount;
@@ -469,10 +467,8 @@ impl ops::Sub for Amount {
         self.checked_sub(rhs).expect("Amount subtraction error")
     }
 }
-
-impl ops::SubAssign for Amount {
-    fn sub_assign(&mut self, other: Amount) { *self = *self - other }
-}
+crate::internal_macros::impl_sub_for_references!(Amount);
+crate::internal_macros::impl_sub_assign!(Amount);
 
 impl ops::Rem<u64> for Amount {
     type Output = Amount;

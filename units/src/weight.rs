@@ -2,8 +2,7 @@
 
 //! Implements `Weight` and associated features.
 
-use core::fmt;
-use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -167,55 +166,51 @@ impl From<Weight> for u64 {
     fn from(value: Weight) -> Self { value.to_wu() }
 }
 
-impl Add for Weight {
+impl ops::Add for Weight {
     type Output = Weight;
 
     fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
 }
+crate::internal_macros::impl_add_for_references!(Weight);
+crate::internal_macros::impl_add_assign!(Weight);
 
-impl AddAssign for Weight {
-    fn add_assign(&mut self, rhs: Self) { self.0 += rhs.0 }
-}
-
-impl Sub for Weight {
+impl ops::Sub for Weight {
     type Output = Weight;
 
     fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
 }
+crate::internal_macros::impl_sub_for_references!(Weight);
+crate::internal_macros::impl_sub_assign!(Weight);
 
-impl SubAssign for Weight {
-    fn sub_assign(&mut self, rhs: Self) { self.0 -= rhs.0 }
-}
-
-impl Mul<u64> for Weight {
+impl ops::Mul<u64> for Weight {
     type Output = Weight;
 
     fn mul(self, rhs: u64) -> Self::Output { Weight(self.0 * rhs) }
 }
 
-impl Mul<Weight> for u64 {
+impl ops::Mul<Weight> for u64 {
     type Output = Weight;
 
     fn mul(self, rhs: Weight) -> Self::Output { Weight(self * rhs.0) }
 }
 
-impl MulAssign<u64> for Weight {
+impl ops::MulAssign<u64> for Weight {
     fn mul_assign(&mut self, rhs: u64) { self.0 *= rhs }
 }
 
-impl Div<u64> for Weight {
+impl ops::Div<u64> for Weight {
     type Output = Weight;
 
     fn div(self, rhs: u64) -> Self::Output { Weight(self.0 / rhs) }
 }
 
-impl Div<Weight> for Weight {
+impl ops::Div<Weight> for Weight {
     type Output = u64;
 
     fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
 }
 
-impl DivAssign<u64> for Weight {
+impl ops::DivAssign<u64> for Weight {
     fn div_assign(&mut self, rhs: u64) { self.0 /= rhs }
 }
 
@@ -362,4 +357,52 @@ mod tests {
 
     #[test]
     fn checked_div_overflows() { assert!(TWO.checked_div(0).is_none()) }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn addition() {
+        let one = Weight(1);
+        let two = Weight(2);
+        let three = Weight(3);
+
+        assert!(one + two == three);
+        assert!(&one + two == three);
+        assert!(one + &two == three);
+        assert!(&one + &two == three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn subtract() {
+        let one = Weight(1);
+        let two = Weight(2);
+        let three = Weight(3);
+
+        assert!(three - two == one);
+        assert!(&three - two == one);
+        assert!(three - &two == one);
+        assert!(&three - &two == one);
+    }
+
+    #[test]
+    fn add_assign() {
+        let mut f = Weight(1);
+        f += Weight(2);
+        assert_eq!(f, Weight(3));
+
+        let mut f = Weight(1);
+        f += &Weight(2);
+        assert_eq!(f, Weight(3));
+    }
+
+    #[test]
+    fn sub_assign() {
+        let mut f = Weight(3);
+        f -= Weight(2);
+        assert_eq!(f, Weight(1));
+
+        let mut f = Weight(3);
+        f -= &Weight(2);
+        assert_eq!(f, Weight(1));
+    }
 }
