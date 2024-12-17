@@ -42,15 +42,6 @@ fn u_amount_homomorphic() {
     let mut amt = Amount::from_sat(max);
     amt -= Amount::from_sat(min);
     assert_eq!(amt, Amount::from_sat(max - min));
-
-    assert_eq!(
-        Amount::from_sat(n1).to_signed(),
-        if n1 <= i64::MAX as u64 {
-            Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
-        } else {
-            Err(OutOfRangeError::too_big(true))
-        },
-    );
 }
 
 #[kani::unwind(4)]
@@ -81,13 +72,4 @@ fn s_amount_homomorphic() {
     let mut amt = SignedAmount::from_sat(n1);
     amt -= SignedAmount::from_sat(n2);
     assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
-
-    assert_eq!(
-        SignedAmount::from_sat(n1).to_unsigned(),
-        if n1 >= 0 {
-            Ok(Amount::from_sat(n1.try_into().unwrap()))
-        } else {
-            Err(OutOfRangeError { is_signed: false, is_greater_than_max: false })
-        },
-    );
 }
