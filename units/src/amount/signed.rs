@@ -27,7 +27,7 @@ use super::{
 /// This type implements several arithmetic operations from [`core::ops`].
 /// To prevent errors due to overflow or underflow when using these operations,
 /// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [`core::ops`] that [`Amount`]
+/// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
 /// implements will panic when overflow or underflow occurs.
 ///
 /// # Examples
@@ -103,7 +103,7 @@ impl SignedAmount {
 
     /// Parses a decimal string as a value in the given denomination.
     ///
-    /// Note: This only parses the value string.  If you want to parse a value
+    /// Note: This only parses the value string. If you want to parse a value
     /// with denomination, use [`FromStr`].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {

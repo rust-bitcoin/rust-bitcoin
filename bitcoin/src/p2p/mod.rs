@@ -68,12 +68,12 @@ impl ServiceFlags {
     /// clients.
     pub const NETWORK: ServiceFlags = ServiceFlags(1 << 0);
 
-    /// GETUTXO means the node is capable of responding to the getutxo protocol request.  Bitcoin
+    /// GETUTXO means the node is capable of responding to the getutxo protocol request. Bitcoin
     /// Core does not support this but a patch set called Bitcoin XT does.
     /// See BIP 64 for details on how this is implemented.
     pub const GETUTXO: ServiceFlags = ServiceFlags(1 << 1);
 
-    /// BLOOM means the node is capable and willing to handle bloom-filtered connections.  Bitcoin
+    /// BLOOM means the node is capable and willing to handle bloom-filtered connections. Bitcoin
     /// Core nodes used to support this by default, without advertising this bit, but no longer do
     /// as of protocol version 70011 (= NO_BLOOM_VERSION)
     pub const BLOOM: ServiceFlags = ServiceFlags(1 << 2);
