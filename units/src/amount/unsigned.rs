@@ -81,6 +81,13 @@ impl Amount {
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
+    /// ```
     pub const fn to_sat(self) -> u64 { self.0 }
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
@@ -90,6 +97,14 @@ impl Amount {
     /// If the amount is too big, too precise or negative.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::Amount;
+    /// let amount = Amount::from_btc(0.01).expect("we know 0.01 is valid");
+    /// assert_eq!(amount.to_sat(), 1_000_000);
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
@@ -219,6 +234,18 @@ impl Amount {
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
     ///
     /// This function is useful if you do not wish to allocate. See also [`Self::to_string_in`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{Amount, Denomination};
+    /// # use std::fmt::Write;
+    /// let amount = Amount::from_sat(10_000_000);
+    /// let mut output = String::new();
+    /// write!(&mut output, "{}", amount.display_in(Denomination::Bitcoin))?;
+    /// assert_eq!(output, "0.1");
+    /// # Ok::<(), std::fmt::Error>(())
+    /// ```
     #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {

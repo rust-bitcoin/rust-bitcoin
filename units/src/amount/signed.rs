@@ -63,12 +63,35 @@ impl SignedAmount {
     pub const MAX: Self = SignedAmount::MAX_MONEY;
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::SignedAmount;
+    /// let amount = SignedAmount::from_sat(-100_000);
+    /// assert_eq!(amount.to_sat(), -100_000);
+    /// ```
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::SignedAmount;
+    /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
+    /// ```
     pub const fn to_sat(self) -> i64 { self.0 }
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::SignedAmount;
+    /// let amount = SignedAmount::from_btc(-0.01).expect("we know 0.01 is valid");
+    /// assert_eq!(amount.to_sat(), -1_000_000);
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
         SignedAmount::from_float_in(btc, Denomination::Bitcoin)
@@ -123,6 +146,15 @@ impl SignedAmount {
     /// or with [`fmt::Display`].
     ///
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::{amount, SignedAmount};
+    /// let amount = SignedAmount::from_str_with_denomination("0.1 BTC")?;
+    /// assert_eq!(amount, SignedAmount::from_sat(10_000_000));
+    /// # Ok::<_, amount::ParseError>(())
+    /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         SignedAmount::from_str_in(amt, denom).map_err(Into::into)
@@ -131,6 +163,14 @@ impl SignedAmount {
     /// Expresses this [`SignedAmount`] as a floating-point value in the given [`Denomination`].
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
+    /// let amount = SignedAmount::from_sat(100_000);
+    /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
@@ -170,6 +210,18 @@ impl SignedAmount {
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
     ///
     /// This function is useful if you do not wish to allocate. See also [`Self::to_string_in`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
+    /// # use std::fmt::Write;
+    /// let amount = SignedAmount::from_sat(10_000_000);
+    /// let mut output = String::new();
+    /// write!(&mut output, "{}", amount.display_in(Denomination::Bitcoin))?;
+    /// assert_eq!(output, "0.1");
+    /// # Ok::<(), std::fmt::Error>(())
+    /// ```
     #[must_use]
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
@@ -196,11 +248,27 @@ impl SignedAmount {
     /// Returns a formatted string representing this [`SignedAmount`] in the given [`Denomination`].
     ///
     /// Returned string does not include the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
+    /// let amount = SignedAmount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
 
     /// Returns a formatted string representing this [`SignedAmount`] in the given [`Denomination`],
     /// suffixed with the abbreviation for the denomination.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
+    /// let amount = SignedAmount::from_sat(10_000_000);
+    /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
+    /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         self.display_in(denom).show_denomination().to_string()
