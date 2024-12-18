@@ -41,7 +41,7 @@ fn u_amount_homomorphic() {
     assert_eq!(
         Amount::from_sat(n1).to_signed(),
         if n1 <= i64::MAX as u64 {
-            Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
+            Ok(SignedAmount::from_sat_unchecked(n1.try_into().unwrap()))
         } else {
             Err(OutOfRangeError::too_big(true))
         },
@@ -71,23 +71,23 @@ fn s_amount_homomorphic() {
     kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
     kani::assume(n1.checked_sub(n2).is_some()); // assume we don't overflow in the actual test
     assert_eq!(
-        SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 + n2)
+        SignedAmount::from_sat_unchecked(n1) + SignedAmount::from_sat_unchecked(n2),
+        SignedAmount::from_sat_unchecked(n1 + n2)
     );
     assert_eq!(
-        SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 - n2)
+        SignedAmount::from_sat_unchecked(n1) - SignedAmount::from_sat_unchecked(n2),
+        SignedAmount::from_sat_unchecked(n1 - n2)
     );
 
-    let mut amt = SignedAmount::from_sat(n1);
-    amt += SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 + n2));
-    let mut amt = SignedAmount::from_sat(n1);
-    amt -= SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
+    let mut amt = SignedAmount::from_sat_unchecked(n1);
+    amt += SignedAmount::from_sat_unchecked(n2);
+    assert_eq!(amt, SignedAmount::from_sat_unchecked(n1 + n2));
+    let mut amt = SignedAmount::from_sat_unchecked(n1);
+    amt -= SignedAmount::from_sat_unchecked(n2);
+    assert_eq!(amt, SignedAmount::from_sat_unchecked(n1 - n2));
 
     assert_eq!(
-        SignedAmount::from_sat(n1).to_unsigned(),
+        SignedAmount::from_sat_unchecked(n1).to_unsigned(),
         if n1 >= 0 {
             Ok(Amount::from_sat(n1.try_into().unwrap()))
         } else {
@@ -102,16 +102,16 @@ fn s_amount_homomorphic_checked() {
     let n1 = kani::any::<i64>();
     let n2 = kani::any::<i64>();
     assert_eq!(
-        SignedAmount::from_sat(n1).checked_add(SignedAmount::from_sat(n2)),
-        n1.checked_add(n2).map(SignedAmount::from_sat),
+        SignedAmount::from_sat_unchecked(n1).checked_add(SignedAmount::from_sat_unchecked(n2)),
+        n1.checked_add(n2).map(SignedAmount::from_sat_unchecked),
     );
     assert_eq!(
-        SignedAmount::from_sat(n1).checked_sub(SignedAmount::from_sat(n2)),
-        n1.checked_sub(n2).map(SignedAmount::from_sat),
+        SignedAmount::from_sat_unchecked(n1).checked_sub(SignedAmount::from_sat_unchecked(n2)),
+        n1.checked_sub(n2).map(SignedAmount::from_sat_unchecked),
     );
 
     assert_eq!(
-        SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
-        if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat(n1 - n2)) } else { None },
+        SignedAmount::from_sat_unchecked(n1).positive_sub(SignedAmount::from_sat_unchecked(n2)),
+        if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat_unchecked(n1 - n2)) } else { None },
     );
 }

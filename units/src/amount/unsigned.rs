@@ -419,7 +419,7 @@ impl Amount {
         if self.to_sat() > SignedAmount::MAX.to_sat() as u64 { // Cast ok, signed max is positive and fits in u64.
             Err(OutOfRangeError::too_big(true))
         } else {
-            Ok(SignedAmount::from_sat(self.to_sat() as i64)) // Cast ok, checked not too big above.
+            Ok(SignedAmount::from_sat_unchecked(self.to_sat() as i64)) // Cast ok, checked not too big above.
         }
     }
 
