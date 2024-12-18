@@ -91,10 +91,30 @@ pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, Par
     })
 }
 
-/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
-/// the output using infallible conversion function `fn`.
+/// Implements standard parsing traits for `$type` by calling `parse::int`.
 ///
-/// The `Error` type is `ParseIntError`
+/// Once the string is converted to an integer the infallible conversion function `fn` is used to
+/// create the type `to`.
+///
+/// Implements:
+///
+/// * `FromStr`
+/// * `TryFrom<&str>`
+///
+/// And if `alloc` feature is enabled in calling crate:
+///
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<String>`
+///
+/// # Arguments
+///
+/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `fn`: The infallible conversion function to call to convert from an integer.
+///
+/// # Errors
+///
+/// If parsing the string fails then a `units::parse::ParseIntError` is returned.
 #[macro_export]
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
@@ -131,7 +151,27 @@ macro_rules! impl_tryfrom_str_from_int_infallible {
     }
 }
 
-/// Implements standard parsing traits for `$type` by calling into `$inner_fn`.
+/// Implements standard parsing traits for `$type` by calling through to `$inner_fn`.
+///
+/// Implements:
+///
+/// * `FromStr`
+/// * `TryFrom<&str>`
+///
+/// And if `alloc` feature is enabled in calling crate:
+///
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<String>`
+///
+/// # Arguments
+///
+/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `inner_fn`: The fallible conversion function to call to convert from a string reference.
+///
+/// # Errors
+///
+/// All functions use the error returned by `$inner_fn`.
 #[macro_export]
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
