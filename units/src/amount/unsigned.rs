@@ -75,10 +75,19 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::Amount;
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_sat(), 100_000);
     /// ```
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
+
+    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Warning, it's possible to violate the [`Amount`] range invariant.  If the value passed is
+    /// greater than [`Amount::MAX`], your code will misbehave in unspecified ways.  If you wish
+    /// to represent values outside this range, you should use a different type.
+    pub const fn from_sat_unchecked(satoshi: u64) -> Amount {
+        Amount(satoshi)
+    }
 
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
@@ -161,7 +170,7 @@ impl Amount {
     /// ```
     /// # use bitcoin_units::{amount, Amount};
     /// let amount = Amount::from_str_with_denomination("0.1 BTC")?;
-    /// assert_eq!(amount, Amount::from_sat(10_000_000));
+    /// assert_eq!(amount, Amount::from_sat_unchecked(10_000_000));
     /// # Ok::<_, amount::ParseError>(())
     /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
@@ -177,7 +186,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
     /// ```
     #[cfg(feature = "alloc")]
@@ -193,7 +202,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
     #[cfg(feature = "alloc")]
@@ -249,7 +258,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(10_000_000);
+    /// let amount = Amount::from_sat_unchecked(10_000_000);
     /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
     /// ```
     #[cfg(feature = "alloc")]
@@ -262,7 +271,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(10_000_000);
+    /// let amount = Amount::from_sat_unchecked(10_000_000);
     /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
     /// ```
     #[cfg(feature = "alloc")]
@@ -334,7 +343,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
+    /// let amount = Amount::from_sat_unchecked(10);
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
