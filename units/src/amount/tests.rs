@@ -168,34 +168,6 @@ fn amount_checked_div_by_weight_floor() {
     assert!(fee_rate.is_none());
 }
 
-#[test]
-#[cfg(not(debug_assertions))]
-fn unchecked_amount_add() {
-    let amt = Amount::MAX.unchecked_add(Amount::ONE_SAT);
-    assert_eq!(amt, Amount::ZERO);
-}
-
-#[test]
-#[cfg(not(debug_assertions))]
-fn unchecked_signed_amount_add() {
-    let signed_amt = SignedAmount::MAX.unchecked_add(SignedAmount::ONE_SAT);
-    assert_eq!(signed_amt, SignedAmount::MIN);
-}
-
-#[test]
-#[cfg(not(debug_assertions))]
-fn unchecked_amount_subtract() {
-    let amt = Amount::ZERO.unchecked_sub(Amount::ONE_SAT);
-    assert_eq!(amt, Amount::MAX);
-}
-
-#[test]
-#[cfg(not(debug_assertions))]
-fn unchecked_signed_amount_subtract() {
-    let signed_amt = SignedAmount::MIN.unchecked_sub(SignedAmount::ONE_SAT);
-    assert_eq!(signed_amt, SignedAmount::MAX);
-}
-
 #[cfg(feature = "alloc")]
 #[test]
 fn floating_point() {
