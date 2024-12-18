@@ -85,6 +85,12 @@ impl SignedAmount {
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
+    /// # Errors
+    ///
+    /// If the amount is too big (positive or negative) or too precise.
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
+    ///
     /// # Examples
     ///
     /// ```
@@ -128,6 +134,10 @@ impl SignedAmount {
     ///
     /// Note: This only parses the value string. If you want to parse a string
     /// containing the value with denomination, use [`FromStr`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big (positive or negative) or too precise.
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
             // (negative, amount)
@@ -146,6 +156,10 @@ impl SignedAmount {
     /// or with [`fmt::Display`].
     ///
     /// If you want to parse only the amount without the denomination, use [`Self::from_str_in`].
+    ///
+    /// # Errors
+    ///
+    /// If the amount is too big (positive or negative) or too precise.
     ///
     /// # Examples
     ///
@@ -194,7 +208,7 @@ impl SignedAmount {
     ///
     /// # Errors
     ///
-    /// If the amount is too big, too precise or negative.
+    /// If the amount is too big (positive or negative) or too precise.
     ///
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
@@ -417,6 +431,10 @@ impl SignedAmount {
     }
 
     /// Converts to an unsigned amount.
+    ///
+    /// # Errors
+    ///
+    /// If the amount is negative.
     pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
