@@ -80,6 +80,15 @@ impl Amount {
     /// ```
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
+    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Warning, it's possible to violate the [`Amount`] range invariant.  If the value passed is
+    /// greater than [`Amount::MAX`], your code will misbehave in unspecified ways.  If you wish
+    /// to represent values outside this range, you should use a different type.
+    pub const fn from_sat_unchecked(satoshi: u64) -> Amount {
+        Amount(satoshi)
+    }
+
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
 
