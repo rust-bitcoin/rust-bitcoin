@@ -356,7 +356,7 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic]
+    #[should_panic = "attempt to multiply with overflow"]
     fn from_sat_per_vb_unchecked_panic() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 
     #[test]
