@@ -188,3 +188,45 @@ mod tests {
         av.extend_from_slice(b"abc");
     }
 }
+
+#[cfg(kani)]
+mod verification {
+    use super::*;
+
+    #[kani::unwind(16)]         // One greater than 15 (max number of elements).
+    #[kani::proof]
+    fn no_out_of_bounds_less_than_cap() {
+        const CAP: usize = 32;
+        let n = kani::any::<u32>();
+        let elements = (n & 0x0F) as usize; // Just use 4 bits.
+
+        let val = kani::any::<u32>();
+
+        let mut v = ArrayVec::<u32, CAP>::new();
+        for _ in 0..elements {
+            v.push(val);
+        }
+
+        for i in 0..elements {
+            assert_eq!(v[i], val);
+        }
+    }
+
+    #[kani::unwind(16)]         // One grater than 15.
+    #[kani::proof]
+    fn no_out_of_bounds_upto_cap() {
+        const CAP: usize = 15;
+        let elements = CAP;
+
+        let val = kani::any::<u32>();
+
+        let mut v = ArrayVec::<u32, CAP>::new();
+        for _ in 0..elements {
+            v.push(val);
+        }
+
+        for i in 0..elements {
+            assert_eq!(v[i], val);
+        }
+    }
+}
