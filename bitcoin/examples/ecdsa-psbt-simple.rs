@@ -46,12 +46,12 @@ const BIP84_DERIVATION_PATH: &str = "m/84'/0'/0'";
 const MASTER_FINGERPRINT: &str = "9680603f";
 
 // The dummy UTXO amounts we are spending.
-const DUMMY_UTXO_AMOUNT_INPUT_1: Amount = Amount::from_sat(20_000_000);
-const DUMMY_UTXO_AMOUNT_INPUT_2: Amount = Amount::from_sat(10_000_000);
+const DUMMY_UTXO_AMOUNT_INPUT_1: Amount = Amount::from_sat_unchecked(20_000_000);
+const DUMMY_UTXO_AMOUNT_INPUT_2: Amount = Amount::from_sat_unchecked(10_000_000);
 
 // The amounts we are sending to someone, and receiving back as change.
-const SPEND_AMOUNT: Amount = Amount::from_sat(25_000_000);
-const CHANGE_AMOUNT: Amount = Amount::from_sat(4_990_000); // 10_000 sat fee.
+const SPEND_AMOUNT: Amount = Amount::from_sat_unchecked(25_000_000);
+const CHANGE_AMOUNT: Amount = Amount::from_sat_unchecked(4_990_000); // 10_000 sat fee.
 
 // Derive the external address xpriv.
 fn get_external_address_xpriv<C: Signing>(

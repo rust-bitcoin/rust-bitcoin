@@ -217,11 +217,12 @@ pub mod amount {
     };
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
+    use encode::Error;
 
     impl Decodable for Amount {
         #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
+        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+            Amount::from_sat(Decodable::consensus_decode(r)?).map_err(|_| Error::Parse(encode::ParseError::MissingData))
         }
     }
 

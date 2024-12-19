@@ -25,23 +25,23 @@ fn u_amount_homomorphic() {
     let n2 = kani::any::<u64>();
     // Assume we don't overflow in the actual tests.
     kani::assume(n1.checked_add(n2).is_some()); // Adding u64s doesn't overflow.
-    let a1 = Amount::from_sat(n1);              // TODO: If from_sat enforces invariant assume this `is_ok()`.
-    let a2 = Amount::from_sat(n2);
+    let a1 = Amount::from_sat_unchecked(n1);              // TODO: If from_sat enforces invariant assume this `is_ok()`.
+    let a2 = Amount::from_sat_unchecked(n2);
     kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
 
-    assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2));
+    assert_eq!(Amount::from_sat_unchecked(n1) + Amount::from_sat_unchecked(n2), Amount::from_sat_unchecked(n1 + n2));
 
-    let mut amt = Amount::from_sat(n1);
-    amt += Amount::from_sat(n2);
-    assert_eq!(amt, Amount::from_sat(n1 + n2));
+    let mut amt = Amount::from_sat_unchecked(n1);
+    amt += Amount::from_sat_unchecked(n2);
+    assert_eq!(amt, Amount::from_sat_unchecked(n1 + n2));
 
     let max = cmp::max(n1, n2);
     let min = cmp::min(n1, n2);
-    assert_eq!(Amount::from_sat(max) - Amount::from_sat(min), Amount::from_sat(max - min));
+    assert_eq!(Amount::from_sat_unchecked(max) - Amount::from_sat_unchecked(min), Amount::from_sat_unchecked(max - min));
 
-    let mut amt = Amount::from_sat(max);
-    amt -= Amount::from_sat(min);
-    assert_eq!(amt, Amount::from_sat(max - min));
+    let mut amt = Amount::from_sat_unchecked(max);
+    amt -= Amount::from_sat_unchecked(min);
+    assert_eq!(amt, Amount::from_sat_unchecked(max - min));
 }
 
 #[kani::unwind(4)]

@@ -662,6 +662,7 @@ pub bitcoin_units::amount::error::ParseDenominationError::Unknown(bitcoin_units:
 pub const bitcoin_units::Amount::MAX: Self
 pub const bitcoin_units::Amount::MAX_MONEY: Self
 pub const bitcoin_units::Amount::MIN: Self
+pub const bitcoin_units::Amount::NULL: bitcoin_units::Amount
 pub const bitcoin_units::Amount::ONE_BTC: Self
 pub const bitcoin_units::Amount::ONE_SAT: Self
 pub const bitcoin_units::Amount::SIZE: usize
@@ -712,7 +713,7 @@ pub const fn bitcoin_units::Amount::checked_mul(self, rhs: u64) -> core::option:
 pub const fn bitcoin_units::Amount::checked_rem(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::checked_sub(self, rhs: bitcoin_units::Amount) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::from_int_btc_const(whole_bitcoin: u32) -> bitcoin_units::Amount
-pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> bitcoin_units::Amount
+pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::error::OutOfRangeError>
 pub const fn bitcoin_units::Amount::from_sat_unchecked(satoshi: u64) -> bitcoin_units::Amount
 pub const fn bitcoin_units::Amount::to_sat(self) -> u64
 pub const fn bitcoin_units::SignedAmount::checked_abs(self) -> core::option::Option<bitcoin_units::SignedAmount>
