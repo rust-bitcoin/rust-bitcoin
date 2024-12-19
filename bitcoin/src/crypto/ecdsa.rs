@@ -6,7 +6,7 @@
 
 use core::str::FromStr;
 use core::{fmt, iter};
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 use alloc::boxed::Box;
 
 #[cfg(feature = "arbitrary")]
@@ -14,8 +14,9 @@ use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
-use std::rc::Rc;
-use std::sync::Arc;
+use alloc::rc::Rc;
+use alloc::sync::Arc;
+use alloc::string::String;
 
 use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
@@ -99,54 +100,42 @@ impl FromStr for Signature {
 }
 
 impl TryFrom<&str> for Signature {
-    type Error = Error;
+    type Error = ParseSignatureError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let bytes = Vec::from_hex(s)?;
-        let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
-        Ok(Signature {
-            signature: secp256k1::ecdsa::Signature::from_der(signature)?,
-            sighash_type: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
-        })
+        Self::from_str(s)
+    }
+}
+
+impl TryFrom<String> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::from_str(&s)
     }
 }
 
 impl TryFrom<Box<str>> for Signature {
-    type Error = Error;
+    type Error = ParseSignatureError;
 
     fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
-        let bytes = Vec::from_hex(&s)?;
-        let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
-        Ok(Signature {
-            signature: secp256k1::ecdsa::Signature::from_der(signature)?,
-            sighash_type: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
-        })
+        Self::from_str(&s)
     }
 }
 
 impl TryFrom<Arc<str>> for Signature {
-    type Error = Error;
+    type Error = ParseSignatureError;
 
     fn try_from(s: Arc<str>) -> Result<Self, Self::Error> {
-        let bytes = Vec::from_hex(&s)?;
-        let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
-        Ok(Signature {
-            signature: secp256k1::ecdsa::Signature::from_der(signature)?,
-            sighash_type: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
-        })
+        Self::from_str(&s)
     }
 }
 
 impl TryFrom<Rc<str>> for Signature {
-    type Error = Error;
+    type Error = ParseSignatureError;
 
     fn try_from(s: Rc<str>) -> Result<Self, Self::Error> {
-        let bytes = Vec::from_hex(&s)?;
-        let (sighash_byte, signature) = bytes.split_last().ok_or(Error::EmptySignature)?;
-        Ok(Signature {
-            signature: secp256k1::ecdsa::Signature::from_der(signature)?,
-            sighash_type: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
-        })
+        Self::from_str(&s)
     }
 }
 
