@@ -6,12 +6,17 @@
 
 use core::str::FromStr;
 use core::{fmt, iter};
+use core::convert::TryFrom;
+use alloc::boxed::Box;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
+use alloc::rc::Rc;
+use alloc::sync::Arc;
+use alloc::string::String;
 
 use crate::prelude::{DisplayHex, Vec};
 use crate::script::PushBytes;
@@ -94,6 +99,46 @@ impl FromStr for Signature {
     }
 }
 
+impl TryFrom<&str> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Self::from_str(s)
+    }
+}
+
+impl TryFrom<String> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::from_str(&s)
+    }
+}
+
+impl TryFrom<Box<str>> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: Box<str>) -> Result<Self, Self::Error> {
+        Self::from_str(&s)
+    }
+}
+
+impl TryFrom<Arc<str>> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: Arc<str>) -> Result<Self, Self::Error> {
+        Self::from_str(&s)
+    }
+}
+
+impl TryFrom<Rc<str>> for Signature {
+    type Error = ParseSignatureError;
+
+    fn try_from(s: Rc<str>) -> Result<Self, Self::Error> {
+        Self::from_str(&s)
+    }
+}
+
 /// Holds signature serialized in-line (not in `Vec`).
 ///
 /// This avoids allocation and allows proving maximum size of the signature (73 bytes).
@@ -110,7 +155,9 @@ pub struct SerializedSignature {
 impl SerializedSignature {
     /// Returns an iterator over bytes of the signature.
     #[inline]
-    pub fn iter(&self) -> core::slice::Iter<'_, u8> { self.into_iter() }
+    pub fn iter(&self) -> core::slice::Iter<'_, u8> {
+        self.into_iter()
+    }
 
     /// Writes this serialized signature to a `writer`.
     #[inline]
@@ -123,47 +170,65 @@ impl core::ops::Deref for SerializedSignature {
     type Target = [u8];
 
     #[inline]
-    fn deref(&self) -> &Self::Target { &self.data[..self.len] }
+    fn deref(&self) -> &Self::Target {
+        &self.data[..self.len]
+    }
 }
 
 impl core::ops::DerefMut for SerializedSignature {
     #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.data[..self.len] }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data[..self.len]
+    }
 }
 
 impl AsRef<[u8]> for SerializedSignature {
     #[inline]
-    fn as_ref(&self) -> &[u8] { self }
+    fn as_ref(&self) -> &[u8] {
+        self
+    }
 }
 
 impl AsMut<[u8]> for SerializedSignature {
     #[inline]
-    fn as_mut(&mut self) -> &mut [u8] { self }
+    fn as_mut(&mut self) -> &mut [u8] {
+        self
+    }
 }
 
 impl AsRef<PushBytes> for SerializedSignature {
     #[inline]
-    fn as_ref(&self) -> &PushBytes { &<&PushBytes>::from(&self.data)[..self.len()] }
+    fn as_ref(&self) -> &PushBytes {
+        &<&PushBytes>::from(&self.data)[..self.len()]
+    }
 }
 
 impl core::borrow::Borrow<[u8]> for SerializedSignature {
     #[inline]
-    fn borrow(&self) -> &[u8] { self }
+    fn borrow(&self) -> &[u8] {
+        self
+    }
 }
 
 impl core::borrow::BorrowMut<[u8]> for SerializedSignature {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut [u8] { self }
+    fn borrow_mut(&mut self) -> &mut [u8] {
+        self
+    }
 }
 
 impl fmt::Debug for SerializedSignature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl fmt::Display for SerializedSignature {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(self, f)
+    }
 }
 
 impl fmt::LowerHex for SerializedSignature {
@@ -184,13 +249,17 @@ impl fmt::UpperHex for SerializedSignature {
 
 impl PartialEq for SerializedSignature {
     #[inline]
-    fn eq(&self, other: &SerializedSignature) -> bool { **self == **other }
+    fn eq(&self, other: &SerializedSignature) -> bool {
+        **self == **other
+    }
 }
 
 impl Eq for SerializedSignature {}
 
 impl core::hash::Hash for SerializedSignature {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { core::hash::Hash::hash(&**self, state) }
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        core::hash::Hash::hash(&**self, state)
+    }
 }
 
 impl<'a> IntoIterator for &'a SerializedSignature {
@@ -198,7 +267,9 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     type Item = &'a u8;
 
     #[inline]
-    fn into_iter(self) -> Self::IntoIter { (*self).iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        (*self).iter()
+    }
 }
 
 /// Error encountered while parsing an ECDSA signature from a byte slice.
