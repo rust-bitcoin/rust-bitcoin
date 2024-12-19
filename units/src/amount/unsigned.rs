@@ -54,6 +54,8 @@ use crate::{FeeRate, Weight};
 pub struct Amount(u64);
 
 impl Amount {
+    /// This is used in a "null txout" in consensus signing code.
+    pub const NULL: Amount = Amount(0xffff_ffff_ffff_ffff);
     /// The zero amount.
     pub const ZERO: Self = Amount(0);
     /// Exactly one satoshi.
@@ -61,7 +63,7 @@ impl Amount {
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = Self::from_int_btc_const(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Self::from_int_btc_const(21_000_000);
+    pub const MAX_MONEY: Self = Amount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
     pub const MIN: Self = Amount::ZERO;
     /// The maximum value of an amount.
@@ -75,10 +77,25 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::Amount;
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_sat(), 100_000);
     /// ```
-    pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
+    pub const fn from_sat(satoshi: u64) -> Result<Amount, OutOfRangeError> {
+        if satoshi > Self::MAX.0 {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+        } else {
+            Ok(Amount(satoshi))
+        }
+    }
+
+    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Warning, it's possible to violate the [`Amount`] range invariant.  If the value passed is
+    /// greater than [`Amount::MAX`], your code will misbehave in unspecified ways.  If you wish
+    /// to represent values outside this range, you should use a different type.
+    pub const fn from_sat_unchecked(satoshi: u64) -> Amount {
+        Amount(satoshi)
+    }
 
     /// Gets the number of satoshis in this [`Amount`].
     pub const fn to_sat(self) -> u64 { self.0 }
@@ -103,7 +120,7 @@ impl Amount {
     /// per bitcoin overflows a `u64` type.
     pub fn from_int_btc<T: Into<u64>>(whole_bitcoin: T) -> Result<Amount, OutOfRangeError> {
         match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Amount::from_sat(amount)),
+            Some(amount) => Amount::from_sat(amount),
             None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
         }
     }
@@ -114,11 +131,15 @@ impl Amount {
     /// # Panics
     ///
     /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows a `u64` type.
+    /// per bitcoin overflows a `u64` type or if the value is out of range.
     pub const fn from_int_btc_const(whole_bitcoin: u32) -> Amount {
         let btc = whole_bitcoin as u64; // Can't call u64::from in const context.
         match btc.checked_mul(100_000_000) {
-            Some(amount) => Amount::from_sat(amount),
+            Some(amount) =>
+                match Amount::from_sat(amount) {
+                    Ok(a) => a,
+                    Err(_) => panic!("out of range")
+                }
             None => panic!("checked_mul overflowed"),
         }
     }
@@ -144,7 +165,7 @@ impl Amount {
                 OutOfRangeError::too_big(false),
             )));
         }
-        Ok(Amount::from_sat(satoshi))
+        Ok(Amount::from_sat_unchecked(satoshi))
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
@@ -161,7 +182,7 @@ impl Amount {
     /// ```
     /// # use bitcoin_units::{amount, Amount};
     /// let amount = Amount::from_str_with_denomination("0.1 BTC")?;
-    /// assert_eq!(amount, Amount::from_sat(10_000_000));
+    /// assert_eq!(amount, Amount::from_sat_unchecked(10_000_000));
     /// # Ok::<_, amount::ParseError>(())
     /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
@@ -177,7 +198,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
     /// ```
     #[cfg(feature = "alloc")]
@@ -193,7 +214,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
+    /// let amount = Amount::from_sat_unchecked(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
     #[cfg(feature = "alloc")]
@@ -249,7 +270,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(10_000_000);
+    /// let amount = Amount::from_sat_unchecked(10_000_000);
     /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
     /// ```
     #[cfg(feature = "alloc")]
@@ -262,7 +283,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{Amount, Denomination};
-    /// let amount = Amount::from_sat(10_000_000);
+    /// let amount = Amount::from_sat_unchecked(10_000_000);
     /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
     /// ```
     #[cfg(feature = "alloc")]
@@ -334,7 +355,7 @@ impl Amount {
     ///
     /// ```
     /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
+    /// let amount = Amount::from_sat_unchecked(10);
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
@@ -538,7 +559,7 @@ impl TryFrom<SignedAmount> for Amount {
 impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Amount::from_sat_unchecked(sats)
     }
 }
 
@@ -548,7 +569,7 @@ impl<'a> core::iter::Sum<&'a Amount> for Amount {
         I: Iterator<Item = &'a Amount>,
     {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Amount::from_sat_unchecked(sats)
     }
 }
 
