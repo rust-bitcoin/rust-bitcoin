@@ -352,8 +352,11 @@ pub struct TxOut {
 #[cfg(feature = "alloc")]
 impl TxOut {
     /// This is used as a "null txout" in consensus signing code.
-    pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+    pub const NULL: Self = TxOut {
+        // Breaks the `Amount` invariant but since this is explicitly an invalid utxo that is ok.
+        value: Amount::from_sat_unchecked(0xffffffffffffffff),
+        script_pubkey: ScriptBuf::new(),
+    };
 }
 
 /// A reference to a transaction output.

@@ -99,26 +99,6 @@ impl FeeRate {
         }
     }
 
-    /// Checked weight multiplication.
-    ///
-    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate.
-    /// When the resulting fee is a non-integer amount, the amount is rounded up,
-    /// ensuring that the transaction fee is enough instead of falling short if
-    /// rounded down.
-    ///
-    /// [`None`] is returned if an overflow occurred.
-    #[must_use]
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
-        // No `?` operator in const context.
-        match self.0.checked_mul(weight.to_wu()) {
-            Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
-                None => None,
-            },
-            None => None,
-        }
-    }
-
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning [`None`] if overflow occured.
@@ -191,31 +171,6 @@ impl ops::Sub for FeeRate {
 }
 crate::internal_macros::impl_sub_for_references!(FeeRate);
 crate::internal_macros::impl_sub_assign!(FeeRate);
-
-/// Computes the ceiling so that the fee computation is conservative.
-impl ops::Mul<FeeRate> for Weight {
-    type Output = Amount;
-
-    fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
-    }
-}
-
-impl ops::Mul<Weight> for FeeRate {
-    type Output = Amount;
-
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
-}
-
-impl ops::Div<Weight> for Amount {
-    type Output = FeeRate;
-
-    /// Truncating integer division.
-    ///
-    /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
-    /// `checked_div_by_weight` instead.
-    fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
-}
 
 impl core::iter::Sum for FeeRate {
     fn sum<I>(iter: I) -> Self
@@ -305,7 +260,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        let fee_rate = Amount::from_sat_unchecked(329) / Weight::from_wu(381);
         assert_eq!(fee_rate, FeeRate(863));
     }
 
@@ -389,7 +344,7 @@ mod tests {
             .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
-        assert_eq!(Amount::from_sat(100), fee);
+        assert_eq!(Amount::from_sat_unchecked(100), fee);
 
         let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
@@ -397,14 +352,14 @@ mod tests {
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
-        assert_eq!(Amount::from_sat(9), fee);
+        assert_eq!(Amount::from_sat_unchecked(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
-        assert_eq!(fee, Amount::from_sat(330));
+        assert_eq!(fee, Amount::from_sat_unchecked(330));
     }
 
     #[test]
