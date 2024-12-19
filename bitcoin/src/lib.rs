@@ -221,7 +221,7 @@ pub mod amount {
     impl Decodable for Amount {
         #[inline]
         fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
+            Amount::from_sat(Decodable::consensus_decode(r)?).map_err(|_| crate::consensus::encode::Error::Parse(encode::ParseError::MissingData))
         }
     }
 

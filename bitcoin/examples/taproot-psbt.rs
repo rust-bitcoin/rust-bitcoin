@@ -40,7 +40,7 @@ const UTXO_SCRIPT_PUBKEY: &str =
     "5120be27fa8b1f5278faf82cab8da23e8761f8f9bd5d5ebebbb37e0e12a70d92dd16";
 const UTXO_PUBKEY: &str = "a6ac32163539c16b6b5dbbca01b725b8e8acaa5f821ba42c80e7940062140d19";
 const UTXO_MASTER_FINGERPRINT: &str = "e61b318f";
-const ABSOLUTE_FEES_IN_SATS: Amount = Amount::from_sat(1_000);
+const ABSOLUTE_FEES_IN_SATS: Amount = Amount::from_sat_unchecked(1_000);
 
 // UTXO_1 will be used for spending example 1
 const UTXO_1: P2trUtxo = P2trUtxo {
