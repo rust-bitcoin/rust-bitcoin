@@ -148,13 +148,19 @@ impl std::error::Error for CommandStringError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// A Network message
+/// A Network message using the v1 p2p protocol.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RawNetworkMessage {
     magic: Magic,
     payload: NetworkMessage,
     payload_len: u32,
     checksum: [u8; 4],
+}
+
+/// A Network message using the v2 p2p protocol defined in BIP324.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct V2NetworkMessage {
+    payload: NetworkMessage,
 }
 
 /// A Network message payload. Proper documentation is available on at
@@ -332,6 +338,27 @@ impl RawNetworkMessage {
     pub fn command(&self) -> CommandString { self.payload.command() }
 }
 
+impl V2NetworkMessage {
+    /// Constructs a new [V2NetworkMessage].
+    pub fn new(payload: NetworkMessage) -> Self { Self { payload } }
+
+    /// Consumes the [V2NetworkMessage] instance and returns the inner payload.
+    pub fn into_payload(self) -> NetworkMessage { self.payload }
+
+    /// The actual message data
+    pub fn payload(&self) -> &NetworkMessage { &self.payload }
+
+    /// Return the message command as a static string reference.
+    ///
+    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// regardless of the actual command in the unknown message.
+    /// Use the [Self::command] method to get the command for unknown messages.
+    pub fn cmd(&self) -> &'static str { self.payload.cmd() }
+
+    /// Return the CommandString for the message command.
+    pub fn command(&self) -> CommandString { self.payload.command() }
+}
+
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
 impl Encodable for HeaderSerializationWrapper<'_> {
@@ -400,6 +427,62 @@ impl Encodable for RawNetworkMessage {
         len += self.payload_len.consensus_encode(w)?;
         len += self.checksum.consensus_encode(w)?;
         len += self.payload().consensus_encode(w)?;
+        Ok(len)
+    }
+}
+
+impl Encodable for V2NetworkMessage {
+    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        // A subset of message types are optimized to only use one byte to encode the command.
+        // Non-optimized message types use the zero-byte flag and the following twelve bytes to encode the command.
+        let (command_byte, full_command) = match self.payload {
+            NetworkMessage::Addr(_) => (1u8, None),
+            NetworkMessage::Inv(_) => (14u8, None),
+            NetworkMessage::GetData(_) => (11u8, None),
+            NetworkMessage::NotFound(_) => (17u8, None),
+            NetworkMessage::GetBlocks(_) => (9u8, None),
+            NetworkMessage::GetHeaders(_) => (12u8, None),
+            NetworkMessage::MemPool => (15u8, None),
+            NetworkMessage::Tx(_) => (21u8, None),
+            NetworkMessage::Block(_) => (2u8, None),
+            NetworkMessage::Headers(_) => (13u8, None),
+            NetworkMessage::Ping(_) => (18u8, None),
+            NetworkMessage::Pong(_) => (19u8, None),
+            NetworkMessage::MerkleBlock(_) => (16u8, None),
+            NetworkMessage::FilterLoad(_) => (8u8, None),
+            NetworkMessage::FilterAdd(_) => (6u8, None),
+            NetworkMessage::FilterClear => (7u8, None),
+            NetworkMessage::GetCFilters(_) => (22u8, None),
+            NetworkMessage::CFilter(_) => (23u8, None),
+            NetworkMessage::GetCFHeaders(_) => (24u8, None),
+            NetworkMessage::CFHeaders(_) => (25u8, None),
+            NetworkMessage::GetCFCheckpt(_) => (26u8, None),
+            NetworkMessage::CFCheckpt(_) => (27u8, None),
+            NetworkMessage::SendCmpct(_) => (20u8, None),
+            NetworkMessage::CmpctBlock(_) => (4u8, None),
+            NetworkMessage::GetBlockTxn(_) => (10u8, None),
+            NetworkMessage::BlockTxn(_) => (3u8, None),
+            NetworkMessage::FeeFilter(_) => (5u8, None),
+            NetworkMessage::AddrV2(_) => (28u8, None),
+            NetworkMessage::Version(_)
+            | NetworkMessage::Verack
+            | NetworkMessage::SendHeaders
+            | NetworkMessage::GetAddr
+            | NetworkMessage::WtxidRelay
+            | NetworkMessage::SendAddrV2
+            | NetworkMessage::Alert(_)
+            | NetworkMessage::Reject(_)
+            | NetworkMessage::Unknown { .. } => (0u8, Some(self.payload.command())),
+        };
+
+        let mut len = command_byte.consensus_encode(writer)?;
+        if let Some(cmd) = full_command {
+            len += cmd.consensus_encode(writer)?;
+        }
+
+        // Encode the payload.
+        len += self.payload.consensus_encode(writer)?;
+
         Ok(len)
     }
 }
@@ -529,6 +612,79 @@ impl Decodable for RawNetworkMessage {
             _ => NetworkMessage::Unknown { command: cmd, payload: raw_payload },
         };
         Ok(RawNetworkMessage { magic, payload, payload_len, checksum })
+    }
+
+    #[inline]
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
+    }
+}
+
+impl Decodable for V2NetworkMessage {
+    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, encode::Error> {
+        let short_id: u8 = Decodable::consensus_decode_from_finite_reader(r)?;
+        let payload = match short_id {
+            0u8 => {
+                // Full command encoding.
+                let cmd = CommandString::consensus_decode_from_finite_reader(r)?;
+                match &cmd.0[..] {
+                    "version" =>
+                        NetworkMessage::Version(Decodable::consensus_decode_from_finite_reader(r)?),
+                    "verack" => NetworkMessage::Verack,
+                    "sendheaders" => NetworkMessage::SendHeaders,
+                    "getaddr" => NetworkMessage::GetAddr,
+                    "wtxidrelay" => NetworkMessage::WtxidRelay,
+                    "sendaddrv2" => NetworkMessage::SendAddrV2,
+                    "alert" =>
+                        NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(r)?),
+                    "reject" =>
+                        NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(r)?),
+                    _ => NetworkMessage::Unknown {
+                        command: cmd,
+                        payload: Vec::consensus_decode_from_finite_reader(r)?,
+                    },
+                }
+            }
+            1u8 => NetworkMessage::Addr(Decodable::consensus_decode_from_finite_reader(r)?),
+            2u8 => NetworkMessage::Block(Decodable::consensus_decode_from_finite_reader(r)?),
+            3u8 => NetworkMessage::BlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
+            4u8 => NetworkMessage::CmpctBlock(Decodable::consensus_decode_from_finite_reader(r)?),
+            5u8 => NetworkMessage::FeeFilter(Decodable::consensus_decode_from_finite_reader(r)?),
+            6u8 => NetworkMessage::FilterAdd(Decodable::consensus_decode_from_finite_reader(r)?),
+            7u8 => NetworkMessage::FilterClear,
+            8u8 => NetworkMessage::FilterLoad(Decodable::consensus_decode_from_finite_reader(r)?),
+            9u8 => NetworkMessage::GetBlocks(Decodable::consensus_decode_from_finite_reader(r)?),
+            10u8 => NetworkMessage::GetBlockTxn(Decodable::consensus_decode_from_finite_reader(r)?),
+            11u8 => NetworkMessage::GetData(Decodable::consensus_decode_from_finite_reader(r)?),
+            12u8 => NetworkMessage::GetHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
+            13u8 => NetworkMessage::Headers(
+                HeaderDeserializationWrapper::consensus_decode_from_finite_reader(r)?.0,
+            ),
+            14u8 => NetworkMessage::Inv(Decodable::consensus_decode_from_finite_reader(r)?),
+            15u8 => NetworkMessage::MemPool,
+            16u8 => NetworkMessage::MerkleBlock(Decodable::consensus_decode_from_finite_reader(r)?),
+            17u8 => NetworkMessage::NotFound(Decodable::consensus_decode_from_finite_reader(r)?),
+            18u8 => NetworkMessage::Ping(Decodable::consensus_decode_from_finite_reader(r)?),
+            19u8 => NetworkMessage::Pong(Decodable::consensus_decode_from_finite_reader(r)?),
+            20u8 => NetworkMessage::SendCmpct(Decodable::consensus_decode_from_finite_reader(r)?),
+            21u8 => NetworkMessage::Tx(Decodable::consensus_decode_from_finite_reader(r)?),
+            22u8 => NetworkMessage::GetCFilters(Decodable::consensus_decode_from_finite_reader(r)?),
+            23u8 => NetworkMessage::CFilter(Decodable::consensus_decode_from_finite_reader(r)?),
+            24u8 =>
+                NetworkMessage::GetCFHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
+            25u8 => NetworkMessage::CFHeaders(Decodable::consensus_decode_from_finite_reader(r)?),
+            26u8 =>
+                NetworkMessage::GetCFCheckpt(Decodable::consensus_decode_from_finite_reader(r)?),
+            27u8 => NetworkMessage::CFCheckpt(Decodable::consensus_decode_from_finite_reader(r)?),
+            28u8 => NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(r)?),
+            _ =>
+                return Err(encode::Error::Parse(encode::ParseError::ParseFailed(
+                    "Unknown short ID",
+                ))),
+        };
+        Ok(V2NetworkMessage { payload })
     }
 
     #[inline]
@@ -669,9 +825,14 @@ mod test {
             NetworkMessage::SendCmpct(SendCmpct { send_compact: true, version: 8333 }),
         ];
 
-        for msg in msgs {
-            let raw_msg = RawNetworkMessage::new(Magic::from_bytes([57, 0, 0, 0]), msg);
+        for msg in &msgs {
+            // V1 messages.
+            let raw_msg = RawNetworkMessage::new(Magic::from_bytes([57, 0, 0, 0]), msg.clone());
             assert_eq!(deserialize::<RawNetworkMessage>(&serialize(&raw_msg)).unwrap(), raw_msg);
+
+            // V2 messages.
+            let v2_msg = V2NetworkMessage::new(msg.clone());
+            assert_eq!(deserialize::<V2NetworkMessage>(&serialize(&v2_msg)).unwrap(), v2_msg);
         }
     }
 
@@ -710,6 +871,17 @@ mod test {
     }
 
     #[test]
+    fn serialize_v2_verack() {
+        assert_eq!(
+            serialize(&V2NetworkMessage::new(NetworkMessage::Verack)),
+            [
+                0x00, // Full command encoding flag.
+                0x76, 0x65, 0x72, 0x61, 0x63, 0x6B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]
+        );
+    }
+
+    #[test]
     #[rustfmt::skip]
     fn serialize_ping() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::Ping(100))),
@@ -717,6 +889,17 @@ mod test {
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
                         0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn serialize_v2_ping() {
+        assert_eq!(
+            serialize(&V2NetworkMessage::new(NetworkMessage::Ping(100))),
+            [
+                0x12, // Ping command short ID
+                0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]
+        );
     }
 
     #[test]
@@ -729,12 +912,33 @@ mod test {
     }
 
     #[test]
+    fn serialize_v2_mempool() {
+        assert_eq!(
+            serialize(&V2NetworkMessage::new(NetworkMessage::MemPool)),
+            [
+                0x0F, // MemPool command short ID
+            ]
+        );
+    }
+
+    #[test]
     #[rustfmt::skip]
     fn serialize_getaddr() {
         assert_eq!(serialize(&RawNetworkMessage::new(Magic::BITCOIN, NetworkMessage::GetAddr)),
                        [0xf9, 0xbe, 0xb4, 0xd9, 0x67, 0x65, 0x74, 0x61,
                         0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]);
+    }
+
+    #[test]
+    fn serialize_v2_getaddr() {
+        assert_eq!(
+            serialize(&V2NetworkMessage::new(NetworkMessage::GetAddr)),
+            [
+                0x00, // Full command encoding flag.
+                0x67, 0x65, 0x74, 0x61, 0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
+            ]
+        );
     }
 
     #[test]
@@ -750,6 +954,19 @@ mod test {
         let msg: RawNetworkMessage = msg.unwrap();
         assert_eq!(preimage.magic, msg.magic);
         assert_eq!(preimage.payload, msg.payload);
+    }
+
+    #[test]
+    fn deserialize_v2_getaddr() {
+        let msg = deserialize(&[
+            0x00, // Full command encoding flag
+            0x67, 0x65, 0x74, 0x61, 0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ]);
+
+        let preimage = V2NetworkMessage::new(NetworkMessage::GetAddr);
+        assert!(msg.is_ok());
+        let msg: V2NetworkMessage = msg.unwrap();
+        assert_eq!(preimage, msg);
     }
 
     #[test]
@@ -777,6 +994,44 @@ mod test {
         assert!(msg.is_ok());
         let msg = msg.unwrap();
         assert_eq!(msg.magic, Magic::BITCOIN);
+        if let NetworkMessage::Version(version_msg) = msg.payload {
+            assert_eq!(version_msg.version, 70015);
+            assert_eq!(
+                version_msg.services,
+                ServiceFlags::NETWORK
+                    | ServiceFlags::BLOOM
+                    | ServiceFlags::WITNESS
+                    | ServiceFlags::NETWORK_LIMITED
+            );
+            assert_eq!(version_msg.timestamp, 1548554224);
+            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
+            assert_eq!(version_msg.start_height, 560275);
+            assert!(version_msg.relay);
+        } else {
+            panic!("wrong message type");
+        }
+    }
+
+    #[test]
+    fn deserialize_v2_version() {
+        #[rustfmt::skip]
+        let msg = deserialize::<V2NetworkMessage>(&[
+            0x00, // Full command encoding flag
+            0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00, // "version" command
+            0x7f, 0x11, 0x01, 0x00, // version: 70015
+            0x0d, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // services
+            0xf0, 0x0f, 0x4d, 0x5c, 0x00, 0x00, 0x00, 0x00, // timestamp: 1548554224
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // receiver services: NONE
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5b, 0xf0, 0x8c, 0x80, 0xb4, 0xbd, // addr_recv
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // sender services: NONE
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // addr_from
+            0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1, // nonce
+            0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68, 0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31, 0x2f, // user_agent: "/Satoshi:0.17.1/"
+            0x93, 0x8c, 0x08, 0x00, // start_height: 560275
+            0x01 // relay: true
+        ]).unwrap();
+
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
             assert_eq!(
