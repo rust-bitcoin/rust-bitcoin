@@ -55,7 +55,7 @@ impl SignedAmount {
     pub const ONE_SAT: Self = SignedAmount(1);
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = SignedAmount(100_000_000);
-    /// The maximum value allowed as an amount. Useful for sanity checking.
+    /// The maximum value allowed as an amount.
     pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
     pub const MIN: Self = SignedAmount(-21_000_000 * 100_000_000);
@@ -68,10 +68,26 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::SignedAmount;
-    /// let amount = SignedAmount::from_sat(-100_000);
-    /// assert_eq!(amount.to_sat(), -100_000);
+    /// # let sat = -100_000;
+    /// let amount = SignedAmount::from_sat(sat).expect("sat is less than MAX_MONEY");
+    /// assert_eq!(amount.to_sat(), sat);
     /// ```
-    pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+    pub const fn from_sat(satoshi: i64) -> Result<SignedAmount, OutOfRangeError> {
+        if satoshi < Self::MIN.to_sat() {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+        } else if satoshi > Self::MAX_MONEY.to_sat() {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+        } else {
+            Ok(SignedAmount(satoshi))
+        }
+    }
+
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Caller to guarantee that `satoshi` is within valid range.
+    ///
+    /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
+    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
     ///
@@ -107,27 +123,23 @@ impl SignedAmount {
     ///
     /// # Errors
     ///
-    /// The function errors if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
+    /// If `whole_bitcoin` is greater than `21_000_000`.
     pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
-        match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(SignedAmount::from_sat(amount)),
-            None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
-        }
+        let btc = whole_bitcoin.into();
+        let satoshi = btc * 100_000_000; // Cannot overflow a `i64`.
+        SignedAmount::from_sat(satoshi)
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
-        match whole_bitcoin.checked_mul(100_000_000) {
-            Some(amount) => SignedAmount::from_sat(amount),
-            None => panic!("checked_mul overflowed"),
-        }
+    /// If `whole_bitcoin` is greater than `21_000_000`.
+    pub const fn from_int_btc_const(whole_bitcoin: i32) -> Result<SignedAmount, OutOfRangeError> {
+        let btc = whole_bitcoin as i64; // Can't call i64::from in const context.
+        let satoshi = btc * 100_000_000; // Cannot overflow a `i64`.
+        SignedAmount::from_sat(satoshi)
     }
 
     /// Parses a decimal string as a value in the given [`Denomination`].
@@ -296,7 +308,10 @@ impl SignedAmount {
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
     #[must_use]
-    pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
+    pub fn unsigned_abs(self) -> Amount {
+        // Unchecked because a positive signed amount is always valid.
+        Amount::from_sat_unchecked(self.0.unsigned_abs())
+    }
 
     /// Returns a number representing sign of this [`SignedAmount`].
     ///
@@ -439,7 +454,8 @@ impl SignedAmount {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64)) // Cast ok, checked not negative above.
+            // Unchecked because a positive signed amount is always valid.
+            Ok(Amount::from_sat_unchecked(self.to_sat() as u64)) // Cast ok, checked not negative above.
         }
     }
 
@@ -557,27 +573,8 @@ impl FromStr for SignedAmount {
     }
 }
 
-impl TryFrom<Amount> for SignedAmount {
-    type Error = OutOfRangeError;
-
-    fn try_from(value: Amount) -> Result<Self, Self::Error> { value.to_signed() }
-}
-
-impl core::iter::Sum for SignedAmount {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
-    }
-}
-
-impl<'a> core::iter::Sum<&'a SignedAmount> for SignedAmount {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a SignedAmount>,
-    {
-        let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
-    }
+impl From<Amount> for SignedAmount {
+    fn from(value: Amount) -> Self { value.to_signed() }
 }
 
 #[cfg(feature = "arbitrary")]
