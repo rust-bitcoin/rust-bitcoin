@@ -603,7 +603,6 @@ mod test {
             )]),
             NetworkMessage::Inv(vec![Inventory::Block(hash([8u8; 32]).into())]),
             NetworkMessage::GetData(vec![Inventory::Transaction(hash([45u8; 32]).into())]),
-            NetworkMessage::NotFound(vec![Inventory::Error]),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![hash([1u8; 32]).into(), hash([4u8; 32]).into()],
                 hash([5u8; 32]).into(),
@@ -693,6 +692,22 @@ mod test {
             let raw_msg = RawNetworkMessage::new(Magic::from_bytes([57, 0, 0, 0]), msg);
             assert_eq!(deserialize::<RawNetworkMessage>(&serialize(&raw_msg)).unwrap(), raw_msg);
         }
+    }
+
+    #[test]
+    fn inventory_error_round_trip_test() {
+        // Inventory::Error decodes as Unknown { inv_type: 0, .. } for backwards compatibility.
+        let raw_msg = RawNetworkMessage::new(
+            Magic::from_bytes([57, 0, 0, 0]),
+            NetworkMessage::NotFound(vec![Inventory::Error]),
+        );
+        assert_eq!(
+            deserialize::<RawNetworkMessage>(&serialize(&raw_msg)).unwrap(),
+            RawNetworkMessage::new(
+                Magic::from_bytes([57, 0, 0, 0]),
+                NetworkMessage::NotFound(vec![Inventory::Unknown { inv_type: 0, hash: [0u8; 32] }]),
+            ),
+        );
     }
 
     #[test]
