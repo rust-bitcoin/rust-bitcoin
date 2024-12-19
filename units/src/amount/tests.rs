@@ -907,13 +907,11 @@ fn checked_sum_amounts() {
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts =
-        [SignedAmount::MIN, SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MIN, SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts =
-        [SignedAmount::MAX, SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MAX, SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
