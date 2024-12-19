@@ -15,7 +15,7 @@ use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, DisplayHex, String, ToString};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _};
-use crate::{Amount, FeeRate};
+use crate::{amount, Amount, FeeRate};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -273,7 +273,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
         fn minimal_non_dust(&self) -> Amount {
-            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
+            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into()).expect("DUST_RELAY_FEE==3000 computes valid amount")
         }
 
         /// Returns the minimum value an output with this script should have in order to be
@@ -287,7 +287,7 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
-        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Amount {
+        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Result<Amount, amount::OutOfRangeError> {
             self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
         }
 
@@ -394,7 +394,7 @@ mod sealed {
 
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
-        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Amount {
+        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Result<Amount, amount::OutOfRangeError> {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
             let sats = dust_relay_fee
