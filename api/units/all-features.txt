@@ -624,7 +624,14 @@ impl serde::ser::Serialize for bitcoin_units::locktime::relative::Time
 impl serde::ser::Serialize for bitcoin_units::weight::Weight
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::Amount
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::SignedAmount
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::amount::Denomination
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::block::BlockHeight
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::block::BlockInterval
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::fee_rate::FeeRate
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Time
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::Height
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::Time
 impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::weight::Weight
 impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::Amount> for bitcoin_units::Amount
 impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
@@ -894,6 +901,7 @@ pub fn bitcoin_units::SignedAmount::unchecked_add(self, rhs: bitcoin_units::Sign
 pub fn bitcoin_units::SignedAmount::unchecked_sub(self, rhs: bitcoin_units::SignedAmount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 pub fn bitcoin_units::amount::CheckedSum::checked_sum(self) -> core::option::Option<R>
+pub fn bitcoin_units::amount::Denomination::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
 pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -981,6 +989,7 @@ pub fn bitcoin_units::amount::serde::as_str::opt::deserialize<'d, A: bitcoin_uni
 pub fn bitcoin_units::amount::serde::as_str::opt::serialize<A: bitcoin_units::amount::serde::SerdeAmountForOpt, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::amount::serde::as_str::serialize<A: bitcoin_units::amount::serde::SerdeAmount, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::block::BlockHeight::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::block::BlockHeight::clone(&self) -> bitcoin_units::block::BlockHeight
 pub fn bitcoin_units::block::BlockHeight::cmp(&self, other: &bitcoin_units::block::BlockHeight) -> core::cmp::Ordering
 pub fn bitcoin_units::block::BlockHeight::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
@@ -999,6 +1008,7 @@ pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) ->
 pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::block::BlockInterval::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
 pub fn bitcoin_units::block::BlockInterval::add_assign(&mut self, rhs: bitcoin_units::block::BlockInterval)
+pub fn bitcoin_units::block::BlockInterval::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::block::BlockInterval::clone(&self) -> bitcoin_units::block::BlockInterval
 pub fn bitcoin_units::block::BlockInterval::cmp(&self, other: &bitcoin_units::block::BlockInterval) -> core::cmp::Ordering
 pub fn bitcoin_units::block::BlockInterval::default() -> bitcoin_units::block::BlockInterval
@@ -1052,6 +1062,7 @@ pub fn bitcoin_units::locktime::absolute::ConversionError::clone(&self) -> bitco
 pub fn bitcoin_units::locktime::absolute::ConversionError::eq(&self, other: &bitcoin_units::locktime::absolute::ConversionError) -> bool
 pub fn bitcoin_units::locktime::absolute::ConversionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::absolute::ConversionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height
 pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::Height::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
@@ -1074,6 +1085,7 @@ pub fn bitcoin_units::locktime::absolute::ParseTimeError::clone(&self) -> bitcoi
 pub fn bitcoin_units::locktime::absolute::ParseTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::ParseTimeError) -> bool
 pub fn bitcoin_units::locktime::absolute::ParseTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::locktime::absolute::ParseTimeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::absolute::Time::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::absolute::Time::clone(&self) -> bitcoin_units::locktime::absolute::Time
 pub fn bitcoin_units::locktime::absolute::Time::cmp(&self, other: &bitcoin_units::locktime::absolute::Time) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::absolute::Time::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
@@ -1087,6 +1099,7 @@ pub fn bitcoin_units::locktime::absolute::Time::serialize<S>(&self, serializer: 
 pub fn bitcoin_units::locktime::absolute::Time::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::Time::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::absolute::Time::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::relative::Height::clone(&self) -> bitcoin_units::locktime::relative::Height
 pub fn bitcoin_units::locktime::relative::Height::cmp(&self, other: &bitcoin_units::locktime::relative::Height) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::relative::Height::default() -> bitcoin_units::locktime::relative::Height
@@ -1102,6 +1115,7 @@ pub fn bitcoin_units::locktime::relative::Height::try_from(h: bitcoin_units::blo
 pub fn bitcoin_units::locktime::relative::Height::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::relative::Height::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::locktime::relative::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Time::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_units::locktime::relative::Time::clone(&self) -> bitcoin_units::locktime::relative::Time
 pub fn bitcoin_units::locktime::relative::Time::cmp(&self, other: &bitcoin_units::locktime::relative::Time) -> core::cmp::Ordering
 pub fn bitcoin_units::locktime::relative::Time::default() -> bitcoin_units::locktime::relative::Time

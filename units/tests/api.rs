@@ -25,6 +25,8 @@ use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
     SignedAmount, Weight,
 };
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
@@ -262,4 +264,43 @@ fn regression_default() {
         e: relative::Time::ZERO,
     };
     assert_eq!(got, want);
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Types {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = Types { a: Enums::arbitrary(u)?, b: Structs::arbitrary(u)? };
+        Ok(a)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Structs {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = Structs {
+            a: Amount::arbitrary(u)?,
+            // Skip the `Display` type.
+            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
+            c: SignedAmount::arbitrary(u)?,
+            d: BlockHeight::arbitrary(u)?,
+            e: BlockInterval::arbitrary(u)?,
+            f: FeeRate::arbitrary(u)?,
+            g: absolute::Height::arbitrary(u)?,
+            h: absolute::Time::arbitrary(u)?,
+            i: relative::Height::arbitrary(u)?,
+            j: relative::Time::arbitrary(u)?,
+            k: Weight::arbitrary(u)?,
+        };
+        Ok(a)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for Enums {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let a = Enums {
+            a: amount::Denomination::arbitrary(u)?,
+        };
+        Ok(a)
+    }
 }
