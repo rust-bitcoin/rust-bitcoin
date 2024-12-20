@@ -583,7 +583,7 @@ mod test {
             )]),
             NetworkMessage::Inv(vec![Inventory::Block(hash([8u8; 32]).into())]),
             NetworkMessage::GetData(vec![Inventory::Transaction(hash([45u8; 32]).into())]),
-            NetworkMessage::NotFound(vec![Inventory::Error]),
+            NetworkMessage::NotFound(vec![Inventory::Error([0u8; 32])]),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![hash([1u8; 32]).into(), hash([4u8; 32]).into()],
                 hash([5u8; 32]).into(),
