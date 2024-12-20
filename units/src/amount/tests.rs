@@ -72,13 +72,6 @@ fn from_int_btc() {
 }
 
 #[test]
-fn test_signed_amount_try_from_amount() {
-    let ua_positive = Amount::from_sat(123);
-    let sa_positive = SignedAmount::try_from(ua_positive).unwrap();
-    assert_eq!(sa_positive, SignedAmount::from_sat(123));
-}
-
-#[test]
 fn test_amount_try_from_signed_amount() {
     let sa_positive = SignedAmount::from_sat(123);
     let ua_positive = Amount::try_from(sa_positive).unwrap();
@@ -473,12 +466,11 @@ fn test_unsigned_signed_conversion() {
     let ua = Amount::from_sat;
     let max_sats: u64 = Amount::MAX.to_sat();
 
-    assert_eq!(ua(max_sats).to_signed(), Ok(sa(max_sats as i64)));
-    assert_eq!(ua(i64::MAX as u64 + 1).to_signed(), Err(OutOfRangeError::too_big(true)));
+    assert_eq!(ua(max_sats).to_signed(), sa(max_sats as i64));
 
     assert_eq!(sa(max_sats as i64).to_unsigned(), Ok(ua(max_sats)));
 
-    assert_eq!(sa(max_sats as i64).to_unsigned().unwrap().to_signed(), Ok(sa(max_sats as i64)));
+    assert_eq!(sa(max_sats as i64).to_unsigned().unwrap().to_signed(), sa(max_sats as i64));
 }
 
 #[test]
