@@ -712,15 +712,15 @@ impl Psbt {
     /// - [`Error::NegativeFee`] if calculated value is negative.
     /// - [`Error::FeeOverflow`] if an integer overflow occurs.
     pub fn fee(&self) -> Result<Amount, Error> {
-        let mut inputs: u64 = 0;
+        let mut inputs = Amount::ZERO;
         for utxo in self.iter_funding_utxos() {
-            inputs = inputs.checked_add(utxo?.value.to_sat()).ok_or(Error::FeeOverflow)?;
+            inputs = inputs.checked_add(utxo?.value).ok_or(Error::FeeOverflow)?;
         }
-        let mut outputs: u64 = 0;
+        let mut outputs = Amount::ZERO;
         for out in &self.unsigned_tx.output {
-            outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
+            outputs = outputs.checked_add(out.value).ok_or(Error::FeeOverflow)?;
         }
-        inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
+        inputs.checked_sub(outputs).ok_or(Error::NegativeFee)
     }
 }
 
