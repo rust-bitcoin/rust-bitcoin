@@ -77,7 +77,7 @@ pub enum Error {
     ConsensusParse(encode::ParseError),
     /// Negative fee
     NegativeFee,
-    /// Integer overflow in fee calculation
+    /// Fee greater than [`Amount::MAX_MONEY`].
     FeeOverflow,
     /// Parsing error indicating invalid public keys
     InvalidPublicKey(crate::crypto::key::FromSliceError),
@@ -150,7 +150,7 @@ impl fmt::Display for Error {
             ConsensusParse(ref e) =>
                 write_err!(f, "error parsing bitcoin consensus encoded object"; e),
             NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
-            FeeOverflow => f.write_str("integer overflow in fee calculation"),
+            FeeOverflow => f.write_str("fee greater than Amount::MAX_MONEY"),
             InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
             InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
             InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
