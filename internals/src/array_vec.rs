@@ -193,7 +193,7 @@ mod tests {
 mod verification {
     use super::*;
 
-    #[kani::unwind(16)]         // One greater than 15 (max number of elements).
+    #[kani::unwind(16)] // One greater than 15 (max number of elements).
     #[kani::proof]
     fn no_out_of_bounds_less_than_cap() {
         const CAP: usize = 32;
@@ -212,7 +212,7 @@ mod verification {
         }
     }
 
-    #[kani::unwind(16)]         // One grater than 15.
+    #[kani::unwind(16)] // One grater than 15.
     #[kani::proof]
     fn no_out_of_bounds_upto_cap() {
         const CAP: usize = 15;

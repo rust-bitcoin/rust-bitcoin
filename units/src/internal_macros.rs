@@ -30,21 +30,21 @@ macro_rules! impl_add_for_references {
 
             fn add(self, rhs: &'a $ty) -> Self::Output { *self + *rhs }
         }
-    }
+    };
 }
 pub(crate) use impl_add_for_references;
 
 /// Implement `ops::AddAssign` for `$ty` and `&$ty`.
 macro_rules! impl_add_assign {
     ($ty:ident) => {
-         impl core::ops::AddAssign<$ty> for $ty {
+        impl core::ops::AddAssign<$ty> for $ty {
             fn add_assign(&mut self, rhs: $ty) { *self = *self + rhs }
         }
 
         impl core::ops::AddAssign<&$ty> for $ty {
             fn add_assign(&mut self, rhs: &$ty) { *self = *self + *rhs }
         }
-    }
+    };
 }
 pub(crate) use impl_add_assign;
 
@@ -74,20 +74,20 @@ macro_rules! impl_sub_for_references {
 
             fn sub(self, rhs: &'a $ty) -> Self::Output { *self - *rhs }
         }
-    }
+    };
 }
 pub(crate) use impl_sub_for_references;
 
 /// Implement `ops::SubAssign` for `$ty` and `&$ty`.
 macro_rules! impl_sub_assign {
     ($ty:ident) => {
-         impl core::ops::SubAssign<$ty> for $ty {
+        impl core::ops::SubAssign<$ty> for $ty {
             fn sub_assign(&mut self, rhs: $ty) { *self = *self - rhs }
         }
 
         impl core::ops::SubAssign<&$ty> for $ty {
             fn sub_assign(&mut self, rhs: &$ty) { *self = *self - *rhs }
         }
-   }
+    };
 }
 pub(crate) use impl_sub_assign;

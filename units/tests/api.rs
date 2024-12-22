@@ -20,13 +20,13 @@
 #![allow(unused_imports)]
 
 // These imports test "typical" usage by user code.
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
     SignedAmount, Weight,
 };
-#[cfg(feature = "arbitrary")]
-use arbitrary::{Arbitrary, Unstructured};
 
 /// A struct that includes all public non-error enums.
 #[derive(Debug)] // All public types implement Debug (C-DEBUG).
@@ -298,9 +298,7 @@ impl<'a> Arbitrary<'a> for Structs {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Enums {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = Enums {
-            a: amount::Denomination::arbitrary(u)?,
-        };
+        let a = Enums { a: amount::Denomination::arbitrary(u)? };
         Ok(a)
     }
 }
