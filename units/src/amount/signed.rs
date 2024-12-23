@@ -566,6 +566,13 @@ impl FromStr for SignedAmount {
     }
 }
 
+impl From<Amount> for SignedAmount {
+    fn from(value: Amount) -> Self {
+        let v = value.to_sat() as i64; // Cast ok, signed amount and amount share positive range.
+        SignedAmount::from_sat_unchecked(v)
+    }
+}
+
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();

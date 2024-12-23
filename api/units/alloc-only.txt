@@ -141,6 +141,7 @@ impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::Height
 impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::Time
 impl core::cmp::PartialOrd for bitcoin_units::weight::Weight
 impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse::ParseIntError
+impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
 impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseAmountError
 impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseError
 impl core::convert::From<bitcoin_units::amount::InvalidCharacterError> for bitcoin_units::amount::ParseAmountError
@@ -791,6 +792,7 @@ pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output
 pub fn bitcoin_units::SignedAmount::div_assign(&mut self, rhs: i64)
 pub fn bitcoin_units::SignedAmount::eq(&self, other: &bitcoin_units::SignedAmount) -> bool
 pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
 pub fn bitcoin_units::SignedAmount::from_btc(btc: f64) -> core::result::Result<bitcoin_units::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::SignedAmount, bitcoin_units::amount::ParseAmountError>
 pub fn bitcoin_units::SignedAmount::from_int_btc<T: core::convert::Into<i64>>(whole_bitcoin: T) -> core::result::Result<bitcoin_units::SignedAmount, bitcoin_units::amount::OutOfRangeError>
