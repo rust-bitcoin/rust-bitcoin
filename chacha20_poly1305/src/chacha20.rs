@@ -45,7 +45,7 @@ impl Nonce {
 ///
 /// This type is attempting to be as close as possible to the experimental [`core::simd::u32x4`]
 /// which at this time is feature gated and well beyond the project's MSRV. But ideally
-/// an easy transistion can be made in the future.
+/// an easy transition can be made in the future.
 ///
 /// A few SIMD relevant design choices:
 ///    * Heavy use of inline functions to help the compiler recognize vectorizable sections.
