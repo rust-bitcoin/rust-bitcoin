@@ -707,8 +707,8 @@ pub const bitcoin_units::weight::Weight::WITNESS_SCALE_FACTOR: u64
 pub const bitcoin_units::weight::Weight::ZERO: bitcoin_units::weight::Weight
 pub const fn bitcoin_units::Amount::checked_add(self, rhs: bitcoin_units::Amount) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::checked_div(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
-pub const fn bitcoin_units::Amount::checked_div_by_weight_ceil(self, rhs: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
-pub const fn bitcoin_units::Amount::checked_div_by_weight_floor(self, rhs: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
+pub const fn bitcoin_units::Amount::checked_div_by_weight_ceil(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
+pub const fn bitcoin_units::Amount::checked_div_by_weight_floor(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
 pub const fn bitcoin_units::Amount::checked_mul(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::checked_rem(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::checked_sub(self, rhs: bitcoin_units::Amount) -> core::option::Option<bitcoin_units::Amount>
@@ -731,7 +731,7 @@ pub const fn bitcoin_units::block::BlockInterval::to_u32(self) -> u32
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_add(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_div(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul(self, rhs: u64) -> core::option::Option<Self>
-pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul_by_weight(self, rhs: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul_by_weight(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::fee_rate::FeeRate::checked_sub(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kvb(sat_kvb: u64) -> Self
 pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kwu(sat_kwu: u64) -> Self
