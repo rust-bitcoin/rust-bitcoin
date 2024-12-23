@@ -124,17 +124,17 @@ struct Errors {
     i: amount::PossiblyConfusingDenominationError,
     j: amount::TooPreciseError,
     k: amount::UnknownDenominationError,
-    l: amount::error::InputTooLargeError,
-    m: amount::error::InvalidCharacterError,
-    n: amount::error::MissingDenominationError,
-    o: amount::error::MissingDigitsError,
-    p: amount::error::OutOfRangeError,
-    q: amount::error::ParseAmountError,
-    r: amount::error::ParseDenominationError,
-    s: amount::error::ParseError,
-    t: amount::error::PossiblyConfusingDenominationError,
-    u: amount::error::TooPreciseError,
-    v: amount::error::UnknownDenominationError,
+    l: amount::InputTooLargeError,
+    m: amount::InvalidCharacterError,
+    n: amount::MissingDenominationError,
+    o: amount::MissingDigitsError,
+    p: amount::OutOfRangeError,
+    q: amount::ParseAmountError,
+    r: amount::ParseDenominationError,
+    s: amount::ParseError,
+    t: amount::PossiblyConfusingDenominationError,
+    u: amount::TooPreciseError,
+    v: amount::UnknownDenominationError,
     w: block::TooBigForRelativeBlockHeightError,
     x: locktime::absolute::ConversionError,
     y: locktime::absolute::Height,
@@ -163,15 +163,6 @@ fn api_can_use_all_types_from_module_amount() {
         MissingDenominationError, MissingDigitsError, OutOfRangeError, ParseAmountError,
         ParseDenominationError, ParseError, PossiblyConfusingDenominationError, SignedAmount,
         TooPreciseError, UnknownDenominationError,
-    };
-}
-
-#[test]
-fn api_can_use_all_types_from_module_amount_error() {
-    use bitcoin_units::amount::error::{
-        InputTooLargeError, InvalidCharacterError, MissingDenominationError, MissingDigitsError,
-        OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
-        PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     };
 }
 
