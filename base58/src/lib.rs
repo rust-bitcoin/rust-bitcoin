@@ -337,7 +337,7 @@ mod benches {
 
     #[bench]
     pub fn bench_encode_check_xpub(bh: &mut Bencher) {
-        let data: alloc::vec::Vec<_> = (0u8..78).collect(); // lenght of xpub
+        let data: alloc::vec::Vec<_> = (0u8..78).collect(); // length of xpub
 
         bh.iter(|| {
             let r = super::encode_check(&data);
