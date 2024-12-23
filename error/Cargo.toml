@@ -1,0 +1,23 @@
+[package]
+name = "no-std-error"
+version = "0.1.0"
+authors = ["Martin Habovstiak <martin.habovstiak@gmail.com>", "Andrew Poelstra <apoelstra@wpsoftware.net>", "Tobin C. Harding <me@tobin.cc>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/no-std-error"
+documentation = "https://docs.rs/no-std-error"
+description = "Error handling tools for code that is expected to work in both `std` and `no_std` environments."
+categories = ["no-std", "rust-patterns"]
+keywords = ["error handling", "no_std"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.63.0"
+exclude = ["tests", "contrib"]
+
+[features]
+default = []
+std = ["alloc"]
+alloc = []
+
+[dependencies]
+
+[dev-dependencies]

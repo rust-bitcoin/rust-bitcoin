@@ -96,3 +96,4 @@ name = "sighash"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)'] }
+
