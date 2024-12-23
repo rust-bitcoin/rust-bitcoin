@@ -273,7 +273,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
         fn minimal_non_dust(&self) -> crate::Amount {
-            self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
+            self.minimal_non_dust_internal(FeeRate::DUST)
         }
 
         /// Returns the minimum value an output with this script should have in order to be
@@ -288,7 +288,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
         fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> crate::Amount {
-            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
+            self.minimal_non_dust_internal(dust_relay_fee)
         }
 
         /// Counts the sigops for this Script using accurate counting.

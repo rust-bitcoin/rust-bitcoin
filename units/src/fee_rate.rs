@@ -41,6 +41,13 @@ impl FeeRate {
     pub const BROADCAST_MIN: FeeRate = FeeRate::from_sat_per_vb_unchecked(1);
 
     /// Fee rate used to compute dust amount.
+    ///
+    /// Dust depends on the -dustrelayfee value of the Bitcoin Core node you are broadcasting to and
+    /// effects which transactions are standard.
+    ///
+    /// The current value in [Bitcoin Core] (as of v26) is 3 sat/vByte.
+    ///
+    /// [Bitcoin Core]: <https://github.com/bitcoin/bitcoin/blob/fc7b21484703da606c5c69b23daee8c39506d90c/src/policy/policy.h#L55>
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
