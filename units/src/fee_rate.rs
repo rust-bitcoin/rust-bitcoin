@@ -108,9 +108,9 @@ impl FeeRate {
     ///
     /// [`None`] is returned if an overflow occurred.
     #[must_use]
-    pub const fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
+    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         // No `?` operator in const context.
-        match self.0.checked_mul(rhs.to_wu()) {
+        match self.0.checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
                 Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
                 None => None,
