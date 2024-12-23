@@ -414,7 +414,7 @@ crate::internal_macros::define_extension_trait! {
                         // Note: We ensure the division happens at the end, since Core performs the division at the end.
                         //       This will make sure none of the implicit floor operations mess with the value.
 
-            crate::Amount::from_sat(sats)
+            crate::Amount::from_sat(sats).expect("will only panic if dust_relay_fee is absurdly large")
         }
 
         fn count_sigops_internal(&self, accurate: bool) -> usize {
