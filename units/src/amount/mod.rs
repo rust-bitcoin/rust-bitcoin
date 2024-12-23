@@ -5,7 +5,7 @@
 //! This module mainly introduces the [`Amount`] and [`SignedAmount`] types.
 //! We refer to the documentation on the types for more information.
 
-pub mod error;
+mod error;
 #[cfg(feature = "serde")]
 pub mod serde;
 
