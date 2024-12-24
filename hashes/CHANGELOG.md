@@ -6,7 +6,7 @@
 
 # 0.15.0 - 2024-10-16
 
-This release is massive. The biggest visable changes are to the `Hash` trait, which has mostly been replaced
+This release is massive. The biggest visible changes are to the `Hash` trait, which has mostly been replaced
 by inherent functions. You should not need to import it at all anymore for normal usage. Check out how we are
 using `hashes` in `rust-bitcoin` to see an example. Enjoy!
 
@@ -52,7 +52,7 @@ using `hashes` in `rust-bitcoin` to see an example. Enjoy!
 
 * Bump MSRV to Rust version 1.56.1 [#2188](https://github.com/rust-bitcoin/rust-bitcoin/pull/2188)
 
-## API improvemnts
+## API improvements
 
 * Add support for SHA384 [#2538](https://github.com/rust-bitcoin/rust-bitcoin/pull/2538)
 * Make from_hex inherent for byte-like types [#2491](https://github.com/rust-bitcoin/rust-bitcoin/pull/2491)

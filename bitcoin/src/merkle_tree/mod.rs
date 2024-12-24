@@ -41,7 +41,7 @@ impl_hashencode!(WitnessMerkleNode);
 /// Other Merkle trees in Bitcoin, such as those used in Taproot commitments,
 /// do not use this algorithm and cannot use this trait.
 pub trait MerkleNode: Copy {
-    /// The hash (TXID or WTXID) of a transaciton in the tree.
+    /// The hash (TXID or WTXID) of a transaction in the tree.
     type Leaf: TxIdentifier;
 
     /// Convert a hash to a leaf node of the tree.
