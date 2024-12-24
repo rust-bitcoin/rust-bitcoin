@@ -325,3 +325,14 @@ jobs:
         run: cargo +stable install --locked cargo-public-api@0.42.0
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
+
+  Typos:
+    name: Spell Check with Typos
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Run typos"
+        uses: crate-ci/typos@master
+        with:
+          config: ./typos.toml
