@@ -25,7 +25,7 @@ fn u_amount_homomorphic() {
     let n2 = kani::any::<u64>();
     // Assume we don't overflow in the actual tests.
     kani::assume(n1.checked_add(n2).is_some()); // Adding u64s doesn't overflow.
-    let a1 = Amount::from_sat(n1);              // TODO: If from_sat enforces invariant assume this `is_ok()`.
+    let a1 = Amount::from_sat(n1); // TODO: If from_sat enforces invariant assume this `is_ok()`.
     let a2 = Amount::from_sat(n2);
     kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
 
