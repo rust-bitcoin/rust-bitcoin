@@ -83,6 +83,15 @@ impl SignedAmount {
     /// ```
     pub const fn to_sat(self) -> i64 { self.0 }
 
+    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Caller to guarantee that `satoshi` is within valid range.
+    ///
+    /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
+    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount {
+        SignedAmount(satoshi)
+    }
+
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
     /// # Errors
@@ -557,10 +566,11 @@ impl FromStr for SignedAmount {
     }
 }
 
-impl TryFrom<Amount> for SignedAmount {
-    type Error = OutOfRangeError;
-
-    fn try_from(value: Amount) -> Result<Self, Self::Error> { value.to_signed() }
+impl From<Amount> for SignedAmount {
+    fn from(value: Amount) -> Self {
+        let v = value.to_sat() as i64; // Cast ok, signed amount and amount share positive range.
+        SignedAmount::from_sat_unchecked(v)
+    }
 }
 
 impl core::iter::Sum for SignedAmount {
