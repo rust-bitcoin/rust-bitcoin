@@ -110,7 +110,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         // No `?` operator in const context.
-        match self.0.checked_mul(weight.to_wu()) {
+        match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
                 Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
                 None => None,
@@ -306,7 +306,7 @@ mod tests {
     #[test]
     fn fee_rate_div_by_weight() {
         let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
-        assert_eq!(fee_rate, FeeRate(863));
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
     #[test]
@@ -391,7 +391,7 @@ mod tests {
             .expect("expected Amount");
         assert_eq!(Amount::from_sat(100), fee);
 
-        let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
+        let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();
