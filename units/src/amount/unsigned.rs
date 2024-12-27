@@ -15,8 +15,6 @@ use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Denomination, Display, DisplayStyle,
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
-#[cfg(feature = "alloc")]
-use crate::{FeeRate, Weight};
 
 /// An amount.
 ///
@@ -349,59 +347,6 @@ impl Amount {
         // No `map()` in const context.
         match self.0.checked_div(rhs) {
             Some(res) => Some(Amount(res)),
-            None => None,
-        }
-    }
-
-    /// Checked weight ceiling division.
-    ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. This method rounds up ensuring the transaction fee-rate is
-    /// sufficient. See also [`Self::checked_div_by_weight_floor`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
-    /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
-    /// ```
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
-        let wu = weight.to_wu();
-        // No `?` operator in const context.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            if let Some(wu_minus_one) = wu.checked_sub(1) {
-                if let Some(sats_plus_wu_minus_one) = sats.checked_add(wu_minus_one) {
-                    if let Some(fee_rate) = sats_plus_wu_minus_one.checked_div(wu) {
-                        return Some(FeeRate::from_sat_per_kwu(fee_rate));
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    /// Checked weight floor division.
-    ///
-    /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. See also [`Self::checked_div_by_weight_ceil`].
-    ///
-    /// Returns [`None`] if overflow occurred.
-    #[cfg(feature = "alloc")]
-    #[must_use]
-    pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
-        // No `?` operator in const context.
-        match self.to_sat().checked_mul(1_000) {
-            Some(res) => match res.checked_div(weight.to_wu()) {
-                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
-                None => None,
-            },
             None => None,
         }
     }
