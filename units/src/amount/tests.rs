@@ -564,40 +564,40 @@ fn to_from_string_in() {
     let sa_str = SignedAmount::from_str_in;
     let sa_sat = SignedAmount::from_sat;
 
-    assert_eq!("0.5", Amount::from_sat(50).to_string_in(D::Bit));
+    assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
     assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));
-    assert_eq!("0.00253583", Amount::from_sat(253_583).to_string_in(D::Bitcoin));
+    assert_eq!("0.00253583", ua_sat(253_583).to_string_in(D::Bitcoin));
     assert_eq!("-5", sa_sat(-5).to_string_in(D::Satoshi));
-    assert_eq!("0.1", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
+    assert_eq!("0.1", ua_sat(100_000_00).to_string_in(D::Bitcoin));
     assert_eq!("-0.1", sa_sat(-100_000_00).to_string_in(D::Bitcoin));
 
-    assert_eq!("0.253583", Amount::from_sat(253_583).to_string_in(D::CentiBitcoin));
+    assert_eq!("0.253583", ua_sat(253_583).to_string_in(D::CentiBitcoin));
     assert_eq!("-0.253583", sa_sat(-253_583).to_string_in(D::CentiBitcoin));
-    assert_eq!("10", Amount::from_sat(100_000_00).to_string_in(D::CentiBitcoin));
+    assert_eq!("10", ua_sat(100_000_00).to_string_in(D::CentiBitcoin));
     assert_eq!("-10", sa_sat(-100_000_00).to_string_in(D::CentiBitcoin));
 
-    assert_eq!("2.53583", Amount::from_sat(253_583).to_string_in(D::MilliBitcoin));
+    assert_eq!("2.53583", ua_sat(253_583).to_string_in(D::MilliBitcoin));
     assert_eq!("-2.53583", sa_sat(-253_583).to_string_in(D::MilliBitcoin));
-    assert_eq!("100", Amount::from_sat(100_000_00).to_string_in(D::MilliBitcoin));
+    assert_eq!("100", ua_sat(100_000_00).to_string_in(D::MilliBitcoin));
     assert_eq!("-100", sa_sat(-100_000_00).to_string_in(D::MilliBitcoin));
 
-    assert_eq!("2535.83", Amount::from_sat(253_583).to_string_in(D::MicroBitcoin));
+    assert_eq!("2535.83", ua_sat(253_583).to_string_in(D::MicroBitcoin));
     assert_eq!("-2535.83", sa_sat(-253_583).to_string_in(D::MicroBitcoin));
-    assert_eq!("100000", Amount::from_sat(100_000_00).to_string_in(D::MicroBitcoin));
+    assert_eq!("100000", ua_sat(100_000_00).to_string_in(D::MicroBitcoin));
     assert_eq!("-100000", sa_sat(-100_000_00).to_string_in(D::MicroBitcoin));
 
-    assert_eq!("0.5", Amount::from_sat(50).to_string_in(D::Bit));
-    assert_eq!("100", Amount::from_sat(10_000).to_string_in(D::Bit));
+    assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
+    assert_eq!("100", ua_sat(10_000).to_string_in(D::Bit));
     assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));
     assert_eq!("-100", sa_sat(-10_000).to_string_in(D::Bit));
 
-    assert_eq!("5", Amount::from_sat(5).to_string_in(D::Satoshi));
+    assert_eq!("5", ua_sat(5).to_string_in(D::Satoshi));
     assert_eq!("-5", sa_sat(-5).to_string_in(D::Satoshi));
 
-    assert_eq!("0.50", format!("{:.2}", Amount::from_sat(50).display_in(D::Bit)));
+    assert_eq!("0.50", format!("{:.2}", ua_sat(50).display_in(D::Bit)));
     assert_eq!("-0.50", format!("{:.2}", sa_sat(-50).display_in(D::Bit)));
 
-    assert_eq!("0.10000000", format!("{:.8}", Amount::from_sat(100_000_00).display_in(D::Bitcoin)));
+    assert_eq!("0.10000000", format!("{:.8}", ua_sat(100_000_00).display_in(D::Bitcoin)));
     assert_eq!("-100.00", format!("{:.2}", sa_sat(-10_000).display_in(D::Bit)));
 
     assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
