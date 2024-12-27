@@ -25,7 +25,7 @@ fn from_str_zero() {
             let s = format!("{} {}", v, denom);
             match s.parse::<Amount>() {
                 Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
-                Ok(amount) => assert_eq!(amount, Amount::from_sat(0)),
+                Ok(amount) => assert_eq!(amount, Amount::ZERO),
             }
         }
 
@@ -41,7 +41,7 @@ fn from_str_zero() {
         }
         match s.parse::<SignedAmount>() {
             Err(e) => panic!("failed to crate amount from {}: {:?}", s, e),
-            Ok(amount) => assert_eq!(amount, SignedAmount::from_sat(0)),
+            Ok(amount) => assert_eq!(amount, SignedAmount::ZERO),
         }
     }
 }
@@ -873,8 +873,8 @@ fn serde_as_str_opt() {
 
 #[test]
 fn sum_amounts() {
-    assert_eq!(Amount::from_sat(0), [].iter().sum::<Amount>());
-    assert_eq!(SignedAmount::from_sat(0), [].iter().sum::<SignedAmount>());
+    assert_eq!(Amount::ZERO, [].iter().sum::<Amount>());
+    assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
 
     let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
     let sum = amounts.into_iter().sum::<Amount>();
@@ -888,8 +888,8 @@ fn sum_amounts() {
 
 #[test]
 fn checked_sum_amounts() {
-    assert_eq!(Some(Amount::from_sat(0)), [].into_iter().checked_sum());
-    assert_eq!(Some(SignedAmount::from_sat(0)), [].into_iter().checked_sum());
+    assert_eq!(Some(Amount::ZERO), [].into_iter().checked_sum());
+    assert_eq!(Some(SignedAmount::ZERO), [].into_iter().checked_sum());
 
     let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
     let sum = amounts.into_iter().checked_sum();
