@@ -112,7 +112,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         // No `?` operator in const context.
-        match self.0.checked_mul(weight.to_wu()) {
+        match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
                 Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
                 None => None,
@@ -216,7 +216,9 @@ impl ops::Div<Weight> for Amount {
     ///
     /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
     /// `checked_div_by_weight` instead.
-    fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
+    fn div(self, rhs: Weight) -> Self::Output {
+        FeeRate::from_sat_per_kwu(self.to_sat() * 1000 / rhs.to_wu())
+    }
 }
 
 impl core::iter::Sum for FeeRate {
@@ -324,7 +326,7 @@ mod tests {
     #[test]
     fn fee_rate_div_by_weight() {
         let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
-        assert_eq!(fee_rate, FeeRate(863));
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
     #[test]
@@ -402,7 +404,7 @@ mod tests {
 
     #[test]
     fn fee_wu() {
-        let fee_overflow = FeeRate(10).fee_wu(Weight::MAX);
+        let fee_overflow = FeeRate::from_sat_per_kwu(10).fee_wu(Weight::MAX);
         assert!(fee_overflow.is_none());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
@@ -412,7 +414,7 @@ mod tests {
 
     #[test]
     fn fee_vb() {
-        let fee_overflow = FeeRate(10).fee_vb(Weight::MAX.to_wu());
+        let fee_overflow = FeeRate::from_sat_per_kwu(10).fee_vb(Weight::MAX.to_wu());
         assert!(fee_overflow.is_none());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
@@ -428,7 +430,7 @@ mod tests {
             .expect("expected Amount");
         assert_eq!(Amount::from_sat(100), fee);
 
-        let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
+        let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();

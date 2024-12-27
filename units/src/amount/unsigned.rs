@@ -375,7 +375,7 @@ impl Amount {
     pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
         // No `?` operator in const context.
-        if let Some(sats) = self.0.checked_mul(1_000) {
+        if let Some(sats) = self.to_sat().checked_mul(1_000) {
             if let Some(wu_minus_one) = wu.checked_sub(1) {
                 if let Some(sats_plus_wu_minus_one) = sats.checked_add(wu_minus_one) {
                     if let Some(fee_rate) = sats_plus_wu_minus_one.checked_div(wu) {
@@ -397,7 +397,7 @@ impl Amount {
     #[must_use]
     pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
         // No `?` operator in const context.
-        match self.0.checked_mul(1_000) {
+        match self.to_sat().checked_mul(1_000) {
             Some(res) => match res.checked_div(weight.to_wu()) {
                 Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
                 None => None,
