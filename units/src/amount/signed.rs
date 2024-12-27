@@ -288,8 +288,6 @@ impl SignedAmount {
         self.display_in(denom).show_denomination().to_string()
     }
 
-    // Some arithmetic that doesn't fit in [`core::ops`] traits.
-
     /// Gets the absolute value of this [`SignedAmount`].
     #[must_use]
     pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
