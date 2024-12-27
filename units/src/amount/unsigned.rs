@@ -90,6 +90,11 @@ impl Amount {
     /// ```
     pub const fn to_sat(self) -> u64 { self.0 }
 
+    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+    ///
+    /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX_MONEY`].
+    pub const fn from_sat_unchecked(satoshi: u64) -> Amount { Self(satoshi) }
+
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
     /// # Errors
