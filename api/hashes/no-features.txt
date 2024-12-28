@@ -806,7 +806,6 @@ pub fn bitcoin_hashes::siphash24::State::clone(&self) -> bitcoin_hashes::siphash
 pub fn bitcoin_hashes::siphash24::State::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub macro bitcoin_hashes::hash_newtype!
 pub macro bitcoin_hashes::impl_debug_only_for_newtype!
-pub macro bitcoin_hashes::serde_impl!
 pub macro bitcoin_hashes::sha256t_hash_newtype!
 pub macro bitcoin_hashes::sha256t_tag!
 pub mod bitcoin_hashes
