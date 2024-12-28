@@ -93,6 +93,7 @@ pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, Par
 
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
 /// conversion function `fn`.
+#[doc(hidden)]                  // Helper macro for `impl_parse_str_from_int_infallible`
 #[macro_export]
 macro_rules! impl_tryfrom_str_from_int_infallible {
     ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
@@ -131,6 +132,7 @@ macro_rules! impl_parse_str_from_int_infallible {
 }
 
 /// Implements `TryFrom<$from> for $to`.
+#[doc(hidden)]                  // Helper macro for `impl_parse_str`
 #[macro_export]
 macro_rules! impl_tryfrom_str {
     ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
