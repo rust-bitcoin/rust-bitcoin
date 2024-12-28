@@ -131,23 +131,6 @@ macro_rules! impl_parse_str_from_int_infallible {
     }
 }
 
-/// Implements `TryFrom<$from> for $to`.
-#[doc(hidden)]                  // Helper macro for `impl_parse_str`
-#[macro_export]
-macro_rules! impl_tryfrom_str {
-    ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
-        $(
-            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
-                type Error = $err;
-
-                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                    $inner_fn(s)
-                }
-            }
-        )*
-    }
-}
-
 /// Implements standard parsing traits for `$type` by calling into `$inner_fn`.
 #[macro_export]
 macro_rules! impl_parse_str {
@@ -163,6 +146,23 @@ macro_rules! impl_parse_str {
                 $inner_fn(s)
             }
         }
+    }
+}
+
+/// Implements `TryFrom<$from> for $to`.
+#[doc(hidden)]                  // Helper macro for `impl_parse_str`
+#[macro_export]
+macro_rules! impl_tryfrom_str {
+    ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
+        $(
+            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
+                type Error = $err;
+
+                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    $inner_fn(s)
+                }
+            }
+        )*
     }
 }
 
