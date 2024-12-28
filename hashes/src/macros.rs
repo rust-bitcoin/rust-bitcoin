@@ -533,6 +533,7 @@ macro_rules! serde_impl(
 ));
 
 /// Does an "empty" serde implementation for the configuration without serde feature.
+#[doc(hidden)]
 #[macro_export]
 #[cfg(not(feature = "serde"))]
 macro_rules! serde_impl(
