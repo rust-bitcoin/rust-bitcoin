@@ -87,6 +87,8 @@ pub fn bitcoin_io::BufRead::consume(&mut self, amount: usize)
 pub fn bitcoin_io::BufRead::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::Cursor<T>::consume(&mut self, amount: usize)
 pub fn bitcoin_io::Cursor<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn bitcoin_io::Cursor<T>::get_mut(&mut self) -> &mut T
+pub fn bitcoin_io::Cursor<T>::get_ref(&self) -> &T
 pub fn bitcoin_io::Cursor<T>::inner(&self) -> &T
 pub fn bitcoin_io::Cursor<T>::into_inner(self) -> T
 pub fn bitcoin_io::Cursor<T>::new(inner: T) -> Self
