@@ -99,12 +99,12 @@ main() {
 
 # Print all public structs and enums.
 structs_and_enums() {
-    grep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| |$)' "$file" | sed "s/^${crate_full_name}:://"
+    grep -oP 'pub (struct|enum) \K[\w:]+(?:<[^>]+>)?(?=\(|;| |$)' "$file" | sed "s/^${crate_full_name}:://"
 }
 
 # Print all public structs and enums excluding error types.
 structs_and_enums_no_err() {
-    grep -oP 'pub (struct|enum) \K[\w:]+(?=\(|;| |$)' "$file" | sed "s/^${crate_full_name}:://" | grep -v Error
+    grep -oP 'pub (struct|enum) \K[\w:]+(?:<[^>]+>)?(?=\(|;| |$)' "$file" | sed "s/^${crate_full_name}:://" | grep -v Error
 }
 
 # Print all public traits.
