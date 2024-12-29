@@ -33,6 +33,7 @@ pub const DEFAULT_BYTES_PER_SIGOP: u32 = 20;
 
 /// The minimum feerate, in sats per kilo-virtualbyte, for defining dust. An output is considered
 /// dust if spending it under this feerate would cost more in fee.
+#[deprecated(since = "TBD", note = "Use `FeeRate::DUST` instead")]
 pub const DUST_RELAY_TX_FEE: u32 = 3_000;
 
 /// Minimum feerate, in sats per virtual kilobyte, for a transaction to be relayed by most nodes on
