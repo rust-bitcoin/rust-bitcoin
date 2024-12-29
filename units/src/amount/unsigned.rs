@@ -298,8 +298,6 @@ impl Amount {
         self.display_in(denom).show_denomination().to_string()
     }
 
-    // Some arithmetic that doesn't fit in [`core::ops`] traits.
-
     /// Checked addition.
     ///
     /// Returns [`None`] if the sum is larger than [`Amount::MAX`].
