@@ -311,9 +311,9 @@ dependencies = [
 
 [[package]]
 name = "ordered"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f0642533dea0bb58bd5cae31bafc1872429f0f12ac8c61fe2b4ba44f80b959b"
+checksum = "3cd8ca7e3c0ec0f0ae705488e2df4ea2eae87e97de8c8abd2bda12b23324cac9"
 
 [[package]]
 name = "ppv-lite86"
