@@ -790,8 +790,8 @@ pub fn effective_value(
     value: Amount,
 ) -> Option<SignedAmount> {
     let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
-    let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed().ok()?;
-    value.to_signed().ok()?.checked_sub(signed_input_fee)
+    let signed_input_fee = fee_rate.checked_mul_by_weight(weight)?.to_signed();
+    value.to_signed().checked_sub(signed_input_fee)
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1673,7 +1673,7 @@ mod tests {
 
         // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
         let expected_fee = "4 sats".parse::<SignedAmount>().unwrap();
-        let expected_effective_value = value.to_signed().unwrap() - expected_fee;
+        let expected_effective_value = value.to_signed() - expected_fee;
         assert_eq!(effective_value, expected_effective_value);
     }
 

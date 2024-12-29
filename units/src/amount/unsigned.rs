@@ -438,17 +438,9 @@ impl Amount {
     pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
 
     /// Converts to a signed amount.
-    ///
-    /// # Errors
-    ///
-    /// If the amount is too big.
     #[rustfmt::skip] // Moves code comments to the wrong line.
-    pub fn to_signed(self) -> Result<SignedAmount, OutOfRangeError> {
-        if self.to_sat() > SignedAmount::MAX.to_sat() as u64 { // Cast ok, signed max is positive and fits in u64.
-            Err(OutOfRangeError::too_big(true))
-        } else {
-            Ok(SignedAmount::from_sat(self.to_sat() as i64)) // Cast ok, checked not too big above.
-        }
+    pub fn to_signed(self) -> SignedAmount {
+        SignedAmount::from_sat_unchecked(self.to_sat() as i64) // Cast ok, signed amount and amount share positive range.
     }
 
     /// Checks if the amount is below the maximum value. Returns `None` if it is above.
