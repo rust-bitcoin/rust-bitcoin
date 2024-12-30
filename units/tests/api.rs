@@ -4,18 +4,6 @@
 //!
 //! The point of these tests are to check the API surface as opposed to test the API functionality.
 //!
-//! What this module tests:
-//!
-//! - The location of re-exports for various typical usage styles.
-//! - Regressions in the API surface (things being accidentally moved).
-//! - All public types implement Debug (C-DEBUG).
-//! - For all non-error types:
-//!     - `Debug` representation is never empty (C-DEBUG-NONEMPTY)
-//! - For all error types:
-//!     - Derive standard traits as defined by `rust-bitcoin` policy.
-//!
-//! This file was created by referring to the output of `cargo check-api`.
-//!
 //! ref: <https://rust-lang.github.io/api-guidelines/about.html>
 
 #![allow(dead_code)]
