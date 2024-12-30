@@ -285,6 +285,7 @@ fn parse_signed_to_satoshi(
     Ok((is_negative, value))
 }
 
+#[derive(Debug)]
 enum InnerParseError {
     Overflow { is_negative: bool },
     TooPrecise(TooPreciseError),

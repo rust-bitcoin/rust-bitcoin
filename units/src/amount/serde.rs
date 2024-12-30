@@ -391,6 +391,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn sanity_check() {
+        assert_eq!(Amount::type_prefix(private::Token), "u");
+        assert_eq!(SignedAmount::type_prefix(private::Token), "i");
+    }
+
+    #[test]
     fn can_serde_as_sat() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {

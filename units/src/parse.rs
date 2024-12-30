@@ -24,7 +24,7 @@ pub struct ParseIntError {
     pub(crate) input: InputString,
     // for displaying - see Display impl with nice error message below
     pub(crate) bits: u8,
-    // We could represent this as a single bit but it wouldn't actually derease the cost of moving
+    // We could represent this as a single bit, but it wouldn't actually decrease the cost of moving
     // the struct because String contains pointers so there will be padding of bits at least
     // pointer_size - 1 bytes: min 1B in practice.
     pub(crate) is_signed: bool,
@@ -488,7 +488,63 @@ impl std::error::Error for ContainsPrefixError {}
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "std")]
+    use std::panic;
+
     use super::*;
+
+    #[test]
+    fn parse_int() {
+        assert!(int::<u8, _>("1").is_ok());
+        let _ = int::<i8, _>("not a number").map_err(|e| assert!(e.is_signed));
+        let _ = int::<u8, _>("not a number").map_err(|e| assert!(!e.is_signed));
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn parse_int_panic_when_populating_bits() {
+        // Fields in the test type are never used
+        #[allow(dead_code)]
+        struct TestTypeLargerThanU128(u128, u128);
+        impl_integer!(TestTypeLargerThanU128);
+        impl FromStr for TestTypeLargerThanU128 {
+            type Err = core::num::ParseIntError;
+
+            fn from_str(_: &str) -> Result<Self, Self::Err> {
+                "Always invalid for testing".parse::<u32>().map(|_| TestTypeLargerThanU128(0, 0))
+            }
+        }
+        impl From<i8> for TestTypeLargerThanU128 {
+            fn from(_: i8) -> Self { TestTypeLargerThanU128(0, 0) }
+        }
+
+        let result = panic::catch_unwind(|| int::<TestTypeLargerThanU128, _>("not a number"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn remove_prefix() {
+        let lower = "0xhello";
+        assert_eq!(hex_remove_prefix(lower).unwrap(), "hello");
+
+        let upper = "0Xhello";
+        assert_eq!(hex_remove_prefix(upper).unwrap(), "hello");
+
+        let err = "error";
+        assert!(hex_remove_prefix(err).is_err());
+    }
+
+    #[test]
+    fn check_unprefixed() {
+        let lower = "0xhello";
+        assert!(hex_check_unprefixed(lower).is_err());
+
+        let upper = "0Xhello";
+        assert!(hex_check_unprefixed(upper).is_err());
+
+        let valid = "hello";
+        assert_eq!(hex_check_unprefixed(valid).unwrap(), "hello");
+    }
 
     #[test]
     fn parse_u32_from_hex_prefixed() {
@@ -505,6 +561,21 @@ mod tests {
     }
 
     #[test]
+    fn parse_hex_u32_prefixed() {
+        let want = 171; // 0xab
+        assert_eq!(hex_u32_prefixed("0xab").unwrap(), want);
+        assert!(hex_u32_unprefixed("0xab").is_err());
+
+    }
+
+    #[test]
+    fn parse_hex_u32_unprefixed() {
+        let want = 171; // 0xab
+        assert_eq!(hex_u32_unprefixed("ab").unwrap(), want);
+        assert!(hex_u32_prefixed("ab").is_err());
+    }
+
+    #[test]
     fn parse_u128_from_hex_prefixed() {
         let want = 3_735_928_559;
         let got = hex_u128("0xdeadbeef").expect("failed to parse prefixed hex");
@@ -516,6 +587,21 @@ mod tests {
         let want = 3_735_928_559;
         let got = hex_u128("deadbeef").expect("failed to parse non-prefixed hex");
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn parse_hex_u128_prefixed() {
+        let want = 3_735_928_559;
+        assert_eq!(hex_u128_prefixed("0xdeadbeef").unwrap(), want);
+        assert!(hex_u128_unprefixed("0xdeadbeef").is_err());
+
+    }
+
+    #[test]
+    fn parse_hex_u128_unprefixed() {
+        let want = 3_735_928_559;
+        assert_eq!(hex_u128_unprefixed("deadbeef").unwrap(), want);
+        assert!(hex_u128_prefixed("deadbeef").is_err());
     }
 
     #[test]

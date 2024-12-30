@@ -72,6 +72,9 @@ impl FeeRate {
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.0 / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
+    /// TODO: cargo-mutants will try to replace - with /, which results in 1000 / 4 / 1 which is also 250.
+    /// Since we're addressing the mutants before introducing the cargo-mutants workflow, come back later
+    /// and skip this function in the mutants.toml config file
     pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.0 + (1000 / 4 - 1)) / (1000 / 4) }
 
     /// Checked multiplication.
@@ -255,6 +258,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn sanity_check() {
+        let fee_rate: u64 = u64::from(FeeRate(100));
+        assert_eq!(fee_rate, 100_u64);
+    }
+
+    #[test]
     #[allow(clippy::op_ref)]
     fn addition() {
         let one = FeeRate(1);
@@ -270,14 +279,24 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn subtract() {
-        let one = FeeRate(1);
-        let two = FeeRate(2);
         let three = FeeRate(3);
+        let seven = FeeRate(7);
+        let ten = FeeRate(10);
 
-        assert!(three - two == one);
-        assert!(&three - two == one);
-        assert!(three - &two == one);
-        assert!(&three - &two == one);
+        assert_eq!(ten - seven, three);
+        assert_eq!(&ten - seven, three);
+        assert_eq!(ten - &seven, three);
+        assert_eq!(&ten - &seven, three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn multiply() {
+        let two = FeeRate::from_sat_per_vb(2).unwrap();
+        let three = Weight::from_vb(3).unwrap();
+        let six = Amount::from_sat(6);
+
+        assert_eq!(two * three, six);
     }
 
     #[test]
@@ -343,7 +362,7 @@ mod tests {
 
     #[test]
     fn fee_rate_from_sat_per_kvb() {
-        let fee_rate = FeeRate::from_sat_per_kvb(10);
+        let fee_rate = FeeRate::from_sat_per_kvb(11);
         assert_eq!(FeeRate(2), fee_rate);
     }
 
@@ -366,10 +385,10 @@ mod tests {
 
     #[test]
     fn raw_feerate() {
-        let fee_rate = FeeRate(333);
-        assert_eq!(333, fee_rate.to_sat_per_kwu());
-        assert_eq!(1, fee_rate.to_sat_per_vb_floor());
-        assert_eq!(2, fee_rate.to_sat_per_vb_ceil());
+        let fee_rate = FeeRate(749);
+        assert_eq!(749, fee_rate.to_sat_per_kwu());
+        assert_eq!(2, fee_rate.to_sat_per_vb_floor());
+        assert_eq!(3, fee_rate.to_sat_per_vb_ceil());
     }
 
     #[test]
@@ -379,6 +398,25 @@ mod tests {
 
         let fee_rate = FeeRate(10).checked_mul(u64::MAX);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn fee_wu() {
+        let fee_overflow = FeeRate(10).fee_wu(Weight::MAX);
+        assert!(fee_overflow.is_none());
+
+        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        let weight = Weight::from_vb(3).unwrap();
+        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat(6));
+    }
+
+    #[test]
+    fn fee_vb() {
+        let fee_overflow = FeeRate(10).fee_vb(Weight::MAX.to_wu());
+        assert!(fee_overflow.is_none());
+
+        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat(6));
     }
 
     #[test]

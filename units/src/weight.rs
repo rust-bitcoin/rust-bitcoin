@@ -251,6 +251,11 @@ mod tests {
     const FOUR: Weight = Weight(4);
 
     #[test]
+    fn sanity_check() {
+        assert_eq!(Weight::MIN_TRANSACTION, Weight(240));
+    }
+
+    #[test]
     fn from_kwu() {
         let got = Weight::from_kwu(1).unwrap();
         let want = Weight(1_000);
@@ -302,8 +307,8 @@ mod tests {
 
     #[test]
     fn to_kwu_floor() {
-        assert_eq!(Weight(1_000).to_kwu_floor(), 1);
-        assert_eq!(Weight(1_999).to_kwu_floor(), 1);
+        assert_eq!(Weight(5_000).to_kwu_floor(), 5);
+        assert_eq!(Weight(5_999).to_kwu_floor(), 5);
     }
 
     #[test]
@@ -314,8 +319,8 @@ mod tests {
 
     #[test]
     fn to_vb_floor() {
-        assert_eq!(Weight(4).to_vbytes_floor(), 1);
-        assert_eq!(Weight(5).to_vbytes_floor(), 1);
+        assert_eq!(Weight(8).to_vbytes_floor(), 2);
+        assert_eq!(Weight(9).to_vbytes_floor(), 2);
     }
 
     #[test]
@@ -374,14 +379,33 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn subtract() {
-        let one = Weight(1);
-        let two = Weight(2);
+        let ten = Weight(10);
+        let seven = Weight(7);
         let three = Weight(3);
 
-        assert!(three - two == one);
-        assert!(&three - two == one);
-        assert!(three - &two == one);
-        assert!(&three - &two == one);
+        assert_eq!(ten - seven, three);
+        assert_eq!(&ten - seven, three);
+        assert_eq!(ten - &seven, three);
+        assert_eq!(&ten - &seven, three);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn multiply() {
+        let two = Weight(2);
+        let six = Weight(6);
+
+        assert_eq!(3_u64 * two, six);
+        assert_eq!(two * 3_u64, six);
+    }
+
+    #[test]
+    fn divide() {
+        let eight = Weight(8);
+        let four = Weight(4);
+
+        assert_eq!(eight / four, 2_u64);
+        assert_eq!(eight / 4_u64, Weight(2));
     }
 
     #[test]
@@ -404,5 +428,19 @@ mod tests {
         let mut f = Weight(3);
         f -= &Weight(2);
         assert_eq!(f, Weight(1));
+    }
+
+    #[test]
+    fn mul_assign() {
+        let mut w = Weight(3);
+        w *= 2_u64;
+        assert_eq!(w, Weight(6));
+    }
+
+    #[test]
+    fn div_assign() {
+        let mut w = Weight(8);
+        w /= Weight(4).into();
+        assert_eq!(w, Weight(2));
     }
 }
