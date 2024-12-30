@@ -88,9 +88,7 @@ impl SignedAmount {
     /// Caller to guarantee that `satoshi` is within valid range.
     ///
     /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
-    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount {
-        SignedAmount(satoshi)
-    }
+    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
