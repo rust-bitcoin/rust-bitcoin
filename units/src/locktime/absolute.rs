@@ -470,6 +470,15 @@ mod tests {
     }
 
     #[test]
+    fn is_block_height_or_time() {
+        assert!(is_block_height(499_999_999));
+        assert!(!is_block_height(500_000_000));
+
+        assert!(!is_block_time(499_999_999));
+        assert!(is_block_time(500_000_000));
+    }
+
+    #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_height() {
         serde_round_trip!(Height::ZERO);
