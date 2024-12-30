@@ -62,8 +62,11 @@ impl FeeRate {
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes without overflow check.
     pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate(sat_vb * (1000 / 4)) }
 
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate(sat_kvb / 4) }
+    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes) rounding
+    /// up.
+    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self {
+        FeeRate((sat_kvb + 3) / 4)
+    }
 
     /// Returns raw fee rate.
     ///
@@ -388,7 +391,7 @@ mod tests {
     #[test]
     fn fee_rate_from_sat_per_kvb() {
         let fee_rate = FeeRate::from_sat_per_kvb(10);
-        assert_eq!(FeeRate(2), fee_rate);
+        assert_eq!(FeeRate(3), fee_rate);
     }
 
     #[test]
