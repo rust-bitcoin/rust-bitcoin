@@ -5,6 +5,7 @@ use internals::rust_version;
 
 /// A bridging wrapper providing the IO traits for types that already implement `std` IO traits.
 #[repr(transparent)]
+#[derive(Debug)]
 pub struct FromStd<T>(T);
 
 impl<T> FromStd<T> {
@@ -116,6 +117,7 @@ impl<T: std::io::Write> std::io::Write for FromStd<T> {
 
 /// A bridging wrapper providing the std traits for types that already implement our traits.
 #[repr(transparent)]
+#[derive(Debug)]
 pub struct ToStd<T>(T);
 
 impl<T> ToStd<T> {

@@ -94,6 +94,7 @@ pub trait BufRead: Read {
 /// Reader adapter which limits the bytes read from an underlying reader.
 ///
 /// Created by calling `[Read::take]`.
+#[derive(Debug)]
 pub struct Take<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     remaining: u64,
@@ -191,6 +192,7 @@ impl BufRead for &[u8] {
 }
 
 /// Wraps an in memory reader providing the `position` function.
+#[derive(Debug)]
 pub struct Cursor<T> {
     inner: T,
     pos: u64,
@@ -329,6 +331,7 @@ impl Write for &mut [u8] {
 /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
 ///
 /// Created using `io::sink()`.
+#[derive(Debug)]
 pub struct Sink;
 
 impl Write for Sink {
