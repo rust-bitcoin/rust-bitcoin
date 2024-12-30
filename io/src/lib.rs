@@ -224,6 +224,19 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     ///
     /// This is the whole wrapped buffer, including the bytes already read.
     #[inline]
+    pub fn get_ref(&self) -> &T { &self.inner }
+
+    /// Returns a mutable reference to the inner buffer.
+    ///
+    /// This is the whole wrapped buffer, including the bytes already read.
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut T { &mut self.inner }
+
+    /// Returns a reference to the inner buffer.
+    ///
+    /// This is the whole wrapped buffer, including the bytes already read.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `get_ref()` instead")]
     pub fn inner(&self) -> &T { &self.inner }
 }
 
