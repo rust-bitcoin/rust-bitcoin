@@ -21,9 +21,9 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-// These imports test "typical" usage by user code.
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+// These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
