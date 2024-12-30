@@ -123,18 +123,6 @@ impl<T> ToStd<T> {
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
 
-    /// Returns the wrapped value.
-    #[inline]
-    pub fn into_inner(self) -> T { self.0 }
-
-    /// Returns a reference to the wrapped value.
-    #[inline]
-    pub fn inner(&self) -> &T { &self.0 }
-
-    /// Returns a mutable reference to the wrapped value.
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
-
     /// Wraps a mutable reference to IO type.
     #[inline]
     pub fn new_mut(inner: &mut T) -> &mut Self {
@@ -149,6 +137,18 @@ impl<T> ToStd<T> {
         // SAFETY: the type is repr(transparent) and the pointer is created from Box
         unsafe { Box::from_raw(Box::into_raw(inner) as *mut Self) }
     }
+
+    /// Returns the wrapped value.
+    #[inline]
+    pub fn into_inner(self) -> T { self.0 }
+
+    /// Returns a reference to the wrapped value.
+    #[inline]
+    pub fn inner(&self) -> &T { &self.0 }
+
+    /// Returns a mutable reference to the wrapped value.
+    #[inline]
+    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 }
 
 impl<T: super::Read> std::io::Read for ToStd<T> {
