@@ -700,8 +700,8 @@ fn serde_as_btc() {
     }
 
     let orig = T {
-        amt: Amount::from_sat(20_000_000__000_000_01),
-        samt: SignedAmount::from_sat(-20_000_000__000_000_01),
+        amt: Amount::from_sat_unchecked(20_000_000__000_000_01),
+        samt: SignedAmount::from_sat_unchecked(-20_000_000__000_000_01),
     };
 
     let json = "{\"amt\": 20000000.00000001, \
@@ -736,7 +736,7 @@ fn serde_as_str() {
     }
 
     serde_test::assert_tokens(
-        &T { amt: Amount::from_sat(123_456_789), samt: SignedAmount::from_sat(-123_456_789) },
+        &T { amt: Amount::from_sat_unchecked(123_456_789), samt: SignedAmount::from_sat_unchecked(-123_456_789) },
         &[
             serde_test::Token::Struct { name: "T", len: 2 },
             serde_test::Token::String("amt"),
@@ -764,8 +764,8 @@ fn serde_as_btc_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(2_500_000_00)),
-        samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+        amt: Some(Amount::from_sat_unchecked(2_500_000_00)),
+        samt: Some(SignedAmount::from_sat_unchecked(-2_500_000_00)),
     };
     let without = T { amt: None, samt: None };
 
@@ -806,8 +806,8 @@ fn serde_as_sat_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(2_500_000_00)),
-        samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+        amt: Some(Amount::from_sat_unchecked(2_500_000_00)),
+        samt: Some(SignedAmount::from_sat_unchecked(-2_500_000_00)),
     };
     let without = T { amt: None, samt: None };
 
@@ -848,8 +848,8 @@ fn serde_as_str_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(123_456_789)),
-        samt: Some(SignedAmount::from_sat(-123_456_789)),
+        amt: Some(Amount::from_sat_unchecked(123_456_789)),
+        samt: Some(SignedAmount::from_sat_unchecked(-123_456_789)),
     };
     let without = T { amt: None, samt: None };
 
