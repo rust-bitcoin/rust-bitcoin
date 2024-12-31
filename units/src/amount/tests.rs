@@ -936,6 +936,8 @@ fn serde_as_str_opt() {
 
 #[test]
 fn sum_amounts() {
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(Amount::ZERO, [].iter().sum::<Amount>());
     assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
 
@@ -945,16 +947,15 @@ fn sum_amounts() {
     let sum = amounts.into_iter().sum::<Amount>();
     assert_eq!(Amount::from_sat(1400), sum);
 
-    let amounts =
-        [SignedAmount::from_sat(-42), SignedAmount::from_sat(1337), SignedAmount::from_sat(21)];
-    assert_eq!(amounts.iter().sum::<SignedAmount>(), SignedAmount::from_sat(1316));
-
+    let amounts = [ssat(-42), ssat(1337), ssat(21)];
     let sum = amounts.into_iter().sum::<SignedAmount>();
-    assert_eq!(SignedAmount::from_sat(1316), sum);
+    assert_eq!(ssat(1316), sum);
 }
 
 #[test]
 fn checked_sum_amounts() {
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(Some(Amount::ZERO), [].into_iter().checked_sum());
     assert_eq!(Some(SignedAmount::ZERO), [].into_iter().checked_sum());
 
@@ -966,18 +967,17 @@ fn checked_sum_amounts() {
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [SignedAmount::MIN, SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [SignedAmount::MAX, SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MAX, ssat(1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts =
-        [SignedAmount::from_sat(42), SignedAmount::from_sat(3301), SignedAmount::from_sat(21)];
+    let amounts = [ssat(42), ssat(3301), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(SignedAmount::from_sat(3364)), sum);
+    assert_eq!(Some(ssat(3364)), sum);
 }
 
 #[test]
@@ -1094,9 +1094,11 @@ fn unsigned_sub_assign() {
 #[test]
 #[allow(clippy::op_ref)]
 fn signed_addition() {
-    let one = SignedAmount::from_sat(1);
-    let two = SignedAmount::from_sat(2);
-    let three = SignedAmount::from_sat(3);
+    let ssat = SignedAmount::from_sat;
+
+    let one = ssat(1);
+    let two = ssat(2);
+    let three = ssat(3);
 
     assert!(one + two == three);
     assert!(&one + two == three);
@@ -1107,9 +1109,11 @@ fn signed_addition() {
 #[test]
 #[allow(clippy::op_ref)]
 fn signed_subtract() {
-    let one = SignedAmount::from_sat(1);
-    let two = SignedAmount::from_sat(2);
-    let three = SignedAmount::from_sat(3);
+    let ssat = SignedAmount::from_sat;
+
+    let one = ssat(1);
+    let two = ssat(2);
+    let three = ssat(3);
 
     assert!(three - two == one);
     assert!(&three - two == one);
@@ -1119,22 +1123,26 @@ fn signed_subtract() {
 
 #[test]
 fn signed_add_assign() {
-    let mut f = SignedAmount::from_sat(1);
-    f += SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(3));
+    let ssat = SignedAmount::from_sat;
 
-    let mut f = SignedAmount::from_sat(1);
-    f += &SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(3));
+    let mut f = ssat(1);
+    f += ssat(2);
+    assert_eq!(f, ssat(3));
+
+    let mut f = ssat(1);
+    f += &ssat(2);
+    assert_eq!(f, ssat(3));
 }
 
 #[test]
 fn signed_sub_assign() {
-    let mut f = SignedAmount::from_sat(3);
-    f -= SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(1));
+    let ssat = SignedAmount::from_sat;
 
-    let mut f = SignedAmount::from_sat(3);
-    f -= &SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(1));
+    let mut f = ssat(3);
+    f -= ssat(2);
+    assert_eq!(f, ssat(1));
+
+    let mut f = ssat(3);
+    f -= &ssat(2);
+    assert_eq!(f, ssat(1));
 }
