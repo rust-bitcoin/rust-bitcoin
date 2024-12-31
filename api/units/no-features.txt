@@ -1021,7 +1021,6 @@ pub fn u64::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub macro bitcoin_units::impl_parse_str!
 pub macro bitcoin_units::impl_parse_str_from_int_infallible!
 pub macro bitcoin_units::impl_tryfrom_str!
-pub macro bitcoin_units::impl_tryfrom_str_from_int_infallible!
 pub mod bitcoin_units
 pub mod bitcoin_units::amount
 pub mod bitcoin_units::block

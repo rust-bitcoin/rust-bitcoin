@@ -116,6 +116,7 @@ macro_rules! impl_parse_str_from_int_infallible {
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
 /// conversion function `fn`.
 #[macro_export]
+#[doc(hidden)]                  // Helper macro called by `impl_parse_str_from_int_infallible`.
 macro_rules! impl_tryfrom_str_from_int_infallible {
     ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
         $(
