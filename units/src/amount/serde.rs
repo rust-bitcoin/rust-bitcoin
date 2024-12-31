@@ -9,7 +9,7 @@
 //! ways are supported and it's up to the user to decide which serialiation to use.
 //! The provided modules can be used as follows:
 //!
-//! ```rust,ignore
+//! ```rust
 //! use serde::{Serialize, Deserialize};
 //! use bitcoin_units::Amount;
 //!
