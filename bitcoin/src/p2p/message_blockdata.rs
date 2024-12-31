@@ -16,8 +16,9 @@ use crate::transaction::{Txid, Wtxid};
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
 pub enum Inventory {
-    /// Error --- these inventories can be ignored
-    Error,
+    /// Error --- these inventories can be ignored.
+    /// While a 32 byte hash is expected over the wire, the value is meaningless.
+    Error([u8; 32]),
     /// Transaction
     Transaction(Txid),
     /// Block
@@ -42,10 +43,10 @@ pub enum Inventory {
 impl Inventory {
     /// Return the item value represented as a SHA256-d hash.
     ///
-    /// Returns [None] only for [Inventory::Error].
+    /// Returns [None] only for [Inventory::Error] who's hash value is meaningless.
     pub fn network_hash(&self) -> Option<[u8; 32]> {
         match self {
-            Inventory::Error => None,
+            Inventory::Error(_) => None,
             Inventory::Transaction(t) => Some(t.to_byte_array()),
             Inventory::Block(b) => Some(b.to_byte_array()),
             Inventory::CompactBlock(b) => Some(b.to_byte_array()),
@@ -66,7 +67,7 @@ impl Encodable for Inventory {
             };
         }
         Ok(match *self {
-            Inventory::Error => encode_inv!(0, [0; 32]),
+            Inventory::Error(_) => encode_inv!(0, [0; 32]),
             Inventory::Transaction(ref t) => encode_inv!(1, t),
             Inventory::Block(ref b) => encode_inv!(2, b),
             Inventory::CompactBlock(ref b) => encode_inv!(4, b),
@@ -83,7 +84,7 @@ impl Decodable for Inventory {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
-            0 => Inventory::Error,
+            0 => Inventory::Error(Decodable::consensus_decode(r)?),
             1 => Inventory::Transaction(Decodable::consensus_decode(r)?),
             2 => Inventory::Block(Decodable::consensus_decode(r)?),
             4 => Inventory::CompactBlock(Decodable::consensus_decode(r)?),
