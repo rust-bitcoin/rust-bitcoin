@@ -151,6 +151,7 @@ macro_rules! impl_parse_str {
 
 /// Implements `TryFrom<$from> for $to`.
 #[macro_export]
+#[doc(hidden)]                  // Helper macro called by `impl_parse_str`.
 macro_rules! impl_tryfrom_str {
     ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
         $(
