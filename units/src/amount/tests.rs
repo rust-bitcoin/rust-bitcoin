@@ -936,16 +936,15 @@ fn serde_as_str_opt() {
 
 #[test]
 fn sum_amounts() {
+    let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(Amount::ZERO, [].iter().sum::<Amount>());
     assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
 
-    let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
-    assert_eq!(amounts.iter().sum::<Amount>(), Amount::from_sat(1400));
-
+    let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().sum::<Amount>();
-    assert_eq!(Amount::from_sat(1400), sum);
+    assert_eq!(sat(1400), sum);
 
     let amounts = [ssat(-42), ssat(1337), ssat(21)];
     let sum = amounts.into_iter().sum::<SignedAmount>();
@@ -954,16 +953,17 @@ fn sum_amounts() {
 
 #[test]
 fn checked_sum_amounts() {
+    let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(Some(Amount::ZERO), [].into_iter().checked_sum());
     assert_eq!(Some(SignedAmount::ZERO), [].into_iter().checked_sum());
 
-    let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+    let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(Amount::from_sat(1400)), sum);
+    assert_eq!(Some(sat(1400)), sum);
 
-    let amounts = [Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
+    let amounts = [sat(u64::MAX), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
@@ -1020,35 +1020,39 @@ fn disallow_unknown_denomination() {
 #[test]
 #[cfg(feature = "alloc")]
 fn trailing_zeros_for_amount() {
-    assert_eq!(format!("{}", Amount::from_sat(1_000_000)), "0.01 BTC");
+    let sat = Amount::from_sat;
+
+    assert_eq!(format!("{}", sat(1_000_000)), "0.01 BTC");
     assert_eq!(format!("{}", Amount::ONE_SAT), "0.00000001 BTC");
     assert_eq!(format!("{}", Amount::ONE_BTC), "1 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(1)), "0.00000001 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(10)), "0.0000001 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(1000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10_000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100_000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(1_000_000)), "0.01 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10_000_000)), "0.10 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100_000_000)), "1.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(500_000)), "0.01 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(9_500_000)), "0.10 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(99_500_000)), "1.00 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(100_000_000)), "1 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(40_000_000_000)), "400 BTC");
-    assert_eq!(format!("{:.10}", Amount::from_sat(100_000_000)), "1.0000000000 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.0000001 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
+    assert_eq!(format!("{}", sat(1)), "0.00000001 BTC");
+    assert_eq!(format!("{}", sat(10)), "0.0000001 BTC");
+    assert_eq!(format!("{:.2}", sat(10)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(100)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(1000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(10_000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(100_000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(1_000_000)), "0.01 BTC");
+    assert_eq!(format!("{:.2}", sat(10_000_000)), "0.10 BTC");
+    assert_eq!(format!("{:.2}", sat(100_000_000)), "1.00 BTC");
+    assert_eq!(format!("{:.2}", sat(500_000)), "0.01 BTC");
+    assert_eq!(format!("{:.2}", sat(9_500_000)), "0.10 BTC");
+    assert_eq!(format!("{:.2}", sat(99_500_000)), "1.00 BTC");
+    assert_eq!(format!("{}", sat(100_000_000)), "1 BTC");
+    assert_eq!(format!("{}", sat(40_000_000_000)), "400 BTC");
+    assert_eq!(format!("{:.10}", sat(100_000_000)), "1.0000000000 BTC");
+    assert_eq!(format!("{}", sat(400_000_000_000_010)), "4000000.0000001 BTC");
+    assert_eq!(format!("{}", sat(400_000_000_000_000)), "4000000 BTC");
 }
 
 #[test]
 #[allow(clippy::op_ref)]
 fn unsigned_addition() {
-    let one = Amount::from_sat(1);
-    let two = Amount::from_sat(2);
-    let three = Amount::from_sat(3);
+    let sat = Amount::from_sat;
+
+    let one = sat(1);
+    let two = sat(2);
+    let three = sat(3);
 
     assert!(one + two == three);
     assert!(&one + two == three);
@@ -1059,9 +1063,11 @@ fn unsigned_addition() {
 #[test]
 #[allow(clippy::op_ref)]
 fn unsigned_subtract() {
-    let one = Amount::from_sat(1);
-    let two = Amount::from_sat(2);
-    let three = Amount::from_sat(3);
+    let sat = Amount::from_sat;
+
+    let one = sat(1);
+    let two = sat(2);
+    let three = sat(3);
 
     assert!(three - two == one);
     assert!(&three - two == one);
@@ -1071,24 +1077,28 @@ fn unsigned_subtract() {
 
 #[test]
 fn unsigned_add_assign() {
-    let mut f = Amount::from_sat(1);
-    f += Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(3));
+    let sat = Amount::from_sat;
 
-    let mut f = Amount::from_sat(1);
-    f += &Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(3));
+    let mut f = sat(1);
+    f += sat(2);
+    assert_eq!(f, sat(3));
+
+    let mut f = sat(1);
+    f += &sat(2);
+    assert_eq!(f, sat(3));
 }
 
 #[test]
 fn unsigned_sub_assign() {
-    let mut f = Amount::from_sat(3);
-    f -= Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(1));
+    let sat = Amount::from_sat;
 
-    let mut f = Amount::from_sat(3);
-    f -= &Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(1));
+    let mut f = sat(3);
+    f -= sat(2);
+    assert_eq!(f, sat(1));
+
+    let mut f = sat(3);
+    f -= &sat(2);
+    assert_eq!(f, sat(1));
 }
 
 #[test]
