@@ -11,6 +11,7 @@
 //! The difference between these types and the locktime types is that these types are thin wrappers
 //! whereas the locktime types contain more complex locktime specific abstractions.
 
+use core::str::FromStr;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -21,6 +22,8 @@ use serde::{Deserialize, Serialize};
 #[cfg(doc)]
 use crate::locktime;
 use crate::locktime::{absolute, relative};
+use crate::parse::ParseIntError;
+use crate::private::impl_parse_str_from_int_infallible;
 
 /// The block height, zero denotes the genesis block.
 ///
@@ -56,7 +59,7 @@ impl fmt::Display for BlockHeight {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str_from_int_infallible!(BlockHeight, u32, from);
+impl_parse_str_from_int_infallible!(BlockHeight, u32, from);
 
 impl From<u32> for BlockHeight {
     fn from(inner: u32) -> Self { Self::from_u32(inner) }
@@ -123,7 +126,7 @@ impl fmt::Display for BlockInterval {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str_from_int_infallible!(BlockInterval, u32, from);
+crate::private::impl_parse_str_from_int_infallible!(BlockInterval, u32, from);
 
 impl From<u32> for BlockInterval {
     fn from(inner: u32) -> Self { Self::from_u32(inner) }

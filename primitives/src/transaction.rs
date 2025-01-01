@@ -18,7 +18,7 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
-use internals::{compact_size, write_err};
+use internals::compact_size;
 #[cfg(feature = "alloc")]
 use units::{parse, Amount, Weight};
 
@@ -26,6 +26,8 @@ use units::{parse, Amount, Weight};
 use crate::locktime::absolute;
 #[cfg(feature = "alloc")]
 use crate::prelude::Vec;
+#[cfg(feature = "alloc")]
+use crate::private::write_err;
 #[cfg(feature = "alloc")]
 use crate::script::ScriptBuf;
 #[cfg(feature = "alloc")]
@@ -423,7 +425,16 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    parse::int(s).map_err(ParseOutPointError::Vout)
+    s.parse::<u32>()
+        .map_err(|error| {
+            units::parse::ParseIntError::new(
+                s,
+                u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 128 bits for u128"),
+                false,
+                error,
+            )
+        })
+        .map_err(ParseOutPointError::Vout)
 }
 
 /// An error in parsing an [`OutPoint`].

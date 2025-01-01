@@ -10,10 +10,11 @@ use core::{fmt, iter};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hex::FromHex;
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::impl_to_hex_from_lower_hex;
 use io::Write;
 
 use crate::prelude::{DisplayHex, Vec};
+use crate::private::write_err;
 use crate::script::PushBytes;
 #[cfg(doc)]
 use crate::script::ScriptBufExt as _;

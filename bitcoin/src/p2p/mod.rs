@@ -24,12 +24,13 @@ use core::str::FromStr;
 use core::{fmt, ops};
 
 use hex::FromHex;
-use internals::{debug_from_display, impl_to_hex_from_lower_hex, write_err};
+use internals::{debug_from_display, impl_to_hex_from_lower_hex};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::network::{Network, Params, TestnetVersion};
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
+use crate::private::write_err;
 
 #[rustfmt::skip]
 #[doc(inline)]

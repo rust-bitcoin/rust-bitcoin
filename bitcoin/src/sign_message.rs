@@ -24,11 +24,11 @@ mod message_signing {
     use core::fmt;
 
     use hashes::sha256d;
-    use internals::write_err;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
+    use crate::private::write_err;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, Clone, PartialEq, Eq)]

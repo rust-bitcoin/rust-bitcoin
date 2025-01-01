@@ -31,6 +31,8 @@ extern crate std;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+mod private;
+
 pub mod error;
 
 #[cfg(not(feature = "std"))]

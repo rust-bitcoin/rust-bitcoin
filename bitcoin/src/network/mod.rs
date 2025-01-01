@@ -23,13 +23,13 @@ pub mod params;
 use core::fmt;
 use core::str::FromStr;
 
-use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::constants::ChainHash;
 use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
+use crate::private::write_err;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

@@ -3,11 +3,15 @@
 //! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
+use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use crate::parse::ParseIntError;
+use crate::private::impl_parse_str_from_int_infallible;
 
 /// A relative lock time lock-by-blockheight value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -46,7 +50,7 @@ impl From<u16> for Height {
     fn from(value: u16) -> Self { Height(value) }
 }
 
-crate::impl_parse_str_from_int_infallible!(Height, u16, from);
+impl_parse_str_from_int_infallible!(Height, u16, from);
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
@@ -122,7 +126,7 @@ impl Time {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
+crate::private::impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }

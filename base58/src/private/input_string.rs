@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Implements the [`InputString`] type storing the parsed input.
 
 use core::fmt;
@@ -12,7 +14,7 @@ use storage::Storage;
 ///
 /// This provides two methods to format the error strings depending on the context.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub struct InputString(Storage);
+pub(crate) struct InputString(Storage);
 
 impl InputString {
     /// Displays a message saying `failed to parse <self> as <what>`.
@@ -21,11 +23,7 @@ impl InputString {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use core::fmt;
-    /// use bitcoin_internals::error::InputString;
-    /// use bitcoin_internals::write_err;
-    ///
+    /// ```rust,ignore
     /// /// An example parsing error including the parse error from core.
     /// #[derive(Debug, Clone, PartialEq, Eq)]
     /// pub struct ParseError {
@@ -40,7 +38,7 @@ impl InputString {
     ///     }
     /// }
     /// ```
-    pub fn display_cannot_parse<'a, T>(&'a self, what: &'a T) -> CannotParse<'a, T>
+    pub(crate) fn display_cannot_parse<'a, T>(&'a self, what: &'a T) -> CannotParse<'a, T>
     where
         T: fmt::Display + ?Sized,
     {
@@ -53,10 +51,7 @@ impl InputString {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use core::fmt;
-    /// use bitcoin_internals::error::InputString;
-    ///
+    /// ```rust,ignore
     /// /// An example parsing error.
     /// #[derive(Debug, Clone, PartialEq, Eq)]
     /// pub struct ParseError(InputString);
@@ -68,7 +63,7 @@ impl InputString {
     ///     }
     /// }
     /// ```
-    pub fn unknown_variant<T>(&self, what: &T, f: &mut fmt::Formatter) -> fmt::Result
+    pub(crate) fn unknown_variant<T>(&self, what: &T, f: &mut fmt::Formatter) -> fmt::Result
     where
         T: fmt::Display + ?Sized,
     {
@@ -97,7 +92,7 @@ impl_from!(&str);
 /// `write_err!("{}", self.input.display_cannot_parse("what is parsed"); self.source)` in parse
 /// error [`Display`](fmt::Display) imlementation if the error has source. If the error doesn't
 /// have a source just use regular `write!` with same formatting arguments.
-pub struct CannotParse<'a, T: fmt::Display + ?Sized> {
+pub(crate) struct CannotParse<'a, T: fmt::Display + ?Sized> {
     input: &'a InputString,
     what: &'a T,
 }

@@ -12,13 +12,14 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{sha256t, HashEngine};
-use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::impl_to_hex_from_lower_hex;
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
+use crate::private::write_err;
 use crate::{Script, ScriptBuf};
 
 // Re-export these so downstream only has to use one `taproot` module.

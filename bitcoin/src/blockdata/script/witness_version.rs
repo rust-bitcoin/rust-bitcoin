@@ -10,11 +10,11 @@
 use core::fmt;
 use core::str::FromStr;
 
-use internals::write_err;
-use units::parse::{self, ParseIntError};
+use units::parse::ParseIntError;
 
 use crate::opcodes::all::*;
 use crate::opcodes::Opcode;
+use crate::private::write_err;
 use crate::script::Instruction;
 
 /// Version of the segregated witness program.
@@ -81,7 +81,14 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = parse::int(s)?;
+        let version = s.parse::<u8>().map_err(|error| {
+            units::parse::ParseIntError::new(
+                s,
+                u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 128 bits for u128"),
+                false,
+                error,
+            )
+        })?;
         Ok(WitnessVersion::try_from(version)?)
     }
 }

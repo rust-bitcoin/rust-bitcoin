@@ -35,10 +35,14 @@ pub mod rust_version {
     include!(concat!(env!("OUT_DIR"), "/rust_version.rs"));
 }
 
+#[allow(unused_macros)]
+#[allow(unused_imports)]
+#[allow(dead_code)]
+mod private;
+
 pub mod array_vec;
 pub mod compact_size;
 pub mod const_tools;
-pub mod error;
 pub mod macros;
 mod parse;
 pub mod script;

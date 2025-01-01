@@ -6,10 +6,10 @@ use core::fmt;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
 use hex::DisplayHex as _;
-use internals::write_err;
 
 #[cfg(doc)]
 use super::IterReader;
+use crate::private::write_err;
 
 /// Error deserializing from a slice.
 #[derive(Debug, PartialEq, Eq)]

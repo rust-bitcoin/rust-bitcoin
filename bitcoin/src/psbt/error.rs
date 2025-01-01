@@ -2,11 +2,10 @@
 
 use core::fmt;
 
-use internals::write_err;
-
 use crate::bip32::Xpub;
 use crate::consensus::encode;
 use crate::prelude::Box;
+use crate::private::write_err;
 use crate::psbt::raw;
 use crate::transaction::Transaction;
 

@@ -6,13 +6,12 @@
 
 use core::fmt;
 
-use internals::write_err;
-
 use crate::amount::Amount;
 use crate::consensus::encode;
 #[cfg(doc)]
 use crate::consensus_validation;
 use crate::internal_macros::define_extension_trait;
+use crate::private::write_err;
 use crate::script::Script;
 use crate::transaction::{OutPoint, Transaction, TxOut};
 
