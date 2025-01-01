@@ -241,14 +241,14 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => {
                 let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
+                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
                     InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
             }
             130 => {
                 let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e.invalid_char()),
+                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
                     InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
@@ -1017,7 +1017,7 @@ pub enum ParsePublicKeyError {
     /// Error originated while parsing string.
     Encoding(FromSliceError),
     /// Hex decoding error.
-    InvalidChar(u8),
+    InvalidChar(hex::InvalidCharError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -1520,12 +1520,22 @@ mod tests {
         assert_eq!(s.len(), 130);
         let res = s.parse::<PublicKey>();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
+        if let Err(ParsePublicKeyError::InvalidChar(err)) = res {
+            assert_eq!(err.invalid_char(), b'g');
+            assert_eq!(err.pos(), 129);
+        } else {
+            panic!("Expected Invalid char error");
+        }
 
         let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1ag";
         assert_eq!(s.len(), 66);
         let res = s.parse::<PublicKey>();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), ParsePublicKeyError::InvalidChar(103));
+        if let Err(ParsePublicKeyError::InvalidChar(err)) = res {
+            assert_eq!(err.invalid_char(), b'g');
+            assert_eq!(err.pos(), 65);
+        } else {
+            panic!("Expected Invalid char error");
+        }
     }
 }
