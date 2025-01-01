@@ -2,21 +2,6 @@
 
 //! Various macros used by the Rust Bitcoin ecosystem.
 
-/// Implements `Debug` by calling through to `Display`.
-#[macro_export]
-macro_rules! debug_from_display {
-    ($thing:ident) => {
-        impl core::fmt::Debug for $thing {
-            fn fmt(
-                &self,
-                f: &mut core::fmt::Formatter,
-            ) -> core::result::Result<(), core::fmt::Error> {
-                core::fmt::Display::fmt(self, f)
-            }
-        }
-    };
-}
-
 /// Asserts a boolean expression at compile time.
 #[macro_export]
 macro_rules! const_assert {

@@ -150,4 +150,8 @@ impl fmt::Display for Builder {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-internals::debug_from_display!(Builder);
+impl fmt::Debug for Builder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        fmt::Display::fmt(self, f)
+    }
+}

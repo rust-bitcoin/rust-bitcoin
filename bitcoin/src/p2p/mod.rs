@@ -24,7 +24,7 @@ use core::str::FromStr;
 use core::{fmt, ops};
 
 use hex::FromHex;
-use internals::{debug_from_display, impl_to_hex_from_lower_hex, write_err};
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
@@ -291,7 +291,12 @@ impl fmt::Display for Magic {
         Ok(())
     }
 }
-debug_from_display!(Magic);
+
+impl fmt::Debug for Magic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        fmt::Display::fmt(self, f)
+    }
+}
 
 impl fmt::LowerHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
