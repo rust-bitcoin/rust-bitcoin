@@ -39,7 +39,7 @@ arbitrary = { version = "1.4", optional = true }
 base64 = { version = "0.22.0", optional = true }
 # `bitcoinconsensus` version includes metadata which indicates the version of Core. Use `cargo tree` to see it.
 bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
-ordered = { version = "0.3.0", optional = true }
+ordered = { version = "0.4.0", optional = true }
 serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]
