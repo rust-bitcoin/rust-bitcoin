@@ -8,6 +8,7 @@ mod borrowed;
 mod owned;
 
 use core::cmp::Ordering;
+use core::convert::Infallible;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
@@ -158,7 +159,9 @@ pub struct RedeemScriptSizeError {
     pub size: usize,
 }
 
-internals::impl_from_infallible!(RedeemScriptSizeError);
+impl From<Infallible> for RedeemScriptSizeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for RedeemScriptSizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -176,7 +179,9 @@ pub struct WitnessScriptSizeError {
     pub size: usize,
 }
 
-internals::impl_from_infallible!(WitnessScriptSizeError);
+impl From<Infallible> for WitnessScriptSizeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for WitnessScriptSizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

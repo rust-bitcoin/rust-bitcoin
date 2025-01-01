@@ -17,6 +17,7 @@ mod unsigned;
 mod verification;
 
 use core::cmp::Ordering;
+use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
@@ -292,7 +293,9 @@ enum InnerParseError {
     InvalidCharacter(InvalidCharacterError),
 }
 
-internals::impl_from_infallible!(InnerParseError);
+impl From<Infallible> for InnerParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl InnerParseError {
     fn convert(self, is_signed: bool) -> ParseAmountError {
