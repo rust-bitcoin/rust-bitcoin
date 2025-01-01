@@ -333,7 +333,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_chacha_block() {
+    fn chacha_block() {
         let mut state = State {
             matrix: [
                 U32x4([0x61707865, 0x3320646e, 0x79622d32, 0x6b206574]),
@@ -357,7 +357,7 @@ mod tests {
     }
 
     #[test]
-    fn test_prepare_state() {
+    fn prepare_state() {
         let key =
             Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
                 .unwrap()
@@ -374,7 +374,7 @@ mod tests {
     }
 
     #[test]
-    fn test_small_plaintext() {
+    fn small_plaintext() {
         let key =
             Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
                 .unwrap()
@@ -391,7 +391,7 @@ mod tests {
     }
 
     #[test]
-    fn test_modulo_64() {
+    fn modulo_64() {
         let key =
             Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
                 .unwrap()
@@ -408,7 +408,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rfc_standard() {
+    fn rfc_standard() {
         let key =
             Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
                 .unwrap()
@@ -428,7 +428,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new_from_block() {
+    fn new_from_block() {
         let key =
             Key(Vec::from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
                 .unwrap()

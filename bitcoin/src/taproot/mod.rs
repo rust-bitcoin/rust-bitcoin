@@ -1572,7 +1572,7 @@ mod test {
     }
 
     #[test]
-    fn test_midstates() {
+    fn midstates() {
         use sha256t::Hash;
         // test that engine creation roundtrips
         assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
@@ -1593,7 +1593,7 @@ mod test {
     }
 
     #[test]
-    fn test_vectors_core() {
+    fn vectors_core() {
         //! Test vectors taken from Core
         use sha256t::Hash;
 
@@ -1840,7 +1840,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_leaf_version_serde() {
+    fn leaf_version_serde() {
         let leaf_version = LeafVersion::TapScript;
         // use serde_test to test serialization and deserialization
         assert_tokens(&leaf_version, &[Token::U8(192)]);
@@ -1852,7 +1852,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_merkle_branch_serde() {
+    fn merkle_branch_serde() {
         let hash1 = TapNodeHash::from_byte_array(
             "03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b"
                 .parse::<sha256t::Hash<TapBranchTag>>()

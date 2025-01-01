@@ -591,7 +591,7 @@ macro_rules! unwrap_all {
 }
 
 #[test]
-fn test_iterator() {
+fn iterator() {
     let zero = ScriptBuf::from_hex("00").unwrap();
     let zeropush = ScriptBuf::from_hex("0100").unwrap();
 
@@ -669,7 +669,7 @@ fn script_ord() {
 
 #[test]
 #[cfg(feature = "bitcoinconsensus")]
-fn test_bitcoinconsensus() {
+fn bitcoinconsensus() {
     use crate::consensus_validation::ScriptExt as _;
 
     // a random SegWit transaction from the blockchain using native SegWit
@@ -707,7 +707,7 @@ fn default_dust_value() {
 }
 
 #[test]
-fn test_script_get_sigop_count() {
+fn script_get_sigop_count() {
     assert_eq!(
         Builder::new()
             .push_opcode(OP_DUP)
@@ -784,7 +784,7 @@ fn test_script_get_sigop_count() {
 
 #[test]
 #[cfg(feature = "serde")]
-fn test_script_serde_human_and_not() {
+fn script_serde_human_and_not() {
     let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
 
     // Serialize
@@ -799,7 +799,7 @@ fn test_script_serde_human_and_not() {
 }
 
 #[test]
-fn test_instructions_are_fused() {
+fn instructions_are_fused() {
     let script = ScriptBuf::new();
     let mut instructions = script.instructions();
     assert!(instructions.next().is_none());

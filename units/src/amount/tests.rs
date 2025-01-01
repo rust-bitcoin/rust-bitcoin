@@ -72,7 +72,7 @@ fn from_int_btc() {
 }
 
 #[test]
-fn test_amount_try_from_signed_amount() {
+fn amount_try_from_signed_amount() {
     let sa_positive = SignedAmount::from_sat_unchecked(123);
     let ua_positive = Amount::try_from(sa_positive).unwrap();
     assert_eq!(ua_positive, Amount::from_sat_unchecked(123));
@@ -103,7 +103,7 @@ fn mul_div() {
 
 #[cfg(feature = "std")]
 #[test]
-fn test_overflows() {
+fn overflows() {
     // panic on overflow
     let result = panic::catch_unwind(|| Amount::MAX + Amount::from_sat_unchecked(1));
     assert!(result.is_err());
@@ -461,7 +461,7 @@ check_format_non_negative_show_denom! {
 }
 
 #[test]
-fn test_unsigned_signed_conversion() {
+fn unsigned_signed_conversion() {
     let sa = SignedAmount::from_sat;
     let ua = Amount::from_sat;
     let max_sats: u64 = Amount::MAX.to_sat();

@@ -1586,7 +1586,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tap_sighash_hash() {
+    fn tap_sighash_hash() {
         let bytes = hex!("00011b96877db45ffa23b307e9f0ac87b80ef9a80b4c5f0db3fbe734422453e83cc5576f3d542c5d4898fb2b696c15d43332534a7c1d1255fda38993545882df92c3e353ff6d36fbfadc4d168452afd8467f02fe53d71714fcea5dfe2ea759bd00185c4cb02bc76d42620393ca358a1a713f4997f9fc222911890afb3fe56c6a19b202df7bffdcfad08003821294279043746631b00e2dc5e52a111e213bbfe6ef09a19428d418dab0d50000000000");
         let expected = hex!("04e808aad07a40b3767a1442fead79af6ef7e7c9316d82dec409bb31e77699b0");
         let mut enc = sha256t::Hash::<TapSighashTag>::engine();
@@ -1596,7 +1596,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sighashes_keyspending() {
+    fn sighashes_keyspending() {
         // following test case has been taken from Bitcoin Core test framework
 
         test_taproot_sighash(
@@ -1657,7 +1657,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sighashes_with_annex() {
+    fn sighashes_with_annex() {
         test_taproot_sighash(
             "0200000001df8123752e8f37d132c4e9f1ff7e4f9b986ade9211267e9ebd5fd22a5e718dec6d01000000ce4023b903cb7b23000000000017a914a18b36ea7a094db2f4940fc09edf154e86de7bd787580200000000000017a914afd0d512a2c5c2b40e25669e9cc460303c325b8b87580200000000000017a914a18b36ea7a094db2f4940fc09edf154e86de7bd787f6020000",
             "01ea49260000000000225120ab5e9800806bf18cb246edcf5fe63441208fe955a4b5a35bbff65f5db622a010",
@@ -1671,7 +1671,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sighashes_with_script_path() {
+    fn sighashes_with_script_path() {
         test_taproot_sighash(
             "020000000189fc651483f9296b906455dd939813bf086b1bbe7c77635e157c8e14ae29062195010000004445b5c7044561320000000000160014331414dbdada7fb578f700f38fb69995fc9b5ab958020000000000001976a914268db0a8104cc6d8afd91233cc8b3d1ace8ac3ef88ac580200000000000017a914ec00dcb368d6a693e11986d265f659d2f59e8be2875802000000000000160014c715799a49a0bae3956df9c17cb4440a673ac0df6f010000",
             "011bec34000000000022512028055142ea437db73382e991861446040b61dd2185c4891d7daf6893d79f7182",
@@ -1685,7 +1685,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sighashes_with_script_path_raw_hash() {
+    fn sighashes_with_script_path_raw_hash() {
         test_taproot_sighash(
             "020000000189fc651483f9296b906455dd939813bf086b1bbe7c77635e157c8e14ae29062195010000004445b5c7044561320000000000160014331414dbdada7fb578f700f38fb69995fc9b5ab958020000000000001976a914268db0a8104cc6d8afd91233cc8b3d1ace8ac3ef88ac580200000000000017a914ec00dcb368d6a693e11986d265f659d2f59e8be2875802000000000000160014c715799a49a0bae3956df9c17cb4440a673ac0df6f010000",
             "011bec34000000000022512028055142ea437db73382e991861446040b61dd2185c4891d7daf6893d79f7182",
@@ -1699,7 +1699,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sighashes_with_annex_and_script() {
+    fn sighashes_with_annex_and_script() {
         test_taproot_sighash(
             "020000000132fb72cb8fba496755f027a9743e2d698c831fdb8304e4d1a346ac92cbf51acba50100000026bdc7df044aad34000000000017a9144fa2554ed6174586854fa3bc01de58dcf33567d0875802000000000000160014950367e1e62cdf240b35b883fc2f5e39f0eb9ab95802000000000000160014950367e1e62cdf240b35b883fc2f5e39f0eb9ab958020000000000001600141b31217d48ccc8760dcc0710fade5866d628e733a02d5122",
             "011458360000000000225120a7baec3fb9f84614e3899fcc010c638f80f13539344120e1f4d8b68a9a011a13",
@@ -1714,7 +1714,7 @@ mod tests {
 
     #[test]
     #[rustfmt::skip] // Allow long function call `taproot_signature_hash`.
-    fn test_sighash_errors() {
+    fn sighash_errors() {
         use crate::transaction::{IndexOutOfBoundsError, InputsIndexError};
 
         let dumb_tx = Transaction {
@@ -1773,7 +1773,7 @@ mod tests {
     }
 
     #[test]
-    fn test_annex_errors() {
+    fn annex_errors() {
         assert_eq!(Annex::new(&[]), Err(AnnexError::Empty));
         assert_eq!(Annex::new(&[0x51]), Err(AnnexError::IncorrectPrefix(0x51)));
         assert_eq!(Annex::new(&[0x51, 0x50]), Err(AnnexError::IncorrectPrefix(0x51)));

@@ -165,7 +165,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_rfc7539() {
+    fn rfc7539() {
         let mut message = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
         let aad = Vec::from_hex("50515253c0c1c2c3c4c5c6c7").unwrap();
         let key = Key::new(

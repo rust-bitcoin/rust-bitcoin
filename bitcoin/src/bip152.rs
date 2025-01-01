@@ -443,7 +443,7 @@ mod test {
     }
 
     #[test]
-    fn test_header_and_short_ids_from_block() {
+    fn header_and_short_ids_from_block() {
         let block = dummy_block();
 
         let compact = HeaderAndShortIds::from_block(&block, 42, 2, &[]).unwrap();
@@ -463,7 +463,7 @@ mod test {
     }
 
     #[test]
-    fn test_compact_block_vector() {
+    fn compact_block_vector() {
         // Tested with Elements implementation of compact blocks.
         let raw_block = Vec::<u8>::from_hex("000000206c750a364035aefd5f81508a08769975116d9195312ee4520dceac39e1fdc62c4dc67473b8e354358c1e610afeaff7410858bd45df43e2940f8a62bd3d5e3ac943c2975cffff7f200000000002020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff04016b0101ffffffff020006062a0100000001510000000000000000266a24aa21a9ed4a3d9f3343dafcc0d6f6d4310f2ee5ce273ed34edca6c75db3a73e7f368734200120000000000000000000000000000000000000000000000000000000000000000000000000020000000001021fc20ba2bd745507b8e00679e3b362558f9457db374ca28ffa5243f4c23a4d5f00000000171600147c9dea14ffbcaec4b575e03f05ceb7a81cd3fcbffdffffff915d689be87b43337f42e26033df59807b768223368f189a023d0242d837768900000000171600147c9dea14ffbcaec4b575e03f05ceb7a81cd3fcbffdffffff0200cdf5050000000017a9146803c72d9154a6a20f404bed6d3dcee07986235a8700e1f5050000000017a9144e6a4c7cb5b5562904843bdf816342f4db9f5797870247304402205e9bf6e70eb0e4b495bf483fd8e6e02da64900f290ef8aaa64bb32600d973c450220670896f5d0e5f33473e5f399ab680cc1d25c2d2afd15abd722f04978f28be887012103e4e4d9312b2261af508b367d8ba9be4f01b61d6d6e78bec499845b4f410bcf2702473044022045ac80596a6ac9c8c572f94708709adaf106677221122e08daf8b9741a04f66a022003ccd52a3b78f8fd08058fc04fc0cffa5f4c196c84eae9e37e2a85babe731b57012103e4e4d9312b2261af508b367d8ba9be4f01b61d6d6e78bec499845b4f410bcf276a000000").unwrap();
         let raw_compact = Vec::<u8>::from_hex("000000206c750a364035aefd5f81508a08769975116d9195312ee4520dceac39e1fdc62c4dc67473b8e354358c1e610afeaff7410858bd45df43e2940f8a62bd3d5e3ac943c2975cffff7f2000000000a4df3c3744da89fa010a6979e971450100020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff04016b0101ffffffff020006062a0100000001510000000000000000266a24aa21a9ed4a3d9f3343dafcc0d6f6d4310f2ee5ce273ed34edca6c75db3a73e7f368734200120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
@@ -478,7 +478,7 @@ mod test {
     }
 
     #[test]
-    fn test_getblocktx_differential_encoding_de_and_serialization() {
+    fn getblocktx_differential_encoding_de_and_serialization() {
         let testcases = vec![
             // differentially encoded VarInts, indicies
             (vec![4, 0, 5, 1, 10], vec![0, 6, 8, 19]),
@@ -523,7 +523,7 @@ mod test {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic] // 'attempt to add with overflow' in consensus_encode()
-    fn test_getblocktx_panic_when_encoding_u64_max() {
+    fn getblocktx_panic_when_encoding_u64_max() {
         serialize(&BlockTransactionsRequest {
             block_hash: BlockHash::from_byte_array([0; 32]),
             indexes: vec![u64::MAX],

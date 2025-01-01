@@ -941,7 +941,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2pkh_address_58() {
+    fn p2pkh_address_58() {
         let hash = "162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse::<PubkeyHash>().unwrap();
         let addr = Address::p2pkh(hash, NetworkKind::Main);
 
@@ -955,7 +955,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2pkh_from_key() {
+    fn p2pkh_from_key() {
         let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse::<PublicKey>().unwrap();
         let addr = Address::p2pkh(key, NetworkKind::Main);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
@@ -970,7 +970,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2sh_address_58() {
+    fn p2sh_address_58() {
         let hash = "162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse::<ScriptHash>().unwrap();
         let addr = Address::p2sh_from_hash(hash, NetworkKind::Main);
 
@@ -984,7 +984,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2sh_parse() {
+    fn p2sh_parse() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae").unwrap();
         let addr = Address::p2sh(&script, NetworkKind::Test).unwrap();
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
@@ -993,7 +993,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2sh_parse_for_large_script() {
+    fn p2sh_parse_for_large_script() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
         assert_eq!(
             Address::p2sh(&script, NetworkKind::Test),
@@ -1002,7 +1002,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2wpkh() {
+    fn p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<CompressedPublicKey>()
@@ -1014,7 +1014,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2wsh() {
+    fn p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
         let addr = Address::p2wsh(&script, KnownHrp::Mainnet).expect("script is valid");
@@ -1027,7 +1027,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2shwpkh() {
+    fn p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
         let key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
             .parse::<CompressedPublicKey>()
@@ -1039,7 +1039,7 @@ mod tests {
     }
 
     #[test]
-    fn test_p2shwsh() {
+    fn p2shwsh() {
         // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
         let script = ScriptBuf::from_hex("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
         let addr = Address::p2shwsh(&script, NetworkKind::Main).expect("script is valid");
@@ -1049,7 +1049,7 @@ mod tests {
     }
 
     #[test]
-    fn test_non_existent_segwit_version() {
+    fn non_existent_segwit_version() {
         // 40-byte program
         let program = hex!(
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
@@ -1061,7 +1061,7 @@ mod tests {
     }
 
     #[test]
-    fn test_address_debug() {
+    fn address_debug() {
         // This is not really testing output of Debug but the ability and proper functioning
         // of Debug derivation on structs generic in NetworkValidation.
         #[derive(Debug)]
@@ -1085,7 +1085,7 @@ mod tests {
     }
 
     #[test]
-    fn test_address_type() {
+    fn address_type() {
         let addresses = [
             ("1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY", Some(AddressType::P2pkh)),
             ("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k", Some(AddressType::P2sh)),
@@ -1116,7 +1116,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_json_serialize() {
+    fn json_serialize() {
         use serde_json;
 
         let addr =
@@ -1198,7 +1198,7 @@ mod tests {
     }
 
     #[test]
-    fn test_qr_string() {
+    fn qr_string() {
         for el in
             ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter()
         {
@@ -1238,7 +1238,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2wpkh() {
+    fn is_related_to_pubkey_p2wpkh() {
         let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4";
         let address = address_string
             .parse::<Address<_>>()
@@ -1259,7 +1259,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2shwpkh() {
+    fn is_related_to_pubkey_p2shwpkh() {
         let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs";
         let address = address_string
             .parse::<Address<_>>()
@@ -1280,7 +1280,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2pkh() {
+    fn is_related_to_pubkey_p2pkh() {
         let address_string = "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx";
         let address = address_string
             .parse::<Address<_>>()
@@ -1301,7 +1301,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2pkh_uncompressed_key() {
+    fn is_related_to_pubkey_p2pkh_uncompressed_key() {
         let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p";
         let address = address_string
             .parse::<Address<_>>()
@@ -1322,7 +1322,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2tr() {
+    fn is_related_to_pubkey_p2tr() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = pubkey_string.parse::<PublicKey>().expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
@@ -1348,7 +1348,7 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_xonly_pubkey() {
+    fn is_related_to_xonly_pubkey() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = pubkey_string.parse::<PublicKey>().expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
@@ -1369,7 +1369,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fail_address_from_script() {
+    fn fail_address_from_script() {
         use crate::witness_program;
 
         let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
@@ -1403,7 +1403,7 @@ mod tests {
     }
 
     #[test]
-    fn test_matches_script_pubkey() {
+    fn matches_script_pubkey() {
         let addresses = [
             "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY",
             "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx",

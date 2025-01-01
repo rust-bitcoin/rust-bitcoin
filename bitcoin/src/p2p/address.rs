@@ -363,7 +363,7 @@ mod test {
     }
 
     #[test]
-    fn test_socket_addr() {
+    fn socket_addr() {
         let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111, 222, 123, 4)), 5555);
         let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);

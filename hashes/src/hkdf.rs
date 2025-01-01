@@ -114,7 +114,7 @@ mod tests {
     use crate::sha256;
 
     #[test]
-    fn test_rfc5869_basic() {
+    fn rfc5869_basic() {
         let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rfc5869_longer_inputs_outputs() {
+    fn rfc5869_longer_inputs_outputs() {
         let salt = Vec::from_hex(
             "606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
         ).unwrap();
@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn test_too_long_okm() {
+    fn too_long_okm() {
         let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn test_short_okm() {
+    fn short_okm() {
         let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
@@ -178,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn test_alloc_wrapper() {
+    fn alloc_wrapper() {
         let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();

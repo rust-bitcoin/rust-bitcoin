@@ -1461,7 +1461,7 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn test_serde_psbt() {
+    fn serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use hashes::sha256d;
 
@@ -2118,7 +2118,7 @@ mod tests {
 
     // https://github.com/rust-bitcoin/rust-bitcoin/issues/3628
     #[test]
-    fn test_combine_psbt_fuzz_3628() {
+    fn combine_psbt_fuzz_3628() {
         let mut psbt1 = hex_psbt(include_str!("../../tests/data/psbt_fuzz1.hex")).unwrap();
         let psbt2 = hex_psbt(include_str!("../../tests/data/psbt_fuzz2.hex")).unwrap();
 
@@ -2154,7 +2154,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fee() {
+    fn fee() {
         let output_0_val = Amount::from_sat(99_999_699);
         let output_1_val = Amount::from_sat(100_000_000);
         let prev_output_val = Amount::from_sat(200_000_000);

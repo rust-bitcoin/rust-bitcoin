@@ -258,7 +258,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_base58_encode() {
+    fn base58_encode() {
         // Basics
         assert_eq!(&encode(&[0][..]), "1");
         assert_eq!(&encode(&[1][..]), "2");
@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn test_base58_decode() {
+    fn base58_decode() {
         // Basics
         assert_eq!(decode("1").ok(), Some(vec![0u8]));
         assert_eq!(decode("2").ok(), Some(vec![1u8]));
@@ -308,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn test_base58_roundtrip() {
+    fn base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = decode_check(s).unwrap();
         assert_eq!(encode_check(&v[..]), s);
