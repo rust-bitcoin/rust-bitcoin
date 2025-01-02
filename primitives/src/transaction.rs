@@ -424,7 +424,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    parse::int(s).map_err(ParseOutPointError::Vout)
+    parse::int_from_str(s).map_err(ParseOutPointError::Vout)
 }
 
 /// An error in parsing an [`OutPoint`].
