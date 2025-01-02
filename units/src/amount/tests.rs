@@ -17,6 +17,32 @@ use super::*;
 use crate::{FeeRate, Weight};
 
 #[test]
+fn sanity_check() {
+    assert_eq!(SignedAmount::from_sat(-100).abs(), SignedAmount::from_sat(100));
+    assert_eq!(SignedAmount::from_sat(i64::MIN + 1).checked_abs().unwrap(), SignedAmount::from_sat(i64::MAX));
+    assert_eq!(SignedAmount::from_sat(-100).signum(), -1);
+    assert_eq!(SignedAmount::from_sat(0).signum(), 0);
+    assert_eq!(SignedAmount::from_sat(100).signum(), 1);
+    assert_eq!(SignedAmount::from(Amount::from_sat(100)), SignedAmount::from_sat(100));
+    assert!(SignedAmount::from_sat(i64::MIN).checked_abs().is_none());
+    assert!(!SignedAmount::from_sat(-100).is_positive());
+    assert!(SignedAmount::from_sat(100).is_positive());
+
+    #[cfg(feature = "alloc")]
+    {
+        assert_eq!(Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(), Amount::from_sat(0));
+        assert_eq!(Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(), Amount::from_sat(200_000_000));
+        assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
+    }
+}
+
+#[test]
+fn check_if_num_is_too_precise() {
+    assert_eq!(is_too_precise("1234", 3).unwrap(), 3);
+    assert_eq!(is_too_precise("1234.1234", 3).unwrap(), 3);
+}
+
+#[test]
 #[cfg(feature = "alloc")]
 fn from_str_zero() {
     let denoms = ["BTC", "cBTC", "mBTC", "uBTC", "bits", "sats"];
@@ -94,11 +120,27 @@ fn mul_div() {
     assert_eq!(ssat(-14) / 2, ssat(-7));
     assert_eq!(ssat(-14) % 3, ssat(-2));
 
+    let mut a = sat(30);
+    a /= 3;
+    assert_eq!(a, sat(10));
+    a %= 3;
+    assert_eq!(a, sat(1));
+    a *= 3;
+    assert_eq!(a, Amount::from_sat(3));
+
     let mut b = ssat(30);
     b /= 3;
     assert_eq!(b, ssat(10));
     b %= 3;
     assert_eq!(b, ssat(1));
+    b *= 3;
+    assert_eq!(b, SignedAmount::from_sat(3));
+}
+
+#[test]
+fn neg() {
+    let amount = -SignedAmount::from_sat(2);
+    assert_eq!(amount.to_sat(), -2);
 }
 
 #[cfg(feature = "std")]
@@ -123,6 +165,23 @@ fn checked_arithmetic() {
 
     assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
     assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
+}
+
+#[test]
+#[allow(deprecated_in_future)]
+fn unchecked_arithmetic() {
+    assert_eq!(SignedAmount::from_sat(10).unchecked_add(SignedAmount::from_sat(20)), SignedAmount::from_sat(30));
+    assert_eq!(SignedAmount::from_sat(50).unchecked_sub(SignedAmount::from_sat(10)), SignedAmount::from_sat(40));
+    assert_eq!(Amount::from_sat(5).unchecked_add(Amount::from_sat(7)), Amount::from_sat(12));
+    assert_eq!(Amount::from_sat(10).unchecked_sub(Amount::from_sat(7)), Amount::from_sat(3));
+}
+
+#[test]
+fn positive_sub() {
+    assert_eq!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(7)).unwrap(), SignedAmount::from_sat(3));
+    assert!(SignedAmount::from_sat(-10).positive_sub(SignedAmount::from_sat(7)).is_none());
+    assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(-7)).is_none());
+    assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(11)).is_none());
 }
 
 #[cfg(feature = "alloc")]
@@ -881,11 +940,15 @@ fn sum_amounts() {
     assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
 
     let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+    assert_eq!(amounts.iter().sum::<Amount>(), Amount::from_sat(1400));
+
     let sum = amounts.into_iter().sum::<Amount>();
     assert_eq!(Amount::from_sat(1400), sum);
 
     let amounts =
         [SignedAmount::from_sat(-42), SignedAmount::from_sat(1337), SignedAmount::from_sat(21)];
+    assert_eq!(amounts.iter().sum::<SignedAmount>(), SignedAmount::from_sat(1316));
+
     let sum = amounts.into_iter().sum::<SignedAmount>();
     assert_eq!(SignedAmount::from_sat(1316), sum);
 }
