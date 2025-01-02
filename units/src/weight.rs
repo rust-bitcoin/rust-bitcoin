@@ -2,12 +2,16 @@
 
 //! Implements `Weight` and associated features.
 
+use core::str::FromStr;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use crate::parse::ParseIntError;
+use crate::private::impl_parse_str_from_int_infallible;
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -232,7 +236,7 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Weight {

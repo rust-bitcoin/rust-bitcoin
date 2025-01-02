@@ -5,8 +5,7 @@
 use core::fmt;
 use core::str::FromStr;
 
-use internals::error::InputString;
-use internals::write_err;
+use crate::private::{write_err, InputString};
 
 /// Error with rich context returned when a string can't be parsed as an integer.
 ///
@@ -28,6 +27,13 @@ pub struct ParseIntError {
     // pointer_size - 1 bytes: min 1B in practice.
     pub(crate) is_signed: bool,
     pub(crate) source: core::num::ParseIntError,
+}
+
+impl ParseIntError {
+    /// Creates a new one of these fucking annoying error types.
+    pub fn new(s: &str, bits: u8, is_signed: bool, source: core::num::ParseIntError) -> Self {
+        Self { input: InputString::from(s), bits, is_signed, source }
+    }
 }
 
 impl fmt::Display for ParseIntError {
@@ -71,97 +77,6 @@ impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 mod sealed {
     /// Seals the extension traits.
     pub trait Sealed {}
-}
-
-/// Parses the input string as an integer returning an error carrying rich context.
-///
-/// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
-/// owned since it avoids allocation in error case.
-pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
-    s.as_ref().parse().map_err(|error| {
-        ParseIntError {
-            input: s.into(),
-            bits: u8::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
-            // We detect if the type is signed by checking if -1 can be represented by it
-            // this way we don't have to implement special traits and optimizer will get rid of the
-            // computation.
-            is_signed: T::try_from(-1i8).is_ok(),
-            source: error,
-        }
-    })
-}
-
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
-/// conversion function `fn`.
-#[macro_export]
-macro_rules! impl_tryfrom_str_from_int_infallible {
-    ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
-        $(
-        impl $crate::_export::_core::convert::TryFrom<$from> for $to {
-            type Error = $crate::parse::ParseIntError;
-
-            fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                $crate::parse::int::<$inner, $from>(s).map($to::$fn)
-            }
-        }
-        )*
-    }
-}
-
-/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
-/// the output using infallible conversion function `fn`.
-///
-/// The `Error` type is `ParseIntError`
-#[macro_export]
-macro_rules! impl_parse_str_from_int_infallible {
-    ($to:ident, $inner:ident, $fn:ident) => {
-        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn);
-        #[cfg(feature = "alloc")]
-        $crate::impl_tryfrom_str_from_int_infallible!(alloc::string::String, $to, $inner, $fn; alloc::boxed::Box<str>, $to, $inner, $fn);
-
-        impl $crate::_export::_core::str::FromStr for $to {
-            type Err = $crate::parse::ParseIntError;
-
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                $crate::parse::int::<$inner, &str>(s).map($to::$fn)
-            }
-        }
-
-    }
-}
-
-/// Implements `TryFrom<$from> for $to`.
-#[macro_export]
-macro_rules! impl_tryfrom_str {
-    ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
-        $(
-            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
-                type Error = $err;
-
-                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                    $inner_fn(s)
-                }
-            }
-        )*
-    }
-}
-
-/// Implements standard parsing traits for `$type` by calling into `$inner_fn`.
-#[macro_export]
-macro_rules! impl_parse_str {
-    ($to:ty, $err:ty, $inner_fn:expr) => {
-        $crate::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
-        #[cfg(feature = "alloc")]
-        $crate::impl_tryfrom_str!(alloc::string::String, $to, $err, $inner_fn; alloc::boxed::Box<str>, $to, $err, $inner_fn);
-
-        impl $crate::_export::_core::str::FromStr for $to {
-            type Err = $err;
-
-            fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                $inner_fn(s)
-            }
-        }
-    }
 }
 
 /// Removes the prefix `0x` (or `0X`) from a hex string.

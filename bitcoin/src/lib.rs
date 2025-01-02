@@ -95,6 +95,7 @@ pub extern crate secp256k1;
 extern crate serde;
 
 mod internal_macros;
+mod private;
 #[cfg(feature = "serde")]
 mod serde_utils;
 
@@ -239,7 +240,7 @@ pub mod parse {
     #[doc(inline)]
     pub use units::parse::{
         hex_check_unprefixed, hex_remove_prefix, hex_u128, hex_u128_unchecked, hex_u128_unprefixed,
-        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int, ParseIntError, PrefixedHexError,
+        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, ParseIntError, PrefixedHexError,
         UnprefixedHexError,
     };
 }

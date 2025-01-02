@@ -2,6 +2,7 @@
 
 //! Implements `FeeRate` and assoctiated features.
 
+use core::str::FromStr;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -10,6 +11,8 @@ use arbitrary::{Arbitrary, Unstructured};
 use serde::{Deserialize, Serialize};
 
 use crate::amount::Amount;
+use crate::parse::ParseIntError;
+use crate::private::impl_parse_str_from_int_infallible;
 use crate::weight::Weight;
 
 /// Represents fee rate.
@@ -235,7 +238,7 @@ impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {

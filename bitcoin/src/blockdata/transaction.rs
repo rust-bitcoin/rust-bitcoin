@@ -13,7 +13,7 @@
 use core::fmt;
 
 use hashes::sha256d;
-use internals::{compact_size, write_err, ToU64};
+use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
 
@@ -22,6 +22,7 @@ use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
 use crate::locktime::absolute::{self, Height, Time};
 use crate::prelude::{Borrow, Vec};
+use crate::private::write_err;
 use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
@@ -1151,7 +1152,6 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
-    use units::parse;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
@@ -1211,10 +1211,23 @@ mod tests {
                     .unwrap_err()
             ))
         );
+        let err = "lol"
+            .parse::<u32>()
+            .map_err(|error| {
+                units::parse::ParseIntError::new(
+                    "lol",
+                    u8::try_from(core::mem::size_of::<u32>() * 8)
+                        .expect("max is 128 bits for u128"),
+                    false,
+                    error,
+                )
+            })
+            .unwrap_err();
+
         assert_eq!(
             "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
                 .parse::<OutPoint>(),
-            Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
+            Err(ParseOutPointError::Vout(err))
         );
 
         assert_eq!(

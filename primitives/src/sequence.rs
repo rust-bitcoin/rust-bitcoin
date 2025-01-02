@@ -15,13 +15,14 @@
 //! [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki>
 
 use core::fmt;
+use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use units::locktime::relative::TimeOverflowError;
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
+use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 use crate::locktime::relative;
 #[cfg(all(doc, feature = "alloc"))]
@@ -239,7 +240,7 @@ impl fmt::Debug for Sequence {
 }
 
 #[cfg(feature = "alloc")]
-units::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
+crate::private::impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 #[cfg(feature = "arbitrary")]
 #[cfg(feature = "alloc")]

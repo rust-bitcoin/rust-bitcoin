@@ -6,9 +6,9 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::error::InputString;
 
 use crate::parse::{self, ParseIntError};
+use crate::private::InputString;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -77,7 +77,7 @@ impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
+crate::private::impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
 
 /// Error returned when parsing block height fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -173,7 +173,7 @@ impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
+crate::private::impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
 
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Time {

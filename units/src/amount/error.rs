@@ -4,10 +4,8 @@
 
 use core::fmt;
 
-use internals::error::InputString;
-use internals::write_err;
-
 use super::INPUT_STRING_LEN_LIMIT;
+use crate::private::{write_err, InputString};
 
 /// An error during amount parsing amount with denomination.
 #[derive(Debug, Clone, PartialEq, Eq)]

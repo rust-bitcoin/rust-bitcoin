@@ -19,6 +19,7 @@ extern crate alloc;
 extern crate std;
 
 mod internal_macros;
+mod private;
 
 #[doc(hidden)]
 pub mod _export {

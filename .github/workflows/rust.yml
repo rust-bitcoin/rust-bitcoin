@@ -325,3 +325,19 @@ jobs:
         run: cargo +stable install --locked cargo-public-api@0.42.0
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
+
+  Diff:
+    name: Diff private modules
+    needs: Prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dep: [recent]
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v4
+      - name: "Select toolchain"
+        uses: dtolnay/rust-toolchain@stable
+      - name: "Run private module diff script"
+        run: ./contrib/diff-private.sh

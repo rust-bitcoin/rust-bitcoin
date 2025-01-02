@@ -41,13 +41,14 @@ use core::cmp::{self, Ordering};
 use core::fmt;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
-use internals::{write_err, ToU64 as _};
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
 use crate::consensus::{ReadExt, WriteExt};
 use crate::internal_macros::impl_hashencode;
 use crate::prelude::{BTreeSet, Borrow, Vec};
+use crate::private::write_err;
 use crate::script::{Script, ScriptExt as _};
 use crate::transaction::OutPoint;
 

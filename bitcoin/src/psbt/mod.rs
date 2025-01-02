@@ -17,7 +17,6 @@ use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
-use internals::write_err;
 use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, DerivationPath, KeySource, Xpriv, Xpub};
@@ -25,6 +24,7 @@ use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::key::{TapTweak, XOnlyPublicKey};
 use crate::prelude::{btree_map, BTreeMap, BTreeSet, Borrow, Box, Vec};
+use crate::private::write_err;
 use crate::script::ScriptExt as _;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::transaction::{self, Transaction, TransactionExt as _, TxOut};
@@ -1150,9 +1150,9 @@ mod display_from_str {
 
     use base64::display::Base64Display;
     use base64::prelude::{Engine as _, BASE64_STANDARD};
-    use internals::write_err;
 
     use super::{Error, Psbt};
+    use crate::private::write_err;
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]

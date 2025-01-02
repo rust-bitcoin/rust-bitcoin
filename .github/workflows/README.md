@@ -28,7 +28,9 @@ Run from rust.yml unless stated otherwise. Unfortunately we are now exceeding th
 14. `Cross`
 15. `Embedded`
 16. `Kani`
-17. `Coveralls` - run by `coveralls.yml`
-18. `release` - run by `release.yml`
-19. `labeler` - run by `manage-pr.yml`
-20. `Shellcheck` - run by `shellcheck.yml`
+17. `API`
+18. `Diff`
+19. `Coveralls` - run by `coveralls.yml`
+20. `release` - run by `release.yml`
+21. `labeler` - run by `manage-pr.yml`
+22. `Shellcheck` - run by `shellcheck.yml`

@@ -7,12 +7,13 @@
 
 use core::cmp::Ordering;
 use core::fmt;
+use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
-use units::parse::{self, PrefixedHexError, UnprefixedHexError};
+use units::parse::{self, ParseIntError, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(all(doc, feature = "alloc"))]
 use crate::{absolute, Transaction};
@@ -289,7 +290,7 @@ impl LockTime {
     }
 }
 
-units::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+crate::private::impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 impl From<Height> for LockTime {
     #[inline]
