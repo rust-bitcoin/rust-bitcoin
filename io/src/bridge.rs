@@ -5,24 +5,13 @@ use internals::rust_version;
 
 /// A bridging wrapper providing the IO traits for types that already implement `std` IO traits.
 #[repr(transparent)]
+#[derive(Debug)]
 pub struct FromStd<T>(T);
 
 impl<T> FromStd<T> {
     /// Wraps an IO type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
-
-    /// Returns the wrapped value.
-    #[inline]
-    pub fn into_inner(self) -> T { self.0 }
-
-    /// Returns a reference to the wrapped value.
-    #[inline]
-    pub fn inner(&self) -> &T { &self.0 }
-
-    /// Returns a mutable reference to the wrapped value.
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 
     /// Wraps a mutable reference to IO type.
     #[inline]
@@ -38,6 +27,18 @@ impl<T> FromStd<T> {
         // SAFETY: the type is repr(transparent) and the pointer is created from Box
         unsafe { Box::from_raw(Box::into_raw(inner) as *mut Self) }
     }
+
+    /// Returns the wrapped value.
+    #[inline]
+    pub fn into_inner(self) -> T { self.0 }
+
+    /// Returns a reference to the wrapped value.
+    #[inline]
+    pub fn inner(&self) -> &T { &self.0 }
+
+    /// Returns a mutable reference to the wrapped value.
+    #[inline]
+    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 }
 
 impl<T: std::io::Read> super::Read for FromStd<T> {
@@ -106,24 +107,13 @@ impl<T: std::io::Write> std::io::Write for FromStd<T> {
 
 /// A bridging wrapper providing the std traits for types that already implement our traits.
 #[repr(transparent)]
+#[derive(Debug)]
 pub struct ToStd<T>(T);
 
 impl<T> ToStd<T> {
     /// Wraps an IO type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
-
-    /// Returns the wrapped value.
-    #[inline]
-    pub fn into_inner(self) -> T { self.0 }
-
-    /// Returns a reference to the wrapped value.
-    #[inline]
-    pub fn inner(&self) -> &T { &self.0 }
-
-    /// Returns a mutable reference to the wrapped value.
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 
     /// Wraps a mutable reference to IO type.
     #[inline]
@@ -139,6 +129,18 @@ impl<T> ToStd<T> {
         // SAFETY: the type is repr(transparent) and the pointer is created from Box
         unsafe { Box::from_raw(Box::into_raw(inner) as *mut Self) }
     }
+
+    /// Returns the wrapped value.
+    #[inline]
+    pub fn into_inner(self) -> T { self.0 }
+
+    /// Returns a reference to the wrapped value.
+    #[inline]
+    pub fn inner(&self) -> &T { &self.0 }
+
+    /// Returns a mutable reference to the wrapped value.
+    #[inline]
+    pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 }
 
 impl<T: super::Read> std::io::Read for ToStd<T> {
