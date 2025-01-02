@@ -82,7 +82,7 @@ impl FromStr for WitnessVersion {
     type Err = FromStrError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = parse::int(s)?;
+        let version: u8 = parse::int_from_str(s)?;
         Ok(WitnessVersion::try_from(version)?)
     }
 }

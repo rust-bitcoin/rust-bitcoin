@@ -1214,7 +1214,7 @@ mod tests {
         assert_eq!(
             "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"
                 .parse::<OutPoint>(),
-            Err(ParseOutPointError::Vout(parse::int::<u32, _>("lol").unwrap_err()))
+            Err(ParseOutPointError::Vout(parse::int_from_str::<u32>("lol").unwrap_err()))
         );
 
         assert_eq!(
