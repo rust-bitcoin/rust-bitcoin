@@ -28,6 +28,7 @@ impl bitcoin_units::parse::Integer for u16
 impl bitcoin_units::parse::Integer for u32
 impl bitcoin_units::parse::Integer for u64
 impl bitcoin_units::parse::Integer for u8
+impl bitcoin_units::parse::ParseIntError
 impl bitcoin_units::weight::Weight
 impl core::clone::Clone for bitcoin_units::Amount
 impl core::clone::Clone for bitcoin_units::SignedAmount
@@ -1010,6 +1011,7 @@ pub fn bitcoin_units::parse::ParseIntError::as_ref(&self) -> &core::num::error::
 pub fn bitcoin_units::parse::ParseIntError::clone(&self) -> bitcoin_units::parse::ParseIntError
 pub fn bitcoin_units::parse::ParseIntError::eq(&self, other: &bitcoin_units::parse::ParseIntError) -> bool
 pub fn bitcoin_units::parse::ParseIntError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse::ParseIntError::new(s: &str, bits: u8, is_signed: bool, source: core::num::error::ParseIntError) -> Self
 pub fn bitcoin_units::parse::PrefixedHexError::clone(&self) -> bitcoin_units::parse::PrefixedHexError
 pub fn bitcoin_units::parse::PrefixedHexError::eq(&self, other: &bitcoin_units::parse::PrefixedHexError) -> bool
 pub fn bitcoin_units::parse::PrefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1030,7 +1032,6 @@ pub fn bitcoin_units::parse::hex_u32(s: &str) -> core::result::Result<u32, bitco
 pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
-pub fn bitcoin_units::parse::int<T: bitcoin_units::parse::Integer, S: core::convert::AsRef<str> + core::convert::Into<bitcoin_internals::error::input_string::InputString>>(s: S) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::weight::Weight::add(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
@@ -1064,10 +1065,6 @@ pub fn u32::from(height: bitcoin_units::block::BlockInterval) -> Self
 pub fn u64::from(value: bitcoin_units::fee_rate::FeeRate) -> Self
 pub fn u64::from(value: bitcoin_units::weight::Weight) -> Self
 pub fn u64::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
-pub macro bitcoin_units::impl_parse_str!
-pub macro bitcoin_units::impl_parse_str_from_int_infallible!
-pub macro bitcoin_units::impl_tryfrom_str!
-pub macro bitcoin_units::impl_tryfrom_str_from_int_infallible!
 pub mod bitcoin_units
 pub mod bitcoin_units::amount
 pub mod bitcoin_units::block
