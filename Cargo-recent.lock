@@ -128,6 +128,7 @@ name = "bitcoin-units"
 version = "0.2.0"
 dependencies = [
  "arbitrary",
+ "bincode",
  "bitcoin-internals",
  "serde",
  "serde_json",
