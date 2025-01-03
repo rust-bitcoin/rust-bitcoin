@@ -91,27 +91,30 @@ pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, Par
     })
 }
 
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
-/// conversion function `fn`.
-#[macro_export]
-macro_rules! impl_tryfrom_str_from_int_infallible {
-    ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
-        $(
-        impl $crate::_export::_core::convert::TryFrom<$from> for $to {
-            type Error = $crate::parse::ParseIntError;
-
-            fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                $crate::parse::int::<$inner, $from>(s).map($to::$fn)
-            }
-        }
-        )*
-    }
-}
-
-/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
-/// the output using infallible conversion function `fn`.
+/// Implements standard parsing traits for `$type` by calling `parse::int`.
 ///
-/// The `Error` type is `ParseIntError`
+/// Once the string is converted to an integer the infallible conversion function `fn` is used to
+/// create the type `to`.
+///
+/// Implements:
+///
+/// * `FromStr`
+/// * `TryFrom<&str>`
+///
+/// And if `alloc` feature is enabled in calling crate:
+///
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<String>`
+///
+/// # Arguments
+///
+/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `fn`: The infallible conversion function to call to convert from an integer.
+///
+/// # Errors
+///
+/// If parsing the string fails then a `units::parse::ParseIntError` is returned.
 #[macro_export]
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
@@ -130,23 +133,45 @@ macro_rules! impl_parse_str_from_int_infallible {
     }
 }
 
-/// Implements `TryFrom<$from> for $to`.
+/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
+/// conversion function `fn`.
 #[macro_export]
-macro_rules! impl_tryfrom_str {
-    ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
+#[doc(hidden)]                  // Helper macro called by `impl_parse_str_from_int_infallible`.
+macro_rules! impl_tryfrom_str_from_int_infallible {
+    ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
         $(
-            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
-                type Error = $err;
+        impl $crate::_export::_core::convert::TryFrom<$from> for $to {
+            type Error = $crate::parse::ParseIntError;
 
-                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                    $inner_fn(s)
-                }
+            fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse::int::<$inner, $from>(s).map($to::$fn)
             }
+        }
         )*
     }
 }
 
-/// Implements standard parsing traits for `$type` by calling into `$inner_fn`.
+/// Implements standard parsing traits for `$type` by calling through to `$inner_fn`.
+///
+/// Implements:
+///
+/// * `FromStr`
+/// * `TryFrom<&str>`
+///
+/// And if `alloc` feature is enabled in calling crate:
+///
+/// * `TryFrom<Box<str>>`
+/// * `TryFrom<String>`
+///
+/// # Arguments
+///
+/// * `to` - the type converted to e.g., `impl From<&str> for $to`.
+/// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
+/// * `inner_fn`: The fallible conversion function to call to convert from a string reference.
+///
+/// # Errors
+///
+/// All functions use the error returned by `$inner_fn`.
 #[macro_export]
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
@@ -161,6 +186,23 @@ macro_rules! impl_parse_str {
                 $inner_fn(s)
             }
         }
+    }
+}
+
+/// Implements `TryFrom<$from> for $to`.
+#[macro_export]
+#[doc(hidden)]                  // Helper macro called by `impl_parse_str`.
+macro_rules! impl_tryfrom_str {
+    ($($from:ty, $to:ty, $err:ty, $inner_fn:expr);*) => {
+        $(
+            impl $crate::_export::_core::convert::TryFrom<$from> for $to {
+                type Error = $err;
+
+                fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                    $inner_fn(s)
+                }
+            }
+        )*
     }
 }
 
