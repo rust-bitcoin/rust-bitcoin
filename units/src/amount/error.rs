@@ -2,6 +2,7 @@
 
 //! Error types for bitcoin amounts.
 
+use core::convert::Infallible;
 use core::fmt;
 
 use internals::error::InputString;
@@ -23,8 +24,13 @@ pub(crate) enum ParseErrorInner {
     MissingDenomination(MissingDenominationError),
 }
 
-internals::impl_from_infallible!(ParseError);
-internals::impl_from_infallible!(ParseErrorInner);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for ParseErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl From<ParseAmountError> for ParseError {
     fn from(e: ParseAmountError) -> Self { Self(ParseErrorInner::Amount(e)) }
@@ -114,8 +120,13 @@ impl From<InvalidCharacterError> for ParseAmountError {
     }
 }
 
-internals::impl_from_infallible!(ParseAmountError);
-internals::impl_from_infallible!(ParseAmountErrorInner);
+impl From<Infallible> for ParseAmountError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for ParseAmountErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -318,7 +329,9 @@ pub enum ParseDenominationError {
     PossiblyConfusing(PossiblyConfusingDenominationError),
 }
 
-internals::impl_from_infallible!(ParseDenominationError);
+impl From<Infallible> for ParseDenominationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

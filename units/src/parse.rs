@@ -2,6 +2,7 @@
 
 //! Parsing utilities.
 
+use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
 
@@ -355,8 +356,13 @@ enum PrefixedHexErrorInner {
     ParseInt(ParseIntError),
 }
 
-internals::impl_from_infallible!(PrefixedHexError);
-internals::impl_from_infallible!(PrefixedHexErrorInner);
+impl From<Infallible> for PrefixedHexError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for PrefixedHexErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for PrefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -401,8 +407,13 @@ enum UnprefixedHexErrorInner {
     ParseInt(ParseIntError),
 }
 
-internals::impl_from_infallible!(UnprefixedHexError);
-internals::impl_from_infallible!(UnprefixedHexErrorInner);
+impl From<Infallible> for UnprefixedHexError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for UnprefixedHexErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for UnprefixedHexError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

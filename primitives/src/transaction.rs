@@ -12,6 +12,7 @@
 
 #[cfg(feature = "alloc")]
 use core::cmp;
+use core::convert::Infallible;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -444,7 +445,9 @@ pub enum ParseOutPointError {
 }
 
 #[cfg(feature = "alloc")]
-internals::impl_from_infallible!(ParseOutPointError);
+impl From<Infallible> for ParseOutPointError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 #[cfg(feature = "alloc")]
 impl fmt::Display for ParseOutPointError {

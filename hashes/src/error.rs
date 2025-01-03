@@ -2,13 +2,16 @@
 
 //! Error code for the `hashes` crate.
 
+use core::convert::Infallible;
 use core::fmt;
 
 /// Attempted to create a hash from an invalid length slice.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FromSliceError(pub(crate) FromSliceErrorInner);
 
-impl_from_infallible!(FromSliceError);
+impl From<Infallible> for FromSliceError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl FromSliceError {
     /// Returns the expected slice length.
@@ -25,7 +28,9 @@ pub(crate) struct FromSliceErrorInner {
     pub(crate) got: usize,
 }
 
-impl_from_infallible!(FromSliceErrorInner);
+impl From<Infallible> for FromSliceErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -35,19 +40,3 @@ impl fmt::Display for FromSliceError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for FromSliceError {}
-
-/// Derives `From<core::convert::Infallible>` for the given type.
-// This is a duplicate of `internals::impl_from_infallible`, see there for complete docs.
-#[doc(hidden)]
-macro_rules! impl_from_infallible {
-    ( $name:ident $(< $( $lt:tt $( : $clt:tt $(+ $dlt:tt )* )? ),+ >)? ) => {
-        impl $(< $( $lt $( : $clt $(+ $dlt )* )? ),+ >)?
-            From<core::convert::Infallible>
-        for $name
-            $(< $( $lt ),+ >)?
-        {
-            fn from(never: core::convert::Infallible) -> Self { match never {} }
-        }
-    }
-}
-pub(crate) use impl_from_infallible;
