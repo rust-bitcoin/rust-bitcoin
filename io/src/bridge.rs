@@ -33,10 +33,20 @@ impl<T> FromStd<T> {
 
     /// Returns a reference to the wrapped value.
     #[inline]
+    pub fn get_ref(&self) -> &T { &self.0 }
+
+    /// Returns a mutable reference to the wrapped value.
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut T { &mut self.0 }
+
+    /// Returns a reference to the wrapped value.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `get_ref()` instead")]
     pub fn inner(&self) -> &T { &self.0 }
 
     /// Returns a mutable reference to the wrapped value.
     #[inline]
+    #[deprecated(since = "TBD", note = "use `get_ref()` instead")]
     pub fn inner_mut(&mut self) -> &mut T { &mut self.0 }
 }
 
