@@ -233,14 +233,14 @@ fn api_all_non_error_types_have_non_empty_debug() {
 }
 
 #[test]
-fn test_send() {
+fn send() {
     fn assert_send<T: Send>() {}
     assert_send::<Types>();
     assert_send::<Errors>();
 }
 
 #[test]
-fn test_sync() {
+fn sync() {
     fn assert_sync<T: Sync>() {}
     assert_sync::<Types>();
     assert_sync::<Errors>();

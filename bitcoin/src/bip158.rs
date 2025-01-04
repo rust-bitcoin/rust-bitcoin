@@ -582,7 +582,7 @@ mod test {
     use crate::ScriptBuf;
 
     #[test]
-    fn test_blockfilters() {
+    fn blockfilters() {
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = include_str!("../tests/data/blockfilters.json");
 
@@ -649,7 +649,7 @@ mod test {
     }
 
     #[test]
-    fn test_filter() {
+    fn filter() {
         let mut patterns = BTreeSet::new();
 
         patterns.insert(hex!("000000"));
@@ -718,7 +718,7 @@ mod test {
     }
 
     #[test]
-    fn test_bit_stream() {
+    fn bit_stream() {
         let mut out = Vec::new();
         {
             let mut writer = BitStreamWriter::new(&mut out);

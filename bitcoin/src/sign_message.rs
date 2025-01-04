@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
-    fn test_message_signature() {
+    fn message_signature() {
         use secp256k1;
 
         use crate::{Address, AddressType, Network, NetworkKind};
@@ -286,7 +286,7 @@ mod tests {
 
     #[test]
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
-    fn test_incorrect_message_signature() {
+    fn incorrect_message_signature() {
         use base64::prelude::{Engine as _, BASE64_STANDARD};
         use secp256k1;
 

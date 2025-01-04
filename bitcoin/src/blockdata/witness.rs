@@ -246,7 +246,7 @@ mod test {
     }
 
     #[test]
-    fn test_push_ecdsa_sig() {
+    fn push_ecdsa_sig() {
         // The very first signature in block 734,958
         let sig_bytes =
             hex!("304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541");
@@ -286,7 +286,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_tapscript() {
+    fn get_tapscript() {
         let tapscript = hex!("deadbeef");
         let control_block = hex!("02");
         // annex starting with 0x50 causes the branching logic.
@@ -307,7 +307,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_tapscript_from_keypath() {
+    fn get_tapscript_from_keypath() {
         let signature = hex!("deadbeef");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
@@ -327,7 +327,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_control_block() {
+    fn get_control_block() {
         let tapscript = hex!("deadbeef");
         let control_block = hex!("02");
         // annex starting with 0x50 causes the branching logic.
@@ -348,7 +348,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_annex() {
+    fn get_annex() {
         let tapscript = hex!("deadbeef");
         let control_block = hex!("02");
         // annex starting with 0x50 causes the branching logic.
@@ -387,7 +387,7 @@ mod test {
     }
 
     #[test]
-    fn test_tx() {
+    fn tx() {
         const S: &str = "02000000000102b44f26b275b8ad7b81146ba3dbecd081f9c1ea0dc05b97516f56045cfcd3df030100000000ffffffff1cb4749ae827c0b75f3d0a31e63efc8c71b47b5e3634a4c698cd53661cab09170100000000ffffffff020b3a0500000000001976a9143ea74de92762212c96f4dd66c4d72a4deb20b75788ac630500000000000016001493a8dfd1f0b6a600ab01df52b138cda0b82bb7080248304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c0121026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e950247304402203ef00489a0d549114977df2820fab02df75bebb374f5eee9e615107121658cfa02204751f2d1784f8e841bff6d3bcf2396af2f1a5537c0e4397224873fbd3bfbe9cf012102ae6aa498ce2dd204e9180e71b4fb1260fe3d1a95c8025b34e56a9adf5f278af200000000";
         let tx_bytes = hex!(S);
         let tx: Transaction = deserialize(&tx_bytes).unwrap();

@@ -1157,7 +1157,7 @@ mod tests {
     use crate::address::Address;
 
     #[test]
-    fn test_key_derivation() {
+    fn key_derivation() {
         // testnet compressed
         let sk =
             PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
@@ -1204,7 +1204,7 @@ mod tests {
     }
 
     #[test]
-    fn test_pubkey_hash() {
+    fn pubkey_hash() {
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1215,7 +1215,7 @@ mod tests {
     }
 
     #[test]
-    fn test_wpubkey_hash() {
+    fn wpubkey_hash() {
         let pk = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af"
             .parse::<PublicKey>()
             .unwrap();
@@ -1229,7 +1229,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "serde")]
-    fn test_key_serde() {
+    fn skey_serde() {
         use serde_test::{assert_tokens, Configure, Token};
 
         static KEY_WIF: &str = "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy";

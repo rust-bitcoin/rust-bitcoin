@@ -974,7 +974,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_derivation_path() {
+    fn parse_derivation_path() {
         assert_eq!("n/0'/0".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
         assert_eq!("4/m/5".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
         assert_eq!("//3/0'".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
@@ -1036,7 +1036,7 @@ mod tests {
     }
 
     #[test]
-    fn test_derivation_path_conversion_index() {
+    fn derivation_path_conversion_index() {
         let path = "0h/1/2'".parse::<DerivationPath>().unwrap();
         let numbers: Vec<ChildNumber> = path.clone().into();
         let path2: DerivationPath = numbers.into();
@@ -1096,7 +1096,7 @@ mod tests {
     }
 
     #[test]
-    fn test_increment() {
+    fn increment() {
         let idx = 9345497; // randomly generated, I promise
         let cn = ChildNumber::from_normal_idx(idx).unwrap();
         assert_eq!(cn.increment().ok(), Some(ChildNumber::from_normal_idx(idx + 1).unwrap()));
@@ -1139,7 +1139,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_1() {
+    fn vector_1() {
         let secp = Secp256k1::new();
         let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
@@ -1175,7 +1175,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_2() {
+    fn vector_2() {
         let secp = Secp256k1::new();
         let seed = hex!("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542");
 
@@ -1211,7 +1211,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_3() {
+    fn vector_3() {
         let secp = Secp256k1::new();
         let seed = hex!("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be");
 
