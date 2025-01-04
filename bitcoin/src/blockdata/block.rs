@@ -723,7 +723,7 @@ mod tests {
     #[test]
     fn soft_fork_signalling() {
         for i in 0..31 {
-            let version_int = (0x20000000u32 ^ 1 << i) as i32;
+            let version_int = (0x20000000u32 ^ (1 << i)) as i32;
             let version = Version::from_consensus(version_int);
             if i < 29 {
                 assert!(version.is_signalling_soft_fork(i));
@@ -732,7 +732,7 @@ mod tests {
             }
         }
 
-        let segwit_signal = Version::from_consensus(0x20000000 ^ 1 << 1);
+        let segwit_signal = Version::from_consensus(0x20000000 ^ (1 << 1));
         assert!(!segwit_signal.is_signalling_soft_fork(0));
         assert!(segwit_signal.is_signalling_soft_fork(1));
         assert!(!segwit_signal.is_signalling_soft_fork(2));
