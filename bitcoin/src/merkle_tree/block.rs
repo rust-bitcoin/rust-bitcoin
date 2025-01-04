@@ -146,7 +146,7 @@ impl Decodable for MerkleBlock {
 /// stored, and its children are not explored further. Otherwise, no hash is
 /// stored, but we recurse into both (or the only) child branch. During
 /// decoding, the same depth-first traversal is performed, consuming bits and
-/// hashes as they written during encoding.
+/// hashes as they are written during encoding.
 ///
 /// The serialization is fixed and provides a hard guarantee about the
 /// encoded size:
