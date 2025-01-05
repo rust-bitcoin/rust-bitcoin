@@ -440,9 +440,7 @@ impl From<u8> for Opcode {
 }
 
 impl fmt::Debug for Opcode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Display::fmt(self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
 }
 
 #[cfg(feature = "serde")]

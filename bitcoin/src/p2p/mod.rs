@@ -293,9 +293,7 @@ impl fmt::Display for Magic {
 }
 
 impl fmt::Debug for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Display::fmt(self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
 }
 
 impl fmt::LowerHex for Magic {
