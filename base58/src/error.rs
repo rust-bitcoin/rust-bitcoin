@@ -3,6 +3,7 @@
 //! Error code for the `base58` crate.
 
 use core::fmt;
+use core::convert::Infallible;
 
 use internals::write_err;
 
@@ -20,8 +21,13 @@ pub(super) enum ErrorInner {
     TooShort(TooShortError),
 }
 
-internals::impl_from_infallible!(Error);
-internals::impl_from_infallible!(ErrorInner);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for ErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl Error {
     /// Returns the invalid base58 ssscharacter, if encountered.
@@ -95,7 +101,9 @@ pub(super) struct IncorrectChecksumError {
     pub(super) expected: u32,
 }
 
-internals::impl_from_infallible!(IncorrectChecksumError);
+impl From<Infallible> for IncorrectChecksumError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for IncorrectChecksumError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -116,8 +124,9 @@ pub(super) struct TooShortError {
     /// The length of the decoded data.
     pub(super) length: usize,
 }
-
-internals::impl_from_infallible!(TooShortError);
+impl From<Infallible> for TooShortError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TooShortError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -141,8 +150,13 @@ pub(super) struct InvalidCharacterErrorInner {
     pub(super) invalid: u8,
 }
 
-internals::impl_from_infallible!(InvalidCharacterError);
-internals::impl_from_infallible!(InvalidCharacterErrorInner);
+impl From<Infallible> for InvalidCharacterError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl From<Infallible> for InvalidCharacterErrorInner {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl InvalidCharacterError {
     pub(super) fn new(invalid: u8) -> Self { Self(InvalidCharacterErrorInner { invalid }) }

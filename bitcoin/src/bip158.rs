@@ -39,6 +39,7 @@
 
 use core::cmp::{self, Ordering};
 use core::fmt;
+use core::convert::Infallible;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
 use internals::{write_err, ToU64 as _};
@@ -79,7 +80,9 @@ pub enum Error {
     Io(io::Error),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {

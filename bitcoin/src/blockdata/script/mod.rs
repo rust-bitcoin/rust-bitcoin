@@ -58,6 +58,7 @@ pub mod witness_program;
 pub mod witness_version;
 
 use core::fmt;
+use core::convert::Infallible;
 
 use io::{BufRead, Write};
 use primitives::opcodes::all::*;
@@ -234,7 +235,9 @@ pub enum Error {
     Serialization,
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

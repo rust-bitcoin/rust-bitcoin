@@ -5,6 +5,7 @@
 //! Implementation of compact blocks data structure and algorithms.
 
 use core::{convert, fmt, mem};
+use core::convert::Infallible;
 #[cfg(feature = "std")]
 use std::error;
 
@@ -30,7 +31,9 @@ pub enum Error {
     InvalidPrefill,
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

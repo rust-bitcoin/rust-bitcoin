@@ -8,6 +8,7 @@
 //! these blocks and the blockchain.
 
 use core::fmt;
+use core::convert::Infallible;
 
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
@@ -383,7 +384,9 @@ pub enum InvalidBlockError {
     InvalidWitnessCommitment,
 }
 
-internals::impl_from_infallible!(InvalidBlockError);
+impl From<Infallible> for InvalidBlockError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for InvalidBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -413,7 +416,9 @@ pub enum Bip34Error {
     NegativeHeight,
 }
 
-internals::impl_from_infallible!(Bip34Error);
+impl From<Infallible> for Bip34Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -457,7 +462,9 @@ pub enum ValidationError {
     BadTarget,
 }
 
-internals::impl_from_infallible!(ValidationError);
+impl From<Infallible> for ValidationError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
