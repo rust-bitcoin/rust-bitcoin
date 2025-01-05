@@ -618,8 +618,8 @@ impl U256 {
             carry = n >> 64; // and carry the high bits.
         }
 
-        let low = u128::from(split_le[0]) | u128::from(split_le[1]) << 64;
-        let high = u128::from(split_le[2]) | u128::from(split_le[3]) << 64;
+        let low = u128::from(split_le[0]) | (u128::from(split_le[1]) << 64);
+        let high = u128::from(split_le[2]) | (u128::from(split_le[3]) << 64);
         (Self(high, low), carry != 0)
     }
 
@@ -872,7 +872,7 @@ impl U256 {
         // (This is why we only care if the other non-msb dropped bits are all 0 or not,
         // so we can just OR them to make sure any bits show up somewhere.)
         let mantissa =
-            (mantissa + ((dropped_bits - (dropped_bits >> 127 & !mantissa)) >> 127)) as u64;
+            (mantissa + ((dropped_bits - ((dropped_bits >> 127) & !mantissa)) >> 127)) as u64;
         // Step 6: Calculate the exponent
         // If self is 0, exponent should be 0 (special meaning) and mantissa will end up 0 too
         // Otherwise, (255 - n) + 1022 so it simplifies to 1277 - n
@@ -1115,8 +1115,8 @@ mod tests {
         /// Constructs a new U256 from a big-endian array of u64's
         fn from_array(a: [u64; 4]) -> Self {
             let mut ret = U256::ZERO;
-            ret.0 = (a[0] as u128) << 64 ^ (a[1] as u128);
-            ret.1 = (a[2] as u128) << 64 ^ (a[3] as u128);
+            ret.0 = ((a[0] as u128) << 64) ^ (a[1] as u128);
+            ret.1 = ((a[2] as u128) << 64) ^ (a[3] as u128);
             ret
         }
     }
@@ -1559,11 +1559,11 @@ mod tests {
     #[test]
     fn u256_multiplication_bits_in_each_word() {
         // Put a digit in the least significant bit of each 64 bit word.
-        let u = 1_u128 << 64 | 1_u128;
+        let u = (1_u128 << 64) | 1_u128;
         let x = U256(u, u);
 
         // Put a digit in the second least significant bit of each 64 bit word.
-        let u = 2_u128 << 64 | 2_u128;
+        let u = (2_u128 << 64) | 2_u128;
         let y = U256(u, u);
 
         let (got, overflow) = x.overflowing_mul(y);

@@ -134,10 +134,10 @@ impl Poly1305 {
             self.acc[i] = t & mask | self.acc[i] & !mask;
         }
         // Voodoo from donna to convert to [u32; 4].
-        let a0 = self.acc[0] | self.acc[1] << 26;
-        let a1 = self.acc[1] >> 6 | self.acc[2] << 20;
-        let a2 = self.acc[2] >> 12 | self.acc[3] << 14;
-        let a3 = self.acc[3] >> 18 | self.acc[4] << 8;
+        let a0 = self.acc[0] | (self.acc[1] << 26);
+        let a1 = (self.acc[1] >> 6) | (self.acc[2] << 20);
+        let a2 = (self.acc[2] >> 12) | (self.acc[3] << 14);
+        let a3 = (self.acc[3] >> 18) | (self.acc[4] << 8);
         let a = [a0, a1, a2, a3];
         // a + s
         let mut tag: [u64; 4] = [0; 4];
@@ -196,21 +196,21 @@ fn prepare_padded_message_slice(msg: &[u8], is_last: bool) -> [u32; 5] {
     // Encode number in five 26-bit limbs.
     let m0 = u32::from_le_bytes(fmt_msg[0..4].try_into().expect("Valid subset of 32.")) & BITMASK;
     let m1 =
-        u32::from_le_bytes(fmt_msg[3..7].try_into().expect("Valid subset of 32.")) >> 2 & BITMASK;
+        (u32::from_le_bytes(fmt_msg[3..7].try_into().expect("Valid subset of 32.")) >> 2) & BITMASK;
     let m2 =
-        u32::from_le_bytes(fmt_msg[6..10].try_into().expect("Valid subset of 32.")) >> 4 & BITMASK;
+        (u32::from_le_bytes(fmt_msg[6..10].try_into().expect("Valid subset of 32.")) >> 4) & BITMASK;
     let m3 =
-        u32::from_le_bytes(fmt_msg[9..13].try_into().expect("Valid subset of 32.")) >> 6 & BITMASK;
+        (u32::from_le_bytes(fmt_msg[9..13].try_into().expect("Valid subset of 32.")) >> 6) & BITMASK;
     let m4 =
-        u32::from_le_bytes(fmt_msg[12..16].try_into().expect("Valid subset of 32.")) >> 8 | hi_bit;
+        (u32::from_le_bytes(fmt_msg[12..16].try_into().expect("Valid subset of 32.")) >> 8) | hi_bit;
     [m0, m1, m2, m3, m4]
 }
 
 fn _print_acc(num: &[u32; 5]) {
-    let a0 = num[0] | num[1] << 26;
-    let a1 = num[1] >> 6 | num[2] << 20;
-    let a2 = num[2] >> 12 | num[3] << 14;
-    let a3 = num[3] >> 18 | num[4] << 8;
+    let a0 = num[0] | (num[1] << 26);
+    let a1 = (num[1] >> 6) | (num[2] << 20);
+    let a2 = (num[2] >> 12) | (num[3] << 14);
+    let a3 = (num[3] >> 18) | (num[4] << 8);
     let a = [a0, a1, a2, a3];
     let mut ret: [u8; 16] = [0; 16];
     for i in 0..a.len() {
