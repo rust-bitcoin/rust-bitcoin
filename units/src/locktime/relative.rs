@@ -116,6 +116,8 @@ impl Time {
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
+    /// TODO: Skip this in cargo-mutants. It will replace | with ^, which will return the same
+    /// value since the XOR is always taken against the u16 and an all-zero bitmask
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 {
         (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
@@ -192,6 +194,13 @@ mod tests {
     use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
+
+    #[test]
+    fn sanity_check() {
+        assert_eq!(Height::MAX.to_consensus_u32(), u32::from(u16::MAX));
+        assert_eq!(Time::from_512_second_intervals(100).value(), 100u16);
+        assert_eq!(Time::from_512_second_intervals(100).to_consensus_u32(), 4_194_404u32); // 0x400064
+    }
 
     #[test]
     fn from_seconds_ceil_success() {
