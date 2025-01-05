@@ -22,6 +22,22 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! }
 //! ```
+//!
+//! ### Using an `Address` as a struct field.
+//!
+//! ```rust
+//! # #[cfg(feature = "serde")] {
+//! # use serde::{self, Deserialize, Serialize};
+//! use bitcoin::address::{Address, NetworkValidation, NetworkValidationUnchecked};
+//! #[derive(Serialize, Deserialize)]
+//! struct Foo<V>
+//!     where V: NetworkValidation,
+//! {
+//!     #[serde(bound(deserialize = "V: NetworkValidationUnchecked"))]
+//!     address: Address<V>,
+//! }
+//! # }
+//! ```
 
 pub mod error;
 pub mod script_pubkey;
@@ -107,6 +123,9 @@ mod sealed {
     pub trait NetworkValidation {}
     impl NetworkValidation for super::NetworkChecked {}
     impl NetworkValidation for super::NetworkUnchecked {}
+
+    pub trait NetworkValidationUnchecked {}
+    impl NetworkValidationUnchecked for super::NetworkUnchecked {}
 }
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
@@ -116,14 +135,25 @@ pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + U
     const IS_CHECKED: bool;
 }
 
+/// Marker trait for `FromStr` and `serde::Deserialize`.
+///
+/// This allows users to use `V: NetworkValidation` in conjunction with derives. Is only ever
+/// implemented for `NetworkUnchecked`.
+pub trait NetworkValidationUnchecked:
+    NetworkValidation + sealed::NetworkValidationUnchecked + Sync + Send + Sized + Unpin
+{
+}
+
 /// Marker that address's network has been successfully validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NetworkChecked {}
 
 /// Marker that address's network has not yet been validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NetworkUnchecked {}
 
 impl NetworkValidation for NetworkChecked {
@@ -132,6 +162,8 @@ impl NetworkValidation for NetworkChecked {
 impl NetworkValidation for NetworkUnchecked {
     const IS_CHECKED: bool = false;
 }
+
+impl NetworkValidationUnchecked for NetworkUnchecked {}
 
 /// The inner representation of an address, without the network validation tag.
 ///
@@ -361,10 +393,41 @@ impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
 }
 
 #[cfg(feature = "serde")]
-internals::serde_string_deserialize_impl!(Address<NetworkUnchecked>, "a Bitcoin address");
+impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> {
+    fn deserialize<D>(deserializer: D) -> Result<Address<U>, D::Error>
+    where
+        D: serde::de::Deserializer<'de>,
+    {
+        use core::fmt::Formatter;
+
+        struct Visitor<U>(PhantomData<U>);
+        impl<U> serde::de::Visitor<'_> for Visitor<U>
+        where
+            U: NetworkValidationUnchecked + NetworkValidation,
+            Address<U>: FromStr,
+        {
+            type Value = Address<U>;
+
+            fn expecting(&self, f: &mut Formatter) -> core::fmt::Result {
+                f.write_str("A Bitcoin address")
+            }
+
+            fn visit_str<E>(self, v: &str) -> core::result::Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
+                let address = v.parse::<Address<NetworkUnchecked>>().map_err(E::custom)?;
+                Ok(Address(address.0, PhantomData::<U>))
+            }
+        }
+
+        deserializer.deserialize_str(Visitor(PhantomData::<U>))
+    }
+}
 
 #[cfg(feature = "serde")]
-impl<N: NetworkValidation> serde::Serialize for Address<N> {
+impl<V: NetworkValidation> serde::Serialize for Address<V> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -881,14 +944,17 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 ///
 /// - [`UnknownHrpError`] if the address does not begin with one of the above SegWit or
 ///   legacy prefixes.
-impl FromStr for Address<NetworkUnchecked> {
+impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
     type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, ParseError> {
+    fn from_str(s: &str) -> Result<Self, ParseError> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
-            Ok(Address::from_bech32_str(s)?)
+            let address = Address::from_bech32_str(s)?;
+            // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
+            Ok(Address(address.0, PhantomData::<U>))
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
-            Ok(Address::from_base58_str(s)?)
+            let address = Address::from_base58_str(s)?;
+            Ok(Address(address.0, PhantomData::<U>))
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],
@@ -1426,5 +1492,38 @@ mod tests {
                 assert_eq!(addr.matches_script_pubkey(&another.script_pubkey()), addr == another);
             }
         }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_address_usage_in_struct() {
+        use serde::{self, Deserialize, Serialize};
+
+        #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+        struct Foo<V>
+        where
+            V: NetworkValidation,
+        {
+            #[serde(bound(deserialize = "V: NetworkValidationUnchecked"))]
+            address: Address<V>,
+        }
+
+        let addr_str = "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k";
+        let unchecked = addr_str.parse::<Address<_>>().unwrap();
+
+        // Serialize with an unchecked address.
+        let foo_unchecked = Foo { address: unchecked.clone() };
+        let ser = serde_json::to_string(&foo_unchecked).expect("failed to serialize");
+        let rinsed: Foo<NetworkUnchecked> =
+            serde_json::from_str(&ser).expect("failed to deserialize");
+        assert_eq!(rinsed, foo_unchecked);
+
+        // Serialize with a checked address.
+        let foo_checked = Foo { address: unchecked.assume_checked() };
+        let ser = serde_json::to_string(&foo_checked).expect("failed to serialize");
+        let rinsed: Foo<NetworkUnchecked> =
+            serde_json::from_str(&ser).expect("failed to deserialize");
+        assert_eq!(&rinsed.address, foo_checked.address.as_unchecked());
+        assert_eq!(rinsed, foo_unchecked);
     }
 }
