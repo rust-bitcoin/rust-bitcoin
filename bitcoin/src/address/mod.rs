@@ -880,7 +880,7 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 ///   not a valid base58 address.
 ///
 /// - [`UnknownHrpError`] if the address does not begin with one of the above SegWit or
-///   legacy prifixes.
+///   legacy prefixes.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = ParseError;
 
