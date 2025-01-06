@@ -92,6 +92,7 @@ impl core::cmp::Eq for bitcoin_units::parse::UnprefixedHexError
 impl core::cmp::Eq for bitcoin_units::weight::Weight
 impl core::cmp::Ord for bitcoin_units::Amount
 impl core::cmp::Ord for bitcoin_units::SignedAmount
+impl core::cmp::Ord for bitcoin_units::amount::Denomination
 impl core::cmp::Ord for bitcoin_units::block::BlockHeight
 impl core::cmp::Ord for bitcoin_units::block::BlockInterval
 impl core::cmp::Ord for bitcoin_units::fee_rate::FeeRate
@@ -132,6 +133,7 @@ impl core::cmp::PartialEq for bitcoin_units::parse::UnprefixedHexError
 impl core::cmp::PartialEq for bitcoin_units::weight::Weight
 impl core::cmp::PartialOrd for bitcoin_units::Amount
 impl core::cmp::PartialOrd for bitcoin_units::SignedAmount
+impl core::cmp::PartialOrd for bitcoin_units::amount::Denomination
 impl core::cmp::PartialOrd for bitcoin_units::block::BlockHeight
 impl core::cmp::PartialOrd for bitcoin_units::block::BlockInterval
 impl core::cmp::PartialOrd for bitcoin_units::fee_rate::FeeRate
@@ -827,10 +829,12 @@ pub fn bitcoin_units::SignedAmount::unchecked_sub(self, rhs: bitcoin_units::Sign
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
 pub fn bitcoin_units::amount::CheckedSum::checked_sum(self) -> core::option::Option<R>
 pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
+pub fn bitcoin_units::amount::Denomination::cmp(&self, other: &bitcoin_units::amount::Denomination) -> core::cmp::Ordering
 pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
 pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::amount::Denomination::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_units::amount::Denomination::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::amount::Denomination::partial_cmp(&self, other: &bitcoin_units::amount::Denomination) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::amount::Display::clone(&self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::amount::Display::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
