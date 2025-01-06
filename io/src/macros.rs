@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[macro_export]
 /// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
 /// of this crate's `io::Write` trait, we provide this macro instead.
 ///
@@ -9,6 +8,7 @@
 /// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
 /// type, even if indirectly.
 #[cfg(not(feature = "std"))]
+#[macro_export]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> $crate::Write for $ty {
@@ -24,7 +24,6 @@ macro_rules! impl_write {
     }
 }
 
-#[macro_export]
 /// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
 /// of this crate's `io::Write` trait, we provide this macro instead.
 ///
@@ -33,6 +32,7 @@ macro_rules! impl_write {
 /// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
 /// type, even if indirectly.
 #[cfg(feature = "std")]
+#[macro_export]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {
