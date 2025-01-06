@@ -8,6 +8,7 @@
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
+use core::convert::Infallible;
 
 use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacEngine};
 use internals::write_err;
@@ -519,7 +520,9 @@ pub enum Error {
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

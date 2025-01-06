@@ -3,6 +3,7 @@
 //! Consensus encoding errors.
 
 use core::fmt;
+use core::convert::Infallible;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
 use hex::DisplayHex as _;
@@ -21,7 +22,9 @@ pub enum DeserializeError {
     Unconsumed,
 }
 
-internals::impl_from_infallible!(DeserializeError);
+impl From<Infallible> for DeserializeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for DeserializeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -64,7 +67,9 @@ pub enum DecodeError<E> {
     Other(E), // Yielded by the inner iterator.
 }
 
-internals::impl_from_infallible!(DecodeError<E>);
+impl<E> From<Infallible> for DecodeError<E> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl<E: fmt::Debug> fmt::Display for DecodeError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -101,7 +106,9 @@ pub enum Error {
     Parse(ParseError),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -169,7 +176,9 @@ pub enum ParseError {
     UnsupportedSegwitFlag(u8),
 }
 
-internals::impl_from_infallible!(ParseError);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

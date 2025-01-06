@@ -1,6 +1,7 @@
 //! Error code for the address module.
 
 use core::fmt;
+use core::convert::Infallible;
 
 use internals::write_err;
 
@@ -21,7 +22,9 @@ pub enum FromScriptError {
     WitnessVersion(witness_version::TryFromError),
 }
 
-internals::impl_from_infallible!(FromScriptError);
+impl From<Infallible> for FromScriptError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromScriptError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -84,7 +87,9 @@ pub enum ParseError {
     NetworkValidation(NetworkValidationError),
 }
 
-internals::impl_from_infallible!(ParseError);
+impl From<Infallible> for ParseError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -175,7 +180,9 @@ pub enum Bech32Error {
     UnknownHrp(UnknownHrpError),
 }
 
-internals::impl_from_infallible!(Bech32Error);
+impl From<Infallible> for Bech32Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Bech32Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -221,7 +228,9 @@ impl From<UnknownHrpError> for Bech32Error {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseBech32Error(pub(crate) bech32::segwit::DecodeError);
 
-internals::impl_from_infallible!(ParseBech32Error);
+impl From<Infallible> for ParseBech32Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseBech32Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -248,7 +257,9 @@ pub enum Base58Error {
     InvalidLegacyPrefix(InvalidLegacyPrefixError),
 }
 
-internals::impl_from_infallible!(Base58Error);
+impl From<Infallible> for Base58Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Base58Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

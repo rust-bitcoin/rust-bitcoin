@@ -10,6 +10,7 @@
 //! Support proofs that transaction(s) belong to a block.
 
 use core::fmt;
+use core::convert::Infallible;
 
 use internals::ToU64 as _;
 use io::{BufRead, Write};
@@ -473,7 +474,9 @@ pub enum MerkleBlockError {
     IdenticalHashesFound,
 }
 
-internals::impl_from_infallible!(MerkleBlockError);
+impl From<Infallible> for MerkleBlockError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

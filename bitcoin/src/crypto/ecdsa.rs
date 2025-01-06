@@ -6,6 +6,7 @@
 
 use core::str::FromStr;
 use core::{fmt, iter};
+use core::convert::Infallible;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -213,7 +214,9 @@ pub enum DecodeError {
     Secp256k1(secp256k1::Error),
 }
 
-internals::impl_from_infallible!(DecodeError);
+impl From<Infallible> for DecodeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -258,7 +261,9 @@ pub enum ParseSignatureError {
     Decode(DecodeError),
 }
 
-internals::impl_from_infallible!(ParseSignatureError);
+impl From<Infallible> for ParseSignatureError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ParseSignatureError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

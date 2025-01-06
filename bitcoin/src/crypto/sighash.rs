@@ -12,6 +12,7 @@
 //! [`SighashCache`] and calling its methods.
 
 use core::{fmt, str};
+use core::convert::Infallible;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -302,7 +303,9 @@ pub enum PrevoutsIndexError {
     InvalidAllIndex,
 }
 
-internals::impl_from_infallible!(PrevoutsIndexError);
+impl From<Infallible> for PrevoutsIndexError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for PrevoutsIndexError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1203,7 +1206,9 @@ pub enum TaprootError {
     InvalidSighashType(u32),
 }
 
-internals::impl_from_infallible!(TaprootError);
+impl From<Infallible> for TaprootError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1262,7 +1267,9 @@ pub enum P2wpkhError {
     NotP2wpkhScript,
 }
 
-internals::impl_from_infallible!(P2wpkhError);
+impl From<Infallible> for P2wpkhError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl From<transaction::InputsIndexError> for P2wpkhError {
     fn from(value: transaction::InputsIndexError) -> Self { P2wpkhError::Sighash(value) }
@@ -1327,7 +1334,9 @@ pub enum AnnexError {
     IncorrectPrefix(u8),
 }
 
-internals::impl_from_infallible!(AnnexError);
+impl From<Infallible> for AnnexError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for AnnexError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1438,7 +1447,9 @@ pub enum SigningDataError<E> {
     Sighash(E),
 }
 
-internals::impl_from_infallible!(SigningDataError<E>);
+impl<E> From<Infallible> for SigningDataError<E> {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl<E> SigningDataError<E> {
     /// Returns the sighash variant, panicking if it's IO.

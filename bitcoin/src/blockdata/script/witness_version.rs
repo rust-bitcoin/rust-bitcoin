@@ -9,6 +9,7 @@
 
 use core::fmt;
 use core::str::FromStr;
+use core::convert::Infallible;
 
 use internals::write_err;
 use units::parse::{self, ParseIntError};
@@ -159,7 +160,9 @@ pub enum FromStrError {
     Invalid(TryFromError),
 }
 
-internals::impl_from_infallible!(FromStrError);
+impl From<Infallible> for FromStrError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for FromStrError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -202,7 +205,9 @@ pub enum TryFromInstructionError {
     DataPush,
 }
 
-internals::impl_from_infallible!(TryFromInstructionError);
+impl From<Infallible> for TryFromInstructionError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for TryFromInstructionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

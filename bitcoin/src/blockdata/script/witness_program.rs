@@ -8,6 +8,7 @@
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
 use core::fmt;
+use core::convert::Infallible;
 
 use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};
@@ -139,7 +140,9 @@ pub enum Error {
     InvalidSegwitV0Length(usize),
 }
 
-internals::impl_from_infallible!(Error);
+impl From<Infallible> for Error {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

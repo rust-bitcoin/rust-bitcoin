@@ -14,6 +14,7 @@ pub mod raw;
 pub mod serialize;
 
 use core::{cmp, fmt};
+use core::convert::Infallible;
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
@@ -857,7 +858,9 @@ pub enum GetKeyError {
     NotSupported,
 }
 
-internals::impl_from_infallible!(GetKeyError);
+impl From<Infallible> for GetKeyError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for GetKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -970,7 +973,9 @@ pub enum SignError {
     Unsupported,
 }
 
-internals::impl_from_infallible!(SignError);
+impl From<Infallible> for SignError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1059,7 +1064,9 @@ pub enum ExtractTxError {
     },
 }
 
-internals::impl_from_infallible!(ExtractTxError);
+impl From<Infallible> for ExtractTxError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for ExtractTxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1111,7 +1118,9 @@ pub enum IndexOutOfBoundsError {
     },
 }
 
-internals::impl_from_infallible!(IndexOutOfBoundsError);
+impl From<Infallible> for IndexOutOfBoundsError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for IndexOutOfBoundsError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1147,6 +1156,7 @@ impl std::error::Error for IndexOutOfBoundsError {
 mod display_from_str {
     use core::fmt;
     use core::str::FromStr;
+    use core::convert::Infallible;
 
     use base64::display::Base64Display;
     use base64::prelude::{Engine as _, BASE64_STANDARD};
@@ -1164,7 +1174,9 @@ mod display_from_str {
         Base64Encoding(::base64::DecodeError),
     }
 
-    internals::impl_from_infallible!(PsbtParseError);
+    impl From<Infallible> for PsbtParseError {
+        fn from(never: Infallible) -> Self { match never {} }
+    }
 
     impl fmt::Display for PsbtParseError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

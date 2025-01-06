@@ -23,6 +23,7 @@
 //! ```
 
 use core::fmt;
+use core::convert::Infallible;
 
 pub mod as_sat_per_kwu {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.
@@ -243,7 +244,9 @@ pub mod as_sat_per_vb_ceil {
 #[non_exhaustive]
 pub struct OverflowError;
 
-internals::impl_from_infallible!(OverflowError);
+impl From<Infallible> for OverflowError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
 
 impl fmt::Display for OverflowError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
