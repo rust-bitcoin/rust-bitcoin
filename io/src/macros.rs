@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 #[macro_export]
 /// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
 /// of this crate's `io::Write` trait, we provide this macro instead.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Rust-Bitcoin I/O Library
 //!
 //! The `std::io` module is not exposed in `no-std` Rust so building `no-std` applications which
