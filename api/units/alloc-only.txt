@@ -1064,8 +1064,6 @@ pub fn u32::from(height: bitcoin_units::block::BlockInterval) -> Self
 pub fn u64::from(value: bitcoin_units::fee_rate::FeeRate) -> Self
 pub fn u64::from(value: bitcoin_units::weight::Weight) -> Self
 pub fn u64::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
-pub macro bitcoin_units::impl_parse_str!
-pub macro bitcoin_units::impl_parse_str_from_int_infallible!
 pub mod bitcoin_units
 pub mod bitcoin_units::amount
 pub mod bitcoin_units::block
