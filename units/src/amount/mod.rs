@@ -65,7 +65,7 @@ pub use self::{
 /// assert_eq!("1 bit".parse::<Amount>().unwrap(), Amount::from_sat(100));
 /// assert_eq!("1 sat".parse::<Amount>().unwrap(), Amount::from_sat(1));
 /// ```
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
 pub enum Denomination {
     /// BTC
