@@ -242,6 +242,8 @@ pub fn bitcoin_io::FromStd<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::FromStd<T>::fill_buf(&mut self) -> std::io::error::Result<&[u8]>
 pub fn bitcoin_io::FromStd<T>::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::FromStd<T>::flush(&mut self) -> std::io::error::Result<()>
+pub fn bitcoin_io::FromStd<T>::get_mut(&mut self) -> &mut T
+pub fn bitcoin_io::FromStd<T>::get_ref(&self) -> &T
 pub fn bitcoin_io::FromStd<T>::inner(&self) -> &T
 pub fn bitcoin_io::FromStd<T>::inner_mut(&mut self) -> &mut T
 pub fn bitcoin_io::FromStd<T>::into_inner(self) -> T
