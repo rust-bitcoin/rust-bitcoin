@@ -191,6 +191,9 @@ impl<'a> Arbitrary<'a> for Time {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "serde")]
+    use internals::serde_round_trip;
+
     use super::*;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
@@ -247,5 +250,21 @@ mod tests {
     fn from_seconds_floor_causes_time_overflow_error() {
         let result = Time::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512);
         assert!(result.is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_decode_height() {
+        serde_round_trip!(Height::ZERO);
+        serde_round_trip!(Height::MIN);
+        serde_round_trip!(Height::MAX);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_decode_time() {
+        serde_round_trip!(Time::ZERO);
+        serde_round_trip!(Time::MIN);
+        serde_round_trip!(Time::MAX);
     }
 }
