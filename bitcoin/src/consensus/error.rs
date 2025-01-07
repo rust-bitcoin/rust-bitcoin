@@ -115,7 +115,7 @@ impl fmt::Display for Error {
         use Error::*;
 
         match *self {
-            Io(ref e) => write_err!(f, "IO error"; e),
+            Io(ref e) => write_err!(f, "I/O error"; e),
             Parse(ref e) => write_err!(f, "error parsing encoded object"; e),
         }
     }

@@ -76,7 +76,7 @@ impl_hashencode!(FilterHeader);
 pub enum Error {
     /// Missing UTXO, cannot calculate script filter.
     UtxoMissing(OutPoint),
-    /// IO error reading or writing binary serialization of the filter.
+    /// I/O error reading or writing binary serialization of the filter.
     Io(io::Error),
 }
 
@@ -90,7 +90,7 @@ impl fmt::Display for Error {
 
         match *self {
             UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Io(ref e) => write_err!(f, "IO error"; e),
+            Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
 }

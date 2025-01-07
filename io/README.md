@@ -1,4 +1,4 @@
-# Rust-Bitcoin IO Library
+# Rust-Bitcoin I/O Library
 
 The `std::io` module is not exposed in `no-std` Rust so building `no-std` applications which require
 reading and writing objects via standard traits is not generally possible. Thus, this library exists

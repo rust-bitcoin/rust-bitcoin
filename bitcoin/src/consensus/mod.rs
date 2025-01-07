@@ -44,8 +44,8 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
 
             (Err(consensus::encode::Error::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.get_ref().is_none() => Err(DecodeError::Other(de_error)),
             (Err(consensus::encode::Error::Parse(parse_error)), None) => Err(DecodeError::Parse(parse_error)),
-            (Err(consensus::encode::Error::Io(io_error)), de_error) => panic!("unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
-            (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
+            (Err(consensus::encode::Error::Io(io_error)), de_error) => panic!("unexpected I/O error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
+            (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` I/O error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),
         }
     }
 }
