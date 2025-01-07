@@ -3,19 +3,20 @@
 // methods are implementation of a standardized serde-specific signature
 #![allow(missing_docs)]
 
-//! This module adds serde serialization and deserialization support for Amounts.
+//! This module adds serde serialization and deserialization support for amounts.
 //!
-//! Since there is not a default way to serialize and deserialize Amounts, multiple
-//! ways are supported and it's up to the user to decide which serialiation to use.
-//! The provided modules can be used as follows:
+//! Since there is not a default way to serialize and deserialize amounts, multiple
+//! ways are supported and it's up to the user to decide which serialization to use.
 //!
-//! ```rust,ignore
+//! # Examples
+//!
+//! ```
 //! use serde::{Serialize, Deserialize};
 //! use bitcoin_units::Amount;
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct HasAmount {
-//!     #[serde(with = "bitcoin_units::amount::serde::as_btc")]
+//!     #[serde(with = "bitcoin_units::amount::serde::as_sat")]
 //!     pub amount: Amount,
 //! }
 //! ```
