@@ -1,5 +1,3 @@
-//! Public macros for porvide.d for users to be able implement our `io::Write` trait.
-
 #[macro_export]
 /// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
 /// of this crate's `io::Write` trait, we provide this macro instead.
