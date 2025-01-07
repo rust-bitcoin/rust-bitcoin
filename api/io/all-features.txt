@@ -56,6 +56,7 @@ impl core::convert::From<std::io::error::Error> for bitcoin_io::Error
 impl core::error::Error for bitcoin_io::Error
 impl core::fmt::Debug for bitcoin_io::Error
 impl core::fmt::Debug for bitcoin_io::ErrorKind
+impl core::fmt::Debug for bitcoin_io::Sink
 impl core::fmt::Display for bitcoin_io::Error
 impl core::hash::Hash for bitcoin_io::ErrorKind
 impl core::marker::Copy for bitcoin_io::ErrorKind
@@ -76,6 +77,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Sink
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::ErrorKind
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::Sink
 impl std::io::Write for bitcoin_io::Sink
+impl<'a, R: core::fmt::Debug + bitcoin_io::Read + ?core::marker::Sized> core::fmt::Debug for bitcoin_io::Take<'a, R>
 impl<'a, R> !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Take<'a, R>
 impl<'a, R> core::marker::Freeze for bitcoin_io::Take<'a, R> where R: ?core::marker::Sized
 impl<'a, R> core::marker::Send for bitcoin_io::Take<'a, R> where R: core::marker::Send + ?core::marker::Sized
@@ -105,6 +107,9 @@ impl<T: core::convert::AsRef<[u8]>> bitcoin_io::BufRead for std::io::cursor::Cur
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Cursor<T>
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Read for bitcoin_io::Cursor<T>
 impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Read for std::io::cursor::Cursor<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_io::Cursor<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_io::FromStd<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_io::ToStd<T>
 impl<T: std::io::BufRead> bitcoin_io::BufRead for bitcoin_io::FromStd<T>
 impl<T: std::io::BufRead> std::io::BufRead for bitcoin_io::FromStd<T>
 impl<T: std::io::Read> bitcoin_io::Read for bitcoin_io::FromStd<T>
@@ -214,6 +219,7 @@ pub fn bitcoin_io::BufRead::consume(&mut self, amount: usize)
 pub fn bitcoin_io::BufRead::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::Cursor<T>::consume(&mut self, amount: usize)
 pub fn bitcoin_io::Cursor<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn bitcoin_io::Cursor<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::Cursor<T>::get_mut(&mut self) -> &mut T
 pub fn bitcoin_io::Cursor<T>::get_ref(&self) -> &T
 pub fn bitcoin_io::Cursor<T>::inner(&self) -> &T
@@ -242,6 +248,7 @@ pub fn bitcoin_io::FromStd<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::FromStd<T>::fill_buf(&mut self) -> std::io::error::Result<&[u8]>
 pub fn bitcoin_io::FromStd<T>::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::FromStd<T>::flush(&mut self) -> std::io::error::Result<()>
+pub fn bitcoin_io::FromStd<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::FromStd<T>::get_mut(&mut self) -> &mut T
 pub fn bitcoin_io::FromStd<T>::get_ref(&self) -> &T
 pub fn bitcoin_io::FromStd<T>::inner(&self) -> &T
@@ -263,6 +270,7 @@ pub fn bitcoin_io::Read::read_to_limit(&mut self, buf: &mut alloc::vec::Vec<u8>,
 pub fn bitcoin_io::Read::take(&mut self, limit: u64) -> bitcoin_io::Take<'_, Self>
 pub fn bitcoin_io::Sink::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::Sink::flush(&mut self) -> std::io::error::Result<()>
+pub fn bitcoin_io::Sink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::Sink::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
 pub fn bitcoin_io::Sink::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
 pub fn bitcoin_io::Sink::write_all(&mut self, _: &[u8]) -> bitcoin_io::Result<()>
@@ -271,11 +279,13 @@ pub fn bitcoin_io::Take<'_, R>::consume(&mut self, amount: usize)
 pub fn bitcoin_io::Take<'_, R>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::Take<'_, R>::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
 pub fn bitcoin_io::Take<'_, R>::read_to_end(&mut self, buf: &mut alloc::vec::Vec<u8>) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Take<'a, R>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::ToStd<T>::consume(&mut self, amount: usize)
 pub fn bitcoin_io::ToStd<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
 pub fn bitcoin_io::ToStd<T>::fill_buf(&mut self) -> std::io::error::Result<&[u8]>
 pub fn bitcoin_io::ToStd<T>::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::ToStd<T>::flush(&mut self) -> std::io::error::Result<()>
+pub fn bitcoin_io::ToStd<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::ToStd<T>::inner(&self) -> &T
 pub fn bitcoin_io::ToStd<T>::inner_mut(&mut self) -> &mut T
 pub fn bitcoin_io::ToStd<T>::into_inner(self) -> T
