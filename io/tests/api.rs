@@ -129,12 +129,12 @@ fn api_all_non_error_types_have_non_empty_debug() {
     assert!(!debug.is_empty());
 }
 
-//  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
 #[test]
 fn all_non_error_tyes_implement_send_sync() {
     fn assert_send<T: Send>() {}
-    assert_send::<Types>();
-
     fn assert_sync<T: Sync>() {}
+
+    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
+    assert_send::<Types>();
     assert_sync::<Types>();
 }
