@@ -117,6 +117,7 @@ pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, Par
 ///
 /// If parsing the string fails then a `units::parse::ParseIntError` is returned.
 #[macro_export]
+#[doc(hidden)] // This is an 'internal' macro that should not be used outside of the `rust-bitcoin` crate.
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
         $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn);
@@ -174,6 +175,7 @@ macro_rules! impl_tryfrom_str_from_int_infallible {
 ///
 /// All functions use the error returned by `$inner_fn`.
 #[macro_export]
+#[doc(hidden)] // This is an 'internal' macro that should not be used outside of the `rust-bitcoin` crate.
 macro_rules! impl_parse_str {
     ($to:ty, $err:ty, $inner_fn:expr) => {
         $crate::impl_tryfrom_str!(&str, $to, $err, $inner_fn);
