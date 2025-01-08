@@ -158,6 +158,7 @@ impl core::cmp::Ord for bitcoin_primitives::block::Header
 impl core::cmp::Ord for bitcoin_primitives::block::Unchecked
 impl core::cmp::Ord for bitcoin_primitives::block::Version
 impl core::cmp::Ord for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Ord for bitcoin_primitives::locktime::absolute::LockTime
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::opcodes::ClassifyContext
@@ -806,7 +807,6 @@ impl core::str::traits::FromStr for bitcoin_primitives::taproot::TapTweakHash
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::OutPoint
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::Txid
 impl core::str::traits::FromStr for bitcoin_primitives::transaction::Wtxid
-impl ordered::ArbitraryOrd for bitcoin_primitives::locktime::absolute::LockTime
 impl ordered::ArbitraryOrd for bitcoin_primitives::locktime::relative::LockTime
 impl serde::ser::Serialize for bitcoin_primitives::block::BlockHash
 impl serde::ser::Serialize for bitcoin_primitives::block::Header
@@ -1433,8 +1433,8 @@ pub fn bitcoin_primitives::block::WitnessCommitment::partial_cmp(&self, other: &
 pub fn bitcoin_primitives::block::WitnessCommitment::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_primitives::locktime::absolute::LockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
-pub fn bitcoin_primitives::locktime::absolute::LockTime::arbitrary_cmp(&self, other: &Self) -> core::cmp::Ordering
 pub fn bitcoin_primitives::locktime::absolute::LockTime::clone(&self) -> bitcoin_primitives::locktime::absolute::LockTime
+pub fn bitcoin_primitives::locktime::absolute::LockTime::cmp(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> core::cmp::Ordering
 pub fn bitcoin_primitives::locktime::absolute::LockTime::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
 pub fn bitcoin_primitives::locktime::absolute::LockTime::eq(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> bool
 pub fn bitcoin_primitives::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -1790,7 +1790,7 @@ pub fn bitcoin_primitives::transaction::ParseOutPointError::from(never: core::co
 pub fn bitcoin_primitives::transaction::ParseOutPointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 pub fn bitcoin_primitives::transaction::Transaction::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::Transaction::clone(&self) -> bitcoin_primitives::transaction::Transaction
-pub fn bitcoin_primitives::transaction::Transaction::cmp(&self, other: &Self) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Transaction::cmp(&self, other: &bitcoin_primitives::transaction::Transaction) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::Transaction::compute_ntxid(&self) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_primitives::transaction::Transaction::compute_txid(&self) -> bitcoin_primitives::transaction::Txid
 pub fn bitcoin_primitives::transaction::Transaction::compute_wtxid(&self) -> bitcoin_primitives::transaction::Wtxid
@@ -1802,7 +1802,7 @@ pub fn bitcoin_primitives::transaction::Transaction::inputs(&self) -> &[bitcoin_
 pub fn bitcoin_primitives::transaction::Transaction::inputs_mut(&mut self) -> &mut [bitcoin_primitives::transaction::TxIn]
 pub fn bitcoin_primitives::transaction::Transaction::outputs(&self) -> &[bitcoin_primitives::transaction::TxOut]
 pub fn bitcoin_primitives::transaction::Transaction::outputs_mut(&mut self) -> &mut [bitcoin_primitives::transaction::TxOut]
-pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &Self) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &bitcoin_primitives::transaction::Transaction) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::transaction::Transaction::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
 pub fn bitcoin_primitives::transaction::TxIn::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
 pub fn bitcoin_primitives::transaction::TxIn::clone(&self) -> bitcoin_primitives::transaction::TxIn

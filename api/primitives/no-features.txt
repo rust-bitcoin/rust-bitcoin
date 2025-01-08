@@ -107,6 +107,7 @@ impl core::cmp::Ord for bitcoin_primitives::block::BlockHash
 impl core::cmp::Ord for bitcoin_primitives::block::Header
 impl core::cmp::Ord for bitcoin_primitives::block::Version
 impl core::cmp::Ord for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Ord for bitcoin_primitives::locktime::absolute::LockTime
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::opcodes::ClassifyContext
@@ -955,6 +956,7 @@ pub fn bitcoin_primitives::block::WitnessCommitment::hash<__H: core::hash::Hashe
 pub fn bitcoin_primitives::block::WitnessCommitment::partial_cmp(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_primitives::locktime::absolute::LockTime::clone(&self) -> bitcoin_primitives::locktime::absolute::LockTime
+pub fn bitcoin_primitives::locktime::absolute::LockTime::cmp(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> core::cmp::Ordering
 pub fn bitcoin_primitives::locktime::absolute::LockTime::eq(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> bool
 pub fn bitcoin_primitives::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::locktime::absolute::LockTime::from(h: bitcoin_units::locktime::absolute::Height) -> Self

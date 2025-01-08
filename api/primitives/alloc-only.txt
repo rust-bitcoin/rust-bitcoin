@@ -158,6 +158,7 @@ impl core::cmp::Ord for bitcoin_primitives::block::Header
 impl core::cmp::Ord for bitcoin_primitives::block::Unchecked
 impl core::cmp::Ord for bitcoin_primitives::block::Version
 impl core::cmp::Ord for bitcoin_primitives::block::WitnessCommitment
+impl core::cmp::Ord for bitcoin_primitives::locktime::absolute::LockTime
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::TxMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::merkle_tree::WitnessMerkleNode
 impl core::cmp::Ord for bitcoin_primitives::opcodes::ClassifyContext
@@ -1345,6 +1346,7 @@ pub fn bitcoin_primitives::block::WitnessCommitment::hash<__H: core::hash::Hashe
 pub fn bitcoin_primitives::block::WitnessCommitment::partial_cmp(&self, other: &bitcoin_primitives::block::WitnessCommitment) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::block::WitnessCommitment::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_primitives::locktime::absolute::LockTime::clone(&self) -> bitcoin_primitives::locktime::absolute::LockTime
+pub fn bitcoin_primitives::locktime::absolute::LockTime::cmp(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> core::cmp::Ordering
 pub fn bitcoin_primitives::locktime::absolute::LockTime::eq(&self, other: &bitcoin_primitives::locktime::absolute::LockTime) -> bool
 pub fn bitcoin_primitives::locktime::absolute::LockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::locktime::absolute::LockTime::from(h: bitcoin_units::locktime::absolute::Height) -> Self
@@ -1666,7 +1668,7 @@ pub fn bitcoin_primitives::transaction::ParseOutPointError::eq(&self, other: &bi
 pub fn bitcoin_primitives::transaction::ParseOutPointError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_primitives::transaction::ParseOutPointError::from(never: core::convert::Infallible) -> Self
 pub fn bitcoin_primitives::transaction::Transaction::clone(&self) -> bitcoin_primitives::transaction::Transaction
-pub fn bitcoin_primitives::transaction::Transaction::cmp(&self, other: &Self) -> core::cmp::Ordering
+pub fn bitcoin_primitives::transaction::Transaction::cmp(&self, other: &bitcoin_primitives::transaction::Transaction) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::Transaction::compute_ntxid(&self) -> bitcoin_hashes::sha256d::Hash
 pub fn bitcoin_primitives::transaction::Transaction::compute_txid(&self) -> bitcoin_primitives::transaction::Txid
 pub fn bitcoin_primitives::transaction::Transaction::compute_wtxid(&self) -> bitcoin_primitives::transaction::Wtxid
@@ -1677,7 +1679,7 @@ pub fn bitcoin_primitives::transaction::Transaction::inputs(&self) -> &[bitcoin_
 pub fn bitcoin_primitives::transaction::Transaction::inputs_mut(&mut self) -> &mut [bitcoin_primitives::transaction::TxIn]
 pub fn bitcoin_primitives::transaction::Transaction::outputs(&self) -> &[bitcoin_primitives::transaction::TxOut]
 pub fn bitcoin_primitives::transaction::Transaction::outputs_mut(&mut self) -> &mut [bitcoin_primitives::transaction::TxOut]
-pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &Self) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_primitives::transaction::Transaction::partial_cmp(&self, other: &bitcoin_primitives::transaction::Transaction) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_primitives::transaction::TxIn::clone(&self) -> bitcoin_primitives::transaction::TxIn
 pub fn bitcoin_primitives::transaction::TxIn::cmp(&self, other: &bitcoin_primitives::transaction::TxIn) -> core::cmp::Ordering
 pub fn bitcoin_primitives::transaction::TxIn::eq(&self, other: &bitcoin_primitives::transaction::TxIn) -> bool
