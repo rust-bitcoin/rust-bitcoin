@@ -759,8 +759,8 @@ fn serde_as_btc() {
     }
 
     let orig = T {
-        amt: Amount::from_sat(20_000_000__000_000_01),
-        samt: SignedAmount::from_sat(-20_000_000__000_000_01),
+        amt: Amount::from_sat_unchecked(20_000_000__000_000_01),
+        samt: SignedAmount::from_sat_unchecked(-20_000_000__000_000_01),
     };
 
     let json = "{\"amt\": 20000000.00000001, \
@@ -795,7 +795,7 @@ fn serde_as_str() {
     }
 
     serde_test::assert_tokens(
-        &T { amt: Amount::from_sat(123_456_789), samt: SignedAmount::from_sat(-123_456_789) },
+        &T { amt: Amount::from_sat_unchecked(123_456_789), samt: SignedAmount::from_sat_unchecked(-123_456_789) },
         &[
             serde_test::Token::Struct { name: "T", len: 2 },
             serde_test::Token::String("amt"),
@@ -823,8 +823,8 @@ fn serde_as_btc_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(2_500_000_00)),
-        samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+        amt: Some(Amount::from_sat_unchecked(2_500_000_00)),
+        samt: Some(SignedAmount::from_sat_unchecked(-2_500_000_00)),
     };
     let without = T { amt: None, samt: None };
 
@@ -865,8 +865,8 @@ fn serde_as_sat_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(2_500_000_00)),
-        samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+        amt: Some(Amount::from_sat_unchecked(2_500_000_00)),
+        samt: Some(SignedAmount::from_sat_unchecked(-2_500_000_00)),
     };
     let without = T { amt: None, samt: None };
 
@@ -907,8 +907,8 @@ fn serde_as_str_opt() {
     }
 
     let with = T {
-        amt: Some(Amount::from_sat(123_456_789)),
-        samt: Some(SignedAmount::from_sat(-123_456_789)),
+        amt: Some(Amount::from_sat_unchecked(123_456_789)),
+        samt: Some(SignedAmount::from_sat_unchecked(-123_456_789)),
     };
     let without = T { amt: None, samt: None };
 
@@ -936,48 +936,48 @@ fn serde_as_str_opt() {
 
 #[test]
 fn sum_amounts() {
+    let sat = Amount::from_sat;
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(Amount::ZERO, [].iter().sum::<Amount>());
     assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
 
-    let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
-    assert_eq!(amounts.iter().sum::<Amount>(), Amount::from_sat(1400));
-
+    let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().sum::<Amount>();
-    assert_eq!(Amount::from_sat(1400), sum);
+    assert_eq!(sat(1400), sum);
 
-    let amounts =
-        [SignedAmount::from_sat(-42), SignedAmount::from_sat(1337), SignedAmount::from_sat(21)];
-    assert_eq!(amounts.iter().sum::<SignedAmount>(), SignedAmount::from_sat(1316));
-
+    let amounts = [ssat(-42), ssat(1337), ssat(21)];
     let sum = amounts.into_iter().sum::<SignedAmount>();
-    assert_eq!(SignedAmount::from_sat(1316), sum);
+    assert_eq!(ssat(1316), sum);
 }
 
 #[test]
 fn checked_sum_amounts() {
+    let sat = Amount::from_sat;
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(Some(Amount::ZERO), [].into_iter().checked_sum());
     assert_eq!(Some(SignedAmount::ZERO), [].into_iter().checked_sum());
 
-    let amounts = [Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+    let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(Amount::from_sat(1400)), sum);
+    assert_eq!(Some(sat(1400)), sum);
 
-    let amounts = [Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
+    let amounts = [sat(u64::MAX), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [SignedAmount::MIN, SignedAmount::from_sat(-1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts = [SignedAmount::MAX, SignedAmount::from_sat(1), SignedAmount::from_sat(21)];
+    let amounts = [SignedAmount::MAX, ssat(1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(None, sum);
 
-    let amounts =
-        [SignedAmount::from_sat(42), SignedAmount::from_sat(3301), SignedAmount::from_sat(21)];
+    let amounts = [ssat(42), ssat(3301), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(SignedAmount::from_sat(3364)), sum);
+    assert_eq!(Some(ssat(3364)), sum);
 }
 
 #[test]
@@ -1020,35 +1020,39 @@ fn disallow_unknown_denomination() {
 #[test]
 #[cfg(feature = "alloc")]
 fn trailing_zeros_for_amount() {
-    assert_eq!(format!("{}", Amount::from_sat(1_000_000)), "0.01 BTC");
+    let sat = Amount::from_sat;
+
+    assert_eq!(format!("{}", sat(1_000_000)), "0.01 BTC");
     assert_eq!(format!("{}", Amount::ONE_SAT), "0.00000001 BTC");
     assert_eq!(format!("{}", Amount::ONE_BTC), "1 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(1)), "0.00000001 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(10)), "0.0000001 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(1000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10_000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100_000)), "0.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(1_000_000)), "0.01 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(10_000_000)), "0.10 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(100_000_000)), "1.00 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(500_000)), "0.01 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(9_500_000)), "0.10 BTC");
-    assert_eq!(format!("{:.2}", Amount::from_sat(99_500_000)), "1.00 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(100_000_000)), "1 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(40_000_000_000)), "400 BTC");
-    assert_eq!(format!("{:.10}", Amount::from_sat(100_000_000)), "1.0000000000 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_010)), "4000000.0000001 BTC");
-    assert_eq!(format!("{}", Amount::from_sat(400_000_000_000_000)), "4000000 BTC");
+    assert_eq!(format!("{}", sat(1)), "0.00000001 BTC");
+    assert_eq!(format!("{}", sat(10)), "0.0000001 BTC");
+    assert_eq!(format!("{:.2}", sat(10)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(100)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(1000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(10_000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(100_000)), "0.00 BTC");
+    assert_eq!(format!("{:.2}", sat(1_000_000)), "0.01 BTC");
+    assert_eq!(format!("{:.2}", sat(10_000_000)), "0.10 BTC");
+    assert_eq!(format!("{:.2}", sat(100_000_000)), "1.00 BTC");
+    assert_eq!(format!("{:.2}", sat(500_000)), "0.01 BTC");
+    assert_eq!(format!("{:.2}", sat(9_500_000)), "0.10 BTC");
+    assert_eq!(format!("{:.2}", sat(99_500_000)), "1.00 BTC");
+    assert_eq!(format!("{}", sat(100_000_000)), "1 BTC");
+    assert_eq!(format!("{}", sat(40_000_000_000)), "400 BTC");
+    assert_eq!(format!("{:.10}", sat(100_000_000)), "1.0000000000 BTC");
+    assert_eq!(format!("{}", sat(400_000_000_000_010)), "4000000.0000001 BTC");
+    assert_eq!(format!("{}", sat(400_000_000_000_000)), "4000000 BTC");
 }
 
 #[test]
 #[allow(clippy::op_ref)]
 fn unsigned_addition() {
-    let one = Amount::from_sat(1);
-    let two = Amount::from_sat(2);
-    let three = Amount::from_sat(3);
+    let sat = Amount::from_sat;
+
+    let one = sat(1);
+    let two = sat(2);
+    let three = sat(3);
 
     assert!(one + two == three);
     assert!(&one + two == three);
@@ -1059,9 +1063,11 @@ fn unsigned_addition() {
 #[test]
 #[allow(clippy::op_ref)]
 fn unsigned_subtract() {
-    let one = Amount::from_sat(1);
-    let two = Amount::from_sat(2);
-    let three = Amount::from_sat(3);
+    let sat = Amount::from_sat;
+
+    let one = sat(1);
+    let two = sat(2);
+    let three = sat(3);
 
     assert!(three - two == one);
     assert!(&three - two == one);
@@ -1071,32 +1077,38 @@ fn unsigned_subtract() {
 
 #[test]
 fn unsigned_add_assign() {
-    let mut f = Amount::from_sat(1);
-    f += Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(3));
+    let sat = Amount::from_sat;
 
-    let mut f = Amount::from_sat(1);
-    f += &Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(3));
+    let mut f = sat(1);
+    f += sat(2);
+    assert_eq!(f, sat(3));
+
+    let mut f = sat(1);
+    f += &sat(2);
+    assert_eq!(f, sat(3));
 }
 
 #[test]
 fn unsigned_sub_assign() {
-    let mut f = Amount::from_sat(3);
-    f -= Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(1));
+    let sat = Amount::from_sat;
 
-    let mut f = Amount::from_sat(3);
-    f -= &Amount::from_sat(2);
-    assert_eq!(f, Amount::from_sat(1));
+    let mut f = sat(3);
+    f -= sat(2);
+    assert_eq!(f, sat(1));
+
+    let mut f = sat(3);
+    f -= &sat(2);
+    assert_eq!(f, sat(1));
 }
 
 #[test]
 #[allow(clippy::op_ref)]
 fn signed_addition() {
-    let one = SignedAmount::from_sat(1);
-    let two = SignedAmount::from_sat(2);
-    let three = SignedAmount::from_sat(3);
+    let ssat = SignedAmount::from_sat;
+
+    let one = ssat(1);
+    let two = ssat(2);
+    let three = ssat(3);
 
     assert!(one + two == three);
     assert!(&one + two == three);
@@ -1107,9 +1119,11 @@ fn signed_addition() {
 #[test]
 #[allow(clippy::op_ref)]
 fn signed_subtract() {
-    let one = SignedAmount::from_sat(1);
-    let two = SignedAmount::from_sat(2);
-    let three = SignedAmount::from_sat(3);
+    let ssat = SignedAmount::from_sat;
+
+    let one = ssat(1);
+    let two = ssat(2);
+    let three = ssat(3);
 
     assert!(three - two == one);
     assert!(&three - two == one);
@@ -1119,22 +1133,26 @@ fn signed_subtract() {
 
 #[test]
 fn signed_add_assign() {
-    let mut f = SignedAmount::from_sat(1);
-    f += SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(3));
+    let ssat = SignedAmount::from_sat;
 
-    let mut f = SignedAmount::from_sat(1);
-    f += &SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(3));
+    let mut f = ssat(1);
+    f += ssat(2);
+    assert_eq!(f, ssat(3));
+
+    let mut f = ssat(1);
+    f += &ssat(2);
+    assert_eq!(f, ssat(3));
 }
 
 #[test]
 fn signed_sub_assign() {
-    let mut f = SignedAmount::from_sat(3);
-    f -= SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(1));
+    let ssat = SignedAmount::from_sat;
 
-    let mut f = SignedAmount::from_sat(3);
-    f -= &SignedAmount::from_sat(2);
-    assert_eq!(f, SignedAmount::from_sat(1));
+    let mut f = ssat(3);
+    f -= ssat(2);
+    assert_eq!(f, ssat(1));
+
+    let mut f = ssat(3);
+    f -= &ssat(2);
+    assert_eq!(f, ssat(1));
 }
