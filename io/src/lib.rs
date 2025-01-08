@@ -445,4 +445,35 @@ mod tests {
             assert_eq!(buf[0], 0x00); // Double check that buffer state is sane.
         }
     }
+
+    #[test]
+    fn read_into_zero_length_buffer() {
+        use crate::Read as _;
+
+        const BUF_LEN: usize = 64;
+        let data = [1_u8; BUF_LEN];
+        let mut buf = [0_u8; BUF_LEN];
+
+        let mut slice = data.as_ref();
+        let mut take = Read::take(&mut slice, 32);
+
+        let read = take.read(&mut buf[0..0]).unwrap();
+        assert_eq!(read, 0);
+        assert_eq!(buf[0], 0x00); // Check the buffer didn't get touched.
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn take_and_read_to_end() {
+        const BUF_LEN: usize = 64;
+        let data = [1_u8; BUF_LEN];
+
+        let mut slice = data.as_ref();
+        let mut take = Read::take(&mut slice, 32);
+
+        let mut v = Vec::new();
+        let read = take.read_to_end(&mut v).unwrap();
+        assert_eq!(read, 32);
+        assert_eq!(data[0..32], v[0..32]);
+    }
 }
