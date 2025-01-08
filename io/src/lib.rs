@@ -212,7 +212,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     /// This method allows seeking within the wrapped memory by setting the position.
     ///
     /// Note that setting a position that is larger than the buffer length will cause reads to
-    /// return no bytes (EOF).
+    /// succeed by reading zero bytes.
     #[inline]
     pub fn set_position(&mut self, position: u64) { self.pos = position; }
 
@@ -247,6 +247,10 @@ impl<T: AsRef<[u8]>> Read for Cursor<T> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let inner: &[u8] = self.inner.as_ref();
         let start_pos = self.pos.try_into().unwrap_or(inner.len());
+        if start_pos >= self.inner.as_ref().len() {
+            return Ok(0);
+        }
+
         let read = core::cmp::min(inner.len().saturating_sub(start_pos), buf.len());
         buf[..read].copy_from_slice(&inner[start_pos..start_pos + read]);
         self.pos = self.pos.saturating_add(read.try_into().unwrap_or(u64::MAX /* unreachable */));
@@ -414,5 +418,31 @@ mod tests {
         let read = reader.read_to_limit(&mut buf, 2).expect("failed to read to limit");
         assert_eq!(read, 2);
         assert_eq!(&buf, "16".as_bytes())
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn set_position_past_end_read_returns_eof() {
+        const BUF_LEN: usize = 64; // Just a small buffer.
+        let mut buf = [0_u8; BUF_LEN]; // We never actually write to this buffer.
+
+        let v = [1_u8; BUF_LEN];
+
+        // Sanity check the stdlib Cursor's behaviour.
+        let mut c = std::io::Cursor::new(v);
+        for pos in [BUF_LEN, BUF_LEN + 1, BUF_LEN * 2] {
+            c.set_position(pos as u64);
+            let read = c.read(&mut buf).unwrap();
+            assert_eq!(read, 0);
+            assert_eq!(buf[0], 0x00); // Double check that buffer state is sane.
+        }
+
+        let mut c = Cursor::new(v);
+        for pos in [BUF_LEN, BUF_LEN + 1, BUF_LEN * 2] {
+            c.set_position(pos as u64);
+            let read = c.read(&mut buf).unwrap();
+            assert_eq!(read, 0);
+            assert_eq!(buf[0], 0x00); // Double check that buffer state is sane.
+        }
     }
 }
