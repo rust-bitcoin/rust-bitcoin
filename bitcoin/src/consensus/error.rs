@@ -13,7 +13,7 @@ use internals::write_err;
 use super::IterReader;
 
 /// Error deserializing from a slice.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum DeserializeError {
     /// Error parsing encoded object.
@@ -149,7 +149,7 @@ impl From<ParseError> for Error {
 }
 
 /// Encoding is invalid.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ParseError {
     /// Missing data (early end of file or slice too short).
