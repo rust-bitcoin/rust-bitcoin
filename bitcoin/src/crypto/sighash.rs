@@ -1452,9 +1452,9 @@ impl<E> From<Infallible> for SigningDataError<E> {
 }
 
 impl<E> SigningDataError<E> {
-    /// Returns the sighash variant, panicking if it's IO.
+    /// Returns the sighash variant, panicking if it's I/O.
     ///
-    /// This is used when encoding to hash engine when we know that IO doesn't fail.
+    /// This is used when encoding to hash engine when we know that I/O doesn't fail.
     fn unwrap_sighash(self) -> E {
         match self {
             Self::Sighash(error) => error,

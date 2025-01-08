@@ -3,24 +3,24 @@ use alloc::boxed::Box;
 
 use internals::rust_version;
 
-/// A bridging wrapper providing the IO traits for types that already implement `std` IO traits.
+/// A bridging wrapper providing the I/O traits for types that already implement `std` I/O traits.
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct FromStd<T>(T);
 
 impl<T> FromStd<T> {
-    /// Wraps an IO type.
+    /// Wraps an I/O type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
 
-    /// Wraps a mutable reference to IO type.
+    /// Wraps a mutable reference to I/O type.
     #[inline]
     pub fn new_mut(inner: &mut T) -> &mut Self {
         // SAFETY: the type is repr(transparent) and the lifetimes match
         unsafe { &mut *(inner as *mut _ as *mut Self) }
     }
 
-    /// Wraps a boxed IO type.
+    /// Wraps a boxed I/O type.
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn new_boxed(inner: Box<T>) -> Box<Self> {
@@ -121,18 +121,18 @@ impl<T: std::io::Write> std::io::Write for FromStd<T> {
 pub struct ToStd<T>(T);
 
 impl<T> ToStd<T> {
-    /// Wraps an IO type.
+    /// Wraps an I/O type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
 
-    /// Wraps a mutable reference to IO type.
+    /// Wraps a mutable reference to I/O type.
     #[inline]
     pub fn new_mut(inner: &mut T) -> &mut Self {
         // SAFETY: the type is repr(transparent) and the lifetimes match
         unsafe { &mut *(inner as *mut _ as *mut Self) }
     }
 
-    /// Wraps a boxed IO type.
+    /// Wraps a boxed I/O type.
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn new_boxed(inner: Box<T>) -> Box<Self> {

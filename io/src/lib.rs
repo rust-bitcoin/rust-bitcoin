@@ -1,4 +1,4 @@
-//! Rust-Bitcoin IO Library
+//! Rust-Bitcoin I/O Library
 //!
 //! The `std::io` module is not exposed in `no-std` Rust so building `no-std` applications which
 //! require reading and writing objects via standard traits is not generally possible. Thus, this
@@ -349,14 +349,14 @@ impl Write for Sink {
 #[inline]
 pub fn sink() -> Sink { Sink }
 
-/// Wraps a `std` IO type to implement the traits from this crate.
+/// Wraps a `std` I/O type to implement the traits from this crate.
 ///
 /// All methods are passed through converting the errors.
 #[cfg(feature = "std")]
 #[inline]
 pub const fn from_std<T>(std_io: T) -> FromStd<T> { FromStd::new(std_io) }
 
-/// Wraps a mutable reference to `std` IO type to implement the traits from this crate.
+/// Wraps a mutable reference to `std` I/O type to implement the traits from this crate.
 ///
 /// All methods are passed through converting the errors.
 #[cfg(feature = "std")]
