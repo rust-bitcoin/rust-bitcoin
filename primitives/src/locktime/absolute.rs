@@ -5,8 +5,7 @@
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-use core::cmp::Ordering;
-use core::fmt;
+use core::{cmp, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -29,12 +28,12 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 ///
 /// ### Note on ordering
 ///
-/// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
-/// ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
-/// For [`Transaction`], which has a locktime field, we implement a total ordering to make
-/// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
-/// consensus encoding to order it. We also implement [`ordered::ArbitraryOrd`] if the "ordered"
-/// feature is enabled.
+/// Locktimes may be height- or time-based, and these metrics are incommensurate. However, because
+/// absolute height-based and time-based locktime values do not overlap there exists a total
+/// ordering (height-based locktime values are by definition less than LOCK_TIME_THRESHOLD and
+/// time-based locktime values are by definition greater than the threshold). Therefore we implement
+/// `PartialOrd` and `Ord` for `absolute::LockTime` but not for `relative::LockTime` (which instead
+/// implements `ordering::ArbitraryOrd` if the `ordered` feature is enabled).
 ///
 /// ### Relevant BIPs
 ///
@@ -301,16 +300,15 @@ impl From<Time> for LockTime {
     fn from(t: Time) -> Self { LockTime::Seconds(t) }
 }
 
-impl PartialOrd for LockTime {
-    #[inline]
-    fn partial_cmp(&self, other: &LockTime) -> Option<Ordering> {
-        use LockTime::*;
+impl cmp::PartialOrd for LockTime {
+    fn partial_cmp(&self, other: &LockTime) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
+}
 
-        match (*self, *other) {
-            (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
-            (Seconds(ref a), Seconds(ref b)) => a.partial_cmp(b),
-            (_, _) => None,
-        }
+impl cmp::Ord for LockTime {
+    fn cmp(&self, other: &LockTime) -> cmp::Ordering {
+        // This is the same as if we manually implemented with the `Blocks` variant defined as
+        // less than `Seconds` because the inner values never overlap.
+        self.to_consensus_u32().cmp(&other.to_consensus_u32())
     }
 }
 
@@ -379,20 +377,6 @@ impl<'de> serde::Deserialize<'de> for LockTime {
             }
         }
         deserializer.deserialize_u32(Visitor).map(LockTime::from_consensus)
-    }
-}
-
-#[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
-    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
-        use LockTime::*;
-
-        match (self, other) {
-            (Blocks(_), Seconds(_)) => Ordering::Less,
-            (Seconds(_), Blocks(_)) => Ordering::Greater,
-            (Blocks(this), Blocks(that)) => this.cmp(that),
-            (Seconds(this), Seconds(that)) => this.cmp(that),
-        }
     }
 }
 

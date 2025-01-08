@@ -10,8 +10,6 @@
 //!
 //! This module provides the structures and functions needed to support transactions.
 
-#[cfg(feature = "alloc")]
-use core::cmp;
 use core::convert::Infallible;
 use core::fmt;
 
@@ -76,20 +74,7 @@ use crate::witness::Witness;
 ///
 /// We therefore deviate from the spec by always using the SegWit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
-///
-/// ### A note on ordering
-///
-/// This type implements `Ord`, even though it contains a locktime, which is not
-/// itself `Ord`. This was done to simplify applications that may need to hold
-/// transactions inside a sorted container. We have ordered the locktimes based
-/// on their representation as a `u32`, which is not a semantically meaningful
-/// order, and therefore the ordering on `Transaction` itself is not semantically
-/// meaningful either.
-///
-/// The ordering is, however, consistent with the ordering present in this library
-/// before this change, so users should not notice any breakage (here) when
-/// transitioning from 0.29 to 0.30.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(feature = "alloc")]
 pub struct Transaction {
@@ -180,22 +165,6 @@ impl Transaction {
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
         self.input.is_empty()
-    }
-}
-
-#[cfg(feature = "alloc")]
-impl cmp::PartialOrd for Transaction {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
-}
-
-#[cfg(feature = "alloc")]
-impl cmp::Ord for Transaction {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        self.version
-            .cmp(&other.version)
-            .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
-            .then(self.input.cmp(&other.input))
-            .then(self.output.cmp(&other.output))
     }
 }
 
