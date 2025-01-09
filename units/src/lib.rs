@@ -18,6 +18,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod fee;
 mod internal_macros;
 
 #[doc(hidden)]
