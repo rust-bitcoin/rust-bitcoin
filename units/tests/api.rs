@@ -221,16 +221,16 @@ fn api_all_non_error_types_have_non_empty_debug() {
 }
 
 #[test]
-fn send() {
+fn all_types_implement_send_sync() {
     fn assert_send<T: Send>() {}
-    assert_send::<Types>();
-    assert_send::<Errors>();
-}
-
-#[test]
-fn sync() {
     fn assert_sync<T: Sync>() {}
+
+    //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
+    assert_send::<Types>();
     assert_sync::<Types>();
+
+    // Error types should implement the Send and Sync traits (C-GOOD-ERR).
+    assert_send::<Errors>();
     assert_sync::<Errors>();
 }
 
