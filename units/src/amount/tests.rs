@@ -939,16 +939,16 @@ fn sum_amounts() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(Amount::ZERO, [].iter().sum::<Amount>());
-    assert_eq!(SignedAmount::ZERO, [].iter().sum::<SignedAmount>());
+    assert_eq!([].iter().sum::<Amount>(), Amount::ZERO);
+    assert_eq!([].iter().sum::<SignedAmount>(), SignedAmount::ZERO);
 
     let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().sum::<Amount>();
-    assert_eq!(sat(1400), sum);
+    assert_eq!(sum, sat(1400));
 
     let amounts = [ssat(-42), ssat(1337), ssat(21)];
     let sum = amounts.into_iter().sum::<SignedAmount>();
-    assert_eq!(ssat(1316), sum);
+    assert_eq!(sum, ssat(1316));
 }
 
 #[test]
@@ -956,28 +956,28 @@ fn checked_sum_amounts() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(Some(Amount::ZERO), [].into_iter().checked_sum());
-    assert_eq!(Some(SignedAmount::ZERO), [].into_iter().checked_sum());
+    assert_eq!([].into_iter().checked_sum(), Some(Amount::ZERO));
+    assert_eq!([].into_iter().checked_sum(), Some(SignedAmount::ZERO));
 
     let amounts = [sat(42), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(sat(1400)), sum);
+    assert_eq!(sum, Some(sat(1400)));
 
     let amounts = [sat(u64::MAX), sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(None, sum);
+    assert_eq!(sum, None);
 
     let amounts = [SignedAmount::MIN, ssat(-1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(None, sum);
+    assert_eq!(sum, None);
 
     let amounts = [SignedAmount::MAX, ssat(1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(None, sum);
+    assert_eq!(sum, None);
 
     let amounts = [ssat(42), ssat(3301), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
-    assert_eq!(Some(ssat(3364)), sum);
+    assert_eq!(sum, Some(ssat(3364)));
 }
 
 #[test]
