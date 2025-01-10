@@ -192,7 +192,7 @@ impl BufRead for &[u8] {
 }
 
 /// Wraps an in memory reader providing the `position` function.
-#[derive(Debug)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Cursor<T> {
     inner: T,
     pos: u64,
@@ -335,7 +335,7 @@ impl Write for &mut [u8] {
 /// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
 ///
 /// Created using `io::sink()`.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Sink;
 
 impl Write for Sink {
