@@ -94,5 +94,9 @@ required-features = ["rand-std"]
 [[example]]
 name = "sighash"
 
+[[example]]
+name = "io"
+required-features = ["std"]
+
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)'] }
