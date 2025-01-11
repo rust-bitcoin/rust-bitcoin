@@ -68,6 +68,48 @@ impl Amount {
             None => None,
         }
     }
+
+    /// Checked fee rate floor division.
+    ///
+    /// Computes the maximum weight that would result in a fee less than or equal to this amount
+    /// at the given `fee_rate`. Uses floor division to ensure the resulting weight doesn't cause
+    /// the fee to exceed the amount.
+    ///
+    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
+    #[must_use]
+    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
+        match self.to_sat().checked_mul(1000) {
+            Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu()) {
+                Some(wu) => Some(Weight::from_wu(wu)),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    /// Checked fee rate ceiling division.
+    ///
+    /// Computes the minimum weight that would result in a fee greater than or equal to this amount
+    /// at the given `fee_rate`. Uses ceiling division to ensure the resulting weight is sufficient.
+    ///
+    /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
+    #[must_use]
+    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
+        let rate = fee_rate.to_sat_per_kwu();
+        match self.to_sat().checked_mul(1000) {
+            Some(amount_msats) => match rate.checked_sub(1) {
+                Some(rate_minus_one) => match amount_msats.checked_add(rate_minus_one) {
+                    Some(rounded_msats) => match rounded_msats.checked_div(rate) {
+                        Some(wu) => Some(Weight::from_wu(wu)),
+                        None => None,
+                    },
+                    None => None,
+                },
+                None => None,
+            },
+            None => None,
+        }
+    }
 }
 
 impl FeeRate {
@@ -136,6 +178,21 @@ impl ops::Div<Weight> for Amount {
     }
 }
 
+impl ops::Div<FeeRate> for Amount {
+    type Output = Weight;
+
+    /// Truncating integer division.
+    ///
+    /// # Panics
+    ///
+    /// This operation will panic if `fee_rate` is zero or the division results in overflow.
+    ///
+    /// Note: This uses floor division. For ceiling division use [`Amount::checked_div_by_fee_rate_ceil`].
+    fn div(self, rhs: FeeRate) -> Self::Output {
+        self.checked_div_by_fee_rate_floor(rhs).unwrap()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,5 +255,32 @@ mod tests {
         let six = Amount::from_sat(6);
 
         assert_eq!(two * three, six);
+    }
+
+    #[test]
+    fn amount_div_by_fee_rate() {
+        // Test exact division
+        let amount = Amount::from_sat(1000);
+        let fee_rate = FeeRate::from_sat_per_kwu(2);
+        let weight = amount / fee_rate;
+        assert_eq!(weight, Weight::from_wu(500_000));
+
+        // Test truncation behavior
+        let amount = Amount::from_sat(1000);
+        let fee_rate = FeeRate::from_sat_per_kwu(3);
+        let weight = amount / fee_rate;
+        // 1000 * 1000 = 1,000,000 msats
+        // 1,000,000 / 3 = 333,333.33... wu
+        // Should truncate down to 333,333 wu
+        assert_eq!(weight, Weight::from_wu(333_333));
+
+        // Verify that ceiling division gives different result
+        let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
+        assert_eq!(ceil_weight, Weight::from_wu(333_334));
+
+        // Test that division by zero returns None
+        let zero_rate = FeeRate::from_sat_per_kwu(0);
+        assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
+        assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
     }
 }
