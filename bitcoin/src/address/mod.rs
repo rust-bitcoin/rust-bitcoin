@@ -768,7 +768,7 @@ impl Address<NetworkUnchecked> {
     }
 
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
-    /// regtest and signet addresse use the same prefix instead of multiple different ones. When
+    /// regtest and signet addresses use the same prefix instead of multiple different ones. When
     /// parsing, such addresses are always assumed to be testnet addresses (the same is true for
     /// bech32 signet addresses). So if one wants to check if an address belongs to a certain
     /// network a simple comparison is not enough anymore. Instead this function can be used.
