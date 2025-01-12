@@ -21,8 +21,8 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
-    use core::fmt;
     use core::convert::Infallible;
+    use core::fmt;
 
     use hashes::sha256d;
     use internals::write_err;

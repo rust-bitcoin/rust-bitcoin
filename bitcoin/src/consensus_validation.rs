@@ -4,8 +4,8 @@
 //!
 //! Relies on the `bitcoinconsensus` crate that uses Bitcoin Core libconsensus to perform validation.
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use internals::write_err;
 

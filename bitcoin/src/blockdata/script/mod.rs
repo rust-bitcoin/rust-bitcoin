@@ -57,8 +57,8 @@ mod tests;
 pub mod witness_program;
 pub mod witness_version;
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use io::{BufRead, Write};
 use primitives::opcodes::all::*;

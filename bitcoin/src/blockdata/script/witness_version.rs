@@ -7,9 +7,9 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
+use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
-use core::convert::Infallible;
 
 use internals::write_err;
 use units::parse::{self, ParseIntError};

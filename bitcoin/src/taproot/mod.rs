@@ -8,9 +8,9 @@ pub mod merkle_branch;
 pub mod serialized_signature;
 
 use core::cmp::{Ordering, Reverse};
+use core::convert::Infallible;
 use core::fmt;
 use core::iter::FusedIterator;
-use core::convert::Infallible;
 
 use hashes::{sha256t, HashEngine};
 use internals::{impl_to_hex_from_lower_hex, write_err};

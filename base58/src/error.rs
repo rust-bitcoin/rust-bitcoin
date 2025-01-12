@@ -2,8 +2,8 @@
 
 //! Error code for the `base58` crate.
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use internals::write_err;
 

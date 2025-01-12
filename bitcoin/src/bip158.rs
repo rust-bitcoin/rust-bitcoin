@@ -38,8 +38,8 @@
 //!  ```
 
 use core::cmp::{self, Ordering};
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
 use internals::{write_err, ToU64 as _};

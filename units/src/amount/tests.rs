@@ -19,7 +19,10 @@ use crate::{FeeRate, Weight};
 #[test]
 fn sanity_check() {
     assert_eq!(SignedAmount::from_sat(-100).abs(), SignedAmount::from_sat(100));
-    assert_eq!(SignedAmount::from_sat(i64::MIN + 1).checked_abs().unwrap(), SignedAmount::from_sat(i64::MAX));
+    assert_eq!(
+        SignedAmount::from_sat(i64::MIN + 1).checked_abs().unwrap(),
+        SignedAmount::from_sat(i64::MAX)
+    );
     assert_eq!(SignedAmount::from_sat(-100).signum(), -1);
     assert_eq!(SignedAmount::from_sat(0).signum(), 0);
     assert_eq!(SignedAmount::from_sat(100).signum(), 1);
@@ -30,8 +33,14 @@ fn sanity_check() {
 
     #[cfg(feature = "alloc")]
     {
-        assert_eq!(Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(), Amount::from_sat(0));
-        assert_eq!(Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(), Amount::from_sat(200_000_000));
+        assert_eq!(
+            Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(),
+            Amount::from_sat(0)
+        );
+        assert_eq!(
+            Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(),
+            Amount::from_sat(200_000_000)
+        );
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
 }
@@ -170,15 +179,24 @@ fn checked_arithmetic() {
 #[test]
 #[allow(deprecated_in_future)]
 fn unchecked_arithmetic() {
-    assert_eq!(SignedAmount::from_sat(10).unchecked_add(SignedAmount::from_sat(20)), SignedAmount::from_sat(30));
-    assert_eq!(SignedAmount::from_sat(50).unchecked_sub(SignedAmount::from_sat(10)), SignedAmount::from_sat(40));
+    assert_eq!(
+        SignedAmount::from_sat(10).unchecked_add(SignedAmount::from_sat(20)),
+        SignedAmount::from_sat(30)
+    );
+    assert_eq!(
+        SignedAmount::from_sat(50).unchecked_sub(SignedAmount::from_sat(10)),
+        SignedAmount::from_sat(40)
+    );
     assert_eq!(Amount::from_sat(5).unchecked_add(Amount::from_sat(7)), Amount::from_sat(12));
     assert_eq!(Amount::from_sat(10).unchecked_sub(Amount::from_sat(7)), Amount::from_sat(3));
 }
 
 #[test]
 fn positive_sub() {
-    assert_eq!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(7)).unwrap(), SignedAmount::from_sat(3));
+    assert_eq!(
+        SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(7)).unwrap(),
+        SignedAmount::from_sat(3)
+    );
     assert!(SignedAmount::from_sat(-10).positive_sub(SignedAmount::from_sat(7)).is_none());
     assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(-7)).is_none());
     assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(11)).is_none());
@@ -795,7 +813,10 @@ fn serde_as_str() {
     }
 
     serde_test::assert_tokens(
-        &T { amt: Amount::from_sat_unchecked(123_456_789), samt: SignedAmount::from_sat_unchecked(-123_456_789) },
+        &T {
+            amt: Amount::from_sat_unchecked(123_456_789),
+            samt: SignedAmount::from_sat_unchecked(-123_456_789),
+        },
         &[
             serde_test::Token::Struct { name: "T", len: 2 },
             serde_test::Token::String("amt"),

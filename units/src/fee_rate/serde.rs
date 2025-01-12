@@ -22,8 +22,8 @@
 //! }
 //! ```
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 pub mod as_sat_per_kwu {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.

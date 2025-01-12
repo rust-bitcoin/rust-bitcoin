@@ -289,7 +289,8 @@ mod tests {
         let interval_from_height: BlockInterval = relative::Height::from(10u16).into();
         assert_eq!(interval_from_height.to_u32(), 10u32);
 
-        let invalid_height_greater = relative::Height::try_from(BlockInterval(u32::from(u16::MAX) + 1));
+        let invalid_height_greater =
+            relative::Height::try_from(BlockInterval(u32::from(u16::MAX) + 1));
         assert!(invalid_height_greater.is_err());
 
         let valid_height = relative::Height::try_from(BlockInterval(u32::from(u16::MAX)));
@@ -314,8 +315,16 @@ mod tests {
         // interval - interval = interval
         assert!(BlockInterval(10) - BlockInterval(7) == BlockInterval(3));
 
-        assert!([BlockInterval(1), BlockInterval(2), BlockInterval(3)].iter().sum::<BlockInterval>() == BlockInterval(6));
-        assert!([BlockInterval(4), BlockInterval(5), BlockInterval(6)].into_iter().sum::<BlockInterval>() == BlockInterval(15));
+        assert!(
+            [BlockInterval(1), BlockInterval(2), BlockInterval(3)].iter().sum::<BlockInterval>()
+                == BlockInterval(6)
+        );
+        assert!(
+            [BlockInterval(4), BlockInterval(5), BlockInterval(6)]
+                .into_iter()
+                .sum::<BlockInterval>()
+                == BlockInterval(15)
+        );
 
         // interval += interval
         let mut int = BlockInterval(1);
