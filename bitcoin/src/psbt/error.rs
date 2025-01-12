@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use internals::write_err;
 

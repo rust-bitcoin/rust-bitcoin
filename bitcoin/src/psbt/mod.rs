@@ -13,8 +13,8 @@ mod map;
 pub mod raw;
 pub mod serialize;
 
-use core::{cmp, fmt};
 use core::convert::Infallible;
+use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
@@ -1154,9 +1154,9 @@ impl std::error::Error for IndexOutOfBoundsError {
 
 #[cfg(feature = "base64")]
 mod display_from_str {
+    use core::convert::Infallible;
     use core::fmt;
     use core::str::FromStr;
-    use core::convert::Infallible;
 
     use base64::display::Base64Display;
     use base64::prelude::{Engine as _, BASE64_STANDARD};

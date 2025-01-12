@@ -11,8 +11,8 @@
 //! handle its complexity efficiently. Computing these hashes is as simple as creating
 //! [`SighashCache`] and calling its methods.
 
-use core::{fmt, str};
 use core::convert::Infallible;
+use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};

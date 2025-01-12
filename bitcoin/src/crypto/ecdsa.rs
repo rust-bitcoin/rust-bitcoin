@@ -4,9 +4,9 @@
 //!
 //! This module provides ECDSA signatures used by Bitcoin that can be roundtrip (de)serialized.
 
+use core::convert::Infallible;
 use core::str::FromStr;
 use core::{fmt, iter};
-use core::convert::Infallible;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};

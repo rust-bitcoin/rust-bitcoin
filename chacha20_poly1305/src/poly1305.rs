@@ -197,12 +197,12 @@ fn prepare_padded_message_slice(msg: &[u8], is_last: bool) -> [u32; 5] {
     let m0 = u32::from_le_bytes(fmt_msg[0..4].try_into().expect("Valid subset of 32.")) & BITMASK;
     let m1 =
         (u32::from_le_bytes(fmt_msg[3..7].try_into().expect("Valid subset of 32.")) >> 2) & BITMASK;
-    let m2 =
-        (u32::from_le_bytes(fmt_msg[6..10].try_into().expect("Valid subset of 32.")) >> 4) & BITMASK;
-    let m3 =
-        (u32::from_le_bytes(fmt_msg[9..13].try_into().expect("Valid subset of 32.")) >> 6) & BITMASK;
-    let m4 =
-        (u32::from_le_bytes(fmt_msg[12..16].try_into().expect("Valid subset of 32.")) >> 8) | hi_bit;
+    let m2 = (u32::from_le_bytes(fmt_msg[6..10].try_into().expect("Valid subset of 32.")) >> 4)
+        & BITMASK;
+    let m3 = (u32::from_le_bytes(fmt_msg[9..13].try_into().expect("Valid subset of 32.")) >> 6)
+        & BITMASK;
+    let m4 = (u32::from_le_bytes(fmt_msg[12..16].try_into().expect("Valid subset of 32.")) >> 8)
+        | hi_bit;
     [m0, m1, m2, m3, m4]
 }
 

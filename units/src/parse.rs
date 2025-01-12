@@ -567,7 +567,6 @@ mod tests {
         let want = 171; // 0xab
         assert_eq!(hex_u32_prefixed("0xab").unwrap(), want);
         assert!(hex_u32_unprefixed("0xab").is_err());
-
     }
 
     #[test]
@@ -596,7 +595,6 @@ mod tests {
         let want = 3_735_928_559;
         assert_eq!(hex_u128_prefixed("0xdeadbeef").unwrap(), want);
         assert!(hex_u128_unprefixed("0xdeadbeef").is_err());
-
     }
 
     #[test]

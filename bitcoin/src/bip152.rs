@@ -4,8 +4,8 @@
 //!
 //! Implementation of compact blocks data structure and algorithms.
 
-use core::{convert, fmt, mem};
 use core::convert::Infallible;
+use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 

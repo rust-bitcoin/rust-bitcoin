@@ -5,10 +5,10 @@
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
-use core::convert::Infallible;
 
 use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacEngine};
 use internals::write_err;

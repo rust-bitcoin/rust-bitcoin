@@ -7,8 +7,8 @@
 //!
 //! [BIP141]: <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki>
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use internals::array_vec::ArrayVec;
 use secp256k1::{Secp256k1, Verification};

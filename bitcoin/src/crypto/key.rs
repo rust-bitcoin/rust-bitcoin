@@ -5,10 +5,10 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
+use core::convert::Infallible;
 use core::fmt::{self, Write as _};
 use core::ops;
 use core::str::FromStr;
-use core::convert::Infallible;
 
 use hashes::hash160;
 use hex::{FromHex, HexToArrayError};

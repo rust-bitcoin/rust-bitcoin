@@ -9,8 +9,8 @@
 //!
 //! Support proofs that transaction(s) belong to a block.
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use internals::ToU64 as _;
 use io::{BufRead, Write};

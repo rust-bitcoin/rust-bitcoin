@@ -7,8 +7,8 @@
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};

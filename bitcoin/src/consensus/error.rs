@@ -2,8 +2,8 @@
 
 //! Consensus encoding errors.
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use hex::error::{InvalidCharError, OddLengthStringError};
 use hex::DisplayHex as _;

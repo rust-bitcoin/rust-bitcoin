@@ -4,8 +4,8 @@
 //!
 //! This module provides Taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
