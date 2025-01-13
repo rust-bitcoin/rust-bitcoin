@@ -2,6 +2,7 @@
 
 // methods are implementation of a standardized serde-specific signature
 #![allow(missing_docs)]
+#![allow(clippy::missing_errors_doc)]
 
 //! This module adds serde serialization and deserialization support for amounts.
 //!
