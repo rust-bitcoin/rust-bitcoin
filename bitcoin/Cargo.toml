@@ -64,31 +64,31 @@ name = "handshake"
 required-features = ["rand-std"]
 
 [[example]]
-name = "ecdsa-psbt"
+name = "ecdsa_psbt"
 required-features = ["std", "bitcoinconsensus"]
 
 [[example]]
-name = "ecdsa-psbt-simple"
+name = "ecdsa_psbt_simple"
 required-features = ["rand-std"]
 
 [[example]]
-name = "create-p2wpkh-address"
+name = "create_p2wpkh_address"
 required-features = ["rand-std"]
 
 [[example]]
-name = "sign-tx-segwit-v0"
+name = "sign_tx_segwit_v0"
 required-features = ["rand-std"]
 
 [[example]]
-name = "sign-tx-taproot"
+name = "sign_tx_taproot"
 required-features = ["rand-std"]
 
 [[example]]
-name = "taproot-psbt"
+name = "taproot_psbt"
 required-features = ["rand-std", "bitcoinconsensus"]
 
 [[example]]
-name = "taproot-psbt-simple"
+name = "taproot_psbt_simple"
 required-features = ["rand-std"]
 
 [[example]]

@@ -1155,8 +1155,8 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     ///
     /// For full signing code see the [`SegWit v0`] and [`taproot`] signing examples.
     ///
-    /// [`SegWit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-segwit-v0.rs>
-    /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign-tx-taproot.rs>
+    /// [`SegWit v0`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign_tx_segwit_v0.rs>
+    /// [`taproot`]: <https://github.com/rust-bitcoin/rust-bitcoin/blob/master/bitcoin/examples/sign_tx_taproot.rs>
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
     }
