@@ -1183,7 +1183,9 @@ pub fn bitcoin_units::parse::hex_u32(s: &str) -> core::result::Result<u32, bitco
 pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::PrefixedHexError>
 pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
-pub fn bitcoin_units::parse::int<T: bitcoin_units::parse::Integer, S: core::convert::AsRef<str> + core::convert::Into<bitcoin_internals::error::input_string::InputString>>(s: S) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::int_from_box<T: bitcoin_units::parse::Integer>(s: alloc::boxed::Box<str>) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::int_from_str<T: bitcoin_units::parse::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::int_from_string<T: bitcoin_units::parse::Integer>(s: alloc::string::String) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
 pub fn bitcoin_units::weight::Weight::add(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
