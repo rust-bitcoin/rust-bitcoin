@@ -19,8 +19,8 @@ use hex_lit::hex;
 ///
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input index
-/// * `value` - ref tx output value in sats
-fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
+/// * `amount` - ref tx output value in sats
+fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
     let witness = &inp.witness;
@@ -43,7 +43,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, value: u64) {
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
-        .p2wpkh_signature_hash(inp_idx, &spk, Amount::from_sat(value), sig.sighash_type)
+        .p2wpkh_signature_hash(inp_idx, &spk, amount, sig.sighash_type)
         .expect("failed to compute sighash");
     println!("SegWit p2wpkh sighash: {:x}", sighash);
     let msg = secp256k1::Message::from(sighash);
@@ -104,8 +104,8 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
 ///
 /// * `raw_tx` - spending tx hex
 /// * `inp_idx` - spending tx input index
-/// * `value` - ref tx output value in sats
-fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
+/// * `amount` - ref tx output value in sats
+fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
     let witness = &inp.witness;
@@ -128,7 +128,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, value: u64) {
             .p2wsh_signature_hash(
                 inp_idx,
                 witness_script,
-                Amount::from_sat(value),
+                amount,
                 sig.sighash_type,
             )
             .expect("failed to compute sighash");
@@ -153,7 +153,7 @@ fn sighash_p2wpkh() {
     let inp_idx = 0;
     //output value from the referenced vout:0 from the referenced tx:
     //bitcoin-cli getrawtransaction 752d675b9cc0bd14e0bd23969effee0005ad6d7e550dcc832f0216c7ffd4e15c  3
-    let ref_out_value = 200000000;
+    let ref_out_value = Amount::from_sat(200000000);
 
     println!("\nsighash_p2wpkh:");
     compute_sighash_p2wpkh(&raw_tx, inp_idx, ref_out_value);
@@ -183,7 +183,7 @@ fn sighash_p2wsh_multisig_2x2() {
     //For the witness transaction sighash computation, we need its referenced output's value from the original transaction:
     //bitcoin-cli getrawtransaction 2845399a8cd7a52733f9f9d0e0b8b6c5d1c88aea4cee09f8d8fa762912b49e1b  3
     //we need vout 0 value in sats:
-    let ref_out_value = 968240;
+    let ref_out_value = Amount::from_sat(968240);
 
     println!("\nsighash_p2wsh_multisig_2x2:");
     compute_sighash_p2wsh(&raw_tx, 0, ref_out_value);
