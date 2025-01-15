@@ -207,6 +207,7 @@ pub mod as_sat {
         use super::private;
         use crate::amount::serde::SerdeAmountForOpt;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
             a: &Option<A>,
             s: S,
@@ -277,6 +278,7 @@ pub mod as_btc {
         use super::private;
         use crate::amount::serde::SerdeAmountForOpt;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
             a: &Option<A>,
             s: S,
@@ -347,6 +349,7 @@ pub mod as_str {
         use super::private;
         use crate::amount::serde::SerdeAmountForOpt;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
             a: &Option<A>,
             s: S,
