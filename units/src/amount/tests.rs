@@ -18,18 +18,20 @@ use crate::{FeeRate, Weight};
 
 #[test]
 fn sanity_check() {
-    assert_eq!(SignedAmount::from_sat(-100).abs(), SignedAmount::from_sat(100));
+    let ssat = SignedAmount::from_sat;
+
+    assert_eq!(ssat(-100).abs(), ssat(100));
     assert_eq!(
-        SignedAmount::from_sat(i64::MIN + 1).checked_abs().unwrap(),
-        SignedAmount::from_sat(i64::MAX)
+        ssat(i64::MIN + 1).checked_abs().unwrap(),
+        ssat(i64::MAX)
     );
-    assert_eq!(SignedAmount::from_sat(-100).signum(), -1);
-    assert_eq!(SignedAmount::from_sat(0).signum(), 0);
-    assert_eq!(SignedAmount::from_sat(100).signum(), 1);
-    assert_eq!(SignedAmount::from(Amount::from_sat(100)), SignedAmount::from_sat(100));
-    assert!(SignedAmount::from_sat(i64::MIN).checked_abs().is_none());
-    assert!(!SignedAmount::from_sat(-100).is_positive());
-    assert!(SignedAmount::from_sat(100).is_positive());
+    assert_eq!(ssat(-100).signum(), -1);
+    assert_eq!(ssat(0).signum(), 0);
+    assert_eq!(ssat(100).signum(), 1);
+    assert_eq!(SignedAmount::from(Amount::from_sat(100)), ssat(100));
+    assert!(ssat(i64::MIN).checked_abs().is_none());
+    assert!(!ssat(-100).is_positive());
+    assert!(ssat(100).is_positive());
 
     #[cfg(feature = "alloc")]
     {
@@ -143,7 +145,7 @@ fn mul_div() {
     b %= 3;
     assert_eq!(b, ssat(1));
     b *= 3;
-    assert_eq!(b, SignedAmount::from_sat(3));
+    assert_eq!(b, ssat(3));
 }
 
 #[test]
@@ -179,13 +181,15 @@ fn checked_arithmetic() {
 #[test]
 #[allow(deprecated_in_future)]
 fn unchecked_arithmetic() {
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(
-        SignedAmount::from_sat(10).unchecked_add(SignedAmount::from_sat(20)),
-        SignedAmount::from_sat(30)
+        ssat(10).unchecked_add(ssat(20)),
+        ssat(30)
     );
     assert_eq!(
-        SignedAmount::from_sat(50).unchecked_sub(SignedAmount::from_sat(10)),
-        SignedAmount::from_sat(40)
+        ssat(50).unchecked_sub(ssat(10)),
+        ssat(40)
     );
     assert_eq!(Amount::from_sat(5).unchecked_add(Amount::from_sat(7)), Amount::from_sat(12));
     assert_eq!(Amount::from_sat(10).unchecked_sub(Amount::from_sat(7)), Amount::from_sat(3));
@@ -193,13 +197,15 @@ fn unchecked_arithmetic() {
 
 #[test]
 fn positive_sub() {
+    let ssat = SignedAmount::from_sat;
+
     assert_eq!(
-        SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(7)).unwrap(),
-        SignedAmount::from_sat(3)
+        ssat(10).positive_sub(ssat(7)).unwrap(),
+        ssat(3)
     );
-    assert!(SignedAmount::from_sat(-10).positive_sub(SignedAmount::from_sat(7)).is_none());
-    assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(-7)).is_none());
-    assert!(SignedAmount::from_sat(10).positive_sub(SignedAmount::from_sat(11)).is_none());
+    assert!(ssat(-10).positive_sub(ssat(7)).is_none());
+    assert!(ssat(10).positive_sub(ssat(-7)).is_none());
+    assert!(ssat(10).positive_sub(ssat(11)).is_none());
 }
 
 #[cfg(feature = "alloc")]
