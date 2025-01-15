@@ -18,6 +18,7 @@ use crate::{FeeRate, Weight};
 
 #[test]
 fn sanity_check() {
+    let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(ssat(-100).abs(), ssat(100));
@@ -28,7 +29,7 @@ fn sanity_check() {
     assert_eq!(ssat(-100).signum(), -1);
     assert_eq!(ssat(0).signum(), 0);
     assert_eq!(ssat(100).signum(), 1);
-    assert_eq!(SignedAmount::from(Amount::from_sat(100)), ssat(100));
+    assert_eq!(SignedAmount::from(sat(100)), ssat(100));
     assert!(ssat(i64::MIN).checked_abs().is_none());
     assert!(!ssat(-100).is_positive());
     assert!(ssat(100).is_positive());
@@ -37,11 +38,11 @@ fn sanity_check() {
     {
         assert_eq!(
             Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(),
-            Amount::from_sat(0)
+            sat(0)
         );
         assert_eq!(
             Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(),
-            Amount::from_sat(200_000_000)
+            sat(200_000_000)
         );
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
@@ -137,7 +138,7 @@ fn mul_div() {
     a %= 3;
     assert_eq!(a, sat(1));
     a *= 3;
-    assert_eq!(a, Amount::from_sat(3));
+    assert_eq!(a, sat(3));
 
     let mut b = ssat(30);
     b /= 3;
@@ -181,6 +182,7 @@ fn checked_arithmetic() {
 #[test]
 #[allow(deprecated_in_future)]
 fn unchecked_arithmetic() {
+    let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(
@@ -191,8 +193,8 @@ fn unchecked_arithmetic() {
         ssat(50).unchecked_sub(ssat(10)),
         ssat(40)
     );
-    assert_eq!(Amount::from_sat(5).unchecked_add(Amount::from_sat(7)), Amount::from_sat(12));
-    assert_eq!(Amount::from_sat(10).unchecked_sub(Amount::from_sat(7)), Amount::from_sat(3));
+    assert_eq!(sat(5).unchecked_add(sat(7)), sat(12));
+    assert_eq!(sat(10).unchecked_sub(sat(7)), sat(3));
 }
 
 #[test]
