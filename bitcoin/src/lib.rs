@@ -239,8 +239,8 @@ pub mod parse {
     #[doc(inline)]
     pub use units::parse::{
         hex_check_unprefixed, hex_remove_prefix, hex_u128, hex_u128_unchecked, hex_u128_unprefixed,
-        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int, ParseIntError, PrefixedHexError,
-        UnprefixedHexError,
+        hex_u32, hex_u32_unchecked, hex_u32_unprefixed, int_from_box, int_from_str,
+        int_from_string, ParseIntError, PrefixedHexError, UnprefixedHexError,
     };
 }
 

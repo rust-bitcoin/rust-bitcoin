@@ -76,9 +76,28 @@ mod sealed {
 
 /// Parses the input string as an integer returning an error carrying rich context.
 ///
-/// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
-/// owned since it avoids allocation in error case.
-pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
+/// On error this function allocates to copy the input string into the error return. If the caller
+/// has a `String` or `Box<str>` which is not used later it's better to call
+/// [`parse::int_from_string`] or [`parse::int_from_box`] respectively.
+///
+/// [`parse::int_from_string`]: crate::parse::int_from_string
+/// [`parse::int_from_box`]: crate::parse::int_from_box
+pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
+
+/// Parses the input string as an integer returning an error carrying rich context.
+///
+/// On error the input string is moved into the error return without allocating.
+#[cfg(feature = "alloc")]
+pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseIntError> { int(s) }
+
+/// Parses the input string as an integer returning an error carrying rich context.
+///
+/// On error the input string is converted into the error return without allocating.
+#[cfg(feature = "alloc")]
+pub fn int_from_box<T: Integer>(s: alloc::boxed::Box<str>) -> Result<T, ParseIntError> { int(s) }
+
+// This must be private because we do not want `InputString` to appear in the public API.
+fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
             input: s.into(),
@@ -120,37 +139,44 @@ pub fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, Par
 #[doc(hidden)] // This is an 'internal' macro that should not be used outside of the `rust-bitcoin` crate.
 macro_rules! impl_parse_str_from_int_infallible {
     ($to:ident, $inner:ident, $fn:ident) => {
-        $crate::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn);
-        #[cfg(feature = "alloc")]
-        $crate::impl_tryfrom_str_from_int_infallible!(alloc::string::String, $to, $inner, $fn; alloc::boxed::Box<str>, $to, $inner, $fn);
-
         impl $crate::_export::_core::str::FromStr for $to {
             type Err = $crate::parse::ParseIntError;
 
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                $crate::parse::int::<$inner, &str>(s).map($to::$fn)
+                $crate::_export::_core::convert::TryFrom::try_from(s)
             }
         }
 
-    }
-}
-
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
-/// conversion function `fn`.
-#[macro_export]
-#[doc(hidden)] // Helper macro called by `impl_parse_str_from_int_infallible`.
-macro_rules! impl_tryfrom_str_from_int_infallible {
-    ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
-        $(
-        impl $crate::_export::_core::convert::TryFrom<$from> for $to {
+        impl $crate::_export::_core::convert::TryFrom<&str> for $to {
             type Error = $crate::parse::ParseIntError;
 
-            fn try_from(s: $from) -> $crate::_export::_core::result::Result<Self, Self::Error> {
-                $crate::parse::int::<$inner, $from>(s).map($to::$fn)
+            fn try_from(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse::int_from_str::<$inner>(s).map($to::$fn)
             }
         }
-        )*
-    }
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::string::String> for $to {
+            type Error = $crate::parse::ParseIntError;
+
+            fn try_from(
+                s: alloc::string::String,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse::int_from_string::<$inner>(s).map($to::$fn)
+            }
+        }
+
+        #[cfg(feature = "alloc")]
+        impl $crate::_export::_core::convert::TryFrom<alloc::boxed::Box<str>> for $to {
+            type Error = $crate::parse::ParseIntError;
+
+            fn try_from(
+                s: alloc::boxed::Box<str>,
+            ) -> $crate::_export::_core::result::Result<Self, Self::Error> {
+                $crate::parse::int_from_box::<$inner>(s).map($to::$fn)
+            }
+        }
+    };
 }
 
 /// Implements standard parsing traits for `$type` by calling through to `$inner_fn`.
@@ -497,9 +523,9 @@ mod tests {
 
     #[test]
     fn parse_int() {
-        assert!(int::<u8, _>("1").is_ok());
-        let _ = int::<i8, _>("not a number").map_err(|e| assert!(e.is_signed));
-        let _ = int::<u8, _>("not a number").map_err(|e| assert!(!e.is_signed));
+        assert!(int_from_str::<u8>("1").is_ok());
+        let _ = int_from_str::<i8>("not a number").map_err(|e| assert!(e.is_signed));
+        let _ = int_from_str::<u8>("not a number").map_err(|e| assert!(!e.is_signed));
     }
 
     #[test]
@@ -520,7 +546,7 @@ mod tests {
             fn from(_: i8) -> Self { TestTypeLargerThanU128(0, 0) }
         }
 
-        let result = panic::catch_unwind(|| int::<TestTypeLargerThanU128, _>("not a number"));
+        let result = panic::catch_unwind(|| int_from_str::<TestTypeLargerThanU128>("not a number"));
         assert!(result.is_err());
     }
 
