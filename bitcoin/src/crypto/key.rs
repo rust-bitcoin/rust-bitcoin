@@ -1034,9 +1034,9 @@ impl From<Infallible> for ParsePublicKeyError {
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParsePublicKeyError::*;
-        match self {
-            Encoding(e) => write_err!(f, "string error"; e),
-            InvalidChar(char) => write!(f, "hex error {}", char),
+        match *self {
+            Encoding(ref e) => write_err!(f, "string error"; e),
+            InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
             InvalidHexLength(got) =>
                 write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
         }
@@ -1048,9 +1048,10 @@ impl std::error::Error for ParsePublicKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParsePublicKeyError::*;
 
-        match self {
-            Encoding(e) => Some(e),
-            InvalidChar(_) | InvalidHexLength(_) => None,
+        match *self {
+            Encoding(ref e) => Some(e),
+            InvalidChar(ref e) => Some(e),
+            InvalidHexLength(_) => None,
         }
     }
 }
