@@ -69,9 +69,6 @@ impl FeeRate {
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.0 / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
-    /// TODO: cargo-mutants will try to replace - with /, which results in 1000 / 4 / 1 which is also 250.
-    /// Since we're addressing the mutants before introducing the cargo-mutants workflow, come back later
-    /// and skip this function in the mutants.toml config file
     pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.0 + (1000 / 4 - 1)) / (1000 / 4) }
 
     /// Checked multiplication.
