@@ -193,6 +193,7 @@ impl SignedAmount {
     /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
     /// ```
     #[cfg(feature = "alloc")]
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         self.to_string_in(denom).parse::<f64>().unwrap()
     }
