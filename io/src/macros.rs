@@ -1,14 +1,9 @@
-//! Public macros for porvide.d for users to be able implement our `io::Write` trait.
+// SPDX-License-Identifier: CC0-1.0
 
-#[macro_export]
-/// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
-/// of this crate's `io::Write` trait, we provide this macro instead.
-///
-/// This macro will implement `Write` given a `write` and `flush` fn, either by implementing the
-/// crate's native `io::Write` trait directly, or a more generic trait from `std` for users using
-/// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
-/// type, even if indirectly.
+/// Implements [`crate::Write`] for `$ty`.
+// See below for docs (docs.rs build enables all features).
 #[cfg(not(feature = "std"))]
+#[macro_export]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> $crate::Write for $ty {
@@ -24,15 +19,18 @@ macro_rules! impl_write {
     }
 }
 
-#[macro_export]
-/// Because we cannot provide a blanket implementation of [`std::io::Write`] for all implementers
-/// of this crate's `io::Write` trait, we provide this macro instead.
+/// Implements [`crate::Write`] for `$ty`.
 ///
-/// This macro will implement `Write` given a `write` and `flush` fn, either by implementing the
-/// crate's native `io::Write` trait directly, or a more generic trait from `std` for users using
-/// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
-/// type, even if indirectly.
+/// Also implements [`std::io::Write`] for `$ty` if `bitcoin_io` has the `std` feature enabled.
+///
+/// # Arguments
+///
+/// * `$ty` - the type used to implement the two traits.
+/// * `write_fn` - the function called by the `Write::write` trait method.
+/// * `flush_fn` - the function called by the `Write::flush` trait method.
+/// * `$bounded_ty: $bounds` - optional trait bounds if required.
 #[cfg(feature = "std")]
+#[macro_export]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {

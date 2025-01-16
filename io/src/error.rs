@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 use alloc::boxed::Box;
 use core::fmt;
