@@ -3,6 +3,7 @@
 // Module implements standardized serde-specific trait methods.
 #![allow(missing_docs)]
 #![allow(clippy::trivially_copy_pass_by_ref)]
+#![allow(clippy::missing_errors_doc)]
 
 //! This module adds serde serialization and deserialization support for amounts.
 //!

@@ -76,21 +76,28 @@ mod sealed {
 
 /// Parses the input string as an integer returning an error carrying rich context.
 ///
-/// On error this function allocates to copy the input string into the error return. If the caller
-/// has a `String` or `Box<str>` which is not used later it's better to call
+/// If the caller has a `String` or `Box<str>` which is not used later it's better to call
 /// [`parse::int_from_string`] or [`parse::int_from_box`] respectively.
 ///
 /// [`parse::int_from_string`]: crate::parse::int_from_string
 /// [`parse::int_from_box`]: crate::parse::int_from_box
+///
+/// # Errors
+///
+/// On error this function allocates to copy the input string into the error return.
 pub fn int_from_str<T: Integer>(s: &str) -> Result<T, ParseIntError> { int(s) }
 
 /// Parses the input string as an integer returning an error carrying rich context.
+///
+/// # Errors
 ///
 /// On error the input string is moved into the error return without allocating.
 #[cfg(feature = "alloc")]
 pub fn int_from_string<T: Integer>(s: alloc::string::String) -> Result<T, ParseIntError> { int(s) }
 
 /// Parses the input string as an integer returning an error carrying rich context.
+///
+/// # Errors
 ///
 /// On error the input string is converted into the error return without allocating.
 #[cfg(feature = "alloc")]
