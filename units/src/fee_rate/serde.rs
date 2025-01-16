@@ -8,7 +8,7 @@
 //! This module adds serde serialization and deserialization support for amounts.
 //!
 //! Since there is not a default way to serialize and deserialize Amounts, multiple
-//! ways are supported and it's up to the user to decide which serialiation to use.
+//! ways are supported, and it's up to the user to decide which serialization to use.
 //!
 //! The provided modules can be used as follows:
 //!
@@ -171,7 +171,7 @@ pub mod as_sat_per_vb_ceil {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use ceil division to convert per kwu to per virtual byte.
-    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb")]`.
+    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]`.
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
