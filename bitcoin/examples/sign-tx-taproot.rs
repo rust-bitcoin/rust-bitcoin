@@ -71,7 +71,7 @@ fn main() {
     // Sign the sighash using the secp256k1 library (exported by rust-bitcoin).
     let tweaked: TweakedKeypair = keypair.tap_tweak(&secp, None);
     let msg = Message::from(sighash);
-    let signature = secp.sign_schnorr(&msg, &tweaked.to_inner());
+    let signature = secp.sign_schnorr(msg.as_ref(), &tweaked.to_inner());
 
     // Update the witness stack.
     let signature = bitcoin::taproot::Signature { signature, sighash_type };
