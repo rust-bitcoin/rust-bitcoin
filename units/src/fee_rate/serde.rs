@@ -53,6 +53,7 @@ pub mod as_sat_per_kwu {
 
         use crate::FeeRate;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
             match *f {
                 Some(f) => s.serialize_some(&f.to_sat_per_kwu()),
@@ -124,6 +125,7 @@ pub mod as_sat_per_vb_floor {
         use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
             match *f {
                 Some(f) => s.serialize_some(&f.to_sat_per_vb_floor()),
@@ -199,6 +201,7 @@ pub mod as_sat_per_vb_ceil {
         use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
+        #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
             match *f {
                 Some(f) => s.serialize_some(&f.to_sat_per_vb_ceil()),
