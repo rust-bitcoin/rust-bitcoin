@@ -611,6 +611,7 @@ pub bitcoin_units::amount::Denomination::MilliBitcoin
 pub bitcoin_units::amount::Denomination::Satoshi
 pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::PossiblyConfusingDenominationError)
 pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::UnknownDenominationError)
+pub const bitcoin_units::Amount::FIFTY_BTC: Self
 pub const bitcoin_units::Amount::MAX: Self
 pub const bitcoin_units::Amount::MAX_MONEY: Self
 pub const bitcoin_units::Amount::MIN: Self
@@ -618,6 +619,7 @@ pub const bitcoin_units::Amount::ONE_BTC: Self
 pub const bitcoin_units::Amount::ONE_SAT: Self
 pub const bitcoin_units::Amount::SIZE: usize
 pub const bitcoin_units::Amount::ZERO: Self
+pub const bitcoin_units::SignedAmount::FIFTY_BTC: Self
 pub const bitcoin_units::SignedAmount::MAX: Self
 pub const bitcoin_units::SignedAmount::MAX_MONEY: Self
 pub const bitcoin_units::SignedAmount::MIN: Self
