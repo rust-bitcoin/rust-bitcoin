@@ -201,11 +201,11 @@ pub struct Cursor<T> {
 impl<T: AsRef<[u8]>> Cursor<T> {
     /// Constructs a new `Cursor` by wrapping `inner`.
     #[inline]
-    pub fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
+    pub const fn new(inner: T) -> Self { Cursor { inner, pos: 0 } }
 
     /// Returns the position read up to thus far.
     #[inline]
-    pub fn position(&self) -> u64 { self.pos }
+    pub const fn position(&self) -> u64 { self.pos }
 
     /// Sets the internal position.
     ///
@@ -226,7 +226,7 @@ impl<T: AsRef<[u8]>> Cursor<T> {
     ///
     /// This is the whole wrapped buffer, including the bytes already read.
     #[inline]
-    pub fn get_ref(&self) -> &T { &self.inner }
+    pub const fn get_ref(&self) -> &T { &self.inner }
 
     /// Returns a mutable reference to the inner buffer.
     ///
