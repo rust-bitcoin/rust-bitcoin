@@ -166,7 +166,7 @@ impl SerializedSignature {
 
     /// Writes this serialized signature to a `writer`.
     #[inline]
-    pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+    pub fn write_to<W: Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(self)
     }
 }

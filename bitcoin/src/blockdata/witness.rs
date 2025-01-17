@@ -21,7 +21,7 @@ use crate::Script;
 pub use primitives::witness::{Iter, Witness};
 
 impl Decodable for Witness {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, Error> {
         let witness_elements = r.read_compact_size()? as usize;
         // Minimum size of witness element is 1 byte, so if the count is
         // greater than MAX_VEC_SIZE we must return an error.
@@ -98,7 +98,7 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 
 impl Encodable for Witness {
     // `self.content` includes the varints so encoding here includes them, as expected.
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut written = w.emit_compact_size(self.len())?;
 
         for element in self.iter() {

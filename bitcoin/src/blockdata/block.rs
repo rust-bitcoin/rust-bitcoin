@@ -74,13 +74,13 @@ crate::internal_macros::define_extension_trait! {
 }
 
 impl Encodable for Version {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for Version {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version::from_consensus)
     }
 }
@@ -322,7 +322,7 @@ fn block_base_size(transactions: &[Transaction]) -> usize {
 
 impl Encodable for Block<Unchecked> {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         // TODO: Should we be able to encode without cloning?
         // This is ok, we decode as unchecked anyway.
         let block = self.clone().assume_checked(None);
@@ -332,7 +332,7 @@ impl Encodable for Block<Unchecked> {
 
 impl Encodable for Block<Checked> {
     #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.header().consensus_encode(w)?;
 
@@ -348,7 +348,7 @@ impl Encodable for Block<Checked> {
 
 impl Decodable for Block<Unchecked> {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: io::BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: io::BufRead>(
         r: &mut R,
     ) -> Result<Block, encode::Error> {
         let header = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -358,7 +358,7 @@ impl Decodable for Block<Unchecked> {
     }
 
     #[inline]
-    fn consensus_decode<R: io::BufRead + ?Sized>(r: &mut R) -> Result<Block, encode::Error> {
+    fn consensus_decode<R: io::BufRead>(r: &mut R) -> Result<Block, encode::Error> {
         let mut r = r.take(internals::ToU64::to_u64(encode::MAX_VEC_SIZE));
         let header = Decodable::consensus_decode(&mut r)?;
         let transactions = Decodable::consensus_decode(&mut r)?;

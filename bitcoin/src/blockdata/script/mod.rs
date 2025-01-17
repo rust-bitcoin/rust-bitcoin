@@ -194,21 +194,21 @@ fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
 
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(self.as_bytes(), w)
     }
 }
 
 impl Encodable for ScriptBuf {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.as_script().consensus_encode(w)
     }
 }
 
 impl Decodable for ScriptBuf {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let v: Vec<u8> = Decodable::consensus_decode_from_finite_reader(r)?;

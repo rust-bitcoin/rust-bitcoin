@@ -57,7 +57,7 @@ impl Address {
 
 impl Encodable for Address {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.services.consensus_encode(w)?;
 
         for word in &self.address {
@@ -74,7 +74,7 @@ impl Encodable for Address {
 
 impl Decodable for Address {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Address {
             services: Decodable::consensus_decode(r)?,
             address: read_be_address(r)?,
@@ -84,7 +84,7 @@ impl Decodable for Address {
 }
 
 /// Read a big-endian address from reader.
-fn read_be_address<R: Read + ?Sized>(r: &mut R) -> Result<[u16; 8], encode::Error> {
+fn read_be_address<R: Read>(r: &mut R) -> Result<[u16; 8], encode::Error> {
     let mut address = [0u16; 8];
     let mut buf = [0u8; 2];
 
@@ -141,8 +141,8 @@ pub enum AddrV2 {
 }
 
 impl Encodable for AddrV2 {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        fn encode_addr<W: Write + ?Sized>(
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+        fn encode_addr<W: Write>(
             w: &mut W,
             network: u8,
             bytes: &[u8],
@@ -162,7 +162,7 @@ impl Encodable for AddrV2 {
 }
 
 impl Decodable for AddrV2 {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         let network_id = u8::consensus_decode(r)?;
         let len = r.read_compact_size()?;
         if len > 512 {
@@ -266,7 +266,7 @@ impl AddrV2Message {
 }
 
 impl Encodable for AddrV2Message {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.time.consensus_encode(w)?;
         len += w.emit_compact_size(self.services.to_u64())?;
@@ -280,7 +280,7 @@ impl Encodable for AddrV2Message {
 }
 
 impl Decodable for AddrV2Message {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(AddrV2Message {
             time: Decodable::consensus_decode(r)?,
             services: ServiceFlags::from(r.read_compact_size()?),

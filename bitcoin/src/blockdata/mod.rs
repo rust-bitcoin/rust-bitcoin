@@ -66,7 +66,7 @@ pub mod locktime {
 
         impl Encodable for LockTime {
             #[inline]
-            fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
                 let v = self.to_consensus_u32();
                 v.consensus_encode(w)
             }
@@ -74,7 +74,7 @@ pub mod locktime {
 
         impl Decodable for LockTime {
             #[inline]
-            fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+            fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
                 u32::consensus_decode(r).map(LockTime::from_consensus)
             }
         }

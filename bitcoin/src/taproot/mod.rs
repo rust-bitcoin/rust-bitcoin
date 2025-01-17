@@ -1138,7 +1138,7 @@ impl ControlBlock {
     /// # Returns
     ///
     /// The number of bytes written to the writer.
-    pub fn encode<W: Write + ?Sized>(&self, writer: &mut W) -> io::Result<usize> {
+    pub fn encode<W: Write>(&self, writer: &mut W) -> io::Result<usize> {
         let first_byte: u8 =
             i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
         writer.write_all(&[first_byte])?;

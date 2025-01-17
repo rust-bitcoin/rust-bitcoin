@@ -608,7 +608,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// In order to sign, the data written by this function must be hashed using a tagged hash. For
     /// example usage see [`Self::taproot_signature_hash`] and
     /// [`Self::taproot_key_spend_signature_hash`].
-    pub fn taproot_encode_signing_data_to<W: Write + ?Sized, T: Borrow<TxOut>>(
+    pub fn taproot_encode_signing_data_to<W: Write, T: Borrow<TxOut>>(
         &mut self,
         writer: &mut W,
         input_index: usize,
@@ -806,7 +806,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// In order to sign, the data written by this function must be hashed using a double SHA256
     /// hash. This can be achieved either by using the [`hashes::sha256d::Hash`] type or one of the
     /// custom sighash types in this module ([`SegwitV0Sighash`] and [`LegacySighash`]).
-    pub fn segwit_v0_encode_signing_data_to<W: Write + ?Sized>(
+    pub fn segwit_v0_encode_signing_data_to<W: Write>(
         &mut self,
         writer: &mut W,
         input_index: usize,
@@ -927,7 +927,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    pub fn legacy_encode_signing_data_to<W: Write + ?Sized, U: Into<u32>>(
+    pub fn legacy_encode_signing_data_to<W: Write, U: Into<u32>>(
         &self,
         writer: &mut W,
         input_index: usize,
@@ -952,7 +952,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        fn encode_signing_data_to_inner<W: Write + ?Sized>(
+        fn encode_signing_data_to_inner<W: Write>(
             self_: &Transaction,
             writer: &mut W,
             input_index: usize,
@@ -1183,7 +1183,7 @@ impl<'a> Annex<'a> {
 }
 
 impl Encodable for Annex<'_> {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
     }
 }
