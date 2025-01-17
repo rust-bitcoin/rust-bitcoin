@@ -1,6 +1,3 @@
-impl !core::marker::Sync for bitcoin_io::Error
-impl !core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Error
-impl !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Error
 impl bitcoin_io::BufRead for &[u8]
 impl bitcoin_io::Error
 impl bitcoin_io::Read for &[u8]
@@ -27,13 +24,16 @@ impl core::marker::Send for bitcoin_io::Error
 impl core::marker::Send for bitcoin_io::ErrorKind
 impl core::marker::Send for bitcoin_io::Sink
 impl core::marker::StructuralPartialEq for bitcoin_io::ErrorKind
+impl core::marker::Sync for bitcoin_io::Error
 impl core::marker::Sync for bitcoin_io::ErrorKind
 impl core::marker::Sync for bitcoin_io::Sink
 impl core::marker::Unpin for bitcoin_io::Error
 impl core::marker::Unpin for bitcoin_io::ErrorKind
 impl core::marker::Unpin for bitcoin_io::Sink
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Error
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::ErrorKind
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Sink
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::Error
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::ErrorKind
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::Sink
 impl<'a, R: core::fmt::Debug + bitcoin_io::Read + ?core::marker::Sized> core::fmt::Debug for bitcoin_io::Take<'a, R>
