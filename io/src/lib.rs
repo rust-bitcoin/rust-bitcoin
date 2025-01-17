@@ -7,6 +7,9 @@
 //!
 //! These traits are not one-for-one drop-ins, but are as close as possible while still implementing
 //! `std::io`'s traits without unnecessary complexity.
+//!
+//! For examples of how to use and implement the types and traits in this crate see `io.rs` in the
+//! `github.com/rust-bitcoin/rust-bitcoin/bitcoin/examples/` directory.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // Experimental features we need.
