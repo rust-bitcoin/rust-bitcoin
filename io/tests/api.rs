@@ -142,3 +142,19 @@ fn all_non_error_tyes_implement_send_sync() {
     assert_send::<Errors>();
     assert_sync::<Errors>();
 }
+
+#[test]
+fn object_safety() {
+    // Sanity check, these are all object safe.
+    struct StdlibTraits {
+        p: Box<dyn std::io::Read>,
+        q: Box<dyn std::io::Write>,
+        r: Box<dyn std::io::BufRead>,
+    }
+    // If this builds then our three traits are object safe also.
+    struct OurTraits {
+        p: Box<dyn Read>,
+        q: Box<dyn Write>,
+        r: Box<dyn BufRead>,
+    }
+}

@@ -62,7 +62,12 @@ pub trait Read {
 
     /// Constructs a new adapter which will read at most `limit` bytes.
     #[inline]
-    fn take(&mut self, limit: u64) -> Take<Self> { Take { reader: self, remaining: limit } }
+    fn take(&mut self, limit: u64) -> Take<Self>
+    where
+        Self: Sized,
+    {
+        Take { reader: self, remaining: limit }
+    }
 
     /// Attempts to read up to limit bytes from the reader, allocating space in `buf` as needed.
     ///
@@ -73,7 +78,10 @@ pub trait Read {
     #[doc(alias = "read_to_end")]
     #[cfg(feature = "alloc")]
     #[inline]
-    fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize> {
+    fn read_to_limit(&mut self, buf: &mut Vec<u8>, limit: u64) -> Result<usize>
+    where
+        Self: Sized,
+    {
         self.take(limit).read_to_end(buf)
     }
 }
@@ -95,12 +103,12 @@ pub trait BufRead: Read {
 ///
 /// Created by calling `[Read::take]`.
 #[derive(Debug)]
-pub struct Take<'a, R: Read + ?Sized> {
+pub struct Take<'a, R: Read> {
     reader: &'a mut R,
     remaining: u64,
 }
 
-impl<R: Read + ?Sized> Take<'_, R> {
+impl<R: Read> Take<'_, R> {
     /// Reads all bytes until EOF from the underlying reader into `buf`.
     #[cfg(feature = "alloc")]
     #[inline]
@@ -122,7 +130,7 @@ impl<R: Read + ?Sized> Take<'_, R> {
     }
 }
 
-impl<R: Read + ?Sized> Read for Take<'_, R> {
+impl<R: Read> Read for Take<'_, R> {
     #[inline]
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let len = cmp::min(buf.len(), self.remaining.try_into().unwrap_or(buf.len()));
@@ -133,7 +141,7 @@ impl<R: Read + ?Sized> Read for Take<'_, R> {
 }
 
 // Impl copied from Rust stdlib.
-impl<R: BufRead + ?Sized> BufRead for Take<'_, R> {
+impl<R: BufRead> BufRead for Take<'_, R> {
     #[inline]
     fn fill_buf(&mut self) -> Result<&[u8]> {
         // Don't call into inner reader at all at EOF because it may still block
