@@ -470,6 +470,7 @@ impl core::ops::arith::AddAssign<&bitcoin_units::SignedAmount> for bitcoin_units
 impl core::ops::arith::AddAssign<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
 impl core::ops::arith::AddAssign<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
 impl core::ops::arith::Div for bitcoin_units::weight::Weight
+impl core::ops::arith::Div<bitcoin_units::fee_rate::FeeRate> for bitcoin_units::Amount
 impl core::ops::arith::Div<bitcoin_units::weight::Weight> for bitcoin_units::Amount
 impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount
 impl core::ops::arith::Div<u64> for bitcoin_units::Amount
@@ -658,6 +659,8 @@ pub const bitcoin_units::weight::Weight::WITNESS_SCALE_FACTOR: u64
 pub const bitcoin_units::weight::Weight::ZERO: bitcoin_units::weight::Weight
 pub const fn bitcoin_units::Amount::checked_add(self, rhs: bitcoin_units::Amount) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::checked_div(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
+pub const fn bitcoin_units::Amount::checked_div_by_fee_rate_ceil(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::weight::Weight>
+pub const fn bitcoin_units::Amount::checked_div_by_fee_rate_floor(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::weight::Weight>
 pub const fn bitcoin_units::Amount::checked_div_by_weight_ceil(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
 pub const fn bitcoin_units::Amount::checked_div_by_weight_floor(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
 pub const fn bitcoin_units::Amount::checked_mul(self, rhs: u64) -> core::option::Option<bitcoin_units::Amount>
@@ -748,6 +751,7 @@ pub fn bitcoin_units::Amount::cmp(&self, other: &bitcoin_units::Amount) -> core:
 pub fn bitcoin_units::Amount::default() -> Self
 pub fn bitcoin_units::Amount::display_dynamic(self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::Amount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
 pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
 pub fn bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output
 pub fn bitcoin_units::Amount::div_assign(&mut self, rhs: u64)
@@ -1113,6 +1117,7 @@ pub type bitcoin_units::Amount::Err = bitcoin_units::amount::ParseError
 pub type bitcoin_units::Amount::Error = bitcoin_units::amount::OutOfRangeError
 pub type bitcoin_units::Amount::Output = bitcoin_units::Amount
 pub type bitcoin_units::Amount::Output = bitcoin_units::fee_rate::FeeRate
+pub type bitcoin_units::Amount::Output = bitcoin_units::weight::Weight
 pub type bitcoin_units::SignedAmount::Err = bitcoin_units::amount::ParseError
 pub type bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::ParseDenominationError
