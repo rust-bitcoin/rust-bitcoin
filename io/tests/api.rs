@@ -138,3 +138,9 @@ fn all_non_error_tyes_implement_send_sync() {
     assert_send::<Types>();
     assert_sync::<Types>();
 }
+
+#[test]
+fn test_write_object_safety() {
+    // Attempt to create a Write trait object
+    let _writer: Box<dyn Write>;
+}
