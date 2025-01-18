@@ -5,10 +5,10 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 #![allow(clippy::missing_errors_doc)]
 
-//! This module adds serde serialization and deserialization support for amounts.
+//! This module adds serde serialization and deserialization support for fee rates.
 //!
-//! Since there is not a default way to serialize and deserialize Amounts, multiple
-//! ways are supported and it's up to the user to decide which serialiation to use.
+//! Since there is not a default way to serialize and deserialize fee rates, multiple
+//! ways are supported and it's up to the user to decide which serialization to use.
 //!
 //! The provided modules can be used as follows:
 //!
