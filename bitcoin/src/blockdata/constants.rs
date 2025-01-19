@@ -112,10 +112,7 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
         witness: Witness::default(),
     });
 
-    ret.output.push(TxOut {
-        value: Amount::FIFTY_BTC,
-        script_pubkey: out_script,
-    });
+    ret.output.push(TxOut { value: Amount::FIFTY_BTC, script_pubkey: out_script });
 
     // end
     ret

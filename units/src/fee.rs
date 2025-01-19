@@ -188,9 +188,7 @@ impl ops::Div<FeeRate> for Amount {
     /// This operation will panic if `fee_rate` is zero or the division results in overflow.
     ///
     /// Note: This uses floor division. For ceiling division use [`Amount::checked_div_by_fee_rate_ceil`].
-    fn div(self, rhs: FeeRate) -> Self::Output {
-        self.checked_div_by_fee_rate_floor(rhs).unwrap()
-    }
+    fn div(self, rhs: FeeRate) -> Self::Output { self.checked_div_by_fee_rate_floor(rhs).unwrap() }
 }
 
 #[cfg(test)]
