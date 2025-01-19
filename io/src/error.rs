@@ -76,19 +76,6 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         self.error.as_ref().and_then(|e| e.as_ref().source())
     }
-
-    #[allow(deprecated)]
-    fn description(&self) -> &str {
-        match self.error.as_ref() {
-            Some(e) => e.description(),
-            None => self.kind.description(),
-        }
-    }
-
-    #[allow(deprecated)]
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        self.error.as_ref().and_then(|e| e.as_ref().cause())
-    }
 }
 
 #[cfg(feature = "std")]

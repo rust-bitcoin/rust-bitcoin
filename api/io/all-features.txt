@@ -239,8 +239,6 @@ pub fn bitcoin_io::Cursor<T>::inner(&self) -> &T
 pub fn bitcoin_io::Cursor<T>::into_inner(self) -> T
 pub fn bitcoin_io::Cursor<T>::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
 pub fn bitcoin_io::Cursor<T>::set_position(&mut self, position: u64)
-pub fn bitcoin_io::Error::cause(&self) -> core::option::Option<&dyn core::error::Error>
-pub fn bitcoin_io::Error::description(&self) -> &str
 pub fn bitcoin_io::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_io::Error::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
 pub fn bitcoin_io::Error::from(kind: bitcoin_io::ErrorKind) -> bitcoin_io::Error
