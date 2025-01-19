@@ -247,6 +247,18 @@ fn regression_default() {
     assert_eq!(got, want);
 }
 
+#[test]
+fn dyn_compatible() {
+    // If this builds then traits are dyn compatible.
+    struct Traits {
+        a: Box<dyn amount::CheckedSum<Amount>>,
+        // These traits are explicitly not dyn compatible.
+        // b: Box<dyn amount::serde::SerdeAmount>,
+        // c: Box<dyn amount::serde::SerdeAmountForOpt>,
+        // d: Box<dyn parse::Integer>,
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Types {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
