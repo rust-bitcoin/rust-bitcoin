@@ -125,12 +125,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
         assert!((70..=72).contains(&sig_len), "signature length {} out of bounds", sig_len);
         //here we assume that all sighash_flags are the same. Can they be different?
         let sighash = cache
-            .p2wsh_signature_hash(
-                inp_idx,
-                witness_script,
-                amount,
-                sig.sighash_type,
-            )
+            .p2wsh_signature_hash(inp_idx, witness_script, amount, sig.sighash_type)
             .expect("failed to compute sighash");
         println!("SegWit p2wsh sighash: {:x} ({})", sighash, sig.sighash_type);
     }
