@@ -58,6 +58,8 @@ impl Amount {
     pub const ONE_SAT: Self = Amount(1);
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = Self::from_int_btc_const(1);
+    /// Exactly fifty bitcoin.
+    pub const FIFTY_BTC: Self = Self::from_sat_unchecked(50 * 100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Self::from_int_btc_const(21_000_000);
     /// The minimum value of an amount.
