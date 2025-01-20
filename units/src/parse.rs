@@ -335,7 +335,7 @@ pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
     Ok(hex_u128_unchecked(unchecked)?)
 }
 
-/// Parses a `u128` from a hex string.
+/// Parses a `u128` from a prefixed hex string.
 ///
 /// # Errors
 ///
@@ -346,7 +346,7 @@ pub fn hex_u128_prefixed(s: &str) -> Result<u128, PrefixedHexError> {
     Ok(hex_u128_unchecked(checked)?)
 }
 
-/// Parses a `u128` from a hex string.
+/// Parses a `u128` from an unprefixed hex string.
 ///
 /// # Errors
 ///
