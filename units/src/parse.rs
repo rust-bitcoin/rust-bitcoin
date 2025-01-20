@@ -53,6 +53,7 @@ impl AsRef<core::num::ParseIntError> for ParseIntError {
 
 /// Not strictly necessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
+// This trait is not dyn-compatible because `FromStr` is not dyn-compatible.
 pub trait Integer:
     FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized + sealed::Sealed
 {
