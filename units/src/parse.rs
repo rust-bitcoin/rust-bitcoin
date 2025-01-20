@@ -76,6 +76,11 @@ mod sealed {
 
 /// Parses the input string as an integer returning an error carrying rich context.
 ///
+/// Apart from the rich error context this function exists so that we can handle builds with and
+/// without an allocator. If an allocator is available (`alloc` feature enabled) then this function
+/// allocates to copy the input string into the error return. If `alloc` is not enabled the input
+/// string is lost.
+///
 /// If the caller has a `String` or `Box<str>` which is not used later it's better to call
 /// [`parse::int_from_string`] or [`parse::int_from_box`] respectively.
 ///
