@@ -1107,8 +1107,8 @@ pub struct bitcoin_units::locktime::relative::TimeOverflowError
 pub struct bitcoin_units::parse::PrefixedHexError(_)
 pub struct bitcoin_units::parse::UnprefixedHexError(_)
 pub struct bitcoin_units::weight::Weight(_)
-pub trait bitcoin_units::amount::CheckedSum<R>: sealed::Sealed<R>
-pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + sealed::Sealed
+pub trait bitcoin_units::amount::CheckedSum<R>: bitcoin_units::amount::sealed::Sealed<R>
+pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse::sealed::Sealed
 pub type &bitcoin_units::Amount::Output = bitcoin_units::Amount
 pub type &bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type &bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::fee_rate::FeeRate

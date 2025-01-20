@@ -1975,8 +1975,8 @@ pub struct bitcoin_primitives::transaction::Version(pub i32)
 pub struct bitcoin_primitives::transaction::Wtxid(_)
 pub struct bitcoin_primitives::witness::Iter<'a>
 pub struct bitcoin_primitives::witness::Witness
-pub trait bitcoin_primitives::BlockValidation: sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
-pub trait bitcoin_primitives::block::Validation: sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
+pub trait bitcoin_primitives::BlockValidation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
+pub trait bitcoin_primitives::block::Validation: bitcoin_primitives::block::sealed::Validation + core::marker::Sync + core::marker::Send + core::marker::Sized + core::marker::Unpin
 pub type &'a bitcoin_primitives::witness::Witness::IntoIter = bitcoin_primitives::witness::Iter<'a>
 pub type &'a bitcoin_primitives::witness::Witness::Item = &'a [u8]
 pub type bitcoin_primitives::block::BlockHash::Bytes = <bitcoin_hashes::sha256d::Hash as bitcoin_hashes::Hash>::Bytes
