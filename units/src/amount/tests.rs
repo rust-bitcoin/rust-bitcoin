@@ -972,10 +972,12 @@ fn sum_amounts() {
     assert_eq!([].iter().sum::<SignedAmount>(), SignedAmount::ZERO);
 
     let amounts = [sat(42), sat(1337), sat(21)];
+    assert_eq!(amounts.iter().sum::<Amount>(), sat(1400));
     let sum = amounts.into_iter().sum::<Amount>();
     assert_eq!(sum, sat(1400));
 
     let amounts = [ssat(-42), ssat(1337), ssat(21)];
+    assert_eq!(amounts.iter().sum::<SignedAmount>(), ssat(1316));
     let sum = amounts.into_iter().sum::<SignedAmount>();
     assert_eq!(sum, ssat(1316));
 }
