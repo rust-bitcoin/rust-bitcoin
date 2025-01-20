@@ -130,17 +130,9 @@ impl Amount {
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`]
     /// in const context.
-    ///
-    /// # Panics
-    ///
-    /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows a `u64` type.
     pub const fn from_int_btc_const(whole_bitcoin: u32) -> Amount {
         let btc = whole_bitcoin as u64; // Can't call u64::from in const context.
-        match btc.checked_mul(100_000_000) {
-            Some(amount) => Amount::from_sat(amount),
-            None => panic!("checked_mul overflowed"),
-        }
+        Amount(btc * 100_000_000) // Don't need checked multiplication: u32::MAX * 100_000_000 < u64::MAX
     }
 
     /// Parses a decimal string as a value in the given [`Denomination`].
