@@ -16,7 +16,7 @@ mod unsigned;
 #[cfg(kani)]
 mod verification;
 
-use core::cmp::Ordering;
+use core::cmp::{self, Ordering};
 use core::convert::Infallible;
 use core::fmt;
 use core::str::FromStr;
@@ -124,6 +124,68 @@ impl Denomination {
             "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
                 Some(Denomination::Satoshi),
             _ => None,
+        }
+    }
+}
+
+impl PartialOrd for Denomination {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Denomination {
+    // This implementation is probably excessively precautions.
+    //
+    // A user may one day compare `Denomination` types and assume the 'natural' order satoshi is
+    // less that bitcoin because it is in a way smaller.
+    fn cmp(&self, other: &Self) -> Ordering {
+        use Denomination as D;
+        use cmp::Ordering::*;
+
+        match (self, other) {
+            //
+            (D::Bitcoin, D::Bitcoin) => Equal,
+            (D::Bitcoin, D::CentiBitcoin) => Greater,
+            (D::Bitcoin, D::MilliBitcoin) => Greater,
+            (D::Bitcoin, D::MicroBitcoin) => Greater,
+            (D::Bitcoin, D::Bit) => Greater,
+            (D::Bitcoin, D::Satoshi) => Greater,
+            //
+            (D::CentiBitcoin, D::Bitcoin) => Less,
+            (D::CentiBitcoin, D::CentiBitcoin) => Equal,
+            (D::CentiBitcoin, D::MilliBitcoin) => Greater,
+            (D::CentiBitcoin, D::MicroBitcoin) => Greater,
+            (D::CentiBitcoin, D::Bit) => Greater,
+            (D::CentiBitcoin, D::Satoshi) => Greater,
+            //
+            (D::MilliBitcoin, D::Bitcoin) => Less,
+            (D::MilliBitcoin, D::CentiBitcoin) => Less,
+            (D::MilliBitcoin, D::MilliBitcoin) => Equal,
+            (D::MilliBitcoin, D::MicroBitcoin) => Greater,
+            (D::MilliBitcoin, D::Bit) => Greater,
+            (D::MilliBitcoin, D::Satoshi) => Greater,
+            //
+            (D::MicroBitcoin, D::Bitcoin) => Less,
+            (D::MicroBitcoin, D::CentiBitcoin) => Less,
+            (D::MicroBitcoin, D::MilliBitcoin) => Less,
+            (D::MicroBitcoin, D::MicroBitcoin) => Equal,
+            (D::MicroBitcoin, D::Bit) => Less, // Define bit < microbit (alphabetic order).
+            (D::MicroBitcoin, D::Satoshi) => Greater,
+            //
+            (D::Bit, D::Bitcoin) => Less,
+            (D::Bit, D::CentiBitcoin) => Less,
+            (D::Bit, D::MilliBitcoin) => Less,
+            (D::Bit, D::MicroBitcoin) => Greater, // Define bit < microbit (alphabetic order).
+            (D::Bit, D::Bit) => Equal,
+            (D::Bit, D::Satoshi) => Greater,
+            //
+            (D::Satoshi, D::Bitcoin) => Less,
+            (D::Satoshi, D::CentiBitcoin) => Less,
+            (D::Satoshi, D::MilliBitcoin) => Less,
+            (D::Satoshi, D::MicroBitcoin) => Less,
+            (D::Satoshi, D::Bit) => Less,
+            (D::Satoshi, D::Satoshi) => Equal,
         }
     }
 }
