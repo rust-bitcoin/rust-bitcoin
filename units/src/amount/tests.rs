@@ -248,6 +248,48 @@ fn amount_checked_div_by_weight_floor() {
 
 #[cfg(feature = "alloc")]
 #[test]
+fn amount_checked_div_by_fee_rate() {
+    let amount = Amount::from_sat(1000);
+    let fee_rate = FeeRate::from_sat_per_kwu(2);
+
+    // Test floor division
+    let weight = amount.checked_div_by_fee_rate_floor(fee_rate).unwrap();
+    // 1000 sats / (2 sats/kwu) = 500,000 wu
+    assert_eq!(weight, Weight::from_wu(500_000));
+
+    // Test ceiling division
+    let weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
+    assert_eq!(weight, Weight::from_wu(500_000)); // Same result for exact division
+
+    // Test truncation behavior
+    let amount = Amount::from_sat(1000);
+    let fee_rate = FeeRate::from_sat_per_kwu(3);
+    let floor_weight = amount.checked_div_by_fee_rate_floor(fee_rate).unwrap();
+    let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
+    assert_eq!(floor_weight, Weight::from_wu(333_333));
+    assert_eq!(ceil_weight, Weight::from_wu(333_334));
+
+    // Test division by zero
+    let zero_fee_rate = FeeRate::from_sat_per_kwu(0);
+    assert!(amount.checked_div_by_fee_rate_floor(zero_fee_rate).is_none());
+    assert!(amount.checked_div_by_fee_rate_ceil(zero_fee_rate).is_none());
+
+    // Test with maximum amount
+    let max_amount = Amount::MAX;
+    let small_fee_rate = FeeRate::from_sat_per_kwu(1);
+    let weight = max_amount.checked_div_by_fee_rate_floor(small_fee_rate).unwrap();
+    // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
+    assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
+
+    // Test overflow case
+    let tiny_fee_rate = FeeRate::from_sat_per_kwu(1);
+    let large_amount = Amount::from_sat(u64::MAX);
+    assert!(large_amount.checked_div_by_fee_rate_floor(tiny_fee_rate).is_none());
+    assert!(large_amount.checked_div_by_fee_rate_ceil(tiny_fee_rate).is_none());
+}
+
+#[cfg(feature = "alloc")]
+#[test]
 fn floating_point() {
     use super::Denomination as D;
     let f = Amount::from_float_in;
