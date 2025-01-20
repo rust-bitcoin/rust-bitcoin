@@ -70,7 +70,7 @@ macro_rules! impl_integer {
 impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 
 mod sealed {
-    /// Seals the extension traits.
+    /// Seals the `Integer` trait.
     pub trait Sealed {}
 }
 
