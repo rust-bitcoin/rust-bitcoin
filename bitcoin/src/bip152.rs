@@ -80,14 +80,14 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 
 impl Encodable for PrefilledTransaction {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         Ok(w.emit_compact_size(self.idx)? + self.tx.consensus_encode(w)?)
     }
 }
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         let idx = r.read_compact_size()?;
         let idx = u16::try_from(idx).map_err(|_| {
             consensus::parse_failed_error("BIP152 prefilled tx index out of bounds")
@@ -137,14 +137,14 @@ impl ShortId {
 
 impl Encodable for ShortId {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<ShortId, encode::Error> {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
@@ -169,7 +169,7 @@ pub struct HeaderAndShortIds {
 }
 
 impl Decodable for HeaderAndShortIds {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         let header_short_ids = HeaderAndShortIds {
             header: Decodable::consensus_decode(r)?,
             nonce: Decodable::consensus_decode(r)?,
@@ -184,7 +184,7 @@ impl Decodable for HeaderAndShortIds {
 }
 
 impl Encodable for HeaderAndShortIds {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.header.consensus_encode(w)?;
         len += self.nonce.consensus_encode(w)?;
@@ -292,7 +292,7 @@ impl Encodable for BlockTransactionsRequest {
     ///
     /// Panics if the index overflows [`u64::MAX`]. This happens when [`BlockTransactionsRequest::indexes`]
     /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded VarInts.
         len += w.emit_compact_size(self.indexes.len())?;
@@ -306,7 +306,7 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(BlockTransactionsRequest {
             block_hash: BlockHash::consensus_decode(r)?,
             indexes: {

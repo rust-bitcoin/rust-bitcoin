@@ -59,7 +59,7 @@ impl Signature {
 
     /// Serializes the signature to `writer`.
     #[inline]
-    pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+    pub fn serialize_to_writer<W: Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
         sig.write_to(writer)
     }

@@ -99,7 +99,7 @@ impl AsRef<str> for CommandString {
 
 impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
@@ -110,7 +110,7 @@ impl Encodable for CommandString {
 
 impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(r)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| {
             if u > 0 {
@@ -363,7 +363,7 @@ struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
 impl Encodable for HeaderSerializationWrapper<'_> {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += w.emit_compact_size(self.0.len())?;
         for header in self.0.iter() {
@@ -375,7 +375,7 @@ impl Encodable for HeaderSerializationWrapper<'_> {
 }
 
 impl Encodable for NetworkMessage {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, writer: &mut W) -> Result<usize, io::Error> {
         match self {
             NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
@@ -420,7 +420,7 @@ impl Encodable for NetworkMessage {
 }
 
 impl Encodable for RawNetworkMessage {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.magic.consensus_encode(w)?;
         len += self.command().consensus_encode(w)?;
@@ -432,7 +432,7 @@ impl Encodable for RawNetworkMessage {
 }
 
 impl Encodable for V2NetworkMessage {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, writer: &mut W) -> Result<usize, io::Error> {
         // A subset of message types are optimized to only use one byte to encode the command.
         // Non-optimized message types use the zero-byte flag and the following twelve bytes to encode the command.
         let (command_byte, full_command) = match self.payload {
@@ -491,7 +491,7 @@ struct HeaderDeserializationWrapper(Vec<block::Header>);
 
 impl Decodable for HeaderDeserializationWrapper {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let len = r.read_compact_size()?;
@@ -510,13 +510,13 @@ impl Decodable for HeaderDeserializationWrapper {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
 impl Decodable for RawNetworkMessage {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let magic = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -615,13 +615,13 @@ impl Decodable for RawNetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }
 
 impl Decodable for V2NetworkMessage {
-    fn consensus_decode_from_finite_reader<R: BufRead + ?Sized>(
+    fn consensus_decode_from_finite_reader<R: BufRead>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
         let short_id: u8 = Decodable::consensus_decode_from_finite_reader(r)?;
@@ -688,7 +688,7 @@ impl Decodable for V2NetworkMessage {
     }
 
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Self::consensus_decode_from_finite_reader(&mut r.take(MAX_MSG_SIZE.to_u64()))
     }
 }

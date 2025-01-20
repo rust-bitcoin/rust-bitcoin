@@ -73,7 +73,7 @@ impl Signature {
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format) to a `writer`.
     #[inline]
-    pub fn serialize_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+    pub fn serialize_to_writer<W: Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         let sig = self.serialize();
         sig.write_to(writer)
     }
@@ -115,7 +115,7 @@ impl SerializedSignature {
 
     /// Writes this serialized signature to a `writer`.
     #[inline]
-    pub fn write_to<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+    pub fn write_to<W: Write>(&self, writer: &mut W) -> Result<(), io::Error> {
         writer.write_all(self)
     }
 }

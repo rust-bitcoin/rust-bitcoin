@@ -198,14 +198,14 @@ impl ops::BitXorAssign for ServiceFlags {
 
 impl Encodable for ServiceFlags {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }
@@ -312,13 +312,13 @@ impl fmt::UpperHex for Magic {
 }
 
 impl Encodable for Magic {
-    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, writer: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(writer)
     }
 }
 
 impl Decodable for Magic {
-    fn consensus_decode<R: BufRead + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(reader: &mut R) -> Result<Self, encode::Error> {
         Ok(Magic(Decodable::consensus_decode(reader)?))
     }
 }

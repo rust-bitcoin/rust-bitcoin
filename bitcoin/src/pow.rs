@@ -443,14 +443,14 @@ impl From<CompactTarget> for Target {
 
 impl Encodable for CompactTarget {
     #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.to_consensus().consensus_encode(w)
     }
 }
 
 impl Decodable for CompactTarget {
     #[inline]
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         u32::consensus_decode(r).map(CompactTarget::from_consensus)
     }
 }

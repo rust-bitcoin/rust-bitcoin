@@ -260,7 +260,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: BufRead + ?Sized,
+        R: BufRead,
     {
         self.reader.match_any(reader, query)
     }
@@ -270,7 +270,7 @@ impl BlockFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: BufRead + ?Sized,
+        R: BufRead,
     {
         self.reader.match_all(reader, query)
     }
@@ -293,7 +293,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: BufRead + ?Sized,
+        R: BufRead,
     {
         let n_elements = reader.read_compact_size().unwrap_or(0);
         // map hashes to [0, n_elements << grp]
@@ -336,7 +336,7 @@ impl GcsFilterReader {
     where
         I: Iterator,
         I::Item: Borrow<[u8]>,
-        R: BufRead + ?Sized,
+        R: BufRead,
     {
         let n_elements = reader.read_compact_size().unwrap_or(0);
         // map hashes to [0, n_elements << grp]
@@ -462,7 +462,7 @@ impl GcsFilter {
     /// Golomb-Rice decodes a number from a bit stream (parameter 2^k).
     fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
     where
-        R: BufRead + ?Sized,
+        R: BufRead,
     {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
@@ -485,7 +485,7 @@ pub struct BitStreamReader<'a, R: ?Sized> {
     reader: &'a mut R,
 }
 
-impl<'a, R: BufRead + ?Sized> BitStreamReader<'a, R> {
+impl<'a, R: BufRead> BitStreamReader<'a, R> {
     /// Constructs a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader { buffer: [0u8], reader, offset: 8 }

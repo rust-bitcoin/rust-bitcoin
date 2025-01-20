@@ -72,7 +72,7 @@ impl fmt::Display for Key {
 }
 
 impl Key {
-    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead>(r: &mut R) -> Result<Self, Error> {
         let byte_size = r.read_compact_size()?;
 
         if byte_size == 0 {
@@ -133,7 +133,7 @@ impl Deserialize for Pair {
 }
 
 impl Pair {
-    pub(crate) fn decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, Error> {
+    pub(crate) fn decode<R: BufRead>(r: &mut R) -> Result<Self, Error> {
         Ok(Pair { key: Key::decode(r)?, value: Decodable::consensus_decode(r)? })
     }
 }
@@ -142,7 +142,7 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(w)?;
         len += w.emit_compact_size(self.subtype.into())?;
         w.write_all(&self.key)?;
@@ -155,7 +155,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype>
 where
     Subtype: Copy + From<u64> + Into<u64>,
 {
-    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: BufRead>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_compact_size()?);
 
