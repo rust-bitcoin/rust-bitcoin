@@ -3,12 +3,6 @@
 version = 3
 
 [[package]]
-name = "anyhow"
-version = "1.0.57"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
-
-[[package]]
 name = "arbitrary"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -68,7 +62,6 @@ dependencies = [
  "bitcoinconsensus",
  "hex-conservative 0.3.0",
  "hex_lit",
- "mutagen",
  "ordered",
  "secp256k1",
  "serde",
@@ -118,7 +111,6 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
- "mutagen",
  "ordered",
  "serde",
  "serde_json",
@@ -243,12 +235,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1306f3464951f30e30d12373d31c79fbd52d236e5e896fd92f96ec7babbbe60b"
 
 [[package]]
-name = "json"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
-
-[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -267,39 +253,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe751422e4a8caa417e13c3ea66452215d7d63e19e604f4980461212f3ae1322"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "mutagen"
-version = "0.2.0"
-source = "git+https://github.com/llogiq/mutagen#a6377c4c3f360afeb7a287c1c17e4b69456d5f53"
-dependencies = [
- "mutagen-core",
- "mutagen-transform",
-]
-
-[[package]]
-name = "mutagen-core"
-version = "0.2.0"
-source = "git+https://github.com/llogiq/mutagen#a6377c4c3f360afeb7a287c1c17e4b69456d5f53"
-dependencies = [
- "anyhow",
- "json",
- "lazy_static",
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "syn",
-]
-
-[[package]]
-name = "mutagen-transform"
-version = "0.2.0"
-source = "git+https://github.com/llogiq/mutagen#a6377c4c3f360afeb7a287c1c17e4b69456d5f53"
-dependencies = [
- "mutagen-core",
- "proc-macro2",
 ]
 
 [[package]]
