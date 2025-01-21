@@ -252,7 +252,7 @@ impl Iterator for IntoIter {
     fn nth(&mut self, n: usize) -> Option<Self::Item> { self.0.nth(n) }
 
     #[inline]
-    fn last(self) -> Option<Self::Item> { self.0.last() }
+    fn last(mut self) -> Option<Self::Item> { self.0.next_back() }
 
     #[inline]
     fn count(self) -> usize { self.0.count() }
