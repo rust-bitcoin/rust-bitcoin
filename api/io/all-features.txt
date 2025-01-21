@@ -1,6 +1,5 @@
 #[repr(transparent)] pub struct bitcoin_io::FromStd<T>(_)
 #[repr(transparent)] pub struct bitcoin_io::ToStd<T>(_)
-impl !core::marker::Sync for bitcoin_io::Error
 impl !core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Error
 impl !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Error
 impl bitcoin_io::BufRead for &[u8]
@@ -70,6 +69,7 @@ impl core::marker::Send for bitcoin_io::Error
 impl core::marker::Send for bitcoin_io::ErrorKind
 impl core::marker::Send for bitcoin_io::Sink
 impl core::marker::StructuralPartialEq for bitcoin_io::ErrorKind
+impl core::marker::Sync for bitcoin_io::Error
 impl core::marker::Sync for bitcoin_io::ErrorKind
 impl core::marker::Sync for bitcoin_io::Sink
 impl core::marker::Unpin for bitcoin_io::Error
