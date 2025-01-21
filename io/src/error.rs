@@ -6,10 +6,12 @@ use core::fmt;
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind,
-    /// Indicates that the `struct` can pretend to own a mutable static reference
-    /// and an [`UnsafeCell`](core::cell::UnsafeCell), which are not unwind safe.
-    /// This is so that it does not introduce non-additive cargo features.
-    _not_unwind_safe: core::marker::PhantomData<(&'static mut (), core::cell::UnsafeCell<()>)>,
+    /// We want this type to be `?UnwindSafe` and `?RefUnwindSafe` - the same as `std::io::Error`.
+    ///
+    /// In `std` builds the existence of `dyn std::error:Error` prevents `UnwindSafe` and
+    /// `RefUnwindSafe` from being automatically implemented. But in `no-std` builds without the
+    /// marker nothing prevents it.
+    _not_unwind_safe: core::marker::PhantomData<NotUnwindSafe>,
 
     #[cfg(feature = "std")]
     error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
@@ -99,6 +101,13 @@ impl From<Error> for std::io::Error {
         }
     }
 }
+
+/// Useful for preventing `UnwindSafe` and `RefUnwindSafe` from being automatically implemented.
+struct NotUnwindSafe {
+    _not_unwind_safe: core::marker::PhantomData<(&'static mut (), core::cell::UnsafeCell<()>)>,
+}
+
+unsafe impl Sync for NotUnwindSafe {}
 
 macro_rules! define_errorkind {
     ($($(#[$($attr:tt)*])* $kind:ident),*) => {

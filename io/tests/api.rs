@@ -137,4 +137,8 @@ fn all_non_error_tyes_implement_send_sync() {
     //  Types are `Send` and `Sync` where possible (C-SEND-SYNC).
     assert_send::<Types>();
     assert_sync::<Types>();
+
+    // Error types are meaningful and well-behaved (C-GOOD-ERR)
+    assert_send::<Errors>();
+    assert_sync::<Errors>();
 }
