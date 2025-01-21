@@ -464,7 +464,12 @@ impl PrivateKey {
         data: &[u8],
         network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
-        Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
+        Ok(PrivateKey::new(
+            secp256k1::SecretKey::from_byte_array(
+                data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?,
+            )?,
+            network,
+        ))
     }
 
     /// Formats the private key to WIF format.
@@ -514,7 +519,9 @@ impl PrivateKey {
         Ok(PrivateKey {
             compressed,
             network,
-            inner: secp256k1::SecretKey::from_slice(&data[1..33])?,
+            inner: secp256k1::SecretKey::from_byte_array(
+                data[1..33].try_into().expect("slice len checked == 32"),
+            )?,
         })
     }
 }

@@ -2012,7 +2012,8 @@ mod tests {
                 .unwrap();
 
             let msg = secp256k1::Message::from(sighash);
-            let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
+            let key_spend_sig =
+                secp.sign_schnorr_with_aux_rand(msg.as_ref(), &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected.internal_pubkey, internal_key);
             assert_eq!(expected.tweak, tweak);
