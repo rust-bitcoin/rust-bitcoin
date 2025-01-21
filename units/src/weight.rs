@@ -6,8 +6,6 @@ use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
@@ -17,9 +15,26 @@ pub const WITNESS_SCALE_FACTOR: usize = 4;
 /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct Weight(u64);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Weight {
+    fn serialize<__S>(&self, __serializer: __S) -> Result<__S::Ok, __S::Error>
+        where
+            __S: serde::Serializer {
+        __serializer.serialize_u64(self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Weight {
+    fn deserialize<__D>(__deserializer: __D) -> Result<Self, __D::Error>
+        where
+            __D: serde::Deserializer<'de> {
+        let value = u64::deserialize(__deserializer)?;
+        Ok(Weight(value))
+    }
+}
 
 impl Weight {
     /// 0 wu.
