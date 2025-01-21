@@ -127,7 +127,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// Implements standard parsing traits for `$type` by calling `parse::int`.
 ///
 /// Once the string is converted to an integer the infallible conversion function `fn` is used to
-/// create the type `to`.
+/// construct the type `to`.
 ///
 /// Implements:
 ///
