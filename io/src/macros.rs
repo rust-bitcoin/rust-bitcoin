@@ -9,6 +9,7 @@
 /// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
 /// type, even if indirectly.
 #[cfg(not(feature = "std"))]
+#[deprecated(since = "TBD", note = "this macro was deemed unnecessary for upcoming 1.0 release")]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> $crate::Write for $ty {
@@ -33,6 +34,7 @@ macro_rules! impl_write {
 /// that feature. In any case, this crate's `io::Write` feature will be implemented for the given
 /// type, even if indirectly.
 #[cfg(feature = "std")]
+#[deprecated(since = "TBD", note = "this macro was deemed unnecessary for upcoming 1.0 release")]
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {

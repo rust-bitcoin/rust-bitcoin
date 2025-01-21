@@ -390,7 +390,6 @@ pub fn std::process::ChildStdin::write(&mut self, buf: &[u8]) -> bitcoin_io::Res
 pub fn std::process::ChildStdin::write_all(&mut self, buf: &[u8]) -> bitcoin_io::Result<()>
 pub fn std::process::ChildStdout::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
 pub fn std::process::ChildStdout::read_exact(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<()>
-pub macro bitcoin_io::impl_write!
 pub mod bitcoin_io
 pub struct bitcoin_io::Cursor<T>
 pub struct bitcoin_io::Error

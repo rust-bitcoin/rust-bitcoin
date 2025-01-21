@@ -136,7 +136,6 @@ pub fn bitcoin_io::Write::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::Write::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
 pub fn bitcoin_io::Write::write_all(&mut self, buf: &[u8]) -> bitcoin_io::Result<()>
 pub fn bitcoin_io::sink() -> bitcoin_io::Sink
-pub macro bitcoin_io::impl_write!
 pub mod bitcoin_io
 pub struct bitcoin_io::Cursor<T>
 pub struct bitcoin_io::Error
