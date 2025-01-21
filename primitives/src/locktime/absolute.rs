@@ -10,8 +10,6 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(all(test, mutate))]
-use mutagen::mutate;
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
 
 #[cfg(all(doc, feature = "alloc"))]
@@ -214,7 +212,6 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
-    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by(&self, height: Height, time: Time) -> bool {
         use LockTime::*;
 
@@ -244,7 +241,6 @@ impl LockTime {
     /// assert!(lock_time.is_implied_by(check));
     /// ```
     #[inline]
-    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
