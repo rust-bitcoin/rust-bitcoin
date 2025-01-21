@@ -1,3 +1,30 @@
+# 1.0.0-alpha - 2025-01-20
+
+BOOM! A long time in the making but here goes, our first alpha 1.0 crate release.
+
+* Add `FIFTY_BTC` const to the amount types [#3915](https://github.com/rust-bitcoin/rust-bitcoin/pull/3915)
+* Remove `InputString` from the public API [#3905](https://github.com/rust-bitcoin/rust-bitcoin/pull/)
+* Hide the remaining public macros [#3867]()
+* Introduce an unchecked constructor for the `Amount` type [#3811]()
+* Implement `Arbitrary` for `units` types [#3777]()
+* Change method return type for `to_unsigned()` [#3769]()
+* Change paramater type used for whole bitcoin [#3744]()
+* Add `Weight::to_kwu_ceil` [#3740]()
+* Change `SignedAmount` MAX and MIN to equal +/- MAX_MONEY [#3719]()
+* Change `Amount::MAX` from `u64::MAX` to `Amount::MAX_MONEY` [#3693]()
+* Support serde serializing `Amount` as string [#3679]()
+* Close amounts error types [#3674]()
+* Close the hex parse errors [#3673]()
+* Remove `serde` from amounts [#3672]()
+* Implement `serde` modules for `FeeRate` [#3666]()
+* Remove `Amount::fmt_value_in` [#3621]()
+* Split `checked_div_by_weight` into floor and ceiling version [#3587]()
+* Replace `String` with `InputString` [#3559]()
+* Add checked div by weight to amount [#3430]()
+* Add `FeeRate` addition and subtraction traits [#3381]()
+* Add `Arbitrary` to `SignedAmount` type [#3274]()
+* Add `Arbitrary` to `Weight` [#3257]()
+
 # 0.2.0 - 2024-09-18
 
 * Bump MSRV to 1.63.0 [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)

@@ -26,7 +26,7 @@ hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = fa
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.4.0" }
 io = { package = "bitcoin-io", version = "0.2.0", default-features = false }
-units = { package = "bitcoin-units", version = "0.2.0", default-features = false }
+units = { package = "bitcoin-units", version = "1.0.0-alpha.0", default-features = false }
 
 arbitrary = { version = "1.4", optional = true }
 ordered = { version = "0.4.0", optional = true }
