@@ -303,7 +303,6 @@ impl<const N: usize> IsByteArray for [u8; N] {
 }
 
 mod sealed {
-    #[doc(hidden)]
     pub trait IsByteArray {}
 
     impl<const N: usize> IsByteArray for [u8; N] {}
