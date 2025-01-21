@@ -71,11 +71,16 @@ macro_rules! impl_integer {
 impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 
 mod sealed {
-    /// Seals the extension traits.
+    /// Seals the `Integer` trait.
     pub trait Sealed {}
 }
 
 /// Parses the input string as an integer returning an error carrying rich context.
+///
+/// Apart from the rich error context this function exists so that we can handle builds with and
+/// without an allocator. If an allocator is available (`alloc` feature enabled) then this function
+/// allocates to copy the input string into the error return. If `alloc` is not enabled the input
+/// string is lost.
 ///
 /// If the caller has a `String` or `Box<str>` which is not used later it's better to call
 /// [`parse::int_from_string`] or [`parse::int_from_box`] respectively.
@@ -331,7 +336,7 @@ pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
     Ok(hex_u128_unchecked(unchecked)?)
 }
 
-/// Parses a `u128` from a hex string.
+/// Parses a `u128` from a prefixed hex string.
 ///
 /// # Errors
 ///
@@ -342,7 +347,7 @@ pub fn hex_u128_prefixed(s: &str) -> Result<u128, PrefixedHexError> {
     Ok(hex_u128_unchecked(checked)?)
 }
 
-/// Parses a `u128` from a hex string.
+/// Parses a `u128` from an unprefixed hex string.
 ///
 /// # Errors
 ///
