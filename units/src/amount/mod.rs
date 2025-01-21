@@ -68,17 +68,17 @@ pub use self::{
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
 pub enum Denomination {
-    /// BTC
+    /// BTC (1 BTC = 100,000,000 satoshi).
     Bitcoin,
-    /// cBTC
+    /// cBTC (1 cBTC = 1,000,000 satoshi).
     CentiBitcoin,
-    /// mBTC
+    /// mBTC (1 mBTC = 100,000 satoshi).
     MilliBitcoin,
-    /// uBTC
+    /// uBTC (1 uBTC = 100 satoshi).
     MicroBitcoin,
-    /// bits
+    /// bits (bits = uBTC).
     Bit,
-    /// satoshi
+    /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
 }
 
