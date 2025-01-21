@@ -1264,7 +1264,7 @@ mod tests {
                     witness: Witness::default(),
                 }],
                 output: vec![TxOut {
-                    value: Amount::from_sat(output),
+                    value: Amount::from_sat(output).expect("output amount too big"),
                     script_pubkey: ScriptBuf::from_hex(
                         "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                     )
@@ -1278,7 +1278,7 @@ mod tests {
 
             inputs: vec![Input {
                 witness_utxo: Some(TxOut {
-                    value: Amount::from_sat(input),
+                    value: Amount::from_sat(input).expect("input amount too big"),
                     script_pubkey: ScriptBuf::from_hex(
                         "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                     )

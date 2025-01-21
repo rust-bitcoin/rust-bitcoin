@@ -134,7 +134,7 @@ define_extension_trait! {
         fn verify(
             &self,
             index: usize,
-            amount: crate::Amount,
+            amount: Amount,
             spending_tx: &[u8],
         ) -> Result<(), BitcoinconsensusError> {
             verify_script(self, index, amount, spending_tx)
@@ -153,7 +153,7 @@ define_extension_trait! {
         fn verify_with_flags(
             &self,
             index: usize,
-            amount: crate::Amount,
+            amount: Amount,
             spending_tx: &[u8],
             flags: impl Into<u32>,
         ) -> Result<(), BitcoinconsensusError> {

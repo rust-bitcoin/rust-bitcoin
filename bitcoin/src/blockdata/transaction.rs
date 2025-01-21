@@ -26,7 +26,7 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
-use crate::{Amount, FeeRate, SignedAmount};
+use crate::{amount, Amount, FeeRate, SignedAmount};
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -198,8 +198,8 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
-            TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Result<TxOut, amount::OutOfRangeError> {
+            Ok(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
         }
     }
 }

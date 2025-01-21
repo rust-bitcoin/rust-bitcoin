@@ -57,13 +57,20 @@ pub use self::{
 ///
 /// ```
 /// # use bitcoin_units::Amount;
-///
-/// assert_eq!("1 BTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000_000));
-/// assert_eq!("1 cBTC".parse::<Amount>().unwrap(), Amount::from_sat(1_000_000));
-/// assert_eq!("1 mBTC".parse::<Amount>().unwrap(), Amount::from_sat(100_000));
-/// assert_eq!("1 uBTC".parse::<Amount>().unwrap(), Amount::from_sat(100));
-/// assert_eq!("1 bit".parse::<Amount>().unwrap(), Amount::from_sat(100));
-/// assert_eq!("1 sat".parse::<Amount>().unwrap(), Amount::from_sat(1));
+/// let equal = [
+///     ("1 BTC", 100_000_000),
+///     ("1 cBTC", 1_000_000),
+///     ("1 mBTC", 100_000),
+///     ("1 uBTC", 100),
+///     ("1 bit", 100),
+///     ("1 sat", 1),
+/// ];
+/// for (string, sats) in equal {
+///     assert_eq!(
+///         string.parse::<Amount>().expect("valid bitcoin amount string"),
+///         Amount::from_sat(sats).expect("valid amount in satoshis"),
+///     )
+/// }
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
@@ -571,8 +578,13 @@ enum DisplayStyle {
 
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: sealed::Sealed<R> {
-    /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
-    /// happen it returns [`None`].
+    /// Calculates the sum over the iterator using checked arithmetic.
+    ///
+    /// # Returns
+    ///
+    /// Returns [`None`] if the result is above [`MAX_MONEY`].
+    ///
+    /// [`MAX_MONEY`]: crate::Amount::MAX_MONEY
     fn checked_sum(self) -> Option<R>;
 }
 
@@ -601,7 +613,7 @@ where
 mod sealed {
     use super::{Amount, SignedAmount};
 
-    /// Used to seal the `CheckedSum` trait
+    /// Used to seal the `CheckedSum` trait.
     pub trait Sealed<A> {}
 
     impl<T> Sealed<Amount> for T where T: Iterator<Item = Amount> {}

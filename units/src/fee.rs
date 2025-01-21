@@ -27,11 +27,12 @@ impl Amount {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
+    /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
+    /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
     #[must_use]
@@ -101,7 +102,8 @@ impl FeeRate {
         // No `?` operator in const context.
         match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
+                // Unchecked because div by 1000 cannot be out of range.
+                Some(add_res) => Some(Amount::from_sat_unchecked(add_res / 1000)),
                 None => None,
             },
             None => None,
@@ -109,19 +111,38 @@ impl FeeRate {
     }
 }
 
-/// Computes the ceiling so that the fee computation is conservative.
 impl ops::Mul<FeeRate> for Weight {
     type Output = Amount;
 
+    /// Enables `fee = fee_rate * weight`.
+    ///
+    /// Computes the ceiling so that the fee computation is conservative. Consider using
+    /// [`FeeRate::checked_mul_by_weight`] if you do not control both the fee rate and the weight
+    /// because this function can panic.
+    ///
+    /// # Panics
+    ///
+    /// If `fee_rate * weight` exceeds `Amount::MAX_MONEY`.
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
+        rhs.checked_mul_by_weight(self).expect("attempted to calculate absurdly high fee")
     }
 }
 
 impl ops::Mul<Weight> for FeeRate {
     type Output = Amount;
 
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
+    /// Enables `fee = weight * fee_rate`.
+    ///
+    /// Computes the ceiling so that the fee computation is conservative. Consider using
+    /// [`FeeRate::checked_mul_by_weight`] if you do not control both the fee rate and the weight
+    /// because this function can panic.
+    ///
+    /// # Panics
+    ///
+    /// If `weight * fee_rate` exceeds `Amount::MAX_MONEY`.
+    fn mul(self, rhs: Weight) -> Self::Output {
+        self.checked_mul_by_weight(rhs).expect("attempted to calculate absurdly high fee")
+    }
 }
 
 impl ops::Div<Weight> for Amount {
@@ -142,7 +163,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        let fee_rate = Amount::from_sat_unchecked(329) / Weight::from_wu(381);
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
@@ -153,7 +174,7 @@ mod tests {
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
-        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat(6));
+        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
@@ -162,7 +183,7 @@ mod tests {
         assert!(fee_overflow.is_none());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
-        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat(6));
+        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
@@ -172,7 +193,7 @@ mod tests {
             .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
-        assert_eq!(Amount::from_sat(100), fee);
+        assert_eq!(Amount::from_sat_unchecked(100), fee);
 
         let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
@@ -180,14 +201,14 @@ mod tests {
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
-        assert_eq!(Amount::from_sat(9), fee);
+        assert_eq!(Amount::from_sat_unchecked(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
-        assert_eq!(fee, Amount::from_sat(330));
+        assert_eq!(fee, Amount::from_sat_unchecked(330));
     }
 
     #[test]
@@ -195,7 +216,7 @@ mod tests {
     fn multiply() {
         let two = FeeRate::from_sat_per_vb(2).unwrap();
         let three = Weight::from_vb(3).unwrap();
-        let six = Amount::from_sat(6);
+        let six = Amount::from_sat_unchecked(6);
 
         assert_eq!(two * three, six);
     }
