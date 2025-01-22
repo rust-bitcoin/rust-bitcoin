@@ -42,7 +42,7 @@ pub use self::{
 ///
 /// # Accepted Denominations
 ///
-/// All upper or lower case, excluding SI prefix (c, m, u) which must be lower case.
+/// All upper or lower case, excluding SI prefixes c, m and u (or µ) which must be lower case.
 /// - Singular: BTC, cBTC, mBTC, uBTC
 /// - Plural or singular: sat, satoshi, bit
 ///
@@ -119,7 +119,7 @@ impl Denomination {
             "BTC" | "btc" => Some(Denomination::Bitcoin),
             "cBTC" | "cbtc" => Some(Denomination::CentiBitcoin),
             "mBTC" | "mbtc" => Some(Denomination::MilliBitcoin),
-            "uBTC" | "ubtc" => Some(Denomination::MicroBitcoin),
+            "uBTC" | "ubtc" | "µBTC" | "µbtc" => Some(Denomination::MicroBitcoin),
             "bit" | "bits" | "BIT" | "BITS" => Some(Denomination::Bit),
             "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
                 Some(Denomination::Satoshi),
