@@ -67,6 +67,7 @@ pub use self::{
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
+#[allow(clippy::doc_markdown)]
 pub enum Denomination {
     /// BTC (1 BTC = 100,000,000 satoshi).
     Bitcoin,
@@ -74,9 +75,9 @@ pub enum Denomination {
     CentiBitcoin,
     /// mBTC (1 mBTC = 100,000 satoshi).
     MilliBitcoin,
-    /// uBTC (1 uBTC = 100 satoshi).
+    /// µBTC (1 µBTC = 100 satoshi).
     MicroBitcoin,
-    /// bits (bits = uBTC).
+    /// bits (bits = µBTC).
     Bit,
     /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
