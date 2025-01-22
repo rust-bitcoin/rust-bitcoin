@@ -1,0 +1,27 @@
+additional_cargo_args = ["--all-features"]
+examine_globs = ["units/src/**/*.rs"]
+exclude_globs = [
+    "units/src/amount/verification.rs" # kani tests
+]
+exclude_re = [
+    "impl Debug",
+    "impl Arbitrary",
+    "impl Display",
+    ".*Error",
+    # --------------------------------------------Crate-specific exclusions--------------------------------------------
+    # Units
+    # src/amount/mod.rs
+    "parse_signed_to_satoshi", # Can't kill all mutants since there is no denomination smaller than Satoshi
+    "fmt_satoshi_in", # Related to formatting/display
+    "dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
+    # src/fee_rate/serde.rs
+    "as_sat_per_kwu::opt::deserialize::<impl Visitor for VisitOpt>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    "as_sat_per_vb_floor::opt::deserialize::<impl Visitor for VisitOpt>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    "as_sat_per_vb_ceil::opt::deserialize::<impl Visitor for VisitOpt>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    # src/amount/serde.rs
+    "as_sat::opt::deserialize::<impl Visitor for VisitOptAmt<X>>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    "as_btc::opt::deserialize::<impl Visitor for VisitOptAmt<X>>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    "as_str::opt::deserialize::<impl Visitor for VisitOptAmt<X>>.*", # Replaces return value with Ok(Default::default()), which is the same as Ok(None)
+    # src/locktime/relative.rs
+    "Time::to_consensus_u32" # It will replace | with ^, which will return the same value since the XOR is always taken against the u16 and an all-zero bitmask
+]

@@ -171,7 +171,7 @@ pub mod as_sat_per_vb_ceil {
     //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use ceil division to convert per kwu to per virtual byte.
-    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb")]`.
+    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]`.
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 

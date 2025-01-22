@@ -14,6 +14,7 @@ hashes/target
 
 # Test artifacts
 bitcoin/dep_test
+mutants.out*
 
 # Fuzz artifacts
 hfuzz_target
