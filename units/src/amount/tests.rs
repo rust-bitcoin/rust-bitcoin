@@ -1230,3 +1230,12 @@ fn signed_sub_assign() {
     f -= &ssat(2);
     assert_eq!(f, ssat(1));
 }
+
+#[test]
+fn check_const() {
+    assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
+    assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
+    assert_eq!(SignedAmount::FIFTY_BTC.to_sat(), SignedAmount::ONE_BTC.to_sat() * 50);
+    assert_eq!(Amount::FIFTY_BTC.to_sat(), Amount::ONE_BTC.to_sat() * 50);
+    assert_eq!(Amount::MAX_MONEY.to_sat() as i64, SignedAmount::MAX_MONEY.to_sat());
+}
