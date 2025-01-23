@@ -572,11 +572,11 @@ check_format_non_negative_show_denom! {
 #[test]
 fn unsigned_signed_conversion() {
     let ssat = SignedAmount::from_sat;
-    let ua = Amount::from_sat;
+    let sat = Amount::from_sat;
     let max_sats: u64 = Amount::MAX.to_sat();
 
-    assert_eq!(ua(max_sats).to_signed(), ssat(max_sats as i64));
-    assert_eq!(ssat(max_sats as i64).to_unsigned(), Ok(ua(max_sats)));
+    assert_eq!(sat(max_sats).to_signed(), ssat(max_sats as i64));
+    assert_eq!(ssat(max_sats as i64).to_unsigned(), Ok(sat(max_sats)));
     assert_eq!(ssat(max_sats as i64).to_unsigned().unwrap().to_signed(), ssat(max_sats as i64));
 }
 
