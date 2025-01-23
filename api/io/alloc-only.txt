@@ -119,7 +119,7 @@ pub fn bitcoin_io::Error::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core
 pub fn bitcoin_io::Error::from(kind: bitcoin_io::ErrorKind) -> bitcoin_io::Error
 pub fn bitcoin_io::Error::get_ref(&self) -> core::option::Option<&(dyn core::fmt::Debug + core::marker::Send + core::marker::Sync + 'static)>
 pub fn bitcoin_io::Error::kind(&self) -> bitcoin_io::ErrorKind
-pub fn bitcoin_io::Error::new<E: sealed::IntoBoxDynDebug>(kind: bitcoin_io::ErrorKind, error: E) -> bitcoin_io::Error
+pub fn bitcoin_io::Error::new<E: bitcoin_io::error::sealed::IntoBoxDynDebug>(kind: bitcoin_io::ErrorKind, error: E) -> bitcoin_io::Error
 pub fn bitcoin_io::ErrorKind::clone(&self) -> bitcoin_io::ErrorKind
 pub fn bitcoin_io::ErrorKind::eq(&self, other: &bitcoin_io::ErrorKind) -> bool
 pub fn bitcoin_io::ErrorKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result

@@ -252,6 +252,7 @@ impl Iterator for IntoIter {
     fn nth(&mut self, n: usize) -> Option<Self::Item> { self.0.nth(n) }
 
     #[inline]
+    #[allow(clippy::double_ended_iterator_last)] // False positive.  Using `.last()` on a `vec::IntoIter` is correct.
     fn last(self) -> Option<Self::Item> { self.0.last() }
 
     #[inline]

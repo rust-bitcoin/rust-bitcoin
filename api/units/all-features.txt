@@ -814,9 +814,9 @@ pub fn bitcoin_units::Amount::arbitrary(u: &mut arbitrary::unstructured::Unstruc
 pub fn bitcoin_units::Amount::clone(&self) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::cmp(&self, other: &bitcoin_units::Amount) -> core::cmp::Ordering
 pub fn bitcoin_units::Amount::default() -> Self
-pub fn bitcoin_units::Amount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::Amount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::Amount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::Amount::display_dynamic(self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::Amount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
@@ -837,12 +837,12 @@ pub fn bitcoin_units::Amount::mul_assign(&mut self, rhs: u64)
 pub fn bitcoin_units::Amount::partial_cmp(&self, other: &bitcoin_units::Amount) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_units::Amount::rem(self, modulus: u64) -> Self
 pub fn bitcoin_units::Amount::rem_assign(&mut self, modulus: u64)
-pub fn bitcoin_units::Amount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::Amount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::Amount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::Amount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::Amount::ser_str<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::Amount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
 pub fn bitcoin_units::Amount::sub_assign(&mut self, rhs: &bitcoin_units::Amount)
@@ -855,7 +855,7 @@ pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
-pub fn bitcoin_units::Amount::type_prefix(_: private::Token) -> &'static str
+pub fn bitcoin_units::Amount::type_prefix(_: bitcoin_units::amount::serde::private::Token) -> &'static str
 pub fn bitcoin_units::Amount::unchecked_add(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
 pub fn bitcoin_units::Amount::unchecked_sub(self, rhs: bitcoin_units::Amount) -> bitcoin_units::Amount
 pub fn bitcoin_units::SignedAmount::abs(self) -> bitcoin_units::SignedAmount
@@ -867,9 +867,9 @@ pub fn bitcoin_units::SignedAmount::arbitrary(u: &mut arbitrary::unstructured::U
 pub fn bitcoin_units::SignedAmount::clone(&self) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::cmp(&self, other: &bitcoin_units::SignedAmount) -> core::cmp::Ordering
 pub fn bitcoin_units::SignedAmount::default() -> Self
-pub fn bitcoin_units::SignedAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::SignedAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::SignedAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::SignedAmount::display_dynamic(self) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::SignedAmount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
 pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output
@@ -893,12 +893,12 @@ pub fn bitcoin_units::SignedAmount::partial_cmp(&self, other: &bitcoin_units::Si
 pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: bitcoin_units::SignedAmount) -> core::option::Option<bitcoin_units::SignedAmount>
 pub fn bitcoin_units::SignedAmount::rem(self, modulus: i64) -> Self
 pub fn bitcoin_units::SignedAmount::rem_assign(&mut self, modulus: i64)
-pub fn bitcoin_units::SignedAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::SignedAmount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::SignedAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::SignedAmount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::SignedAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::SignedAmount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_units::SignedAmount::signum(self) -> i64
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
 pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
@@ -911,7 +911,7 @@ pub fn bitcoin_units::SignedAmount::to_float_in(self, denom: bitcoin_units::amou
 pub fn bitcoin_units::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
 pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::OutOfRangeError>
-pub fn bitcoin_units::SignedAmount::type_prefix(_: private::Token) -> &'static str
+pub fn bitcoin_units::SignedAmount::type_prefix(_: bitcoin_units::amount::serde::private::Token) -> &'static str
 pub fn bitcoin_units::SignedAmount::unchecked_add(self, rhs: bitcoin_units::SignedAmount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::unchecked_sub(self, rhs: bitcoin_units::SignedAmount) -> bitcoin_units::SignedAmount
 pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
@@ -981,16 +981,16 @@ pub fn bitcoin_units::amount::UnknownDenominationError::clone(&self) -> bitcoin_
 pub fn bitcoin_units::amount::UnknownDenominationError::eq(&self, other: &bitcoin_units::amount::UnknownDenominationError) -> bool
 pub fn bitcoin_units::amount::UnknownDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_units::amount::UnknownDenominationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
-pub fn bitcoin_units::amount::serde::SerdeAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
-pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::type_prefix(_: private::Token) -> &'static str
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::type_prefix(_: bitcoin_units::amount::serde::private::Token) -> &'static str
 pub fn bitcoin_units::amount::serde::as_btc::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmount, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::amount::serde::as_btc::opt::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmountForOpt, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error>
 pub fn bitcoin_units::amount::serde::as_btc::opt::serialize<A: bitcoin_units::amount::serde::SerdeAmountForOpt, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
@@ -1281,10 +1281,10 @@ pub struct bitcoin_units::locktime::relative::TimeOverflowError
 pub struct bitcoin_units::parse::PrefixedHexError(_)
 pub struct bitcoin_units::parse::UnprefixedHexError(_)
 pub struct bitcoin_units::weight::Weight(_)
-pub trait bitcoin_units::amount::CheckedSum<R>: sealed::Sealed<R>
+pub trait bitcoin_units::amount::CheckedSum<R>: bitcoin_units::amount::sealed::Sealed<R>
 pub trait bitcoin_units::amount::serde::SerdeAmount: core::marker::Copy + core::marker::Sized
 pub trait bitcoin_units::amount::serde::SerdeAmountForOpt: core::marker::Copy + core::marker::Sized + bitcoin_units::amount::serde::SerdeAmount
-pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + sealed::Sealed
+pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse::sealed::Sealed
 pub type &bitcoin_units::Amount::Output = bitcoin_units::Amount
 pub type &bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
 pub type &bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::fee_rate::FeeRate

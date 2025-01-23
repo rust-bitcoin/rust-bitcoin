@@ -847,7 +847,7 @@ pub struct bitcoin_hashes::siphash24::State
 pub trait bitcoin_hashes::GeneralHash: bitcoin_hashes::Hash
 pub trait bitcoin_hashes::Hash: core::marker::Copy + core::clone::Clone + core::cmp::PartialEq + core::cmp::Eq + core::cmp::PartialOrd + core::cmp::Ord + core::hash::Hash + core::convert::AsRef<[u8]>
 pub trait bitcoin_hashes::HashEngine: core::clone::Clone
-pub trait bitcoin_hashes::IsByteArray: core::convert::AsRef<[u8]> + sealed::IsByteArray
+pub trait bitcoin_hashes::IsByteArray: core::convert::AsRef<[u8]> + bitcoin_hashes::sealed::IsByteArray
 pub trait bitcoin_hashes::sha256t::Tag
 pub type bitcoin_hashes::GeneralHash::Engine: bitcoin_hashes::HashEngine
 pub type bitcoin_hashes::Hash::Bytes: core::marker::Copy + bitcoin_hashes::IsByteArray
