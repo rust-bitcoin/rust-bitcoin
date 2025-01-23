@@ -142,7 +142,7 @@ fn mul_div() {
 
 #[test]
 fn neg() {
-    let amount = -SignedAmount::from_sat(2);
+    let amount = -SignedAmount::from_sat_unchecked(2);
     assert_eq!(amount.to_sat(), -2);
 }
 
@@ -231,7 +231,7 @@ fn amount_checked_div_by_weight_floor() {
 #[cfg(feature = "alloc")]
 #[test]
 fn amount_checked_div_by_fee_rate() {
-    let amount = Amount::from_sat(1000);
+    let amount = Amount::from_sat_unchecked(1000);
     let fee_rate = FeeRate::from_sat_per_kwu(2);
 
     // Test floor division
@@ -244,7 +244,7 @@ fn amount_checked_div_by_fee_rate() {
     assert_eq!(weight, Weight::from_wu(500_000)); // Same result for exact division
 
     // Test truncation behavior
-    let amount = Amount::from_sat(1000);
+    let amount = Amount::from_sat_unchecked(1000);
     let fee_rate = FeeRate::from_sat_per_kwu(3);
     let floor_weight = amount.checked_div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
