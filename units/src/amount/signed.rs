@@ -113,16 +113,10 @@ impl SignedAmount {
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
-    ///
-    /// # Errors
-    ///
-    /// The function errors if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
-        match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Self::from_sat(amount)),
-            None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
-        }
+    pub fn from_int_btc<T: Into<i32>>(whole_bitcoin: T) -> SignedAmount {
+        let btc = i64::from(whole_bitcoin.into());
+        let satoshi = btc * 100_000_000; // Unchecked mul ok, can't overflow an `i64`.
+        Self::from_sat(satoshi)
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].

@@ -116,16 +116,10 @@ impl Amount {
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
-    ///
-    /// # Errors
-    ///
-    /// The function errors if the argument multiplied by the number of sats
-    /// per bitcoin overflows a `u64` type.
-    pub fn from_int_btc<T: Into<u64>>(whole_bitcoin: T) -> Result<Amount, OutOfRangeError> {
-        match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Self::from_sat(amount)),
-            None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
-        }
+    pub fn from_int_btc<T: Into<u32>>(whole_bitcoin: T) -> Amount {
+        let btc = u64::from(whole_bitcoin.into());
+        let satoshi = btc * 100_000_000; // Unchecked mul ok, can't overflow a `u64`.
+        Self::from_sat(satoshi)
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
