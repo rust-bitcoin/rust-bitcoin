@@ -485,15 +485,15 @@ mod tests {
     fn satisfied_by_time() {
         let lock_by_time = LockTime::from_consensus(1653195600); // May 22nd 2022, 5am UTC.
 
-        let time = Time::from_consensus(1653195600).expect("May 22nd 2022, 5am UTC");
-        let day_after = Time::from_consensus(1653282000).expect("May 23rd 2022, 5am UTC");
-        let day_before = Time::from_consensus(1653109200).expect("May 21th 2022, 5am UTC");
+        let time_same = Time::from_consensus(1653195600).expect("May 22nd 2022, 5am UTC");
+        let time_after = Time::from_consensus(1653282000).expect("May 23rd 2022, 5am UTC");
+        let time_before = Time::from_consensus(1653109200).expect("May 21th 2022, 5am UTC");
 
         let height = Height::from_consensus(800_000).expect("failed to parse height");
 
-        assert!(lock_by_time.is_satisfied_by(height, time));
-        assert!(lock_by_time.is_satisfied_by(height, day_after));
-        assert!(!lock_by_time.is_satisfied_by(height, day_before));
+        assert!(lock_by_time.is_satisfied_by(height, time_same));
+        assert!(lock_by_time.is_satisfied_by(height, time_after));
+        assert!(!lock_by_time.is_satisfied_by(height, time_before));
 
     }
 
