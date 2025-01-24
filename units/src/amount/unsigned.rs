@@ -112,7 +112,7 @@ impl Amount {
     /// ```
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
-        Amount::from_float_in(btc, Denomination::Bitcoin)
+        Self::from_float_in(btc, Denomination::Bitcoin)
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
@@ -123,7 +123,7 @@ impl Amount {
     /// per bitcoin overflows a `u64` type.
     pub fn from_int_btc<T: Into<u64>>(whole_bitcoin: T) -> Result<Amount, OutOfRangeError> {
         match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Amount::from_sat(amount)),
+            Some(amount) => Ok(Self::from_sat(amount)),
             None => Err(OutOfRangeError { is_signed: false, is_greater_than_max: true }),
         }
     }
@@ -164,7 +164,7 @@ impl Amount {
                 OutOfRangeError::too_big(false),
             )));
         }
-        Ok(Amount::from_sat(sats))
+        Ok(Self::from_sat(sats))
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
@@ -186,7 +186,7 @@ impl Amount {
     /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
-        Amount::from_str_in(amt, denom).map_err(Into::into)
+        Self::from_str_in(amt, denom).map_err(Into::into)
     }
 
     /// Expresses this [`Amount`] as a floating-point value in the given [`Denomination`].
@@ -234,7 +234,7 @@ impl Amount {
         }
         // This is inefficient, but the safest way to deal with this. The parsing logic is safe.
         // Any performance-critical application should not be dealing with floats.
-        Amount::from_str_in(&value.to_string(), denom)
+        Self::from_str_in(&value.to_string(), denom)
     }
 
     /// Constructs a new object that implements [`fmt::Display`] in the given [`Denomination`].
@@ -483,14 +483,14 @@ impl FromStr for Amount {
     ///
     /// If the returned value would be zero or negative zero, then no denomination is required.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let result = Amount::from_str_with_denomination(s);
+        let result = Self::from_str_with_denomination(s);
 
         match result {
             Err(ParseError(ParseErrorInner::MissingDenomination(_))) => {
-                let d = Amount::from_str_in(s, Denomination::Satoshi);
+                let d = Self::from_str_in(s, Denomination::Satoshi);
 
-                if d == Ok(Amount::ZERO) {
-                    Ok(Amount::ZERO)
+                if d == Ok(Self::ZERO) {
+                    Ok(Self::ZERO)
                 } else {
                     result
                 }
@@ -509,7 +509,7 @@ impl TryFrom<SignedAmount> for Amount {
 impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Self::from_sat(sats)
     }
 }
 
@@ -519,7 +519,7 @@ impl<'a> core::iter::Sum<&'a Amount> for Amount {
         I: Iterator<Item = &'a Amount>,
     {
         let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        Self::from_sat(sats)
     }
 }
 
@@ -527,6 +527,6 @@ impl<'a> core::iter::Sum<&'a Amount> for Amount {
 impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = u64::arbitrary(u)?;
-        Ok(Amount(a))
+        Ok(Self(a))
     }
 }
