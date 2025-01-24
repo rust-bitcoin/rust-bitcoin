@@ -155,15 +155,35 @@ impl FeeRate {
 impl ops::Mul<FeeRate> for Weight {
     type Output = Amount;
 
+    /// Enables `fee = weight * fee_rate`.
+    ///
+    /// Computes the ceiling so that the fee computation is conservative. Consider using
+    /// [`FeeRate::checked_mul_by_weight`] if you do not control both the fee rate and the weight
+    /// because this function can panic.
+    ///
+    /// # Panics
+    ///
+    /// If during calculation an overflow occurred.
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
+        rhs.checked_mul_by_weight(self).unwrap()
     }
 }
 
 impl ops::Mul<Weight> for FeeRate {
     type Output = Amount;
 
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
+    /// Enables `fee = fee_rate * weight`.
+    ///
+    /// Computes the ceiling so that the fee computation is conservative. Consider using
+    /// [`FeeRate::checked_mul_by_weight`] if you do not control both the fee rate and the weight
+    /// because this function can panic.
+    ///
+    /// # Panics
+    ///
+    /// If during calculation an overflow occurred.
+    fn mul(self, rhs: Weight) -> Self::Output {
+        self.checked_mul_by_weight(rhs).unwrap()
+    }
 }
 
 impl ops::Div<Weight> for Amount {
