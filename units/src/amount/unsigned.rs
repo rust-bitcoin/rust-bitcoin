@@ -128,8 +128,7 @@ impl Amount {
         }
     }
 
-    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`]
-    /// in const context.
+    /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
     pub const fn from_int_btc_const(whole_bitcoin: u32) -> Amount {
         let btc = whole_bitcoin as u64; // Can't call u64::from in const context.
         Amount(btc * 100_000_000) // Don't need checked multiplication: u32::MAX * 100_000_000 < u64::MAX

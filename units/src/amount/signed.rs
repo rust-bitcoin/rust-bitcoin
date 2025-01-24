@@ -125,18 +125,10 @@ impl SignedAmount {
         }
     }
 
-    /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
-    /// in const context.
-    ///
-    /// # Panics
-    ///
-    /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
-        match whole_bitcoin.checked_mul(100_000_000) {
-            Some(amount) => SignedAmount::from_sat(amount),
-            None => panic!("checked_mul overflowed"),
-        }
+    /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
+    pub const fn from_int_btc_const(whole_bitcoin: i32) -> SignedAmount {
+        let btc = whole_bitcoin as i64; // Can't call i64::from in const context.
+        SignedAmount(btc * 100_000_000) // Don't need checked multiplication: i32::MAX * 100_000_000 < i64::MAX
     }
 
     /// Parses a decimal string as a value in the given [`Denomination`].
