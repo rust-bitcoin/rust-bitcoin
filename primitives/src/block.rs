@@ -349,8 +349,9 @@ mod tests {
 
     #[test]
     fn version_is_not_signalling_with_invalid_bit() {
-        let arbitrary_version = Version::from_consensus(1234567890);
+        let arbitrary_version = Version::from_consensus(0b00111111111111111111111111111111);
         // The max bit number to signal is 28.
+        assert!(Version::is_signalling_soft_fork(&arbitrary_version, 28));
         assert!(!Version::is_signalling_soft_fork(&arbitrary_version, 29));
     }
 
