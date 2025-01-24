@@ -1,3 +1,9 @@
+# Unreleased
+
+- TODO: Make a comment about `Amount::MAX_MONEY` (perhaps here in `bitcoin` release notes as well as in `amount`)
+
+- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+
 # 0.33.0-alpha.0 - 2024-11-18
 
 This series of alpha releases is meant for two things:
