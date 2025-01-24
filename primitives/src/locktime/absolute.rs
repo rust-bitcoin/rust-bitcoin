@@ -447,40 +447,50 @@ mod tests {
 
     #[test]
     fn parses_correctly_to_height_or_time() {
-        let lock = LockTime::from_consensus(750_000);
+        let lock_height = LockTime::from_consensus(750_000);
 
-        assert!(lock.is_block_height());
-        assert!(!lock.is_block_time());
+        assert!(lock_height.is_block_height());
+        assert!(!lock_height.is_block_time());
 
         let t: u32 = 1653195600; // May 22nd, 5am UTC.
-        let lock = LockTime::from_consensus(t);
+        let lock_time = LockTime::from_consensus(t);
 
-        assert!(!lock.is_block_height());
-        assert!(lock.is_block_time());
+        assert!(!lock_time.is_block_height());
+        assert!(lock_time.is_block_time());
+
+        // Test is_same_unit() logic
+        assert!(lock_height.is_same_unit(LockTime::from_consensus(800_000)));
+        assert!(!lock_height.is_same_unit(lock_time));
+        assert!(lock_time.is_same_unit(LockTime::from_consensus(1653282000)));
+        assert!(!lock_time.is_same_unit(lock_height));
     }
 
     #[test]
     fn satisfied_by_height() {
         let lock = LockTime::from_consensus(750_000);
 
-        let height = Height::from_consensus(800_000).expect("failed to parse height");
+        let height_above = Height::from_consensus(800_000).expect("failed to parse height");
+        let height_below = Height::from_consensus(700_000).expect("failed to parse height");
 
         let t: u32 = 1653195600; // May 22nd, 5am UTC.
         let time = Time::from_consensus(t).expect("invalid time value");
 
-        assert!(lock.is_satisfied_by(height, time))
+        assert!(lock.is_satisfied_by(height_above, time));
+        assert!(!lock.is_satisfied_by(height_below, time));
     }
 
     #[test]
     fn satisfied_by_time() {
-        let lock = LockTime::from_consensus(1053195600);
+        let lock_time = LockTime::from_consensus(1653195600); // May 22nd 2022, 5am UTC.
 
-        let t: u32 = 1653195600; // May 22nd, 5am UTC.
-        let time = Time::from_consensus(t).expect("invalid time value");
+        let day_after = Time::from_consensus(1653282000).expect("May 23rd 2022, 5am UTC");
+        let day_before = Time::from_consensus(1653109200).expect("May 21th 2022, 5am UTC");
 
         let height = Height::from_consensus(800_000).expect("failed to parse height");
 
-        assert!(lock.is_satisfied_by(height, time))
+        assert!(lock_time.is_satisfied_by(height, day_after));
+        assert!(!lock_time.is_satisfied_by(height, day_before));
+
     }
 
     #[test]

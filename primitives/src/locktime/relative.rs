@@ -426,6 +426,31 @@ mod tests {
     use super::*;
 
     #[test]
+    fn parses_correctly_to_height_or_time() {
+        let height1 = Height::from(10);
+        let height2 = Height::from(11);
+        let time1 = Time::from_512_second_intervals(70);
+        let time2 = Time::from_512_second_intervals(71);
+
+        let lock_height1 = LockTime::from(height1);
+        let lock_height2 = LockTime::from(height2);
+        let lock_time1 = LockTime::from(time1);
+        let lock_time2 = LockTime::from(time2);
+
+        assert!(lock_height1.is_block_height());
+        assert!(!lock_height1.is_block_time());
+
+        assert!(!lock_time1.is_block_height());
+        assert!(lock_time1.is_block_time());
+
+        // Test is_same_unit() logic
+        assert!(lock_height1.is_same_unit(lock_height2));
+        assert!(!lock_height1.is_same_unit(lock_time1));
+        assert!(lock_time1.is_same_unit(lock_time2));
+        assert!(!lock_time1.is_same_unit(lock_height1));
+    }
+
+    #[test]
     fn satisfied_by_height() {
         let height = Height::from(10);
         let time = Time::from_512_second_intervals(70);
@@ -467,6 +492,24 @@ mod tests {
         assert!(!lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(69))));
         assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(70))));
         assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(71))));
+    }
+
+    #[test]
+    fn sequence_correctly_implies() {
+        let height = Height::from(10);
+        let time = Time::from_512_second_intervals(70);
+
+        let lock_height = LockTime::from(height);
+        let lock_time = LockTime::from(time);
+
+        let seq_height = Sequence::from(lock_height);
+        let seq_time = Sequence::from(lock_time);
+
+        assert!(lock_height.is_implied_by_sequence(seq_height));
+        assert!(!lock_height.is_implied_by_sequence(seq_time));
+
+        assert!(lock_time.is_implied_by_sequence(seq_time));
+        assert!(!lock_time.is_implied_by_sequence(seq_height));
     }
 
     #[test]
