@@ -1,3 +1,9 @@
+# Unreleased
+
+- TODO: Make a comment about `Amount::MAX_MONEY` including breaking serde
+
+- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+
 # 0.2.0 - 2024-09-18
 
 * Bump MSRV to 1.63.0 [#3100](https://github.com/rust-bitcoin/rust-bitcoin/pull/3100)
