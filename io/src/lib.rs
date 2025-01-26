@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Rust-Bitcoin I/O Library
 //!
-//! The `std::io` module is not exposed in `no-std` Rust so building `no-std` applications which
+//! The [`std::io`] module is not exposed in `no-std` Rust so building `no-std` applications which
 //! require reading and writing objects via standard traits is not generally possible. Thus, this
-//! library exists to export a minmal version of `std::io`'s traits which we use in `rust-bitcoin`
+//! library exists to export a minimal version of `std::io`'s traits which we use in `rust-bitcoin`
 //! so that we can support `no-std` applications.
 //!
 //! These traits are not one-for-one drop-ins, but are as close as possible while still implementing
@@ -41,12 +43,22 @@ pub use self::error::{Error, ErrorKind};
 /// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;
 
-/// A generic trait describing an input stream. See [`std::io::Read`] for more info.
+/// A generic trait describing an input stream.
+///
+/// See [`std::io::Read`] for more information.
 pub trait Read {
     /// Reads bytes from source into `buf`.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes read if successful or an [`Error`] if reading fails.
     fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
 
     /// Reads bytes from source until `buf` is full.
+    ///
+    /// # Errors
+    ///
+    /// If the exact number of bytes required to fill `buf` cannot be read.
     #[inline]
     fn read_exact(&mut self, mut buf: &mut [u8]) -> Result<()> {
         while !buf.is_empty() {
@@ -69,7 +81,11 @@ pub trait Read {
     /// `limit` is used to prevent a denial of service attack vector since an unbounded reader will
     /// exhaust all memory.
     ///
-    /// Similar to `std::io::Read::read_to_end` but with the DOS protection.
+    /// Similar to [`std::io::Read::read_to_end`] but with the DOS protection.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes read if successful or an [`Error`] if reading fails.
     #[doc(alias = "read_to_end")]
     #[cfg(feature = "alloc")]
     #[inline]
@@ -81,6 +97,10 @@ pub trait Read {
 /// A trait describing an input stream that uses an internal buffer when reading.
 pub trait BufRead: Read {
     /// Returns data read from this reader, filling the internal buffer if needed.
+    ///
+    /// # Errors
+    ///
+    /// May error if reading fails.
     fn fill_buf(&mut self) -> Result<&[u8]>;
 
     /// Marks the buffered data up to amount as consumed.
@@ -102,6 +122,12 @@ pub struct Take<'a, R: Read + ?Sized> {
 
 impl<R: Read + ?Sized> Take<'_, R> {
     /// Reads all bytes until EOF from the underlying reader into `buf`.
+    ///
+    /// Allocates space in `buf` as needed.
+    ///
+    /// # Returns
+    ///
+    /// The number of bytes read if successful or an [`Error`] if reading fails.
     #[cfg(feature = "alloc")]
     #[inline]
     pub fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
@@ -272,7 +298,9 @@ impl<T: AsRef<[u8]>> BufRead for Cursor<T> {
     }
 }
 
-/// A generic trait describing an output stream. See [`std::io::Write`] for more info.
+/// A generic trait describing an output stream.
+///
+/// See [`std::io::Write`] for more information.
 pub trait Write {
     /// Writes `buf` into this writer, returning how many bytes were written.
     fn write(&mut self, buf: &[u8]) -> Result<usize>;
@@ -332,9 +360,9 @@ impl Write for &mut [u8] {
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
-/// A sink to which all writes succeed. See [`std::io::Sink`] for more info.
+/// A sink to which all writes succeed.
 ///
-/// Created using `io::sink()`.
+/// Created using [`sink()`]. See [`std::io::Sink`] for more information.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Sink;
 
@@ -349,7 +377,9 @@ impl Write for Sink {
     fn flush(&mut self) -> Result<()> { Ok(()) }
 }
 
-/// Returns a sink to which all writes succeed. See [`std::io::sink`] for more info.
+/// Returns a sink to which all writes succeed.
+///
+/// See [`std::io::sink`] for more information.
 #[inline]
 pub fn sink() -> Sink { Sink }
 
