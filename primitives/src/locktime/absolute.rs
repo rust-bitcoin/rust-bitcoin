@@ -490,7 +490,6 @@ mod tests {
 
         assert!(lock_time.is_satisfied_by(height, day_after));
         assert!(!lock_time.is_satisfied_by(height, day_before));
-
     }
 
     #[test]
