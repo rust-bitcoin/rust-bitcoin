@@ -40,7 +40,7 @@ const UTXO_SCRIPT_PUBKEY: &str =
     "5120be27fa8b1f5278faf82cab8da23e8761f8f9bd5d5ebebbb37e0e12a70d92dd16";
 const UTXO_PUBKEY: &str = "a6ac32163539c16b6b5dbbca01b725b8e8acaa5f821ba42c80e7940062140d19";
 const UTXO_MASTER_FINGERPRINT: &str = "e61b318f";
-const ABSOLUTE_FEES_IN_SATS: Amount = Amount::from_sat_unchecked(1_000);
+const ABSOLUTE_FEES: Amount = Amount::from_sat_unchecked(1_000);
 
 // UTXO_1 will be used for spending example 1
 const UTXO_1: P2trUtxo = P2trUtxo {
@@ -49,7 +49,7 @@ const UTXO_1: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::FIFTY_BTC,
+    amount: Amount::FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -60,7 +60,7 @@ const UTXO_2: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::FIFTY_BTC,
+    amount: Amount::FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -71,7 +71,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::FIFTY_BTC,
+    amount: Amount::FIFTY_BTC,
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -106,11 +106,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let change_address = "bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76"
         .parse::<Address<_>>()?
         .require_network(Network::Regtest)?;
-    let amount_to_send_in_sats = Amount::ONE_BTC;
+    let amount_to_send = Amount::ONE_BTC;
     let change_amount = UTXO_1
-        .amount_in_sats
-        .checked_sub(amount_to_send_in_sats)
-        .and_then(|x| x.checked_sub(ABSOLUTE_FEES_IN_SATS))
+        .amount
+        .checked_sub(amount_to_send)
+        .and_then(|x| x.checked_sub(ABSOLUTE_FEES))
         .ok_or("fees more than input amount!")?;
 
     let tx_hex_string = encode::serialize_hex(&generate_bip86_key_spend_tx(
@@ -120,7 +120,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Set these fields with valid data for the UTXO from step 5 above
         UTXO_1,
         vec![
-            TxOut { value: amount_to_send_in_sats, script_pubkey: to_address.script_pubkey() },
+            TxOut { value: amount_to_send, script_pubkey: to_address.script_pubkey() },
             TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
         ],
     )?);
@@ -215,7 +215,7 @@ struct P2trUtxo<'a> {
     script_pubkey: &'a str,
     pubkey: &'a str,
     master_fingerprint: &'a str,
-    amount_in_sats: Amount,
+    amount: Amount,
     derivation_path: &'a str,
 }
 
@@ -226,7 +226,7 @@ fn generate_bip86_key_spend_tx(
     input_utxo: P2trUtxo,
     outputs: Vec<TxOut>,
 ) -> Result<Transaction, Box<dyn std::error::Error>> {
-    let from_amount = input_utxo.amount_in_sats;
+    let from_amount = input_utxo.amount;
     let input_pubkey = input_utxo.pubkey.parse::<XOnlyPublicKey>()?;
 
     // CREATOR + UPDATER
@@ -274,7 +274,7 @@ fn generate_bip86_key_spend_tx(
     let mut input_txouts = Vec::<TxOut>::new();
     for input in [&input_utxo].iter() {
         input_txouts.push(TxOut {
-            value: input.amount_in_sats,
+            value: input.amount,
             script_pubkey: ScriptBuf::from_hex(input.script_pubkey)?,
         });
     }
@@ -412,7 +412,7 @@ impl BenefactorWallet {
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
         );
-        let value = input_utxo.amount_in_sats - ABSOLUTE_FEES_IN_SATS;
+        let value = input_utxo.amount - ABSOLUTE_FEES;
 
         // Spend a normal BIP86-like output as an input in our inheritance funding transaction
         let tx = generate_bip86_key_spend_tx(
@@ -476,7 +476,7 @@ impl BenefactorWallet {
             let mut psbt = self.next_psbt.clone().expect("should have next_psbt");
             let input = &mut psbt.inputs[0];
             let input_value = input.witness_utxo.as_ref().unwrap().value;
-            let output_value = input_value - ABSOLUTE_FEES_IN_SATS;
+            let output_value = input_value - ABSOLUTE_FEES;
 
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
@@ -649,7 +649,7 @@ impl BeneficiaryWallet {
         psbt.unsigned_tx.lock_time = lock_time;
         psbt.unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
-            value: input_value - ABSOLUTE_FEES_IN_SATS,
+            value: input_value - ABSOLUTE_FEES,
         }];
         psbt.outputs = vec![Output::default()];
         let unsigned_tx = psbt.unsigned_tx.clone();

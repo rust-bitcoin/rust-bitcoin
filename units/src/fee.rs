@@ -188,9 +188,7 @@ impl ops::Div<FeeRate> for Amount {
     /// This operation will panic if `fee_rate` is zero or the division results in overflow.
     ///
     /// Note: This uses floor division. For ceiling division use [`Amount::checked_div_by_fee_rate_ceil`].
-    fn div(self, rhs: FeeRate) -> Self::Output {
-        self.checked_div_by_fee_rate_floor(rhs).unwrap()
-    }
+    fn div(self, rhs: FeeRate) -> Self::Output { self.checked_div_by_fee_rate_floor(rhs).unwrap() }
 }
 
 #[cfg(test)]
@@ -199,7 +197,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat(329) / Weight::from_wu(381);
+        let fee_rate = Amount::from_sat_unchecked(329) / Weight::from_wu(381);
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
@@ -210,7 +208,7 @@ mod tests {
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
-        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat(6));
+        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
@@ -219,7 +217,7 @@ mod tests {
         assert!(fee_overflow.is_none());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
-        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat(6));
+        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
@@ -229,7 +227,7 @@ mod tests {
             .unwrap()
             .checked_mul_by_weight(weight)
             .expect("expected Amount");
-        assert_eq!(Amount::from_sat(100), fee);
+        assert_eq!(Amount::from_sat_unchecked(100), fee);
 
         let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
@@ -237,14 +235,14 @@ mod tests {
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
-        assert_eq!(Amount::from_sat(9), fee);
+        assert_eq!(Amount::from_sat_unchecked(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
         let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
-        assert_eq!(fee, Amount::from_sat(330));
+        assert_eq!(fee, Amount::from_sat_unchecked(330));
     }
 
     #[test]
@@ -252,7 +250,7 @@ mod tests {
     fn multiply() {
         let two = FeeRate::from_sat_per_vb(2).unwrap();
         let three = Weight::from_vb(3).unwrap();
-        let six = Amount::from_sat(6);
+        let six = Amount::from_sat_unchecked(6);
 
         assert_eq!(two * three, six);
     }
@@ -260,13 +258,13 @@ mod tests {
     #[test]
     fn amount_div_by_fee_rate() {
         // Test exact division
-        let amount = Amount::from_sat(1000);
+        let amount = Amount::from_sat_unchecked(1000);
         let fee_rate = FeeRate::from_sat_per_kwu(2);
         let weight = amount / fee_rate;
         assert_eq!(weight, Weight::from_wu(500_000));
 
         // Test truncation behavior
-        let amount = Amount::from_sat(1000);
+        let amount = Amount::from_sat_unchecked(1000);
         let fee_rate = FeeRate::from_sat_per_kwu(3);
         let weight = amount / fee_rate;
         // 1000 * 1000 = 1,000,000 msats

@@ -22,10 +22,7 @@ fn sanity_check() {
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(ssat(-100).abs(), ssat(100));
-    assert_eq!(
-        ssat(i64::MIN + 1).checked_abs().unwrap(),
-        ssat(i64::MAX)
-    );
+    assert_eq!(ssat(i64::MIN + 1).checked_abs().unwrap(), ssat(i64::MAX));
     assert_eq!(ssat(-100).signum(), -1);
     assert_eq!(ssat(0).signum(), 0);
     assert_eq!(ssat(100).signum(), 1);
@@ -36,14 +33,8 @@ fn sanity_check() {
 
     #[cfg(feature = "alloc")]
     {
-        assert_eq!(
-            Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(),
-            sat(0)
-        );
-        assert_eq!(
-            Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(),
-            sat(200_000_000)
-        );
+        assert_eq!(Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(), sat(0));
+        assert_eq!(Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(), sat(200_000_000));
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
 }
@@ -151,7 +142,7 @@ fn mul_div() {
 
 #[test]
 fn neg() {
-    let amount = -SignedAmount::from_sat(2);
+    let amount = -SignedAmount::from_sat_unchecked(2);
     assert_eq!(amount.to_sat(), -2);
 }
 
@@ -185,14 +176,8 @@ fn unchecked_arithmetic() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(
-        ssat(10).unchecked_add(ssat(20)),
-        ssat(30)
-    );
-    assert_eq!(
-        ssat(50).unchecked_sub(ssat(10)),
-        ssat(40)
-    );
+    assert_eq!(ssat(10).unchecked_add(ssat(20)), ssat(30));
+    assert_eq!(ssat(50).unchecked_sub(ssat(10)), ssat(40));
     assert_eq!(sat(5).unchecked_add(sat(7)), sat(12));
     assert_eq!(sat(10).unchecked_sub(sat(7)), sat(3));
 }
@@ -201,10 +186,7 @@ fn unchecked_arithmetic() {
 fn positive_sub() {
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(
-        ssat(10).positive_sub(ssat(7)).unwrap(),
-        ssat(3)
-    );
+    assert_eq!(ssat(10).positive_sub(ssat(7)).unwrap(), ssat(3));
     assert!(ssat(-10).positive_sub(ssat(7)).is_none());
     assert!(ssat(10).positive_sub(ssat(-7)).is_none());
     assert!(ssat(10).positive_sub(ssat(11)).is_none());
@@ -249,7 +231,7 @@ fn amount_checked_div_by_weight_floor() {
 #[cfg(feature = "alloc")]
 #[test]
 fn amount_checked_div_by_fee_rate() {
-    let amount = Amount::from_sat(1000);
+    let amount = Amount::from_sat_unchecked(1000);
     let fee_rate = FeeRate::from_sat_per_kwu(2);
 
     // Test floor division
@@ -262,7 +244,7 @@ fn amount_checked_div_by_fee_rate() {
     assert_eq!(weight, Weight::from_wu(500_000)); // Same result for exact division
 
     // Test truncation behavior
-    let amount = Amount::from_sat(1000);
+    let amount = Amount::from_sat_unchecked(1000);
     let fee_rate = FeeRate::from_sat_per_kwu(3);
     let floor_weight = amount.checked_div_by_fee_rate_floor(fee_rate).unwrap();
     let ceil_weight = amount.checked_div_by_fee_rate_ceil(fee_rate).unwrap();
@@ -589,15 +571,13 @@ check_format_non_negative_show_denom! {
 
 #[test]
 fn unsigned_signed_conversion() {
-    let sa = SignedAmount::from_sat;
-    let ua = Amount::from_sat;
+    let ssat = SignedAmount::from_sat;
+    let sat = Amount::from_sat;
     let max_sats: u64 = Amount::MAX.to_sat();
 
-    assert_eq!(ua(max_sats).to_signed(), sa(max_sats as i64));
-
-    assert_eq!(sa(max_sats as i64).to_unsigned(), Ok(ua(max_sats)));
-
-    assert_eq!(sa(max_sats as i64).to_unsigned().unwrap().to_signed(), sa(max_sats as i64));
+    assert_eq!(sat(max_sats).to_signed(), ssat(max_sats as i64));
+    assert_eq!(ssat(max_sats as i64).to_unsigned(), Ok(sat(max_sats)));
+    assert_eq!(ssat(max_sats as i64).to_unsigned().unwrap().to_signed(), ssat(max_sats as i64));
 }
 
 #[test]
