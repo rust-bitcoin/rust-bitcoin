@@ -91,12 +91,6 @@ macro_rules! general_hash_type {
             {
                 <Self as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
             }
-
-            /// Hashes the entire contents of the `reader`.
-            #[cfg(feature = "bitcoin-io")]
-            pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
-                <Self as $crate::GeneralHash>::hash_reader(reader)
-            }
         }
     };
 }
@@ -156,7 +150,7 @@ macro_rules! hash_type_no_default {
 
         $crate::internal_macros::hash_trait_impls!($bits, $reverse);
 
-        $crate::internal_macros::impl_io_write!(
+        $crate::internal_macros::impl_write!(
             HashEngine,
             |us: &mut HashEngine, buf| {
                 crate::HashEngine::input(us, buf);
@@ -168,29 +162,16 @@ macro_rules! hash_type_no_default {
 }
 pub(crate) use hash_type_no_default;
 
-// We do not use the `bitcoin_io::impl_write` macro because we don't have an unconditional
-// dependency on `bitcoin-io` and we want to implement `std:io::Write` even when we don't depend on
-// `bitcoin-io`.
-macro_rules! impl_io_write {
+macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
-        #[cfg(feature = "bitcoin-io")]
-        impl<$($bounded_ty: $bounds),*> bitcoin_io::Write for $ty {
-            #[inline]
-            fn write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize> {
-                $write_fn(self, buf)
-            }
-            #[inline]
-            fn flush(&mut self) -> bitcoin_io::Result<()> {
-                $flush_fn(self)
-            }
-        }
-
+        // `bitcoin_io::Write` is implemented in `bitcoin_io`.
         #[cfg(feature = "std")]
         impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {
             #[inline]
             fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
                 $write_fn(self, buf)
             }
+
             #[inline]
             fn flush(&mut self) -> std::io::Result<()> {
                 $flush_fn(self)
@@ -198,7 +179,7 @@ macro_rules! impl_io_write {
         }
     }
 }
-pub(crate) use impl_io_write;
+pub(crate) use impl_write;
 
 macro_rules! engine_input_impl(
     () => (

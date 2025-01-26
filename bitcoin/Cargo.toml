@@ -27,10 +27,10 @@ arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
 [dependencies]
 base58 = { package = "base58ck", version = "0.2.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
-hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["alloc", "bitcoin-io", "hex"] }
+hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["alloc", "hex"] }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.4.0", features = ["alloc"] }
-io = { package = "bitcoin-io", version = "0.2.0", default-features = false, features = ["alloc"] }
+io = { package = "bitcoin-io", version = "0.2.0", default-features = false, features = ["alloc", "hashes"] }
 primitives = { package = "bitcoin-primitives", version = "0.101.0", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
 units = { package = "bitcoin-units", version = "0.2.0", default-features = false, features = ["alloc"] }

@@ -155,7 +155,8 @@ impl<'de, T: GeneralHash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     }
 }
 
-crate::internal_macros::impl_io_write!(
+#[cfg(feature = "std")]
+crate::internal_macros::impl_write!(
     HmacEngine<T>,
     |us: &mut HmacEngine<T>, buf| {
         us.input(buf);
