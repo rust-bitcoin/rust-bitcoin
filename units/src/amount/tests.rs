@@ -22,10 +22,7 @@ fn sanity_check() {
     let ssat = SignedAmount::from_sat;
 
     assert_eq!(ssat(-100).abs(), ssat(100));
-    assert_eq!(
-        ssat(i64::MIN + 1).checked_abs().unwrap(),
-        ssat(i64::MAX)
-    );
+    assert_eq!(ssat(i64::MIN + 1).checked_abs().unwrap(), ssat(i64::MAX));
     assert_eq!(ssat(-100).signum(), -1);
     assert_eq!(ssat(0).signum(), 0);
     assert_eq!(ssat(100).signum(), 1);
@@ -36,14 +33,8 @@ fn sanity_check() {
 
     #[cfg(feature = "alloc")]
     {
-        assert_eq!(
-            Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(),
-            sat(0)
-        );
-        assert_eq!(
-            Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(),
-            sat(200_000_000)
-        );
+        assert_eq!(Amount::from_float_in(0_f64, Denomination::Bitcoin).unwrap(), sat(0));
+        assert_eq!(Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(), sat(200_000_000));
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
 }
@@ -185,14 +176,8 @@ fn unchecked_arithmetic() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(
-        ssat(10).unchecked_add(ssat(20)),
-        ssat(30)
-    );
-    assert_eq!(
-        ssat(50).unchecked_sub(ssat(10)),
-        ssat(40)
-    );
+    assert_eq!(ssat(10).unchecked_add(ssat(20)), ssat(30));
+    assert_eq!(ssat(50).unchecked_sub(ssat(10)), ssat(40));
     assert_eq!(sat(5).unchecked_add(sat(7)), sat(12));
     assert_eq!(sat(10).unchecked_sub(sat(7)), sat(3));
 }
@@ -201,10 +186,7 @@ fn unchecked_arithmetic() {
 fn positive_sub() {
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(
-        ssat(10).positive_sub(ssat(7)).unwrap(),
-        ssat(3)
-    );
+    assert_eq!(ssat(10).positive_sub(ssat(7)).unwrap(), ssat(3));
     assert!(ssat(-10).positive_sub(ssat(7)).is_none());
     assert!(ssat(10).positive_sub(ssat(-7)).is_none());
     assert!(ssat(10).positive_sub(ssat(11)).is_none());
