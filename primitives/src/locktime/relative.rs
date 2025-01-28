@@ -52,8 +52,9 @@ impl LockTime {
     /// Constructs a new `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
     ///
     /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
-    /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
-    /// you want to preserve the full value, you should use the [`Sequence`] type instead.
+    /// locktimes only use some bits of the underlying `u32` value and discard the rest. Small
+    /// values may still round-trip, but if you want to preserve the full value, you should use the
+    /// [`Sequence`] type instead.
     ///
     /// # Examples
     ///
