@@ -432,22 +432,22 @@ mod tests {
         let time1 = Time::from_512_second_intervals(70);
         let time2 = Time::from_512_second_intervals(71);
 
-        let lock_height1 = LockTime::from(height1);
-        let lock_height2 = LockTime::from(height2);
-        let lock_time1 = LockTime::from(time1);
-        let lock_time2 = LockTime::from(time2);
+        let lock_by_height1 = LockTime::from(height1);
+        let lock_by_height2 = LockTime::from(height2);
+        let lock_by_time1 = LockTime::from(time1);
+        let lock_by_time2 = LockTime::from(time2);
 
-        assert!(lock_height1.is_block_height());
-        assert!(!lock_height1.is_block_time());
+        assert!(lock_by_height1.is_block_height());
+        assert!(!lock_by_height1.is_block_time());
 
-        assert!(!lock_time1.is_block_height());
-        assert!(lock_time1.is_block_time());
+        assert!(!lock_by_time1.is_block_height());
+        assert!(lock_by_time1.is_block_time());
 
         // Test is_same_unit() logic
-        assert!(lock_height1.is_same_unit(lock_height2));
-        assert!(!lock_height1.is_same_unit(lock_time1));
-        assert!(lock_time1.is_same_unit(lock_time2));
-        assert!(!lock_time1.is_same_unit(lock_height1));
+        assert!(lock_by_height1.is_same_unit(lock_by_height2));
+        assert!(!lock_by_height1.is_same_unit(lock_by_time1));
+        assert!(lock_by_time1.is_same_unit(lock_by_time2));
+        assert!(!lock_by_time1.is_same_unit(lock_by_height1));
     }
 
     #[test]
@@ -455,11 +455,11 @@ mod tests {
         let height = Height::from(10);
         let time = Time::from_512_second_intervals(70);
 
-        let lock = LockTime::from(height);
+        let lock_by_height = LockTime::from(height);
 
-        assert!(!lock.is_satisfied_by(Height::from(9), time));
-        assert!(lock.is_satisfied_by(Height::from(10), time));
-        assert!(lock.is_satisfied_by(Height::from(11), time));
+        assert!(!lock_by_height.is_satisfied_by(Height::from(9), time));
+        assert!(lock_by_height.is_satisfied_by(Height::from(10), time));
+        assert!(lock_by_height.is_satisfied_by(Height::from(11), time));
     }
 
     #[test]
@@ -467,31 +467,31 @@ mod tests {
         let height = Height::from(10);
         let time = Time::from_512_second_intervals(70);
 
-        let lock = LockTime::from(time);
+        let lock_by_time = LockTime::from(time);
 
-        assert!(!lock.is_satisfied_by(height, Time::from_512_second_intervals(69)));
-        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(70)));
-        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(71)));
+        assert!(!lock_by_time.is_satisfied_by(height, Time::from_512_second_intervals(69)));
+        assert!(lock_by_time.is_satisfied_by(height, Time::from_512_second_intervals(70)));
+        assert!(lock_by_time.is_satisfied_by(height, Time::from_512_second_intervals(71)));
     }
 
     #[test]
     fn height_correctly_implies() {
         let height = Height::from(10);
-        let lock = LockTime::from(height);
+        let lock_by_height = LockTime::from(height);
 
-        assert!(!lock.is_implied_by(LockTime::from(Height::from(9))));
-        assert!(lock.is_implied_by(LockTime::from(Height::from(10))));
-        assert!(lock.is_implied_by(LockTime::from(Height::from(11))));
+        assert!(!lock_by_height.is_implied_by(LockTime::from(Height::from(9))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(Height::from(10))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(Height::from(11))));
     }
 
     #[test]
     fn time_correctly_implies() {
         let time = Time::from_512_second_intervals(70);
-        let lock = LockTime::from(time);
+        let lock_by_time = LockTime::from(time);
 
-        assert!(!lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(69))));
-        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(70))));
-        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(71))));
+        assert!(!lock_by_time.is_implied_by(LockTime::from(Time::from_512_second_intervals(69))));
+        assert!(lock_by_time.is_implied_by(LockTime::from(Time::from_512_second_intervals(70))));
+        assert!(lock_by_time.is_implied_by(LockTime::from(Time::from_512_second_intervals(71))));
     }
 
     #[test]
@@ -499,17 +499,17 @@ mod tests {
         let height = Height::from(10);
         let time = Time::from_512_second_intervals(70);
 
-        let lock_height = LockTime::from(height);
-        let lock_time = LockTime::from(time);
+        let lock_by_height = LockTime::from(height);
+        let lock_by_time = LockTime::from(time);
 
-        let seq_height = Sequence::from(lock_height);
-        let seq_time = Sequence::from(lock_time);
+        let seq_height = Sequence::from(lock_by_height);
+        let seq_time = Sequence::from(lock_by_time);
 
-        assert!(lock_height.is_implied_by_sequence(seq_height));
-        assert!(!lock_height.is_implied_by_sequence(seq_time));
+        assert!(lock_by_height.is_implied_by_sequence(seq_height));
+        assert!(!lock_by_height.is_implied_by_sequence(seq_time));
 
-        assert!(lock_time.is_implied_by_sequence(seq_time));
-        assert!(!lock_time.is_implied_by_sequence(seq_height));
+        assert!(lock_by_time.is_implied_by_sequence(seq_time));
+        assert!(!lock_by_time.is_implied_by_sequence(seq_height));
     }
 
     #[test]
@@ -517,8 +517,8 @@ mod tests {
         let time = Time::from_512_second_intervals(70);
         let height = Height::from(10);
 
-        let lock = LockTime::from(time);
-        assert!(!lock.is_implied_by(LockTime::from(height)));
+        let lock_by_time = LockTime::from(time);
+        assert!(!lock_by_time.is_implied_by(LockTime::from(height)));
     }
 
     #[test]
