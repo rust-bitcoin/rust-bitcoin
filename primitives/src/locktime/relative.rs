@@ -77,10 +77,19 @@ impl LockTime {
     /// ```rust
     /// # use bitcoin_primitives::relative::LockTime;
     ///
-    /// // `from_consensus` roundtrips with `to_consensus_u32` for small values.
-    /// let n_lock_time: u32 = 7000;
-    /// let lock_time = LockTime::from_consensus(n_lock_time).unwrap();
-    /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
+    /// // Values with bit 22 set to 0 will be interpreted as height-based lock times.
+    /// let height: u32 = 144; // 144 blocks, approx 24h.
+    /// let lock_time = LockTime::from_consensus(height)?;
+    /// assert!(lock_time.is_block_height());
+    /// assert_eq!(lock_time.to_consensus_u32(), height);
+    ///
+    /// // Values with bit 22 set to 1 will be interpreted as time-based lock times.
+    /// let time: u32 = 168 | (1 << 22) ; // Bit 22 is 1 with time approx 24h.
+    /// let lock_time = LockTime::from_consensus(time)?;
+    /// assert!(lock_time.is_block_time());
+    /// assert_eq!(lock_time.to_consensus_u32(), time);
+    ///
+    /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
     /// ```
     pub fn from_consensus(n: u32) -> Result<Self, DisabledLockTimeError> {
         let sequence = crate::Sequence::from_consensus(n);
