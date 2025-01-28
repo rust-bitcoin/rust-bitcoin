@@ -156,46 +156,33 @@ macro_rules! hash_type_no_default {
 
         $crate::internal_macros::hash_trait_impls!($bits, $reverse);
 
-        $crate::internal_macros::impl_io_write!(
-            HashEngine,
-            |us: &mut HashEngine, buf| {
-                crate::HashEngine::input(us, buf);
-                Ok(buf.len())
-            },
-            |_us| { Ok(()) }
-        );
-    };
-}
-pub(crate) use hash_type_no_default;
-
-// We do not use the `bitcoin_io::impl_write` macro because we don't have an unconditional
-// dependency on `bitcoin-io` and we want to implement `std:io::Write` even when we don't depend on
-// `bitcoin-io`.
-macro_rules! impl_io_write {
-    ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
         #[cfg(feature = "bitcoin-io")]
-        impl<$($bounded_ty: $bounds),*> bitcoin_io::Write for $ty {
+        impl bitcoin_io::Write for HashEngine {
             #[inline]
             fn write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize> {
-                $write_fn(self, buf)
+                use crate::HashEngine as _;
+
+                self.input(buf);
+                Ok(buf.len())
             }
+
             #[inline]
-            fn flush(&mut self) -> bitcoin_io::Result<()> {
-                $flush_fn(self)
-            }
+            fn flush(&mut self) -> bitcoin_io::Result<()> { Ok(()) }
         }
 
         #[cfg(feature = "std")]
-        impl<$($bounded_ty: $bounds),*> std::io::Write for $ty {
+        impl std::io::Write for HashEngine {
             #[inline]
             fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-                $write_fn(self, buf)
+                use crate::HashEngine as _;
+
+                self.input(buf);
+                Ok(buf.len())
             }
+
             #[inline]
-            fn flush(&mut self) -> std::io::Result<()> {
-                $flush_fn(self)
-            }
+            fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
         }
-    }
+    };
 }
-pub(crate) use impl_io_write;
+pub(crate) use hash_type_no_default;

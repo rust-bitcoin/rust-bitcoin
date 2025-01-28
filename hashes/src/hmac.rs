@@ -152,15 +152,33 @@ impl<'de, T: GeneralHash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     }
 }
 
-crate::internal_macros::impl_io_write!(
-    HmacEngine<T>,
-    |us: &mut HmacEngine<T>, buf| {
-        us.input(buf);
+#[cfg(feature = "bitcoin-io")]
+impl<T: GeneralHash> bitcoin_io::Write for HmacEngine<T> {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize> {
+        use crate::HashEngine as _;
+
+        self.input(buf);
         Ok(buf.len())
-    },
-    |_us| { Ok(()) },
-    T: crate::GeneralHash
-);
+    }
+
+    #[inline]
+    fn flush(&mut self) -> bitcoin_io::Result<()> { Ok(()) }
+}
+
+#[cfg(feature = "std")]
+impl<T: GeneralHash> std::io::Write for HmacEngine<T> {
+    #[inline]
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        use crate::HashEngine as _;
+
+        self.input(buf);
+        Ok(buf.len())
+    }
+
+    #[inline]
+    fn flush(&mut self) -> std::io::Result<()> { Ok(()) }
+}
 
 #[cfg(test)]
 mod tests {
