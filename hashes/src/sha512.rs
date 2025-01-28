@@ -118,7 +118,29 @@ impl crate::HashEngine for HashEngine {
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
-    crate::internal_macros::engine_input_impl!();
+    #[cfg(not(hashes_fuzz))]
+    fn input(&mut self, mut inp: &[u8]) {
+        while !inp.is_empty() {
+            let buf_idx = crate::incomplete_block_len(self);
+            let rem_len = Self::BLOCK_SIZE - buf_idx;
+            let write_len = cmp::min(rem_len, inp.len());
+
+            self.buffer[buf_idx..buf_idx + write_len].copy_from_slice(&inp[..write_len]);
+            self.bytes_hashed += write_len as u64;
+            if crate::incomplete_block_len(self) == 0 {
+                self.process_block();
+            }
+            inp = &inp[write_len..];
+        }
+    }
+
+    #[cfg(hashes_fuzz)]
+    fn input(&mut self, inp: &[u8]) {
+        for c in inp {
+            self.buffer[0] ^= *c;
+        }
+        self.bytes_hashed += inp.len() as u64;
+    }
 }
 
 #[allow(non_snake_case)]
