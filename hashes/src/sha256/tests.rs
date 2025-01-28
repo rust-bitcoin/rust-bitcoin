@@ -127,8 +127,7 @@ fn engine_with_state() {
     let data_vec: &[&[u8]] = &[&[3u8; 1], &[4u8; 63], &[5u8; 65], &[6u8; 66]];
     for data in data_vec {
         let mut engine = engine.clone();
-        let mut midstate_engine =
-            sha256::HashEngine::from_midstate(engine.midstate_unchecked());
+        let mut midstate_engine = sha256::HashEngine::from_midstate(engine.midstate_unchecked());
         assert_eq!(engine.h, midstate_engine.h);
         assert_eq!(engine.bytes_hashed, midstate_engine.bytes_hashed);
         engine.input(data);
@@ -156,8 +155,7 @@ fn engine_with_state() {
         0x88, 0x52, 0x7f, 0x7d, 0x8a, 0x06, 0x94, 0x20,
         0x8f, 0xf1, 0xf7, 0xa9, 0xd5, 0x69, 0x09, 0x59,
     ];
-    let midstate_engine =
-        sha256::HashEngine::from_midstate(sha256::Midstate::new(MIDSTATE, 64));
+    let midstate_engine = sha256::HashEngine::from_midstate(sha256::Midstate::new(MIDSTATE, 64));
     let hash = sha256::Hash::from_engine(midstate_engine);
     assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
 }
@@ -180,8 +178,8 @@ fn hash_unoptimized() {
 // The midstate of an empty hash engine tagged with "TapLeaf".
 const TAP_LEAF_MIDSTATE: Midstate = Midstate::new(
     [
-        156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243,
-        147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+        156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147,
+        108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
     ],
     64,
 );
