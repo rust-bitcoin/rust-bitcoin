@@ -494,7 +494,6 @@ mod tests {
         assert!(lock_by_time.is_satisfied_by(height, time_same));
         assert!(lock_by_time.is_satisfied_by(height, time_after));
         assert!(!lock_by_time.is_satisfied_by(height, time_before));
-
     }
 
     #[test]
