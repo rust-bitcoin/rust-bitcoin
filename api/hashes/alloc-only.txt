@@ -431,7 +431,6 @@ impl<T: bitcoin_hashes::sha256t::Tag> core::cmp::PartialEq for bitcoin_hashes::s
 impl<T: bitcoin_hashes::sha256t::Tag> core::cmp::PartialOrd for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::convert::AsRef<[u8; 32]> for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::convert::AsRef<[u8]> for bitcoin_hashes::sha256t::Hash<T>
-impl<T: bitcoin_hashes::sha256t::Tag> core::default::Default for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Debug for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::Display for bitcoin_hashes::sha256t::Hash<T>
 impl<T: bitcoin_hashes::sha256t::Tag> core::fmt::LowerHex for bitcoin_hashes::sha256t::Hash<T>
@@ -734,7 +733,6 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::borrow(&self) -> &[u8; 32]
 pub fn bitcoin_hashes::sha256t::Hash<T>::borrow(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256t::Hash<T>::clone(&self) -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::cmp(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> core::cmp::Ordering
-pub fn bitcoin_hashes::sha256t::Hash<T>::default() -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::engine() -> bitcoin_hashes::sha256::HashEngine
 pub fn bitcoin_hashes::sha256t::Hash<T>::eq(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> bool
 pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
