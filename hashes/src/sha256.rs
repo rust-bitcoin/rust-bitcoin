@@ -8,7 +8,7 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 use core::{cmp, convert, fmt};
 
-use crate::{incomplete_block_len, sha256d, HashEngine as _};
+use crate::{sha256d, HashEngine as _};
 #[cfg(doc)]
 use crate::{sha256t, sha256t_tag};
 
@@ -25,15 +25,15 @@ fn from_engine(mut e: HashEngine) -> Hash {
 
     let zeroes = [0; BLOCK_SIZE - 8];
     e.input(&[0x80]);
-    if incomplete_block_len(&e) > zeroes.len() {
+    if crate::incomplete_block_len(&e) > zeroes.len() {
         e.input(&zeroes);
     }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
+    let pad_length = zeroes.len() - crate::incomplete_block_len(&e);
     e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+    debug_assert_eq!(crate::incomplete_block_len(&e), zeroes.len());
 
     e.input(&(8 * n_bytes_hashed).to_be_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
+    debug_assert_eq!(crate::incomplete_block_len(&e), 0);
 
     Hash(e.midstate_unchecked().bytes)
 }

@@ -4,7 +4,7 @@
 
 use core::cmp;
 
-use crate::{incomplete_block_len, HashEngine as _};
+use crate::HashEngine as _;
 
 crate::internal_macros::general_hash_type! {
     512,
@@ -19,16 +19,16 @@ pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
 
     let zeroes = [0; BLOCK_SIZE - 16];
     e.input(&[0x80]);
-    if incomplete_block_len(&e) > zeroes.len() {
+    if crate::incomplete_block_len(&e) > zeroes.len() {
         e.input(&zeroes);
     }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
+    let pad_length = zeroes.len() - crate::incomplete_block_len(&e);
     e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+    debug_assert_eq!(crate::incomplete_block_len(&e), zeroes.len());
 
     e.input(&[0; 8]);
     e.input(&(8 * n_bytes_hashed).to_be_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
+    debug_assert_eq!(crate::incomplete_block_len(&e), 0);
 
     Hash(e.midstate())
 }
