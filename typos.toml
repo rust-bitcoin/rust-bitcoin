@@ -1,0 +1,13 @@
+[default.extend-words]
+substituters = "substituters"
+# trips on some base64 string in the test
+wel = "wel"
+# common mistake that typos doesn't detect automatically
+reasponse= "response"
+
+[files]
+extend-exclude = [
+  "hfuzz_target/**",
+  "hfuzz_workspace/**",
+  "releases/**",
+]
