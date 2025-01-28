@@ -32,6 +32,23 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 ///
 /// * [BIP 68 Relative lock-time using consensus-enforced sequence numbers](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
 /// * [BIP 112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)
+///
+/// # Examples
+///
+/// ```
+/// use bitcoin_primitives::relative::{LockTime, Height, Time};
+/// let lock_by_height = LockTime::from_height(144); // 144 blocks, approx 24h.
+/// assert!(lock_by_height.is_block_height());
+///
+/// let lock_by_time = LockTime::from_512_second_intervals(168); // 168 time intervals, approx 24h.
+/// assert!(lock_by_time.is_block_time());
+///
+/// // Check if a lock time is satisfied by a given height or time.
+/// let height = Height::from(150);
+/// let time = Time::from_512_second_intervals(200);
+/// assert!(lock_by_height.is_satisfied_by(height, time));
+/// assert!(lock_by_time.is_satisfied_by(height, time));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LockTime {
@@ -89,6 +106,18 @@ impl LockTime {
     ///
     /// This method will **not** round-trip with [`Self::to_sequence`]. See the
     /// docs for [`Self::from_consensus`] for more information.
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin_primitives::{Sequence, relative::LockTime};
+    ///
+    /// // Interpret a sequence number from a Bitcoin transaction input as a relative lock time
+    /// let sequence_number = Sequence::from_consensus(144); // 144 blocks, approx 24h.
+    /// let lock_time = LockTime::from_sequence(sequence_number)?;
+    /// assert!(lock_time.is_block_height());
+    ///
+    /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
+    /// ```
     #[inline]
     pub fn from_sequence(n: Sequence) -> Result<Self, DisabledLockTimeError> {
         Self::from_consensus(n.to_consensus_u32())
@@ -227,6 +256,21 @@ impl LockTime {
     /// When deciding whether an instance of `<n> CHECKSEQUENCEVERIFY` will pass, this
     /// method can be used by parsing `n` as a [`LockTime`] and calling this method
     /// with the sequence number of the input which spends the script.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_primitives::{Sequence, relative::LockTime};
+    ///
+    /// let sequence = Sequence::from_consensus(1 << 22 | 168); // Bit 22 is 1 with time approx 24h.
+    /// let lock_time = LockTime::from_sequence(sequence)?;
+    /// let input_sequence = Sequence::from_consensus(1 << 22 | 336); // Approx 48h.
+    /// assert!(lock_time.is_block_time());
+    ///
+    /// assert!(lock_time.is_implied_by_sequence(input_sequence));
+    ///
+    /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
+    /// ```
     #[inline]
     pub fn is_implied_by_sequence(&self, other: Sequence) -> bool {
         if let Ok(other) = LockTime::from_sequence(other) {
