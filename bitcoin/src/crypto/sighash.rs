@@ -1530,6 +1530,8 @@ mod tests {
 
     extern crate serde_json;
 
+    const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptBuf::new() };
+
     #[test]
     fn sighash_single_bug() {
         const SIGHASH_SINGLE: u32 = 3;
@@ -1539,7 +1541,7 @@ mod tests {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
-            output: vec![TxOut::NULL],
+            output: vec![DUMMY_TXOUT],
         };
         let script = ScriptBuf::new();
         let cache = SighashCache::new(&tx);
@@ -1740,13 +1742,13 @@ mod tests {
             c.taproot_signature_hash(0, &empty_prevouts, None, None, TapSighashType::All),
             Err(TaprootError::PrevoutsSize(PrevoutsSizeError))
         );
-        let two = [TxOut::NULL, TxOut::NULL];
+        let two = [DUMMY_TXOUT, DUMMY_TXOUT];
         let too_many_prevouts = Prevouts::All(&two);
         assert_eq!(
             c.taproot_signature_hash(0, &too_many_prevouts, None, None, TapSighashType::All),
             Err(TaprootError::PrevoutsSize(PrevoutsSizeError))
         );
-        let tx_out = TxOut::NULL;
+        let tx_out = DUMMY_TXOUT;
         let prevout = Prevouts::One(1, &tx_out);
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::All),
