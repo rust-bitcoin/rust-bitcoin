@@ -10,6 +10,15 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA256d hash function."
 }
 
+fn from_engine(e: HashEngine) -> Hash {
+    let sha2 = sha256::Hash::from_engine(e.0);
+    let sha2d = sha256::Hash::hash(sha2.as_byte_array());
+
+    let mut ret = [0; 32];
+    ret.copy_from_slice(sha2d.as_byte_array());
+    Hash(ret)
+}
+
 /// Engine to compute SHA256d hash function.
 #[derive(Clone)]
 pub struct HashEngine(sha256::HashEngine);
@@ -27,15 +36,6 @@ impl crate::HashEngine for HashEngine {
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
-}
-
-fn from_engine(e: HashEngine) -> Hash {
-    let sha2 = sha256::Hash::from_engine(e.0);
-    let sha2d = sha256::Hash::hash(sha2.as_byte_array());
-
-    let mut ret = [0; 32];
-    ret.copy_from_slice(sha2d.as_byte_array());
-    Hash(ret)
 }
 
 #[cfg(test)]
