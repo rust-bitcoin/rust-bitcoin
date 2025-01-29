@@ -46,7 +46,6 @@ impl bitcoin_primitives::taproot::TapTweakHash
 impl bitcoin_primitives::transaction::OutPoint
 impl bitcoin_primitives::transaction::Transaction
 impl bitcoin_primitives::transaction::TxIn
-impl bitcoin_primitives::transaction::TxOut
 impl bitcoin_primitives::transaction::Txid
 impl bitcoin_primitives::transaction::Version
 impl bitcoin_primitives::transaction::Wtxid
@@ -1184,7 +1183,6 @@ pub const bitcoin_primitives::transaction::OutPoint::COINBASE_PREVOUT: Self
 pub const bitcoin_primitives::transaction::OutPoint::SIZE: usize
 pub const bitcoin_primitives::transaction::Transaction::MAX_STANDARD_WEIGHT: bitcoin_units::weight::Weight
 pub const bitcoin_primitives::transaction::TxIn::EMPTY_COINBASE: bitcoin_primitives::transaction::TxIn
-pub const bitcoin_primitives::transaction::TxOut::NULL: Self
 pub const bitcoin_primitives::transaction::Txid::COINBASE_PREVOUT: Self
 pub const bitcoin_primitives::transaction::Txid::DISPLAY_BACKWARD: bool
 pub const bitcoin_primitives::transaction::Version::ONE: Self
