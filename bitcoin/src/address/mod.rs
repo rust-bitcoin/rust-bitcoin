@@ -1526,4 +1526,31 @@ mod tests {
         assert_eq!(&rinsed.address, foo_checked.address.as_unchecked());
         assert_eq!(rinsed, foo_unchecked);
     }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_serialize_generic() {
+        use serde::Serialize;
+
+        // Note no `Deserialize`.
+        #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+        struct Foo<V>
+        where
+            V: NetworkValidation,
+        {
+            address: Address<V>,
+        }
+
+        let addr_str = "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k";
+        let unchecked = addr_str.parse::<Address<NetworkUnchecked>>().unwrap();
+
+        // Serialize with an unchecked address.
+        let foo_unchecked = Foo { address: unchecked.clone() };
+        let _ = serde_json::to_string(&foo_unchecked).expect("failed to serialize");
+
+        // Serialize with an checked address.
+        let foo_checked = Foo { address: unchecked.clone().assume_checked() };
+        let _ = serde_json::to_string(&foo_checked).expect("failed to serialize");
+
+    }
 }
