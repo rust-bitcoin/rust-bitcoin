@@ -22,11 +22,11 @@ use io::Write;
 
 use crate::address::script_pubkey::ScriptExt as _;
 use crate::consensus::{encode, Encodable};
-use crate::prelude::{Borrow, BorrowMut, String, ToOwned, Vec};
+use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 use crate::taproot::{LeafVersion, TapLeafHash, TapLeafTag, TAPROOT_ANNEX_PREFIX};
 use crate::transaction::TransactionExt as _;
 use crate::witness::Witness;
-use crate::{transaction, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
+use crate::{transaction, Amount, Script, Sequence, Transaction, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -959,63 +959,59 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             script_pubkey: &Script,
             sighash_type: u32,
         ) -> Result<(), io::Error> {
+            use crate::consensus::encode::WriteExt;
+
             let (sighash, anyone_can_pay) =
                 EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
-            // Build tx to sign
-            let mut tx = Transaction {
-                version: self_.version,
-                lock_time: self_.lock_time,
-                input: vec![],
-                output: vec![],
-            };
+            self_.version.consensus_encode(writer)?;
             // Add all inputs necessary..
             if anyone_can_pay {
-                tx.input = vec![TxIn {
-                    previous_output: self_.input[input_index].previous_output,
-                    script_sig: script_pubkey.to_owned(),
-                    sequence: self_.input[input_index].sequence,
-                    witness: Witness::default(),
-                }];
+                writer.emit_compact_size(1u8)?;
+                self_.input[input_index].previous_output.consensus_encode(writer)?;
+                script_pubkey.consensus_encode(writer)?;
+                self_.input[input_index].sequence.consensus_encode(writer)?;
             } else {
-                tx.input = Vec::with_capacity(self_.input.len());
+                writer.emit_compact_size(self_.input.len())?;
                 for (n, input) in self_.input.iter().enumerate() {
-                    tx.input.push(TxIn {
-                        previous_output: input.previous_output,
-                        script_sig: if n == input_index {
-                            script_pubkey.to_owned()
-                        } else {
-                            ScriptBuf::new()
-                        },
-                        sequence: if n != input_index
-                            && (sighash == EcdsaSighashType::Single
-                                || sighash == EcdsaSighashType::None)
-                        {
-                            Sequence::ZERO
-                        } else {
-                            input.sequence
-                        },
-                        witness: Witness::default(),
-                    });
+                    input.previous_output.consensus_encode(writer)?;
+                    if n == input_index {
+                        script_pubkey.consensus_encode(writer)?;
+                    } else {
+                        Script::new().consensus_encode(writer)?;
+                    }
+                    if n != input_index
+                        && (sighash == EcdsaSighashType::Single
+                            || sighash == EcdsaSighashType::None)
+                    {
+                        Sequence::ZERO.consensus_encode(writer)?;
+                    } else {
+                        input.sequence.consensus_encode(writer)?;
+                    }
                 }
             }
             // ..then all outputs
-            tx.output = match sighash {
-                EcdsaSighashType::All => self_.output.clone(),
+            match sighash {
+                EcdsaSighashType::All => {
+                    self_.output.consensus_encode(writer)?;
+                },
                 EcdsaSighashType::Single => {
-                    let output_iter = self_
-                        .output
-                        .iter()
-                        .take(input_index + 1) // sign all outputs up to and including this one, but erase
-                        .enumerate() // all of them except for this one
-                        .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::NULL });
-                    output_iter.collect()
-                }
-                EcdsaSighashType::None => vec![],
+                    // sign all outputs up to and including this one, but erase
+                    // all of them except for this one
+                    let count = input_index.min(self_.output.len() - 1);
+                    writer.emit_compact_size(count + 1)?;
+                    for _ in 0..count {
+                        // consensus encoding of the "NULL txout" - max amount, empty script_pubkey
+                        writer.write_all(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00])?;
+                    }
+                    self_.output[count].consensus_encode(writer)?;
+                },
+                EcdsaSighashType::None => {
+                    writer.emit_compact_size(0u8)?;
+                },
                 _ => unreachable!(),
             };
-            // hash the result
-            tx.consensus_encode(writer)?;
+            self_.lock_time.consensus_encode(writer)?;
             sighash_type.to_le_bytes().consensus_encode(writer)?;
             Ok(())
         }
@@ -1529,7 +1525,8 @@ mod tests {
     use super::*;
     use crate::consensus::deserialize;
     use crate::locktime::absolute;
-    use crate::script::ScriptBufExt as _;
+    use crate::script::{ScriptBuf, ScriptBufExt as _};
+    use crate::TxIn;
 
     extern crate serde_json;
 
