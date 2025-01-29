@@ -152,3 +152,62 @@ delegate_index!(
     RangeToInclusive<usize>,
     (Bound<usize>, Bound<usize>)
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn script_from_bytes() {
+        let script = Script::from_bytes(&[1, 2, 3]);
+        assert_eq!(script.as_bytes(), [1, 2, 3]);
+    }
+
+    #[test]
+    fn script_from_bytes_mut() {
+        let bytes = &mut [1, 2, 3];
+        let script = Script::from_bytes_mut(bytes);
+        script.as_mut_bytes()[0] = 4;
+        assert_eq!(script.as_mut_bytes(), [4, 2, 3]);
+    }
+
+    #[test]
+    fn script_to_vec() {
+        let script = Script::from_bytes(&[1, 2, 3]);
+        assert_eq!(script.to_vec(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn script_len() {
+        let script = Script::from_bytes(&[1, 2, 3]);
+        assert_eq!(script.len(), 3);
+    }
+
+    #[test]
+    fn script_is_empty() {
+        let script = Script::new();
+        assert!(script.is_empty());
+
+        let script = Script::from_bytes(&[1, 2, 3]);
+        assert!(!script.is_empty());
+    }
+
+    #[test]
+    fn script_to_owned() {
+        let script = Script::from_bytes(&[1, 2, 3]);
+        let script_buf = script.to_owned();
+        assert_eq!(script_buf.as_bytes(), [1, 2, 3]);
+    }
+
+    #[test]
+    fn test_index() {
+        let script = Script::from_bytes(&[1, 2, 3, 4, 5]);
+
+        assert_eq!(script[1..3].as_bytes(), &[2, 3]);
+        assert_eq!(script[2..].as_bytes(), &[3, 4, 5]);
+        assert_eq!(script[..3].as_bytes(), &[1, 2, 3]);
+        assert_eq!(script[..].as_bytes(), &[1, 2, 3, 4, 5]);
+        assert_eq!(script[1..=3].as_bytes(), &[2, 3, 4]);
+        assert_eq!(script[..=2].as_bytes(), &[1, 2, 3]);
+    }
+}

@@ -94,3 +94,69 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
         Ok(ScriptBuf(v))
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn script_buf_from_bytes() {
+        let bytes = vec![1, 2, 3];
+        let script = ScriptBuf::from_bytes(bytes.clone());
+        assert_eq!(script.0, bytes);
+    }
+
+    #[test]
+    fn script_buf_as_script() {
+        let bytes = vec![1, 2, 3];
+        let script = ScriptBuf::from_bytes(bytes.clone());
+        let script_ref = script.as_script();
+        assert_eq!(script_ref.as_bytes(), bytes);
+    }
+
+    #[test]
+    fn script_buf_as_mut_script() {
+        let bytes = vec![1, 2, 3];
+        let mut script = ScriptBuf::from_bytes(bytes.clone());
+        let script_mut_ref = script.as_mut_script();
+        script_mut_ref.as_mut_bytes()[0] = 4;
+        assert_eq!(script.0, vec![4, 2, 3]);
+    }
+
+    #[test]
+    fn script_buf_into_bytes() {
+        let bytes = vec![1, 2, 3];
+        let script = ScriptBuf::from_bytes(bytes.clone());
+        let result = script.into_bytes();
+        assert_eq!(result, bytes);
+    }
+
+    #[test]
+    fn script_buf_into_boxed_script() {
+        let bytes = vec![1, 2, 3];
+        let script = ScriptBuf::from_bytes(bytes.clone());
+        let boxed_script = script.into_boxed_script();
+        assert_eq!(boxed_script.as_bytes(), bytes);
+    }
+
+    #[test]
+    fn script_buf_capacity() {
+        let script = ScriptBuf::with_capacity(10);
+        assert!(script.0.capacity() >= 10);
+    }
+
+    #[test]
+    fn script_buf_reserve() {
+        let mut script = ScriptBuf::new();
+        script.reserve(10);
+        assert!(script.0.capacity() >= 10);
+    }
+
+    #[test]
+    fn script_buf_reserve_exact() {
+        let mut script = ScriptBuf::new();
+        script.reserve_exact(10);
+        assert!(script.0.capacity() >= 10);
+    }
+}
