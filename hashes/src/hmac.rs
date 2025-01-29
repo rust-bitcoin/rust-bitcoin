@@ -31,13 +31,6 @@ pub struct HmacEngine<T: GeneralHash> {
     oengine: T::Engine,
 }
 
-impl<T: GeneralHash> Default for HmacEngine<T>
-where
-    <T as GeneralHash>::Engine: Default,
-{
-    fn default() -> Self { HmacEngine::new(&[]) }
-}
-
 impl<T: GeneralHash> HmacEngine<T> {
     /// Constructs a new keyed HMAC from `key`.
     ///
@@ -328,7 +321,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_10(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacEngine::<sha256::Hashe>::new(&[]);
         let bytes = [1u8; 10];
         bh.iter(|| {
             engine.input(&bytes);
@@ -338,7 +331,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_1k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacEngine::<sha256::Hashe>::new(&[]);
         let bytes = [1u8; 1024];
         bh.iter(|| {
             engine.input(&bytes);
@@ -348,7 +341,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_64k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = HmacEngine::<sha256::Hashe>::new(&[]);
         let bytes = [1u8; 65536];
         bh.iter(|| {
             engine.input(&bytes);
