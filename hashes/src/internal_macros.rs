@@ -57,6 +57,8 @@ pub(crate) use hash_trait_impls;
 
 /// Creates a type called `Hash` and implements the standard general hashing interface for it.
 ///
+/// The associated `HashEngine` MUST NOT require a key and MUST NOT implement `Default`.
+///
 /// The created type has a single field and will have all standard derives as well as an
 /// implementation of [`crate::Hash`].
 ///
