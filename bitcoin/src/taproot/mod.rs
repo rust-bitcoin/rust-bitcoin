@@ -1592,14 +1592,15 @@ mod test {
     fn midstates() {
         use sha256t::Hash;
         // test that engine creation roundtrips
-        assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
-        assert_eq!(tag_engine("TapBranch").midstate(), TapBranchTag::engine().midstate());
-        assert_eq!(tag_engine("TapTweak").midstate(), TapTweakTag::engine().midstate());
-        assert_eq!(tag_engine("TapSighash").midstate(), TapSighashTag::engine().midstate());
+        assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().into_inner().midstate());
+        assert_eq!(tag_engine("TapBranch").midstate(), TapBranchTag::engine().into_inner().midstate());
+        assert_eq!(tag_engine("TapTweak").midstate(), TapTweakTag::engine().into_inner().midstate());
+        assert_eq!(tag_engine("TapSighash").midstate(), TapSighashTag::engine().into_inner().midstate());
 
         // check that hash creation is the same as building into the same engine
         fn empty_hash(tag_name: &str) -> [u8; 32] {
-            let mut e = tag_engine(tag_name);
+            let sha256 = tag_engine(tag_name);
+            let mut e = sha256t::HashEngine::from_pre_tagged(sha256);
             e.input(&[]);
             Hash::<TapBranchTag>::from_engine(e).to_byte_array()
         }

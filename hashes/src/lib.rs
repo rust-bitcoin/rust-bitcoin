@@ -76,7 +76,7 @@ extern crate core;
 extern crate std;
 
 #[cfg(feature = "bitcoin-io")]
-extern crate bitcoin_io as io;
+pub extern crate bitcoin_io as io;
 
 /// A generic serialization/deserialization framework.
 #[cfg(feature = "serde")]
