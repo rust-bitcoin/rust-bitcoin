@@ -569,3 +569,170 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scriptbuf_from_vec_u8() {
+        let vec = vec![0x51, 0x52, 0x53];
+        let script_buf: ScriptBuf = vec.clone().into();
+        let result: Vec<u8> = script_buf.into();
+        assert_eq!(result, vec);
+    }
+
+    #[test]
+    fn scriptbuf_as_ref() {
+        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_ref: &[u8] = script_buf.as_ref();
+        assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn scriptbuf_as_mut() {
+        let mut script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_mut: &mut [u8] = script_buf.as_mut();
+        script_mut[0] = 0x50;
+        assert_eq!(script_mut, [0x50, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn script_as_ref() {
+        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let script_ref: &[u8] = script.as_ref();
+        assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn script_as_mut() {
+        let bytes = &mut [0x51, 0x52, 0x53];
+        let script = Script::from_bytes_mut(bytes);
+        let script_mut: &mut [u8] = script.as_mut();
+        script_mut[0] = 0x50;
+        assert_eq!(script_mut, [0x50, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn partial_ord() {
+        let script_small = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let script_big = Script::from_bytes(&[0x54, 0x55, 0x56]);
+        let script_buf_small = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_buf_big = ScriptBuf::from(vec![0x54, 0x55, 0x56]);
+
+        assert!(script_small == &script_buf_small);
+        assert!(script_buf_small == *script_small);
+        assert!(script_small != &script_buf_big);
+        assert!(script_buf_small != *script_big);
+
+        assert!(script_small < &script_buf_big);
+        assert!(script_buf_small < *script_big);
+        assert!(script_big > &script_buf_small);
+        assert!(script_buf_big > *script_small);
+    }
+
+    #[test]
+    fn script_hash_from_script() {
+        let script = Script::from_bytes(&[0x51; 520]);
+        assert!(ScriptHash::from_script(script).is_ok());
+
+        let script = Script::from_bytes(&[0x51; 521]);
+        assert!(ScriptHash::from_script(script).is_err());
+    }
+
+    #[test]
+    fn script_hash_from_script_unchecked() {
+        let script = Script::from_bytes(&[0x51; 521]);
+        let hash = ScriptHash::from_script_unchecked(script);
+        assert_eq!(hash, ScriptHash(hash160::Hash::hash(script.as_bytes())));
+    }
+
+    #[test]
+    fn wscript_hash_from_script() {
+        let script = Script::from_bytes(&[0x51; 10_000]);
+        assert!(WScriptHash::from_script(script).is_ok());
+
+        let script = Script::from_bytes(&[0x51; 10_001]);
+        assert!(WScriptHash::from_script(script).is_err());
+    }
+
+    #[test]
+    fn wscript_hash_from_script_unchecked() {
+        let script = Script::from_bytes(&[0x51; 10_001]);
+        let hash = WScriptHash::from_script_unchecked(script);
+        assert_eq!(hash, WScriptHash(sha256::Hash::hash(script.as_bytes())));
+    }
+
+    #[test]
+    fn try_from_scriptbuf_for_scripthash() {
+        let script = ScriptBuf::from(vec![0x51; 520]);
+        assert!(ScriptHash::try_from(script).is_ok());
+
+        let script = ScriptBuf::from(vec![0x51; 521]);
+        assert!(ScriptHash::try_from(script).is_err());
+    }
+
+    #[test]
+    fn try_from_scriptbuf_for_wscript_hash() {
+        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        assert!(WScriptHash::try_from(script).is_ok());
+
+        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        assert!(WScriptHash::try_from(script).is_err());
+    }
+
+    #[test]
+    fn script_display() {
+        let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
+        assert_eq!(format!("{}", script), "OP_LESSTHANOREQUAL OP_CSV OP_RETURN_195");
+        assert_eq!(format!("{:x}", script), "a1b2c3");
+        assert_eq!(format!("{:X}", script), "A1B2C3");
+    }
+
+    #[test]
+    fn scriptbuf_display() {
+        let script_buf = ScriptBuf::from(vec![0xa1, 0xb2, 0xc3]);
+        assert_eq!(format!("{}", script_buf), "OP_LESSTHANOREQUAL OP_CSV OP_RETURN_195");
+        assert_eq!(format!("{:x}", script_buf), "a1b2c3");
+        assert_eq!(format!("{:X}", script_buf), "A1B2C3");
+    }
+
+    #[test]
+    fn cow_script_to_scriptbuf() {
+        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let cow_borrowed: Cow<Script> = Cow::Borrowed(script);
+        let script_buf: ScriptBuf = cow_borrowed.into();
+        assert_eq!(script_buf.as_bytes(), &[0x51, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn cow_scriptbuf_to_script() {
+        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
+        let script: &Script = cow_owned.borrow();
+        assert_eq!(script.as_bytes(), &[0x51, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn cow_scriptbuf_to_box_script() {
+        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
+        let boxed_script: Box<Script> = cow_owned.into();
+        let script_buf2 = boxed_script.into_script_buf();
+        assert_eq!(script_buf2, script_buf);
+    }
+
+    #[test]
+    fn cow_script_to_box_script() {
+        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let cow_borrowed: Cow<Script> = Cow::Borrowed(script);
+        let boxed_script: Box<Script> = cow_borrowed.into();
+        assert_eq!(boxed_script.as_bytes(), &[0x51, 0x52, 0x53]);
+
+        let cow_owned: Cow<Script> = Cow::from(script.to_owned());
+        assert_eq!(cow_owned.as_ref().as_bytes(), &[0x51, 0x52, 0x53]);
+
+        let cow_from_script: Cow<Script> = Cow::from(script);
+        assert_eq!(cow_from_script.as_ref().as_bytes(), &[0x51, 0x52, 0x53]);
+    }
+}
