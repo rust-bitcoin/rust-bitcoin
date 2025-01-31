@@ -458,10 +458,10 @@ impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::GeneralHash for bitcoin_has
 impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::Hash for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::HashEngine for bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::hkdf::Hkdf<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::default::Default
+impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::GeneralHash> bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::GeneralHash> bitcoin_io::Write for bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::GeneralHash> core::convert::AsRef<[u8]> for bitcoin_hashes::hmac::Hmac<T>
-impl<T: bitcoin_hashes::GeneralHash> core::default::Default for bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::default::Default
 impl<T: bitcoin_hashes::GeneralHash> core::marker::StructuralPartialEq for bitcoin_hashes::hmac::Hmac<T>
 impl<T: bitcoin_hashes::GeneralHash> std::io::Write for bitcoin_hashes::hmac::HmacEngine<T>
 impl<T: bitcoin_hashes::sha256t::Tag> bitcoin_hashes::GeneralHash for bitcoin_hashes::sha256t::Hash<T>
@@ -669,6 +669,7 @@ pub fn bitcoin_hashes::hmac::Hmac<T>::as_ref(&self) -> &[u8]
 pub fn bitcoin_hashes::hmac::Hmac<T>::clone(&self) -> bitcoin_hashes::hmac::Hmac<T>
 pub fn bitcoin_hashes::hmac::Hmac<T>::cmp(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> core::cmp::Ordering
 pub fn bitcoin_hashes::hmac::Hmac<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::hmac::Hmac<T>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_hashes::hmac::Hmac<T>::engine(key: &[u8]) -> bitcoin_hashes::hmac::HmacEngine<T> where <T as bitcoin_hashes::GeneralHash>::Engine: core::default::Default
 pub fn bitcoin_hashes::hmac::Hmac<T>::eq(&self, other: &bitcoin_hashes::hmac::Hmac<T>) -> bool
 pub fn bitcoin_hashes::hmac::Hmac<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::hmac::Hmac<T>::from_byte_array(bytes: <T as bitcoin_hashes::Hash>::Bytes) -> Self
@@ -680,7 +681,6 @@ pub fn bitcoin_hashes::hmac::Hmac<T>::partial_cmp(&self, other: &bitcoin_hashes:
 pub fn bitcoin_hashes::hmac::Hmac<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_hashes::hmac::Hmac<T>::to_byte_array(self) -> Self::Bytes
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::clone(&self) -> bitcoin_hashes::hmac::HmacEngine<T>
-pub fn bitcoin_hashes::hmac::HmacEngine<T>::default() -> Self
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> bitcoin_io::Result<()>
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::flush(&mut self) -> std::io::error::Result<()>
 pub fn bitcoin_hashes::hmac::HmacEngine<T>::from_inner_engines(iengine: <T as bitcoin_hashes::GeneralHash>::Engine, oengine: <T as bitcoin_hashes::GeneralHash>::Engine) -> bitcoin_hashes::hmac::HmacEngine<T>
