@@ -19,6 +19,16 @@ use crate::{FromSliceError, GeneralHash, Hash, HashEngine};
 #[repr(transparent)]
 pub struct Hmac<T: GeneralHash>(T);
 
+impl<T: GeneralHash> Hmac<T> {
+    /// Constructs a new keyed HMAC engine from `key`.
+    pub fn engine(key: &[u8]) -> HmacEngine<T>
+    where
+        <T as GeneralHash>::Engine: Default,
+    {
+        HmacEngine::new(key)
+    }
+}
+
 impl<T: GeneralHash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }
@@ -31,15 +41,8 @@ pub struct HmacEngine<T: GeneralHash> {
     oengine: T::Engine,
 }
 
-impl<T: GeneralHash> Default for HmacEngine<T>
-where
-    <T as GeneralHash>::Engine: Default,
-{
-    fn default() -> Self { HmacEngine::new(&[]) }
-}
-
 impl<T: GeneralHash> HmacEngine<T> {
-    /// Constructs a new keyed HMAC from `key`.
+    /// Constructs a new keyed HMAC engine from `key`.
     ///
     /// We only support underlying hashes whose block sizes are ≤ 128 bytes.
     ///
@@ -328,7 +331,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_10(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = Hmac::<sha256::Hash>::engine(&[]);
         let bytes = [1u8; 10];
         bh.iter(|| {
             engine.input(&bytes);
@@ -338,7 +341,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_1k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = Hmac::<sha256::Hash>::engine(&[]);
         let bytes = [1u8; 1024];
         bh.iter(|| {
             engine.input(&bytes);
@@ -348,7 +351,7 @@ mod benches {
 
     #[bench]
     pub fn hmac_sha256_64k(bh: &mut Bencher) {
-        let mut engine = Hmac::<sha256::Hash>::engine();
+        let mut engine = Hmac::<sha256::Hash>::engine(&[]);
         let bytes = [1u8; 65536];
         bh.iter(|| {
             engine.input(&bytes);

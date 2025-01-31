@@ -57,22 +57,6 @@ fn regression_sha256t() {
 }
 
 #[test]
-fn regression_hmac_sha256_with_default_key() {
-    let hash = Hmac::<sha256::Hash>::hash(DATA.as_bytes());
-    let got = format!("{}", hash);
-    let want = "58cc7ed8567bd86eba61f7ed2d5a4edab1774dc10488e57de2eb007a2d9ae82d";
-    assert_eq!(got, want);
-}
-
-#[test]
-fn regression_hmac_sha512_with_default_key() {
-    let hash = Hmac::<sha512::Hash>::hash(DATA.as_bytes());
-    let got = format!("{}", hash);
-    let want = "5f5db2f3e1178bf19af5db38a0ed04dc5bc52d641648542886eea9b6bbec0db658ed7a5799ca18f5bc1949f39d24151a32990ee85974e40bb8a35e2288f494ce";
-    assert_eq!(got, want);
-}
-
-#[test]
 fn regression_hmac_sha256_with_key() {
     let mut engine = HmacEngine::<sha256::Hash>::new(HMAC_KEY);
     engine.input(DATA.as_bytes());
