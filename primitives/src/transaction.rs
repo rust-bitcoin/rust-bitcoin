@@ -350,13 +350,6 @@ pub struct TxOut {
     pub script_pubkey: ScriptBuf,
 }
 
-#[cfg(feature = "alloc")]
-impl TxOut {
-    /// This is used as a "null txout" in consensus signing code.
-    pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
-}
-
 /// A reference to a transaction output.
 ///
 /// ### Bitcoin Core References
