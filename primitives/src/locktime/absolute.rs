@@ -91,12 +91,34 @@ impl LockTime {
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
     /// Constructs a new `LockTime` from a prefixed hex string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_primitives::absolute::LockTime;
+    /// let hex_str = "0x61cf9980"; // Unix timestamp for January 1, 2022
+    /// let lock_time = LockTime::from_hex(hex_str)?;
+    /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
+    ///
+    /// # Ok::<_, units::parse::PrefixedHexError>(())
+    /// ```
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
     /// Constructs a new `LockTime` from an unprefixed hex string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use bitcoin_primitives::absolute::LockTime;
+    /// let hex_str = "61cf9980"; // Unix timestamp for January 1, 2022
+    /// let lock_time = LockTime::from_unprefixed_hex(hex_str)?;
+    /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
+    ///
+    /// # Ok::<_, units::parse::UnprefixedHexError>(())
+    /// ```
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
