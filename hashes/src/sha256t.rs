@@ -119,9 +119,6 @@ impl<T: Tag> PartialEq for Hash<T> {
     fn eq(&self, other: &Hash<T>) -> bool { self.0 == other.0 }
 }
 impl<T: Tag> Eq for Hash<T> {}
-impl<T: Tag> Default for Hash<T> {
-    fn default() -> Self { Hash([0; 32], PhantomData) }
-}
 impl<T: Tag> PartialOrd for Hash<T> {
     fn partial_cmp(&self, other: &Hash<T>) -> Option<cmp::Ordering> {
         Some(cmp::Ord::cmp(self, other))
