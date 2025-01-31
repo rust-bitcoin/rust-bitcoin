@@ -42,6 +42,7 @@ impl bitcoin_hashes::HashEngine for bitcoin_hashes::ripemd160::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha1::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha256::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha256d::HashEngine
+impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha256t::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha384::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512::HashEngine
 impl bitcoin_hashes::HashEngine for bitcoin_hashes::sha512_256::HashEngine
@@ -58,6 +59,7 @@ impl bitcoin_hashes::sha256::HashEngine
 impl bitcoin_hashes::sha256::Midstate
 impl bitcoin_hashes::sha256d::Hash
 impl bitcoin_hashes::sha256d::HashEngine
+impl bitcoin_hashes::sha256t::HashEngine
 impl bitcoin_hashes::sha384::Hash
 impl bitcoin_hashes::sha384::HashEngine
 impl bitcoin_hashes::sha512::Hash
@@ -71,6 +73,7 @@ impl bitcoin_io::Write for bitcoin_hashes::ripemd160::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha1::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha256::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha256d::HashEngine
+impl bitcoin_io::Write for bitcoin_hashes::sha256t::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha384::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha512::HashEngine
 impl bitcoin_io::Write for bitcoin_hashes::sha512_256::HashEngine
@@ -107,6 +110,7 @@ impl core::clone::Clone for bitcoin_hashes::sha256::Midstate
 impl core::clone::Clone for bitcoin_hashes::sha256::MidstateError
 impl core::clone::Clone for bitcoin_hashes::sha256d::Hash
 impl core::clone::Clone for bitcoin_hashes::sha256d::HashEngine
+impl core::clone::Clone for bitcoin_hashes::sha256t::HashEngine
 impl core::clone::Clone for bitcoin_hashes::sha384::Hash
 impl core::clone::Clone for bitcoin_hashes::sha384::HashEngine
 impl core::clone::Clone for bitcoin_hashes::sha512::Hash
@@ -274,6 +278,7 @@ impl core::marker::Freeze for bitcoin_hashes::sha256::Midstate
 impl core::marker::Freeze for bitcoin_hashes::sha256::MidstateError
 impl core::marker::Freeze for bitcoin_hashes::sha256d::Hash
 impl core::marker::Freeze for bitcoin_hashes::sha256d::HashEngine
+impl core::marker::Freeze for bitcoin_hashes::sha256t::HashEngine
 impl core::marker::Freeze for bitcoin_hashes::sha384::Hash
 impl core::marker::Freeze for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Freeze for bitcoin_hashes::sha512::Hash
@@ -297,6 +302,7 @@ impl core::marker::Send for bitcoin_hashes::sha256::Midstate
 impl core::marker::Send for bitcoin_hashes::sha256::MidstateError
 impl core::marker::Send for bitcoin_hashes::sha256d::Hash
 impl core::marker::Send for bitcoin_hashes::sha256d::HashEngine
+impl core::marker::Send for bitcoin_hashes::sha256t::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha384::Hash
 impl core::marker::Send for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Send for bitcoin_hashes::sha512::Hash
@@ -333,6 +339,7 @@ impl core::marker::Sync for bitcoin_hashes::sha256::Midstate
 impl core::marker::Sync for bitcoin_hashes::sha256::MidstateError
 impl core::marker::Sync for bitcoin_hashes::sha256d::Hash
 impl core::marker::Sync for bitcoin_hashes::sha256d::HashEngine
+impl core::marker::Sync for bitcoin_hashes::sha256t::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha384::Hash
 impl core::marker::Sync for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Sync for bitcoin_hashes::sha512::Hash
@@ -356,6 +363,7 @@ impl core::marker::Unpin for bitcoin_hashes::sha256::Midstate
 impl core::marker::Unpin for bitcoin_hashes::sha256::MidstateError
 impl core::marker::Unpin for bitcoin_hashes::sha256d::Hash
 impl core::marker::Unpin for bitcoin_hashes::sha256d::HashEngine
+impl core::marker::Unpin for bitcoin_hashes::sha256t::HashEngine
 impl core::marker::Unpin for bitcoin_hashes::sha384::Hash
 impl core::marker::Unpin for bitcoin_hashes::sha384::HashEngine
 impl core::marker::Unpin for bitcoin_hashes::sha512::Hash
@@ -379,6 +387,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256::Midstat
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256::MidstateError
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256d::Hash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256d::HashEngine
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha256t::HashEngine
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha384::Hash
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha384::HashEngine
 impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_hashes::sha512::Hash
@@ -402,6 +411,7 @@ impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256::Midstate
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256::MidstateError
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256d::Hash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256d::HashEngine
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha256t::HashEngine
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha384::Hash
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha384::HashEngine
 impl core::panic::unwind_safe::UnwindSafe for bitcoin_hashes::sha512::Hash
@@ -434,6 +444,7 @@ impl std::io::Write for bitcoin_hashes::ripemd160::HashEngine
 impl std::io::Write for bitcoin_hashes::sha1::HashEngine
 impl std::io::Write for bitcoin_hashes::sha256::HashEngine
 impl std::io::Write for bitcoin_hashes::sha256d::HashEngine
+impl std::io::Write for bitcoin_hashes::sha256t::HashEngine
 impl std::io::Write for bitcoin_hashes::sha384::HashEngine
 impl std::io::Write for bitcoin_hashes::sha512::HashEngine
 impl std::io::Write for bitcoin_hashes::sha512_256::HashEngine
@@ -550,6 +561,7 @@ pub const bitcoin_hashes::sha256::HashEngine::BLOCK_SIZE: usize
 pub const bitcoin_hashes::sha256d::Hash::DISPLAY_BACKWARD: bool
 pub const bitcoin_hashes::sha256d::HashEngine::BLOCK_SIZE: usize
 pub const bitcoin_hashes::sha256t::Hash<T>::DISPLAY_BACKWARD: bool
+pub const bitcoin_hashes::sha256t::HashEngine::BLOCK_SIZE: usize
 pub const bitcoin_hashes::sha384::Hash::DISPLAY_BACKWARD: bool
 pub const bitcoin_hashes::sha384::HashEngine::BLOCK_SIZE: usize
 pub const bitcoin_hashes::sha512::Hash::DISPLAY_BACKWARD: bool
@@ -588,6 +600,8 @@ pub const fn bitcoin_hashes::sha256d::HashEngine::new() -> Self
 pub const fn bitcoin_hashes::sha256t::Hash<T>::as_byte_array(&self) -> &[u8; 32]
 pub const fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: [u8; 32]) -> Self
 pub const fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> [u8; 32]
+pub const fn bitcoin_hashes::sha256t::HashEngine::from_pre_tagged(e: bitcoin_hashes::sha256::HashEngine) -> Self
+pub const fn bitcoin_hashes::sha256t::HashEngine::into_inner(self) -> bitcoin_hashes::sha256::HashEngine
 pub const fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &[u8; 48]
 pub const fn bitcoin_hashes::sha384::Hash::from_byte_array(bytes: [u8; 48]) -> Self
 pub const fn bitcoin_hashes::sha384::Hash::to_byte_array(self) -> [u8; 48]
@@ -605,6 +619,7 @@ pub const fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: [u8; 8]) ->
 pub const fn bitcoin_hashes::siphash24::Hash::to_byte_array(self) -> [u8; 8]
 pub const fn bitcoin_hashes::siphash24::HashEngine::with_keys(k0: u64, k1: u64) -> bitcoin_hashes::siphash24::HashEngine
 pub extern crate bitcoin_hashes::hex
+pub extern crate bitcoin_hashes::io
 pub extern crate bitcoin_hashes::serde
 pub fn bitcoin_hashes::GeneralHash::engine() -> Self::Engine where Self::Engine: core::default::Default
 pub fn bitcoin_hashes::GeneralHash::from_engine(e: Self::Engine) -> Self
@@ -845,13 +860,13 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::borrow(&self) -> &[u8]
 pub fn bitcoin_hashes::sha256t::Hash<T>::clone(&self) -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::cmp(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> core::cmp::Ordering
 pub fn bitcoin_hashes::sha256t::Hash<T>::deserialize<D: serde::de::Deserializer<'de>>(d: D) -> core::result::Result<bitcoin_hashes::sha256t::Hash<T>, <D as serde::de::Deserializer>::Error>
-pub fn bitcoin_hashes::sha256t::Hash<T>::engine() -> bitcoin_hashes::sha256::HashEngine
+pub fn bitcoin_hashes::sha256t::Hash<T>::engine() -> bitcoin_hashes::sha256t::HashEngine
 pub fn bitcoin_hashes::sha256t::Hash<T>::eq(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> bool
 pub fn bitcoin_hashes::sha256t::Hash<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_byte_array(bytes: Self::Bytes) -> Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_bytes_ref(bytes: &[u8; 32]) -> &Self
-pub fn bitcoin_hashes::sha256t::Hash<T>::from_engine(e: bitcoin_hashes::sha256::HashEngine) -> bitcoin_hashes::sha256t::Hash<T>
+pub fn bitcoin_hashes::sha256t::Hash<T>::from_engine(e: bitcoin_hashes::sha256t::HashEngine) -> bitcoin_hashes::sha256t::Hash<T>
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_slice(sl: &[u8]) -> core::result::Result<bitcoin_hashes::sha256t::Hash<T>, bitcoin_hashes::error::FromSliceError>
 pub fn bitcoin_hashes::sha256t::Hash<T>::from_str(s: &str) -> core::result::Result<Self, Self::Err>
 pub fn bitcoin_hashes::sha256t::Hash<T>::hash(data: &[u8]) -> Self
@@ -861,7 +876,14 @@ pub fn bitcoin_hashes::sha256t::Hash<T>::hash_reader<R: bitcoin_io::BufRead>(rea
 pub fn bitcoin_hashes::sha256t::Hash<T>::partial_cmp(&self, other: &bitcoin_hashes::sha256t::Hash<T>) -> core::option::Option<core::cmp::Ordering>
 pub fn bitcoin_hashes::sha256t::Hash<T>::serialize<S: serde::ser::Serializer>(&self, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
 pub fn bitcoin_hashes::sha256t::Hash<T>::to_byte_array(self) -> Self::Bytes
-pub fn bitcoin_hashes::sha256t::Tag::engine() -> bitcoin_hashes::sha256::HashEngine
+pub fn bitcoin_hashes::sha256t::HashEngine::clone(&self) -> bitcoin_hashes::sha256t::HashEngine
+pub fn bitcoin_hashes::sha256t::HashEngine::flush(&mut self) -> bitcoin_io::Result<()>
+pub fn bitcoin_hashes::sha256t::HashEngine::flush(&mut self) -> std::io::error::Result<()>
+pub fn bitcoin_hashes::sha256t::HashEngine::input(&mut self, data: &[u8])
+pub fn bitcoin_hashes::sha256t::HashEngine::n_bytes_hashed(&self) -> u64
+pub fn bitcoin_hashes::sha256t::HashEngine::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_hashes::sha256t::HashEngine::write(&mut self, buf: &[u8]) -> std::io::error::Result<usize>
+pub fn bitcoin_hashes::sha256t::Tag::engine() -> bitcoin_hashes::sha256t::HashEngine
 pub fn bitcoin_hashes::sha384::Hash::as_byte_array(&self) -> &Self::Bytes
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8; 48]
 pub fn bitcoin_hashes::sha384::Hash::as_ref(&self) -> &[u8]
@@ -999,7 +1021,6 @@ pub macro bitcoin_hashes::hash_newtype!
 pub macro bitcoin_hashes::impl_debug_only_for_newtype!
 pub macro bitcoin_hashes::impl_hex_for_newtype!
 pub macro bitcoin_hashes::impl_serde_for_newtype!
-pub macro bitcoin_hashes::sha256t_hash_newtype!
 pub macro bitcoin_hashes::sha256t_tag!
 pub mod bitcoin_hashes
 pub mod bitcoin_hashes::cmp
@@ -1038,6 +1059,7 @@ pub struct bitcoin_hashes::sha256::HashEngine
 pub struct bitcoin_hashes::sha256::Midstate
 pub struct bitcoin_hashes::sha256::MidstateError
 pub struct bitcoin_hashes::sha256d::HashEngine(_)
+pub struct bitcoin_hashes::sha256t::HashEngine(_)
 pub struct bitcoin_hashes::sha384::HashEngine(_)
 pub struct bitcoin_hashes::sha512::HashEngine
 pub struct bitcoin_hashes::sha512_256::HashEngine(_)
@@ -1076,7 +1098,7 @@ pub type bitcoin_hashes::sha256d::Hash::Bytes = [u8; 32]
 pub type bitcoin_hashes::sha256d::Hash::Engine = bitcoin_hashes::sha256d::HashEngine
 pub type bitcoin_hashes::sha256d::Hash::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin_hashes::sha256t::Hash<T>::Bytes = [u8; 32]
-pub type bitcoin_hashes::sha256t::Hash<T>::Engine = bitcoin_hashes::sha256::HashEngine
+pub type bitcoin_hashes::sha256t::Hash<T>::Engine = bitcoin_hashes::sha256t::HashEngine
 pub type bitcoin_hashes::sha256t::Hash<T>::Err = hex_conservative::error::HexToArrayError
 pub type bitcoin_hashes::sha384::Hash::Bytes = [u8; 48]
 pub type bitcoin_hashes::sha384::Hash::Engine = bitcoin_hashes::sha384::HashEngine

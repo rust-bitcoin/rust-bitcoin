@@ -1698,7 +1698,7 @@ pub fn bitcoin_primitives::sequence::Sequence::try_from(s: alloc::string::String
 pub fn bitcoin_primitives::taproot::TapBranchTag::clone(&self) -> bitcoin_primitives::taproot::TapBranchTag
 pub fn bitcoin_primitives::taproot::TapBranchTag::cmp(&self, other: &bitcoin_primitives::taproot::TapBranchTag) -> core::cmp::Ordering
 pub fn bitcoin_primitives::taproot::TapBranchTag::default() -> bitcoin_primitives::taproot::TapBranchTag
-pub fn bitcoin_primitives::taproot::TapBranchTag::engine() -> bitcoin_hashes::sha256::HashEngine
+pub fn bitcoin_primitives::taproot::TapBranchTag::engine() -> bitcoin_hashes::sha256t::HashEngine
 pub fn bitcoin_primitives::taproot::TapBranchTag::eq(&self, other: &bitcoin_primitives::taproot::TapBranchTag) -> bool
 pub fn bitcoin_primitives::taproot::TapBranchTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::taproot::TapBranchTag::partial_cmp(&self, other: &bitcoin_primitives::taproot::TapBranchTag) -> core::option::Option<core::cmp::Ordering>
@@ -1723,7 +1723,7 @@ pub fn bitcoin_primitives::taproot::TapLeafHash::to_byte_array(self) -> Self::By
 pub fn bitcoin_primitives::taproot::TapLeafTag::clone(&self) -> bitcoin_primitives::taproot::TapLeafTag
 pub fn bitcoin_primitives::taproot::TapLeafTag::cmp(&self, other: &bitcoin_primitives::taproot::TapLeafTag) -> core::cmp::Ordering
 pub fn bitcoin_primitives::taproot::TapLeafTag::default() -> bitcoin_primitives::taproot::TapLeafTag
-pub fn bitcoin_primitives::taproot::TapLeafTag::engine() -> bitcoin_hashes::sha256::HashEngine
+pub fn bitcoin_primitives::taproot::TapLeafTag::engine() -> bitcoin_hashes::sha256t::HashEngine
 pub fn bitcoin_primitives::taproot::TapLeafTag::eq(&self, other: &bitcoin_primitives::taproot::TapLeafTag) -> bool
 pub fn bitcoin_primitives::taproot::TapLeafTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::taproot::TapLeafTag::partial_cmp(&self, other: &bitcoin_primitives::taproot::TapLeafTag) -> core::option::Option<core::cmp::Ordering>
@@ -1767,7 +1767,7 @@ pub fn bitcoin_primitives::taproot::TapTweakHash::to_byte_array(self) -> Self::B
 pub fn bitcoin_primitives::taproot::TapTweakTag::clone(&self) -> bitcoin_primitives::taproot::TapTweakTag
 pub fn bitcoin_primitives::taproot::TapTweakTag::cmp(&self, other: &bitcoin_primitives::taproot::TapTweakTag) -> core::cmp::Ordering
 pub fn bitcoin_primitives::taproot::TapTweakTag::default() -> bitcoin_primitives::taproot::TapTweakTag
-pub fn bitcoin_primitives::taproot::TapTweakTag::engine() -> bitcoin_hashes::sha256::HashEngine
+pub fn bitcoin_primitives::taproot::TapTweakTag::engine() -> bitcoin_hashes::sha256t::HashEngine
 pub fn bitcoin_primitives::taproot::TapTweakTag::eq(&self, other: &bitcoin_primitives::taproot::TapTweakTag) -> bool
 pub fn bitcoin_primitives::taproot::TapTweakTag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 pub fn bitcoin_primitives::taproot::TapTweakTag::partial_cmp(&self, other: &bitcoin_primitives::taproot::TapTweakTag) -> core::option::Option<core::cmp::Ordering>
