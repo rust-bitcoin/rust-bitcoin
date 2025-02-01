@@ -334,7 +334,11 @@ pub struct LegacyAddressTooLongError {
 
 impl LegacyAddressTooLongError {
     /// Returns the invalid legacy address length.
-    pub fn invalid_legcay_address_length(&self) -> usize { self.length }
+    pub fn invalid_legacy_address_length(&self) -> usize { self.length }
+
+    #[doc(hidden)]
+    #[deprecated = "Use invalid_legacy_address_length() instead"]
+    pub fn invalid_legcay_address_length(&self) -> usize { self.invalid_legacy_address_length() }
 }
 
 impl fmt::Display for LegacyAddressTooLongError {
