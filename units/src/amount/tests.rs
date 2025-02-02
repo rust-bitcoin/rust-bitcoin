@@ -26,7 +26,6 @@ fn sanity_check() {
     assert_eq!(ssat(-100).signum(), -1);
     assert_eq!(ssat(0).signum(), 0);
     assert_eq!(ssat(100).signum(), 1);
-    assert_eq!(SignedAmount::from(sat(100)), ssat(100));
     assert!(ssat(i64::MIN).checked_abs().is_none());
     assert!(!ssat(-100).is_positive());
     assert!(ssat(100).is_positive());
@@ -98,6 +97,13 @@ fn from_str_zero_without_denomination() {
 fn from_int_btc() {
     let amt = Amount::from_int_btc_const(2);
     assert_eq!(Amount::from_sat_unchecked(200_000_000), amt);
+}
+
+#[test]
+fn signed_amount_try_from_amount() {
+    let ua_positive = Amount::from_sat(123);
+    let sa_positive = SignedAmount::try_from(ua_positive).unwrap();
+    assert_eq!(sa_positive, SignedAmount::from_sat(123));
 }
 
 #[test]
@@ -575,9 +581,13 @@ fn unsigned_signed_conversion() {
     let sat = Amount::from_sat;
     let max_sats: u64 = Amount::MAX.to_sat();
 
-    assert_eq!(sat(max_sats).to_signed(), ssat(max_sats as i64));
-    assert_eq!(ssat(max_sats as i64).to_unsigned(), Ok(sat(max_sats)));
-    assert_eq!(ssat(max_sats as i64).to_unsigned().unwrap().to_signed(), ssat(max_sats as i64));
+    assert_eq!(SignedAmount::try_from(sat(100)).unwrap(), ssat(100));
+    assert_eq!(Amount::try_from(ssat(100)).unwrap(), sat(100));
+
+    assert_eq!(sat(i64::MAX as u64 + 1).to_signed(), Err(OutOfRangeError::too_big(true)));
+    assert_eq!(sat(max_sats).to_signed(), Err(OutOfRangeError::too_big(true)));
+
+    assert_eq!(ssat(-100).to_unsigned(), Err(OutOfRangeError::negative()));
 }
 
 #[test]
