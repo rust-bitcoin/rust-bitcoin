@@ -696,6 +696,7 @@ pub const fn bitcoin_units::locktime::relative::Time::value(self) -> u16
 pub const fn bitcoin_units::weight::Weight::checked_add(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::checked_div(self, rhs: u64) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::checked_mul(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::checked_mul_by_fee_rate(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::weight::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
 pub const fn bitcoin_units::weight::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
 pub const fn bitcoin_units::weight::Weight::from_vb(vb: u64) -> core::option::Option<Self>
