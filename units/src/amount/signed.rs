@@ -60,9 +60,9 @@ impl SignedAmount {
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
-    pub const MIN: Self = SignedAmount(-21_000_000 * 100_000_000);
+    pub const MIN: Self = SignedAmount(i64::MIN);
     /// The maximum value of an amount.
-    pub const MAX: Self = SignedAmount::MAX_MONEY;
+    pub const MAX: Self = SignedAmount(i64::MAX);
 
     /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
     ///
@@ -146,11 +146,12 @@ impl SignedAmount {
             (false, sat) if sat > SignedAmount::MAX.to_sat() as u64 => Err(ParseAmountError(
                 ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
             )),
-            (false, sat) => Ok(SignedAmount(sat as i64)), // Cast ok, value in this arm does not wrap.
-            (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(
-                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
-            ),
-            (true, sat) => Ok(SignedAmount(-(sat as i64))), // Cast ok, value in this arm does not wrap.
+            (false, sat) => Ok(SignedAmount(sat as i64)),
+            (true, sat) if sat == i64::MIN.unsigned_abs() => Ok(SignedAmount(i64::MIN)),
+            (true, sat) if sat > i64::MIN.unsigned_abs() => Err(ParseAmountError(
+                ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small()),
+            )),
+            (true, sat) => Ok(SignedAmount(-(sat as i64))),
         }
     }
 
@@ -340,7 +341,7 @@ impl SignedAmount {
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_add(rhs.0) {
-            Some(res) => SignedAmount(res).check_min_max(),
+            Some(res) => Some(SignedAmount(res)),
             None => None,
         }
     }
@@ -353,7 +354,7 @@ impl SignedAmount {
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_sub(rhs.0) {
-            Some(res) => SignedAmount(res).check_min_max(),
+            Some(res) => Some(SignedAmount(res)),
             None => None,
         }
     }
@@ -366,7 +367,7 @@ impl SignedAmount {
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
         match self.0.checked_mul(rhs) {
-            Some(res) => SignedAmount(res).check_min_max(),
+            Some(res) => Some(SignedAmount(res)),
             None => None,
         }
     }
@@ -441,15 +442,6 @@ impl SignedAmount {
             Err(OutOfRangeError::negative())
         } else {
             Ok(Amount::from_sat(self.to_sat() as u64)) // Cast ok, checked not negative above.
-        }
-    }
-
-    /// Checks the amount is within the allowed range.
-    const fn check_min_max(self) -> Option<SignedAmount> {
-        if self.0 < Self::MIN.0 || self.0 > Self::MAX.0 {
-            None
-        } else {
-            Some(self)
         }
     }
 }

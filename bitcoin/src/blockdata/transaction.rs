@@ -1690,6 +1690,12 @@ mod tests {
     }
 
     #[test]
+    fn effective_value_value_does_not_overflow() {
+        let eff_value = effective_value(FeeRate::ZERO, Weight::ZERO, Amount::MAX);
+        assert!(eff_value.is_none());
+    }
+
+    #[test]
     fn txin_txout_weight() {
         // [(is_segwit, tx_hex, expected_weight)]
         let txs = [

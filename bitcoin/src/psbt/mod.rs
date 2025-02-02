@@ -2171,7 +2171,7 @@ mod tests {
         let output_1_val = Amount::from_sat(100_000_000);
         let prev_output_val = Amount::from_sat(200_000_000);
 
-        let t = Psbt {
+        let mut t = Psbt {
             unsigned_tx: Transaction {
                 version: transaction::Version::TWO,
                 lock_time: absolute::LockTime::from_consensus(1257139),
@@ -2263,6 +2263,13 @@ mod tests {
         t3.unsigned_tx.output[0].value = prev_output_val;
         match t3.fee().unwrap_err() {
             Error::NegativeFee => {}
+            e => panic!("unexpected error: {:?}", e),
+        }
+        // overflow
+        t.unsigned_tx.output[0].value = Amount::MAX;
+        t.unsigned_tx.output[1].value = Amount::MAX;
+        match t.fee().unwrap_err() {
+            Error::FeeOverflow => {}
             e => panic!("unexpected error: {:?}", e),
         }
     }

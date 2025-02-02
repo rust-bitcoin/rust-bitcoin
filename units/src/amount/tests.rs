@@ -104,6 +104,10 @@ fn signed_amount_try_from_amount() {
     let ua_positive = Amount::from_sat(123);
     let sa_positive = SignedAmount::try_from(ua_positive).unwrap();
     assert_eq!(sa_positive, SignedAmount::from_sat(123));
+
+    let ua_max = Amount::MAX;
+    let result = SignedAmount::try_from(ua_max);
+    assert_eq!(result, Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }));
 }
 
 #[test]
@@ -212,6 +216,9 @@ fn amount_checked_div_by_weight_ceil() {
     // round up to 864
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(864));
 
+    let fee_rate = Amount::MAX.checked_div_by_weight_ceil(weight);
+    assert!(fee_rate.is_none());
+
     let fee_rate = Amount::ONE_SAT.checked_div_by_weight_ceil(Weight::ZERO);
     assert!(fee_rate.is_none());
 }
@@ -229,6 +236,9 @@ fn amount_checked_div_by_weight_floor() {
     // 329 sats / 381 wu = 863.5 sats/kwu
     // round down to 863
     assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
+
+    let fee_rate = Amount::MAX.checked_div_by_weight_floor(weight);
+    assert!(fee_rate.is_none());
 
     let fee_rate = Amount::ONE_SAT.checked_div_by_weight_floor(Weight::ZERO);
     assert!(fee_rate.is_none());
@@ -262,12 +272,14 @@ fn amount_checked_div_by_fee_rate() {
     assert!(amount.checked_div_by_fee_rate_floor(zero_fee_rate).is_none());
     assert!(amount.checked_div_by_fee_rate_ceil(zero_fee_rate).is_none());
 
-    // Test with maximum amount
-    let max_amount = Amount::MAX;
+    // Test with maximum fee calculation amount.
+    let max = Amount::MAX / 1000;
     let small_fee_rate = FeeRate::from_sat_per_kwu(1);
-    let weight = max_amount.checked_div_by_fee_rate_floor(small_fee_rate).unwrap();
-    // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
-    assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
+    let weight = max.checked_div_by_fee_rate_floor(small_fee_rate).unwrap();
+    assert_eq!(weight, Weight::from_wu(18_446_744_073_709_551_000));
+
+    let max = max + Amount::from_sat(1);
+    assert!(max.checked_div_by_fee_rate_floor(small_fee_rate).is_none());
 
     // Test overflow case
     let tiny_fee_rate = FeeRate::from_sat_per_kwu(1);
@@ -298,6 +310,9 @@ fn floating_point() {
         f(18_446_744_073_709_551_617.0, D::Satoshi),
         Err(OutOfRangeError::too_big(false).into())
     );
+
+    // Amount can be grater than the max SignedAmount.
+    assert!(f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi).is_ok());
 
     assert_eq!(
         f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
@@ -350,7 +365,7 @@ fn parsing() {
         Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 }))
     );
     #[cfg(feature = "alloc")]
-    let more_than_max = format!("{}", Amount::MAX.to_sat() + 1);
+    let more_than_max = format!("1{}", Amount::MAX);
     #[cfg(feature = "alloc")]
     assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
     assert_eq!(p("0.000000042", btc), Err(TooPreciseError { position: 10 }.into()));
@@ -363,13 +378,24 @@ fn parsing() {
     assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
     assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
     #[cfg(feature = "alloc")]
-    assert_eq!(sp(&SignedAmount::MIN.to_sat().to_string(), sat), Ok(SignedAmount::MIN));
+    assert_eq!(sp(&i64::MIN.to_string(), sat), Ok(SignedAmount::from_sat(i64::MIN)));
     assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
     assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
     assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
-    assert_eq!(p("2100000000000000", sat), Ok(Amount::from_sat(21_000_000__000_000_00)));
-    assert_eq!(p("2100000000000000.", sat), Ok(Amount::from_sat(21_000_000__000_000_00)));
-    assert_eq!(p("21000000", btc), Ok(Amount::from_sat(21_000_000__000_000_00)));
+    assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
+    // Should this even pass?
+    assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
+    assert_eq!(p("12345678901.12345678", btc), Ok(Amount::from_sat(12_345_678_901__123_456_78)));
+
+    // make sure satoshi > i64::MAX is checked.
+    #[cfg(feature = "alloc")]
+    {
+        let amount = Amount::from_sat(i64::MAX as u64);
+        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
+        assert!(SignedAmount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat)
+            .is_err());
+        assert!(Amount::from_str_in(&(amount + Amount::from_sat(1)).to_string_in(sat), sat).is_ok());
+    }
 
     // exactly 50 chars.
     assert_eq!(
@@ -653,11 +679,7 @@ fn from_str() {
     scase("-0.1 satoshi", Err(TooPreciseError { position: 3 }));
     case("0.123456 mBTC", Err(TooPreciseError { position: 7 }));
     scase("-1.001 bits", Err(TooPreciseError { position: 5 }));
-    scase("-21000001 BTC", Err(OutOfRangeError::too_small()));
-    scase("21000001 BTC", Err(OutOfRangeError::too_big(true)));
-    scase("-2100000000000001 SAT", Err(OutOfRangeError::too_small()));
-    scase("2100000000000001 SAT", Err(OutOfRangeError::too_big(true)));
-    case("21000001 BTC", Err(OutOfRangeError::too_big(false)));
+    scase("-200000000000 BTC", Err(OutOfRangeError::too_small()));
     case("18446744073709551616 sat", Err(OutOfRangeError::too_big(false)));
 
     ok_case(".5 bits", Amount::from_sat(50));
@@ -666,9 +688,8 @@ fn from_str() {
     ok_scase("-5 satoshi", SignedAmount::from_sat(-5));
     ok_case("0.10000000 BTC", Amount::from_sat(100_000_00));
     ok_scase("-100 bits", SignedAmount::from_sat(-10_000));
-    ok_case("21000000 BTC", Amount::MAX);
-    ok_scase("21000000 BTC", SignedAmount::MAX);
-    ok_scase("-21000000 BTC", SignedAmount::MIN);
+    #[cfg(feature = "alloc")]
+    ok_scase(&format!("{} SAT", i64::MIN), SignedAmount::from_sat(i64::MIN));
 }
 
 #[cfg(feature = "alloc")]
@@ -817,12 +838,12 @@ fn serde_as_btc() {
     }
 
     let orig = T {
-        amt: Amount::from_sat(20_000_000__000_000_01),
-        samt: SignedAmount::from_sat(-20_000_000__000_000_01),
+        amt: Amount::from_sat(21_000_000__000_000_01),
+        samt: SignedAmount::from_sat(-21_000_000__000_000_01),
     };
 
-    let json = "{\"amt\": 20000000.00000001, \
-                \"samt\": -20000000.00000001}";
+    let json = "{\"amt\": 21000000.00000001, \
+                \"samt\": -21000000.00000001}";
     let t: T = serde_json::from_str(json).unwrap();
     assert_eq!(t, orig);
 
