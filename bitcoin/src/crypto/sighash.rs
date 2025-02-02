@@ -994,7 +994,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             match sighash {
                 EcdsaSighashType::All => {
                     self_.output.consensus_encode(writer)?;
-                },
+                }
                 EcdsaSighashType::Single => {
                     // sign all outputs up to and including this one, but erase
                     // all of them except for this one
@@ -1002,13 +1002,14 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                     writer.emit_compact_size(count + 1)?;
                     for _ in 0..count {
                         // consensus encoding of the "NULL txout" - max amount, empty script_pubkey
-                        writer.write_all(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00])?;
+                        writer
+                            .write_all(&[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00])?;
                     }
                     self_.output[count].consensus_encode(writer)?;
-                },
+                }
                 EcdsaSighashType::None => {
                     writer.emit_compact_size(0u8)?;
-                },
+                }
                 _ => unreachable!(),
             };
             self_.lock_time.consensus_encode(writer)?;

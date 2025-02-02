@@ -95,7 +95,6 @@ impl<'a> Arbitrary<'a> for ScriptBuf {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
