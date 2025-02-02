@@ -148,7 +148,7 @@ fn sighash_p2wpkh() {
     let inp_idx = 0;
     //output value from the referenced vout:0 from the referenced tx:
     //bitcoin-cli getrawtransaction 752d675b9cc0bd14e0bd23969effee0005ad6d7e550dcc832f0216c7ffd4e15c  3
-    let ref_out_value = Amount::from_sat_unchecked(200000000);
+    let ref_out_value = Amount::from_sat(200000000);
 
     println!("\nsighash_p2wpkh:");
     compute_sighash_p2wpkh(&raw_tx, inp_idx, ref_out_value);
@@ -178,7 +178,7 @@ fn sighash_p2wsh_multisig_2x2() {
     //For the witness transaction sighash computation, we need its referenced output's value from the original transaction:
     //bitcoin-cli getrawtransaction 2845399a8cd7a52733f9f9d0e0b8b6c5d1c88aea4cee09f8d8fa762912b49e1b  3
     //we need vout 0 value in sats:
-    let ref_out_value = Amount::from_sat_unchecked(968240);
+    let ref_out_value = Amount::from_sat(968240);
 
     println!("\nsighash_p2wsh_multisig_2x2:");
     compute_sighash_p2wsh(&raw_tx, 0, ref_out_value);

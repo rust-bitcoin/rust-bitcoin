@@ -670,7 +670,7 @@ pub const fn bitcoin_units::Amount::checked_rem(self, rhs: u64) -> core::option:
 pub const fn bitcoin_units::Amount::checked_sub(self, rhs: bitcoin_units::Amount) -> core::option::Option<bitcoin_units::Amount>
 pub const fn bitcoin_units::Amount::from_int_btc_const(whole_bitcoin: u32) -> bitcoin_units::Amount
 pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> bitcoin_units::Amount
-pub const fn bitcoin_units::Amount::from_sat_unchecked(satoshi: u64) -> bitcoin_units::Amount
+pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> bitcoin_units::Amount
 pub const fn bitcoin_units::Amount::to_sat(self) -> u64
 pub const fn bitcoin_units::SignedAmount::checked_abs(self) -> core::option::Option<bitcoin_units::SignedAmount>
 pub const fn bitcoin_units::SignedAmount::checked_add(self, rhs: bitcoin_units::SignedAmount) -> core::option::Option<bitcoin_units::SignedAmount>
@@ -680,7 +680,7 @@ pub const fn bitcoin_units::SignedAmount::checked_rem(self, rhs: i64) -> core::o
 pub const fn bitcoin_units::SignedAmount::checked_sub(self, rhs: bitcoin_units::SignedAmount) -> core::option::Option<bitcoin_units::SignedAmount>
 pub const fn bitcoin_units::SignedAmount::from_int_btc_const(whole_bitcoin: i64) -> bitcoin_units::SignedAmount
 pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::SignedAmount
-pub const fn bitcoin_units::SignedAmount::from_sat_unchecked(satoshi: i64) -> bitcoin_units::SignedAmount
+pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::SignedAmount
 pub const fn bitcoin_units::SignedAmount::to_sat(self) -> i64
 pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
 pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32

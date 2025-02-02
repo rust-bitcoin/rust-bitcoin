@@ -56,7 +56,7 @@ impl SignedAmount {
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = SignedAmount(100_000_000);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Self::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = Self::from_sat(50 * 100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
@@ -84,13 +84,6 @@ impl SignedAmount {
     /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
     /// ```
     pub const fn to_sat(self) -> i64 { self.0 }
-
-    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
-    ///
-    /// Caller to guarantee that `satoshi` is within valid range.
-    ///
-    /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
-    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
