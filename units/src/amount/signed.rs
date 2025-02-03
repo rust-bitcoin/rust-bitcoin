@@ -502,7 +502,7 @@ crate::internal_macros::impl_sub_assign!(SignedAmount);
 impl ops::Rem<i64> for SignedAmount {
     type Output = SignedAmount;
 
-    fn rem(self, modulus: i64) -> Self {
+    fn rem(self, modulus: i64) -> Self::Output {
         self.checked_rem(modulus).expect("SignedAmount remainder error")
     }
 }
