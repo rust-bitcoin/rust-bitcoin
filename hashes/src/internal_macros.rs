@@ -104,12 +104,8 @@ macro_rules! hash_type_no_default {
         pub struct Hash([u8; $bits / 8]);
 
         impl Hash {
-            const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
-
             /// Constructs a new hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
-                Self::internal_new(bytes)
-            }
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self { Hash(bytes) }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
@@ -137,7 +133,7 @@ macro_rules! hash_type_no_default {
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);
-                    Ok(Self::internal_new(ret))
+                    Ok(Self::from_byte_array(ret))
                 }
             }
 

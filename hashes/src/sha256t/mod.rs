@@ -23,10 +23,8 @@ impl<T> Hash<T>
 where
     T: Tag,
 {
-    const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
-
     /// Constructs a new hash from the underlying byte array.
-    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes, PhantomData) }
 
     /// Zero cost conversion between a fixed length byte array shared reference and
     /// a shared reference to this Hash type.
