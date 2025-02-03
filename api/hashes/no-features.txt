@@ -780,6 +780,7 @@ pub fn bitcoin_hashes::siphash24::Hash::borrow(&self) -> &[u8; 8]
 pub fn bitcoin_hashes::siphash24::Hash::borrow(&self) -> &[u8]
 pub fn bitcoin_hashes::siphash24::Hash::clone(&self) -> bitcoin_hashes::siphash24::Hash
 pub fn bitcoin_hashes::siphash24::Hash::cmp(&self, other: &bitcoin_hashes::siphash24::Hash) -> core::cmp::Ordering
+pub fn bitcoin_hashes::siphash24::Hash::engine(k0: u64, k1: u64) -> bitcoin_hashes::siphash24::HashEngine
 pub fn bitcoin_hashes::siphash24::Hash::eq(&self, other: &bitcoin_hashes::siphash24::Hash) -> bool
 pub fn bitcoin_hashes::siphash24::Hash::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 pub fn bitcoin_hashes::siphash24::Hash::from_byte_array(bytes: Self::Bytes) -> Self

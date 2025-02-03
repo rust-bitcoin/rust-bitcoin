@@ -168,6 +168,9 @@ impl crate::HashEngine for HashEngine {
 }
 
 impl Hash {
+    /// Constructs a new SipHash24 engine with keys.
+    pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
+
     /// Produces a hash from the current state of a given engine.
     pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
 
