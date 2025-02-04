@@ -322,6 +322,6 @@ jobs:
           toolchain: ${{ needs.Prepare.outputs.nightly_version }}
       - name: "Install cargo-public-api"
         # Pin version so that updates don't introduce changes to the text files.
-        run: cargo +stable install --locked cargo-public-api@0.42.0
+        run: cargo +stable install --locked cargo-public-api@0.43.0
       - name: "Run API checker script"
         run: ./contrib/check-for-api-changes.sh
