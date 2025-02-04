@@ -134,6 +134,7 @@ impl FeeRate {
     /// This is equivalent to converting `vb` to [`Weight`] using [`Weight::from_vb`] and then calling
     /// `Self::fee_wu(weight)`.
     #[must_use]
+    #[deprecated(since = "TBD", note = "use Weight::from_vb and then `to_fee()` instead")]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
         Weight::from_vb(vb).and_then(|w| self.to_fee(w))
     }
@@ -232,15 +233,6 @@ mod tests {
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
         assert_eq!(fee_rate.to_fee(weight).unwrap(), Amount::from_sat_unchecked(6));
-    }
-
-    #[test]
-    fn fee_vb() {
-        let fee_overflow = FeeRate::from_sat_per_kwu(10).fee_vb(Weight::MAX.to_wu());
-        assert!(fee_overflow.is_none());
-
-        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
-        assert_eq!(fee_rate.fee_vb(3).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
