@@ -118,6 +118,14 @@ impl FeeRate {
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
+    pub fn to_fee(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+
+    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
+    /// if an overflow occurred.
+    ///
+    /// This is equivalent to `Self::checked_mul_by_weight()`.
+    #[must_use]
+    #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
@@ -127,7 +135,7 @@ impl FeeRate {
     /// `Self::fee_wu(weight)`.
     #[must_use]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
-        Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
+        Weight::from_vb(vb).and_then(|w| self.to_fee(w))
     }
 
     /// Checked weight multiplication.
@@ -218,12 +226,12 @@ mod tests {
 
     #[test]
     fn fee_wu() {
-        let fee_overflow = FeeRate::from_sat_per_kwu(10).fee_wu(Weight::MAX);
+        let fee_overflow = FeeRate::from_sat_per_kwu(10).to_fee(Weight::MAX);
         assert!(fee_overflow.is_none());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
-        assert_eq!(fee_rate.fee_wu(weight).unwrap(), Amount::from_sat_unchecked(6));
+        assert_eq!(fee_rate.to_fee(weight).unwrap(), Amount::from_sat_unchecked(6));
     }
 
     #[test]
