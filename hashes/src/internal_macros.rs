@@ -9,7 +9,7 @@
 ///
 /// * `$bits` - number of bits this hash type has
 /// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
-///    otherwise.
+///   otherwise.
 /// * `$gen: $gent` - generic type(s) and trait bound(s)
 ///
 /// Restrictions on usage:
