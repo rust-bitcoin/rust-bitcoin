@@ -265,7 +265,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
     ///
     /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
-    /// [`policy`]: ../../policy/index.html
+    /// [`policy`]: crate::policy
     fn vsize(&self) -> usize;
 
     /// Checks if this is a coinbase transaction.
