@@ -2249,7 +2249,7 @@ mod tests {
         };
         assert_eq!(
             t.fee().expect("fee calculation"),
-            prev_output_val - (output_0_val + output_1_val)
+            (prev_output_val - (output_0_val + output_1_val)).unwrap()
         );
         // no previous output
         let mut t2 = t.clone();

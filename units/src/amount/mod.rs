@@ -6,6 +6,7 @@
 //! We refer to the documentation on the types for more information.
 
 mod error;
+mod result;
 #[cfg(feature = "serde")]
 pub mod serde;
 
@@ -34,6 +35,7 @@ pub use self::{
         OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     },
+    result::{NumOpError, NumOpResult},
     signed::SignedAmount,
     unsigned::Amount,
 };

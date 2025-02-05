@@ -1673,7 +1673,7 @@ mod tests {
 
         // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
         let expected_fee = "4 sats".parse::<SignedAmount>().unwrap();
-        let expected_effective_value = value.to_signed() - expected_fee;
+        let expected_effective_value = (value.to_signed() - expected_fee).unwrap();
         assert_eq!(effective_value, expected_effective_value);
     }
 

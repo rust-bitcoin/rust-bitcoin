@@ -5,7 +5,7 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::str::FromStr;
-use core::{default, fmt, ops};
+use core::{default, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -422,60 +422,6 @@ impl fmt::Display for Amount {
     }
 }
 
-impl ops::Add for Amount {
-    type Output = Amount;
-
-    fn add(self, rhs: Amount) -> Self::Output {
-        self.checked_add(rhs).expect("Amount addition error")
-    }
-}
-crate::internal_macros::impl_add_for_references!(Amount);
-crate::internal_macros::impl_add_assign!(Amount);
-
-impl ops::Sub for Amount {
-    type Output = Amount;
-
-    fn sub(self, rhs: Amount) -> Self::Output {
-        self.checked_sub(rhs).expect("Amount subtraction error")
-    }
-}
-crate::internal_macros::impl_sub_for_references!(Amount);
-crate::internal_macros::impl_sub_assign!(Amount);
-
-impl ops::Rem<u64> for Amount {
-    type Output = Amount;
-
-    fn rem(self, modulus: u64) -> Self::Output {
-        self.checked_rem(modulus).expect("Amount remainder error")
-    }
-}
-
-impl ops::RemAssign<u64> for Amount {
-    fn rem_assign(&mut self, modulus: u64) { *self = *self % modulus }
-}
-
-impl ops::Mul<u64> for Amount {
-    type Output = Amount;
-
-    fn mul(self, rhs: u64) -> Self::Output {
-        self.checked_mul(rhs).expect("Amount multiplication error")
-    }
-}
-
-impl ops::MulAssign<u64> for Amount {
-    fn mul_assign(&mut self, rhs: u64) { *self = *self * rhs }
-}
-
-impl ops::Div<u64> for Amount {
-    type Output = Amount;
-
-    fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).expect("Amount division error") }
-}
-
-impl ops::DivAssign<u64> for Amount {
-    fn div_assign(&mut self, rhs: u64) { *self = *self / rhs }
-}
-
 impl FromStr for Amount {
     type Err = ParseError;
 
@@ -504,23 +450,6 @@ impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 
     fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
-}
-
-impl core::iter::Sum for Amount {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: u64 = iter.map(|amt| amt.0).sum();
-        Self::from_sat(sats)
-    }
-}
-
-impl<'a> core::iter::Sum<&'a Amount> for Amount {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Amount>,
-    {
-        let sats: u64 = iter.map(|amt| amt.0).sum();
-        Self::from_sat(sats)
-    }
 }
 
 #[cfg(feature = "arbitrary")]
