@@ -374,4 +374,10 @@ mod tests {
         let version = Version::from_consensus(0b00100000000000000000000000000010);
         assert!(!Version::is_signalling_soft_fork(&version, 0));
     }
+
+    #[test]
+    fn version_to_consensus() {
+        let version = Version::from_consensus(1234567890);
+        assert_eq!(version.to_consensus(), 1234567890);
+    }
 }
