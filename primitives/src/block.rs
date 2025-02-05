@@ -365,6 +365,8 @@ mod tests {
     fn version_is_signalling() {
         let version = Version::from_consensus(0b00100000000000000000000000000010);
         assert!(Version::is_signalling_soft_fork(&version, 1));
+        let version = Version::from_consensus(0b00110000000000000000000000000000);
+        assert!(Version::is_signalling_soft_fork(&version, 28));
     }
 
     #[test]
