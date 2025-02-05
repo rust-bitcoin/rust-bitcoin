@@ -950,6 +950,7 @@ pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: &bitcoin_uni
 pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: bitcoin_units::fee_rate::FeeRate)
 pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::fee_rate::FeeRate>
 pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
+pub fn bitcoin_units::fee_rate::FeeRate::to_fee(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
 pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: &str) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
 pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
