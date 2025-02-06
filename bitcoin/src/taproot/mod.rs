@@ -1600,7 +1600,7 @@ mod test {
         fn empty_hash(tag_name: &str) -> [u8; 32] {
             let mut e = tag_engine(tag_name);
             e.input(&[]);
-            Hash::<TapBranchTag>::from_engine(e).to_byte_array()
+            sha256::Hash::from_engine(e).to_byte_array()
         }
         assert_eq!(empty_hash("TapLeaf"), Hash::<TapLeafTag>::hash(&[]).to_byte_array());
         assert_eq!(empty_hash("TapBranch"), Hash::<TapBranchTag>::hash(&[]).to_byte_array());

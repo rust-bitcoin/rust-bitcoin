@@ -5,12 +5,12 @@
 use core::cmp;
 use core::marker::PhantomData;
 
+#[cfg(doc)]
+use crate::sha256::Midstate;
 use crate::{sha256, FromSliceError, HashEngine as _};
 
-type HashEngine = sha256::HashEngine;
-
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
-pub trait Tag {
+pub trait Tag: Clone {
     /// The [`Midstate`] after pre-tagging the hash engine.
     const MIDSTATE: sha256::Midstate;
 }
@@ -57,14 +57,12 @@ where
     }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash<T> {
-        Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
+    pub fn from_engine(e: HashEngine<T>) -> Hash<T> {
+        Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
     }
 
     /// Constructs a new engine.
-    pub fn engine() -> HashEngine {
-        sha256::HashEngine::from_midstate(T::MIDSTATE)
-    }
+    pub fn engine() -> HashEngine<T> { HashEngine::default() }
 
     /// Hashes some bytes.
     #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
@@ -136,6 +134,33 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 }
 
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
+
+/// Engine to compute SHA256t hash function.
+#[derive(Debug, Clone)]
+pub struct HashEngine<T>(sha256::HashEngine, PhantomData<T>);
+
+impl<T: Tag> Default for HashEngine<T> {
+    fn default() -> Self {
+        let tagged = sha256::HashEngine::from_midstate(T::MIDSTATE);
+        HashEngine(tagged, PhantomData)
+    }
+}
+
+impl<T: Tag> crate::HashEngine for HashEngine<T> {
+    const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
+    fn input(&mut self, data: &[u8]) { self.0.input(data) }
+    fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
+}
+
+crate::internal_macros::impl_io_write!(
+    HashEngine<T>,
+    |us: &mut HashEngine<T>, buf| {
+        us.input(buf);
+        Ok(buf.len())
+    },
+    |_us| { Ok(()) },
+    T: crate::sha256t::Tag
+);
 
 // Workaround macros being unavailable in attributes.
 #[doc(hidden)]
