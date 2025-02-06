@@ -68,6 +68,7 @@ pub use self::{
     block::{
         Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
     },
+    script::{Script, ScriptBuf},
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };
@@ -76,10 +77,11 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, WitnessCommitment},
     locktime::{absolute, relative},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
+    opcodes::Opcode,
     pow::CompactTarget,
     sequence::Sequence,
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
-    transaction::{Txid, Wtxid},
+    transaction::{OutPoint, Txid, Wtxid},
 };
 
 #[rustfmt::skip]
