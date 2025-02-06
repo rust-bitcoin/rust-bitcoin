@@ -13,11 +13,6 @@ type HashEngine = sha256::HashEngine;
 pub trait Tag {
     /// The [`Midstate`] after pre-tagging the hash engine.
     const MIDSTATE: sha256::Midstate;
-
-    /// Returns a hash engine that is pre-tagged and is ready to be used for the data.
-    fn engine() -> sha256::HashEngine {
-        sha256::HashEngine::from_midstate(Self::MIDSTATE)
-    }
 }
 
 /// Output of the SHA256t hash function.
@@ -65,7 +60,9 @@ where
     pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
 
     /// Constructs a new engine.
-    pub fn engine() -> HashEngine { T::engine() }
+    pub fn engine() -> HashEngine {
+        sha256::HashEngine::from_midstate(T::MIDSTATE)
+    }
 
     /// Hashes some bytes.
     #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.

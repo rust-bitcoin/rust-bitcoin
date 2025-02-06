@@ -1564,7 +1564,6 @@ mod sealed {
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hashes::sha256t::Tag;
     use hex::{DisplayHex, FromHex};
     use secp256k1::VerifyOnly;
 
@@ -1590,12 +1589,12 @@ mod test {
 
     #[test]
     fn midstates() {
-        use sha256t::Hash;
+        use sha256t::{Hash, Tag};
         // test that engine creation roundtrips
-        assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
-        assert_eq!(tag_engine("TapBranch").midstate(), TapBranchTag::engine().midstate());
-        assert_eq!(tag_engine("TapTweak").midstate(), TapTweakTag::engine().midstate());
-        assert_eq!(tag_engine("TapSighash").midstate(), TapSighashTag::engine().midstate());
+        assert_eq!(tag_engine("TapLeaf").midstate().unwrap(), TapLeafTag::MIDSTATE);
+        assert_eq!(tag_engine("TapBranch").midstate().unwrap(), TapBranchTag::MIDSTATE);
+        assert_eq!(tag_engine("TapTweak").midstate().unwrap(), TapTweakTag::MIDSTATE);
+        assert_eq!(tag_engine("TapSighash").midstate().unwrap(), TapSighashTag::MIDSTATE);
 
         // check that hash creation is the same as building into the same engine
         fn empty_hash(tag_name: &str) -> [u8; 32] {
@@ -1618,19 +1617,19 @@ mod test {
         //   CHashWriter writer = HasherTapLeaf;
         //   writer.GetSHA256().GetHex()
         assert_eq!(
-            Hash::<TapLeafTag>::from_engine(TapLeafTag::engine()).to_string(),
+            Hash::<TapLeafTag>::from_engine(Hash::<TapLeafTag>::engine()).to_string(),
             "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
-            Hash::<TapBranchTag>::from_engine(TapBranchTag::engine()).to_string(),
+            Hash::<TapBranchTag>::from_engine(Hash::<TapBranchTag>::engine()).to_string(),
             "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
-            Hash::<TapTweakTag>::from_engine(TapTweakTag::engine()).to_string(),
+            Hash::<TapTweakTag>::from_engine(Hash::<TapTweakTag>::engine()).to_string(),
             "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
-            Hash::<TapSighashTag>::from_engine(TapSighashTag::engine()).to_string(),
+            Hash::<TapSighashTag>::from_engine(Hash::<TapSighashTag>::engine()).to_string(),
             "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
