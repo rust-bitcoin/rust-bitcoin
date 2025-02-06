@@ -57,7 +57,9 @@ where
     }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash<T> { from_engine(e) }
+    pub fn from_engine(e: HashEngine) -> Hash<T> {
+        Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
+    }
 
     /// Constructs a new engine.
     pub fn engine() -> HashEngine {
@@ -134,13 +136,6 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 }
 
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
-
-fn from_engine<T>(e: sha256::HashEngine) -> Hash<T>
-where
-    T: Tag,
-{
-    Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
-}
 
 // Workaround macros being unavailable in attributes.
 #[doc(hidden)]
