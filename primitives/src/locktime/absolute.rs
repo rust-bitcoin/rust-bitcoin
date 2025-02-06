@@ -42,9 +42,9 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// # Examples
 ///
 /// ```
-/// # use bitcoin_primitives::absolute::{LockTime, LockTime::*};
-/// # let n = LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
-/// # let lock_time = LockTime::from_consensus(741521);  // nLockTime
+/// # use bitcoin_primitives::absolute::{self, LockTime::*};
+/// # let n = absolute::LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
+/// # let lock_time = absolute::LockTime::from_consensus(741521);  // nLockTime
 /// // To compare absolute lock times there are various `is_satisfied_*` methods, you may also use:
 /// let _is_satisfied = match (n, lock_time) {
 ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
@@ -59,10 +59,10 @@ pub enum LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_primitives::absolute::LockTime;
+    /// use bitcoin_primitives::absolute;
     ///
     /// let block: u32 = 741521;
-    /// let n = LockTime::from_height(block).expect("valid height");
+    /// let n = absolute::LockTime::from_height(block).expect("valid height");
     /// assert!(n.is_block_height());
     /// assert_eq!(n.to_consensus_u32(), block);
     /// ```
@@ -72,10 +72,10 @@ pub enum LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_primitives::absolute::LockTime;
+    /// use bitcoin_primitives::absolute;
     ///
     /// let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let n = LockTime::from_time(seconds).expect("valid time");
+    /// let n = absolute::LockTime::from_time(seconds).expect("valid time");
     /// assert!(n.is_block_time());
     /// assert_eq!(n.to_consensus_u32(), seconds);
     /// ```
@@ -95,9 +95,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_primitives::absolute::LockTime;
+    /// # use bitcoin_primitives::absolute;
     /// let hex_str = "0x61cf9980"; // Unix timestamp for January 1, 2022
-    /// let lock_time = LockTime::from_hex(hex_str)?;
+    /// let lock_time = absolute::LockTime::from_hex(hex_str)?;
     /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
     ///
     /// # Ok::<_, units::parse::PrefixedHexError>(())
@@ -112,9 +112,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_primitives::absolute::LockTime;
+    /// # use bitcoin_primitives::absolute;
     /// let hex_str = "61cf9980"; // Unix timestamp for January 1, 2022
-    /// let lock_time = LockTime::from_unprefixed_hex(hex_str)?;
+    /// let lock_time = absolute::LockTime::from_unprefixed_hex(hex_str)?;
     /// assert_eq!(lock_time.to_consensus_u32(), 0x61cf9980);
     ///
     /// # Ok::<_, units::parse::UnprefixedHexError>(())
@@ -129,11 +129,11 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::LockTime;
+    /// # use bitcoin_primitives::absolute;
     ///
     /// // `from_consensus` roundtrips as expected with `to_consensus_u32`.
     /// let n_lock_time: u32 = 741521;
-    /// let lock_time = LockTime::from_consensus(n_lock_time);
+    /// let lock_time = absolute::LockTime::from_consensus(n_lock_time);
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
     pub fn from_consensus(n: u32) -> Self {
@@ -157,9 +157,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::LockTime;
-    /// assert!(LockTime::from_height(741521).is_ok());
-    /// assert!(LockTime::from_height(1653195600).is_err());
+    /// # use bitcoin_primitives::absolute;
+    /// assert!(absolute::LockTime::from_height(741521).is_ok());
+    /// assert!(absolute::LockTime::from_height(1653195600).is_err());
     /// ```
     #[inline]
     pub fn from_height(n: u32) -> Result<Self, ConversionError> {
@@ -183,9 +183,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::LockTime;
-    /// assert!(LockTime::from_time(1653195600).is_ok());
-    /// assert!(LockTime::from_time(741521).is_err());
+    /// # use bitcoin_primitives::absolute;
+    /// assert!(absolute::LockTime::from_time(1653195600).is_ok());
+    /// assert!(absolute::LockTime::from_time(741521).is_err());
     /// ```
     #[inline]
     pub fn from_time(n: u32) -> Result<Self, ConversionError> {
@@ -223,12 +223,12 @@ impl LockTime {
     /// # Examples
     ///
     /// ```no_run
-    /// # use bitcoin_primitives::absolute::{LockTime, Height, Time};
+    /// # use bitcoin_primitives::absolute;
     /// // Can be implemented if block chain data is available.
-    /// fn get_height() -> Height { todo!("return the current block height") }
-    /// fn get_time() -> Time { todo!("return the current block time") }
+    /// fn get_height() -> absolute::Height { todo!("return the current block height") }
+    /// fn get_time() -> absolute::Time { todo!("return the current block time") }
     ///
-    /// let n = LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
+    /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
     /// if n.is_satisfied_by(get_height(), get_time()) {
     ///     // Can create and mine a transaction that satisfies the OP_CLTV timelock constraint.
     /// }
@@ -257,9 +257,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::LockTime;
-    /// let lock_time = LockTime::from_consensus(741521);
-    /// let check = LockTime::from_consensus(741521 + 1);
+    /// # use bitcoin_primitives::absolute;
+    /// let lock_time = absolute::LockTime::from_consensus(741521);
+    /// let check = absolute::LockTime::from_consensus(741521 + 1);
     /// assert!(lock_time.is_implied_by(check));
     /// ```
     #[inline]
@@ -285,9 +285,9 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::{LockTime, LockTime::*};
-    /// # let n = LockTime::from_consensus(741521);              // n OP_CHECKLOCKTIMEVERIFY
-    /// # let lock_time = LockTime::from_consensus(741521 + 1);  // nLockTime
+    /// # use bitcoin_primitives::absolute::{self, LockTime::*};
+    /// # let n = absolute::LockTime::from_consensus(741521);  // n OP_CHECKLOCKTIMEVERIFY
+    /// # let lock_time = absolute::LockTime::from_consensus(741521 + 1);  // nLockTime
     ///
     /// let _is_satisfied = match (n, lock_time) {
     ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
