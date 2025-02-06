@@ -29,7 +29,7 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
             type Engine = HashEngine;
 
-            fn from_engine(e: HashEngine) -> Hash<$($gen),*> { Self::from_engine(e) }
+            fn from_engine(e: Self::Engine) -> Hash<$($gen),*> { Self::from_engine(e) }
         }
 
         #[cfg(feature = "serde")]
