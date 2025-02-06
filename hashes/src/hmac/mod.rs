@@ -35,7 +35,7 @@ impl<T: GeneralHash + str::FromStr> str::FromStr for Hmac<T> {
 }
 
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HmacEngine<T: GeneralHash> {
     iengine: T::Engine,
     oengine: T::Engine,

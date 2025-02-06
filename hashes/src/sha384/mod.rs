@@ -17,7 +17,7 @@ fn from_engine(e: HashEngine) -> Hash {
 }
 
 /// Engine to compute SHA384 hash function.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HashEngine(sha512::HashEngine);
 
 impl HashEngine {

@@ -49,7 +49,7 @@ pub(crate) fn from_engine(e: HashEngine) -> Hash {
 pub(crate) const BLOCK_SIZE: usize = 128;
 
 /// Engine to compute SHA512 hash function.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HashEngine {
     h: [u64; 8],
     bytes_hashed: u64,
