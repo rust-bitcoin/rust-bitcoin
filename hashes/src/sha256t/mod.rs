@@ -11,8 +11,13 @@ type HashEngine = sha256::HashEngine;
 
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
 pub trait Tag {
+    /// The [`Midstate`] after pre-tagging the hash engine.
+    const MIDSTATE: sha256::Midstate;
+
     /// Returns a hash engine that is pre-tagged and is ready to be used for the data.
-    fn engine() -> sha256::HashEngine;
+    fn engine() -> sha256::HashEngine {
+        sha256::HashEngine::from_midstate(Self::MIDSTATE)
+    }
 }
 
 /// Output of the SHA256t hash function.
@@ -190,11 +195,7 @@ mod tests {
     pub struct TestHashTag;
 
     impl sha256t::Tag for TestHashTag {
-        fn engine() -> sha256::HashEngine {
-            // The TapRoot TapLeaf midstate.
-            let midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
-            sha256::HashEngine::from_midstate(midstate)
-        }
+        const MIDSTATE: sha256::Midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
     }
 
     // We support manually implementing `Tag` and creating a tagged hash from it.
