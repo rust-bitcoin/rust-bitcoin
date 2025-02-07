@@ -36,16 +36,16 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 /// # Examples
 ///
 /// ```
-/// use bitcoin_primitives::relative::{LockTime, Height, Time};
-/// let lock_by_height = LockTime::from_height(144); // 144 blocks, approx 24h.
+/// use bitcoin_primitives::relative;
+/// let lock_by_height = relative::LockTime::from_height(144); // 144 blocks, approx 24h.
 /// assert!(lock_by_height.is_block_height());
 ///
-/// let lock_by_time = LockTime::from_512_second_intervals(168); // 168 time intervals, approx 24h.
+/// let lock_by_time = relative::LockTime::from_512_second_intervals(168); // 168 time intervals, approx 24h.
 /// assert!(lock_by_time.is_block_time());
 ///
 /// // Check if a lock time is satisfied by a given height or time.
-/// let height = Height::from(150);
-/// let time = Time::from_512_second_intervals(200);
+/// let height = relative::Height::from(150);
+/// let time = relative::Time::from_512_second_intervals(200);
 /// assert!(lock_by_height.is_satisfied_by(height, time));
 /// assert!(lock_by_time.is_satisfied_by(height, time));
 /// ```
@@ -75,17 +75,17 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::relative::LockTime;
+    /// # use bitcoin_primitives::relative;
     ///
     /// // Values with bit 22 set to 0 will be interpreted as height-based lock times.
     /// let height: u32 = 144; // 144 blocks, approx 24h.
-    /// let lock_time = LockTime::from_consensus(height)?;
+    /// let lock_time = relative::LockTime::from_consensus(height)?;
     /// assert!(lock_time.is_block_height());
     /// assert_eq!(lock_time.to_consensus_u32(), height);
     ///
     /// // Values with bit 22 set to 1 will be interpreted as time-based lock times.
     /// let time: u32 = 168 | (1 << 22) ; // Bit 22 is 1 with time approx 24h.
-    /// let lock_time = LockTime::from_consensus(time)?;
+    /// let lock_time = relative::LockTime::from_consensus(time)?;
     /// assert!(lock_time.is_block_time());
     /// assert_eq!(lock_time.to_consensus_u32(), time);
     ///
@@ -118,11 +118,11 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::{Sequence, relative::LockTime};
+    /// # use bitcoin_primitives::{Sequence, relative};
     ///
     /// // Interpret a sequence number from a Bitcoin transaction input as a relative lock time
     /// let sequence_number = Sequence::from_consensus(144); // 144 blocks, approx 24h.
-    /// let lock_time = LockTime::from_sequence(sequence_number)?;
+    /// let lock_time = relative::LockTime::from_sequence(sequence_number)?;
     /// assert!(lock_time.is_block_height());
     ///
     /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
@@ -200,12 +200,12 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::{Height, Time};
+    /// # use bitcoin_primitives::relative;
     ///
     /// # let required_height = 100;       // 100 blocks.
     /// # let intervals = 70;     // Approx 10 hours.
-    /// # let current_height = || Height::from(required_height + 10);
-    /// # let current_time = || Time::from_512_second_intervals(intervals + 10);
+    /// # let current_height = || relative::Height::from(required_height + 10);
+    /// # let current_time = || relative::Time::from_512_second_intervals(intervals + 10);
     /// # let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
     ///
     /// // Users that have chain data can get the current height and time to check against a lock.
@@ -269,10 +269,10 @@ impl LockTime {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_primitives::{Sequence, relative::LockTime};
+    /// # use bitcoin_primitives::{Sequence, relative};
     ///
     /// let sequence = Sequence::from_consensus(1 << 22 | 168); // Bit 22 is 1 with time approx 24h.
-    /// let lock_time = LockTime::from_sequence(sequence)?;
+    /// let lock_time = relative::LockTime::from_sequence(sequence)?;
     /// let input_sequence = Sequence::from_consensus(1 << 22 | 336); // Approx 48h.
     /// assert!(lock_time.is_block_time());
     ///
@@ -299,11 +299,11 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::Height;
+    /// # use bitcoin_primitives::relative;
     ///
     /// let required_height: u16 = 100;
     /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    /// assert!(lock.is_satisfied_by_height(Height::from(required_height + 1)).expect("a height"));
+    /// assert!(lock.is_satisfied_by_height(relative::Height::from(required_height + 1)).expect("a height"));
     /// ```
     #[inline]
     pub fn is_satisfied_by_height(&self, height: Height) -> Result<bool, IncompatibleHeightError> {
@@ -325,11 +325,11 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::locktime::relative::Time;
+    /// # use bitcoin_primitives::relative;
     ///
     /// let intervals: u16 = 70; // approx 10 hours;
     /// let lock = Sequence::from_512_second_intervals(intervals).to_relative_lock_time().expect("valid time");
-    /// assert!(lock.is_satisfied_by_time(Time::from_512_second_intervals(intervals + 10)).expect("a time"));
+    /// assert!(lock.is_satisfied_by_time(relative::Time::from_512_second_intervals(intervals + 10)).expect("a time"));
     /// ```
     #[inline]
     pub fn is_satisfied_by_time(&self, time: Time) -> Result<bool, IncompatibleTimeError> {
