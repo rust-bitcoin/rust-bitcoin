@@ -566,6 +566,12 @@ mod tests {
     }
 
     #[test]
+    fn ordinary_op_code() {
+        let ordinary_op = Ordinary::from_opcode(OP_PUSHDATA1).expect("0x4C");
+        assert_eq!(ordinary_op.to_u8(), 0x4C_u8);
+    }
+
+    #[test]
     fn decode_pushnum() {
         // Test all possible opcodes
         // - Sanity check
