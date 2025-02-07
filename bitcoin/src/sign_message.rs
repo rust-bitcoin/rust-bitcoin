@@ -220,11 +220,11 @@ pub fn signed_msg_hash(msg: impl AsRef<[u8]>) -> sha256d::Hash {
 pub fn sign<C: secp256k1::Signing>(
     secp_ctx: &secp256k1::Secp256k1<C>,
     msg: impl AsRef<[u8]>,
-    privkey: SecretKey,
+    privkey: &SecretKey,
 ) -> MessageSignature {
     let msg_hash = signed_msg_hash(msg);
     let msg_to_sign = secp256k1::Message::from_digest(msg_hash.to_byte_array());
-    let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, &privkey);
+    let secp_sig = secp_ctx.sign_ecdsa_recoverable(&msg_to_sign, privkey);
     MessageSignature { signature: secp_sig, compressed: true }
 }
 
@@ -256,7 +256,7 @@ mod tests {
         let secp_sig = secp.sign_ecdsa_recoverable(&msg, &privkey);
         let signature = super::MessageSignature { signature: secp_sig, compressed: true };
 
-        assert_eq!(signature.to_string(), super::sign(&secp, message, privkey).to_string());
+        assert_eq!(signature.to_string(), super::sign(&secp, message, &privkey).to_string());
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = &signature.to_string().parse::<super::MessageSignature>().unwrap();
         let pubkey = signature2
