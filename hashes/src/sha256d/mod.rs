@@ -20,7 +20,7 @@ fn from_engine(e: HashEngine) -> Hash {
 }
 
 /// Engine to compute SHA256d hash function.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HashEngine(sha256::HashEngine);
 
 impl HashEngine {

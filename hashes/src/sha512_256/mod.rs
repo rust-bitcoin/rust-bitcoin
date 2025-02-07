@@ -27,7 +27,7 @@ fn from_engine(e: HashEngine) -> Hash {
 /// the output to 256 bits. It has different initial constants than sha512 so it
 /// produces an entirely different hash compared to sha512. More information at
 /// <https://eprint.iacr.org/2010/548.pdf>.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HashEngine(sha512::HashEngine);
 
 impl HashEngine {

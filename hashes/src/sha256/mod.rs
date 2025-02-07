@@ -54,7 +54,7 @@ fn from_engine(e: HashEngine) -> Hash {
 const BLOCK_SIZE: usize = 64;
 
 /// Engine to compute SHA256 hash function.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HashEngine {
     buffer: [u8; BLOCK_SIZE],
     h: [u32; 8],
