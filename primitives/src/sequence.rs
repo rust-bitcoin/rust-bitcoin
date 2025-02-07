@@ -334,4 +334,15 @@ mod tests {
         assert!(!seq_time_locked.is_height_locked());
         assert!(!seq_height_locked.is_time_locked());
     }
+
+    #[test]
+    fn sequence_formatting() {
+        let sequence = Sequence(0x7FFFFFFF);
+        assert_eq!(format!("{:x}", sequence), "7fffffff");
+        assert_eq!(format!("{:X}", sequence), "7FFFFFFF");
+
+        // Test From<Sequence> for u32
+        let sequence_u32: u32 = sequence.into();
+        assert_eq!(sequence_u32, 0x7FFFFFFF);
+    }
 }
