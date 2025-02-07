@@ -307,4 +307,31 @@ mod tests {
     fn from_seconds_ceil_causes_overflow_error() {
         assert!(Sequence::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1).is_err());
     }
+
+    #[test]
+    fn sequence_properties() {
+        let seq_max = Sequence(0xFFFFFFFF);
+        let seq_no_rbf = Sequence(0xFFFFFFFE);
+        let seq_rbf = Sequence(0xFFFFFFFD);
+
+        assert!(seq_max.is_final());
+        assert!(!seq_no_rbf.is_final());
+
+        assert!(seq_no_rbf.enables_absolute_lock_time());
+        assert!(!seq_max.enables_absolute_lock_time());
+
+        assert!(seq_rbf.is_rbf());
+        assert!(!seq_no_rbf.is_rbf());
+
+        let seq_relative = Sequence(0x7FFFFFFF);
+        assert!(seq_relative.is_relative_lock_time());
+        assert!(!seq_max.is_relative_lock_time());
+
+        let seq_height_locked = Sequence(0x00399999);
+        let seq_time_locked = Sequence(0x00400000);
+        assert!(seq_height_locked.is_height_locked());
+        assert!(seq_time_locked.is_time_locked());
+        assert!(!seq_time_locked.is_height_locked());
+        assert!(!seq_height_locked.is_time_locked());
+    }
 }
