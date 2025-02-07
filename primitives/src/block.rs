@@ -365,11 +365,43 @@ mod tests {
     fn version_is_signalling() {
         let version = Version::from_consensus(0b00100000000000000000000000000010);
         assert!(Version::is_signalling_soft_fork(&version, 1));
+        let version = Version::from_consensus(0b00110000000000000000000000000000);
+        assert!(Version::is_signalling_soft_fork(&version, 28));
     }
 
     #[test]
     fn version_is_not_signalling() {
         let version = Version::from_consensus(0b00100000000000000000000000000010);
         assert!(!Version::is_signalling_soft_fork(&version, 0));
+    }
+
+    #[test]
+    fn version_to_consensus() {
+        let version = Version::from_consensus(1234567890);
+        assert_eq!(version.to_consensus(), 1234567890);
+    }
+
+    // Check that the size of the header consensus serialization matches the const SIZE value
+    #[test]
+    fn header_size() {
+        let header = Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
+            time: 2,
+            bits: CompactTarget::from_consensus(3),
+            nonce: 4,
+        };
+
+        // Calculate the size of the block header in bytes from the sum of the serialized lengths
+        // it's fields: version, prev_blockhash, merkle_root, time, bits, nonce.
+        let header_size = header.version.to_consensus().to_le_bytes().len()
+            + header.prev_blockhash.as_byte_array().len()
+            + header.merkle_root.as_byte_array().len()
+            + header.time.to_le_bytes().len()
+            + header.bits.to_consensus().to_le_bytes().len()
+            + header.nonce.to_le_bytes().len();
+
+        assert_eq!(header_size, Header::SIZE);
     }
 }
