@@ -20,8 +20,11 @@ crate::internal_macros::general_hash_type! {
     "Output of the RIPEMD160 hash function."
 }
 
+
+impl Hash {
+/// Finalize a hash engine to produce a hash.
 #[cfg(not(hashes_fuzz))]
-fn from_engine(mut e: HashEngine) -> Hash {
+pub fn from_engine(mut e: HashEngine) -> Self {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
     let n_bytes_hashed = e.bytes_hashed;
 
@@ -40,11 +43,13 @@ fn from_engine(mut e: HashEngine) -> Hash {
     Hash(e.midstate())
 }
 
+/// Finalize a hash engine to produce a hash.
 #[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
+pub fn from_engine(e: HashEngine) -> Self {
     let mut res = e.midstate();
     res[0] ^= (e.bytes_hashed & 0xff) as u8;
     Hash(res)
+}
 }
 
 const BLOCK_SIZE: usize = 64;

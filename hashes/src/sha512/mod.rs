@@ -20,8 +20,10 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA512 hash function."
 }
 
+impl Hash {
+/// Finalize a hash engine to produce a hash.
 #[cfg(not(hashes_fuzz))]
-pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
+pub fn from_engine(mut e: HashEngine) -> Self {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
     let n_bytes_hashed = e.bytes_hashed;
 
@@ -41,11 +43,13 @@ pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
     Hash(e.midstate())
 }
 
+/// Finalize a hash engine to produce a hash.
 #[cfg(hashes_fuzz)]
-pub(crate) fn from_engine(e: HashEngine) -> Hash {
+pub fn from_engine(e: HashEngine) -> Self {
     let mut hash = e.midstate();
     hash[0] ^= 0xff; // Make this distinct from SHA-256
     Hash(hash)
+}
 }
 
 pub(crate) const BLOCK_SIZE: usize = 128;

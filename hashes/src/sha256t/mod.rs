@@ -83,7 +83,7 @@ where
     }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine<T>) -> Hash<T> {
+    pub fn from_engine(e: HashEngine<T>) -> Self {
         Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
     }
 
