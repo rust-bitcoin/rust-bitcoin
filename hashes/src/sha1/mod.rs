@@ -21,7 +21,7 @@ crate::internal_macros::general_hash_type! {
 impl crate::GeneralHash for Hash {
     type Engine = HashEngine;
 
-    fn from_engine(mut e: HashEngine) -> Hash {
+    fn from_engine(mut e: Self::Engine) -> Self {
         // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
         let n_bytes_hashed = e.bytes_hashed;
 

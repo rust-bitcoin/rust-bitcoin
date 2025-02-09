@@ -18,7 +18,7 @@ crate::internal_macros::general_hash_type! {
 impl crate::GeneralHash for Hash {
     type Engine = HashEngine;
 
-    fn from_engine(e: HashEngine) -> Hash {
+    fn from_engine(e: Self::Engine) -> Self {
         let sha2 = sha256::Hash::from_engine(e.0);
         let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
 

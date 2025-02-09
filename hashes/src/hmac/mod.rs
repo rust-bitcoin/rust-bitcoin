@@ -119,7 +119,7 @@ impl<T: GeneralHash> convert::AsRef<[u8]> for Hmac<T> {
 impl<T: GeneralHash> GeneralHash for Hmac<T> {
     type Engine = HmacEngine<T>;
 
-    fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
+    fn from_engine(mut e: Self::Engine) -> Self {
         let ihash = T::from_engine(e.iengine);
         e.oengine.input(ihash.as_byte_array().as_ref());
         let ohash = T::from_engine(e.oengine);
