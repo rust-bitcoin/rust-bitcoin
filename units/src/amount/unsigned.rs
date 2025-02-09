@@ -445,7 +445,7 @@ crate::internal_macros::impl_sub_assign!(Amount);
 impl ops::Rem<u64> for Amount {
     type Output = Amount;
 
-    fn rem(self, modulus: u64) -> Self {
+    fn rem(self, modulus: u64) -> Self::Output {
         self.checked_rem(modulus).expect("Amount remainder error")
     }
 }
