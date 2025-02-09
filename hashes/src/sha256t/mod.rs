@@ -19,6 +19,12 @@ pub trait Tag: Clone {
 #[repr(transparent)]
 pub struct Hash<T>([u8; 32], PhantomData<T>);
 
+impl<T: Tag> crate::GeneralHash for Hash<T> {
+    type Engine = HashEngine<T>;
+
+    fn from_engine(e: Self::Engine) -> Self { Self::from_engine(e) }
+}
+
 impl<T> Hash<T>
 where
     T: Tag,
@@ -55,7 +61,7 @@ where
     }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine<T>) -> Hash<T> {
+    pub fn from_engine(e: HashEngine<T>) -> Self {
         Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
     }
 
