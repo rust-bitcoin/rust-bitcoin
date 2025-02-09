@@ -40,10 +40,7 @@ impl_regression_test! {
 pub struct RegHashTag;
 
 impl sha256t::Tag for RegHashTag {
-    fn engine() -> sha256::HashEngine {
-        let midstate = sha256::Midstate::new([0xab; 32], 64);
-        sha256::HashEngine::from_midstate(midstate)
-    }
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::new([0xab; 32], 64);
 }
 
 type RegHash = sha256t::Hash<RegHashTag>;

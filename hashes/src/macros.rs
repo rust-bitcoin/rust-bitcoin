@@ -33,11 +33,7 @@ macro_rules! sha256t_tag {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
 
         impl $crate::sha256t::Tag for $tag {
-            #[inline]
-            fn engine() -> $crate::sha256::HashEngine {
-                const MIDSTATE: $crate::sha256::Midstate = $crate::sha256t_tag_constructor!($constructor, $($tag_value)+);
-                $crate::sha256::HashEngine::from_midstate(MIDSTATE)
-            }
+            const MIDSTATE: $crate::sha256::Midstate = $crate::sha256t_tag_constructor!($constructor, $($tag_value)+);
         }
     }
 }
