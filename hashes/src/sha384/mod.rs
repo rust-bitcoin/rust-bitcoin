@@ -13,11 +13,11 @@ crate::internal_macros::general_hash_type! {
 impl crate::GeneralHash for Hash {
     type Engine = HashEngine;
 
-fn from_engine(e: HashEngine) -> Hash {
-    let mut ret = [0; 48];
-    ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..48]);
-    Hash(ret)
-}
+    fn from_engine(e: HashEngine) -> Hash {
+        let mut ret = [0; 48];
+        ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..48]);
+        Hash(ret)
+    }
 }
 
 /// Engine to compute SHA384 hash function.

@@ -15,14 +15,14 @@ crate::internal_macros::hash_type_no_default! {
 impl crate::GeneralHash for Hash {
     type Engine = HashEngine;
 
-#[cfg(not(hashes_fuzz))]
-fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
+    #[cfg(not(hashes_fuzz))]
+    fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
 
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let state = e.state.clone();
-    Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
-}
+    #[cfg(hashes_fuzz)]
+    fn from_engine(e: HashEngine) -> Hash {
+        let state = e.state.clone();
+        Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
+    }
 }
 
 macro_rules! compress {

@@ -15,18 +15,17 @@ crate::internal_macros::general_hash_type! {
     "Output of the Bitcoin HASH160 hash function. (RIPEMD160(SHA256))"
 }
 
-
 impl crate::GeneralHash for Hash {
     type Engine = HashEngine;
 
-fn from_engine(e: HashEngine) -> Hash {
-    let sha2 = sha256::Hash::from_engine(e.0);
-    let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
+    fn from_engine(e: HashEngine) -> Hash {
+        let sha2 = sha256::Hash::from_engine(e.0);
+        let rmd = ripemd160::Hash::hash(sha2.as_byte_array());
 
-    let mut ret = [0; 20];
-    ret.copy_from_slice(rmd.as_byte_array());
-    Hash(ret)
-}
+        let mut ret = [0; 20];
+        ret.copy_from_slice(rmd.as_byte_array());
+        Hash(ret)
+    }
 }
 
 /// Engine to compute HASH160 hash function.

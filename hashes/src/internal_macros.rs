@@ -66,7 +66,9 @@ macro_rules! general_hash_type {
 
         impl Hash {
             /// Produces a hash from the current state of a given engine.
-            pub fn from_engine(e: HashEngine) -> Hash { <Self as $crate::GeneralHash>::from_engine(e) }
+            pub fn from_engine(e: HashEngine) -> Hash {
+                <Self as $crate::GeneralHash>::from_engine(e)
+            }
 
             /// Constructs a new engine.
             pub fn engine() -> HashEngine { Default::default() }
