@@ -106,7 +106,6 @@ dependencies = [
  "arbitrary",
  "bincode",
  "bitcoin-internals",
- "bitcoin-io",
  "bitcoin-units",
  "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
