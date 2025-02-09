@@ -18,6 +18,10 @@ crate::internal_macros::general_hash_type! {
     "Output of the RIPEMD160 hash function."
 }
 
+
+impl crate::GeneralHash for Hash {
+    type Engine = HashEngine;
+
 #[cfg(not(hashes_fuzz))]
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
@@ -43,6 +47,7 @@ fn from_engine(e: HashEngine) -> Hash {
     let mut res = e.midstate();
     res[0] ^= (e.bytes_hashed & 0xff) as u8;
     Hash(res)
+}
 }
 
 const BLOCK_SIZE: usize = 64;

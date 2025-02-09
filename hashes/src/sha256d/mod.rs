@@ -10,6 +10,9 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA256d hash function."
 }
 
+impl crate::GeneralHash for Hash {
+    type Engine = HashEngine;
+
 fn from_engine(e: HashEngine) -> Hash {
     let sha2 = sha256::Hash::from_engine(e.0);
     let sha2d = sha256::Hash::hash(sha2.as_byte_array());
@@ -17,6 +20,7 @@ fn from_engine(e: HashEngine) -> Hash {
     let mut ret = [0; 32];
     ret.copy_from_slice(sha2d.as_byte_array());
     Hash(ret)
+}
 }
 
 /// Engine to compute SHA256d hash function.

@@ -18,6 +18,9 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA1 hash function."
 }
 
+impl crate::GeneralHash for Hash {
+    type Engine = HashEngine;
+
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
     let n_bytes_hashed = e.bytes_hashed;
@@ -35,6 +38,7 @@ fn from_engine(mut e: HashEngine) -> Hash {
     debug_assert_eq!(incomplete_block_len(&e), 0);
 
     Hash(e.midstate())
+}
 }
 
 const BLOCK_SIZE: usize = 64;
