@@ -643,4 +643,30 @@ mod tests {
         // Test partial ord
         assert!(tx > tx_orig);
     }
+
+    #[test]
+    fn outpoint_from_str() {
+        // Check format errors
+        let mut outpoint_str = "0".repeat(64); // No ":"
+        let outpoint: Result<OutPoint, ParseOutPointError> = outpoint_str.parse();
+        assert_eq!(outpoint, Err(ParseOutPointError::Format));
+
+        outpoint_str.push(':'); // Empty vout
+        let outpoint: Result<OutPoint, ParseOutPointError> = outpoint_str.parse();
+        assert_eq!(outpoint, Err(ParseOutPointError::Format));
+
+        outpoint_str.push('0'); // Correct format
+        let outpoint: OutPoint = outpoint_str.parse().unwrap();
+        assert_eq!(outpoint.txid, Txid::from_byte_array([0; 32]));
+        assert_eq!(outpoint.vout, 0);
+
+        // Check the number of bytes OutPoint contributes to the transaction is equal to SIZE
+        let outpoint_size = outpoint.txid.as_byte_array().len() + outpoint.vout.to_le_bytes().len();
+        assert_eq!(outpoint_size, OutPoint::SIZE);
+
+        // Check TooLong error
+        outpoint_str.push_str("0000000000");
+        let outpoint: Result<OutPoint, ParseOutPointError> = outpoint_str.parse();
+        assert_eq!(outpoint, Err(ParseOutPointError::TooLong));
+    }
 }
