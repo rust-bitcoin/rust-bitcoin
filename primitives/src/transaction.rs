@@ -598,3 +598,49 @@ impl<'a> Arbitrary<'a> for Txid {
         Ok(Txid(t))
     }
 }
+
+#[cfg(feature = "alloc")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transaction_functions() {
+        let txin = TxIn {
+            previous_output: OutPoint {
+                txid: Txid::from_byte_array([0xAA; 32]), // Arbitrary invalid dummy value.
+                vout: 0,
+            },
+            script_sig: ScriptBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::new(),
+        };
+
+        let txout = TxOut {
+            value: Amount::from_sat(123456789),
+            script_pubkey: ScriptBuf::new(),
+        };
+
+        let tx_orig = Transaction {
+            version: Version::ONE,
+            lock_time: absolute::LockTime::from_consensus(1738968231), // The time this was written
+            input: vec![txin.clone()],
+            output: vec![txout.clone()],
+        };
+
+        // Test changing the transaction
+        let mut tx = tx_orig.clone();
+        tx.inputs_mut()[0].previous_output.txid = Txid::from_byte_array([0xFF; 32]);
+        tx.outputs_mut()[0].value = Amount::from_sat(987654321);
+        assert_eq!(tx.inputs()[0].previous_output.txid.to_byte_array(), [0xFF; 32]);
+        assert_eq!(tx.outputs()[0].value.to_sat(), 987654321);
+
+        // Test uses_segwit_serialization
+        assert!(!tx.uses_segwit_serialization());
+        tx.input[0].witness.push(vec![0xAB, 0xCD, 0xEF]);
+        assert!(tx.uses_segwit_serialization());
+
+        // Test partial ord
+        assert!(tx > tx_orig);
+    }
+}
