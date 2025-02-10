@@ -669,4 +669,12 @@ mod tests {
         let outpoint: Result<OutPoint, ParseOutPointError> = outpoint_str.parse();
         assert_eq!(outpoint, Err(ParseOutPointError::TooLong));
     }
+
+    #[test]
+    fn canonical_vout() {
+        assert_eq!(parse_vout("0").unwrap(), 0);
+        assert_eq!(parse_vout("1").unwrap(), 1);
+        assert!(parse_vout("01").is_err()); // Leading zero not allowed
+        assert!(parse_vout("+1").is_err()); // Non digits not allowed
+    }
 }
