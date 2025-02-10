@@ -501,6 +501,9 @@ mod tests {
         assert!(!lock_by_height1.is_same_unit(lock_by_time1));
         assert!(lock_by_time1.is_same_unit(lock_by_time2));
         assert!(!lock_by_time1.is_same_unit(lock_by_height1));
+
+        assert!(lock_by_height1 < lock_by_height2);
+        assert!(lock_by_time1 < lock_by_time2);
     }
 
     #[test]

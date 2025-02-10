@@ -501,6 +501,9 @@ mod tests {
         assert!(lock_by_height.is_satisfied_by(height_same, time));
         assert!(lock_by_height.is_satisfied_by(height_above, time));
         assert!(!lock_by_height.is_satisfied_by(height_below, time));
+
+        let lock_by_height_above = LockTime::from_consensus(800_000);
+        assert!(lock_by_height < lock_by_height_above)
     }
 
     #[test]
@@ -516,6 +519,9 @@ mod tests {
         assert!(lock_by_time.is_satisfied_by(height, time_same));
         assert!(lock_by_time.is_satisfied_by(height, time_after));
         assert!(!lock_by_time.is_satisfied_by(height, time_before));
+
+        let lock_by_time_after = LockTime::from_consensus(1653282000);
+        assert!(lock_by_time < lock_by_time_after);
     }
 
     #[test]
