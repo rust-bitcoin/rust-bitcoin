@@ -32,6 +32,7 @@ impl fmt::Display for MaxLengthError {
 impl std::error::Error for MaxLengthError {}
 
 /// HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
+#[derive(Copy, Clone)]
 pub struct Hkdf<T: GeneralHash> {
     /// Pseudorandom key based on the extract step.
     prk: Hmac<T>,
