@@ -598,6 +598,18 @@ mod test {
     }
 
     #[test]
+    fn witness_from_parts() {
+        let elements = [1u8, 11, 2, 21, 22];
+        let witness_elements = 2;
+        let content = append_u32_vec(&elements, &[0, 2]);
+        let indices_start = elements.len();
+        let witness = Witness::from_parts__unstable(content.clone(), witness_elements, indices_start);
+        assert_eq!(witness.nth(0).unwrap(), [11_u8]);
+        assert_eq!(witness.nth(1).unwrap(), [21_u8, 22]);
+        assert_eq!(witness.size(), 6);
+    }
+
+    #[test]
     #[cfg(feature = "serde")]
     fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
