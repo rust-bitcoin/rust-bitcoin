@@ -33,7 +33,6 @@ impl Amount {
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
     /// ```
-    #[cfg(feature = "alloc")]
     #[must_use]
     pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
@@ -56,7 +55,6 @@ impl Amount {
     /// can be made. See also [`Self::checked_div_by_weight_ceil`].
     ///
     /// Returns [`None`] if overflow occurred.
-    #[cfg(feature = "alloc")]
     #[must_use]
     pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
         // No `?` operator in const context.
