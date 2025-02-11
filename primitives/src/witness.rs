@@ -497,6 +497,7 @@ mod test {
     fn push() {
         // Sanity check default.
         let mut witness = Witness::default();
+        assert!(witness.is_empty());
         assert_eq!(witness.last(), None);
         assert_eq!(witness.second_to_last(), None);
 
@@ -506,10 +507,11 @@ mod test {
         assert_eq!(witness.nth(3), None);
 
         // Push a single byte element onto the witness stack.
-        let push = [0_u8];
+        let push = [11_u8];
         witness.push(push);
+        assert!(!witness.is_empty());
 
-        let elements = [1u8, 0];
+        let elements = [1u8, 11];
         let expected = Witness {
             witness_elements: 1,
             content: append_u32_vec(&elements, &[0]), // Start at index 0.
@@ -529,10 +531,10 @@ mod test {
         assert_eq!(witness.nth(3), None);
 
         // Now push 2 byte element onto the witness stack.
-        let push = [2u8, 3u8];
+        let push = [21u8, 22u8];
         witness.push(push);
 
-        let elements = [1u8, 0, 2, 2, 3];
+        let elements = [1u8, 11, 2, 21, 22];
         let expected = Witness {
             witness_elements: 2,
             content: append_u32_vec(&elements, &[0, 2]),
@@ -552,10 +554,10 @@ mod test {
         assert_eq!(witness.last(), Some(element_1));
 
         // Now push another 2 byte element onto the witness stack.
-        let push = [4u8, 5u8];
+        let push = [31u8, 32u8];
         witness.push(push);
 
-        let elements = [1u8, 0, 2, 2, 3, 2, 4, 5];
+        let elements = [1u8, 11, 2, 21, 22, 2, 31, 32];
         let expected = Witness {
             witness_elements: 3,
             content: append_u32_vec(&elements, &[0, 2, 5]),
@@ -571,6 +573,7 @@ mod test {
         assert_eq!(witness.nth(2), Some(element_2));
         assert_eq!(witness.nth(3), None);
 
+        assert_eq!(witness.third_to_last(), Some(element_0));
         assert_eq!(witness.second_to_last(), Some(element_1));
         assert_eq!(witness.last(), Some(element_2));
     }
