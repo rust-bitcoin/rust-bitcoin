@@ -1,5 +1,5 @@
 additional_cargo_args = ["--all-features"]
-examine_globs = ["units/src/**/*.rs"]
+examine_globs = ["units/src/**/*.rs", "primitives/src/**/*.rs"]
 exclude_globs = [
     "units/src/amount/verification.rs" # kani tests
 ]
@@ -9,6 +9,7 @@ exclude_re = [
     "impl Display",
     ".*Error",
     "deserialize", # Skip serde mutation tests
+    "Iterator", # Mutating operations in an iterator can result in an infinite loop
 
     # ----------------------------------Crate-specific exclusions----------------------------------
     # Units
@@ -18,4 +19,14 @@ exclude_re = [
     "dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
     # src/locktime/relative.rs
     "Time::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+
+    # primitives
+    "Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "Opcode::classify", # Not possible to kill all mutants without individually checking every opcode classification
+    "Block<Checked>::cached_witness_root", # Skip getters
+    "Block<Checked>::transactions", # Skip getters
+    "Script::to_bytes", # Deprecated
+    "decode_cursor", # Mutating operations in decode_cursor can result in an infinite loop
+    "fmt_debug", # Mutants from formatting/display changes
+    "fmt_debug_pretty", # Mutants from formatting/display changes
 ]
