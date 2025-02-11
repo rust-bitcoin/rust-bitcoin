@@ -87,25 +87,6 @@ where
         Self::from_engine(engine)
     }
 
-    /// Hashes the entire contents of the `reader`.
-    #[cfg(feature = "bitcoin-io")]
-    pub fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error> {
-        let mut engine = Self::engine();
-        loop {
-            let bytes = reader.fill_buf()?;
-
-            let read = bytes.len();
-            // Empty slice means EOF.
-            if read == 0 {
-                break;
-            }
-
-            engine.input(bytes);
-            reader.consume(read);
-        }
-        Ok(Self::from_engine(engine))
-    }
-
     /// Returns the underlying byte array.
     pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
@@ -152,7 +133,7 @@ impl<T: Tag> crate::HashEngine for HashEngine<T> {
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
 }
 
-crate::internal_macros::impl_io_write!(
+crate::internal_macros::impl_write!(
     HashEngine<T>,
     |us: &mut HashEngine<T>, buf| {
         us.input(buf);

@@ -75,9 +75,6 @@ extern crate core;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(feature = "bitcoin-io")]
-extern crate bitcoin_io as io;
-
 /// A generic serialization/deserialization framework.
 #[cfg(feature = "serde")]
 pub extern crate serde;
@@ -239,28 +236,6 @@ pub trait GeneralHash: Hash {
         }
         Self::from_engine(engine)
     }
-
-    /// Hashes the entire contents of the `reader`.
-    #[cfg(feature = "bitcoin-io")]
-    fn hash_reader<R: io::BufRead>(reader: &mut R) -> Result<Self, io::Error>
-    where
-        Self::Engine: Default,
-    {
-        let mut engine = Self::engine();
-        loop {
-            let bytes = reader.fill_buf()?;
-
-            let read = bytes.len();
-            // Empty slice means EOF.
-            if read == 0 {
-                break;
-            }
-
-            engine.input(bytes);
-            reader.consume(read);
-        }
-        Ok(Self::from_engine(engine))
-    }
 }
 
 /// Trait which applies to hashes of all types.
@@ -366,14 +341,5 @@ mod tests {
         let hex = format!("{}", orig);
         let rinsed = hex.parse::<TestNewtype>().expect("failed to parse hex");
         assert_eq!(rinsed, orig)
-    }
-
-    #[test]
-    #[cfg(feature = "bitcoin-io")]
-    fn hash_reader() {
-        use crate::sha256;
-
-        let mut reader: &[u8] = b"hello";
-        assert_eq!(sha256::Hash::hash_reader(&mut reader).unwrap(), sha256::Hash::hash(b"hello"),)
     }
 }

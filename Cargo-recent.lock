@@ -97,6 +97,7 @@ name = "bitcoin-io"
 version = "0.2.0"
 dependencies = [
  "bitcoin-internals",
+ "bitcoin_hashes 0.16.0",
 ]
 
 [[package]]
@@ -106,7 +107,6 @@ dependencies = [
  "arbitrary",
  "bincode",
  "bitcoin-internals",
- "bitcoin-io",
  "bitcoin-units",
  "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
@@ -140,7 +140,6 @@ dependencies = [
 name = "bitcoin_hashes"
 version = "0.16.0"
 dependencies = [
- "bitcoin-io",
  "hex-conservative 0.3.0",
  "serde",
  "serde_json",
