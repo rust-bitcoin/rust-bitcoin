@@ -610,6 +610,33 @@ mod test {
     }
 
     #[test]
+    fn witness_from_impl() {
+        // Test From implementations with the same 2 elements
+        let vec = vec![vec![11], vec![21, 22]];
+        let slice_vec: &[Vec<u8>] = &vec;
+        let slice_slice: &[&[u8]] = &[&[11u8], &[21, 22]];
+        let vec_slice: Vec<&[u8]> = vec![&[11u8], &[21, 22]];
+
+        let witness_vec_vec = Witness::from(vec.clone());
+        let witness_slice_vec = Witness::from(slice_vec);
+        let witness_slice_slice = Witness::from(slice_slice);
+        let witness_vec_slice = Witness::from(vec_slice);
+
+        let mut expected = Witness::from_slice(&vec);
+        assert_eq!(expected.len(), 2);
+        assert_eq!(expected.to_vec(), vec);
+
+        assert_eq!(witness_vec_vec, expected);
+        assert_eq!(witness_slice_vec, expected);
+        assert_eq!(witness_slice_slice, expected);
+        assert_eq!(witness_vec_slice, expected);
+
+        // Test clear method
+        expected.clear();
+        assert!(expected.is_empty());
+    }
+
+    #[test]
     #[cfg(feature = "serde")]
     fn serde_bincode_backward_compatibility() {
         let old_witness_format = vec![vec![0u8], vec![2]];
