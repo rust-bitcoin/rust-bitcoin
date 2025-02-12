@@ -510,7 +510,7 @@ impl Wtxid {
 ///
 /// Currently, as specified by [BIP-68] and [BIP-431], version 1, 2, and 3 are considered standard.
 ///
-/// Standardness of the inner `i32` is not an invariant because you are free to create transactions
+/// Standardness of the inner `u32` is not an invariant because you are free to create transactions
 /// of any version, transactions with non-standard version numbers will not be relayed by the
 /// Bitcoin network.
 ///
@@ -518,7 +518,7 @@ impl Wtxid {
 /// [BIP-431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Version(pub i32);
+pub struct Version(pub u32);
 
 impl Version {
     /// The original Bitcoin transaction version (pre-BIP-68).

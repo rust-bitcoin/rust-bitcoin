@@ -631,7 +631,7 @@ crate::internal_macros::define_extension_trait! {
     /// Extension functionality for the [`Version`] type.
     pub trait VersionExt impl for Version {
         /// Constructs a new non-standard transaction version.
-        fn non_standard(version: i32) -> Version { Self(version) }
+        fn non_standard(version: u32) -> Version { Self(version) }
 
         /// Returns true if this transaction version number is considered standard.
         fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO || *self == Version::THREE }
@@ -1369,17 +1369,11 @@ mod tests {
 
     #[test]
     fn transaction_version() {
-        let tx_bytes = hex!("ffffff7f0100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000");
+        let tx_bytes = hex!("ffffffff0100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000");
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_ok());
         let realtx = tx.unwrap();
-        assert_eq!(realtx.version, Version::non_standard(2147483647));
-
-        let tx2_bytes = hex!("000000800100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000");
-        let tx2: Result<Transaction, _> = deserialize(&tx2_bytes);
-        assert!(tx2.is_ok());
-        let realtx2 = tx2.unwrap();
-        assert_eq!(realtx2.version, Version::non_standard(-2147483648));
+        assert_eq!(realtx.version, Version::non_standard(u32::MAX));
     }
 
     #[test]
