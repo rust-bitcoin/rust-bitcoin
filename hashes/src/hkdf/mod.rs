@@ -107,6 +107,7 @@ where
 
 #[cfg(test)]
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 mod tests {
     use hex::prelude::{DisplayHex, FromHex};
 

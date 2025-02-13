@@ -45,6 +45,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn test() {
         use alloc::string::ToString;
 
@@ -98,6 +99,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn fmt_roundtrips() {
         use alloc::format;
 
