@@ -19,6 +19,8 @@ exclude_re = [
     "dec_width", # Replacing num /= 10 with num %=10 in a loop causes a timeout due to infinite loop
     # src/locktime/relative.rs
     "Time::to_consensus_u32", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
+    "FeeRate::fee_vb", # Deprecated
+    "FeeRate::fee_wu", # Deprecated
 
     # primitives
     "Sequence::from_512_second_intervals", # Mutant from replacing | with ^, this returns the same value since the XOR is taken against the u16 with an all-zero bitmask
