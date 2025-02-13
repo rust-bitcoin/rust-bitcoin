@@ -576,6 +576,25 @@ mod test {
         fn all_zeros() -> Self { Self::from_byte_array([0; 32]) }
     }
 
+    #[test]
+    fn macros_work_in_function_scope() {
+        use crate::sha256t;
+
+        sha256t_tag! {
+            #[repr(align(2))] // This tests that we can add additional attributes.
+            pub struct FunctionScopeTag = hash_str("It works");
+        }
+
+        hash_newtype! {
+            /// Some docs.
+            #[repr(align(4))] // This tests that we can add additional attributes.
+            pub struct FunctionScopeHash(pub(crate) sha256t::Hash<FunctionScopeTag>);
+        }
+
+        assert_eq!(2, core::mem::align_of::<FunctionScopeTag>());
+        assert_eq!(4, core::mem::align_of::<FunctionScopeHash>());
+    }
+
     // NB: This runs with and without `hex` feature enabled, testing different code paths for each.
     #[test]
     #[cfg(feature = "alloc")]
