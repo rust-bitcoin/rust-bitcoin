@@ -254,7 +254,7 @@ mod tests {
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
-        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        let fee = weight.checked_mul_by_fee_rate(fee_rate).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
         assert_eq!(fee, Amount::from_sat_unchecked(330));
