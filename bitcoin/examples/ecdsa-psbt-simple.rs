@@ -174,8 +174,8 @@ fn main() {
     let unsigned_tx = Transaction {
         version: transaction::Version::TWO,  // Post BIP 68.
         lock_time: absolute::LockTime::ZERO, // Ignore the locktime.
-        input: inputs,                       // Input is 0-indexed.
-        output: vec![spend, change],         // Outputs, order does not matter.
+        inputs: inputs,                       // Input is 0-indexed.
+        outputs: vec![spend, change],         // Outputs, order does not matter.
     };
 
     // Now we'll start the PSBT workflow.

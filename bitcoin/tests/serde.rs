@@ -220,7 +220,7 @@ fn serde_regression_psbt() {
     let tx = Transaction {
         version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
-        input: vec![TxIn {
+        inputs: vec![TxIn {
             previous_output: OutPoint {
                 txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389"
                     .parse::<Txid>()
@@ -235,7 +235,7 @@ fn serde_regression_psbt() {
             )
             .unwrap()]),
         }],
-        output: vec![TxOut {
+        outputs: vec![TxOut {
             value: Amount::from_sat_unchecked(190_303_501_938),
             script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
@@ -273,8 +273,8 @@ fn serde_regression_psbt() {
         },
         unsigned_tx: {
             let mut unsigned = tx.clone();
-            unsigned.input[0].script_sig = ScriptBuf::new();
-            unsigned.input[0].witness = Witness::default();
+            unsigned.inputs[0].script_sig = ScriptBuf::new();
+            unsigned.inputs[0].witness = Witness::default();
             unsigned
         },
         proprietary: proprietary.clone(),

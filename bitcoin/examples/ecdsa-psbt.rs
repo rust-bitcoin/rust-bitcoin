@@ -185,13 +185,13 @@ impl WatchOnly {
         let tx = Transaction {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn {
+            inputs: vec![TxIn {
                 previous_output: OutPoint { txid: INPUT_UTXO_TXID.parse()?, vout: INPUT_UTXO_VOUT },
                 script_sig: ScriptBuf::new(),
                 sequence: Sequence::MAX, // Disable LockTime and RBF.
                 witness: Witness::default(),
             }],
-            output: vec![
+            outputs: vec![
                 TxOut { value: to_amount, script_pubkey: to_address.script_pubkey() },
                 TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
             ],

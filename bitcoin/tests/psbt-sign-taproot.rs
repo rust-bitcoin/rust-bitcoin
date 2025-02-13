@@ -213,13 +213,13 @@ fn create_psbt_for_taproot_key_path_spend(
     let transaction = Transaction {
         version: Version(2),
         lock_time: absolute::LockTime::ZERO,
-        input: vec![TxIn {
+        inputs: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
             script_sig: ScriptBuf::new(),
             sequence: Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
-        output: out_puts,
+        outputs: out_puts,
     };
 
     let mut psbt = Psbt::from_unsigned_tx(transaction).unwrap();
@@ -290,13 +290,13 @@ fn create_psbt_for_taproot_script_path_spend(
     let transaction = Transaction {
         version: Version(2),
         lock_time: absolute::LockTime::ZERO,
-        input: vec![TxIn {
+        inputs: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
             script_sig: ScriptBuf::new(),
             sequence: Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
-        output: out_puts,
+        outputs: out_puts,
     };
 
     let mut psbt = Psbt::from_unsigned_tx(transaction).unwrap();

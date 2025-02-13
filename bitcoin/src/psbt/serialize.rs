@@ -98,7 +98,7 @@ impl Psbt {
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
+            let inputs_len: usize = (global.unsigned_tx.inputs).len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
@@ -110,7 +110,7 @@ impl Psbt {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
+            let outputs_len: usize = (global.unsigned_tx.outputs).len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 

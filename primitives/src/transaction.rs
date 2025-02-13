@@ -103,9 +103,9 @@ pub struct Transaction {
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     pub lock_time: absolute::LockTime,
     /// List of transaction inputs.
-    pub input: Vec<TxIn>,
+    pub inputs: Vec<TxIn>,
     /// List of transaction outputs.
-    pub output: Vec<TxOut>,
+    pub outputs: Vec<TxOut>,
 }
 
 #[cfg(feature = "alloc")]
@@ -115,16 +115,16 @@ impl Transaction {
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
 
     /// Returns a reference to the transaction inputs.
-    pub fn inputs(&self) -> &[TxIn] { &self.input }
+    pub fn inputs(&self) -> &[TxIn] { &self.inputs }
 
     /// Returns a mutable reference to the transaction inputs.
-    pub fn inputs_mut(&mut self) -> &mut [TxIn] { &mut self.input }
+    pub fn inputs_mut(&mut self) -> &mut [TxIn] { &mut self.inputs }
 
     /// Returns a reference to the transaction outputs.
-    pub fn outputs(&self) -> &[TxOut] { &self.output }
+    pub fn outputs(&self) -> &[TxOut] { &self.outputs }
 
     /// Returns a mutable reference to the transaction outputs.
-    pub fn outputs_mut(&mut self) -> &mut [TxOut] { &mut self.output }
+    pub fn outputs_mut(&mut self) -> &mut [TxOut] { &mut self.outputs }
 
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
@@ -135,8 +135,8 @@ impl Transaction {
         let cloned_tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: self
-                .input
+            inputs: self
+                .inputs
                 .iter()
                 .map(|txin| TxIn {
                     script_sig: ScriptBuf::new(),
@@ -144,7 +144,7 @@ impl Transaction {
                     ..*txin
                 })
                 .collect(),
-            output: self.output.clone(),
+            outputs: self.outputs.clone(),
         };
         cloned_tx.compute_txid().into()
     }
@@ -174,12 +174,12 @@ impl Transaction {
     /// Returns whether or not to serialize transaction as specified in BIP-144.
     // This is duplicated in `bitcoin`, if you change it please do so in both places.
     fn uses_segwit_serialization(&self) -> bool {
-        if self.input.iter().any(|input| !input.witness.is_empty()) {
+        if self.inputs.iter().any(|input| !input.witness.is_empty()) {
             return true;
         }
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
-        self.input.is_empty()
+        self.inputs.is_empty()
     }
 }
 
@@ -194,8 +194,8 @@ impl cmp::Ord for Transaction {
         self.version
             .cmp(&other.version)
             .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
-            .then(self.input.cmp(&other.input))
-            .then(self.output.cmp(&other.output))
+            .then(self.inputs.cmp(&other.inputs))
+            .then(self.outputs.cmp(&other.outputs))
     }
 }
 
@@ -242,9 +242,9 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     }
 
     // Encode inputs (excluding witness data) with leading compact size encoded int.
-    let input_len = tx.input.len();
+    let input_len = tx.inputs.len();
     enc.input(compact_size::encode(input_len).as_slice());
-    for input in &tx.input {
+    for input in &tx.inputs {
         // Encode each input same as we do in `Encodable for TxIn`.
         enc.input(input.previous_output.txid.as_byte_array());
         enc.input(&input.previous_output.vout.to_le_bytes());
@@ -257,9 +257,9 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
     }
 
     // Encode outputs with leading compact size encoded int.
-    let output_len = tx.output.len();
+    let output_len = tx.outputs.len();
     enc.input(compact_size::encode(output_len).as_slice());
-    for output in &tx.output {
+    for output in &tx.outputs {
         // Encode each output same as we do in `Encodable for TxOut`.
         enc.input(&output.value.to_sat().to_le_bytes());
 
@@ -270,7 +270,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 
     if uses_segwit_serialization {
         // BIP-141 (SegWit) transaction serialization also includes the witness data.
-        for input in &tx.input {
+        for input in &tx.inputs {
             // Same as `Encodable for Witness`.
             enc.input(compact_size::encode(input.witness.len()).as_slice());
             for element in input.witness.iter() {
@@ -542,8 +542,8 @@ impl<'a> Arbitrary<'a> for Transaction {
         Ok(Transaction {
             version: Version::arbitrary(u)?,
             lock_time: absolute::LockTime::arbitrary(u)?,
-            input: Vec::<TxIn>::arbitrary(u)?,
-            output: Vec::<TxOut>::arbitrary(u)?,
+            inputs: Vec::<TxIn>::arbitrary(u)?,
+            outputs: Vec::<TxOut>::arbitrary(u)?,
         })
     }
 }

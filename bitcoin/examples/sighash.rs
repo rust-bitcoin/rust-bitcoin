@@ -22,7 +22,7 @@ use hex_lit::hex;
 /// * `amount` - ref tx output value in sats
 fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
-    let inp = &tx.input[inp_idx];
+    let inp = &tx.inputs[inp_idx];
     let witness = &inp.witness;
     println!("Witness: {:?}", witness);
 
@@ -61,7 +61,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 /// * `script_pubkey_bytes_opt` - Option with scriptPubKey bytes. If None, it's p2sh case, i.e., reftx output's scriptPubKey.type is "scripthash". In this case scriptPubkey is extracted from the spending transaction's scriptSig. If Some(), it's p2ms case, i.e., reftx output's scriptPubKey.type is "multisig", and the scriptPubkey is supplied from the referenced output.
 fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt: Option<&[u8]>) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
-    let inp = &tx.input[inp_idx];
+    let inp = &tx.inputs[inp_idx];
     let script_sig = &inp.script_sig;
     println!("scriptSig is: {}", script_sig);
     let cache = sighash::SighashCache::new(&tx);
@@ -107,7 +107,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
 /// * `amount` - ref tx output value in sats
 fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
-    let inp = &tx.input[inp_idx];
+    let inp = &tx.inputs[inp_idx];
     let witness = &inp.witness;
     println!("witness {:?}", witness);
 
