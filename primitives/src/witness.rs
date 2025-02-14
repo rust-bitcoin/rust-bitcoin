@@ -497,6 +497,7 @@ mod test {
     fn push() {
         // Sanity check default.
         let mut witness = Witness::default();
+        assert!(witness.is_empty());
         assert_eq!(witness.last(), None);
         assert_eq!(witness.second_to_last(), None);
 
@@ -506,10 +507,11 @@ mod test {
         assert_eq!(witness.nth(3), None);
 
         // Push a single byte element onto the witness stack.
-        let push = [0_u8];
+        let push = [11_u8];
         witness.push(push);
+        assert!(!witness.is_empty());
 
-        let elements = [1u8, 0];
+        let elements = [1u8, 11];
         let expected = Witness {
             witness_elements: 1,
             content: append_u32_vec(&elements, &[0]), // Start at index 0.
@@ -529,10 +531,10 @@ mod test {
         assert_eq!(witness.nth(3), None);
 
         // Now push 2 byte element onto the witness stack.
-        let push = [2u8, 3u8];
+        let push = [21u8, 22u8];
         witness.push(push);
 
-        let elements = [1u8, 0, 2, 2, 3];
+        let elements = [1u8, 11, 2, 21, 22];
         let expected = Witness {
             witness_elements: 2,
             content: append_u32_vec(&elements, &[0, 2]),
@@ -552,10 +554,10 @@ mod test {
         assert_eq!(witness.last(), Some(element_1));
 
         // Now push another 2 byte element onto the witness stack.
-        let push = [4u8, 5u8];
+        let push = [31u8, 32u8];
         witness.push(push);
 
-        let elements = [1u8, 0, 2, 2, 3, 2, 4, 5];
+        let elements = [1u8, 11, 2, 21, 22, 2, 31, 32];
         let expected = Witness {
             witness_elements: 3,
             content: append_u32_vec(&elements, &[0, 2, 5]),
@@ -571,6 +573,7 @@ mod test {
         assert_eq!(witness.nth(2), Some(element_2));
         assert_eq!(witness.nth(3), None);
 
+        assert_eq!(witness.third_to_last(), Some(element_0));
         assert_eq!(witness.second_to_last(), Some(element_1));
         assert_eq!(witness.last(), Some(element_2));
     }
@@ -592,6 +595,45 @@ mod test {
             assert_eq!(iter.len(), i);
             iter.next();
         }
+    }
+
+    #[test]
+    fn witness_from_parts() {
+        let elements = [1u8, 11, 2, 21, 22];
+        let witness_elements = 2;
+        let content = append_u32_vec(&elements, &[0, 2]);
+        let indices_start = elements.len();
+        let witness = Witness::from_parts__unstable(content.clone(), witness_elements, indices_start);
+        assert_eq!(witness.nth(0).unwrap(), [11_u8]);
+        assert_eq!(witness.nth(1).unwrap(), [21_u8, 22]);
+        assert_eq!(witness.size(), 6);
+    }
+
+    #[test]
+    fn witness_from_impl() {
+        // Test From implementations with the same 2 elements
+        let vec = vec![vec![11], vec![21, 22]];
+        let slice_vec: &[Vec<u8>] = &vec;
+        let slice_slice: &[&[u8]] = &[&[11u8], &[21, 22]];
+        let vec_slice: Vec<&[u8]> = vec![&[11u8], &[21, 22]];
+
+        let witness_vec_vec = Witness::from(vec.clone());
+        let witness_slice_vec = Witness::from(slice_vec);
+        let witness_slice_slice = Witness::from(slice_slice);
+        let witness_vec_slice = Witness::from(vec_slice);
+
+        let mut expected = Witness::from_slice(&vec);
+        assert_eq!(expected.len(), 2);
+        assert_eq!(expected.to_vec(), vec);
+
+        assert_eq!(witness_vec_vec, expected);
+        assert_eq!(witness_slice_vec, expected);
+        assert_eq!(witness_slice_slice, expected);
+        assert_eq!(witness_vec_slice, expected);
+
+        // Test clear method
+        expected.clear();
+        assert!(expected.is_empty());
     }
 
     #[test]
