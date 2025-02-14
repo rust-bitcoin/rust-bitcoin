@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 . contrib/test_vars.sh
 
-target_features="$(rustc --print target-features | awk '{ if ($1 == "") { exit 0 } if (NR != 1 && $1 != "crt-static") { if (NR == 2) { printf "+%s", $1 } else { printf ",+%s", $1 } } }')"
+target_features="$(rustc --print target-features | awk '{ if ($1 == "") { exit 0 } if (NR != 1 && $1 != "crt-static" && $1 != "soft-float") { if (NR == 2) { printf "+%s", $1 } else { printf ",+%s", $1 } } }')"
 
 for crate in $CRATES;
 do
