@@ -56,6 +56,11 @@ use crate::prelude::{Box, ToOwned, Vec};
 #[repr(transparent)]
 pub struct Script(pub(in crate::script) [u8]);
 
+impl Default for &Script {
+    #[inline]
+    fn default() -> Self { Script::new() }
+}
+
 impl ToOwned for Script {
     type Owned = ScriptBuf;
 
