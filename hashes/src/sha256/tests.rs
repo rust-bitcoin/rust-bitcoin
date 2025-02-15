@@ -5,6 +5,7 @@ use crate::{sha256, HashEngine};
 
 #[test]
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn test() {
     use alloc::string::ToString;
 
@@ -70,6 +71,7 @@ fn test() {
 
 #[test]
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn fmt_roundtrips() {
     use alloc::format;
 

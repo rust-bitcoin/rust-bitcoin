@@ -326,6 +326,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
     fn newtype_fmt_roundtrip() {
         use alloc::format;
 
