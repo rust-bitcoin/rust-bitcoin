@@ -412,7 +412,8 @@ impl BenefactorWallet {
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
         );
-        let value = input_utxo.amount - ABSOLUTE_FEES;
+        let value = (input_utxo.amount - ABSOLUTE_FEES)
+            .expect("ABSOLUTE_FEES must be set below input amount");
 
         // Spend a normal BIP86-like output as an input in our inheritance funding transaction
         let tx = generate_bip86_key_spend_tx(
@@ -476,7 +477,7 @@ impl BenefactorWallet {
             let mut psbt = self.next_psbt.clone().expect("should have next_psbt");
             let input = &mut psbt.inputs[0];
             let input_value = input.witness_utxo.as_ref().unwrap().value;
-            let output_value = input_value - ABSOLUTE_FEES;
+            let output_value = (input_value - ABSOLUTE_FEES).into_result()?;
 
             // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
             // that we use an unhardened path so we can make use of xpubs.
@@ -649,7 +650,8 @@ impl BeneficiaryWallet {
         psbt.unsigned_tx.lock_time = lock_time;
         psbt.unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
-            value: input_value - ABSOLUTE_FEES,
+            value: (input_value - ABSOLUTE_FEES)
+                .expect("ABSOLUTE_FEES must be set below input amount"),
         }];
         psbt.outputs = vec![Output::default()];
         let unsigned_tx = psbt.unsigned_tx.clone();

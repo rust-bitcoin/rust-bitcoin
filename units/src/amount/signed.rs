@@ -5,7 +5,7 @@
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 use core::str::FromStr;
-use core::{default, fmt, ops};
+use core::{default, fmt};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -479,68 +479,6 @@ impl fmt::Display for SignedAmount {
     }
 }
 
-impl ops::Add for SignedAmount {
-    type Output = SignedAmount;
-
-    fn add(self, rhs: SignedAmount) -> Self::Output {
-        self.checked_add(rhs).expect("SignedAmount addition error")
-    }
-}
-crate::internal_macros::impl_add_for_references!(SignedAmount);
-crate::internal_macros::impl_add_assign!(SignedAmount);
-
-impl ops::Sub for SignedAmount {
-    type Output = SignedAmount;
-
-    fn sub(self, rhs: SignedAmount) -> Self::Output {
-        self.checked_sub(rhs).expect("SignedAmount subtraction error")
-    }
-}
-crate::internal_macros::impl_sub_for_references!(SignedAmount);
-crate::internal_macros::impl_sub_assign!(SignedAmount);
-
-impl ops::Rem<i64> for SignedAmount {
-    type Output = SignedAmount;
-
-    fn rem(self, modulus: i64) -> Self::Output {
-        self.checked_rem(modulus).expect("SignedAmount remainder error")
-    }
-}
-
-impl ops::RemAssign<i64> for SignedAmount {
-    fn rem_assign(&mut self, modulus: i64) { *self = *self % modulus }
-}
-
-impl ops::Mul<i64> for SignedAmount {
-    type Output = SignedAmount;
-
-    fn mul(self, rhs: i64) -> Self::Output {
-        self.checked_mul(rhs).expect("SignedAmount multiplication error")
-    }
-}
-
-impl ops::MulAssign<i64> for SignedAmount {
-    fn mul_assign(&mut self, rhs: i64) { *self = *self * rhs }
-}
-
-impl ops::Div<i64> for SignedAmount {
-    type Output = SignedAmount;
-
-    fn div(self, rhs: i64) -> Self::Output {
-        self.checked_div(rhs).expect("SignedAmount division error")
-    }
-}
-
-impl ops::DivAssign<i64> for SignedAmount {
-    fn div_assign(&mut self, rhs: i64) { *self = *self / rhs }
-}
-
-impl ops::Neg for SignedAmount {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output { Self(self.0.neg()) }
-}
-
 impl FromStr for SignedAmount {
     type Err = ParseError;
 
@@ -569,23 +507,6 @@ impl From<Amount> for SignedAmount {
     fn from(value: Amount) -> Self {
         let v = value.to_sat() as i64; // Cast ok, signed amount and amount share positive range.
         Self::from_sat_unchecked(v)
-    }
-}
-
-impl core::iter::Sum for SignedAmount {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: i64 = iter.map(|amt| amt.0).sum();
-        Self::from_sat(sats)
-    }
-}
-
-impl<'a> core::iter::Sum<&'a SignedAmount> for SignedAmount {
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a SignedAmount>,
-    {
-        let sats: i64 = iter.map(|amt| amt.0).sum();
-        Self::from_sat(sats)
     }
 }
 

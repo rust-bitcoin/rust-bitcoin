@@ -116,28 +116,15 @@ fn mul_div() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(sat(14) * 3, sat(42));
-    assert_eq!(sat(14) / 2, sat(7));
-    assert_eq!(sat(14) % 3, sat(2));
-    assert_eq!(ssat(-14) * 3, ssat(-42));
-    assert_eq!(ssat(-14) / 2, ssat(-7));
-    assert_eq!(ssat(-14) % 3, ssat(-2));
+    let op_result_sat = |sat| NumOpResult::Valid(Amount::from_sat(sat));
+    let op_result_ssat = |sat| NumOpResult::Valid(SignedAmount::from_sat(sat));
 
-    let mut a = sat(30);
-    a /= 3;
-    assert_eq!(a, sat(10));
-    a %= 3;
-    assert_eq!(a, sat(1));
-    a *= 3;
-    assert_eq!(a, sat(3));
-
-    let mut b = ssat(30);
-    b /= 3;
-    assert_eq!(b, ssat(10));
-    b %= 3;
-    assert_eq!(b, ssat(1));
-    b *= 3;
-    assert_eq!(b, ssat(3));
+    assert_eq!(sat(14) * 3, op_result_sat(42));
+    assert_eq!(sat(14) / 2, op_result_sat(7));
+    assert_eq!(sat(14) % 3, op_result_sat(2));
+    assert_eq!(ssat(-14) * 3, op_result_ssat(-42));
+    assert_eq!(ssat(-14) / 2, op_result_ssat(-7));
+    assert_eq!(ssat(-14) % 3, op_result_ssat(-2));
 }
 
 #[test]
@@ -149,11 +136,41 @@ fn neg() {
 #[cfg(feature = "std")]
 #[test]
 fn overflows() {
-    // panic on overflow
-    let result = panic::catch_unwind(|| Amount::MAX + Amount::from_sat_unchecked(1));
-    assert!(result.is_err());
-    let result = panic::catch_unwind(|| Amount::from_sat_unchecked(8_446_744_073_709_551_615) * 3);
-    assert!(result.is_err());
+    let result = Amount::MAX + Amount::from_sat_unchecked(1);
+    assert!(result.is_error());
+    let result = Amount::from_sat_unchecked(8_446_744_073_709_551_615) * 3;
+    assert!(result.is_error());
+}
+
+#[test]
+fn add() {
+    let sat = Amount::from_sat;
+    let ssat = SignedAmount::from_sat;
+
+    assert!(sat(0) + sat(0) == sat(0).into());
+    assert!(sat(127) + sat(179) == sat(306).into());
+
+    assert!(ssat(0) + ssat(0) == ssat(0).into());
+    assert!(ssat(127) + ssat(179) == ssat(306).into());
+    assert!(ssat(-127) + ssat(179) == ssat(52).into());
+    assert!(ssat(127) + ssat(-179) == ssat(-52).into());
+    assert!(ssat(-127) + ssat(-179) == ssat(-306).into());
+}
+
+#[test]
+fn sub() {
+    let sat = Amount::from_sat;
+    let ssat = SignedAmount::from_sat;
+
+    assert!(sat(0) - sat(0) == sat(0).into());
+    assert!(sat(179) - sat(127) == sat(52).into());
+    assert!((sat(127) - sat(179)).is_error());
+
+    assert!(ssat(0) - ssat(0) == ssat(0).into());
+    assert!(ssat(127) - ssat(179) == ssat(-52).into());
+    assert!(ssat(-127) - ssat(179) == ssat(-306).into());
+    assert!(ssat(127) - ssat(-179) == ssat(306).into());
+    assert!(ssat(-127) - ssat(-179) == ssat(52).into());
 }
 
 #[test]
@@ -990,18 +1007,28 @@ fn sum_amounts() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!([].iter().sum::<Amount>(), Amount::ZERO);
-    assert_eq!([].iter().sum::<SignedAmount>(), SignedAmount::ZERO);
+    assert_eq!([].iter().sum::<NumOpResult<Amount>>(), Amount::ZERO.into());
+    assert_eq!([].iter().sum::<NumOpResult<SignedAmount>>(), SignedAmount::ZERO.into());
 
     let amounts = [sat(42), sat(1337), sat(21)];
-    assert_eq!(amounts.iter().sum::<Amount>(), sat(1400));
-    let sum = amounts.into_iter().sum::<Amount>();
-    assert_eq!(sum, sat(1400));
+    assert_eq!(
+        amounts.iter().map(|a| NumOpResult::Valid(*a)).sum::<NumOpResult<Amount>>(),
+        sat(1400).into(),
+    );
+    assert_eq!(
+        amounts.into_iter().map(NumOpResult::Valid).sum::<NumOpResult<Amount>>(),
+        sat(1400).into(),
+    );
 
     let amounts = [ssat(-42), ssat(1337), ssat(21)];
-    assert_eq!(amounts.iter().sum::<SignedAmount>(), ssat(1316));
-    let sum = amounts.into_iter().sum::<SignedAmount>();
-    assert_eq!(sum, ssat(1316));
+    assert_eq!(
+        amounts.iter().map(NumOpResult::from).sum::<NumOpResult<SignedAmount>>(),
+        ssat(1316).into(),
+    );
+    assert_eq!(
+        amounts.into_iter().map(NumOpResult::from).sum::<NumOpResult<SignedAmount>>(),
+        ssat(1316).into()
+    );
 }
 
 #[test]
@@ -1108,10 +1135,11 @@ fn unsigned_addition() {
     let two = sat(2);
     let three = sat(3);
 
-    assert!(one + two == three);
-    assert!(&one + two == three);
-    assert!(one + &two == three);
-    assert!(&one + &two == three);
+    assert!((one + two) == three.into());
+    assert!((one + two) == three.into());
+    assert!((&one + two) == three.into());
+    assert!((one + &two) == three.into());
+    assert!((&one + &two) == three.into());
 }
 
 #[test]
@@ -1123,36 +1151,10 @@ fn unsigned_subtract() {
     let two = sat(2);
     let three = sat(3);
 
-    assert!(three - two == one);
-    assert!(&three - two == one);
-    assert!(three - &two == one);
-    assert!(&three - &two == one);
-}
-
-#[test]
-fn unsigned_add_assign() {
-    let sat = Amount::from_sat;
-
-    let mut f = sat(1);
-    f += sat(2);
-    assert_eq!(f, sat(3));
-
-    let mut f = sat(1);
-    f += &sat(2);
-    assert_eq!(f, sat(3));
-}
-
-#[test]
-fn unsigned_sub_assign() {
-    let sat = Amount::from_sat;
-
-    let mut f = sat(3);
-    f -= sat(2);
-    assert_eq!(f, sat(1));
-
-    let mut f = sat(3);
-    f -= &sat(2);
-    assert_eq!(f, sat(1));
+    assert!(three - two == one.into());
+    assert!(&three - two == one.into());
+    assert!(three - &two == one.into());
+    assert!(&three - &two == one.into());
 }
 
 #[test]
@@ -1164,10 +1166,10 @@ fn signed_addition() {
     let two = ssat(2);
     let three = ssat(3);
 
-    assert!(one + two == three);
-    assert!(&one + two == three);
-    assert!(one + &two == three);
-    assert!(&one + &two == three);
+    assert!(one + two == three.into());
+    assert!(&one + two == three.into());
+    assert!(one + &two == three.into());
+    assert!(&one + &two == three.into());
 }
 
 #[test]
@@ -1179,36 +1181,10 @@ fn signed_subtract() {
     let two = ssat(2);
     let three = ssat(3);
 
-    assert!(three - two == one);
-    assert!(&three - two == one);
-    assert!(three - &two == one);
-    assert!(&three - &two == one);
-}
-
-#[test]
-fn signed_add_assign() {
-    let ssat = SignedAmount::from_sat;
-
-    let mut f = ssat(1);
-    f += ssat(2);
-    assert_eq!(f, ssat(3));
-
-    let mut f = ssat(1);
-    f += &ssat(2);
-    assert_eq!(f, ssat(3));
-}
-
-#[test]
-fn signed_sub_assign() {
-    let ssat = SignedAmount::from_sat;
-
-    let mut f = ssat(3);
-    f -= ssat(2);
-    assert_eq!(f, ssat(1));
-
-    let mut f = ssat(3);
-    f -= &ssat(2);
-    assert_eq!(f, ssat(1));
+    assert!(three - two == one.into());
+    assert!(&three - two == one.into());
+    assert!(three - &two == one.into());
+    assert!(&three - &two == one.into());
 }
 
 #[test]
@@ -1218,4 +1194,186 @@ fn check_const() {
     assert_eq!(SignedAmount::FIFTY_BTC.to_sat(), SignedAmount::ONE_BTC.to_sat() * 50);
     assert_eq!(Amount::FIFTY_BTC.to_sat(), Amount::ONE_BTC.to_sat() * 50);
     assert_eq!(Amount::MAX_MONEY.to_sat() as i64, SignedAmount::MAX_MONEY.to_sat());
+}
+
+// Verify we have implemented all combinations of ops for `Amount` and `SignedAmount`.
+// It's easier to read this test that check the code.
+#[test]
+#[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
+fn amount_tyes_all_ops() {
+    // Sanity check than stdlib supports the set of reference combinations for the ops we want.
+    {
+        let x = 127;
+
+        let _ = x + x;
+        let _ = &x + x;
+        let _ = x + &x;
+        let _ = &x + &x;
+
+        let _ = x - x;
+        let _ = &x - x;
+        let _ = x - &x;
+        let _ = &x - &x;
+
+        let _ = -x;
+    }
+
+    let sat = Amount::from_sat(1);
+    let ssat = SignedAmount::from_sat(1);
+
+    // Add
+    let _ = sat + sat;
+    let _ = &sat + sat;
+    let _ = sat + &sat;
+    let _ = &sat + &sat;
+
+    // let _ = ssat + sat;
+    // let _ = &ssat + sat;
+    // let _ = ssat + &sat;
+    // let _ = &ssat + &sat;
+
+    // let _ = sat + ssat;
+    // let _ = &sat + ssat;
+    // let _ = sat + &ssat;
+    // let _ = &sat + &ssat;
+
+    let _ = ssat + ssat;
+    let _ = &ssat + ssat;
+    let _ = ssat + &ssat;
+    let _ = &ssat + &ssat;
+
+    // Sub
+    let _ = sat - sat;
+    let _ = &sat - sat;
+    let _ = sat - &sat;
+    let _ = &sat - &sat;
+
+    // let _ = ssat - sat;
+    // let _ = &ssat - sat;
+    // let _ = ssat - &sat;
+    // let _ = &ssat - &sat;
+
+    // let _ = sat - ssat;
+    // let _ = &sat - ssat;
+    // let _ = sat - &ssat;
+    // let _ = &sat - &ssat;
+
+    let _ = ssat - ssat;
+    let _ = &ssat - ssat;
+    let _ = ssat - &ssat;
+    let _ = &ssat - &ssat;
+
+    // let _ = sat * sat;  // Intentionally not supported.
+
+    // Mul
+    let _ = sat * 3;
+    let _ = sat * &3;
+    let _ = &sat * 3;
+    let _ = &sat * &3;
+
+    let _ = ssat * 3_i64; // Explicit type for the benefit of the reader.
+    let _ = ssat * &3;
+    let _ = &ssat * 3;
+    let _ = &ssat * &3;
+
+    // Div
+    let _ = sat / 3;
+    let _ = &sat / 3;
+    let _ = sat / &3;
+    let _ = &sat / &3;
+
+    let _ = ssat / 3_i64; // Explicit type for the benefit of the reader.
+    let _ = &ssat / 3;
+    let _ = ssat / &3;
+    let _ = &ssat / &3;
+
+    // Rem
+    let _ = sat % 3;
+    let _ = &sat % 3;
+    let _ = sat % &3;
+    let _ = &sat % &3;
+
+    let _ = ssat % 3;
+    let _ = &ssat % 3;
+    let _ = ssat % &3;
+    let _ = &ssat % &3;
+
+    // FIXME: Do we want to support this?
+    // let _ = sat / sat;
+    //
+    // "How many times does this amount go into that amount?" - seems
+    // like a reasonable question to ask.
+
+    // FIXME: Do we want to support these?
+    // let _ = -sat;
+    // let _ = -ssat;
+}
+
+// FIXME: Should we support this sort of thing?
+// It will be a lot more code for possibly not that much benefit.
+#[test]
+fn can_ops_on_amount_and_signed_amount() {
+    // let res: NumOpResult<SignedAmount> = sat + ssat;
+}
+
+// Verify we have implemented all combinations of ops for the `NumOpResult` type.
+// It's easier to read this test that check the code.
+#[test]
+#[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
+fn amount_op_result_all_ops() {
+    let sat = Amount::from_sat(1);
+    // let ssat = SignedAmount::from_sat(1);
+
+    // Explicit type as sanity check.
+    let res: NumOpResult<Amount> = sat + sat;
+    // let sres: NumOpResult<SignedAmount> = ssat + ssat;
+
+    // Operations that where RHS is the result of another operation.
+    let _ = sat + res.clone();
+    let _ = &sat + res.clone();
+    // let _ = sat + &res.clone();
+    // let _ = &sat + &res.clone();
+
+    let _ = sat - res.clone();
+    let _ = &sat - res.clone();
+    // let _ = sat - &res.clone();
+    // let _ = &sat - &res.clone();
+
+    // Operations that where LHS is the result of another operation.
+    let _ = res.clone() + sat;
+    // let _ = &res.clone() + sat;
+    let _ = res.clone() + &sat;
+    // let _ = &res.clone() + &sat;
+
+    let _ = res.clone() - sat;
+    // let _ = &res.clone() - sat;
+    let _ = res.clone() - &sat;
+    // let _ = &res.clone() - &sat;
+
+    // Operations that where both sides are the result of another operation.
+    let _ = res.clone() + res.clone();
+    // let _ = &res.clone() + res.clone();
+    // let _ = res.clone() + &res.clone();
+    // let _ = &res.clone() + &res.clone();
+
+    let _ = res.clone() - res.clone();
+    // let _ = &res.clone() - res.clone();
+    // let _ = res.clone() - &res.clone();
+    // let _ = &res.clone() - &res.clone();
+}
+
+// Verify we have implemented all `Sum` for the `NumOpResult` type.
+#[test]
+fn amount_op_result_sum() {
+    let res = Amount::from_sat(1) + Amount::from_sat(1);
+    let amounts = [res.clone(), res.clone()];
+    let amount_refs = [&res, &res];
+
+    // Sum iterators.
+    let _ = amounts.iter().sum::<NumOpResult<Amount>>();
+    let _ = amount_refs.iter().copied().sum::<NumOpResult<Amount>>();
+    let _ = amount_refs.into_iter().sum::<NumOpResult<Amount>>();
+
+    // FIXME: Should we support this? I don't think so (Tobin).
+    // let _ = amount_refs.iter().sum::<NumOpResult<&Amount>>();
 }

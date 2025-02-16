@@ -29,19 +29,11 @@ fn u_amount_homomorphic() {
     let a2 = Amount::from_sat(n2);
     kani::assume(a1.checked_add(a2).is_some()); // Adding amounts doesn't overflow.
 
-    assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2));
-
-    let mut amt = Amount::from_sat(n1);
-    amt += Amount::from_sat(n2);
-    assert_eq!(amt, Amount::from_sat(n1 + n2));
+    assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2).into());
 
     let max = cmp::max(n1, n2);
     let min = cmp::min(n1, n2);
-    assert_eq!(Amount::from_sat(max) - Amount::from_sat(min), Amount::from_sat(max - min));
-
-    let mut amt = Amount::from_sat(max);
-    amt -= Amount::from_sat(min);
-    assert_eq!(amt, Amount::from_sat(max - min));
+    assert_eq!(Amount::from_sat(max) - Amount::from_sat(min), Amount::from_sat(max - min).into());
 }
 
 #[kani::unwind(4)]
@@ -59,17 +51,10 @@ fn s_amount_homomorphic() {
 
     assert_eq!(
         SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 + n2)
+        SignedAmount::from_sat(n1 + n2).into()
     );
     assert_eq!(
         SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2),
-        SignedAmount::from_sat(n1 - n2)
+        SignedAmount::from_sat(n1 - n2).into()
     );
-
-    let mut amt = SignedAmount::from_sat(n1);
-    amt += SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 + n2));
-    let mut amt = SignedAmount::from_sat(n1);
-    amt -= SignedAmount::from_sat(n2);
-    assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
 }
