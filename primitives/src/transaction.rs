@@ -616,10 +616,7 @@ mod tests {
             witness: Witness::new(),
         };
 
-        let txout = TxOut {
-            value: Amount::from_sat(123456789),
-            script_pubkey: ScriptBuf::new(),
-        };
+        let txout = TxOut { value: Amount::from_sat(123456789), script_pubkey: ScriptBuf::new() };
 
         let tx_orig = Transaction {
             version: Version::ONE,

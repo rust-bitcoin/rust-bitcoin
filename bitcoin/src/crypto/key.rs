@@ -499,10 +499,10 @@ impl PrivateKey {
             33 => false,
             34 => {
                 if data[33] != 1 {
-                    return Err(InvalidWifCompressionFlagError{ invalid: data[33] }.into());
+                    return Err(InvalidWifCompressionFlagError { invalid: data[33] }.into());
                 }
                 true
-            },
+            }
             length => {
                 return Err(InvalidBase58PayloadLengthError { length }.into());
             }
@@ -987,8 +987,7 @@ impl fmt::Display for FromWifError {
             InvalidAddressVersion(ref e) =>
                 write_err!(f, "decoded base58 data contained an invalid address version btye"; e),
             Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
-            InvalidWifCompressionFlag(ref e) => 
-                write_err!(f, "invalid WIF compression flag";e),
+            InvalidWifCompressionFlag(ref e) => write_err!(f, "invalid WIF compression flag";e),
         }
     }
 }
@@ -1179,7 +1178,7 @@ impl std::error::Error for InvalidAddressVersionError {}
 
 /// Invalid compression flag for a WIF key
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidWifCompressionFlagError{
+pub struct InvalidWifCompressionFlagError {
     /// The invalid compression flag.
     pub(crate) invalid: u8,
 }
@@ -1206,9 +1205,13 @@ mod tests {
     #[test]
     fn key_derivation() {
         // mainnet compressed WIF with invalid compression flag.
-        let sk =
-        PrivateKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
-        assert!(matches!(sk, Err(FromWifError::InvalidWifCompressionFlag(InvalidWifCompressionFlagError { invalid: 49 }))));
+        let sk = PrivateKey::from_wif("L2x4uC2YgfFWZm9tF4pjDnVR6nJkheizFhEr2KvDNnTEmEqVzPJY");
+        assert!(matches!(
+            sk,
+            Err(FromWifError::InvalidWifCompressionFlag(InvalidWifCompressionFlagError {
+                invalid: 49
+            }))
+        ));
 
         // testnet compressed
         let sk =
