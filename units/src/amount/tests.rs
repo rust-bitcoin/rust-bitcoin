@@ -1328,44 +1328,44 @@ fn amount_op_result_all_ops() {
     // let sres: NumOpResult<SignedAmount> = ssat + ssat;
 
     // Operations that where RHS is the result of another operation.
-    let _ = sat + res.clone();
-    let _ = &sat + res.clone();
-    // let _ = sat + &res.clone();
-    // let _ = &sat + &res.clone();
+    let _ = sat + res;
+    let _ = &sat + res;
+    // let _ = sat + &res;
+    // let _ = &sat + &res;
 
-    let _ = sat - res.clone();
-    let _ = &sat - res.clone();
-    // let _ = sat - &res.clone();
-    // let _ = &sat - &res.clone();
+    let _ = sat - res;
+    let _ = &sat - res;
+    // let _ = sat - &res;
+    // let _ = &sat - &res;
 
     // Operations that where LHS is the result of another operation.
-    let _ = res.clone() + sat;
-    // let _ = &res.clone() + sat;
-    let _ = res.clone() + &sat;
-    // let _ = &res.clone() + &sat;
+    let _ = res + sat;
+    // let _ = &res + sat;
+    let _ = res + &sat;
+    // let _ = &res + &sat;
 
-    let _ = res.clone() - sat;
-    // let _ = &res.clone() - sat;
-    let _ = res.clone() - &sat;
-    // let _ = &res.clone() - &sat;
+    let _ = res - sat;
+    // let _ = &res - sat;
+    let _ = res - &sat;
+    // let _ = &res - &sat;
 
     // Operations that where both sides are the result of another operation.
-    let _ = res.clone() + res.clone();
-    // let _ = &res.clone() + res.clone();
-    // let _ = res.clone() + &res.clone();
-    // let _ = &res.clone() + &res.clone();
+    let _ = res + res;
+    // let _ = &res + res;
+    // let _ = res + &res;
+    // let _ = &res + &res;
 
-    let _ = res.clone() - res.clone();
-    // let _ = &res.clone() - res.clone();
-    // let _ = res.clone() - &res.clone();
-    // let _ = &res.clone() - &res.clone();
+    let _ = res - res;
+    // let _ = &res - res;
+    // let _ = res - &res;
+    // let _ = &res - &res;
 }
 
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
 #[test]
 fn amount_op_result_sum() {
     let res = Amount::from_sat(1) + Amount::from_sat(1);
-    let amounts = [res.clone(), res.clone()];
+    let amounts = [res, res];
     let amount_refs = [&res, &res];
 
     // Sum iterators.
