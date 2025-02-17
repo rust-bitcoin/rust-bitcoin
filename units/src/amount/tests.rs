@@ -1136,7 +1136,6 @@ fn unsigned_addition() {
     let three = sat(3);
 
     assert!((one + two) == three.into());
-    assert!((one + two) == three.into());
     assert!((&one + two) == three.into());
     assert!((one + &two) == three.into());
     assert!((&one + &two) == three.into());
