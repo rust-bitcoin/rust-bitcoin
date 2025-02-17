@@ -1131,14 +1131,14 @@ fn trailing_zeros_for_amount() {
 fn unsigned_addition() {
     let sat = Amount::from_sat;
 
-    let one = sat(1);
-    let two = sat(2);
-    let three = sat(3);
+    let a = sat(127);
+    let b = sat(179);
+    let c = NumOpResult::from(sat(306));
 
-    assert!((one + two) == three.into());
-    assert!((&one + two) == three.into());
-    assert!((one + &two) == three.into());
-    assert!((&one + &two) == three.into());
+    assert!((a + b) == c);
+    assert!((&a + b) == c);
+    assert!((a + &b) == c);
+    assert!((&a + &b) == c);
 }
 
 #[test]
@@ -1146,14 +1146,14 @@ fn unsigned_addition() {
 fn unsigned_subtract() {
     let sat = Amount::from_sat;
 
-    let one = sat(1);
-    let two = sat(2);
-    let three = sat(3);
+    let a = sat(127);
+    let b = sat(179);
+    let c = NumOpResult::from(sat(52));
 
-    assert!(three - two == one.into());
-    assert!(&three - two == one.into());
-    assert!(three - &two == one.into());
-    assert!(&three - &two == one.into());
+    assert!((b - a) == c);
+    assert!((&b - a) == c);
+    assert!((b - &a) == c);
+    assert!((&b - &a) == c);
 }
 
 #[test]
@@ -1161,14 +1161,14 @@ fn unsigned_subtract() {
 fn signed_addition() {
     let ssat = SignedAmount::from_sat;
 
-    let one = ssat(1);
-    let two = ssat(2);
-    let three = ssat(3);
+    let a = ssat(127);
+    let b = ssat(179);
+    let c = NumOpResult::from(ssat(306));
 
-    assert!(one + two == three.into());
-    assert!(&one + two == three.into());
-    assert!(one + &two == three.into());
-    assert!(&one + &two == three.into());
+    assert!((a + b) == c);
+    assert!((&a + b) == c);
+    assert!((a + &b) == c);
+    assert!((&a + &b) == c);
 }
 
 #[test]
@@ -1176,14 +1176,14 @@ fn signed_addition() {
 fn signed_subtract() {
     let ssat = SignedAmount::from_sat;
 
-    let one = ssat(1);
-    let two = ssat(2);
-    let three = ssat(3);
+    let a = ssat(127);
+    let b = ssat(179);
+    let c = NumOpResult::from(ssat(52));
 
-    assert!(three - two == one.into());
-    assert!(&three - two == one.into());
-    assert!(three - &two == one.into());
-    assert!(&three - &two == one.into());
+    assert!((b - a) == c);
+    assert!((&b - a) == c);
+    assert!((b - &a) == c);
+    assert!((&b - &a) == c);
 }
 
 #[test]
