@@ -12,7 +12,7 @@ use super::{Amount, SignedAmount};
 /// Result of an operation on [`Amount`] or [`SignedAmount`].
 ///
 /// The type parameter `T` should be normally `Amout` or `SignedAmount`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
     /// Result of a successful mathematical operation.
@@ -584,7 +584,7 @@ impl OptionExt<SignedAmount> for Option<SignedAmount> {
 }
 
 /// An error occurred while doing a mathematical operation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct NumOpError;
 
