@@ -1363,11 +1363,11 @@ fn num_op_result_ops_integer() {
     check_op! {
         // Operations on a `NumOpResult` and integer.
         let _ = res * 3_u64; // Explicit type for the benefit of the reader.
-        // let _ = res / 3;
+        let _ = res / 3;
         // let _ = res % 3;
 
         let _ = sres * 3_i64; // Explicit type for the benefit of the reader.
-        // let _ = sres / 3;
+        let _ = sres / 3;
         // let _ = sres % 3;
     };
 }

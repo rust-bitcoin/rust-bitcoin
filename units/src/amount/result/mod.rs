@@ -151,21 +151,7 @@ impl ops::Div<u64> for Amount {
 
     fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
 }
-impl ops::Div<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: u64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { (*self).div(*rhs) }
-}
+self::macros::impl_div_combinations!(Amount, u64);
 
 impl ops::Rem<u64> for Amount {
     type Output = NumOpResult<Amount>;
@@ -220,21 +206,7 @@ impl ops::Div<i64> for SignedAmount {
 
     fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
 }
-impl ops::Div<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: i64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { (*self).div(*rhs) }
-}
+self::macros::impl_div_combinations!(SignedAmount, i64);
 
 impl ops::Rem<i64> for SignedAmount {
     type Output = NumOpResult<SignedAmount>;

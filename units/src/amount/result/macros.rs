@@ -246,3 +246,72 @@ macro_rules! impl_mul_combinations {
     };
 }
 pub(crate) use impl_mul_combinations;
+
+/// Implements `ops::Div` for various combinations.
+///
+/// Requires implementation of `ops::Div<$rhs> for $ty`.
+macro_rules! impl_div_combinations {
+    ($amount_ty:ident, $int_ty:ident) => {
+        // E.g., Amount / 3;
+        impl core::ops::Div<$int_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: $int_ty) -> Self::Output { (*self) / rhs }
+        }
+        impl core::ops::Div<&$int_ty> for $amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: &$int_ty) -> Self::Output { self / (*rhs) }
+        }
+        impl<'a> core::ops::Div<&'a $int_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: &'a $int_ty) -> Self::Output { (*self) / (*rhs) }
+        }
+
+        // E.g., NumOpResult<Amount> / 3;
+        impl ops::Div<$int_ty> for NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: $int_ty) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+        }
+        impl ops::Div<$int_ty> for &NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: $int_ty) -> Self::Output { (*self) / rhs }
+        }
+        impl ops::Div<&$int_ty> for NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: &$int_ty) -> Self::Output { self / (*rhs) }
+        }
+        impl ops::Div<&$int_ty> for &NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn div(self, rhs: &$int_ty) -> Self::Output { (*self) / (*rhs) }
+        }
+
+        // E.g., Amount / Amount;
+        impl ops::Div<$amount_ty> for $amount_ty {
+            type Output = $int_ty;
+
+            fn div(self, rhs: $amount_ty) -> Self::Output { self.to_sat() / rhs.to_sat() }
+        }
+        impl ops::Div<$amount_ty> for &$amount_ty {
+            type Output = $int_ty;
+
+            fn div(self, rhs: $amount_ty) -> Self::Output { (*self) / rhs }
+        }
+        impl ops::Div<&$amount_ty> for $amount_ty {
+            type Output = $int_ty;
+
+            fn div(self, rhs: &$amount_ty) -> Self::Output { self / (*rhs) }
+        }
+        impl ops::Div<&$amount_ty> for &$amount_ty {
+            type Output = $int_ty;
+
+            fn div(self, rhs: &$amount_ty) -> Self::Output { (*self) / (*rhs) }
+        }
+    };
+}
+pub(crate) use impl_div_combinations;
