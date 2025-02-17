@@ -202,6 +202,12 @@ impl ops::Rem<&u64> for &Amount {
     fn rem(self, modulus: &u64) -> Self::Output { (*self).rem(*modulus) }
 }
 
+impl ops::Neg for Amount {
+    type Output = SignedAmount;
+
+    fn neg(self) -> Self::Output { self.to_signed() }
+}
+
 impl ops::Add for SignedAmount {
     type Output = NumOpResult<SignedAmount>;
 

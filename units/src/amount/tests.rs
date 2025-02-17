@@ -1283,9 +1283,8 @@ fn amount_tyes_all_ops() {
     // "How many times does this amount go into that amount?" - seems
     // like a reasonable question to ask.
 
-    // FIXME: Do we want to support these?
-    // let _ = -sat;
-    // let _ = -ssat;
+    let _ = -sat;
+    let _ = -ssat;
 }
 
 // Verify we have implemented all combinations of ops for the `NumOpResult` type.
