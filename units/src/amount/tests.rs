@@ -1372,7 +1372,4 @@ fn amount_op_result_sum() {
     let _ = amounts.iter().sum::<NumOpResult<Amount>>();
     let _ = amount_refs.iter().copied().sum::<NumOpResult<Amount>>();
     let _ = amount_refs.into_iter().sum::<NumOpResult<Amount>>();
-
-    // FIXME: Should we support this? I don't think so (Tobin).
-    // let _ = amount_refs.iter().sum::<NumOpResult<&Amount>>();
 }
