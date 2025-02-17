@@ -1335,8 +1335,8 @@ fn amount_op_result_all_ops() {
 
     let _ = sat - res;
     let _ = &sat - res;
-    // let _ = sat - &res;
-    // let _ = &sat - &res;
+    let _ = sat - &res;
+    let _ = &sat - &res;
 
     // Operations that where LHS is the result of another operation.
     let _ = res + sat;
@@ -1345,9 +1345,9 @@ fn amount_op_result_all_ops() {
     let _ = &res + &sat;
 
     let _ = res - sat;
-    // let _ = &res - sat;
+    let _ = &res - sat;
     let _ = res - &sat;
-    // let _ = &res - &sat;
+    let _ = &res - &sat;
 
     // Operations that where both sides are the result of another operation.
     let _ = res + res;
@@ -1356,9 +1356,9 @@ fn amount_op_result_all_ops() {
     let _ = &res + &res;
 
     let _ = res - res;
-    // let _ = &res - res;
-    // let _ = res - &res;
-    // let _ = &res - &res;
+    let _ = &res - res;
+    let _ = res - &res;
+    let _ = &res - &res;
 }
 
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
