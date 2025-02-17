@@ -7,7 +7,7 @@ use core::marker::PhantomData;
 
 #[cfg(doc)]
 use crate::sha256::Midstate;
-use crate::{sha256, FromSliceError, HashEngine as _};
+use crate::{sha256, HashEngine as _};
 
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
 pub trait Tag: Clone {
@@ -44,11 +44,12 @@ where
 
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
-    pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, FromSliceError> {
+    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+    pub fn from_slice(sl: &[u8]) -> Result<Hash<T>, crate::FromSliceError> {
         use crate::error::FromSliceErrorInner;
 
         if sl.len() != 32 {
-            Err(FromSliceError(FromSliceErrorInner { expected: 32, got: sl.len() }))
+            Err(crate::error::FromSliceError(FromSliceErrorInner { expected: 32, got: sl.len() }))
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);

@@ -12,7 +12,7 @@ use core::{convert, fmt, str};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{FromSliceError, GeneralHash, Hash, HashEngine};
+use crate::{GeneralHash, Hash, HashEngine};
 
 /// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -132,8 +132,10 @@ impl<T: GeneralHash> Hash for Hmac<T> {
 
     fn from_byte_array(bytes: T::Bytes) -> Self { Hmac(T::from_byte_array(bytes)) }
 
-    #[allow(deprecated)]
-    fn from_slice(sl: &[u8]) -> Result<Hmac<T>, FromSliceError> { T::from_slice(sl).map(Hmac) }
+    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+    fn from_slice(sl: &[u8]) -> Result<Hmac<T>, crate::FromSliceError> {
+        T::from_slice(sl).map(Hmac)
+    }
 
     fn to_byte_array(self) -> Self::Bytes { self.0.to_byte_array() }
 

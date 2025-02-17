@@ -96,10 +96,11 @@ pub mod _export {
     }
 }
 
+#[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
+mod error;
 mod internal_macros;
 
 pub mod cmp;
-pub mod error;
 pub mod hash160;
 pub mod hkdf;
 pub mod hmac;
@@ -132,11 +133,9 @@ use core::{convert, hash};
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
 pub use self::{
-    error::FromSliceError,
     hkdf::Hkdf,
     hmac::{Hmac, HmacEngine},
 };
-
 /// HASH-160: Alias for the [`hash160::Hash`] hash type.
 #[doc(inline)]
 pub use hash160::Hash as Hash160;
@@ -164,6 +163,11 @@ pub use sha512_256::Hash as Sha512_256;
 /// SipHash-2-4: Alias for the [`siphash24::Hash`] hash type.
 #[doc(inline)]
 pub use siphash24::Hash as Siphash24;
+
+/// Attempted to create a hash from an invalid length slice.
+#[deprecated(since = "TBD", note = "unused now that `Hash::from_slice` is deprecated")]
+#[allow(deprecated_in_future)]
+pub type FromSliceError = crate::error::FromSliceError; // Alias instead of re-export so we can deprecate it.
 
 /// Tagged SHA-256: Type alias for the [`sha256t::Hash`] hash type.
 pub type Sha256t<T> = sha256t::Hash<T>;
@@ -257,7 +261,8 @@ pub trait Hash:
     fn from_byte_array(bytes: Self::Bytes) -> Self;
 
     /// Copies a byte slice into a hash object.
-    #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
+    #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+    #[deprecated(since = "TBD", note = "use `from_byte_array` instead")]
     fn from_slice(sl: &[u8]) -> Result<Self, FromSliceError>;
 
     /// Returns the underlying byte array.

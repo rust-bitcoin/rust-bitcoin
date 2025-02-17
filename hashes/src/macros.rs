@@ -141,7 +141,8 @@ macro_rules! hash_newtype {
 
             /// Copies a byte slice into a hash object.
             #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
-            #[allow(deprecated)]
+            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+            #[allow(deprecated)]           // Because of `from_slice`.
             pub fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
             }
@@ -178,7 +179,8 @@ macro_rules! hash_newtype {
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 
             #[inline]
-            #[allow(deprecated)]
+            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+            #[allow(deprecated)]           // Because of `from_slice`.
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<$newtype, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }
