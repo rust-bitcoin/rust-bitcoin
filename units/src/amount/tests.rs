@@ -1226,16 +1226,6 @@ fn amount_tyes_all_ops() {
     let _ = sat + &sat;
     let _ = &sat + &sat;
 
-    // let _ = ssat + sat;
-    // let _ = &ssat + sat;
-    // let _ = ssat + &sat;
-    // let _ = &ssat + &sat;
-
-    // let _ = sat + ssat;
-    // let _ = &sat + ssat;
-    // let _ = sat + &ssat;
-    // let _ = &sat + &ssat;
-
     let _ = ssat + ssat;
     let _ = &ssat + ssat;
     let _ = ssat + &ssat;
@@ -1246,16 +1236,6 @@ fn amount_tyes_all_ops() {
     let _ = &sat - sat;
     let _ = sat - &sat;
     let _ = &sat - &sat;
-
-    // let _ = ssat - sat;
-    // let _ = &ssat - sat;
-    // let _ = ssat - &sat;
-    // let _ = &ssat - &sat;
-
-    // let _ = sat - ssat;
-    // let _ = &sat - ssat;
-    // let _ = sat - &ssat;
-    // let _ = &sat - &ssat;
 
     let _ = ssat - ssat;
     let _ = &ssat - ssat;
@@ -1306,13 +1286,6 @@ fn amount_tyes_all_ops() {
     // FIXME: Do we want to support these?
     // let _ = -sat;
     // let _ = -ssat;
-}
-
-// FIXME: Should we support this sort of thing?
-// It will be a lot more code for possibly not that much benefit.
-#[test]
-fn can_ops_on_amount_and_signed_amount() {
-    // let res: NumOpResult<SignedAmount> = sat + ssat;
 }
 
 // Verify we have implemented all combinations of ops for the `NumOpResult` type.
