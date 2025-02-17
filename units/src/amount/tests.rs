@@ -1287,50 +1287,55 @@ fn amount_tyes_all_ops() {
     let _ = -ssat;
 }
 
-// Verify we have implemented all combinations of ops for the `NumOpResult` type.
-// It's easier to read this test that check the code.
+// Verify we have implemented all combinations of ops for the amount types and `NumOpResult` type.
+// It's easier to read this test than check the code.
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
-fn amount_op_result_all_ops() {
+fn num_op_result_ops() {
     let sat = Amount::from_sat(1);
-    // let ssat = SignedAmount::from_sat(1);
+    let ssat = SignedAmount::from_sat(1);
 
     // Explicit type as sanity check.
     let res: NumOpResult<Amount> = sat + sat;
-    // let sres: NumOpResult<SignedAmount> = ssat + ssat;
+    let sres: NumOpResult<SignedAmount> = ssat + ssat;
 
-    // Operations that where RHS is the result of another operation.
-    let _ = sat + res;
-    let _ = &sat + res;
-    let _ = sat + &res;
-    let _ = &sat + &res;
+    macro_rules! check_op {
+        ($(let _ = $lhs:ident $op:tt $rhs:ident);* $(;)?) => {
+            $(
+                let _ = $lhs $op $rhs;
+                let _ = &$lhs $op $rhs;
+                let _ = $lhs $op &$rhs;
+                let _ = &$lhs $op &$rhs;
+            )*
+        }
+    }
 
-    let _ = sat - res;
-    let _ = &sat - res;
-    let _ = sat - &res;
-    let _ = &sat - &res;
+    // We do not currently support division involving `NumOpResult` and an amount type.
+    check_op! {
+        // Operations where RHS is the result of another operation.
+        let _ = sat + res;
+        let _ = sat - res;
+        // let _ = sat / res;
+        let _ = ssat + sres;
+        let _ = ssat - sres;
+        // let _ = ssat / sres;
 
-    // Operations that where LHS is the result of another operation.
-    let _ = res + sat;
-    let _ = &res + sat;
-    let _ = res + &sat;
-    let _ = &res + &sat;
+        // Operations where LHS is the result of another operation.
+        let _ = res + sat;
+        let _ = res - sat;
+        // let _ = res / sat;
+        let _ = sres + ssat;
+        let _ = sres - ssat;
+        // let _ = sres / ssat;
 
-    let _ = res - sat;
-    let _ = &res - sat;
-    let _ = res - &sat;
-    let _ = &res - &sat;
-
-    // Operations that where both sides are the result of another operation.
-    let _ = res + res;
-    let _ = &res + res;
-    let _ = res + &res;
-    let _ = &res + &res;
-
-    let _ = res - res;
-    let _ = &res - res;
-    let _ = res - &res;
-    let _ = &res - &res;
+        // Operations that where both sides are the result of another operation.
+        let _ = res + res;
+        let _ = res - res;
+        // let _ = res / res;
+        let _ = sres + sres;
+        let _ = sres - sres;
+        // let _ = sres / sres;
+    };
 }
 
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
