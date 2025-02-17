@@ -106,6 +106,26 @@ where
     }
 }
 
+impl<T: GeneralHash> fmt::Debug for Hkdf<T> {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        use crate::{sha256t, sha256t_tag};
+
+        struct Fingerprint([u8; 8]); // Print 16 hex characters as a fingerprint.
+
+        impl fmt::Debug for Fingerprint {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { crate::debug_hex(&self.0, f) }
+        }
+
+        sha256t_tag! {
+            pub struct Tag = hash_str("bitcoin_hashes1DEBUG");
+        }
+
+        let hash = sha256t::Hash::<Tag>::hash(self.prk.as_ref());
+        let fingerprint = Fingerprint(core::array::from_fn(|i| hash.as_byte_array()[i]));
+        f.debug_tuple("Hkdf").field(&format_args!("#{:?}", fingerprint)).finish()
+    }
+}
+
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
@@ -191,5 +211,16 @@ mod tests {
             okm.to_lower_hex_string(),
             "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
         );
+    }
+
+    #[test]
+    fn debug() {
+        let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
+        let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
+
+        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let debug = alloc::format!("{:?}", hkdf);
+
+        assert_eq!(debug, "Hkdf(#ec7bd36ab2ed4045)");
     }
 }
