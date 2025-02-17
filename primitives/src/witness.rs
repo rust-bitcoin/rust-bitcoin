@@ -9,6 +9,7 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+use hex::DisplayHex;
 use internals::compact_size;
 
 use crate::prelude::Vec;
@@ -231,76 +232,29 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
     }
 }
 
+/// Debug implementation that displays the witness as a structured output containing hex-encoded witness elements.
+struct DebugElements<'a>(&'a Witness);
+
+impl fmt::Debug for DebugElements<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.0.iter().map(|elem| elem.as_hex())).finish()
+    }
+}
+
+/// Debug implementation that displays the witness as a structured output containing:
+/// - Number of witness elements
+/// - Total bytes across all elements
+/// - List of hex-encoded witness elements
 impl fmt::Debug for Witness {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        if f.alternate() {
-            fmt_debug_pretty(self, f)
-        } else {
-            fmt_debug(self, f)
-        }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let total_bytes: usize = self.iter().map(|elem| elem.len()).sum();
+
+        f.debug_struct("Witness")
+            .field("num_elements", &self.witness_elements)
+            .field("total_bytes", &total_bytes)
+            .field("elements", &DebugElements(self))
+            .finish()
     }
-}
-
-fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-    #[rustfmt::skip]
-    let comma_or_close = |current_index, last_index| {
-        if current_index == last_index { "]" } else { ", " }
-    };
-
-    f.write_str("Witness: { ")?;
-    write!(f, "indices: {}, ", w.witness_elements)?;
-    write!(f, "indices_start: {}, ", w.indices_start)?;
-    f.write_str("witnesses: [")?;
-
-    let instructions = w.iter();
-    match instructions.len().checked_sub(1) {
-        Some(last_instruction) => {
-            for (i, instruction) in instructions.enumerate() {
-                let bytes = instruction.iter();
-                match bytes.len().checked_sub(1) {
-                    Some(last_byte) => {
-                        f.write_str("[")?;
-                        for (j, byte) in bytes.enumerate() {
-                            write!(f, "{:#04x}", byte)?;
-                            f.write_str(comma_or_close(j, last_byte))?;
-                        }
-                    }
-                    None => {
-                        // This is possible because the varint is not part of the instruction (see Iter).
-                        write!(f, "[]")?;
-                    }
-                }
-                f.write_str(comma_or_close(i, last_instruction))?;
-            }
-        }
-        None => {
-            // Witnesses can be empty because the 0x00 var int is not stored in content.
-            write!(f, "]")?;
-        }
-    }
-
-    f.write_str(" }")
-}
-
-fn fmt_debug_pretty(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-    f.write_str("Witness: {\n")?;
-    writeln!(f, "    indices: {},", w.witness_elements)?;
-    writeln!(f, "    indices_start: {},", w.indices_start)?;
-    f.write_str("    witnesses: [\n")?;
-
-    for instruction in w.iter() {
-        f.write_str("        [")?;
-        for (j, byte) in instruction.iter().enumerate() {
-            if j > 0 {
-                f.write_str(", ")?;
-            }
-            write!(f, "{:#04x}", byte)?;
-        }
-        f.write_str("],\n")?;
-    }
-
-    writeln!(f, "    ],")?;
-    writeln!(f, "}}")
 }
 
 /// An iterator returning individual witness elements.
