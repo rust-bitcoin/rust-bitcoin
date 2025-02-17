@@ -1338,6 +1338,40 @@ fn num_op_result_ops() {
     };
 }
 
+// Verify we have implemented all combinations of ops for the `NumOpResult` type and an integer.
+// It's easier to read this test than check the code.
+#[test]
+#[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
+fn num_op_result_ops_integer() {
+    let sat = Amount::from_sat(1);
+    let ssat = SignedAmount::from_sat(1);
+
+    // Explicit type as sanity check.
+    let res: NumOpResult<Amount> = sat + sat;
+    let sres: NumOpResult<SignedAmount> = ssat + ssat;
+
+    macro_rules! check_op {
+        ($(let _ = $lhs:ident $op:tt $rhs:literal);* $(;)?) => {
+            $(
+                let _ = $lhs $op $rhs;
+                let _ = &$lhs $op $rhs;
+                let _ = $lhs $op &$rhs;
+                let _ = &$lhs $op &$rhs;
+            )*
+        }
+    }
+    check_op! {
+        // Operations on a `NumOpResult` and integer.
+        let _ = res * 3_u64; // Explicit type for the benefit of the reader.
+        // let _ = res / 3;
+        // let _ = res % 3;
+
+        let _ = sres * 3_i64; // Explicit type for the benefit of the reader.
+        // let _ = sres / 3;
+        // let _ = sres % 3;
+    };
+}
+
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
 #[test]
 fn amount_op_result_sum() {

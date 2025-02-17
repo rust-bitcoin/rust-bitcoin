@@ -144,21 +144,7 @@ impl ops::Mul<u64> for Amount {
 
     fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
 }
-impl ops::Mul<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
-}
-impl ops::Mul<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: u64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
-}
+self::macros::impl_mul_combinations!(Amount, u64);
 
 impl ops::Div<u64> for Amount {
     type Output = NumOpResult<Amount>;
@@ -227,21 +213,7 @@ impl ops::Mul<i64> for SignedAmount {
 
     fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
 }
-impl ops::Mul<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
-}
-impl ops::Mul<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: i64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
-}
+self::macros::impl_mul_combinations!(SignedAmount, i64);
 
 impl ops::Div<i64> for SignedAmount {
     type Output = NumOpResult<SignedAmount>;

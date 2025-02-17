@@ -199,3 +199,50 @@ macro_rules! impl_sub_combinations {
     };
 }
 pub(crate) use impl_sub_combinations;
+
+/// Implements `ops::Mul` for various combinations.
+///
+/// Requires implementation of `ops::Mul<$rhs> for $ty`.
+macro_rules! impl_mul_combinations {
+    ($ty:ident, $rhs:ident) => {
+        // E.g., let _: NumOpResult<Amount> = Amount * 5;
+        impl core::ops::Mul<$rhs> for &$ty {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: $rhs) -> Self::Output { (*self) * rhs }
+        }
+        impl core::ops::Mul<&$rhs> for $ty {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: &$rhs) -> Self::Output { self * (*rhs) }
+        }
+        impl<'a> core::ops::Mul<&'a $rhs> for &$ty {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: &'a $rhs) -> Self::Output { (*self) * (*rhs) }
+        }
+
+        // E.g., let _: NumOpResult<Amount> = NumOpResult<Amount> * 5;
+        impl ops::Mul<$rhs> for NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: $rhs) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
+        }
+        impl ops::Mul<$rhs> for &NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: $rhs) -> Self::Output { (*self) * rhs }
+        }
+        impl ops::Mul<&$rhs> for NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: &$rhs) -> Self::Output { self * (*rhs) }
+        }
+        impl ops::Mul<&$rhs> for &NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn mul(self, rhs: &$rhs) -> Self::Output { (*self) * (*rhs) }
+        }
+    };
+}
+pub(crate) use impl_mul_combinations;
