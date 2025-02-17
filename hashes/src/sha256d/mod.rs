@@ -122,7 +122,7 @@ mod tests {
             0xb7, 0x65, 0x44, 0x8c, 0x86, 0x35, 0xfb, 0x6c,
         ];
 
-        let hash = sha256d::Hash::from_slice(&HASH_BYTES).expect("right number of bytes");
+        let hash = sha256d::Hash::from_byte_array(HASH_BYTES);
         assert_tokens(&hash.compact(), &[Token::BorrowedBytes(&HASH_BYTES[..])]);
         assert_tokens(
             &hash.readable(),
