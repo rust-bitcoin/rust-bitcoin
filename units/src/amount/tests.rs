@@ -1195,96 +1195,23 @@ fn check_const() {
     assert_eq!(Amount::MAX_MONEY.to_sat() as i64, SignedAmount::MAX_MONEY.to_sat());
 }
 
-// Verify we have implemented all combinations of ops for `Amount` and `SignedAmount`.
-// It's easier to read this test that check the code.
+// Sanity check than stdlib supports the set of reference combinations for the ops we want.
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
-fn amount_tyes_all_ops() {
-    // Sanity check than stdlib supports the set of reference combinations for the ops we want.
-    {
-        let x = 127;
+fn sanity_all_ops() {
+    let x = 127;
 
-        let _ = x + x;
-        let _ = &x + x;
-        let _ = x + &x;
-        let _ = &x + &x;
+    let _ = x + x;
+    let _ = &x + x;
+    let _ = x + &x;
+    let _ = &x + &x;
 
-        let _ = x - x;
-        let _ = &x - x;
-        let _ = x - &x;
-        let _ = &x - &x;
+    let _ = x - x;
+    let _ = &x - x;
+    let _ = x - &x;
+    let _ = &x - &x;
 
-        let _ = -x;
-    }
-
-    let sat = Amount::from_sat(1);
-    let ssat = SignedAmount::from_sat(1);
-
-    // Add
-    let _ = sat + sat;
-    let _ = &sat + sat;
-    let _ = sat + &sat;
-    let _ = &sat + &sat;
-
-    let _ = ssat + ssat;
-    let _ = &ssat + ssat;
-    let _ = ssat + &ssat;
-    let _ = &ssat + &ssat;
-
-    // Sub
-    let _ = sat - sat;
-    let _ = &sat - sat;
-    let _ = sat - &sat;
-    let _ = &sat - &sat;
-
-    let _ = ssat - ssat;
-    let _ = &ssat - ssat;
-    let _ = ssat - &ssat;
-    let _ = &ssat - &ssat;
-
-    // let _ = sat * sat;  // Intentionally not supported.
-
-    // Mul
-    let _ = sat * 3;
-    let _ = sat * &3;
-    let _ = &sat * 3;
-    let _ = &sat * &3;
-
-    let _ = ssat * 3_i64; // Explicit type for the benefit of the reader.
-    let _ = ssat * &3;
-    let _ = &ssat * 3;
-    let _ = &ssat * &3;
-
-    // Div
-    let _ = sat / 3;
-    let _ = &sat / 3;
-    let _ = sat / &3;
-    let _ = &sat / &3;
-
-    let _ = ssat / 3_i64; // Explicit type for the benefit of the reader.
-    let _ = &ssat / 3;
-    let _ = ssat / &3;
-    let _ = &ssat / &3;
-
-    // Rem
-    let _ = sat % 3;
-    let _ = &sat % 3;
-    let _ = sat % &3;
-    let _ = &sat % &3;
-
-    let _ = ssat % 3;
-    let _ = &ssat % 3;
-    let _ = ssat % &3;
-    let _ = &ssat % &3;
-
-    // FIXME: Do we want to support this?
-    // let _ = sat / sat;
-    //
-    // "How many times does this amount go into that amount?" - seems
-    // like a reasonable question to ask.
-
-    let _ = -sat;
-    let _ = -ssat;
+    let _ = -x;
 }
 
 // Verify we have implemented all combinations of ops for the amount types and `NumOpResult` type.
