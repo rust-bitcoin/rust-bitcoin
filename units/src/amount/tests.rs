@@ -1330,8 +1330,8 @@ fn amount_op_result_all_ops() {
     // Operations that where RHS is the result of another operation.
     let _ = sat + res;
     let _ = &sat + res;
-    // let _ = sat + &res;
-    // let _ = &sat + &res;
+    let _ = sat + &res;
+    let _ = &sat + &res;
 
     let _ = sat - res;
     let _ = &sat - res;
@@ -1340,9 +1340,9 @@ fn amount_op_result_all_ops() {
 
     // Operations that where LHS is the result of another operation.
     let _ = res + sat;
-    // let _ = &res + sat;
+    let _ = &res + sat;
     let _ = res + &sat;
-    // let _ = &res + &sat;
+    let _ = &res + &sat;
 
     let _ = res - sat;
     // let _ = &res - sat;

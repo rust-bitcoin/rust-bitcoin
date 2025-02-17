@@ -34,36 +34,6 @@ macro_rules! impl_add_for_references {
 }
 pub(crate) use impl_add_for_references;
 
-/// Implements `ops::Add` for various amount references.
-///
-/// Requires `$ty` it implement `Add` e.g. 'impl Add<T> for T'. Adds impls of:
-///
-/// - Add<T> for &T
-/// - Add<&T> for T
-/// - Add<&T> for &T
-macro_rules! impl_add_for_amount_references {
-    ($ty:ident) => {
-        impl core::ops::Add<$ty> for &$ty {
-            type Output = NumOpResult<$ty>;
-
-            fn add(self, rhs: $ty) -> Self::Output { *self + rhs }
-        }
-
-        impl core::ops::Add<&$ty> for $ty {
-            type Output = NumOpResult<$ty>;
-
-            fn add(self, rhs: &$ty) -> Self::Output { self + *rhs }
-        }
-
-        impl<'a> core::ops::Add<&'a $ty> for &$ty {
-            type Output = NumOpResult<$ty>;
-
-            fn add(self, rhs: &'a $ty) -> Self::Output { *self + *rhs }
-        }
-    };
-}
-pub(crate) use impl_add_for_amount_references;
-
 /// Implement `ops::AddAssign` for `$ty` and `&$ty`.
 macro_rules! impl_add_assign {
     ($ty:ident) => {

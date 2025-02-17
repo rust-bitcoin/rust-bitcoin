@@ -3,6 +3,8 @@
 //! Provides a monodic numeric result type that is used to return the result of
 //! doing mathematical operations (`core::ops`) on amount types.
 
+mod macros;
+
 use core::{fmt, ops};
 
 use NumOpResult as R;
@@ -128,28 +130,7 @@ impl ops::Add for Amount {
 
     fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
 }
-crate::internal_macros::impl_add_for_amount_references!(Amount);
-
-impl ops::Add<NumOpResult<Amount>> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<NumOpResult<Amount>> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: Amount) -> Self::Output { rhs + self }
-}
-impl ops::Add<&Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: &Amount) -> Self::Output { rhs + self }
-}
+self::macros::impl_add_combinations!(Amount);
 
 impl ops::Sub for Amount {
     type Output = NumOpResult<Amount>;
@@ -267,28 +248,7 @@ impl ops::Add for SignedAmount {
 
     fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
 }
-crate::internal_macros::impl_add_for_amount_references!(SignedAmount);
-
-impl ops::Add<NumOpResult<SignedAmount>> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<NumOpResult<SignedAmount>> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: SignedAmount) -> Self::Output { rhs + self }
-}
-impl ops::Add<&SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: &SignedAmount) -> Self::Output { rhs + self }
-}
+self::macros::impl_add_combinations!(SignedAmount);
 
 impl ops::Sub for SignedAmount {
     type Output = NumOpResult<SignedAmount>;
