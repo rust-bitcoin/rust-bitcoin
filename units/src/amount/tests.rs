@@ -1351,9 +1351,9 @@ fn amount_op_result_all_ops() {
 
     // Operations that where both sides are the result of another operation.
     let _ = res + res;
-    // let _ = &res + res;
-    // let _ = res + &res;
-    // let _ = &res + &res;
+    let _ = &res + res;
+    let _ = res + &res;
+    let _ = &res + &res;
 
     let _ = res - res;
     // let _ = &res - res;

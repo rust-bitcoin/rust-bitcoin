@@ -69,6 +69,35 @@ macro_rules! impl_add_combinations {
 
             fn add(self, rhs: &$ty) -> Self::Output { (*self) + (*rhs) }
         }
+
+        // E.g., let _: NumOpResult<Amount> = NumOpResult<Amount> + NumOpResult<Amount>;
+        impl ops::Add for NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn add(self, rhs: Self) -> Self::Output {
+                match (self, rhs) {
+                    (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
+                    (e, R::Valid(_)) => e,
+                    (R::Valid(_), e) => e,
+                    (e, _) => e, // Just return the first one for now.
+                }
+            }
+        }
+        impl ops::Add<NumOpResult<$ty>> for &NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn add(self, rhs: NumOpResult<$ty>) -> Self::Output { (*self) + rhs }
+        }
+        impl ops::Add<&NumOpResult<$ty>> for NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn add(self, rhs: &NumOpResult<$ty>) -> Self::Output { self + (*rhs) }
+        }
+        impl ops::Add for &NumOpResult<$ty> {
+            type Output = NumOpResult<$ty>;
+
+            fn add(self, rhs: &NumOpResult<$ty>) -> Self::Output { (*self) + (*rhs) }
+        }
     };
 }
 pub(crate) use impl_add_combinations;

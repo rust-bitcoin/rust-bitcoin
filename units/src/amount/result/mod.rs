@@ -367,59 +367,6 @@ impl ops::Neg for SignedAmount {
     fn neg(self) -> Self::Output { Self::from_sat(self.to_sat().neg()) }
 }
 
-impl<T> ops::Add for NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>>,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add<NumOpResult<T>> for &NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs + rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add<&NumOpResult<T>> for NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add for &NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs + *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-
 impl<T> ops::Sub for NumOpResult<T>
 where
     T: ops::Sub<Output = NumOpResult<T>>,
