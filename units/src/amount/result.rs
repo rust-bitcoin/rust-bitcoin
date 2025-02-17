@@ -27,6 +27,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     /// # Panics
     ///
     /// Panics with `msg` if the numeric result is an `Error`.
+    #[inline]
     #[track_caller]
     pub fn expect(self, msg: &str) -> T {
         match self {
@@ -40,6 +41,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     /// # Panics
     ///
     /// Panics if the numeric result is an `Error`.
+    #[inline]
     #[track_caller]
     pub fn unwrap(self) -> T {
         match self {
@@ -53,6 +55,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     /// # Panics
     ///
     /// Panics if the numeric result is a valid amount.
+    #[inline]
     #[track_caller]
     pub fn unwrap_err(self) -> NumOpError {
         match self {
@@ -62,6 +65,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 
     /// Converts this `NumOpResult` to an `Option<T>`.
+    #[inline]
     pub fn ok(self) -> Option<T> {
         match self {
             R::Valid(amount) => Some(amount),
@@ -70,6 +74,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 
     /// Converts this `NumOpResult` to a `Result<T, NumOpError>`.
+    #[inline]
     #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result<T, NumOpError> {
         match self {
@@ -79,6 +84,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 
     /// Calls `op` if the numeric result is `Valid`, otherwise returns the `Error` value of `self`.
+    #[inline]
     pub fn and_then<F>(self, op: F) -> NumOpResult<T>
     where
         F: FnOnce(T) -> NumOpResult<T>,
@@ -90,6 +96,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 
     /// Returns `true` if the numeric result is a valid amount.
+    #[inline]
     pub fn is_valid(&self) -> bool {
         match self {
             R::Valid(_) => true,
@@ -98,6 +105,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     }
 
     /// Returns `true` if the numeric result is an invalid amount.
+    #[inline]
     pub fn is_error(&self) -> bool { !self.is_valid() }
 }
 
@@ -556,6 +564,7 @@ pub(in crate::amount) trait OptionExt<T> {
 }
 
 impl OptionExt<Amount> for Option<Amount> {
+    #[inline]
     fn valid_or_error(self) -> NumOpResult<Amount> {
         match self {
             Some(amount) => R::Valid(amount),
@@ -565,6 +574,7 @@ impl OptionExt<Amount> for Option<Amount> {
 }
 
 impl OptionExt<SignedAmount> for Option<SignedAmount> {
+    #[inline]
     fn valid_or_error(self) -> NumOpResult<SignedAmount> {
         match self {
             Some(amount) => R::Valid(amount),
