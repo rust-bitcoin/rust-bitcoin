@@ -292,7 +292,7 @@ macro_rules! impl_div_combinations {
         }
 
         // E.g., Amount / Amount;
-        impl ops::Div<$amount_ty> for $amount_ty {
+       impl ops::Div<$amount_ty> for $amount_ty {
             type Output = $int_ty;
 
             fn div(self, rhs: $amount_ty) -> Self::Output { self.to_sat() / rhs.to_sat() }
@@ -315,3 +315,74 @@ macro_rules! impl_div_combinations {
     };
 }
 pub(crate) use impl_div_combinations;
+
+/// Implements `ops::Rem` for various combinations.
+///
+/// Requires implementation of `ops::Rem<$rhs> for $ty`.
+macro_rules! impl_rem_combinations {
+    ($amount_ty:ident, $int_ty:ident) => {
+        // E.g., let _: NumOpResult<Amount> = Amount % 3;
+        impl core::ops::Rem<$int_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: $int_ty) -> Self::Output { (*self) % rhs }
+        }
+        impl core::ops::Rem<&$int_ty> for $amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: &$int_ty) -> Self::Output { self % (*rhs) }
+        }
+        impl<'a> core::ops::Rem<&'a $int_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: &'a $int_ty) -> Self::Output { (*self) % (*rhs) }
+        }
+
+        // E.g., NumOpResult<Amount> % 3;
+        impl ops::Rem<$int_ty> for NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: $int_ty) -> Self::Output { self.and_then(|lhs| lhs % rhs) }
+        }
+        impl ops::Rem<$int_ty> for &NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: $int_ty) -> Self::Output { (*self) % rhs }
+        }
+        impl ops::Rem<&$int_ty> for NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: &$int_ty) -> Self::Output { self % (*rhs) }
+        }
+        impl ops::Rem<&$int_ty> for &NumOpResult<$amount_ty> {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, rhs: &$int_ty) -> Self::Output { (*self) % (*rhs) }
+        }
+
+        // E.g., Amount % Amount;
+        impl ops::Rem<$amount_ty> for $amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, modulus: $amount_ty) -> Self::Output {
+                self.checked_rem(modulus.to_sat()).valid_or_error()
+            }
+        }
+        impl ops::Rem<$amount_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, modulus: $amount_ty) -> Self::Output { (*self) % modulus }
+        }
+        impl ops::Rem<&$amount_ty> for $amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, modulus: &$amount_ty) -> Self::Output { self % (*modulus) }
+        }
+        impl ops::Rem<&$amount_ty> for &$amount_ty {
+            type Output = NumOpResult<$amount_ty>;
+
+            fn rem(self, modulus: &$amount_ty) -> Self::Output { (*self) % (*modulus) }
+        }
+    };
+}
+pub(crate) use impl_rem_combinations;

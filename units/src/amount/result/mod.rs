@@ -158,21 +158,7 @@ impl ops::Rem<u64> for Amount {
 
     fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
 }
-impl ops::Rem<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: &u64) -> Self::Output { self.rem(*modulus) }
-}
-impl ops::Rem<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: u64) -> Self::Output { (*self).rem(modulus) }
-}
-impl ops::Rem<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: &u64) -> Self::Output { (*self).rem(*modulus) }
-}
+self::macros::impl_rem_combinations!(Amount, u64);
 
 impl ops::Neg for Amount {
     type Output = SignedAmount;
@@ -213,21 +199,7 @@ impl ops::Rem<i64> for SignedAmount {
 
     fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
 }
-impl ops::Rem<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: &i64) -> Self::Output { self.rem(*modulus) }
-}
-impl ops::Rem<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: i64) -> Self::Output { (*self).rem(modulus) }
-}
-impl ops::Rem<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: &i64) -> Self::Output { (*self).rem(*modulus) }
-}
+self::macros::impl_rem_combinations!(SignedAmount, i64);
 
 impl ops::Neg for SignedAmount {
     type Output = Self;
