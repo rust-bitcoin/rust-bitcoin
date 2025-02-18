@@ -41,6 +41,7 @@ base64 = { version = "0.22.0", optional = true }
 bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
 ordered = { version = "0.4.0", optional = true }
 serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+criterion = "0.5.1"
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", version = "0.4.0", features = ["test-serde"] }
@@ -97,3 +98,8 @@ required-features = ["std"]
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)'] }
+
+[[bench]]
+name = "sighash_cache_benchmark"
+harness = false
+path = "../benches/sighash_cache_benchmark.rs"
