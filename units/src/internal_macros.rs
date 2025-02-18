@@ -17,37 +17,49 @@
 ///
 /// You must specify `$other_ty` and you may not use `Self`. So e.g. you need
 /// to write `impl ops::Add<Amount> for Amount { ... }` when calling this macro.
+///
+/// Your where clause must include extra parenthesis, like `where (T: Copy)`.
 macro_rules! impl_op_for_references {
     ($(
-        impl $($op_trait:ident)::+<$other_ty:ty> for $ty:ty {
+        impl$(<$gen:ident>)? $($op_trait:ident)::+<$other_ty:ty> for $ty:ty
+        $(where ($($bounds:tt)*))?
+        {
             type Output = $($main_output:ty)*;
             fn $op:ident($($main_args:tt)*) -> Self::Output {
                 $($main_impl:tt)*
             }
         }
     )+) => {$(
-        impl $($op_trait)::+<$other_ty> for $ty {
+        impl$(<$gen>)?  $($op_trait)::+<$other_ty> for $ty
+        $(where $($bounds)*)?
+        {
             type Output = $($main_output)*;
             fn $op($($main_args)*) -> Self::Output {
                 $($main_impl)*
             }
         }
 
-        impl $($op_trait)::+<$other_ty> for &$ty {
+        impl$(<$gen>)?  $($op_trait)::+<$other_ty> for &$ty
+        $(where $($bounds)*)?
+        {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             fn $op(self, rhs: $other_ty) -> Self::Output {
                 (*self).$op(rhs)
             }
         }
 
-        impl $($op_trait)::+<&$other_ty> for $ty {
+        impl$(<$gen>)?  $($op_trait)::+<&$other_ty> for $ty
+        $(where $($bounds)*)?
+        {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 self.$op(*rhs)
             }
         }
 
-        impl<'a> $($op_trait)::+<&'a $other_ty> for &$ty {
+        impl<'a, $($gen)?> $($op_trait)::+<&'a $other_ty> for &$ty
+        $(where $($bounds)*)?
+        {
             type Output = <$ty as $($op_trait)::+<$other_ty>>::Output;
             fn $op(self, rhs: &$other_ty) -> Self::Output {
                 (*self).$op(*rhs)
