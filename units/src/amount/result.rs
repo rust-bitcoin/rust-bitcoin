@@ -123,23 +123,23 @@ impl From<&SignedAmount> for NumOpResult<SignedAmount> {
     fn from(a: &SignedAmount) -> Self { Self::Valid(*a) }
 }
 
-impl ops::Add for Amount {
-    type Output = NumOpResult<Amount>;
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Add<Amount> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
+        fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
+    }
 }
-crate::internal_macros::impl_add_for_amount_references!(Amount);
 
-impl ops::Add<NumOpResult<Amount>> for Amount {
-    type Output = NumOpResult<Amount>;
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Add<NumOpResult<Amount>> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
+        fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
+    }
 }
-impl ops::Add<NumOpResult<Amount>> for &Amount {
-    type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
+// FIXME these two should be covered by generic impls below
 impl ops::Add<Amount> for NumOpResult<Amount> {
     type Output = NumOpResult<Amount>;
 
@@ -151,12 +151,13 @@ impl ops::Add<&Amount> for NumOpResult<Amount> {
     fn add(self, rhs: &Amount) -> Self::Output { rhs + self }
 }
 
-impl ops::Sub for Amount {
-    type Output = NumOpResult<Amount>;
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Sub<Amount> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
+        fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
+    }
 }
-crate::internal_macros::impl_sub_for_amount_references!(Amount);
 
 impl ops::Sub<NumOpResult<Amount>> for Amount {
     type Output = NumOpResult<Amount>;
