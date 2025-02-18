@@ -18,14 +18,14 @@
 /// You must specify `$other_ty` and you may not use `Self`. So e.g. you need
 /// to write `impl ops::Add<Amount> for Amount { ... }` when calling this macro.
 macro_rules! impl_op_for_references {
-    (
+    ($(
         impl $($op_trait:ident)::+<$other_ty:ty> for $ty:ty {
             type Output = $($main_output:ty)*;
             fn $op:ident($($main_args:tt)*) -> Self::Output {
                 $($main_impl:tt)*
             }
         }
-    ) => {
+    )+) => {$(
         impl $($op_trait)::+<$other_ty> for $ty {
             type Output = $($main_output)*;
             fn $op($($main_args)*) -> Self::Output {
@@ -53,7 +53,7 @@ macro_rules! impl_op_for_references {
                 (*self).$op(*rhs)
             }
         }
-    };
+    )+};
 }
 pub(crate) use impl_op_for_references;
 

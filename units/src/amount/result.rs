@@ -129,9 +129,7 @@ crate::internal_macros::impl_op_for_references! {
 
         fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
     }
-}
 
-crate::internal_macros::impl_op_for_references! {
     impl ops::Add<NumOpResult<Amount>> for Amount {
         type Output = NumOpResult<Amount>;
 
