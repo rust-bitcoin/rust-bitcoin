@@ -137,18 +137,6 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-// FIXME these two should be covered by generic impls below
-impl ops::Add<Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: Amount) -> Self::Output { rhs + self }
-}
-impl ops::Add<&Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: &Amount) -> Self::Output { rhs + self }
-}
-
 crate::internal_macros::impl_op_for_references! {
     impl ops::Sub<Amount> for Amount {
         type Output = NumOpResult<Amount>;
@@ -261,7 +249,19 @@ impl ops::Rem<&u64> for &Amount {
     fn rem(self, modulus: &u64) -> Self::Output { (*self).rem(*modulus) }
 }
 
-impl ops::Add for SignedAmount {
+// FIXME these two should be covered by generic impls below
+impl ops::Add<Amount> for NumOpResult<Amount> {
+    type Output = NumOpResult<Amount>;
+
+    fn add(self, rhs: Amount) -> Self::Output { rhs + self }
+}
+impl ops::Add<&Amount> for NumOpResult<Amount> {
+    type Output = NumOpResult<Amount>;
+
+    fn add(self, rhs: &Amount) -> Self::Output { rhs + self }
+}
+
+impl ops::Add<SignedAmount> for SignedAmount {
     type Output = NumOpResult<SignedAmount>;
 
     fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
@@ -289,7 +289,7 @@ impl ops::Add<&SignedAmount> for NumOpResult<SignedAmount> {
     fn add(self, rhs: &SignedAmount) -> Self::Output { rhs + self }
 }
 
-impl ops::Sub for SignedAmount {
+impl ops::Sub<SignedAmount> for SignedAmount {
     type Output = NumOpResult<SignedAmount>;
 
     fn sub(self, rhs: SignedAmount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }

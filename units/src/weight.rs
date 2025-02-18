@@ -166,20 +166,20 @@ impl From<Weight> for u64 {
     fn from(value: Weight) -> Self { value.to_wu() }
 }
 
-impl ops::Add for Weight {
+impl ops::Add<Weight> for Weight {
     type Output = Weight;
 
     fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
 }
 crate::internal_macros::impl_add_for_references!(Weight);
-crate::internal_macros::impl_add_assign!(Weight);
 
-impl ops::Sub for Weight {
+impl ops::Sub<Weight> for Weight {
     type Output = Weight;
 
     fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
 }
 crate::internal_macros::impl_sub_for_references!(Weight);
+crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::Mul<u64> for Weight {
