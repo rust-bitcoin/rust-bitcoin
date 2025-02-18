@@ -16,7 +16,6 @@
 //! * `base64` (dependency) - enables encoding of PSBTs and message signatures.
 //! * `bitcoinconsensus` (dependency) - enables validating scripts and transactions.
 //! * `default` - enables `std` and `secp-recovery`.
-//! * `ordered` (dependency) - adds implementations of `ArbitraryOrd` to some structs.
 //! * `rand` (transitive dependency) - makes it more convenient to generate random values.
 //! * `rand-std` - same as `rand` but also enables `std` here and in `secp256k1`.
 //! * `serde` (dependency) - implements `serde`-based serialization and deserialization.
@@ -79,10 +78,6 @@ pub extern crate hex;
 
 /// Re-export the `bitcoin-io` crate.
 pub extern crate io;
-
-/// Re-export the `ordered` crate.
-#[cfg(feature = "ordered")]
-pub extern crate ordered;
 
 /// Re-export the `rust-secp256k1` crate.
 ///

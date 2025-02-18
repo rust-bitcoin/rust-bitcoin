@@ -5,9 +5,7 @@
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether bit 22 of the `u32` consensus value is set.
 
-#[cfg(feature = "ordered")]
-use core::cmp::Ordering;
-use core::{cmp, convert, fmt};
+use core::{convert, fmt};
 
 use crate::Sequence;
 #[cfg(all(doc, feature = "alloc"))]
@@ -25,8 +23,8 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 /// ### Note on ordering
 ///
 /// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
-/// ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`]. We also
-/// implement [`ordered::ArbitraryOrd`] if the "ordered" feature is enabled.
+/// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
+/// [`LockTime::is_satisfied_by`] API.
 ///
 /// ### Relevant BIPs
 ///
@@ -352,19 +350,6 @@ impl From<Time> for LockTime {
     fn from(t: Time) -> Self { LockTime::Time(t) }
 }
 
-impl PartialOrd for LockTime {
-    #[inline]
-    fn partial_cmp(&self, other: &LockTime) -> Option<cmp::Ordering> {
-        use LockTime::*;
-
-        match (*self, *other) {
-            (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
-            (Time(ref a), Time(ref b)) => a.partial_cmp(b),
-            (_, _) => None,
-        }
-    }
-}
-
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use LockTime::*;
@@ -379,20 +364,6 @@ impl fmt::Display for LockTime {
                 Blocks(ref h) => fmt::Display::fmt(h, f),
                 Time(ref t) => fmt::Display::fmt(t, f),
             }
-        }
-    }
-}
-
-#[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
-    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
-        use LockTime::*;
-
-        match (self, other) {
-            (Blocks(_), Time(_)) => Ordering::Less,
-            (Time(_), Blocks(_)) => Ordering::Greater,
-            (Blocks(this), Blocks(that)) => this.cmp(that),
-            (Time(this), Time(that)) => this.cmp(that),
         }
     }
 }
@@ -501,9 +472,6 @@ mod tests {
         assert!(!lock_by_height1.is_same_unit(lock_by_time1));
         assert!(lock_by_time1.is_same_unit(lock_by_time2));
         assert!(!lock_by_time1.is_same_unit(lock_by_height1));
-
-        assert!(lock_by_height1 < lock_by_height2);
-        assert!(lock_by_time1 < lock_by_time2);
     }
 
     #[test]
