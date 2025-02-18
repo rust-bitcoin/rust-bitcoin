@@ -169,23 +169,6 @@ crate::internal_macros::impl_op_for_references! {
         fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
     }
 
-    // FIXME these two should be covered by generic impls below
-    impl ops::Add<Amount> for NumOpResult<Amount> {
-        type Output = NumOpResult<Amount>;
-
-        fn add(self, rhs: Amount) -> Self::Output { rhs + self }
-    }
-    impl ops::Sub<Amount> for NumOpResult<Amount> {
-        type Output = NumOpResult<Amount>;
-
-        fn sub(self, rhs: Amount) -> Self::Output {
-            match self {
-                R::Valid(amount) => amount - rhs,
-                R::Error(_) => self,
-            }
-        }
-    }
-
     impl ops::Add<SignedAmount> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
@@ -208,25 +191,8 @@ crate::internal_macros::impl_op_for_references! {
 
         fn sub(self, rhs: NumOpResult<SignedAmount>) -> Self::Output {
             match rhs {
-                R::Valid(amount) => amount - rhs,
+                R::Valid(amount) => self - amount,
                 R::Error(_) => rhs,
-            }
-        }
-    }
-
-    impl ops::Add<SignedAmount> for NumOpResult<SignedAmount> {
-        type Output = NumOpResult<SignedAmount>;
-
-        fn add(self, rhs: SignedAmount) -> Self::Output { rhs + self }
-    }
-
-    impl ops::Sub<SignedAmount> for NumOpResult<SignedAmount> {
-        type Output = NumOpResult<SignedAmount>;
-
-        fn sub(self, rhs: SignedAmount) -> Self::Output {
-            match self {
-                R::Valid(amount) => amount - rhs,
-                R::Error(_) => self,
             }
         }
     }
@@ -260,65 +226,49 @@ crate::internal_macros::impl_op_for_references! {
             }
         }
     }
+
+    impl<T> ops::Add<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Add<NumOpResult<T>, Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn add(self, rhs: T) -> Self::Output { rhs + self }
+    }
+
+    impl<T> ops::Sub<NumOpResult<T>> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn sub(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
+                (_, _) => R::Error(NumOpError {}),
+            }
+        }
+    }
+
+    impl<T> ops::Sub<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn sub(self, rhs: T) -> Self::Output {
+            match self {
+                R::Valid(amount) => amount - rhs,
+                R::Error(_) => self,
+            }
+        }
+    }
 }
 
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
     fn neg(self) -> Self::Output { Self::from_sat(self.to_sat().neg()) }
-}
-
-impl<T> ops::Sub for NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>>,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub<NumOpResult<T>> for &NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs - rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub<&NumOpResult<T>> for NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs - *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub for &NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs - *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
 }
 
 impl core::iter::Sum<NumOpResult<Amount>> for NumOpResult<Amount> {
