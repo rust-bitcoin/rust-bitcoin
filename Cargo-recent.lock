@@ -61,7 +61,6 @@ dependencies = [
  "bitcoinconsensus",
  "hex-conservative 0.3.0",
  "hex_lit",
- "ordered",
  "secp256k1",
  "serde",
  "serde_json",
@@ -110,7 +109,6 @@ dependencies = [
  "bitcoin-units",
  "bitcoin_hashes 0.16.0",
  "hex-conservative 0.3.0",
- "ordered",
  "serde",
  "serde_json",
 ]
@@ -261,12 +259,6 @@ checksum = "fd3f7eed9d3848f8b98834af67102b720745c4ec028fcd0aa0239277e7de374f"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "ordered"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79c12388aac4f817eae0359011d67d4072ed84cfc63b0d9a7958ef476fb74bec"
 
 [[package]]
 name = "ppv-lite86"

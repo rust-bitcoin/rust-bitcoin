@@ -5,7 +5,6 @@
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-use core::cmp::Ordering;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -33,8 +32,7 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 ///
 /// For [`Transaction`], which has a locktime field, we implement a total ordering to make
 /// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
-/// consensus encoding to order it. We also implement [`ordered::ArbitraryOrd`] if the "ordered"
-/// feature is enabled.
+/// consensus encoding to order it.
 ///
 /// ### Relevant BIPs
 ///
@@ -386,20 +384,6 @@ impl<'de> serde::Deserialize<'de> for LockTime {
             }
         }
         deserializer.deserialize_u32(Visitor).map(LockTime::from_consensus)
-    }
-}
-
-#[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
-    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
-        use LockTime::*;
-
-        match (self, other) {
-            (Blocks(_), Seconds(_)) => Ordering::Less,
-            (Seconds(_), Blocks(_)) => Ordering::Greater,
-            (Blocks(this), Blocks(that)) => this.cmp(that),
-            (Seconds(this), Seconds(that)) => this.cmp(that),
-        }
     }
 }
 

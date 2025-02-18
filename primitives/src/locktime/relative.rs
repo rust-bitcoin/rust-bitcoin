@@ -5,8 +5,6 @@
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether bit 22 of the `u32` consensus value is set.
 
-#[cfg(feature = "ordered")]
-use core::cmp::Ordering;
 use core::{convert, fmt};
 
 use crate::Sequence;
@@ -366,20 +364,6 @@ impl fmt::Display for LockTime {
                 Blocks(ref h) => fmt::Display::fmt(h, f),
                 Time(ref t) => fmt::Display::fmt(t, f),
             }
-        }
-    }
-}
-
-#[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
-    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
-        use LockTime::*;
-
-        match (self, other) {
-            (Blocks(_), Time(_)) => Ordering::Less,
-            (Time(_), Blocks(_)) => Ordering::Greater,
-            (Blocks(this), Blocks(that)) => this.cmp(that),
-            (Time(this), Time(that)) => this.cmp(that),
         }
     }
 }
