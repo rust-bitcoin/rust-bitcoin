@@ -5,6 +5,7 @@
 #![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(bench, feature(test))]
 // Coding conventions.
 #![warn(missing_docs)]
 #![warn(deprecated_in_future)]
@@ -18,6 +19,10 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[cfg(bench)]
+mod benches;
+#[cfg(bench)]
+extern crate test;
 pub mod chacha20;
 pub mod poly1305;
 
