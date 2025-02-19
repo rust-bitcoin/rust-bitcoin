@@ -30,11 +30,12 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
-
     fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 #[cfg(test)]
