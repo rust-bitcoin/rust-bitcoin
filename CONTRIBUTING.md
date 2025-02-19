@@ -209,12 +209,9 @@ in Bitcoin Core, with the following exceptions:
 If your change requires a dependency to be upgraded you must do the following:
 
 1. Modify `Cargo.toml`
-2. Copy `Cargo-minimal.lock` to `Cargo.lock`
-3. Trigger cargo to update the required entries in the lock file - use `--precise` using the minimum version number that works
-4. Test your change
-5. Copy `Cargo.lock` to `Cargo-minimal.lock`
-6. Update `Cargo-recent.lock` if it is also behind
-7. Commit both lock files together with `Cargo.toml` and your code changes
+2. Run `just update-lock-files`, if necessary install `just` first with `cargo install just`.
+3. Test your change
+4. Commit both `Cargo-minimal.lock` and `Cargo-recent.lock` together with `Cargo.toml` and your code changes
 
 ### Unsafe code
 
