@@ -328,11 +328,8 @@ impl ChaCha20 {
         }
     }
 
-    /// Get the keystream block at a specified block.
-    pub fn get_keystream(&mut self, block: u32) -> [u8; 64] {
-        self.block(block);
-        self.keystream_at_block(self.block_count)
-    }
+    /// Get the keystream for specified block.
+    pub fn get_keystream(&self, block: u32) -> [u8; 64] { self.keystream_at_block(block) }
 
     /// Update the index of the keystream to the given byte.
     pub fn seek(&mut self, seek: u32) {
