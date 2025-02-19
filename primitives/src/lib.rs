@@ -68,7 +68,7 @@ pub use self::{
     block::{
         Block, Checked as BlockChecked, Unchecked as BlockUnchecked, Validation as BlockValidation,
     },
-    script::{Script, ScriptBuf},
+    script::{Script, ScriptBuf, ScriptHash, WScriptHash},
     transaction::{Transaction, TxIn, TxOut},
     witness::Witness,
 };

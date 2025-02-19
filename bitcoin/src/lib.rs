@@ -125,7 +125,7 @@ pub use primitives::{
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
     pow::CompactTarget, // No `pow` module outside of `primitives`.
-    script::{Script, ScriptBuf},
+    script::{Script, ScriptBuf, ScriptHash, WScriptHash},
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
     transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
     witness::Witness,
@@ -163,7 +163,6 @@ pub use crate::{
     blockdata::locktime::{absolute, relative},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
-    blockdata::script::{ScriptHash, WScriptHash}, // TODO: Move these down below after they are in primitives.
     // These modules also re-export all the respective `primitives` types.
     blockdata::{
         block, constants, fee_rate, locktime, opcodes, script, transaction, weight, witness,
