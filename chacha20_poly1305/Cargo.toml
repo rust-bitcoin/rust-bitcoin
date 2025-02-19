@@ -22,3 +22,6 @@ hex = { package = "hex-conservative", version = "0.3.0", default-features = fals
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)'] }
