@@ -31,6 +31,14 @@ impl Nonce {
     pub const fn new(nonce: [u8; 12]) -> Self { Nonce(nonce) }
 }
 
+// Const validation trait for compile time check with max of 3.
+trait UpTo3<const N: u32> {}
+
+impl UpTo3<0> for () {}
+impl UpTo3<1> for () {}
+impl UpTo3<2> for () {}
+impl UpTo3<3> for () {}
+
 /// A SIMD-friendly structure which holds 25% of the cipher state.
 ///
 /// The cipher's quarter round function is the bulk of its work
@@ -81,21 +89,29 @@ impl U32x4 {
     }
 
     #[inline(always)]
-    fn rotate_elements_left<const N: u32>(self) -> Self {
-        let mut result = [0u32; 4];
-        (0..4).for_each(|i| {
-            result[i] = self.0[(i + N as usize) % 4];
-        });
-        U32x4(result)
+    fn rotate_elements_left<const N: u32>(self) -> Self
+    where
+        (): UpTo3<N>,
+    {
+        match N {
+            1 => U32x4([self.0[1], self.0[2], self.0[3], self.0[0]]),
+            2 => U32x4([self.0[2], self.0[3], self.0[0], self.0[1]]),
+            3 => U32x4([self.0[3], self.0[0], self.0[1], self.0[2]]),
+            _ => self, // Rotate by 0 is a no-op.
+        }
     }
 
     #[inline(always)]
-    fn rotate_elements_right<const N: u32>(self) -> Self {
-        let mut result = [0u32; 4];
-        (0..4).for_each(|i| {
-            result[i] = self.0[(i + 4 - N as usize) % 4];
-        });
-        U32x4(result)
+    fn rotate_elements_right<const N: u32>(self) -> Self
+    where
+        (): UpTo3<N>,
+    {
+        match N {
+            1 => U32x4([self.0[3], self.0[0], self.0[1], self.0[2]]),
+            2 => U32x4([self.0[2], self.0[3], self.0[0], self.0[1]]),
+            3 => U32x4([self.0[1], self.0[2], self.0[3], self.0[0]]),
+            _ => self, // Rotate by 0 is a no-op.
+        }
     }
 
     #[inline(always)]
