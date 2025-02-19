@@ -177,7 +177,7 @@ impl State {
 
     /// Four quarter rounds performed on the entire state of the cipher in a vectorized SIMD friendly fashion.
     #[inline(always)]
-    fn quarter_round(a: U32x4, b: U32x4, c: U32x4, d: U32x4) -> (U32x4, U32x4, U32x4, U32x4) {
+    fn quarter_round(a: U32x4, b: U32x4, c: U32x4, d: U32x4) -> [U32x4; 4] {
         let a = a.wrapping_add(b);
         let d = d.bitxor(a).rotate_left(16);
 
@@ -190,7 +190,7 @@ impl State {
         let c = c.wrapping_add(d);
         let b = b.bitxor(c).rotate_left(7);
 
-        (a, b, c, d)
+        [a, b, c, d]
     }
 
     /// Perform a round on "columns" and then "diagonals" of the state.
@@ -207,13 +207,13 @@ impl State {
         let [mut a, mut b, mut c, mut d] = state;
 
         // Column round.
-        (a, b, c, d) = Self::quarter_round(a, b, c, d);
+        [a, b, c, d] = Self::quarter_round(a, b, c, d);
 
         // Diagonal round (with rotations).
         b = b.rotate_elements_left::<1>();
         c = c.rotate_elements_left::<2>();
         d = d.rotate_elements_left::<3>();
-        (a, b, c, d) = Self::quarter_round(a, b, c, d);
+        [a, b, c, d] = Self::quarter_round(a, b, c, d);
         // Rotate the words back into their normal positions.
         b = b.rotate_elements_right::<1>();
         c = c.rotate_elements_right::<2>();
