@@ -5,7 +5,6 @@
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
-use core::cmp::Ordering;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -28,11 +27,12 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// ### Note on ordering
 ///
 /// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
-/// ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
+/// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
+/// [`LockTime::is_satisfied_by`] API.
+///
 /// For [`Transaction`], which has a locktime field, we implement a total ordering to make
 /// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
-/// consensus encoding to order it. We also implement [`ordered::ArbitraryOrd`] if the "ordered"
-/// feature is enabled.
+/// consensus encoding to order it.
 ///
 /// ### Relevant BIPs
 ///
@@ -319,19 +319,6 @@ impl From<Time> for LockTime {
     fn from(t: Time) -> Self { LockTime::Seconds(t) }
 }
 
-impl PartialOrd for LockTime {
-    #[inline]
-    fn partial_cmp(&self, other: &LockTime) -> Option<Ordering> {
-        use LockTime::*;
-
-        match (*self, *other) {
-            (Blocks(ref a), Blocks(ref b)) => a.partial_cmp(b),
-            (Seconds(ref a), Seconds(ref b)) => a.partial_cmp(b),
-            (_, _) => None,
-        }
-    }
-}
-
 impl fmt::Debug for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use LockTime::*;
@@ -397,20 +384,6 @@ impl<'de> serde::Deserialize<'de> for LockTime {
             }
         }
         deserializer.deserialize_u32(Visitor).map(LockTime::from_consensus)
-    }
-}
-
-#[cfg(feature = "ordered")]
-impl ordered::ArbitraryOrd for LockTime {
-    fn arbitrary_cmp(&self, other: &Self) -> Ordering {
-        use LockTime::*;
-
-        match (self, other) {
-            (Blocks(_), Seconds(_)) => Ordering::Less,
-            (Seconds(_), Blocks(_)) => Ordering::Greater,
-            (Blocks(this), Blocks(that)) => this.cmp(that),
-            (Seconds(this), Seconds(that)) => this.cmp(that),
-        }
     }
 }
 
@@ -501,9 +474,6 @@ mod tests {
         assert!(lock_by_height.is_satisfied_by(height_same, time));
         assert!(lock_by_height.is_satisfied_by(height_above, time));
         assert!(!lock_by_height.is_satisfied_by(height_below, time));
-
-        let lock_by_height_above = LockTime::from_consensus(800_000);
-        assert!(lock_by_height < lock_by_height_above)
     }
 
     #[test]
@@ -519,9 +489,6 @@ mod tests {
         assert!(lock_by_time.is_satisfied_by(height, time_same));
         assert!(lock_by_time.is_satisfied_by(height, time_after));
         assert!(!lock_by_time.is_satisfied_by(height, time_before));
-
-        let lock_by_time_after = LockTime::from_consensus(1653282000);
-        assert!(lock_by_time < lock_by_time_after);
     }
 
     #[test]
