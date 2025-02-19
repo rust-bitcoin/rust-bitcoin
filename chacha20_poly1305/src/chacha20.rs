@@ -223,6 +223,7 @@ impl State {
     }
 
     /// Transform the state by performing the ChaCha block function.
+    #[inline(always)]
     fn chacha_block(&mut self) {
         let mut working_state = self.matrix;
 
@@ -237,6 +238,7 @@ impl State {
     }
 
     /// Expose the 512-bit state as a byte stream.
+    #[inline(always)]
     fn keystream(&self) -> [u8; 64] {
         let mut keystream = [0u8; 64];
         for i in 0..4 {
@@ -275,6 +277,7 @@ impl ChaCha20 {
     }
 
     /// Get the keystream for a specific block.
+    #[inline(always)]
     fn keystream_at_block(&self, block: u32) -> [u8; 64] {
         let mut state = State::new(self.key, self.nonce, block);
         state.chacha_block();
