@@ -186,6 +186,9 @@ pub type HkdfSha512 = Hkdf<sha512::Hash>;
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone {
+    /// The `Hash` type returned when finalizing this engine.
+    type Hash: Hash;
+
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 
@@ -194,6 +197,9 @@ pub trait HashEngine: Clone {
 
     /// Return the number of bytes already input into the engine.
     fn n_bytes_hashed(&self) -> u64;
+
+    /// Finalizes this engine.
+    fn finalize(self) -> Self::Hash;
 }
 
 /// Trait describing hash digests which can be constructed by hashing arbitrary data.

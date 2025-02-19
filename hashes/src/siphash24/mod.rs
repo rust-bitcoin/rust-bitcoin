@@ -121,6 +121,7 @@ impl HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
     const BLOCK_SIZE: usize = 8;
 
     #[inline]
@@ -165,6 +166,8 @@ impl crate::HashEngine for HashEngine {
     }
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
+
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 impl Hash {

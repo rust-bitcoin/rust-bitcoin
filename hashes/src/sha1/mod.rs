@@ -79,9 +79,12 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
 
     crate::internal_macros::engine_input_impl!();
+
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }

@@ -133,9 +133,12 @@ impl<T: Tag> Clone for HashEngine<T> {
 }
 
 impl<T: Tag> crate::HashEngine for HashEngine<T> {
+    type Hash = Hash<T>;
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
+
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 crate::internal_macros::impl_write!(

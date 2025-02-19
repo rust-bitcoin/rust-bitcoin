@@ -92,11 +92,12 @@ impl<T: GeneralHash> HmacEngine<T> {
 }
 
 impl<T: GeneralHash> HashEngine for HmacEngine<T> {
+    type Hash = Hmac<T>;
     const BLOCK_SIZE: usize = T::Engine::BLOCK_SIZE;
 
     fn n_bytes_hashed(&self) -> u64 { self.iengine.n_bytes_hashed() }
-
     fn input(&mut self, buf: &[u8]) { self.iengine.input(buf) }
+    fn finalize(self) -> Self::Hash { Hmac::from_engine(self) }
 }
 
 impl<T: GeneralHash + fmt::Debug> fmt::Debug for Hmac<T> {
