@@ -74,14 +74,14 @@ pub use self::{
 };
 #[doc(inline)]
 pub use self::{
-    block::{BlockHash, Header as BlockHeader, WitnessCommitment},
+    block::{BlockHash, Header as BlockHeader, Version as BlockVersion, WitnessCommitment},
     locktime::{absolute, relative},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
     pow::CompactTarget,
     sequence::Sequence,
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
-    transaction::{OutPoint, Txid, Wtxid},
+    transaction::{OutPoint, Txid, Version as TxVersion, Wtxid},
 };
 
 #[rustfmt::skip]
