@@ -60,12 +60,10 @@ impl UpTo3<3> for () {}
 ///    * For-each loops are easy for the compiler to recognize as vectorizable.
 ///    * The type is a based on an array instead of tuple since the heterogeneous
 ///      nature of tuples can confuse the compiler into thinking it is not vectorizable.
-///    * Memory alignment lines up with SIMD size.
 ///
 /// In the future, a "blacklist" for the alignment option might be useful to
 /// disable it on architectures which definitely do not support SIMD in order to avoid
 /// needless memory inefficientcies.
-#[repr(align(16))]
 #[derive(Clone, Copy, PartialEq)]
 struct U32x4([u32; 4]);
 
