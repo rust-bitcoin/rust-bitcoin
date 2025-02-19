@@ -191,33 +191,19 @@ fn api_can_use_all_types_from_module_weight() {
 // `Debug` representation is never empty (C-DEBUG-NONEMPTY).
 #[test]
 fn api_all_non_error_types_have_non_empty_debug() {
+    macro_rules! check_debug {
+        ($t:tt, $field:tt; $($sub_field:tt),* $(,)?) => {
+            $(
+                let debug = format!("{:?}", $t.$field.$sub_field);
+                assert!(!debug.is_empty());
+            )*
+        }
+    }
+
     let t = Types::new();
 
-    let debug = format!("{:?}", t.a.a);
-    assert!(!debug.is_empty());
-
-    let debug = format!("{:?}", t.b.a);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.b);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.c);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.d);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.e);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.f);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.g);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.h);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.i);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.j);
-    assert!(!debug.is_empty());
-    let debug = format!("{:?}", t.b.k);
-    assert!(!debug.is_empty());
+    check_debug!(t, a; a);
+    check_debug!(t, b; a, b, c, d, e, f, g, h, i, j, k);
 }
 
 #[test]
