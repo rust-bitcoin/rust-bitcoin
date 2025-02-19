@@ -716,7 +716,7 @@ mod test {
     use crate::script::ScriptBuf;
     use crate::transaction::Transaction;
 
-    fn hash(slice: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_slice(&slice).unwrap() }
+    fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
     #[test]
     fn full_round_ser_der_raw_network_message() {

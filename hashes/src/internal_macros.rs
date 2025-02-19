@@ -42,7 +42,8 @@ macro_rules! hash_trait_impls {
 
             fn from_byte_array(bytes: Self::Bytes) -> Self { Self::from_byte_array(bytes) }
 
-            #[allow(deprecated)]
+            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
+            #[allow(deprecated)]           // Because of `from_slice`.
             fn from_slice(sl: &[u8]) -> $crate::_export::_core::result::Result<Hash<$($gen),*>, $crate::FromSliceError> {
                 Self::from_slice(sl)
             }
@@ -126,11 +127,13 @@ macro_rules! hash_type_no_default {
             }
 
             /// Copies a byte slice into a hash object.
+            #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
+            #[allow(deprecated_in_future)] // Because of `FromSliceError`.
             pub fn from_slice(
                 sl: &[u8],
             ) -> $crate::_export::_core::result::Result<Hash, $crate::FromSliceError> {
                 if sl.len() != $bits / 8 {
-                    Err($crate::FromSliceError($crate::error::FromSliceErrorInner {
+                    Err($crate::error::FromSliceError($crate::error::FromSliceErrorInner {
                         expected: $bits / 8,
                         got: sl.len(),
                     }))
