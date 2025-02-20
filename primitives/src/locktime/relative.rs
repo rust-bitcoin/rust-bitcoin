@@ -401,12 +401,19 @@ impl std::error::Error for DisabledLockTimeError {}
 
 /// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct IncompatibleHeightError {
     /// Attempted to satisfy a lock-by-blocktime lock with this height.
-    pub height: Height,
+    height: Height,
     /// The inner time value of the lock-by-blocktime lock.
-    pub time: Time,
+    time: Time,
+}
+
+impl IncompatibleHeightError {
+    /// Returns the height that was erroneously used to try and satisfy a lock-by-blocktime lock.
+    pub fn incompatible(&self) -> Height { self.height }
+
+    /// Returns the time value of the lock-by-blocktime lock.
+    pub fn expected(&self) -> Time { self.time }
 }
 
 impl fmt::Display for IncompatibleHeightError {
@@ -424,12 +431,19 @@ impl std::error::Error for IncompatibleHeightError {}
 
 /// Tried to satisfy a lock-by-blockheight lock using a time value.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct IncompatibleTimeError {
     /// Attempted to satisfy a lock-by-blockheight lock with this time.
-    pub time: Time,
+    time: Time,
     /// The inner height value of the lock-by-blockheight lock.
-    pub height: Height,
+    height: Height,
+}
+
+impl IncompatibleTimeError {
+    /// Returns the time that was erroneously used to try and satisfy a lock-by-blockheight lock.
+    pub fn incompatible(&self) -> Time { self.time }
+
+    /// Returns the height value of the lock-by-blockheight lock.
+    pub fn expected(&self) -> Height { self.height }
 }
 
 impl fmt::Display for IncompatibleTimeError {
