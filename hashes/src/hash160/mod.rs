@@ -132,7 +132,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{hash160, GeneralHash as _, Hash as _, HashEngine};
+    use crate::{hash160, Hash as _, HashEngine};
 
     #[bench]
     pub fn hash160_10(bh: &mut Bencher) {
