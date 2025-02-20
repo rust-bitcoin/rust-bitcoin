@@ -28,17 +28,21 @@ impl ScriptBuf {
     /// Converts byte vector into script.
     ///
     /// This method doesn't (re)allocate.
+    #[inline]
     pub const fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
 
     /// Returns a reference to unsized script.
+    #[inline]
     pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
 
     /// Returns a mutable reference to unsized script.
+    #[inline]
     pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
 
     /// Converts the script into a byte vector.
     ///
     /// This method doesn't (re)allocate.
+    #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Converts this `ScriptBuf` into a [boxed](Box) [`Script`].
@@ -56,6 +60,7 @@ impl ScriptBuf {
     }
 
     /// Constructs a new empty script with pre-allocated capacity.
+    #[inline]
     pub fn with_capacity(capacity: usize) -> Self { ScriptBuf::from_bytes(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
@@ -68,6 +73,7 @@ impl ScriptBuf {
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
+    #[inline]
     pub fn reserve(&mut self, additional_len: usize) { self.0.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
@@ -83,21 +89,25 @@ impl ScriptBuf {
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
+    #[inline]
     pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
 }
 
 impl Deref for ScriptBuf {
     type Target = Script;
 
+    #[inline]
     fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
 impl DerefMut for ScriptBuf {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for ScriptBuf {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
         Ok(ScriptBuf::from_bytes(v))

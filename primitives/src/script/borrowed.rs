@@ -67,6 +67,7 @@ impl Default for &Script {
 impl ToOwned for Script {
     type Owned = ScriptBuf;
 
+    #[inline]
     fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
@@ -124,6 +125,7 @@ impl Script {
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
+    #[inline]
     pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
@@ -137,6 +139,7 @@ impl Script {
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for &'a Script {
+    #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = <&'a [u8]>::arbitrary(u)?;
         Ok(Script::from_bytes(v))
