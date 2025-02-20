@@ -91,6 +91,14 @@ impl ScriptBuf {
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     #[inline]
     pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
+
+    /// Returns the number of **bytes** available for writing without reallocation.
+    ///
+    /// It is guaranteed that `script.capacity() >= script.len()` always holds.
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.0.capacity()
+    }
 }
 
 impl Deref for ScriptBuf {
@@ -161,20 +169,20 @@ mod tests {
     #[test]
     fn script_buf_capacity() {
         let script = ScriptBuf::with_capacity(10);
-        assert!(script.0.capacity() >= 10);
+        assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve() {
         let mut script = ScriptBuf::new();
         script.reserve(10);
-        assert!(script.0.capacity() >= 10);
+        assert!(script.capacity() >= 10);
     }
 
     #[test]
     fn script_buf_reserve_exact() {
         let mut script = ScriptBuf::new();
         script.reserve_exact(10);
-        assert!(script.0.capacity() >= 10);
+        assert!(script.capacity() >= 10);
     }
 }
