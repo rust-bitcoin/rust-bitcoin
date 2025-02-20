@@ -26,12 +26,6 @@ macro_rules! hash_trait_impls {
         #[cfg(not(feature = "hex"))]
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
 
-        impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
-            type Engine = HashEngine<$($gen),*>;
-
-            fn from_engine(e: Self::Engine) -> Hash<$($gen),*> { Self::from_engine(e) }
-        }
-
         #[cfg(feature = "serde")]
         $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
 
