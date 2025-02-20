@@ -317,22 +317,22 @@ impl Input {
             }
             PSBT_IN_RIPEMD160 => {
                 psbt_insert_hash_pair! {
-                    &mut self.ripemd160_preimages <= raw_key|raw_value|ripemd160::Hash|error::PsbtHash::Ripemd
+                    &mut self.ripemd160_preimages <= raw_key|raw_value|ripemd160|error::PsbtHash::Ripemd
                 }
             }
             PSBT_IN_SHA256 => {
                 psbt_insert_hash_pair! {
-                    &mut self.sha256_preimages <= raw_key|raw_value|sha256::Hash|error::PsbtHash::Sha256
+                    &mut self.sha256_preimages <= raw_key|raw_value|sha256|error::PsbtHash::Sha256
                 }
             }
             PSBT_IN_HASH160 => {
                 psbt_insert_hash_pair! {
-                    &mut self.hash160_preimages <= raw_key|raw_value|hash160::Hash|error::PsbtHash::Hash160
+                    &mut self.hash160_preimages <= raw_key|raw_value|hash160|error::PsbtHash::Hash160
                 }
             }
             PSBT_IN_HASH256 => {
                 psbt_insert_hash_pair! {
-                    &mut self.hash256_preimages <= raw_key|raw_value|sha256d::Hash|error::PsbtHash::Hash256
+                    &mut self.hash256_preimages <= raw_key|raw_value|sha256d|error::PsbtHash::Hash256
                 }
             }
             PSBT_IN_TAP_KEY_SIG => {
