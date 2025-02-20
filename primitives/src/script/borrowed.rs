@@ -4,6 +4,9 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
 
@@ -129,6 +132,14 @@ impl Script {
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf::from_bytes(Vec::from(inner))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for &'a Script {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = <&'a [u8]>::arbitrary(u)?;
+        Ok(Script::from_bytes(v))
     }
 }
 
