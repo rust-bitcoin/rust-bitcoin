@@ -128,7 +128,7 @@ impl_write!(
         Ok(buf.len())
     },
     |_us| { Ok(()) },
-    T: hashes::GeneralHash
+    T: hashes::HashEngine
 );
 
 /// Hashes data from a reader.
@@ -172,7 +172,7 @@ mod sealed {
 mod tests {
     use alloc::format;
 
-    use hashes::{hmac, Hmac};
+    use hashes::hmac;
 
     use super::*;
     use crate::{Cursor, Write as _};
@@ -257,24 +257,24 @@ mod tests {
 
     #[test]
     fn hmac() {
-        let mut engine = hmac::HmacEngine::<sha256::Hash>::new(&[0xde, 0xad, 0xbe, 0xef]);
+        let mut engine = hmac::HmacEngine::<sha256::HashEngine>::new(&[0xde, 0xad, 0xbe, 0xef]);
         engine.write_all(&[]).unwrap();
         assert_eq!(
-            format!("{}", hmac::Hmac::from_engine(engine)),
+            format!("{}", engine.finalize()),
             "bf5515149cf797955c4d3194cca42472883281951697c8375d9d9b107f384225"
         );
 
-        let mut engine = hmac::HmacEngine::<sha256::Hash>::new(&[0xde, 0xad, 0xbe, 0xef]);
+        let mut engine = hmac::HmacEngine::<sha256::HashEngine>::new(&[0xde, 0xad, 0xbe, 0xef]);
         engine.write_all(&[1; 256]).unwrap();
         assert_eq!(
-            format!("{}", hmac::Hmac::from_engine(engine)),
+            format!("{}", engine.finalize()),
             "59c9aca10c81c73cb4c196d94db741b6bf2050e0153d5a45f2526bff34675ac5"
         );
 
-        let mut engine = hmac::HmacEngine::<sha256::Hash>::new(&[0xde, 0xad, 0xbe, 0xef]);
+        let mut engine = hmac::HmacEngine::<sha256::HashEngine>::new(&[0xde, 0xad, 0xbe, 0xef]);
         engine.write_all(&[99; 64000]).unwrap();
         assert_eq!(
-            format!("{}", hmac::Hmac::from_engine(engine)),
+            format!("{}", engine.finalize()),
             "30df499717415a395379a1eaabe50038036e4abb5afc94aa55c952f4aa57be08"
         );
     }
@@ -345,9 +345,9 @@ mod tests {
 
     #[test]
     fn regression_hmac_sha256_with_key() {
-        let mut engine = HmacEngine::<sha256::Hash>::new(HMAC_KEY);
+        let mut engine = HmacEngine::<sha256::HashEngine>::new(HMAC_KEY);
         engine.input(DATA.as_bytes());
-        let hash = Hmac::from_engine(engine);
+        let hash = engine.finalize();
 
         let got = format!("{}", hash);
         let want = "d159cecaf4adf90b6a641bab767e4817d3a51c414acea3682686c35ec0b37b52";
@@ -356,9 +356,9 @@ mod tests {
 
     #[test]
     fn regression_hmac_sha512_with_key() {
-        let mut engine = HmacEngine::<sha512::Hash>::new(HMAC_KEY);
+        let mut engine = HmacEngine::<sha512::HashEngine>::new(HMAC_KEY);
         engine.input(DATA.as_bytes());
-        let hash = Hmac::from_engine(engine);
+        let hash = engine.finalize();
 
         let got = format!("{}", hash);
         let want = "8511773748f89ba22c07fb3a2981a12c1823695119de41f4a62aead6b848bd34939acf16475c35ed7956114fead3e794cc162ecd35e447a4dabc3227d55f757b";

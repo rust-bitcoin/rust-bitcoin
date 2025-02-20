@@ -129,6 +129,7 @@ impl Default for HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
+    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
