@@ -156,7 +156,12 @@ impl TryFrom<&Script> for WScriptHash {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RedeemScriptSizeError {
     /// Invalid redeem script size (cannot exceed 520 bytes).
-    pub size: usize,
+    size: usize,
+}
+
+impl RedeemScriptSizeError {
+    /// Returns the invalid redeem script size.
+    pub fn invalid_size(&self) -> usize { self.size }
 }
 
 impl From<Infallible> for RedeemScriptSizeError {
@@ -176,7 +181,12 @@ impl std::error::Error for RedeemScriptSizeError {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WitnessScriptSizeError {
     /// Invalid witness script size (cannot exceed 10,000 bytes).
-    pub size: usize,
+    size: usize,
+}
+
+impl WitnessScriptSizeError {
+    /// Returns the invalid witness script size.
+    pub fn invalid_size(&self) -> usize { self.size }
 }
 
 impl From<Infallible> for WitnessScriptSizeError {
