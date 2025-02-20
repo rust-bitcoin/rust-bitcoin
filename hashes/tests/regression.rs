@@ -87,3 +87,13 @@ fn regression_siphash24_with_key() {
     let want = "e823ed82311d601a";
     assert_eq!(got, want);
 }
+
+#[test]
+fn regression_sha256_hash_again() {
+    let hash = sha256::Hash::hash(b"Don't explain your philosophy. Embody it.");
+    let again = hash.hash_again();
+
+    let got = format!("{}", again);
+    let want = "28273103bcd88ab99e2b1007174770ff3f0ea91ee4b3ac942879ed1a2d264b4c";
+    assert_eq!(got, want);
+}
