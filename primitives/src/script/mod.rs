@@ -2,9 +2,7 @@
 
 //! Bitcoin scripts.
 
-/// FIXME: Make this private.
 mod borrowed;
-/// FIXME: Make this private.
 mod owned;
 
 use core::cmp::Ordering;
