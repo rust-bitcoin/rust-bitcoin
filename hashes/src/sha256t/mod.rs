@@ -21,6 +21,22 @@ where
     engine.finalize()
 }
 
+/// Hashes all the byte slices retrieved from the iterator together.
+pub fn hash_byte_chunks<B, I, T>(byte_slices: I) -> Hash<T>
+where
+    B: AsRef<[u8]>,
+    I: IntoIterator<Item = B>,
+    T: Tag,
+{
+    use crate::HashEngine as _;
+
+    let mut engine = HashEngine::default();
+    for slice in byte_slices {
+        engine.input(slice.as_ref());
+    }
+    engine.finalize()
+}
+
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
 pub trait Tag {
     /// The [`Midstate`] after pre-tagging the hash engine.

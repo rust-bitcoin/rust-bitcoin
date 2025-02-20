@@ -80,6 +80,21 @@ macro_rules! general_hash_type {
             engine.finalize()
         }
 
+        /// Hashes all the byte slices retrieved from the iterator together.
+        pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Hash
+        where
+            B: AsRef<[u8]>,
+            I: IntoIterator<Item = B>,
+        {
+            use crate::HashEngine as _;
+
+            let mut engine = Hash::engine();
+            for slice in byte_slices {
+                engine.input(slice.as_ref());
+            }
+            engine.finalize()
+        }
+
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
         impl Hash {
@@ -99,7 +114,7 @@ macro_rules! general_hash_type {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                <Self as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
+                hash_byte_chunks(byte_slices)
             }
         }
     };
