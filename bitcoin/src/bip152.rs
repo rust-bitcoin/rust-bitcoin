@@ -413,8 +413,8 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, CompactTarget, OutPoint, ScriptBuf, Sequence, TxIn,
-        TxOut, Txid, Witness,
+        transaction, Amount, BlockChecked, CompactTarget, OutPoint, ScriptBuf, Sequence, Timestamp,
+        TxIn, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -437,7 +437,7 @@ mod test {
             version: block::Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
-            time: 2,
+            time: Timestamp::from_u32(2),
             bits: CompactTarget::from_consensus(3),
             nonce: 4,
         };

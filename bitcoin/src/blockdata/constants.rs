@@ -16,7 +16,7 @@ use crate::opcodes::all::*;
 use crate::pow::CompactTarget;
 use crate::transaction::{self, OutPoint, Transaction, TxIn, TxOut};
 use crate::witness::Witness;
-use crate::{script, Amount, BlockHash, Sequence, TestnetVersion};
+use crate::{script, Amount, BlockHash, Sequence, TestnetVersion, Timestamp};
 
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -132,7 +132,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
-                time: 1231006505,
+                time: Timestamp::from_u32(1231006505),
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 2083236893,
             },
@@ -144,7 +144,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
-                time: 1296688602,
+                time: Timestamp::from_u32(1296688602),
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 414098458,
             },
@@ -156,7 +156,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
-                time: 1714777860,
+                time: Timestamp::from_u32(1714777860),
                 bits: CompactTarget::from_consensus(0x1d00ffff),
                 nonce: 393743547,
             },
@@ -168,7 +168,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
-                time: 1598918400,
+                time: Timestamp::from_u32(1598918400),
                 bits: CompactTarget::from_consensus(0x1e0377ae),
                 nonce: 52613770,
             },
@@ -180,7 +180,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::GENESIS_PREVIOUS_BLOCK_HASH,
                 merkle_root,
-                time: 1296688602,
+                time: Timestamp::from_u32(1296688602),
                 bits: CompactTarget::from_consensus(0x207fffff),
                 nonce: 2,
             },
@@ -320,7 +320,7 @@ mod test {
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
 
-        assert_eq!(gen.header().time, 1231006505);
+        assert_eq!(gen.header().time, Timestamp::from_u32(1231006505));
         assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1d00ffff));
         assert_eq!(gen.header().nonce, 2083236893);
         assert_eq!(
@@ -338,7 +338,7 @@ mod test {
             gen.header().merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
-        assert_eq!(gen.header().time, 1296688602);
+        assert_eq!(gen.header().time, Timestamp::from_u32(1296688602));
         assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1d00ffff));
         assert_eq!(gen.header().nonce, 414098458);
         assert_eq!(
@@ -356,7 +356,7 @@ mod test {
             gen.header().merkle_root.to_string(),
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
-        assert_eq!(gen.header().time, 1598918400);
+        assert_eq!(gen.header().time, Timestamp::from_u32(1598918400));
         assert_eq!(gen.header().bits, CompactTarget::from_consensus(0x1e0377ae));
         assert_eq!(gen.header().nonce, 52613770);
         assert_eq!(
