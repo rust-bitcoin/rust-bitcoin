@@ -69,7 +69,8 @@ impl ScriptHash {
             return Err(RedeemScriptSizeError { size: redeem_script.len() });
         }
 
-        Ok(ScriptHash(hash160::Hash::hash(redeem_script.as_bytes())))
+        // We've just checked the length
+        Ok(ScriptHash::from_script_unchecked(redeem_script))
     }
 
     /// Constructs a new `ScriptHash` from any script irrespective of script size.
@@ -99,7 +100,8 @@ impl WScriptHash {
             return Err(WitnessScriptSizeError { size: witness_script.len() });
         }
 
-        Ok(WScriptHash(sha256::Hash::hash(witness_script.as_bytes())))
+        // We've just checked the length
+        Ok(WScriptHash::from_script_unchecked(witness_script))
     }
 
     /// Constructs a new `WScriptHash` from any script irrespective of script size.
