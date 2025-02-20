@@ -33,9 +33,18 @@ pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 
 hashes::hash_newtype! {
-    /// A hash of Bitcoin Script bytecode.
+    /// A 160-bit hash of Bitcoin Script bytecode.
+    ///
+    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+    /// uses 256-bit hash and hashes a semantically different script. Thus, this type cannot
+    /// represent it.
     pub struct ScriptHash(hash160::Hash);
-    /// SegWit version of a Bitcoin Script bytecode hash.
+
+    /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
+    ///
+    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+    /// looks similar to this one also being SHA256, however, they hash semantically different
+    /// scripts and have reversed representations, so this type cannot be used for both.
     pub struct WScriptHash(sha256::Hash);
 }
 
