@@ -74,28 +74,28 @@ impl ToOwned for Script {
 impl Script {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> &'static Script { Script::from_bytes(&[]) }
+    pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
 
     /// Treat byte slice as `Script`
     #[inline]
-    pub const fn from_bytes(bytes: &[u8]) -> &Script {
+    pub const fn from_bytes(bytes: &[u8]) -> &Self {
         // SAFETY: copied from `std`
         // The pointer was just created from a reference which is still alive.
         // Casting slice pointer to a transparent struct wrapping that slice is sound (same
         // layout).
-        unsafe { &*(bytes as *const [u8] as *const Script) }
+        unsafe { &*(bytes as *const [u8] as *const Self) }
     }
 
     /// Treat mutable byte slice as `Script`
     #[inline]
-    pub fn from_bytes_mut(bytes: &mut [u8]) -> &mut Script {
+    pub fn from_bytes_mut(bytes: &mut [u8]) -> &mut Self {
         // SAFETY: copied from `std`
         // The pointer was just created from a reference which is still alive.
         // Casting slice pointer to a transparent struct wrapping that slice is sound (same
         // layout).
         // Function signature prevents callers from accessing `bytes` while the returned reference
         // is alive.
-        unsafe { &mut *(bytes as *mut [u8] as *mut Script) }
+        unsafe { &mut *(bytes as *mut [u8] as *mut Self) }
     }
 
     /// Returns the script data as a byte slice.

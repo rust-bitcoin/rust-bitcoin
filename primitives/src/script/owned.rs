@@ -23,13 +23,13 @@ pub struct ScriptBuf(Vec<u8>);
 impl ScriptBuf {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { ScriptBuf::from_bytes(Vec::new()) }
+    pub const fn new() -> Self { Self::from_bytes(Vec::new()) }
 
     /// Converts byte vector into script.
     ///
     /// This method doesn't (re)allocate.
     #[inline]
-    pub const fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
+    pub const fn from_bytes(bytes: Vec<u8>) -> Self { Self(bytes) }
 
     /// Returns a reference to unsized script.
     #[inline]

@@ -299,7 +299,7 @@ impl From<ScriptBuf> for Vec<u8> {
 
 impl AsRef<Script> for Script {
     #[inline]
-    fn as_ref(&self) -> &Script { self }
+    fn as_ref(&self) -> &Self { self }
 }
 
 impl AsRef<Script> for ScriptBuf {
@@ -319,7 +319,7 @@ impl AsRef<[u8]> for ScriptBuf {
 
 impl AsMut<Script> for Script {
     #[inline]
-    fn as_mut(&mut self) -> &mut Script { self }
+    fn as_mut(&mut self) -> &mut Self { self }
 }
 
 impl AsMut<Script> for ScriptBuf {
@@ -435,14 +435,14 @@ impl fmt::LowerHex for Script {
     }
 }
 #[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(Script, |script: &Script| script.len() * 2);
+internals::impl_to_hex_from_lower_hex!(Script, |script: &Self| script.len() * 2);
 
 impl fmt::LowerHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 #[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &ScriptBuf| script_buf.len() * 2);
+internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf.len() * 2);
 
 impl fmt::UpperHex for Script {
     #[inline]
