@@ -54,7 +54,7 @@ use crate::prelude::{Box, ToOwned, Vec};
 ///
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct Script(pub(in crate::script) [u8]);
+pub struct Script([u8]);
 
 impl Default for &Script {
     #[inline]
@@ -64,7 +64,7 @@ impl Default for &Script {
 impl ToOwned for Script {
     type Owned = ScriptBuf;
 
-    fn to_owned(&self) -> Self::Owned { ScriptBuf(self.0.to_owned()) }
+    fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
 impl Script {
@@ -104,7 +104,7 @@ impl Script {
 
     /// Returns a copy of the script data.
     #[inline]
-    pub fn to_vec(&self) -> Vec<u8> { self.0.to_owned() }
+    pub fn to_vec(&self) -> Vec<u8> { self.as_bytes().to_owned() }
 
     /// Returns a copy of the script data.
     #[inline]
@@ -113,11 +113,11 @@ impl Script {
 
     /// Returns the length in bytes of the script.
     #[inline]
-    pub fn len(&self) -> usize { self.0.len() }
+    pub fn len(&self) -> usize { self.as_bytes().len() }
 
     /// Returns whether the script is the empty script.
     #[inline]
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
@@ -128,7 +128,7 @@ impl Script {
         // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
-        ScriptBuf(Vec::from(inner))
+        ScriptBuf::from_bytes(Vec::from(inner))
     }
 }
 
@@ -141,7 +141,7 @@ macro_rules! delegate_index {
 
                 #[inline]
                 fn index(&self, index: $type) -> &Self::Output {
-                    Self::from_bytes(&self.0[index])
+                    Self::from_bytes(&self.as_bytes()[index])
                 }
             }
         )*

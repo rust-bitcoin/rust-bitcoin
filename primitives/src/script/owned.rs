@@ -19,17 +19,17 @@ use crate::prelude::{Box, Vec};
 ///
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(pub(in crate::script) Vec<u8>);
+pub struct ScriptBuf(Vec<u8>);
 
 impl ScriptBuf {
     /// Constructs a new empty script.
     #[inline]
-    pub const fn new() -> Self { ScriptBuf(Vec::new()) }
+    pub const fn new() -> Self { ScriptBuf::from_bytes(Vec::new()) }
 
     /// Converts byte vector into script.
     ///
     /// This method doesn't (re)allocate.
-    pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
+    pub const fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
 
     /// Returns a reference to unsized script.
     pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
@@ -52,12 +52,12 @@ impl ScriptBuf {
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script> {
         // Copied from PathBuf::into_boxed_path
-        let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
+        let rw = Box::into_raw(self.into_bytes().into_boxed_slice()) as *mut Script;
         unsafe { Box::from_raw(rw) }
     }
 
     /// Constructs a new empty script with pre-allocated capacity.
-    pub fn with_capacity(capacity: usize) -> Self { ScriptBuf(Vec::with_capacity(capacity)) }
+    pub fn with_capacity(capacity: usize) -> Self { ScriptBuf::from_bytes(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
     ///
@@ -91,7 +91,7 @@ impl ScriptBuf {
 impl<'a> Arbitrary<'a> for ScriptBuf {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let v = Vec::<u8>::arbitrary(u)?;
-        Ok(ScriptBuf(v))
+        Ok(ScriptBuf::from_bytes(v))
     }
 }
 
@@ -103,7 +103,7 @@ mod tests {
     fn script_buf_from_bytes() {
         let bytes = vec![1, 2, 3];
         let script = ScriptBuf::from_bytes(bytes.clone());
-        assert_eq!(script.0, bytes);
+        assert_eq!(script.as_bytes(), bytes);
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod tests {
         let mut script = ScriptBuf::from_bytes(bytes.clone());
         let script_mut_ref = script.as_mut_script();
         script_mut_ref.as_mut_bytes()[0] = 4;
-        assert_eq!(script.0, vec![4, 2, 3]);
+        assert_eq!(script.as_mut_bytes(), vec![4, 2, 3]);
     }
 
     #[test]

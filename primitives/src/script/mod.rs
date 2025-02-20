@@ -236,7 +236,7 @@ impl<'a> From<&'a Script> for Cow<'a, Script> {
 #[cfg(target_has_atomic = "ptr")]
 impl<'a> From<&'a Script> for Arc<Script> {
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Arc::into_raw(Arc::from(&value.0));
+        let rw: *const [u8] = Arc::into_raw(Arc::from(value.as_bytes()));
         // SAFETY: copied from `std`
         // The pointer was just created from an Arc without deallocating
         // Casting a slice to a transparent struct wrapping that slice is sound (same
@@ -247,7 +247,7 @@ impl<'a> From<&'a Script> for Arc<Script> {
 
 impl<'a> From<&'a Script> for Rc<Script> {
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Rc::into_raw(Rc::from(&value.0));
+        let rw: *const [u8] = Rc::into_raw(Rc::from(value.as_bytes()));
         // SAFETY: copied from `std`
         // The pointer was just created from an Rc without deallocating
         // Casting a slice to a transparent struct wrapping that slice is sound (same
@@ -257,11 +257,11 @@ impl<'a> From<&'a Script> for Rc<Script> {
 }
 
 impl From<Vec<u8>> for ScriptBuf {
-    fn from(v: Vec<u8>) -> Self { ScriptBuf(v) }
+    fn from(v: Vec<u8>) -> Self { ScriptBuf::from_bytes(v) }
 }
 
 impl From<ScriptBuf> for Vec<u8> {
-    fn from(v: ScriptBuf) -> Self { v.0 }
+    fn from(v: ScriptBuf) -> Self { v.into_bytes() }
 }
 
 impl AsRef<Script> for Script {
@@ -418,11 +418,11 @@ impl fmt::UpperHex for ScriptBuf {
 impl Deref for ScriptBuf {
     type Target = Script;
 
-    fn deref(&self) -> &Self::Target { Script::from_bytes(&self.0) }
+    fn deref(&self) -> &Self::Target { self.as_script() }
 }
 
 impl DerefMut for ScriptBuf {
-    fn deref_mut(&mut self) -> &mut Self::Target { Script::from_bytes_mut(&mut self.0) }
+    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 impl Borrow<Script> for ScriptBuf {
