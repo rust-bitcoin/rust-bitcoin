@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(doc)]
-use core::ops::Deref;
+use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -85,6 +84,16 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
+}
+
+impl Deref for ScriptBuf {
+    type Target = Script;
+
+    fn deref(&self) -> &Self::Target { self.as_script() }
+}
+
+impl DerefMut for ScriptBuf {
+    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 #[cfg(feature = "arbitrary")]

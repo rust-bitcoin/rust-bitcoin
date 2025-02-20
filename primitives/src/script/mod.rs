@@ -10,7 +10,6 @@ mod owned;
 use core::cmp::Ordering;
 use core::convert::Infallible;
 use core::fmt;
-use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
 use hex::DisplayHex;
@@ -413,16 +412,6 @@ impl fmt::UpperHex for Script {
 impl fmt::UpperHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
-}
-
-impl Deref for ScriptBuf {
-    type Target = Script;
-
-    fn deref(&self) -> &Self::Target { self.as_script() }
-}
-
-impl DerefMut for ScriptBuf {
-    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_script() }
 }
 
 impl Borrow<Script> for ScriptBuf {
