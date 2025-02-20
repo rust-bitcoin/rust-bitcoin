@@ -46,7 +46,7 @@ pub use bridge::{FromStd, ToStd};
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use self::error::{Error, ErrorKind};
 #[cfg(feature = "hashes")]
-pub use self::hash::GeneralHashExt;
+pub use self::hash::hash_reader;
 
 /// Result type returned by functions in this crate.
 pub type Result<T> = core::result::Result<T, Error>;

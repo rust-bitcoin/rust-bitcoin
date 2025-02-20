@@ -10,8 +10,10 @@
 use hashes::hmac::HmacEngine;
 use hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
-    GeneralHash, HashEngine as _,
+    HashEngine as _,
 };
+
+use crate::BufRead;
 
 macro_rules! impl_write {
     ($ty: ty, $write_fn: expr, $flush_fn: expr $(, $bounded_ty: ident : $bounds: path),*) => {
@@ -132,39 +134,24 @@ impl_write!(
 );
 
 /// Hashes data from a reader.
-///
-/// Adds functionality to a [`hashes::GeneralHash`] type to support hashing data read from a
-/// buffered reader.
-pub trait GeneralHashExt: GeneralHash + sealed::Sealed {
-    /// Hashes the entire contents of the `reader`.
-    fn hash_reader<R: crate::BufRead>(reader: &mut R) -> Result<Self, crate::Error>
-    where
-        Self::Engine: Default,
-    {
-        let mut engine = Self::engine(); // This calls `Self::Engine::default()`.
-        loop {
-            let bytes = reader.fill_buf()?;
+pub fn hash_reader<T>(reader: &mut impl BufRead) -> Result<T::Hash, crate::Error>
+where
+    T: hashes::HashEngine + Default,
+{
+    let mut engine = T::default();
+    loop {
+        let bytes = reader.fill_buf()?;
 
-            let read = bytes.len();
-            // Empty slice means EOF.
-            if read == 0 {
-                break;
-            }
-
-            engine.input(bytes);
-            reader.consume(read);
+        let read = bytes.len();
+        // Empty slice means EOF.
+        if read == 0 {
+            break;
         }
-        Ok(Self::from_engine(engine))
+
+        engine.input(bytes);
+        reader.consume(read);
     }
-}
-
-impl<T: GeneralHash> GeneralHashExt for T {}
-
-mod sealed {
-    /// Used to seal the `GeneralHashExt` trait.
-    pub trait Sealed {}
-
-    impl<T: hashes::GeneralHash> Sealed for T {}
+    Ok(engine.finalize())
 }
 
 #[cfg(test)]
@@ -308,7 +295,7 @@ mod tests {
                     assert_eq!(got, $want);
 
                     let mut reader = Cursor::new(DATA);
-                    let hash_from_reader = $module::Hash::hash_reader(&mut reader).unwrap();
+                    let hash_from_reader = $crate::hash_reader::<$module::HashEngine>(&mut reader).unwrap();
                     assert_eq!(hash_from_reader, hash)
                 }
             )*
