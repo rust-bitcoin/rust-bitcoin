@@ -70,11 +70,11 @@ impl ToOwned for Script {
 impl Script {
     /// Constructs a new empty script.
     #[inline]
-    pub fn new() -> &'static Script { Script::from_bytes(&[]) }
+    pub const fn new() -> &'static Script { Script::from_bytes(&[]) }
 
     /// Treat byte slice as `Script`
     #[inline]
-    pub fn from_bytes(bytes: &[u8]) -> &Script {
+    pub const fn from_bytes(bytes: &[u8]) -> &Script {
         // SAFETY: copied from `std`
         // The pointer was just created from a reference which is still alive.
         // Casting slice pointer to a transparent struct wrapping that slice is sound (same
@@ -96,7 +96,7 @@ impl Script {
 
     /// Returns the script data as a byte slice.
     #[inline]
-    pub fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns the script data as a mutable byte slice.
     #[inline]
@@ -113,11 +113,11 @@ impl Script {
 
     /// Returns the length in bytes of the script.
     #[inline]
-    pub fn len(&self) -> usize { self.as_bytes().len() }
+    pub const fn len(&self) -> usize { self.as_bytes().len() }
 
     /// Returns whether the script is the empty script.
     #[inline]
-    pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
+    pub const fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
