@@ -134,6 +134,7 @@ impl<T: Tag> Clone for HashEngine<T> {
 
 impl<T: Tag> crate::HashEngine for HashEngine<T> {
     type Hash = Hash<T>;
+    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
 
     fn input(&mut self, data: &[u8]) { self.0.input(data) }

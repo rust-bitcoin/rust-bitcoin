@@ -189,6 +189,12 @@ pub trait HashEngine: Clone {
     /// The `Hash` type returned when finalizing this engine.
     type Hash: Hash;
 
+    /// The byte array that is used internally in `finalize`.
+    type Bytes: Copy + IsByteArray;
+
+    /// Length of the hash, in bytes.
+    const LEN: usize = Self::Bytes::LEN;
+
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 

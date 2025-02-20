@@ -122,6 +122,7 @@ impl HashEngine {
 
 impl crate::HashEngine for HashEngine {
     type Hash = Hash;
+    type Bytes = [u8; 8];
     const BLOCK_SIZE: usize = 8;
 
     #[inline]
