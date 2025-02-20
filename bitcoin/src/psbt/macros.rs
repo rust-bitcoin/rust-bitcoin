@@ -113,15 +113,15 @@ macro_rules! impl_psbt_insert_pair {
 
 #[rustfmt::skip]
 macro_rules! psbt_insert_hash_pair {
-    (&mut $slf:ident.$map:ident <= $raw_key:ident|$raw_value:ident|$hash:path|$hash_type_error:path) => {
+    (&mut $slf:ident.$map:ident <= $raw_key:ident|$raw_value:ident|$hash:ident|$hash_type_error:path) => {
         if $raw_key.key_data.is_empty() {
             return Err($crate::psbt::Error::InvalidKey($raw_key));
         }
-        let key_val: $hash = Deserialize::deserialize(&$raw_key.key_data)?;
+        let key_val: $hash::Hash = Deserialize::deserialize(&$raw_key.key_data)?;
         match $slf.$map.entry(key_val) {
             btree_map::Entry::Vacant(empty_key) => {
                 let val: Vec<u8> = Deserialize::deserialize(&$raw_value)?;
-                if <$hash as hashes::GeneralHash>::hash(&val) != key_val {
+                if $hash::hash(&val) != key_val {
                     return Err($crate::psbt::Error::InvalidPreimageHashPair {
                         preimage: val.into_boxed_slice(),
                         hash: Box::from(key_val.borrow()),

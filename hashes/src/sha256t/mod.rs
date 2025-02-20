@@ -9,6 +9,18 @@ use core::marker::PhantomData;
 use crate::sha256::Midstate;
 use crate::{sha256, HashEngine as _};
 
+/// Hashes some bytes.
+pub fn hash<T>(data: &[u8]) -> Hash<T>
+where
+    T: Tag,
+{
+    use crate::HashEngine as _;
+
+    let mut engine = HashEngine::default();
+    engine.input(data);
+    engine.finalize()
+}
+
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
 pub trait Tag {
     /// The [`Midstate`] after pre-tagging the hash engine.

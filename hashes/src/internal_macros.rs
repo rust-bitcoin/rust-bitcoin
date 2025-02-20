@@ -71,6 +71,15 @@ pub(crate) use hash_trait_impls;
 /// [`hash_trait_impls`].
 macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
+        /// Hashes some bytes.
+        pub fn hash(data: &[u8]) -> Hash {
+            use crate::HashEngine as _;
+
+            let mut engine = Hash::engine();
+            engine.input(data);
+            engine.finalize()
+        }
+
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
         impl Hash {
@@ -82,7 +91,7 @@ macro_rules! general_hash_type {
 
             /// Hashes some bytes.
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self { <Self as $crate::GeneralHash>::hash(data) }
+            pub fn hash(data: &[u8]) -> Self { hash(data) }
 
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
