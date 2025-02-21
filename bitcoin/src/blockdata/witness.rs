@@ -395,13 +395,22 @@ impl Witness {
         self.element_at(pos)
     }
 
-    /// Get Tapscript following BIP341 rules regarding accounting for an annex.
+    /// Get leaf script following BIP341 rules regarding accounting for an annex.
+    ///
+    /// This method is broken: it's called `tapscript` but it's actually returning a leaf script.
+    /// We're not going to fix it because someone might be relying on it thinking leaf script and
+    /// tapscript are the same thing (they are not). Instead, this is deprecated and will be
+    /// removed in the next breaking release. You need to use `taproot_leaf_script` and if you
+    /// intended to use it as leaf script, just access the `script` field of the returned type. If
+    /// you intended tapscript specifically you have to check the version first and bail if it's not
+    /// `LeafVersion::TapScript`.
     ///
     /// This does not guarantee that this represents a P2TR [`Witness`]. It
     /// merely gets the second to last or third to last element depending on
     /// the first byte of the last element being equal to 0x50.
     ///
     /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
+    #[deprecated = "use `taproot_leaf_script` and check leaf version, if applicable"]
     pub fn tapscript(&self) -> Option<&Script> {
         match P2TrSpend::from_witness(self) {
             // Note: the method is named "tapscript" but historically it was actually returning
