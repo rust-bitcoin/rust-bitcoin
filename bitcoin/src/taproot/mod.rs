@@ -158,7 +158,16 @@ pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
 pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
-// type alias for versioned tap script corresponding merkle proof
+/// The leaf script with its version.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct LeafScript<S> {
+    /// The version of the script.
+    pub version: LeafVersion,
+    /// The script, usually `ScriptBuf` or `&Script`.
+    pub script: S,
+}
+
+// type alias for versioned tap script corresponding Merkle proof
 type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
 
 /// Represents taproot spending information.
