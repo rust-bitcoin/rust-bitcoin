@@ -266,12 +266,12 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::encode::serialize;
     use crate::network::params;
     use crate::Txid;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

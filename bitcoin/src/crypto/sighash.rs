@@ -1521,7 +1521,7 @@ impl<'a> Arbitrary<'a> for TapSighashType {
 #[cfg(test)]
 mod tests {
     use hashes::HashEngine;
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
 
     use super::*;
     use crate::consensus::deserialize;
@@ -1532,6 +1532,8 @@ mod tests {
     extern crate serde_json;
 
     const DUMMY_TXOUT: TxOut = TxOut { value: Amount::MIN, script_pubkey: ScriptBuf::new() };
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn sighash_single_bug() {

@@ -144,10 +144,10 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
-
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn getblocks_message() {

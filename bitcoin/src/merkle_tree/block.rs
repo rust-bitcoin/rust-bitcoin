@@ -519,7 +519,9 @@ mod tests {
     use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{test_hex_unwrap as hex, DisplayHex, FromHex};
+    use crate::hex::{DisplayHex, FromHex};
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {

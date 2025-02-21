@@ -1222,7 +1222,7 @@ pub use self::display_from_str::PsbtParseError;
 #[cfg(test)]
 mod tests {
     use hashes::{hash160, ripemd160, sha256};
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
 
@@ -1236,6 +1236,8 @@ mod tests {
     use crate::transaction::{self, OutPoint, TxIn};
     use crate::witness::Witness;
     use crate::Sequence;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {

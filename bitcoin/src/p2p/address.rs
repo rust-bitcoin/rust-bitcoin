@@ -301,10 +301,12 @@ impl ToSocketAddrs for AddrV2Message {
 mod test {
     use std::net::IpAddr;
 
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn serialize_address() {
