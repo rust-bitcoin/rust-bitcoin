@@ -403,15 +403,13 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
-            if self.is_empty() {
-                return None;
-            }
-
-            if self.taproot_annex().is_some() {
-                self.third_to_last().map(Script::from_bytes)
-            } else {
-                self.second_to_last().map(Script::from_bytes)
-            }
+        match P2TrSpend::from_witness(self) {
+            // Note: the method is named "tapscript" but historically it was actually returning
+            // leaf script. This is broken but we now keep the behavior the same to not subtly
+            // break someone.
+            Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),
+            _ => None,
+        }
     }
 
     /// Get the taproot control block following BIP341 rules.
@@ -422,15 +420,10 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn taproot_control_block(&self) -> Option<&[u8]> {
-            if self.is_empty() {
-                return None;
-            }
-
-            if self.taproot_annex().is_some() {
-                self.second_to_last()
-            } else {
-                self.last()
-            }
+        match P2TrSpend::from_witness(self) {
+            Some(P2TrSpend::Script { control_block, .. }) => Some(control_block),
+            _ => None,
+        }
     }
 
     /// Get the taproot annex following BIP341 rules.
@@ -439,17 +432,7 @@ impl Witness {
     /// [Script::is_p2tr](crate::blockdata::script::Script::is_p2tr) to
     /// check whether this is actually a Taproot witness.
     pub fn taproot_annex(&self) -> Option<&[u8]> {
-        self.last().and_then(|last| {
-            // From BIP341:
-            // If there are at least two witness elements, and the first byte of
-            // the last element is 0x50, this last element is called annex a
-            // and is removed from the witness stack.
-            if self.len() >= 2 && last.first() == Some(&TAPROOT_ANNEX_PREFIX) {
-                Some(last)
-            } else {
-                None
-            }
-        })
+        P2TrSpend::from_witness(self)?.annex()
     }
 
     /// Get the p2wsh witness script following BIP141 rules.
@@ -466,6 +449,66 @@ impl Index<usize> for Witness {
     type Output = [u8];
 
     fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("Out of Bounds") }
+}
+
+enum P2TrSpend<'a> {
+    Key {
+        // signature: &'a [u8],
+        annex: Option<&'a [u8]>,
+    },
+    Script {
+        leaf_script: &'a Script,
+        control_block: &'a [u8],
+        annex: Option<&'a [u8]>,
+    },
+}
+
+impl<'a> P2TrSpend<'a> {
+    /// Parses `Witness` to determine what kind of spend this is.
+    fn from_witness(witness: &'a Witness) -> Option<Self> {
+        // BIP341 says:
+        //   If there are at least two witness elements, and the first byte of
+        //   the last element is 0x50, this last element is called annex a
+        //   and is removed from the witness stack.
+        //
+        // However here we're not removing anything, so we have to adjust the numbers to account
+        // for the fact that annex is still there.
+        match witness.len() {
+            0 => None,
+            1 => Some(P2TrSpend::Key { /* signature: witness.last().expect("len > 0") ,*/ annex: None }),
+            2 if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
+                let spend = P2TrSpend::Key {
+                    // signature: witness.second_to_last().expect("len > 1"),
+                    annex: witness.last(),
+                };
+                Some(spend)
+            },
+            // 2 => this is script spend without annex - same as the last case
+            3.. if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
+                let spend = P2TrSpend::Script {
+                    leaf_script: Script::from_bytes(witness.third_to_last().expect("len > 2")),
+                    control_block: witness.second_to_last().expect("len > 1"),
+                    annex: witness.last(),
+                };
+                Some(spend)
+            },
+            _ => {
+                let spend = P2TrSpend::Script {
+                    leaf_script: Script::from_bytes(witness.second_to_last().expect("len > 1")),
+                    control_block: witness.last().expect("len > 0"),
+                    annex: None,
+                };
+                Some(spend)
+            },
+        }
+    }
+
+    fn annex(&self) -> Option<&'a [u8]> {
+        match self {
+            P2TrSpend::Key { annex, .. } => *annex,
+            P2TrSpend::Script { annex, .. } => *annex,
+        }
+    }
 }
 
 impl<'a> Iterator for Iter<'a> {
