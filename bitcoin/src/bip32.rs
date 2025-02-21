@@ -969,12 +969,13 @@ impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 
     use super::ChildNumber::{Hardened, Normal};
     use super::*;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn parse_derivation_path() {

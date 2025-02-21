@@ -490,13 +490,14 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
     use internals::ToU64 as _;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::pow::test_utils::{u128_to_work, u64_to_work};
     use crate::{block, CompactTarget, Network, TestnetVersion};
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn static_vector() {
