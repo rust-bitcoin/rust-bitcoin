@@ -27,4 +27,7 @@ path = "primitives"
 path = "units"
 
 [patch.crates-io.hex-conservative]
-path = "/home/tobin/build/github.com/tcharding/hex-conservative/master"
+path = "/home/tobin/build/github.com/tcharding/hex-conservative/02-21-demo-error-crate"
+
+[patch.crates-io.hex-conservative-errors]
+path = "/home/tobin/build/github.com/tcharding/hex-conservative/02-21-demo-error-crate/errors"
