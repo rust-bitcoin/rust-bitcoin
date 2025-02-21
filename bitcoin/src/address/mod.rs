@@ -120,7 +120,9 @@ impl FromStr for AddressType {
 }
 
 mod sealed {
-    pub trait NetworkValidation {}
+    use core::panic::{UnwindSafe, RefUnwindSafe};
+
+    pub trait NetworkValidation: Send + Sync + Sized + Unpin + UnwindSafe + RefUnwindSafe {}
     impl NetworkValidation for super::NetworkChecked {}
     impl NetworkValidation for super::NetworkUnchecked {}
 
@@ -130,7 +132,7 @@ mod sealed {
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + Unpin {
+pub trait NetworkValidation: sealed::NetworkValidation {
     /// Indicates whether this `NetworkValidation` is `NetworkChecked` or not.
     const IS_CHECKED: bool;
 }
@@ -139,10 +141,7 @@ pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + U
 ///
 /// This allows users to use `V: NetworkValidation` in conjunction with derives. Is only ever
 /// implemented for `NetworkUnchecked`.
-pub trait NetworkValidationUnchecked:
-    NetworkValidation + sealed::NetworkValidationUnchecked + Sync + Send + Sized + Unpin
-{
-}
+pub trait NetworkValidationUnchecked: NetworkValidation + sealed::NetworkValidationUnchecked {}
 
 /// Marker that address's network has been successfully validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
@@ -1552,5 +1551,22 @@ mod tests {
         let foo_checked = Foo { address: unchecked.clone().assume_checked() };
         let _ = serde_json::to_string(&foo_checked).expect("failed to serialize");
 
+    }
+
+    #[test]
+    #[allow(dead_code)]
+    fn implement_required_marker_traits() {
+        use core::panic::{UnwindSafe, RefUnwindSafe};
+
+        /// A struct that holds an address with a generic bound by `NetworkValidation`.
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        struct Verifier<T: NetworkValidation> {
+            address: Address<T>
+        }
+
+        fn f(_: impl Send + Sync + Sized + Unpin + UnwindSafe + RefUnwindSafe) {}
+
+        fn verify_address<T: NetworkValidation>(a: Address<T>) { f(a) }
+        fn verify_custom_type<T: NetworkValidation>(a: Verifier<T>) { f(a) }
     }
 }
