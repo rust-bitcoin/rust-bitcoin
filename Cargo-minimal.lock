@@ -202,11 +202,14 @@ dependencies = [
 [[package]]
 name = "hex-conservative"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4afe881d0527571892c4034822e59bb10c6c991cce6abe8199b6f5cf10766f55"
 dependencies = [
  "arrayvec",
+ "hex-conservative-errors",
 ]
+
+[[package]]
+name = "hex-conservative-errors"
+version = "1.0.0-alpha.0"
 
 [[package]]
 name = "hex_lit"
