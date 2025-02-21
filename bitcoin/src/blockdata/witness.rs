@@ -139,23 +139,6 @@ crate::internal_macros::define_extension_trait! {
             self.push(signature.serialize())
         }
 
-        /// Get Tapscript following BIP341 rules regarding accounting for an annex.
-        ///
-        /// This does not guarantee that this represents a P2TR [`Witness`]. It
-        /// merely gets the second to last or third to last element depending on
-        /// the first byte of the last element being equal to 0x50.
-        ///
-        /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
-        fn tapscript(&self) -> Option<&Script> {
-            match P2TrSpend::from_witness(self) {
-                // Note: the method is named "tapscript" but historically it was actually returning
-                // leaf script. This is broken but we now keep the behavior the same to not subtly
-                // break someone.
-                Some(P2TrSpend::Script { leaf_script, .. }) => Some(leaf_script),
-                _ => None,
-            }
-        }
-
         /// Returns the leaf script with its version but without the merkle proof.
         ///
         /// This does not guarantee that this represents a P2TR [`Witness`]. It
@@ -367,27 +350,6 @@ mod test {
     }
 
     #[test]
-    fn get_tapscript() {
-        let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
-        // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
-
-        let witness_vec = vec![tapscript.clone(), control_block.clone()];
-        let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
-
-        // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
-        assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
-    }
-
-    #[test]
     fn get_taproot_leaf_script() {
         let tapscript = hex!("deadbeef");
         let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -411,26 +373,6 @@ mod test {
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_leaf_script().unwrap(), expected_leaf_script);
         assert_eq!(witness_annex.taproot_leaf_script().unwrap(), expected_leaf_script);
-    }
-
-    #[test]
-    fn get_tapscript_from_keypath() {
-        let signature = hex!("deadbeef");
-        // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
-
-        let witness_vec = vec![signature.clone()];
-        let witness_vec_annex = vec![signature.clone(), annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
-
-        // With or without annex, no tapscript should be returned.
-        assert_eq!(witness.tapscript(), None);
-        assert_eq!(witness_annex.tapscript(), None);
     }
 
     #[test]
