@@ -138,7 +138,7 @@ fn neg() {
 fn overflows() {
     let result = Amount::MAX + Amount::from_sat_unchecked(1);
     assert!(result.is_error());
-    let result = Amount::from_sat_unchecked(8_446_744_073_709_551_615) * 3;
+    let result: NumOpResult<Amount> = Amount::from_sat_unchecked(8_446_744_073_709_551_615) * 3;
     assert!(result.is_error());
 }
 

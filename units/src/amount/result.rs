@@ -199,47 +199,62 @@ impl ops::Sub<&Amount> for NumOpResult<Amount> {
     }
 }
 
-impl ops::Mul<u64> for Amount {
-    type Output = NumOpResult<Amount>;
+macro_rules! impl_mul_for_amount {
+    ($amount:ty, $($int:ty),*) => {
+        $(
+            impl ops::Mul<$int> for $amount {
+                type Output = NumOpResult<$amount>;
 
-    fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
+                fn mul(self, rhs: $int) -> Self::Output { self.checked_mul(rhs as u64).valid_or_error() }
+            }
+            impl ops::Mul<&$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: &$int) -> Self::Output { self.mul(*rhs) }
+            }
+            impl ops::Mul<$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: $int) -> Self::Output { (*self).mul(rhs) }
+            }
+            impl ops::Mul<&$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: &$int) -> Self::Output { self.mul(*rhs) }
+            }
+        )*
+    };
 }
-impl ops::Mul<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
+macro_rules! impl_div_for_amount {
+    ($amount:ty, $($int:ty),*) => {
+        $(
+            impl ops::Div<$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: $int) -> Self::Output { self.checked_div(rhs as u64).valid_or_error() }
+            }
+            impl ops::Div<&$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: &$int) -> Self::Output { self.div(*rhs) }
+            }
+            impl ops::Div<$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: $int) -> Self::Output { (*self).div(rhs) }
+            }
+            impl ops::Div<&$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: &$int) -> Self::Output { (*self).div(*rhs) }
+            }
+        )*
+    };
 }
-impl ops::Mul<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: u64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
-}
-
-impl ops::Div<u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
-}
-impl ops::Div<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: u64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { (*self).div(*rhs) }
-}
+impl_mul_for_amount!(Amount, usize, isize, u64, i32);
+impl_div_for_amount!(Amount, usize, isize, u64, i32);
 
 impl ops::Rem<u64> for Amount {
     type Output = NumOpResult<Amount>;
@@ -338,47 +353,72 @@ impl ops::Sub<&SignedAmount> for NumOpResult<SignedAmount> {
     }
 }
 
-impl ops::Mul<i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
+macro_rules! impl_mul_for_signed_amount {
+    ($amount:ty, $($int:ty),*) => {
+        $(
+            impl ops::Mul<$int> for $amount {
+                type Output = NumOpResult<$amount>;
 
-    fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
+                fn mul(self, rhs: $int) -> Self::Output { 
+                    match i64::try_from(rhs) {
+                        Ok(val) => self.checked_mul(val).valid_or_error(),
+                        Err(_) => R::Error(NumOpError {})
+                    }
+                }
+            }
+            impl ops::Mul<&$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: &$int) -> Self::Output { self.mul(*rhs) }
+            }
+            impl ops::Mul<$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: $int) -> Self::Output { (*self).mul(rhs) }
+            }
+            impl ops::Mul<&$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn mul(self, rhs: &$int) -> Self::Output { self.mul(*rhs) }
+            }
+        )*
+    };
 }
-impl ops::Mul<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
 
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
+macro_rules! impl_div_for_signed_amount {
+    ($amount:ty, $($int:ty),*) => {
+        $(
+            impl ops::Div<$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: $int) -> Self::Output { 
+                    match i64::try_from(rhs) {
+                        Ok(val) => self.checked_div(val).valid_or_error(),
+                        Err(_) => R::Error(NumOpError {})
+                    }
+                }
+            }
+            impl ops::Div<&$int> for $amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: &$int) -> Self::Output { self.div(*rhs) }
+            }
+            impl ops::Div<$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: $int) -> Self::Output { (*self).div(rhs) }
+            }
+            impl ops::Div<&$int> for &$amount {
+                type Output = NumOpResult<$amount>;
+
+                fn div(self, rhs: &$int) -> Self::Output { (*self).div(*rhs) }
+            }
+        )*
+    };
 }
-impl ops::Mul<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
 
-    fn mul(self, rhs: i64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
-}
-
-impl ops::Div<i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
-}
-impl ops::Div<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: i64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { (*self).div(*rhs) }
-}
+impl_mul_for_signed_amount!(SignedAmount, isize, i64, i32);
+impl_div_for_signed_amount!(SignedAmount, isize, i64, i32);
 
 impl ops::Rem<i64> for SignedAmount {
     type Output = NumOpResult<SignedAmount>;
