@@ -211,7 +211,7 @@ fn create_psbt_for_taproot_key_path_spend(
     let prev_tx_id = "06980ca116f74c7845a897461dd0e1d15b114130176de5004957da516b4dee3a";
 
     let transaction = Transaction {
-        version: Version(2),
+        version: Version::TWO,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
@@ -288,7 +288,7 @@ fn create_psbt_for_taproot_script_path_spend(
     }];
     let prev_tx_id = "9d7c6770fca57285babab60c51834cfcfd10ad302119cae842d7216b4ac9a376";
     let transaction = Transaction {
-        version: Version(2),
+        version: Version::TWO,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint { txid: prev_tx_id.parse().unwrap(), vout: 0 },
