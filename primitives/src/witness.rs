@@ -258,6 +258,7 @@ impl fmt::Debug for Witness {
 }
 
 /// An iterator returning individual witness elements.
+#[derive(Debug)]
 pub struct Iter<'a> {
     inner: &'a [u8],
     indices_start: usize,

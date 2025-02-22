@@ -8,6 +8,7 @@ use hashes::{hash_newtype, sha256t, sha256t_tag};
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_tag! {
+    #[derive(Debug)]
     pub struct TapLeafTag = hash_str("TapLeaf");
 }
 
@@ -23,6 +24,7 @@ hashes::impl_hex_for_newtype!(TapLeafHash);
 hashes::impl_serde_for_newtype!(TapLeafHash);
 
 sha256t_tag! {
+    #[derive(Debug)]
     pub struct TapBranchTag = hash_str("TapBranch");
 }
 
@@ -38,6 +40,7 @@ hashes::impl_hex_for_newtype!(TapNodeHash);
 hashes::impl_serde_for_newtype!(TapNodeHash);
 
 sha256t_tag! {
+    #[derive(Debug)]
     pub struct TapTweakTag = hash_str("TapTweak");
 }
 
