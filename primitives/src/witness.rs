@@ -11,6 +11,7 @@ use core::ops::Index;
 use arbitrary::{Arbitrary, Unstructured};
 use hex::DisplayHex;
 use internals::compact_size;
+use internals::wrap_debug::WrapDebug;
 
 use crate::prelude::Vec;
 
@@ -232,15 +233,6 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
     }
 }
 
-/// Debug implementation that displays the witness as a structured output containing hex-encoded witness elements.
-struct DebugElements<'a>(&'a Witness);
-
-impl fmt::Debug for DebugElements<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.0.iter().map(|elem| elem.as_hex())).finish()
-    }
-}
-
 /// Debug implementation that displays the witness as a structured output containing:
 /// - Number of witness elements
 /// - Total bytes across all elements
@@ -252,7 +244,12 @@ impl fmt::Debug for Witness {
         f.debug_struct("Witness")
             .field("num_elements", &self.witness_elements)
             .field("total_bytes", &total_bytes)
-            .field("elements", &DebugElements(self))
+            .field(
+                "elements",
+                &WrapDebug(|f| {
+                    f.debug_list().entries(self.iter().map(|elem| elem.as_hex())).finish()
+                }),
+            )
             .finish()
     }
 }
