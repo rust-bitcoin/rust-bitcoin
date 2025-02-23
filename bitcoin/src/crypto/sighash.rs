@@ -886,6 +886,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Computes the BIP143 sighash to spend a p2wsh transaction for any flag type.
+    ///
+    /// `witness_script` is the script that goes into the [`Witness`],
+    /// not the one that goes into `script_pubkey` of a [`TxOut`].
     pub fn p2wsh_signature_hash(
         &mut self,
         input_index: usize,
