@@ -627,26 +627,15 @@ impl std::error::Error for IndexOutOfBoundsError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-crate::internal_macros::define_extension_trait! {
-    /// Extension functionality for the [`Version`] type.
-    pub trait VersionExt impl for Version {
-        /// Constructs a new non-standard transaction version.
-        fn non_standard(version: u32) -> Version { Self(version) }
-
-        /// Returns true if this transaction version number is considered standard.
-        fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO || *self == Version::THREE }
-    }
-}
-
 impl Encodable for Version {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.to_u32().consensus_encode(w)
     }
 }
 
 impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(Version)
+        Decodable::consensus_decode(r).map(Version::maybe_non_standard)
     }
 }
 
@@ -1373,7 +1362,7 @@ mod tests {
         let tx: Result<Transaction, _> = deserialize(&tx_bytes);
         assert!(tx.is_ok());
         let realtx = tx.unwrap();
-        assert_eq!(realtx.version, Version::non_standard(u32::MAX));
+        assert_eq!(realtx.version, Version::maybe_non_standard(u32::MAX));
     }
 
     #[test]

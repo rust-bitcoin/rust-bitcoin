@@ -518,7 +518,7 @@ impl Wtxid {
 /// [BIP-431]: https://github.com/bitcoin/bips/blob/master/bip-0431.mediawiki
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Version(pub u32);
+pub struct Version(u32);
 
 impl Version {
     /// The original Bitcoin transaction version (pre-BIP-68).
@@ -529,10 +529,33 @@ impl Version {
 
     /// The third Bitcoin transaction version (post-BIP-431).
     pub const THREE: Self = Self(3);
+
+    /// Constructs a potentially non-standard transaction version.
+    ///
+    /// This can accept both standard and non-standard versions.
+    #[inline]
+    pub fn maybe_non_standard(version: u32) -> Version { Self(version) }
+
+    /// Returns the inner `u32` value of this `Version`.
+    #[inline]
+    pub const fn to_u32(self) -> u32 { self.0 }
+
+    /// Returns true if this transaction version number is considered standard.
+    ///
+    /// The behavior of this method matches whatever Bitcoin Core considers standard at the time
+    /// of the release and may change in future versions to accommodate new standard versions.
+    /// As of Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)),
+    /// versions 1, 2, and 3 are considered standard.
+    #[inline]
+    pub fn is_standard(&self) -> bool { *self == Version::ONE || *self == Version::TWO || *self == Version::THREE }
 }
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl From<Version> for u32 {
+    fn from(version: Version) -> Self { version.0 }
 }
 
 #[cfg(feature = "arbitrary")]
