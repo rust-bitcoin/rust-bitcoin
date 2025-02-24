@@ -2,15 +2,12 @@
 
 //! Bitcoin scripts.
 
-/// FIXME: Make this private.
 mod borrowed;
-/// FIXME: Make this private.
 mod owned;
 
 use core::cmp::Ordering;
 use core::convert::Infallible;
 use core::fmt;
-use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
 use hex::DisplayHex;
@@ -36,9 +33,18 @@ pub const MAX_REDEEM_SCRIPT_SIZE: usize = 520;
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = 10_000;
 
 hashes::hash_newtype! {
-    /// A hash of Bitcoin Script bytecode.
+    /// A 160-bit hash of Bitcoin Script bytecode.
+    ///
+    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+    /// uses 256-bit hash and hashes a semantically different script. Thus, this type cannot
+    /// represent it.
     pub struct ScriptHash(hash160::Hash);
-    /// SegWit version of a Bitcoin Script bytecode hash.
+
+    /// SegWit (256-bit) version of a Bitcoin Script bytecode hash.
+    ///
+    /// Note: there is another "script hash" object in bitcoin ecosystem (Electrum protocol) that
+    /// looks similar to this one also being SHA256, however, they hash semantically different
+    /// scripts and have reversed representations, so this type cannot be used for both.
     pub struct WScriptHash(sha256::Hash);
 }
 
@@ -57,12 +63,14 @@ impl ScriptHash {
     /// > spend a P2SH output if the redemption script it refers to is >520 bytes in length.
     ///
     /// ref: [BIP-16](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size)
+    #[inline]
     pub fn from_script(redeem_script: &Script) -> Result<Self, RedeemScriptSizeError> {
         if redeem_script.len() > MAX_REDEEM_SCRIPT_SIZE {
             return Err(RedeemScriptSizeError { size: redeem_script.len() });
         }
 
-        Ok(ScriptHash(hash160::Hash::hash(redeem_script.as_bytes())))
+        // We've just checked the length
+        Ok(ScriptHash::from_script_unchecked(redeem_script))
     }
 
     /// Constructs a new `ScriptHash` from any script irrespective of script size.
@@ -71,6 +79,7 @@ impl ScriptHash {
     /// then the output will be unspendable (see [BIP-16]).
     ///
     /// [BIP-16]: <https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki#user-content-520byte_limitation_on_serialized_script_size>
+    #[inline]
     pub fn from_script_unchecked(script: &Script) -> Self {
         ScriptHash(hash160::Hash::hash(script.as_bytes()))
     }
@@ -85,12 +94,14 @@ impl WScriptHash {
     /// > witnessScript must match the 32-byte witness program.
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    #[inline]
     pub fn from_script(witness_script: &Script) -> Result<Self, WitnessScriptSizeError> {
         if witness_script.len() > MAX_WITNESS_SCRIPT_SIZE {
             return Err(WitnessScriptSizeError { size: witness_script.len() });
         }
 
-        Ok(WScriptHash(sha256::Hash::hash(witness_script.as_bytes())))
+        // We've just checked the length
+        Ok(WScriptHash::from_script_unchecked(witness_script))
     }
 
     /// Constructs a new `WScriptHash` from any script irrespective of script size.
@@ -99,6 +110,7 @@ impl WScriptHash {
     /// output then the output will be unspendable (see [BIP-141]).
     ///
     /// ref: [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    #[inline]
     pub fn from_script_unchecked(script: &Script) -> Self {
         WScriptHash(sha256::Hash::hash(script.as_bytes()))
     }
@@ -107,6 +119,7 @@ impl WScriptHash {
 impl TryFrom<ScriptBuf> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
+    #[inline]
     fn try_from(redeem_script: ScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(&redeem_script)
     }
@@ -115,6 +128,7 @@ impl TryFrom<ScriptBuf> for ScriptHash {
 impl TryFrom<&ScriptBuf> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
+    #[inline]
     fn try_from(redeem_script: &ScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(redeem_script)
     }
@@ -123,6 +137,7 @@ impl TryFrom<&ScriptBuf> for ScriptHash {
 impl TryFrom<&Script> for ScriptHash {
     type Error = RedeemScriptSizeError;
 
+    #[inline]
     fn try_from(redeem_script: &Script) -> Result<Self, Self::Error> {
         Self::from_script(redeem_script)
     }
@@ -131,6 +146,7 @@ impl TryFrom<&Script> for ScriptHash {
 impl TryFrom<ScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
+    #[inline]
     fn try_from(witness_script: ScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(&witness_script)
     }
@@ -139,6 +155,7 @@ impl TryFrom<ScriptBuf> for WScriptHash {
 impl TryFrom<&ScriptBuf> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
+    #[inline]
     fn try_from(witness_script: &ScriptBuf) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
@@ -147,6 +164,7 @@ impl TryFrom<&ScriptBuf> for WScriptHash {
 impl TryFrom<&Script> for WScriptHash {
     type Error = WitnessScriptSizeError;
 
+    #[inline]
     fn try_from(witness_script: &Script) -> Result<Self, Self::Error> {
         Self::from_script(witness_script)
     }
@@ -160,10 +178,12 @@ pub struct RedeemScriptSizeError {
 }
 
 impl From<Infallible> for RedeemScriptSizeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for RedeemScriptSizeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "redeem script size exceeds {} bytes: {}", MAX_REDEEM_SCRIPT_SIZE, self.size)
     }
@@ -180,10 +200,12 @@ pub struct WitnessScriptSizeError {
 }
 
 impl From<Infallible> for WitnessScriptSizeError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 impl fmt::Display for WitnessScriptSizeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "witness script size exceeds {} bytes: {}", MAX_WITNESS_SCRIPT_SIZE, self.size)
     }
@@ -195,14 +217,17 @@ impl std::error::Error for WitnessScriptSizeError {}
 // We keep all the `Script` and `ScriptBuf` impls together since its easier to see side-by-side.
 
 impl From<ScriptBuf> for Box<Script> {
+    #[inline]
     fn from(v: ScriptBuf) -> Self { v.into_boxed_script() }
 }
 
 impl From<ScriptBuf> for Cow<'_, Script> {
+    #[inline]
     fn from(value: ScriptBuf) -> Self { Cow::Owned(value) }
 }
 
 impl<'a> From<Cow<'a, Script>> for ScriptBuf {
+    #[inline]
     fn from(value: Cow<'a, Script>) -> Self {
         match value {
             Cow::Owned(owned) => owned,
@@ -212,6 +237,7 @@ impl<'a> From<Cow<'a, Script>> for ScriptBuf {
 }
 
 impl<'a> From<Cow<'a, Script>> for Box<Script> {
+    #[inline]
     fn from(value: Cow<'a, Script>) -> Self {
         match value {
             Cow::Owned(owned) => owned.into(),
@@ -221,22 +247,26 @@ impl<'a> From<Cow<'a, Script>> for Box<Script> {
 }
 
 impl<'a> From<&'a Script> for Box<Script> {
+    #[inline]
     fn from(value: &'a Script) -> Self { value.to_owned().into() }
 }
 
 impl<'a> From<&'a Script> for ScriptBuf {
+    #[inline]
     fn from(value: &'a Script) -> Self { value.to_owned() }
 }
 
 impl<'a> From<&'a Script> for Cow<'a, Script> {
+    #[inline]
     fn from(value: &'a Script) -> Self { Cow::Borrowed(value) }
 }
 
 /// Note: This will fail to compile on old Rust for targets that don't support atomics
 #[cfg(target_has_atomic = "ptr")]
 impl<'a> From<&'a Script> for Arc<Script> {
+    #[inline]
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Arc::into_raw(Arc::from(&value.0));
+        let rw: *const [u8] = Arc::into_raw(Arc::from(value.as_bytes()));
         // SAFETY: copied from `std`
         // The pointer was just created from an Arc without deallocating
         // Casting a slice to a transparent struct wrapping that slice is sound (same
@@ -246,8 +276,9 @@ impl<'a> From<&'a Script> for Arc<Script> {
 }
 
 impl<'a> From<&'a Script> for Rc<Script> {
+    #[inline]
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Rc::into_raw(Rc::from(&value.0));
+        let rw: *const [u8] = Rc::into_raw(Rc::from(value.as_bytes()));
         // SAFETY: copied from `std`
         // The pointer was just created from an Rc without deallocating
         // Casting a slice to a transparent struct wrapping that slice is sound (same
@@ -257,19 +288,22 @@ impl<'a> From<&'a Script> for Rc<Script> {
 }
 
 impl From<Vec<u8>> for ScriptBuf {
-    fn from(v: Vec<u8>) -> Self { ScriptBuf(v) }
+    #[inline]
+    fn from(v: Vec<u8>) -> Self { ScriptBuf::from_bytes(v) }
 }
 
 impl From<ScriptBuf> for Vec<u8> {
-    fn from(v: ScriptBuf) -> Self { v.0 }
+    #[inline]
+    fn from(v: ScriptBuf) -> Self { v.into_bytes() }
 }
 
 impl AsRef<Script> for Script {
     #[inline]
-    fn as_ref(&self) -> &Script { self }
+    fn as_ref(&self) -> &Self { self }
 }
 
 impl AsRef<Script> for ScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &Script { self }
 }
 
@@ -279,14 +313,17 @@ impl AsRef<[u8]> for Script {
 }
 
 impl AsRef<[u8]> for ScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
 impl AsMut<Script> for Script {
-    fn as_mut(&mut self) -> &mut Script { self }
+    #[inline]
+    fn as_mut(&mut self) -> &mut Self { self }
 }
 
 impl AsMut<Script> for ScriptBuf {
+    #[inline]
     fn as_mut(&mut self) -> &mut Script { self }
 }
 
@@ -296,6 +333,7 @@ impl AsMut<[u8]> for Script {
 }
 
 impl AsMut<[u8]> for ScriptBuf {
+    #[inline]
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
@@ -308,6 +346,7 @@ impl fmt::Debug for Script {
 }
 
 impl fmt::Debug for ScriptBuf {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(self.as_script(), f) }
 }
 
@@ -390,21 +429,23 @@ impl fmt::Display for ScriptBuf {
 }
 
 impl fmt::LowerHex for Script {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
 #[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(Script, |script: &Script| script.len() * 2);
+internals::impl_to_hex_from_lower_hex!(Script, |script: &Self| script.len() * 2);
 
 impl fmt::LowerHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 #[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &ScriptBuf| script_buf.len() * 2);
+internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf.len() * 2);
 
 impl fmt::UpperHex for Script {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
     }
@@ -415,39 +456,35 @@ impl fmt::UpperHex for ScriptBuf {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
 }
 
-impl Deref for ScriptBuf {
-    type Target = Script;
-
-    fn deref(&self) -> &Self::Target { Script::from_bytes(&self.0) }
-}
-
-impl DerefMut for ScriptBuf {
-    fn deref_mut(&mut self) -> &mut Self::Target { Script::from_bytes_mut(&mut self.0) }
-}
-
 impl Borrow<Script> for ScriptBuf {
+    #[inline]
     fn borrow(&self) -> &Script { self }
 }
 
 impl BorrowMut<Script> for ScriptBuf {
+    #[inline]
     fn borrow_mut(&mut self) -> &mut Script { self }
 }
 
 impl PartialEq<ScriptBuf> for Script {
+    #[inline]
     fn eq(&self, other: &ScriptBuf) -> bool { self.eq(other.as_script()) }
 }
 
 impl PartialEq<Script> for ScriptBuf {
+    #[inline]
     fn eq(&self, other: &Script) -> bool { self.as_script().eq(other) }
 }
 
 impl PartialOrd<Script> for ScriptBuf {
+    #[inline]
     fn partial_cmp(&self, other: &Script) -> Option<Ordering> {
         self.as_script().partial_cmp(other)
     }
 }
 
 impl PartialOrd<ScriptBuf> for Script {
+    #[inline]
     fn partial_cmp(&self, other: &ScriptBuf) -> Option<Ordering> {
         self.partial_cmp(other.as_script())
     }

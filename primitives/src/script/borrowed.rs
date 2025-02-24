@@ -4,6 +4,9 @@ use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+
 use super::ScriptBuf;
 use crate::prelude::{Box, ToOwned, Vec};
 
@@ -54,7 +57,7 @@ use crate::prelude::{Box, ToOwned, Vec};
 ///
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct Script(pub(in crate::script) [u8]);
+pub struct Script([u8]);
 
 impl Default for &Script {
     #[inline]
@@ -64,39 +67,40 @@ impl Default for &Script {
 impl ToOwned for Script {
     type Owned = ScriptBuf;
 
-    fn to_owned(&self) -> Self::Owned { ScriptBuf(self.0.to_owned()) }
+    #[inline]
+    fn to_owned(&self) -> Self::Owned { ScriptBuf::from_bytes(self.to_vec()) }
 }
 
 impl Script {
     /// Constructs a new empty script.
     #[inline]
-    pub fn new() -> &'static Script { Script::from_bytes(&[]) }
+    pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
 
     /// Treat byte slice as `Script`
     #[inline]
-    pub fn from_bytes(bytes: &[u8]) -> &Script {
+    pub const fn from_bytes(bytes: &[u8]) -> &Self {
         // SAFETY: copied from `std`
         // The pointer was just created from a reference which is still alive.
         // Casting slice pointer to a transparent struct wrapping that slice is sound (same
         // layout).
-        unsafe { &*(bytes as *const [u8] as *const Script) }
+        unsafe { &*(bytes as *const [u8] as *const Self) }
     }
 
     /// Treat mutable byte slice as `Script`
     #[inline]
-    pub fn from_bytes_mut(bytes: &mut [u8]) -> &mut Script {
+    pub fn from_bytes_mut(bytes: &mut [u8]) -> &mut Self {
         // SAFETY: copied from `std`
         // The pointer was just created from a reference which is still alive.
         // Casting slice pointer to a transparent struct wrapping that slice is sound (same
         // layout).
         // Function signature prevents callers from accessing `bytes` while the returned reference
         // is alive.
-        unsafe { &mut *(bytes as *mut [u8] as *mut Script) }
+        unsafe { &mut *(bytes as *mut [u8] as *mut Self) }
     }
 
     /// Returns the script data as a byte slice.
     #[inline]
-    pub fn as_bytes(&self) -> &[u8] { &self.0 }
+    pub const fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns the script data as a mutable byte slice.
     #[inline]
@@ -104,7 +108,7 @@ impl Script {
 
     /// Returns a copy of the script data.
     #[inline]
-    pub fn to_vec(&self) -> Vec<u8> { self.0.to_owned() }
+    pub fn to_vec(&self) -> Vec<u8> { self.as_bytes().to_owned() }
 
     /// Returns a copy of the script data.
     #[inline]
@@ -113,14 +117,15 @@ impl Script {
 
     /// Returns the length in bytes of the script.
     #[inline]
-    pub fn len(&self) -> usize { self.0.len() }
+    pub const fn len(&self) -> usize { self.as_bytes().len() }
 
     /// Returns whether the script is the empty script.
     #[inline]
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub const fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 
     /// Converts a [`Box<Script>`](Box) into a [`ScriptBuf`] without copying or allocating.
     #[must_use]
+    #[inline]
     pub fn into_script_buf(self: Box<Self>) -> ScriptBuf {
         let rw = Box::into_raw(self) as *mut [u8];
         // SAFETY: copied from `std`
@@ -128,7 +133,16 @@ impl Script {
         // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
-        ScriptBuf(Vec::from(inner))
+        ScriptBuf::from_bytes(Vec::from(inner))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for &'a Script {
+    #[inline]
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        let v = <&'a [u8]>::arbitrary(u)?;
+        Ok(Script::from_bytes(v))
     }
 }
 
@@ -141,7 +155,7 @@ macro_rules! delegate_index {
 
                 #[inline]
                 fn index(&self, index: $type) -> &Self::Output {
-                    Self::from_bytes(&self.0[index])
+                    Self::from_bytes(&self.as_bytes()[index])
                 }
             }
         )*
