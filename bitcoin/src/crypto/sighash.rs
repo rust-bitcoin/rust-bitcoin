@@ -400,6 +400,16 @@ impl EcdsaSighashType {
         }
     }
 
+    /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].
+    ///
+    /// This matches Bitcoin Core's behavior where SIGHASH_SINGLE bug check is based on the base
+    /// type (after masking with 0x1f), regardless of the ANYONECANPAY flag.
+    ///
+    /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
+    pub fn is_single(&self) -> bool {
+        matches!(self, Self::Single | Self::SinglePlusAnyoneCanPay)
+    }
+
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
@@ -1316,7 +1326,7 @@ impl std::error::Error for AnnexError {
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {
     let ty = EcdsaSighashType::from_consensus(sighash);
-    ty == EcdsaSighashType::Single && input_index >= outputs_len
+    ty.is_single() && input_index >= outputs_len
 }
 
 /// Result of [`SighashCache::legacy_encode_signing_data_to`].
