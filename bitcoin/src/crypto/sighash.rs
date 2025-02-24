@@ -1463,8 +1463,6 @@ mod tests {
 
     #[test]
     fn sighash_single_bug() {
-        const SIGHASH_SINGLE: u32 = 3;
-
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: transaction::Version::ONE,
@@ -1475,10 +1473,16 @@ mod tests {
         let script = ScriptBuf::new();
         let cache = SighashCache::new(&tx);
 
-        let got = cache.legacy_signature_hash(1, &script, SIGHASH_SINGLE).expect("sighash");
-        let want = LegacySighash::from_slice(&UINT256_ONE).unwrap();
+        let sighash_single = 3;
+        let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
+        let want = LegacySighash::from_byte_array(UINT256_ONE);
+        assert_eq!(got, want);
 
-        assert_eq!(got, want)
+        // https://github.com/rust-bitcoin/rust-bitcoin/issues/4112
+        let sighash_single = 131;
+        let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
+        let want = LegacySighash::from_byte_array(UINT256_ONE);
+        assert_eq!(got, want);
     }
 
     #[test]
