@@ -14,15 +14,16 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hashes/std", "internals/std"]
-alloc = ["hashes/alloc", "internals/alloc"]
+std = ["alloc", "hashes/std", "internals/std", "hex-stable/std", "hex-unstable/std"]
+alloc = ["hashes/alloc", "internals/alloc", "hex-stable/alloc", "hex-unstable/alloc"]
 
 [dependencies]
 hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.4.0" }
 
 [dev-dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.4.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-0.4", default-features = false }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-1.0-alpha.0", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true

@@ -328,7 +328,7 @@ fn keystream_at_slice(key: Key, nonce: Nonce, count: u32, seek: usize) -> [u8; 6
 mod tests {
     use alloc::vec::Vec;
 
-    use hex::prelude::*;
+    use hex_unstable::prelude::*;
 
     use super::*;
 

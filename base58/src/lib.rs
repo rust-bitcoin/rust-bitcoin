@@ -253,7 +253,7 @@ where
 mod tests {
     use alloc::vec;
 
-    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex_stable::FromHex>::from_hex($hex).unwrap()));
 
     use super::*;
 

@@ -1564,7 +1564,8 @@ mod sealed {
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hex::{DisplayHex, FromHex};
+    use hex_unstable::DisplayHex;
+    use hex_stable::FromHex;
     use secp256k1::VerifyOnly;
 
     use super::*;

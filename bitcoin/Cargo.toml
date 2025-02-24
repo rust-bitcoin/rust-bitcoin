@@ -16,7 +16,7 @@ exclude = ["tests", "contrib"]
 # If you change features or optional dependencies in any way please update the "# Cargo features" section in lib.rs as well.
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std", "bitcoinconsensus?/std"]
+std = ["base58/std", "bech32/std", "hashes/std", "hex-stable/std", "hex-unstable/std", "internals/std", "io/std", "primitives/std", "secp256k1/std", "units/std", "bitcoinconsensus?/std"]
 rand-std = ["secp256k1/rand-std", "std"]
 rand = ["secp256k1/rand"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "secp256k1/serde", "units/serde"]
@@ -28,7 +28,8 @@ arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
 base58 = { package = "base58ck", version = "0.2.0", default-features = false, features = ["alloc"] }
 bech32 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["alloc", "hex"] }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.4.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-0.4", default-features = false, features = ["alloc"] }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-1.0-alpha.0", default-features = false, features = ["alloc"] }
 internals = { package = "bitcoin-internals", version = "0.4.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.2.0", default-features = false, features = ["alloc", "hashes"] }
 primitives = { package = "bitcoin-primitives", version = "0.101.0", default-features = false, features = ["alloc"] }

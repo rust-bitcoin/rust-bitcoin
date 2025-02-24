@@ -1847,7 +1847,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        use hex::DisplayHex;
+        use hex_unstable::DisplayHex;
 
         use crate::taproot::TapTweakHashExt as _;
 

@@ -515,11 +515,13 @@ mod tests {
     #[cfg(feature = "rand-std")]
     use {core::cmp, secp256k1::rand::prelude::*};
 
+    use hex_unstable::DisplayHex as _;
+
     use super::*;
     use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{DisplayHex, FromHex};
+    use crate::hex::FromHex;
 
     macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 

@@ -13,7 +13,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 
 use hashes::{hash160, sha256};
-use hex::DisplayHex;
+use hex_unstable::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
 use crate::opcodes::all::*;
@@ -521,7 +521,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     {
         use core::fmt::Formatter;
 
-        use hex::FromHex;
+        use crate::hex::FromHex;
 
         if deserializer.is_human_readable() {
             struct Visitor;

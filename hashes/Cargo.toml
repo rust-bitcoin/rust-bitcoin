@@ -15,15 +15,16 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hex?/std"]
-alloc = ["hex?/alloc"]
-serde = ["dep:serde", "hex"]
+std = ["alloc", "hex-stable?/std", "hex-unstable?/std"]
+alloc = ["hex-stable?/alloc", "hex-unstable?/alloc"]
+hex = ["hex-stable", "hex-unstable"]
+serde = ["dep:serde", "hex-unstable"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
 
 [dependencies]
-
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.4.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-0.4", default-features = false, optional = true }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-1.0-alpha.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]

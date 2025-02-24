@@ -9,7 +9,7 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex::DisplayHex;
+use hex_unstable::DisplayHex;
 use internals::compact_size;
 use internals::wrap_debug::WrapDebug;
 
