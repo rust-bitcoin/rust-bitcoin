@@ -28,6 +28,7 @@
 /// may use `raw(MIDSTATE_BYTES, HASHED_BYTES_LENGTH)` instead, note that HASHED_BYTES_LENGTH must
 /// be a multiple of 64.
 #[macro_export]
+#[deprecated(since = "TBD", note = "create an empty enum and implement Tag on it")]
 macro_rules! sha256t_tag {
     ($(#[$($tag_attr:tt)*])* $tag_vis:vis struct $tag:ident = $constructor:tt($($tag_value:tt)+);) => {
         $crate::sha256t_tag_struct!($tag_vis, $tag, stringify!($hash_name), $(#[$($tag_attr)*])*);
@@ -579,21 +580,22 @@ mod test {
     }
 
     #[test]
-    fn macros_work_in_function_scope() {
+    fn macro_works_in_function_scope() {
         use crate::sha256t;
 
-        sha256t_tag! {
-            #[repr(align(2))] // This tests that we can add additional attributes.
-            pub struct FunctionScopeTag = hash_str("It works");
+        #[derive(Debug, Clone)]
+        enum FunctionScopeTag {}
+
+        impl sha256t::Tag for FunctionScopeTag {
+            const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag("It  works".as_bytes());
         }
 
         hash_newtype! {
             /// Some docs.
             #[repr(align(4))] // This tests that we can add additional attributes.
-            pub struct FunctionScopeHash(pub(crate) sha256t::Hash<FunctionScopeTag>);
+            struct FunctionScopeHash(pub(crate) sha256t::Hash<FunctionScopeTag>);
         }
 
-        assert_eq!(2, core::mem::align_of::<FunctionScopeTag>());
         assert_eq!(4, core::mem::align_of::<FunctionScopeHash>());
     }
 

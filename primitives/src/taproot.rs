@@ -4,11 +4,15 @@
 //!
 //! This module provides support for Taproot tagged hashes.
 
-use hashes::{hash_newtype, sha256t, sha256t_tag};
+use hashes::{hash_newtype, sha256t, sha256};
 
+/// Tag for the `TapLeafHash`.
 // Taproot test vectors from BIP-341 state the hashes without any reversing
-sha256t_tag! {
-    pub struct TapLeafTag = hash_str("TapLeaf");
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TapLeafTag {}
+
+impl sha256t::Tag for TapLeafTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag("TapLeaf".as_bytes());
 }
 
 hash_newtype! {
@@ -22,8 +26,12 @@ hashes::impl_hex_for_newtype!(TapLeafHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapLeafHash);
 
-sha256t_tag! {
-    pub struct TapBranchTag = hash_str("TapBranch");
+/// Tag for the `TapNodeHash`.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TapBranchTag {}
+
+impl sha256t::Tag for TapBranchTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag("TapBranch".as_bytes());
 }
 
 hash_newtype! {
@@ -37,8 +45,12 @@ hashes::impl_hex_for_newtype!(TapNodeHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TapNodeHash);
 
-sha256t_tag! {
-    pub struct TapTweakTag = hash_str("TapTweak");
+/// Tag for the `TapTweakHash`.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TapTweakTag {}
+
+impl sha256t::Tag for TapTweakTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag("TapTweak".as_bytes());
 }
 
 hash_newtype! {
