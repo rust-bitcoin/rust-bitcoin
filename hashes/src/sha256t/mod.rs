@@ -10,7 +10,7 @@ use crate::sha256::Midstate;
 use crate::{sha256, HashEngine as _};
 
 /// Trait representing a tag that can be used as a context for SHA256t hashes.
-pub trait Tag: Clone {
+pub trait Tag {
     /// The [`Midstate`] after pre-tagging the hash engine.
     const MIDSTATE: sha256::Midstate;
 }
@@ -118,13 +118,19 @@ impl<T: Tag> core::hash::Hash for Hash<T> {
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
 
 /// Engine to compute SHA256t hash function.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct HashEngine<T>(sha256::HashEngine, PhantomData<T>);
 
 impl<T: Tag> Default for HashEngine<T> {
     fn default() -> Self {
         let tagged = sha256::HashEngine::from_midstate(T::MIDSTATE);
         HashEngine(tagged, PhantomData)
+    }
+}
+
+impl<T: Tag> Clone for HashEngine<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), PhantomData)
     }
 }
 
