@@ -155,7 +155,7 @@ fn sighash_p2wpkh() {
 }
 
 fn sighash_p2sh_multisig_2x2() {
-    //Spending transactoin:
+    //Spending transaction:
     //bitcoin-cli getrawtransaction 214646c4b563cd8c788754ec94468ab71602f5ed07d5e976a2b0e41a413bcc0e  3
     //after decoding ScriptSig from the input:0, its last ASM element is the scriptpubkey:
     //bitcoin-cli decodescript 5221032d7306898e980c66aefdfb6b377eaf71597c449bf9ce741a3380c5646354f6de2103e8c742e1f283ef810c1cd0c8875e5c2998a05fc5b23c30160d3d33add7af565752ae
