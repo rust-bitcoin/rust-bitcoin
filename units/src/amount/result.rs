@@ -129,7 +129,6 @@ crate::internal_macros::impl_op_for_references! {
 
         fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
     }
-
     impl ops::Add<NumOpResult<Amount>> for Amount {
         type Output = NumOpResult<Amount>;
 
@@ -141,7 +140,6 @@ crate::internal_macros::impl_op_for_references! {
 
         fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
     }
-
     impl ops::Sub<NumOpResult<Amount>> for Amount {
         type Output = NumOpResult<Amount>;
 
@@ -158,15 +156,32 @@ crate::internal_macros::impl_op_for_references! {
 
         fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
     }
+    impl ops::Mul<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn mul(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
+    }
+
     impl ops::Div<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
         fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
     }
+    impl ops::Div<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn div(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+
     impl ops::Rem<u64> for Amount {
         type Output = NumOpResult<Amount>;
 
         fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
+    }
+    impl ops::Rem<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn rem(self, modulus: u64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
     }
 
     impl ops::Add<SignedAmount> for SignedAmount {
@@ -174,7 +189,6 @@ crate::internal_macros::impl_op_for_references! {
 
         fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
     }
-
     impl ops::Add<NumOpResult<SignedAmount>> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
@@ -202,15 +216,32 @@ crate::internal_macros::impl_op_for_references! {
 
         fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
     }
+    impl ops::Mul<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn mul(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
+    }
+
     impl ops::Div<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
         fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
     }
+    impl ops::Div<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn div(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+
     impl ops::Rem<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
 
         fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
+    }
+    impl ops::Rem<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn rem(self, modulus: i64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
     }
 
     impl<T> ops::Add<NumOpResult<T>> for NumOpResult<T>
