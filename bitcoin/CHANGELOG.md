@@ -121,6 +121,20 @@ For changes to our dependencies included in this release see:
 - Change `TxIn::default()` to `TxIn::EMPTY_COINBASE` if appropriate.
 - Change `to_raw_hash()` to `to_byte_array()`.
 - `bitcoin::error::UnprefixedHexError` moved to `bitcoin::parse::UnprefixedHexError`.
+# 0.32.5 - 2024-11-27
+
+- Backport - Re-export `bech32` crate [#3662](https://github.com/rust-bitcoin/rust-bitcoin/pull/3662)
+- Backport - Add API for extracting the inner payload of `RawNetworkMessage` [#3523](https://github.com/rust-bitcoin/rust-bitcoin/pull/3523)
+- Backport - Fix bug in witness stack getters [#3626](https://github.com/rust-bitcoin/rust-bitcoin/pull/3626)
+- Backport - address: Add `Address::into_unchecked` [#3655](https://github.com/rust-bitcoin/rust-bitcoin/pull/3655)
+
+# 0.32.4 - 2024-10-24
+
+- Bound decode methods on `Read`, rather than `BufRead` [#3173](https://github.com/rust-bitcoin/rust-bitcoin/pull/3173)
+- Backport - Some additional inspectors on `Script` and `Witness` [#2646](https://github.com/rust-bitcoin/rust-bitcoin/pull/2646)
+- Backport - Add difficulty adjustment calculation [#3494](https://github.com/rust-bitcoin/rust-bitcoin/pull/3494)
+- Backport - Add testnet 4 support [#3453](https://github.com/rust-bitcoin/rust-bitcoin/pull/3453)
+- Backport - CI: Copy main workflow from master [#3418](https://github.com/rust-bitcoin/rust-bitcoin/pull/3418)
 
 # 0.32.3 - 2024-09-27
 
