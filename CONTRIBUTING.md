@@ -130,7 +130,7 @@ adhere to the ideas presented in the following two blog posts:
 Whenever any part of your code wants to mention the version number the code will
 be released in, primarily in deprecation notices, you should use the string
 `TBD` (verbatim), so that the release preparation script can detect the
-change and the correct version number can be filled in in preparation of the
+change and the correct version number can be filled in preparation of the
 release.
 
 ```rust
@@ -360,7 +360,7 @@ All errors that live in an `error` module (eg, `foo/error.rs`) and appear in a p
 
 With respect to `expect` messages, they should follow the
 [Rust standard library guidelines](https://doc.rust-lang.org/std/option/enum.Option.html#recommended-message-style).
-More specifically, `expect` messages should be used to to describe the reason
+More specifically, `expect` messages should be used to describe the reason
 you expect the operation to succeed.
 For example, this `expect` message clearly states why the operation should succeed:
 
