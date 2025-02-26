@@ -455,7 +455,9 @@ impl TryFrom<SignedAmount> for Amount {
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let a = u64::arbitrary(u)?;
+        let min = Amount::MIN.to_sat();
+        let max = Amount::MAX.to_sat();
+        let a:u64 = u.int_in_range(min..=max)?;
         Ok(Self(a))
     }
 }
