@@ -1,247 +1,239 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use core::convert::Infallible;
 use core::fmt;
-use core::str::FromStr;
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
+use internals::write_err;
 use secp256k1::XOnlyPublicKey;
 
+use super::Map;
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::prelude::{btree_map, BTreeMap, Borrow, Box, ToOwned, Vec};
-use crate::psbt::map::Map;
-use crate::psbt::serialize::Deserialize;
-use crate::psbt::{error, raw, Error};
+use crate::locktime::absolute;
+use crate::prelude::{btree_map, BTreeMap, Borrow, Box, Vec};
+use crate::psbt::consts::{
+    PSBT_IN_BIP32_DERIVATION, PSBT_IN_FINAL_SCRIPTSIG, PSBT_IN_FINAL_SCRIPTWITNESS,
+    PSBT_IN_HASH160, PSBT_IN_HASH256, PSBT_IN_NON_WITNESS_UTXO, PSBT_IN_OUTPUT_INDEX,
+    PSBT_IN_PARTIAL_SIG, PSBT_IN_PREVIOUS_TXID, PSBT_IN_PROPRIETARY, PSBT_IN_REDEEM_SCRIPT,
+    PSBT_IN_REQUIRED_HEIGHT_LOCKTIME, PSBT_IN_REQUIRED_TIME_LOCKTIME, PSBT_IN_RIPEMD160,
+    PSBT_IN_SEQUENCE, PSBT_IN_SHA256, PSBT_IN_SIGHASH_TYPE, PSBT_IN_TAP_BIP32_DERIVATION,
+    PSBT_IN_TAP_INTERNAL_KEY, PSBT_IN_TAP_KEY_SIG, PSBT_IN_TAP_LEAF_SCRIPT,
+    PSBT_IN_TAP_MERKLE_ROOT, PSBT_IN_TAP_SCRIPT_SIG, PSBT_IN_WITNESS_SCRIPT, PSBT_IN_WITNESS_UTXO,
+};
+use crate::psbt::serialize::error::PsbtHash;
+use crate::psbt::serialize::{raw, Error};
+use crate::psbt::PsbtSighashType;
 use crate::script::ScriptBuf;
 use crate::sighash::{
-    EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
-    TapSighashType,
+    EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, TapSighashType,
 };
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
-use crate::transaction::{Transaction, TxOut};
+use crate::transaction::{Transaction, TxOut, Txid};
 use crate::witness::Witness;
-
-/// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
-const PSBT_IN_NON_WITNESS_UTXO: u64 = 0x00;
-/// Type: Witness UTXO PSBT_IN_WITNESS_UTXO = 0x01
-const PSBT_IN_WITNESS_UTXO: u64 = 0x01;
-/// Type: Partial Signature PSBT_IN_PARTIAL_SIG = 0x02
-const PSBT_IN_PARTIAL_SIG: u64 = 0x02;
-/// Type: Sighash Type PSBT_IN_SIGHASH_TYPE = 0x03
-const PSBT_IN_SIGHASH_TYPE: u64 = 0x03;
-/// Type: Redeem Script PSBT_IN_REDEEM_SCRIPT = 0x04
-const PSBT_IN_REDEEM_SCRIPT: u64 = 0x04;
-/// Type: Witness Script PSBT_IN_WITNESS_SCRIPT = 0x05
-const PSBT_IN_WITNESS_SCRIPT: u64 = 0x05;
-/// Type: BIP 32 Derivation Path PSBT_IN_BIP32_DERIVATION = 0x06
-const PSBT_IN_BIP32_DERIVATION: u64 = 0x06;
-/// Type: Finalized scriptSig PSBT_IN_FINAL_SCRIPTSIG = 0x07
-const PSBT_IN_FINAL_SCRIPTSIG: u64 = 0x07;
-/// Type: Finalized scriptWitness PSBT_IN_FINAL_SCRIPTWITNESS = 0x08
-const PSBT_IN_FINAL_SCRIPTWITNESS: u64 = 0x08;
-/// Type: RIPEMD160 preimage PSBT_IN_RIPEMD160 = 0x0a
-const PSBT_IN_RIPEMD160: u64 = 0x0a;
-/// Type: SHA256 preimage PSBT_IN_SHA256 = 0x0b
-const PSBT_IN_SHA256: u64 = 0x0b;
-/// Type: HASH160 preimage PSBT_IN_HASH160 = 0x0c
-const PSBT_IN_HASH160: u64 = 0x0c;
-/// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
-const PSBT_IN_HASH256: u64 = 0x0d;
-/// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
-const PSBT_IN_TAP_KEY_SIG: u64 = 0x13;
-/// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
-const PSBT_IN_TAP_SCRIPT_SIG: u64 = 0x14;
-/// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
-const PSBT_IN_TAP_LEAF_SCRIPT: u64 = 0x15;
-/// Type: Taproot Key BIP 32 Derivation Path PSBT_IN_TAP_BIP32_DERIVATION = 0x16
-const PSBT_IN_TAP_BIP32_DERIVATION: u64 = 0x16;
-/// Type: Taproot Internal Key PSBT_IN_TAP_INTERNAL_KEY = 0x17
-const PSBT_IN_TAP_INTERNAL_KEY: u64 = 0x17;
-/// Type: Taproot Merkle Root PSBT_IN_TAP_MERKLE_ROOT = 0x18
-const PSBT_IN_TAP_MERKLE_ROOT: u64 = 0x18;
-/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
-const PSBT_IN_PROPRIETARY: u64 = 0xFC;
+use crate::Sequence;
 
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
-    /// The non-witness transaction this input spends from. Should only be
-    /// `Option::Some` for inputs which spend non-SegWit outputs or
-    /// if it is unknown whether an input spends a SegWit output.
+    /// The non-witness transaction this input spends from.
+    ///
+    /// This should be present for inputs that spend non-segwit outputs and can be present
+    /// for inputs that spend segwit outputs.
+    ///
+    /// PSBT_IN_NON_WITNESS_UTXO: Optional for v0, optional for v2.
     pub non_witness_utxo: Option<Transaction>,
-    /// The transaction output this input spends from. Should only be
-    /// `Option::Some` for inputs which spend SegWit outputs,
-    /// including P2SH embedded ones.
+
+    /// The transaction output this input spends from.
+    ///
+    /// This should only be present for inputs which spend segwit outputs, including
+    /// P2SH embedded ones.
+    ///
+    /// PSBT_IN_WITNESS_UTXO: Optional for v0, optional for v2.
     pub witness_utxo: Option<TxOut>,
+
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-Taproot inputs.
+    ///
+    /// PSBT_IN_PARTIAL_SIG: Optional for v0, optional for v2.
     pub partial_sigs: BTreeMap<PublicKey, ecdsa::Signature>,
-    /// The sighash type to be used for this input. Signatures for this input
-    /// must use the sighash type.
+
+    /// The sighash type to be used for this input.
+    ///
+    /// Signatures for this input must use the sighash type, finalizers must fail to finalize inputs
+    /// which have signatures that do not match the specified sighash type.
+    ///
+    /// PSBT_IN_SIGHASH_TYPE: Optional for v0, optional for v2.
     pub sighash_type: Option<PsbtSighashType>,
-    /// The redeem script for this input.
+
+    /// The redeem script for this input if it has one.
+    ///
+    /// PSBT_IN_REDEEM_SCRIPT: Optional for v0, optional for v2.
     pub redeem_script: Option<ScriptBuf>,
-    /// The witness script for this input.
+
+    /// The witnessScript for this input if it has one.
+    ///
+    /// PSBT_IN_WITNESS_SCRIPT: Optional for v0, optional for v2.
     pub witness_script: Option<ScriptBuf>,
+
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
+    ///
+    /// PSBT_IN_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
+
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
+    ///
+    /// PSBT_IN_SCRIPTSIG: Optional for v0, optional for v2.
     pub final_script_sig: Option<ScriptBuf>,
+
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
+    ///
+    /// PSBT_IN_SCRIPTWITNESS: Optional for v0, optional for v2.
     pub final_script_witness: Option<Witness>,
+
     /// RIPEMD160 hash to preimage map.
+    ///
+    /// PSBT_IN_RIPEMD160: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub ripemd160_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
+
     /// SHA256 hash to preimage map.
+    ///
+    /// PSBT_IN_SHA256: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
+
     /// HSAH160 hash to preimage map.
+    ///
+    /// PSBT_IN_HASH160: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
+
     /// HAS256 hash to preimage map.
+    ///
+    /// PSBT_IN_HASH256: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
+
+    /// The txid of the previous transaction whose output at `self.spent_output_index` is being spent.
+    ///
+    /// In other words, the output being spent by this `Input` is:
+    ///
+    ///  `OutPoint { txid: self.previous_txid, vout: self.spent_output_index }`
+    ///
+    /// PSBT_IN_PREVIOUS_TXID: Excluded for v0, required for v2.
+    pub previous_txid: Option<Txid>,
+
+    /// The index of the output being spent in the transaction with the txid of `self.previous_txid`.
+    ///
+    /// PSBT_IN_OUTPUT_INDEX: Excluded for v0, required for v2.
+    pub spent_output_index: Option<u32>,
+
+    /// The sequence number of this input.
+    ///
+    /// If omitted, assumed to be the final sequence number ([`Sequence::MAX`]).
+    ///
+    /// PSBT_IN_SEQUENCE: Excluded for v0, optional for v2.
+    pub sequence: Option<Sequence>,
+
+    /// The minimum Unix timestamp that this input requires to be set as the transaction's lock time.
+    ///
+    /// PSBT_IN_REQUIRED_TIME_LOCKTIME: Excluded for v0, optional for v2.
+    pub min_time: Option<absolute::Time>,
+
+    /// The minimum block height that this input requires to be set as the transaction's lock time.
+    ///
+    /// PSBT_IN_REQUIRED_HEIGHT_LOCKTIME: Excluded for v0, optional for v2.
+    pub min_height: Option<absolute::Height>,
+
     /// Serialized Taproot signature with sighash type for key spend.
+    ///
+    /// PSBT_IN_TAP_SCRIPT_SIG: Optional for v0, optional for v2.
     pub tap_key_sig: Option<taproot::Signature>,
+
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
+    ///
+    /// PSBT_IN_TAP_SCRIPT_SIG: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), taproot::Signature>,
-    /// Map of Control blocks to Script version pair.
+
+    /// Map of control blocks to script version pair.
+    ///
+    /// PSBT_IN_TAP_LEAF_SCRIPT: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf, LeafVersion)>,
+
     /// Map of tap root x only keys to origin info and leaf hashes contained in it.
+    ///
+    /// PSBT_IN_TAP_BIP32_DERIVATION: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
-    /// Taproot Internal key.
+
+    /// Taproot internal key.
+    ///
+    /// PSBT_IN_TAP_INTERNAL_KEY: Optional for v0, optional for v2.
     pub tap_internal_key: Option<XOnlyPublicKey>,
-    /// Taproot Merkle root.
+
+    /// Taproot Merkle root hash.
+    ///
+    /// PSBT_IN_TAP_MERKLE_ROOT: Optional for v0, optional for v2.
     pub tap_merkle_root: Option<TapNodeHash>,
+
     /// Proprietary key-value pairs for this input.
+    ///
+    /// PSBT_IN_PROPRIETARY: Optional for v0, optional for v2.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+
     /// Unknown key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-/// A Signature hash type for the corresponding input.
-///
-/// As of Taproot upgrade, the signature hash type can be either [`EcdsaSighashType`] or
-/// [`TapSighashType`] but it is not possible to know directly which signature hash type the user is
-/// dealing with. Therefore, the user is responsible for converting to/from [`PsbtSighashType`]
-/// from/to the desired signature hash type they need.
-///
-/// # Examples
-///
-/// ```
-/// use bitcoin::{EcdsaSighashType, TapSighashType};
-/// use bitcoin::psbt::PsbtSighashType;
-///
-/// let _ecdsa_sighash_all: PsbtSighashType = EcdsaSighashType::All.into();
-/// let _tap_sighash_all: PsbtSighashType = TapSighashType::All.into();
-/// ```
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct PsbtSighashType {
-    pub(in crate::psbt) inner: u32,
-}
-
-impl fmt::Display for PsbtSighashType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.taproot_hash_ty() {
-            Err(_) => write!(f, "{:#x}", self.inner),
-            Ok(taproot_hash_ty) => fmt::Display::fmt(&taproot_hash_ty, f),
-        }
-    }
-}
-
-impl FromStr for PsbtSighashType {
-    type Err = SighashTypeParseError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // We accept strings of form: "SIGHASH_ALL" etc.
-        //
-        // NB: some of Taproot sighash types are non-standard for pre-Taproot
-        // inputs. We also do not support SIGHASH_RESERVED in verbatim form
-        // ("0xFF" string should be used instead).
-        if let Ok(ty) = s.parse::<TapSighashType>() {
-            return Ok(ty.into());
-        }
-
-        // We accept non-standard sighash values.
-        if let Ok(inner) = u32::from_str_radix(s.trim_start_matches("0x"), 16) {
-            return Ok(PsbtSighashType { inner });
-        }
-
-        Err(SighashTypeParseError { unrecognized: s.to_owned() })
-    }
-}
-impl From<EcdsaSighashType> for PsbtSighashType {
-    fn from(ecdsa_hash_ty: EcdsaSighashType) -> Self {
-        PsbtSighashType { inner: ecdsa_hash_ty as u32 }
-    }
-}
-
-impl From<TapSighashType> for PsbtSighashType {
-    fn from(taproot_hash_ty: TapSighashType) -> Self {
-        PsbtSighashType { inner: taproot_hash_ty as u32 }
-    }
-}
-
-impl PsbtSighashType {
-    /// Ambiguous `ALL` sighash type, may refer to either [`EcdsaSighashType::All`]
-    /// or [`TapSighashType::All`].
-    ///
-    /// This is equivalent to either `EcdsaSighashType::All.into()` or `TapSighashType::All.into()`.
-    /// For sighash types other than `ALL` use the ECDSA or Taproot sighash type directly.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bitcoin::{EcdsaSighashType, TapSighashType};
-    /// use bitcoin::psbt::PsbtSighashType;
-    /// let _ecdsa_sighash_anyone_can_pay: PsbtSighashType = EcdsaSighashType::AllPlusAnyoneCanPay.into();
-    /// let _tap_sighash_anyone_can_pay: PsbtSighashType = TapSighashType::AllPlusAnyoneCanPay.into();
-    /// ```
-    pub const ALL: PsbtSighashType = PsbtSighashType { inner: 0x01 };
-
-    /// Returns the [`EcdsaSighashType`] if the [`PsbtSighashType`] can be
-    /// converted to one.
-    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
-        EcdsaSighashType::from_standard(self.inner)
-    }
-
-    /// Returns the [`TapSighashType`] if the [`PsbtSighashType`] can be
-    /// converted to one.
-    pub fn taproot_hash_ty(self) -> Result<TapSighashType, InvalidSighashTypeError> {
-        if self.inner > 0xffu32 {
-            Err(InvalidSighashTypeError(self.inner))
-        } else {
-            TapSighashType::from_consensus_u8(self.inner as u8)
-        }
-    }
-
-    /// Constructs a new [`PsbtSighashType`] from a raw `u32`.
-    ///
-    /// Allows construction of a non-standard or non-valid sighash flag
-    /// ([`EcdsaSighashType`], [`TapSighashType`] respectively).
-    pub fn from_u32(n: u32) -> PsbtSighashType { PsbtSighashType { inner: n } }
-
-    /// Converts [`PsbtSighashType`] to a raw `u32` sighash flag.
-    ///
-    /// No guarantees are made as to the standardness or validity of the returned value.
-    pub fn to_u32(self) -> u32 { self.inner }
-}
-
 impl Input {
+    /// Checks if `Input` has fields set as required by the respective BIP.
+    pub(crate) fn is_valid(&self) -> bool {
+        self.assert_valid_v0().is_ok() | self.assert_valid_v2().is_ok()
+    }
+
+    /// Checks if `Input` has minimum fields required by `BIP-174`.
+    pub(crate) fn assert_valid_v0(&self) -> Result<(), V0InvalidError> {
+        if self.previous_txid.is_some() {
+            return Err(V0InvalidError::PreviousTxid);
+        }
+        if self.spent_output_index.is_some() {
+            return Err(V0InvalidError::SpentOutputIndex);
+        }
+        if self.sequence.is_some() {
+            return Err(V0InvalidError::Sequence);
+        }
+        if self.min_time.is_some() {
+            return Err(V0InvalidError::MinTime);
+        }
+        if self.min_height.is_some() {
+            return Err(V0InvalidError::MinHeight);
+        }
+        Ok(())
+    }
+
+    /// Checks if `Input` has minimum fields required by `BIP-370`.
+    pub(crate) fn assert_valid_v2(&self) -> Result<(), V2InvalidError> {
+        if self.previous_txid.is_none() {
+            return Err(V2InvalidError::PreviousTxid);
+        }
+        if self.spent_output_index.is_none() {
+            return Err(V2InvalidError::SpentOutputIndex);
+        }
+        Ok(())
+    }
+
     /// Obtains the [`EcdsaSighashType`] for this input if one is specified. If no sighash type is
     /// specified, returns [`EcdsaSighashType::All`].
     ///
@@ -317,22 +309,47 @@ impl Input {
             }
             PSBT_IN_RIPEMD160 => {
                 psbt_insert_hash_pair! {
-                    &mut self.ripemd160_preimages <= raw_key|raw_value|ripemd160::Hash|error::PsbtHash::Ripemd
+                    &mut self.ripemd160_preimages <= raw_key|raw_value|ripemd160::Hash|PsbtHash::Ripemd
                 }
             }
             PSBT_IN_SHA256 => {
                 psbt_insert_hash_pair! {
-                    &mut self.sha256_preimages <= raw_key|raw_value|sha256::Hash|error::PsbtHash::Sha256
+                    &mut self.sha256_preimages <= raw_key|raw_value|sha256::Hash|PsbtHash::Sha256
                 }
             }
             PSBT_IN_HASH160 => {
                 psbt_insert_hash_pair! {
-                    &mut self.hash160_preimages <= raw_key|raw_value|hash160::Hash|error::PsbtHash::Hash160
+                    &mut self.hash160_preimages <= raw_key|raw_value|hash160::Hash|PsbtHash::Hash160
                 }
             }
             PSBT_IN_HASH256 => {
                 psbt_insert_hash_pair! {
-                    &mut self.hash256_preimages <= raw_key|raw_value|sha256d::Hash|error::PsbtHash::Hash256
+                    &mut self.hash256_preimages <= raw_key|raw_value|sha256d::Hash|PsbtHash::Hash256
+                }
+            }
+            PSBT_IN_PREVIOUS_TXID => {
+                impl_psbt_insert_pair! {
+                    self.previous_txid <= <raw_key: _>|<raw_value: Txid>
+                }
+            }
+            PSBT_IN_OUTPUT_INDEX => {
+                impl_psbt_insert_pair! {
+                    self.spent_output_index <= <raw_key: _>|<raw_value: u32>
+                }
+            }
+            PSBT_IN_SEQUENCE => {
+                impl_psbt_insert_pair! {
+                    self.sequence <= <raw_key: _>|< raw_value: Sequence>
+                }
+            }
+            PSBT_IN_REQUIRED_TIME_LOCKTIME => {
+                impl_psbt_insert_pair! {
+                    self.min_time <= <raw_key: _>|<raw_value: absolute::Time>
+                }
+            }
+            PSBT_IN_REQUIRED_HEIGHT_LOCKTIME => {
+                impl_psbt_insert_pair! {
+                    self.min_height <= <raw_key: _>|<raw_value: absolute::Height>
                 }
             }
             PSBT_IN_TAP_KEY_SIG => {
@@ -473,6 +490,26 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
+            rv.push(self.previous_txid, PSBT_IN_PREVIOUS_TXID)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.spent_output_index, PSBT_IN_OUTPUT_INDEX)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.sequence, PSBT_IN_SEQUENCE)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.min_time, PSBT_IN_REQUIRED_TIME_LOCKTIME)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.min_height, PSBT_IN_REQUIRED_HEIGHT_LOCKTIME)
+        }
+
+        impl_psbt_get_pair! {
             rv.push(self.tap_key_sig, PSBT_IN_TAP_KEY_SIG)
         }
 
@@ -508,6 +545,116 @@ impl Map for Input {
 }
 
 impl_psbtmap_ser_de_serialize!(Input);
+
+/// Input is not valid.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum InvalidError {
+    /// Invalid for v0.
+    V0Invalid(V0InvalidError),
+    /// Invalid for v2.
+    V2Invalid(V2InvalidError),
+}
+
+impl From<Infallible> for InvalidError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for InvalidError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use InvalidError::*;
+
+        match *self {
+            V0Invalid(ref e) => write_err!(f, "v0"; e),
+            V2Invalid(ref e) => write_err!(f, "v2"; e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use InvalidError::*;
+
+        match *self {
+            V0Invalid(ref e) => Some(e),
+            V2Invalid(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<V0InvalidError> for InvalidError {
+    fn from(e: V0InvalidError) -> Self { Self::V0Invalid(e) }
+}
+
+impl From<V2InvalidError> for InvalidError {
+    fn from(e: V2InvalidError) -> Self { Self::V2Invalid(e) }
+}
+
+/// Input is not valid for v0 (BIP-174).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum V0InvalidError {
+    /// PSBT_IN_PREVIOUS_TXID: Excluded for v0, required for v2.
+    PreviousTxid,
+    /// PSBT_IN_OUTPUT_INDEX: Excluded for v0, required for v2.
+    SpentOutputIndex,
+    /// PSBT_IN_SEQUENCE: Excluded for v0, optional for v2.
+    Sequence,
+    /// PSBT_IN_REQUIRED_TIME_LOCKTIME: Excluded for v0, optional for v2.
+    MinTime,
+    /// PSBT_IN_REQUIRED_HEIGHT_LOCKTIME: Excluded for v0, optional for v2.
+    MinHeight,
+}
+
+impl From<Infallible> for V0InvalidError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for V0InvalidError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use V0InvalidError as E;
+
+        match *self {
+            E::PreviousTxid => write!(f, "PSBT_IN_PREVOUS_TXID must be excluded for v0"),
+            E::SpentOutputIndex => write!(f, "PSBT_IN_OUTPUT_INDEX must be excluded for v0"),
+            E::Sequence => write!(f, "PSBT_IN_SEQUENCE must be excluded for v0"),
+            E::MinTime => write!(f, "PSBT_IN_REQUIRED_TIME_LOCKTIME must be excluded for v0"),
+            E::MinHeight => write!(f, "PSBT_IN_REQUIRED_HEIGHT_LOCKTIME must be excluded for v0"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for V0InvalidError {}
+
+/// Input is not valid for v2 (BIP-370).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum V2InvalidError {
+    /// PSBT_IN_PREVIOUS_TXID: Excluded for v0, required for v2.
+    PreviousTxid,
+    /// PSBT_IN_OUTPUT_INDEX: Excluded for v0, required for v2.
+    SpentOutputIndex,
+}
+
+impl From<Infallible> for V2InvalidError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for V2InvalidError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use V2InvalidError as E;
+
+        match *self {
+            E::PreviousTxid => write!(f, "PSBT_IN_PREVOUS_TXID is required for v2"),
+            E::SpentOutputIndex => write!(f, "PSBT_IN_OUTPUT_INDEX is required for v2"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for V2InvalidError {}
 
 #[cfg(test)]
 mod test {

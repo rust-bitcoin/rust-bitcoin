@@ -10,7 +10,7 @@ use core::fmt;
 use internals::ToU64 as _;
 use io::{BufRead, Write};
 
-use super::serialize::{Deserialize, Serialize};
+use super::{Deserialize, Serialize};
 use crate::consensus::encode::{
     self, deserialize, serialize, Decodable, Encodable, ReadExt, WriteExt, MAX_VEC_SIZE,
 };
