@@ -1,8 +1,29 @@
-# Unreleased
+# 1.0.0 - 2025-02-24
 
-- TODO: Make a comment about `Amount::MAX_MONEY` including breaking serde
+BOOM! A long time in the making but here goes, our first 1.0 crate release.
 
-- Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
+This changelog is a rolling description of everything that will eventually end up in `v1.0`.
+
+* Remove `InputString` from the public API [#3905](https://github.com/rust-bitcoin/rust-bitcoin/pull/3905)
+* Hide the remaining public macros [#3867](https://github.com/rust-bitcoin/rust-bitcoin/pull/3867)
+* Change method return type for `to_unsigned()` [#3769](https://github.com/rust-bitcoin/rust-bitcoin/pull/3769)
+* Change paramater type used for whole bitcoin [#3744](https://github.com/rust-bitcoin/rust-bitcoin/pull/3744)
+* Add `Weight::to_kwu_ceil` [#3740](https://github.com/rust-bitcoin/rust-bitcoin/pull/3740)
+* Replace `String` with `InputString` [#3559](https://github.com/rust-bitcoin/rust-bitcoin/pull/3559)
+* Add `FeeRate` addition and subtraction traits [#3381](https://github.com/rust-bitcoin/rust-bitcoin/pull/3381)
+
+## Changes relate to error types
+
+* Close the hex parse errors [#3673](https://github.com/rust-bitcoin/rust-bitcoin/pull/3673)
+
+## Changes related to `serde`
+
+* Implement `serde` modules for `FeeRate` [#3666](https://github.com/rust-bitcoin/rust-bitcoin/pull/3666)
+
+## Improved support for `Arbitrary`
+
+* Implement `Arbitrary` for `units` types [#3777](https://github.com/rust-bitcoin/rust-bitcoin/pull/3777)
+* Add `Arbitrary` to `Weight` [#3257](https://github.com/rust-bitcoin/rust-bitcoin/pull/3257)
 
 # 0.2.0 - 2024-09-18
 
