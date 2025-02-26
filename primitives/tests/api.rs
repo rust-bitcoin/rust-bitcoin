@@ -9,6 +9,68 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
+// These imports test "typical" usage by user code.
+use bitcoin_primitives::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
+use bitcoin_primitives::{
+    amount, block, fee_rate, locktime, merkle_tree, opcodes, pow,
+    script, sequence, taproot, transaction, weight, witness, Amount,
+    Block, BlockHash, BlockHeader, BlockHeight, BlockInterval,
+    CompactTarget, FeeRate, Sequence, SignedAmount, TapBranchTag,
+    TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag,
+    Transaction, TxIn, TxMerkleNode, TxOut, Txid, Weight, Witness,
+    WitnessCommitment, WitnessMerkleNode, Wtxid,
+    BlockChecked, BlockUnchecked
+};
+
+/// A struct that includes all public non-error enums.
+#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+struct Enums {
+    a: amount::Denomination,
+}
+
+impl Enums {
+    fn new() -> Self {
+        Self { a: amount::Denomination::Bitcoin }
+    }
+}
+
+/// A struct that includes all public non-error structs.
+#[derive(Debug)] // All public types implement Debug (C-DEBUG).
+struct Structs {
+    a: Amount,
+    b: Block,
+    c: BlockHash,
+    d: BlockHeader,
+    e: BlockHeight,
+    f: BlockInterval,
+    g: CompactTarget,
+    h: FeeRate,
+    i: absolute::Height,
+    j: absolute::Time,
+    k: relative::Height,
+    l: relative::Time,
+    m: relative::Time,
+    n: Sequence,
+    o: SignedAmount,
+    p: TapBranchTag,
+    q: TapLeafHash,
+    r: TapLeafTag,
+    s: TapNodeHash,
+    t: TapTweakHash,
+    u: TapTweakTag,
+    v: Transaction,
+    w: TxIn,
+    x: TxMerkleNode,
+    y: TxOut,
+    z: Txid,
+    _a: Weight,
+    _b: Witness,
+    _c: WitnessCommitment
+
+}
+
 #[test]
 fn api_can_use_modules_from_crate_root() {
   use bitcoin_primitives::{
@@ -47,12 +109,20 @@ fn api_can_use_all_types_from_module_amount() {
   };
 }
 
+#[rustfmt::skip]
 #[test]
 fn api_can_use_all_types_from_module_block() {
-  use bitcoin_primitives::block::{
-    Block, BlockHash, Header, Version, WitnessCommitment,
-    Checked, Unchecked
-  };
+  {
+    // New types added in `primitives`.
+    use bitcoin_primitives::block::{
+      Block, BlockHash, Header, Version, WitnessCommitment,
+      Checked, Unchecked
+    };
+  }
+  {
+    // Re-exports from `units`
+    use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
+  }
 }
 
 #[test]
