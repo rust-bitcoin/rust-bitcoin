@@ -14,7 +14,7 @@ use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
 use crate::prelude::{sink, DisplayHex, String, ToString};
-use crate::taproot::{LeafVersion, TapLeafHash, TapLeafHashExt as _};
+use crate::taproot::{LeafVersion, TapLeafHash};
 use crate::{Amount, FeeRate};
 
 #[rustfmt::skip]            // Keep public re-exports separate.

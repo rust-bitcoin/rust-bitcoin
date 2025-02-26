@@ -1864,8 +1864,6 @@ mod tests {
     fn bip_341_sighash_tests() {
         use hex::DisplayHex;
 
-        use crate::taproot::TapTweakHashExt as _;
-
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<TapSighashType, D::Error>
         where
             D: serde::Deserializer<'de>,
