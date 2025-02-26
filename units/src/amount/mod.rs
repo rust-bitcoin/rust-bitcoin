@@ -91,6 +91,10 @@ pub enum Denomination {
     Bit,
     /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
+    /// Stops users from casting this enum to an integer.
+    // May get removed if one day Rust supports disabling casts natively.
+    #[doc(hidden)]
+    _DoNotUse(Infallible),
 }
 
 impl Denomination {
@@ -109,6 +113,7 @@ impl Denomination {
             Denomination::MicroBitcoin => -2,
             Denomination::Bit => -2,
             Denomination::Satoshi => 0,
+            Denomination::_DoNotUse(infallible) => match infallible {}
         }
     }
 
@@ -121,6 +126,7 @@ impl Denomination {
             Denomination::MicroBitcoin => "uBTC",
             Denomination::Bit => "bits",
             Denomination::Satoshi => "satoshi",
+            Denomination::_DoNotUse(infallible) => match infallible {}
         }
     }
 
