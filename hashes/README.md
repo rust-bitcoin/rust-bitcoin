@@ -3,7 +3,7 @@
 This is a simple, no-dependency library which implements the hash functions
 needed by Bitcoin. These are SHA1, SHA256, SHA256d, SHA512, and RIPEMD160. As an
 ancillary thing, it exposes hexadecimal serialization and deserialization,
-since these are needed to display hashes anway.
+since these are needed to display hashes anyway.
 
 [Documentation](https://docs.rs/bitcoin_hashes/)
 
@@ -29,5 +29,5 @@ Alternatively add symlinks in your `.git/hooks` directory to any of the githooks
 
 ### Running Benchmarks
 
-We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
-bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+We use a custom Rust compiler configuration conditional to guard the benchmark code. To run the
+benchmarks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
