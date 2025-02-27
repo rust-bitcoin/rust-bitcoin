@@ -57,17 +57,17 @@ impl Serde {
     /// Constructs an arbitrary instance.
     fn new() -> Self {
         Self {
-            unsigned_as_sat: Amount::MAX,
-            unsigned_as_btc: Amount::MAX,
+            unsigned_as_sat: Amount::MAX_MONEY,
+            unsigned_as_btc: Amount::MAX_MONEY,
 
-            unsigned_opt_as_sat: Some(Amount::MAX),
-            unsigned_opt_as_btc: Some(Amount::MAX),
+            unsigned_opt_as_sat: Some(Amount::MAX_MONEY),
+            unsigned_opt_as_btc: Some(Amount::MAX_MONEY),
 
-            signed_as_sat: SignedAmount::MAX,
-            signed_as_btc: SignedAmount::MAX,
+            signed_as_sat: SignedAmount::MAX_MONEY,
+            signed_as_btc: SignedAmount::MAX_MONEY,
 
-            signed_opt_as_sat: Some(SignedAmount::MAX),
-            signed_opt_as_btc: Some(SignedAmount::MAX),
+            signed_opt_as_sat: Some(SignedAmount::MAX_MONEY),
+            signed_opt_as_btc: Some(SignedAmount::MAX_MONEY),
 
             vb_floor: FeeRate::BROADCAST_MIN,
             vb_ceil: FeeRate::BROADCAST_MIN,

@@ -47,9 +47,9 @@ struct Structs {
 impl Structs {
     fn max() -> Self {
         Self {
-            a: Amount::MAX,
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
-            c: SignedAmount::MAX,
+            a: Amount::MAX_MONEY,
+            b: Amount::MAX_MONEY.display_in(amount::Denomination::Bitcoin),
+            c: SignedAmount::MAX_MONEY,
             d: BlockHeight::MAX,
             e: BlockInterval::MAX,
             f: FeeRate::MAX,
@@ -273,7 +273,7 @@ impl<'a> Arbitrary<'a> for Structs {
         let a = Structs {
             a: Amount::arbitrary(u)?,
             // Skip the `Display` type.
-            b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
+            b: Amount::MAX_MONEY.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::arbitrary(u)?,
             d: BlockHeight::arbitrary(u)?,
             e: BlockInterval::arbitrary(u)?,

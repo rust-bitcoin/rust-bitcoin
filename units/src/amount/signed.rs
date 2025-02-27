@@ -158,7 +158,7 @@ impl SignedAmount {
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
             // (negative, amount)
-            (false, sat) if sat > SignedAmount::MAX.to_sat() as u64 => Err(ParseAmountError(
+            (false, sat) if sat > SignedAmount::MAX_MONEY.to_sat() as u64 => Err(ParseAmountError(
                 ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
             )),
             (false, sat) => Ok(SignedAmount::from_sat(sat as i64)), // Cast ok, value in this arm does not wrap.
@@ -350,7 +350,7 @@ impl SignedAmount {
 
     /// Checked addition.
     ///
-    /// Returns [`None`] if the sum is above [`SignedAmount::MAX`] or below [`SignedAmount::MIN`].
+    /// Returns [`None`] if the sum is above [`SignedAmount::MAX_MONEY`] or below [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
@@ -362,7 +362,7 @@ impl SignedAmount {
 
     /// Checked subtraction.
     ///
-    /// Returns [`None`] if the difference is above [`SignedAmount::MAX`] or below
+    /// Returns [`None`] if the difference is above [`SignedAmount::MAX_MONEY`] or below
     /// [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
@@ -375,7 +375,7 @@ impl SignedAmount {
 
     /// Checked multiplication.
     ///
-    /// Returns [`None`] if the product is above [`SignedAmount::MAX`] or below
+    /// Returns [`None`] if the product is above [`SignedAmount::MAX_MONEY`] or below
     /// [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
