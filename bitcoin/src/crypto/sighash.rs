@@ -16,7 +16,7 @@ use core::{fmt, str};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hashes::{hash_newtype, sha256, sha256d, sha256t, sha256t_tag};
+use hashes::{hash_newtype, sha256, sha256d, sha256t};
 use internals::write_err;
 use io::Write;
 
@@ -76,8 +76,12 @@ impl SegwitV0Sighash {
     fn from_engine(e: sha256d::HashEngine) -> Self { Self(sha256d::Hash::from_engine(e)) }
 }
 
-sha256t_tag! {
-    pub struct TapSighashTag = hash_str("TapSighash");
+/// Tag for the `TapSighash`.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TapSighashTag {}
+
+impl sha256t::Tag for TapSighashTag {
+    const MIDSTATE: sha256::Midstate = sha256::Midstate::hash_tag("TapSighash".as_bytes());
 }
 
 hash_newtype! {

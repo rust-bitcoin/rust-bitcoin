@@ -213,11 +213,13 @@ mod tests {
         assert_eq!(TestHash::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 
-    // We also provide macros to create the tag and the hash type.
-    sha256t_tag! {
-        /// Test detailed explanation.
-        struct NewTypeTagBackward = raw(TEST_MIDSTATE, 64);
+    #[derive(Debug, Clone)]
+    enum NewTypeTagBackward {}
+
+    impl sha256t::Tag for NewTypeTagBackward {
+        const MIDSTATE: sha256::Midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
     }
+
     hash_newtype! {
         /// A test hash.
         #[hash_newtype(backward)]
@@ -241,11 +243,13 @@ mod tests {
         assert_eq!(sha256t::Hash::<NewTypeTagBackward>::hash(&[0]).to_string(), HASH_ZERO_FORWARD);
     }
 
-    // We also provide a macro to create the tag and the hash type.
-    sha256t_tag! {
-        /// Test detailed explanation.
-        struct NewTypeTagForward = raw(TEST_MIDSTATE, 64);
+    #[derive(Debug, Clone)]
+    enum NewTypeTagForward {}
+
+    impl sha256t::Tag for NewTypeTagForward {
+        const MIDSTATE: sha256::Midstate = sha256::Midstate::new(TEST_MIDSTATE, 64);
     }
+
     hash_newtype! {
         /// A test hash.
         #[hash_newtype(forward)]
