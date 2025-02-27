@@ -123,7 +123,7 @@ pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
     let params = params.as_ref();
     let transactions = vec![bitcoin_genesis_tx(params)];
     let hash: sha256d::Hash = transactions[0].compute_txid().into();
-    let merkle_root: crate::TxMerkleNode = hash.into();
+    let merkle_root: crate::TxMerkleNode = crate::TxMerkleNode::from_byte_array(hash.to_byte_array());
     let witness_root = block::compute_witness_root(&transactions);
 
     match params.network {
