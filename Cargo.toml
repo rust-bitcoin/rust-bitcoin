@@ -1,27 +1,6 @@
 [workspace]
-members = ["addresses", "base58", "bitcoin", "chacha20_poly1305", "fuzz", "hashes", "internals", "io", "primitives", "units"]
+members = ["units"]
 resolver = "2"
-
-[patch.crates-io.bitcoin-addresses]
-path = "addresses"
-
-[patch.crates-io.base58ck]
-path = "base58"
-
-[patch.crates-io.bitcoin]
-path = "bitcoin"
-
-[patch.crates-io.bitcoin_hashes]
-path = "hashes"
-
-[patch.crates-io.bitcoin-internals]
-path = "internals"
-
-[patch.crates-io.bitcoin-io]
-path = "io"
-
-[patch.crates-io.bitcoin-primitives]
-path = "primitives"
 
 [patch.crates-io.bitcoin-units]
 path = "units"

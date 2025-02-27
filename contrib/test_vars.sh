@@ -9,5 +9,5 @@
 # disable verify unused vars, despite the fact that they are used when sourced
 # shellcheck disable=SC2034
 
-CRATES="$(cargo metadata --no-deps --format-version 1 | jq -j -r '.packages | map(.manifest_path | rtrimstr("/Cargo.toml") | ltrimstr("'"$PWD"'/")) | join(" ")')"
+CRATES="units"
 DEPS="recent minimal"
