@@ -42,15 +42,15 @@ pub struct Amount(u64);
 
 impl Amount {
     /// The zero amount.
-    pub const ZERO: Self = Amount(0);
+    pub const ZERO: Self = Amount::from_sat_unchecked(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: Self = Amount(1);
+    pub const ONE_SAT: Self = Amount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = Self::from_int_btc_const(1);
+    pub const ONE_BTC: Self = Amount::from_sat_unchecked(100_000_000);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Self::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = Amount::from_sat_unchecked(50 * 100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Self::from_int_btc_const(21_000_000);
+    pub const MAX_MONEY: Self = Amount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
     pub const MIN: Self = Amount::ZERO;
     /// The maximum value of an amount.
