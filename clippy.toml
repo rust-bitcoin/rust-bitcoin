@@ -1,3 +1,0 @@
-msrv = "1.63.0"
-too-many-arguments-threshold = 13
-avoid-breaking-exported-api = false

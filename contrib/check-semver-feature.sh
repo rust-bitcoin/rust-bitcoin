@@ -19,33 +19,12 @@ set -euo pipefail
 RUSTDOCFLAGS="-Z unstable-options --document-private-items --document-hidden-items --output-format=json --cap-lints=allow"
 
 main() {
-    # Generate JSON files for no-features and all-features
-    # 1. bitcoin
-    generate_json_files_all_features "bitcoin"
-    generate_json_files_no_default_features "bitcoin"
-
-    # 2. base58ck
-    generate_json_files_all_features "base58ck"
-    generate_json_files_no_default_features "base58ck"
-
-    # 3. bitcoin_hashes
-    generate_json_files_all_features "bitcoin_hashes"
-    generate_json_files_no_default_features "bitcoin_hashes"
-
     # 4. bitcoin-units
     generate_json_files_all_features "bitcoin-units"
     generate_json_files_no_default_features "bitcoin-units"
 
-    # 5. bitcoin-io
-    generate_json_files_all_features "bitcoin-io"
-    generate_json_files_no_default_features "bitcoin-io"
-
     # Check for API semver non-addivite cargo features on all the generated JSON files above.
-    run_cargo_semver_check "bitcoin"
-    run_cargo_semver_check "base58ck"
-    run_cargo_semver_check "bitcoin_hashes"
     run_cargo_semver_check "bitcoin-units"
-    run_cargo_semver_check "bitcoin-io"
 
     # Invoke cargo semver-checks to check for non-additive cargo features
     # in all generated files.
