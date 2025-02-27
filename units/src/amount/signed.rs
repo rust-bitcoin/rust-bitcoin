@@ -121,29 +121,19 @@ impl SignedAmount {
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
-    ///
-    /// # Errors
-    ///
-    /// The function errors if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
-        match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Self::from_sat(amount)),
-            None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
-        }
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_int_btc<T: Into<i32>>(whole_bitcoin: T) -> SignedAmount {
+        SignedAmount::from_int_btc_const(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
-    ///
-    /// # Panics
-    ///
-    /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
-        match whole_bitcoin.checked_mul(100_000_000) {
+    #[allow(clippy::missing_panics_doc)]
+    pub const fn from_int_btc_const(whole_bitcoin: i32) -> SignedAmount {
+        let btc = whole_bitcoin as i64; // Can't call `into` in const context.
+        match btc.checked_mul(100_000_000) {
             Some(amount) => SignedAmount::from_sat(amount),
-            None => panic!("checked_mul overflowed"),
+            None => panic!("cannot overflow in i64"),
         }
     }
 
