@@ -16,29 +16,58 @@ use super::{
     OutOfRangeError, ParseAmountError, ParseError, SignedAmount,
 };
 
-/// An amount.
-///
-/// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
-/// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
-/// but we do provide modules for serializing as satoshis or bitcoin.
-///
-/// # Examples
-///
-/// ```
-/// # #[cfg(feature = "serde")] {
-/// use serde::{Serialize, Deserialize};
-/// use bitcoin_units::Amount;
-///
-/// #[derive(Serialize, Deserialize)]
-/// struct Foo {
-///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
-///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
-///     amount: Amount,
-/// }
-/// # }
-/// ```
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Amount(u64);
+mod encapsulate {
+    /// An amount.
+    ///
+    /// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
+    /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
+    /// but we do provide modules for serializing as satoshis or bitcoin.
+    ///
+    /// Warning!
+    ///
+    /// This type implements several arithmetic operations from [`core::ops`].
+    /// To prevent errors due to an overflow when using these operations,
+    /// it is advised to instead use the checked arithmetic methods whose names
+    /// start with `checked_`. The operations from [`core::ops`] that [`Amount`]
+    /// implements will panic when an overflow occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "serde")] {
+    /// use serde::{Serialize, Deserialize};
+    /// use bitcoin_units::Amount;
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// struct Foo {
+    ///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
+    ///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
+    ///     amount: Amount,
+    /// }
+    /// # }
+    /// ```
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct Amount(u64);
+
+    impl Amount {
+        /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
+        ///
+        /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX_MONEY`].
+        pub const fn from_sat_unchecked(satoshi: u64) -> Amount { Self(satoshi) }
+
+        /// Gets the number of satoshis in this [`Amount`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// # use bitcoin_units::Amount;
+        /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
+        /// ```
+        pub const fn to_sat(self) -> u64 { self.0 }
+    }
+}
+#[doc(inline)]
+pub use encapsulate::Amount;
 
 impl Amount {
     /// The zero amount.
@@ -67,22 +96,7 @@ impl Amount {
     /// let amount = Amount::from_sat(100_000);
     /// assert_eq!(amount.to_sat(), 100_000);
     /// ```
-    pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
-
-    /// Gets the number of satoshis in this [`Amount`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::Amount;
-    /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
-    /// ```
-    pub const fn to_sat(self) -> u64 { self.0 }
-
-    /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
-    ///
-    /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX_MONEY`].
-    pub const fn from_sat_unchecked(satoshi: u64) -> Amount { Self(satoshi) }
+    pub const fn from_sat(satoshi: u64) -> Amount { Amount::from_sat_unchecked(satoshi) }
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
@@ -148,7 +162,7 @@ impl Amount {
                 OutOfRangeError::negative(),
             )));
         }
-        if sats > Self::MAX.0 {
+        if sats > Self::MAX.to_sat() {
             return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
                 OutOfRangeError::too_big(false),
             )));
@@ -299,8 +313,8 @@ impl Amount {
     #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
-        match self.0.checked_add(rhs.0) {
-            Some(res) => Amount(res).check_max(),
+        match self.to_sat().checked_add(rhs.to_sat()) {
+            Some(res) => Amount::from_sat(res).check_max(),
             None => None,
         }
     }
@@ -311,8 +325,8 @@ impl Amount {
     #[must_use]
     pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
-        match self.0.checked_sub(rhs.0) {
-            Some(res) => Some(Amount(res)),
+        match self.to_sat().checked_sub(rhs.to_sat()) {
+            Some(res) => Some(Amount::from_sat(res)),
             None => None,
         }
     }
@@ -323,8 +337,8 @@ impl Amount {
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
-        match self.0.checked_mul(rhs) {
-            Some(res) => Amount(res).check_max(),
+        match self.to_sat().checked_mul(rhs) {
+            Some(res) => Amount::from_sat(res).check_max(),
             None => None,
         }
     }
@@ -337,8 +351,8 @@ impl Amount {
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
-        match self.0.checked_div(rhs) {
-            Some(res) => Some(Amount(res)),
+        match self.to_sat().checked_div(rhs) {
+            Some(res) => Some(Amount::from_sat(res)),
             None => None,
         }
     }
@@ -349,8 +363,8 @@ impl Amount {
     #[must_use]
     pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
-        match self.0.checked_rem(rhs) {
-            Some(res) => Some(Amount(res)),
+        match self.to_sat().checked_rem(rhs) {
+            Some(res) => Some(Amount::from_sat(res)),
             None => None,
         }
     }
@@ -364,7 +378,9 @@ impl Amount {
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
     #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_add(self, rhs: Amount) -> Amount { Self(self.0 + rhs.0) }
+    pub fn unchecked_add(self, rhs: Amount) -> Amount {
+        Self::from_sat(self.to_sat() + rhs.to_sat())
+    }
 
     /// Unchecked subtraction.
     ///
@@ -375,7 +391,9 @@ impl Amount {
     /// On overflow, panics in debug mode, wraps in release mode.
     #[must_use]
     #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_sub(self, rhs: Amount) -> Amount { Self(self.0 - rhs.0) }
+    pub fn unchecked_sub(self, rhs: Amount) -> Amount {
+        Self::from_sat(self.to_sat() - rhs.to_sat())
+    }
 
     /// Converts to a signed amount.
     #[rustfmt::skip] // Moves code comments to the wrong line.
@@ -385,7 +403,7 @@ impl Amount {
 
     /// Checks if the amount is below the maximum value. Returns `None` if it is above.
     const fn check_max(self) -> Option<Amount> {
-        if self.0 > Self::MAX.0 {
+        if self.to_sat() > Self::MAX.to_sat() {
             None
         } else {
             Some(self)
@@ -445,6 +463,6 @@ impl TryFrom<SignedAmount> for Amount {
 impl<'a> Arbitrary<'a> for Amount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let a = u64::arbitrary(u)?;
-        Ok(Self(a))
+        Ok(Self::from_sat(a))
     }
 }
