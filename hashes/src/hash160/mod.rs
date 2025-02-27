@@ -38,9 +38,13 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
+    type Bytes = [u8; 20];
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
+
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 #[cfg(test)]
@@ -128,7 +132,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{hash160, GeneralHash as _, Hash as _, HashEngine};
+    use crate::{hash160, Hash as _, HashEngine};
 
     #[bench]
     pub fn hash160_10(bh: &mut Bencher) {

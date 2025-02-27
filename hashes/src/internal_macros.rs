@@ -26,12 +26,6 @@ macro_rules! hash_trait_impls {
         #[cfg(not(feature = "hex"))]
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
 
-        impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
-            type Engine = HashEngine<$($gen),*>;
-
-            fn from_engine(e: Self::Engine) -> Hash<$($gen),*> { Self::from_engine(e) }
-        }
-
         #[cfg(feature = "serde")]
         $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
 
@@ -71,6 +65,30 @@ pub(crate) use hash_trait_impls;
 /// [`hash_trait_impls`].
 macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
+        /// Hashes some bytes.
+        pub fn hash(data: &[u8]) -> Hash {
+            use crate::HashEngine as _;
+
+            let mut engine = Hash::engine();
+            engine.input(data);
+            engine.finalize()
+        }
+
+        /// Hashes all the byte slices retrieved from the iterator together.
+        pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Hash
+        where
+            B: AsRef<[u8]>,
+            I: IntoIterator<Item = B>,
+        {
+            use crate::HashEngine as _;
+
+            let mut engine = Hash::engine();
+            for slice in byte_slices {
+                engine.input(slice.as_ref());
+            }
+            engine.finalize()
+        }
+
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
         impl Hash {
@@ -82,7 +100,7 @@ macro_rules! general_hash_type {
 
             /// Hashes some bytes.
             #[allow(clippy::self_named_constructors)] // Hash is a noun and a verb.
-            pub fn hash(data: &[u8]) -> Self { <Self as $crate::GeneralHash>::hash(data) }
+            pub fn hash(data: &[u8]) -> Self { hash(data) }
 
             /// Hashes all the byte slices retrieved from the iterator together.
             pub fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
@@ -90,7 +108,7 @@ macro_rules! general_hash_type {
                 B: AsRef<[u8]>,
                 I: IntoIterator<Item = B>,
             {
-                <Self as $crate::GeneralHash>::hash_byte_chunks(byte_slices)
+                hash_byte_chunks(byte_slices)
             }
         }
     };

@@ -11,7 +11,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
-use crate::{GeneralHash, HashEngine, Hmac, HmacEngine, IsByteArray};
+use crate::{HashEngine, Hmac, HmacEngine, IsByteArray};
 
 /// Output keying material max length multiple.
 const MAX_OUTPUT_BLOCKS: usize = 255;
@@ -33,20 +33,20 @@ impl std::error::Error for MaxLengthError {}
 
 /// HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
 #[derive(Copy, Clone)]
-pub struct Hkdf<T: GeneralHash> {
+pub struct Hkdf<T: HashEngine> {
     /// Pseudorandom key based on the extract step.
-    prk: Hmac<T>,
+    prk: Hmac<T::Hash>,
 }
 
-impl<T: GeneralHash> Hkdf<T>
+impl<T: HashEngine> Hkdf<T>
 where
-    <T as GeneralHash>::Engine: Default,
+    T: Default,
 {
     /// Initialize a HKDF by performing the extract step.
     pub fn new(salt: &[u8], ikm: &[u8]) -> Self {
-        let mut hmac_engine: HmacEngine<T> = HmacEngine::new(salt);
-        hmac_engine.input(ikm);
-        Self { prk: Hmac::from_engine(hmac_engine) }
+        let mut engine: HmacEngine<T> = HmacEngine::new(salt);
+        engine.input(ikm);
+        Self { prk: engine.finalize() }
     }
 
     /// Expand the key to generate output key material in okm.
@@ -65,19 +65,19 @@ where
         let total_blocks = (okm.len() + T::Bytes::LEN - 1) / T::Bytes::LEN;
 
         while counter <= total_blocks as u8 {
-            let mut hmac_engine: HmacEngine<T> = HmacEngine::new(self.prk.as_ref());
+            let mut engine: HmacEngine<T> = HmacEngine::new(self.prk.as_ref());
 
             // First block does not have a previous block,
             // all other blocks include last block in the HMAC input.
             if counter != 1u8 {
                 let previous_start_index = (counter as usize - 2) * T::Bytes::LEN;
                 let previous_end_index = (counter as usize - 1) * T::Bytes::LEN;
-                hmac_engine.input(&okm[previous_start_index..previous_end_index]);
+                engine.input(&okm[previous_start_index..previous_end_index]);
             }
-            hmac_engine.input(info);
-            hmac_engine.input(&[counter]);
+            engine.input(info);
+            engine.input(&[counter]);
 
-            let t = Hmac::from_engine(hmac_engine);
+            let t = engine.finalize();
             let start_index = (counter as usize - 1) * T::Bytes::LEN;
             // Last block might not take full hash length.
             let end_index = if counter == (total_blocks as u8) {
@@ -106,7 +106,7 @@ where
     }
 }
 
-impl<T: GeneralHash> fmt::Debug for Hkdf<T> {
+impl<T: HashEngine> fmt::Debug for Hkdf<T> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use crate::{sha256t, sha256t_tag};
 
@@ -141,7 +141,7 @@ mod tests {
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let mut okm = [0u8; 42];
         hkdf.expand(&info, &mut okm).unwrap();
 
@@ -163,7 +163,7 @@ mod tests {
             "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
         ).unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let mut okm = [0u8; 82];
         hkdf.expand(&info, &mut okm).unwrap();
 
@@ -179,7 +179,7 @@ mod tests {
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let mut okm = [0u8; 256 * 32];
         let e = hkdf.expand(&info, &mut okm);
 
@@ -192,7 +192,7 @@ mod tests {
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let mut okm = [0u8; 1];
         hkdf.expand(&info, &mut okm).unwrap();
 
@@ -205,7 +205,7 @@ mod tests {
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
         let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let okm = hkdf.expand_to_len(&info, 42).unwrap();
 
         assert_eq!(
@@ -219,7 +219,7 @@ mod tests {
         let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
         let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
 
-        let hkdf = Hkdf::<sha256::Hash>::new(&salt, &ikm);
+        let hkdf = Hkdf::<sha256::HashEngine>::new(&salt, &ikm);
         let debug = alloc::format!("{:?}", hkdf);
 
         assert_eq!(debug, "Hkdf(#ec7bd36ab2ed4045)");
