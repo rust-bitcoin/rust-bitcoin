@@ -50,17 +50,17 @@ pub struct SignedAmount(i64);
 
 impl SignedAmount {
     /// The zero amount.
-    pub const ZERO: Self = SignedAmount(0);
+    pub const ZERO: Self = SignedAmount::from_sat_unchecked(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: Self = SignedAmount(1);
+    pub const ONE_SAT: Self = SignedAmount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = SignedAmount(100_000_000);
+    pub const ONE_BTC: Self = SignedAmount::from_sat_unchecked(100_000_000);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Self::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = SignedAmount::from_sat_unchecked(50 * 100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
+    pub const MAX_MONEY: Self = SignedAmount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
-    pub const MIN: Self = SignedAmount(-21_000_000 * 100_000_000);
+    pub const MIN: Self = SignedAmount::from_sat_unchecked(-21_000_000 * 100_000_000);
     /// The maximum value of an amount.
     pub const MAX: Self = SignedAmount::MAX_MONEY;
 
