@@ -54,7 +54,7 @@ mod encapsulate {
         ///
         /// Caller to guarantee that `satoshi` is within valid range.
         ///
-        /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
+        /// See [`Self::MIN`] and [`Self::MAX`].
         pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
         /// Gets the number of satoshis in this [`SignedAmount`].
