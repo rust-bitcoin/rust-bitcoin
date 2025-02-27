@@ -143,7 +143,7 @@ fn neg() {
 fn overflows() {
     let sat = Amount::from_sat;
 
-    let result = Amount::MAX + sat(1);
+    let result = Amount::MAX_MONEY + sat(1);
     assert!(result.is_error());
     let result = sat(8_446_744_073_709_551_615) * 3;
     assert!(result.is_error());
@@ -185,9 +185,9 @@ fn checked_arithmetic() {
     let sat = Amount::from_sat;
     let ssat = SignedAmount::from_sat;
 
-    assert_eq!(SignedAmount::MAX.checked_add(ssat(1)), None);
+    assert_eq!(SignedAmount::MAX_MONEY.checked_add(ssat(1)), None);
     assert_eq!(SignedAmount::MIN.checked_sub(ssat(1)), None);
-    assert_eq!(Amount::MAX.checked_add(sat(1)), None);
+    assert_eq!(Amount::MAX_MONEY.checked_add(sat(1)), None);
     assert_eq!(Amount::MIN.checked_sub(sat(1)), None);
 
     assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
@@ -287,7 +287,7 @@ fn amount_checked_div_by_fee_rate() {
     assert!(amount.checked_div_by_fee_rate_ceil(zero_fee_rate).is_none());
 
     // Test with maximum amount
-    let max_amount = Amount::MAX;
+    let max_amount = Amount::MAX_MONEY;
     let small_fee_rate = FeeRate::from_sat_per_kwu(1);
     let weight = max_amount.checked_div_by_fee_rate_floor(small_fee_rate).unwrap();
     // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
@@ -324,12 +324,12 @@ fn floating_point() {
     );
 
     assert_eq!(
-        f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+        f(Amount::MAX_MONEY.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
         Err(OutOfRangeError::too_big(false).into())
     );
 
     assert_eq!(
-        sf(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+        sf(SignedAmount::MAX_MONEY.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
         Err(OutOfRangeError::too_big(true).into())
     );
 
@@ -380,7 +380,7 @@ fn parsing() {
         Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 }))
     );
     #[cfg(feature = "alloc")]
-    let more_than_max = format!("{}", Amount::MAX.to_sat() + 1);
+    let more_than_max = format!("{}", Amount::MAX_MONEY.to_sat() + 1);
     #[cfg(feature = "alloc")]
     assert_eq!(p(&more_than_max, den_btc), Err(OutOfRangeError::too_big(false).into()));
     assert_eq!(p("0.000000042", den_btc), Err(TooPreciseError { position: 10 }.into()));
@@ -614,7 +614,7 @@ check_format_non_negative_show_denom! {
 fn unsigned_signed_conversion() {
     let ssat = SignedAmount::from_sat;
     let sat = Amount::from_sat;
-    let max_sats: u64 = Amount::MAX.to_sat();
+    let max_sats: u64 = Amount::MAX_MONEY.to_sat();
 
     assert_eq!(sat(max_sats).to_signed(), ssat(max_sats as i64));
     assert_eq!(ssat(max_sats as i64).to_unsigned(), Ok(sat(max_sats)));
@@ -700,8 +700,8 @@ fn from_str() {
     ok_scase("-5 satoshi", ssat(-5));
     ok_case("0.10000000 BTC", sat(100_000_00));
     ok_scase("-100 bits", ssat(-10_000));
-    ok_case("21000000 BTC", Amount::MAX);
-    ok_scase("21000000 BTC", SignedAmount::MAX);
+    ok_case("21000000 BTC", Amount::MAX_MONEY);
+    ok_scase("21000000 BTC", SignedAmount::MAX_MONEY);
     ok_scase("-21000000 BTC", SignedAmount::MIN);
 }
 
@@ -761,18 +761,31 @@ fn to_from_string_in() {
     assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
     assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
 
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin), D::CentiBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin), D::MicroBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bit), D::Bit).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok());
+    assert!(
+        ua_str(&ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok()
+    );
+    assert!(ua_str(
+        &ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::CentiBitcoin),
+        D::CentiBitcoin
+    )
+    .is_ok());
+    assert!(ua_str(
+        &ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::MilliBitcoin),
+        D::MilliBitcoin
+    )
+    .is_ok());
+    assert!(ua_str(
+        &ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::MicroBitcoin),
+        D::MicroBitcoin
+    )
+    .is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::Bit), D::Bit).is_ok());
+    assert!(
+        ua_str(&ua_sat(Amount::MAX_MONEY.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok()
+    );
 
     assert_eq!(
-        sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
+        sa_str(&SignedAmount::MAX_MONEY.to_string_in(D::Satoshi), D::MicroBitcoin),
         Err(OutOfRangeError::too_big(true).into())
     );
     // Test an overflow bug in `abs()`
@@ -1080,7 +1093,7 @@ fn checked_sum_amounts() {
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(sum, None);
 
-    let amounts = [SignedAmount::MAX, ssat(1), ssat(21)];
+    let amounts = [SignedAmount::MAX_MONEY, ssat(1), ssat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(sum, None);
 

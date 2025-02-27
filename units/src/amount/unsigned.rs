@@ -312,7 +312,7 @@ impl Amount {
 
     /// Checked addition.
     ///
-    /// Returns [`None`] if the sum is larger than [`Amount::MAX`].
+    /// Returns [`None`] if the sum is larger than [`Amount::MAX_MONEY`].
     #[must_use]
     pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
         // No `map()` in const context.
@@ -336,7 +336,7 @@ impl Amount {
 
     /// Checked multiplication.
     ///
-    /// Returns [`None`] if the product is larger than [`Amount::MAX`].
+    /// Returns [`None`] if the product is larger than [`Amount::MAX_MONEY`].
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
         // No `map()` in const context.
