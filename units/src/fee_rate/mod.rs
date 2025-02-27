@@ -135,20 +135,20 @@ impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
-impl ops::Add for FeeRate {
-    type Output = FeeRate;
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Add<FeeRate> for FeeRate {
+        type Output = FeeRate;
 
-    fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
+        fn add(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 + rhs.0) }
+    }
+
+    impl ops::Sub<FeeRate> for FeeRate {
+        type Output = FeeRate;
+
+        fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
+    }
 }
-crate::internal_macros::impl_add_for_references!(FeeRate);
 crate::internal_macros::impl_add_assign!(FeeRate);
-
-impl ops::Sub for FeeRate {
-    type Output = FeeRate;
-
-    fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate(self.0 - rhs.0) }
-}
-crate::internal_macros::impl_sub_for_references!(FeeRate);
 crate::internal_macros::impl_sub_assign!(FeeRate);
 
 impl core::iter::Sum for FeeRate {

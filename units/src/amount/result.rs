@@ -12,7 +12,7 @@ use super::{Amount, SignedAmount};
 /// Result of an operation on [`Amount`] or [`SignedAmount`].
 ///
 /// The type parameter `T` should be normally `Amout` or `SignedAmount`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
     /// Result of a successful mathematical operation.
@@ -123,394 +123,183 @@ impl From<&SignedAmount> for NumOpResult<SignedAmount> {
     fn from(a: &SignedAmount) -> Self { Self::Valid(*a) }
 }
 
-impl ops::Add for Amount {
-    type Output = NumOpResult<Amount>;
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Add<Amount> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
-}
-crate::internal_macros::impl_add_for_amount_references!(Amount);
+        fn add(self, rhs: Amount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
+    }
+    impl ops::Add<NumOpResult<Amount>> for Amount {
+        type Output = NumOpResult<Amount>;
 
-impl ops::Add<NumOpResult<Amount>> for Amount {
-    type Output = NumOpResult<Amount>;
+        fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
+    }
 
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<NumOpResult<Amount>> for &Amount {
-    type Output = NumOpResult<Amount>;
+    impl ops::Sub<Amount> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
+        fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
+    }
+    impl ops::Sub<NumOpResult<Amount>> for Amount {
+        type Output = NumOpResult<Amount>;
 
-    fn add(self, rhs: Amount) -> Self::Output { rhs + self }
-}
-impl ops::Add<&Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
-
-    fn add(self, rhs: &Amount) -> Self::Output { rhs + self }
-}
-
-impl ops::Sub for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn sub(self, rhs: Amount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
-}
-crate::internal_macros::impl_sub_for_amount_references!(Amount);
-
-impl ops::Sub<NumOpResult<Amount>> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn sub(self, rhs: NumOpResult<Amount>) -> Self::Output {
-        match rhs {
-            R::Valid(amount) => self - amount,
-            R::Error(_) => rhs,
+        fn sub(self, rhs: NumOpResult<Amount>) -> Self::Output {
+            match rhs {
+                R::Valid(amount) => self - amount,
+                R::Error(_) => rhs,
+            }
         }
     }
-}
-impl ops::Sub<NumOpResult<Amount>> for &Amount {
-    type Output = NumOpResult<Amount>;
 
-    fn sub(self, rhs: NumOpResult<Amount>) -> Self::Output {
-        match rhs {
-            R::Valid(amount) => self - amount,
-            R::Error(_) => rhs,
+    impl ops::Mul<u64> for Amount {
+        type Output = NumOpResult<Amount>;
+
+        fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
+    }
+    impl ops::Mul<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn mul(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
+    }
+
+    impl ops::Div<u64> for Amount {
+        type Output = NumOpResult<Amount>;
+
+        fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
+    }
+    impl ops::Div<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn div(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+
+    impl ops::Rem<u64> for Amount {
+        type Output = NumOpResult<Amount>;
+
+        fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
+    }
+    impl ops::Rem<u64> for NumOpResult<Amount> {
+        type Output = NumOpResult<Amount>;
+
+        fn rem(self, modulus: u64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
+    }
+
+    impl ops::Add<SignedAmount> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
+    }
+    impl ops::Add<NumOpResult<SignedAmount>> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn add(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|a| a + self) }
+    }
+
+    impl ops::Sub<SignedAmount> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn sub(self, rhs: SignedAmount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
+    }
+    impl ops::Sub<NumOpResult<SignedAmount>> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn sub(self, rhs: NumOpResult<SignedAmount>) -> Self::Output {
+            match rhs {
+                R::Valid(amount) => self - amount,
+                R::Error(_) => rhs,
+            }
         }
     }
-}
-impl ops::Sub<Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
 
-    fn sub(self, rhs: Amount) -> Self::Output {
-        match self {
-            R::Valid(amount) => amount - rhs,
-            R::Error(_) => self,
+    impl ops::Mul<i64> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
+    }
+    impl ops::Mul<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn mul(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
+    }
+
+    impl ops::Div<i64> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
+    }
+    impl ops::Div<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn div(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+
+    impl ops::Rem<i64> for SignedAmount {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
+    }
+    impl ops::Rem<i64> for NumOpResult<SignedAmount> {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn rem(self, modulus: i64) -> Self::Output { self.and_then(|lhs| lhs % modulus) }
+    }
+
+    impl<T> ops::Add<NumOpResult<T>> for NumOpResult<T>
+    where
+        (T: Copy + ops::Add<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
+                (_, _) => R::Error(NumOpError {}),
+            }
         }
     }
-}
-impl ops::Sub<&Amount> for NumOpResult<Amount> {
-    type Output = NumOpResult<Amount>;
 
-    fn sub(self, rhs: &Amount) -> Self::Output {
-        match self {
-            R::Valid(amount) => amount - (*rhs),
-            R::Error(_) => self,
+    impl<T> ops::Add<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Add<NumOpResult<T>, Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn add(self, rhs: T) -> Self::Output { rhs + self }
+    }
+
+    impl<T> ops::Sub<NumOpResult<T>> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn sub(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
+                (_, _) => R::Error(NumOpError {}),
+            }
         }
     }
-}
 
-impl ops::Mul<u64> for Amount {
-    type Output = NumOpResult<Amount>;
+    impl<T> ops::Sub<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
 
-    fn mul(self, rhs: u64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
-}
-impl ops::Mul<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
-}
-impl ops::Mul<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: u64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: &u64) -> Self::Output { self.mul(*rhs) }
-}
-
-impl ops::Div<u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: u64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
-}
-impl ops::Div<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: u64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn div(self, rhs: &u64) -> Self::Output { (*self).div(*rhs) }
-}
-
-impl ops::Rem<u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: u64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
-}
-impl ops::Rem<&u64> for Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: &u64) -> Self::Output { self.rem(*modulus) }
-}
-impl ops::Rem<u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: u64) -> Self::Output { (*self).rem(modulus) }
-}
-impl ops::Rem<&u64> for &Amount {
-    type Output = NumOpResult<Amount>;
-
-    fn rem(self, modulus: &u64) -> Self::Output { (*self).rem(*modulus) }
-}
-
-impl ops::Add for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: SignedAmount) -> Self::Output { self.checked_add(rhs).valid_or_error() }
-}
-crate::internal_macros::impl_add_for_amount_references!(SignedAmount);
-
-impl ops::Add<NumOpResult<SignedAmount>> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<NumOpResult<SignedAmount>> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|a| a + self) }
-}
-impl ops::Add<SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: SignedAmount) -> Self::Output { rhs + self }
-}
-impl ops::Add<&SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn add(self, rhs: &SignedAmount) -> Self::Output { rhs + self }
-}
-
-impl ops::Sub for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn sub(self, rhs: SignedAmount) -> Self::Output { self.checked_sub(rhs).valid_or_error() }
-}
-crate::internal_macros::impl_sub_for_amount_references!(SignedAmount);
-
-impl ops::Sub<NumOpResult<SignedAmount>> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn sub(self, rhs: NumOpResult<SignedAmount>) -> Self::Output {
-        match rhs {
-            R::Valid(amount) => amount - rhs,
-            R::Error(_) => rhs,
+        fn sub(self, rhs: T) -> Self::Output {
+            match self {
+                R::Valid(amount) => amount - rhs,
+                R::Error(_) => self,
+            }
         }
     }
-}
-impl ops::Sub<NumOpResult<SignedAmount>> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn sub(self, rhs: NumOpResult<SignedAmount>) -> Self::Output {
-        match rhs {
-            R::Valid(amount) => amount - rhs,
-            R::Error(_) => rhs,
-        }
-    }
-}
-impl ops::Sub<SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn sub(self, rhs: SignedAmount) -> Self::Output {
-        match self {
-            R::Valid(amount) => amount - rhs,
-            R::Error(_) => self,
-        }
-    }
-}
-impl ops::Sub<&SignedAmount> for NumOpResult<SignedAmount> {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn sub(self, rhs: &SignedAmount) -> Self::Output {
-        match self {
-            R::Valid(amount) => amount - *rhs,
-            R::Error(_) => self,
-        }
-    }
-}
-
-impl ops::Mul<i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: i64) -> Self::Output { self.checked_mul(rhs).valid_or_error() }
-}
-impl ops::Mul<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
-}
-impl ops::Mul<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: i64) -> Self::Output { (*self).mul(rhs) }
-}
-impl ops::Mul<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn mul(self, rhs: &i64) -> Self::Output { self.mul(*rhs) }
-}
-
-impl ops::Div<i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: i64) -> Self::Output { self.checked_div(rhs).valid_or_error() }
-}
-impl ops::Div<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { self.div(*rhs) }
-}
-impl ops::Div<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: i64) -> Self::Output { (*self).div(rhs) }
-}
-impl ops::Div<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn div(self, rhs: &i64) -> Self::Output { (*self).div(*rhs) }
-}
-
-impl ops::Rem<i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: i64) -> Self::Output { self.checked_rem(modulus).valid_or_error() }
-}
-impl ops::Rem<&i64> for SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: &i64) -> Self::Output { self.rem(*modulus) }
-}
-impl ops::Rem<i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: i64) -> Self::Output { (*self).rem(modulus) }
-}
-impl ops::Rem<&i64> for &SignedAmount {
-    type Output = NumOpResult<SignedAmount>;
-
-    fn rem(self, modulus: &i64) -> Self::Output { (*self).rem(*modulus) }
 }
 
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
     fn neg(self) -> Self::Output { Self::from_sat(self.to_sat().neg()) }
-}
-
-impl<T> ops::Add for NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>>,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add<NumOpResult<T>> for &NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs + rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add<&NumOpResult<T>> for NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs + *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Add for &NumOpResult<T>
-where
-    T: ops::Add<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn add(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs + *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-
-impl<T> ops::Sub for NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>>,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub<NumOpResult<T>> for &NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs - rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub<&NumOpResult<T>> for NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: &NumOpResult<T>) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => lhs - *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
-}
-impl<T> ops::Sub for &NumOpResult<T>
-where
-    T: ops::Sub<Output = NumOpResult<T>> + Copy,
-{
-    type Output = NumOpResult<T>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (R::Valid(lhs), R::Valid(rhs)) => *lhs - *rhs,
-            (_, _) => R::Error(NumOpError {}),
-        }
-    }
 }
 
 impl core::iter::Sum<NumOpResult<Amount>> for NumOpResult<Amount> {
@@ -584,7 +373,7 @@ impl OptionExt<SignedAmount> for Option<SignedAmount> {
 }
 
 /// An error occurred while doing a mathematical operation.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct NumOpError;
 
