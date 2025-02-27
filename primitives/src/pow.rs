@@ -24,9 +24,11 @@ pub struct CompactTarget(u32);
 
 impl CompactTarget {
     /// Constructs a new [`CompactTarget`] from a consensus encoded `u32`.
+    #[inline]
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    #[inline]
     pub fn to_consensus(self) -> u32 { self.0 }
 }
 

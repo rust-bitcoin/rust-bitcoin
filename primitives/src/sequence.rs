@@ -124,12 +124,14 @@ impl Sequence {
     }
 
     /// Constructs a new `Sequence` from a prefixed hex string.
+    #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
     }
 
     /// Constructs a new `Sequence` from an unprefixed hex string.
+    #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
@@ -203,23 +205,28 @@ impl Sequence {
     /// Returns the low 16 bits from sequence number.
     ///
     /// BIP-68 only uses the low 16 bits for relative lock value.
+    #[inline]
     fn low_u16(&self) -> u16 { self.0 as u16 }
 }
 
 impl Default for Sequence {
     /// The default value of sequence is 0xffffffff.
+    #[inline]
     fn default() -> Self { Sequence::MAX }
 }
 
 impl From<Sequence> for u32 {
+    #[inline]
     fn from(sequence: Sequence) -> u32 { sequence.0 }
 }
 
 impl fmt::Display for Sequence {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl fmt::LowerHex for Sequence {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
 #[cfg(feature = "alloc")]
@@ -228,10 +235,12 @@ internals::impl_to_hex_from_lower_hex!(Sequence, |sequence: &Sequence| {
 });
 
 impl fmt::UpperHex for Sequence {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 impl fmt::Debug for Sequence {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // 10 because its 8 digits + 2 for the '0x'
         write!(f, "Sequence({:#010x})", self.0)

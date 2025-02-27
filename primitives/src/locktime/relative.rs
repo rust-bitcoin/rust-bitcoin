@@ -89,6 +89,7 @@ impl LockTime {
     ///
     /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
     /// ```
+    #[inline]
     pub fn from_consensus(n: u32) -> Result<Self, DisabledLockTimeError> {
         let sequence = crate::Sequence::from_consensus(n);
         sequence.to_relative_lock_time().ok_or(DisabledLockTimeError(n))
@@ -370,12 +371,14 @@ impl fmt::Display for LockTime {
 
 impl convert::TryFrom<Sequence> for LockTime {
     type Error = DisabledLockTimeError;
+    #[inline]
     fn try_from(seq: Sequence) -> Result<LockTime, DisabledLockTimeError> {
         LockTime::from_sequence(seq)
     }
 }
 
 impl From<LockTime> for Sequence {
+    #[inline]
     fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
 }
 
@@ -387,10 +390,12 @@ pub struct DisabledLockTimeError(u32);
 impl DisabledLockTimeError {
     /// Accessor for the `u32` whose "disable" flag was set, preventing
     /// it from being parsed as a relative locktime.
+    #[inline]
     pub fn disabled_locktime_value(&self) -> u32 { self.0 }
 }
 
 impl fmt::Display for DisabledLockTimeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "lock time 0x{:08x} has disable flag set", self.0)
     }
@@ -417,6 +422,7 @@ impl IncompatibleHeightError {
 }
 
 impl fmt::Display for IncompatibleHeightError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -447,6 +453,7 @@ impl IncompatibleTimeError {
 }
 
 impl fmt::Display for IncompatibleTimeError {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,

@@ -70,6 +70,7 @@ where
 #[cfg(feature = "alloc")]
 impl Block<Unchecked> {
     /// Constructs a new `Block` without doing any validation.
+    #[inline]
     pub fn new_unchecked(header: Header, transactions: Vec<Transaction>) -> Block<Unchecked> {
         Block { header, transactions, witness_root: None, marker: PhantomData::<Unchecked> }
     }
@@ -78,6 +79,7 @@ impl Block<Unchecked> {
     ///
     /// You should only use this function if you trust the block i.e., it comes from a trusted node.
     #[must_use]
+    #[inline]
     pub fn assume_checked(self, witness_root: Option<WitnessMerkleNode>) -> Block<Checked> {
         Block {
             header: self.header,
@@ -88,37 +90,44 @@ impl Block<Unchecked> {
     }
 
     /// Decomposes block into its constituent parts.
+    #[inline]
     pub fn into_parts(self) -> (Header, Vec<Transaction>) { (self.header, self.transactions) }
 }
 
 #[cfg(feature = "alloc")]
 impl Block<Checked> {
     /// Gets a reference to the block header.
+    #[inline]
     pub fn header(&self) -> &Header { &self.header }
 
     /// Gets a reference to the block's list of transactions.
+    #[inline]
     pub fn transactions(&self) -> &[Transaction] { &self.transactions }
 
     /// Returns the cached witness root if one is present.
     ///
     /// It is assumed that a block will have the witness root calculated and cached as part of the
     /// validation process.
+    #[inline]
     pub fn cached_witness_root(&self) -> Option<WitnessMerkleNode> { self.witness_root }
 }
 
 #[cfg(feature = "alloc")]
 impl<V: Validation> Block<V> {
     /// Returns the block hash.
+    #[inline]
     pub fn block_hash(&self) -> BlockHash { self.header.block_hash() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<Block> for BlockHash {
+    #[inline]
     fn from(block: Block) -> BlockHash { block.block_hash() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Block> for BlockHash {
+    #[inline]
     fn from(block: &Block) -> BlockHash { block.block_hash() }
 }
 
@@ -212,10 +221,12 @@ impl fmt::Debug for Header {
 }
 
 impl From<Header> for BlockHash {
+    #[inline]
     fn from(header: Header) -> BlockHash { header.block_hash() }
 }
 
 impl From<&Header> for BlockHash {
+    #[inline]
     fn from(header: &Header) -> BlockHash { header.block_hash() }
 }
 
@@ -263,6 +274,7 @@ impl Version {
     /// Returns the inner `i32` value.
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
+    #[inline]
     pub fn to_consensus(self) -> i32 { self.0 }
 
     /// Checks whether the version number is signalling a soft fork at the given bit.
@@ -286,6 +298,7 @@ impl Version {
 }
 
 impl Default for Version {
+    #[inline]
     fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
 }
 
