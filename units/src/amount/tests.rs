@@ -339,53 +339,62 @@ fn floating_point() {
 #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
 fn parsing() {
     use super::ParseAmountError as E;
-    let btc = Denomination::Bitcoin;
-    let sat = Denomination::Satoshi;
+    let den_btc = Denomination::Bitcoin;
+    let den_sat = Denomination::Satoshi;
     let p = Amount::from_str_in;
     let sp = SignedAmount::from_str_in;
 
-    assert_eq!(p("x", btc), Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 })));
     assert_eq!(
-        p("-", btc),
+        p("x", den_btc),
+        Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 0 }))
+    );
+    assert_eq!(
+        p("-", den_btc),
         Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign }))
     );
     assert_eq!(
-        sp("-", btc),
+        sp("-", den_btc),
         Err(E::from(MissingDigitsError { kind: MissingDigitsKind::OnlyMinusSign }))
     );
     assert_eq!(
-        p("-1.0x", btc),
+        p("-1.0x", den_btc),
         Err(E::from(InvalidCharacterError { invalid_char: 'x', position: 4 }))
     );
     assert_eq!(
-        p("0.0 ", btc),
+        p("0.0 ", den_btc),
         Err(E::from(InvalidCharacterError { invalid_char: ' ', position: 3 }))
     );
     assert_eq!(
-        p("0.000.000", btc),
+        p("0.000.000", den_btc),
         Err(E::from(InvalidCharacterError { invalid_char: '.', position: 5 }))
     );
     #[cfg(feature = "alloc")]
     let more_than_max = format!("{}", Amount::MAX.to_sat() + 1);
     #[cfg(feature = "alloc")]
-    assert_eq!(p(&more_than_max, btc), Err(OutOfRangeError::too_big(false).into()));
-    assert_eq!(p("0.000000042", btc), Err(TooPreciseError { position: 10 }.into()));
-    assert_eq!(p("1.0000000", sat), Ok(Amount::from_sat_unchecked(1)));
-    assert_eq!(p("1.1", sat), Err(TooPreciseError { position: 2 }.into()));
-    assert_eq!(p("1000.1", sat), Err(TooPreciseError { position: 5 }.into()));
-    assert_eq!(p("1001.0000000", sat), Ok(Amount::from_sat_unchecked(1001)));
-    assert_eq!(p("1000.0000001", sat), Err(TooPreciseError { position: 11 }.into()));
+    assert_eq!(p(&more_than_max, den_btc), Err(OutOfRangeError::too_big(false).into()));
+    assert_eq!(p("0.000000042", den_btc), Err(TooPreciseError { position: 10 }.into()));
+    assert_eq!(p("1.0000000", den_sat), Ok(Amount::from_sat_unchecked(1)));
+    assert_eq!(p("1.1", den_sat), Err(TooPreciseError { position: 2 }.into()));
+    assert_eq!(p("1000.1", den_sat), Err(TooPreciseError { position: 5 }.into()));
+    assert_eq!(p("1001.0000000", den_sat), Ok(Amount::from_sat_unchecked(1001)));
+    assert_eq!(p("1000.0000001", den_sat), Err(TooPreciseError { position: 11 }.into()));
 
-    assert_eq!(p("1", btc), Ok(Amount::from_sat_unchecked(1_000_000_00)));
-    assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat_unchecked(-500_000_00)));
+    assert_eq!(p("1", den_btc), Ok(Amount::from_sat_unchecked(1_000_000_00)));
+    assert_eq!(sp("-.5", den_btc), Ok(SignedAmount::from_sat_unchecked(-500_000_00)));
     #[cfg(feature = "alloc")]
-    assert_eq!(sp(&SignedAmount::MIN.to_sat().to_string(), sat), Ok(SignedAmount::MIN));
-    assert_eq!(p("1.1", btc), Ok(Amount::from_sat_unchecked(1_100_000_00)));
-    assert_eq!(p("100", sat), Ok(Amount::from_sat_unchecked(100)));
-    assert_eq!(p("55", sat), Ok(Amount::from_sat_unchecked(55)));
-    assert_eq!(p("2100000000000000", sat), Ok(Amount::from_sat_unchecked(21_000_000__000_000_00)));
-    assert_eq!(p("2100000000000000.", sat), Ok(Amount::from_sat_unchecked(21_000_000__000_000_00)));
-    assert_eq!(p("21000000", btc), Ok(Amount::from_sat_unchecked(21_000_000__000_000_00)));
+    assert_eq!(sp(&SignedAmount::MIN.to_sat().to_string(), den_sat), Ok(SignedAmount::MIN));
+    assert_eq!(p("1.1", den_btc), Ok(Amount::from_sat_unchecked(1_100_000_00)));
+    assert_eq!(p("100", den_sat), Ok(Amount::from_sat_unchecked(100)));
+    assert_eq!(p("55", den_sat), Ok(Amount::from_sat_unchecked(55)));
+    assert_eq!(
+        p("2100000000000000", den_sat),
+        Ok(Amount::from_sat_unchecked(21_000_000__000_000_00))
+    );
+    assert_eq!(
+        p("2100000000000000.", den_sat),
+        Ok(Amount::from_sat_unchecked(21_000_000__000_000_00))
+    );
+    assert_eq!(p("21000000", den_btc), Ok(Amount::from_sat_unchecked(21_000_000__000_000_00)));
 
     // exactly 50 chars.
     assert_eq!(
