@@ -52,7 +52,7 @@ mod encapsulate {
     impl Amount {
         /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
         ///
-        /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX_MONEY`].
+        /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX`].
         pub const fn from_sat_unchecked(satoshi: u64) -> Amount { Self(satoshi) }
 
         /// Gets the number of satoshis in this [`Amount`].

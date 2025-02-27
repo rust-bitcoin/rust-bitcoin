@@ -725,15 +725,28 @@ fn to_from_string_in() {
     assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
     assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
 
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin), D::CentiBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin)
-        .is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin), D::MicroBitcoin)
-        .is_ok());
+    assert!(
+        ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok()
+    );
+    assert!(ua_str(
+        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin),
+        D::CentiBitcoin
+    )
+    .is_ok());
+    assert!(ua_str(
+        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin),
+        D::MilliBitcoin
+    )
+    .is_ok());
+    assert!(ua_str(
+        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin),
+        D::MicroBitcoin
+    )
+    .is_ok());
     assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bit), D::Bit).is_ok());
-    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok());
+    assert!(
+        ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok()
+    );
 
     assert_eq!(
         sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
@@ -1276,7 +1289,7 @@ fn check_const() {
     assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
     assert_eq!(SignedAmount::FIFTY_BTC.to_sat(), SignedAmount::ONE_BTC.to_sat() * 50);
     assert_eq!(Amount::FIFTY_BTC.to_sat(), Amount::ONE_BTC.to_sat() * 50);
-    assert_eq!(Amount::MAX_MONEY.to_sat() as i64, SignedAmount::MAX_MONEY.to_sat());
+    assert_eq!(Amount::MAX.to_sat() as i64, SignedAmount::MAX.to_sat());
 }
 
 // Sanity check than stdlib supports the set of reference combinations for the ops we want.
