@@ -95,7 +95,7 @@ impl_from!(&str);
 ///
 /// This is created by `display_cannot_parse` method and should be used as
 /// `write_err!("{}", self.input.display_cannot_parse("what is parsed"); self.source)` in parse
-/// error [`Display`](fmt::Display) imlementation if the error has source. If the error doesn't
+/// error [`Display`](fmt::Display) implementation if the error has source. If the error doesn't
 /// have a source just use regular `write!` with same formatting arguments.
 pub struct CannotParse<'a, T: fmt::Display + ?Sized> {
     input: &'a InputString,
