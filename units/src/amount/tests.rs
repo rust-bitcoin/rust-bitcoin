@@ -16,18 +16,19 @@ use super::*;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
-fn sat(sat: u64) -> Amount { Amount::from_sat(sat) }
-fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat) }
+fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
+fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
 #[test]
 fn sanity_check() {
+    let sat = |sat| Amount::from_sat(sat).unwrap();
+    let ssat = |ssat| SignedAmount::from_sat(ssat).unwrap();
+
     assert_eq!(ssat(-100).abs(), ssat(100));
-    assert_eq!(ssat(i64::MIN + 1).checked_abs().unwrap(), ssat(i64::MAX));
     assert_eq!(ssat(-100).signum(), -1);
     assert_eq!(ssat(0).signum(), 0);
     assert_eq!(ssat(100).signum(), 1);
     assert_eq!(SignedAmount::from(sat(100)), ssat(100));
-    assert!(ssat(i64::MIN).checked_abs().is_none());
     assert!(!ssat(-100).is_positive());
     assert!(ssat(100).is_positive());
 
@@ -96,7 +97,7 @@ fn from_str_zero_without_denomination() {
 
 #[test]
 fn from_int_btc() {
-    let amt = Amount::from_int_btc_const(2);
+    let amt = Amount::from_int_btc_const(2).unwrap();
     assert_eq!(sat(200_000_000), amt);
 }
 
@@ -113,8 +114,8 @@ fn amount_try_from_signed_amount() {
 
 #[test]
 fn mul_div() {
-    let op_result_sat = |sat| NumOpResult::Valid(Amount::from_sat(sat));
-    let op_result_ssat = |sat| NumOpResult::Valid(SignedAmount::from_sat(sat));
+    let op_result_sat = |sat| NumOpResult::Valid(Amount::from_sat(sat).unwrap());
+    let op_result_ssat = |sat| NumOpResult::Valid(SignedAmount::from_sat(sat).unwrap());
 
     assert_eq!(sat(14) * 3, op_result_sat(42));
     assert_eq!(sat(14) / 2, op_result_sat(7));
@@ -128,15 +129,6 @@ fn mul_div() {
 fn neg() {
     let amount = -SignedAmount::from_sat_unchecked(2);
     assert_eq!(amount.to_sat(), -2);
-}
-
-#[cfg(feature = "std")]
-#[test]
-fn overflows() {
-    let result = Amount::MAX + sat(1);
-    assert!(result.is_error());
-    let result = sat(8_446_744_073_709_551_615) * 3;
-    assert!(result.is_error());
 }
 
 #[test]
@@ -253,12 +245,6 @@ fn amount_checked_div_by_fee_rate() {
     let weight = max_amount.checked_div_by_fee_rate_floor(small_fee_rate).unwrap();
     // 21_000_000_0000_0000 sats / (1 sat/kwu) = 2_100_000_000_000_000_000 wu
     assert_eq!(weight, Weight::from_wu(2_100_000_000_000_000_000));
-
-    // Test overflow case
-    let tiny_fee_rate = FeeRate::from_sat_per_kwu(1);
-    let large_amount = Amount::from_sat(u64::MAX);
-    assert!(large_amount.checked_div_by_fee_rate_floor(tiny_fee_rate).is_none());
-    assert!(large_amount.checked_div_by_fee_rate_ceil(tiny_fee_rate).is_none());
 }
 
 #[cfg(feature = "alloc")]
@@ -412,8 +398,8 @@ macro_rules! check_format_non_negative {
             #[test]
             #[cfg(feature = "alloc")]
             fn $test_name() {
-                assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom)), $expected);
-                assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom)), $expected);
+                assert_eq!(format!($format_string, Amount::from_sat($val).unwrap().display_in(Denomination::$denom)), $expected);
+                assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).unwrap().display_in(Denomination::$denom)), $expected);
             }
         )*
     }
@@ -425,8 +411,8 @@ macro_rules! check_format_non_negative_show_denom {
             #[test]
             #[cfg(feature = "alloc")]
             fn $test_name() {
-                assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
-                assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                assert_eq!(format!($format_string, Amount::from_sat($val).unwrap().display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).unwrap().display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
             }
         )*
     }
@@ -1009,7 +995,7 @@ fn checked_sum_amounts() {
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(sum, Some(sat(1400)));
 
-    let amounts = [sat(u64::MAX), sat(1337), sat(21)];
+    let amounts = [Amount::MAX_MONEY, sat(1337), sat(21)];
     let sum = amounts.into_iter().checked_sum();
     assert_eq!(sum, None);
 
@@ -1176,8 +1162,8 @@ fn sanity_all_ops() {
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
 fn num_op_result_ops() {
-    let sat = Amount::from_sat(1);
-    let ssat = SignedAmount::from_sat(1);
+    let sat = Amount::from_sat(1).unwrap();
+    let ssat = SignedAmount::from_sat(1).unwrap();
 
     // Explicit type as sanity check.
     let res: NumOpResult<Amount> = sat + sat;
@@ -1227,8 +1213,8 @@ fn num_op_result_ops() {
 #[test]
 #[allow(clippy::op_ref)] // We are explicitly testing the references work with ops.
 fn num_op_result_ops_integer() {
-    let sat = Amount::from_sat(1);
-    let ssat = SignedAmount::from_sat(1);
+    let sat = Amount::from_sat(1).unwrap();
+    let ssat = SignedAmount::from_sat(1).unwrap();
 
     // Explicit type as sanity check.
     let res: NumOpResult<Amount> = sat + sat;
@@ -1261,8 +1247,8 @@ fn num_op_result_ops_integer() {
 fn amount_op_result_neg() {
     // TODO: Implement Neg all round.
 
-    // let sat = Amount::from_sat(1);
-    let ssat = SignedAmount::from_sat(1);
+    // let sat = Amount::from_sat(1).unwrap();
+    let ssat = SignedAmount::from_sat(1).unwrap();
 
     // let _ = -sat;
     let _ = -ssat;
@@ -1273,7 +1259,7 @@ fn amount_op_result_neg() {
 // Verify we have implemented all `Sum` for the `NumOpResult` type.
 #[test]
 fn amount_op_result_sum() {
-    let res = Amount::from_sat(1) + Amount::from_sat(1);
+    let res = Amount::from_sat(1).unwrap() + Amount::from_sat(1).unwrap();
     let amounts = [res, res];
     let amount_refs = [&res, &res];
 
