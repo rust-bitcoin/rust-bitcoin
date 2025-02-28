@@ -13,7 +13,10 @@ use crate::crypto::ecdsa;
 use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
-use crate::taproot::{self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE, TAPROOT_LEAF_MASK};
+use crate::taproot::{
+    self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
+    TAPROOT_LEAF_MASK,
+};
 use crate::Script;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
@@ -249,14 +252,16 @@ impl<'a> P2TrSpend<'a> {
         // for the fact that annex is still there.
         match witness.len() {
             0 => None,
-            1 => Some(P2TrSpend::Key { /* signature: witness.last().expect("len > 0") ,*/ annex: None }),
+            1 => Some(P2TrSpend::Key {
+                /* signature: witness.last().expect("len > 0") ,*/ annex: None,
+            }),
             2 if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
                 let spend = P2TrSpend::Key {
                     // signature: witness.second_to_last().expect("len > 1"),
                     annex: witness.last(),
                 };
                 Some(spend)
-            },
+            }
             // 2 => this is script spend without annex - same as when there are 3+ elements and the
             //   last one does NOT start with TAPROOT_ANNEX_PREFIX. This is handled in the catchall
             //   arm.
@@ -267,7 +272,7 @@ impl<'a> P2TrSpend<'a> {
                     annex: witness.last(),
                 };
                 Some(spend)
-            },
+            }
             _ => {
                 let spend = P2TrSpend::Script {
                     leaf_script: Script::from_bytes(witness.second_to_last().expect("len > 1")),
@@ -275,7 +280,7 @@ impl<'a> P2TrSpend<'a> {
                     annex: None,
                 };
                 Some(spend)
-            },
+            }
         }
     }
 
@@ -390,7 +395,8 @@ mod test {
     #[test]
     fn get_taproot_leaf_script() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let control_block =
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
@@ -403,10 +409,8 @@ mod test {
         let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
         let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
 
-        let expected_leaf_script = LeafScript {
-            version: LeafVersion::TapScript,
-            script: Script::from_bytes(&tapscript),
-        };
+        let expected_leaf_script =
+            LeafScript { version: LeafVersion::TapScript, script: Script::from_bytes(&tapscript) };
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_leaf_script().unwrap(), expected_leaf_script);
@@ -451,7 +455,8 @@ mod test {
 
         let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
         let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
-        let witness_key_spend_annex = deserialize::<Witness>(&witness_serialized_key_spend_annex[..]).unwrap();
+        let witness_key_spend_annex =
+            deserialize::<Witness>(&witness_serialized_key_spend_annex[..]).unwrap();
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_control_block(), Some(&control_block[..]));

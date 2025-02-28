@@ -61,7 +61,9 @@ impl ScriptBuf {
 
     /// Constructs a new empty script with pre-allocated capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self { ScriptBuf::from_bytes(Vec::with_capacity(capacity)) }
+    pub fn with_capacity(capacity: usize) -> Self {
+        ScriptBuf::from_bytes(Vec::with_capacity(capacity))
+    }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
     ///
@@ -96,9 +98,7 @@ impl ScriptBuf {
     ///
     /// It is guaranteed that `script.capacity() >= script.len()` always holds.
     #[inline]
-    pub fn capacity(&self) -> usize {
-        self.0.capacity()
-    }
+    pub fn capacity(&self) -> usize { self.0.capacity() }
 }
 
 impl Deref for ScriptBuf {
