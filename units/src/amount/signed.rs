@@ -402,32 +402,6 @@ impl SignedAmount {
         }
     }
 
-    /// Unchecked addition.
-    ///
-    /// Computes `self + rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount {
-        Self::from_sat(self.to_sat() + rhs.to_sat())
-    }
-
-    /// Unchecked subtraction.
-    ///
-    /// Computes `self - rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount {
-        Self::from_sat(self.to_sat() - rhs.to_sat())
-    }
-
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
     ///
     /// Returns [`None`] if either `self`, `rhs` or the result is strictly negative.
