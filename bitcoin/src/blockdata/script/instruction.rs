@@ -31,7 +31,7 @@ impl Instruction<'_> {
         }
     }
 
-    /// Returns the number interpretted by the script parser
+    /// Returns the number interpreted by the script parser
     /// if it can be coerced into a number.
     ///
     /// This does not require the script num to be minimal.
