@@ -28,11 +28,12 @@ impl Amount {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
+    /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
+    /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
     pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
@@ -151,7 +152,10 @@ impl FeeRate {
         // No `?` operator in const context.
         match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
+                Some(add_res) => match Amount::from_sat(add_res / 1000) {
+                    Ok(fee) => Some(fee),
+                    Err(_) => None,
+                },
                 None => None,
             },
             None => None,

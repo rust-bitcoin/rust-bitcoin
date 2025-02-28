@@ -59,7 +59,7 @@ pub(crate) use self::result::OptionExt;
 /// # Examples
 ///
 /// ```
-/// # use bitcoin_units::Amount;
+/// # use bitcoin_units::{amount, Amount};
 ///
 /// let equal = [
 ///     ("1 BTC", 100_000_000),
@@ -72,9 +72,10 @@ pub(crate) use self::result::OptionExt;
 /// for (string, sats) in equal {
 ///     assert_eq!(
 ///         string.parse::<Amount>().expect("valid bitcoin amount string"),
-///         Amount::from_sat(sats),
+///         Amount::from_sat(sats)?,
 ///     )
 /// }
+/// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
