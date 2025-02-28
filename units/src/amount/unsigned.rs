@@ -358,32 +358,6 @@ impl Amount {
         }
     }
 
-    /// Unchecked addition.
-    ///
-    /// Computes `self + rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_add(self, rhs: Amount) -> Amount {
-        Self::from_sat(self.to_sat() + rhs.to_sat())
-    }
-
-    /// Unchecked subtraction.
-    ///
-    /// Computes `self - rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_sub(self, rhs: Amount) -> Amount {
-        Self::from_sat(self.to_sat() - rhs.to_sat())
-    }
-
     /// Converts to a signed amount.
     #[rustfmt::skip] // Moves code comments to the wrong line.
     pub fn to_signed(self) -> SignedAmount {
