@@ -261,7 +261,7 @@ crate::internal_macros::define_extension_trait! {
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today’s Bitcoin network.
         #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
-        fn dust_value(&self) -> Amount { self.minimal_non_dust() }
+        fn dust_value(&self) -> Option<Amount> { self.minimal_non_dust() }
 
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today's Bitcoin network.
@@ -272,7 +272,7 @@ crate::internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-        fn minimal_non_dust(&self) -> Amount {
+        fn minimal_non_dust(&self) -> Option<Amount> {
             self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
         }
 
@@ -287,7 +287,7 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
-        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Amount {
+        fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Option<Amount> {
             self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
         }
 
@@ -394,7 +394,7 @@ mod sealed {
 
 crate::internal_macros::define_extension_trait! {
     pub(crate) trait ScriptExtPriv impl for Script {
-        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Amount {
+        fn minimal_non_dust_internal(&self, dust_relay_fee: u64) -> Option<Amount> {
             // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
             // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
             let sats = dust_relay_fee
@@ -408,13 +408,12 @@ crate::internal_macros::define_extension_trait! {
                     32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
                     8 + // The serialized size of the TxOut's amount field
                     self.consensus_encode(&mut sink()).expect("sinks don't error").to_u64() // The serialized size of this script_pubkey
-                })
-                .expect("dust_relay_fee or script length should not be absurdly large")
+                })?
                 / 1000; // divide by 1000 like in Core to get value as it cancels out DEFAULT_MIN_RELAY_TX_FEE
                         // Note: We ensure the division happens at the end, since Core performs the division at the end.
                         //       This will make sure none of the implicit floor operations mess with the value.
 
-            Amount::from_sat(sats)
+            Some(Amount::from_sat(sats))
         }
 
         fn count_sigops_internal(&self, accurate: bool) -> usize {
