@@ -12,6 +12,7 @@ use crate::key::{
 use crate::opcodes::all::*;
 use crate::script::witness_program::WitnessProgram;
 use crate::script::witness_version::WitnessVersion;
+use crate::script::witness_program::P2A_PROGRAM;
 use crate::script::{
     self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
     WScriptHash, WitnessScriptSizeError,
@@ -170,6 +171,11 @@ define_extension_trait! {
             new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
         }
 
+        /// Generates pay to anchor output.
+        fn new_p2a() -> Self {
+            new_witness_program_unchecked(WitnessVersion::V1, P2A_PROGRAM)
+        }
+
         /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
         fn new_witness_program(witness_program: &WitnessProgram) -> Self {
             Builder::new()
@@ -183,14 +189,14 @@ define_extension_trait! {
 /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
 /// Does not do any checks on version or program length.
 ///
-/// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
+/// Convenience method used by `new_p2a`, `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
 pub(super) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
     version: WitnessVersion,
     program: T,
 ) -> ScriptBuf {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
-    // In SegWit v0, the program must be 20 or 32 bytes long.
+    // In SegWit v0, the program must be either 20 (P2WPKH) bytes or 32 (P2WSH) bytes long
     debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }
