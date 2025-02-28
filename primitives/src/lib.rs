@@ -49,7 +49,6 @@ pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
 pub mod sequence;
-pub mod taproot;
 pub mod transaction;
 #[cfg(feature = "alloc")]
 pub mod witness;
@@ -80,7 +79,6 @@ pub use self::{
     opcodes::Opcode,
     pow::CompactTarget,
     sequence::Sequence,
-    taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
     transaction::{OutPoint, Txid, Wtxid},
 };
 
