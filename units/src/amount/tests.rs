@@ -195,18 +195,6 @@ fn checked_arithmetic() {
 }
 
 #[test]
-#[allow(deprecated_in_future)]
-fn unchecked_arithmetic() {
-    let sat = Amount::from_sat;
-    let ssat = SignedAmount::from_sat;
-
-    assert_eq!(ssat(10).unchecked_add(ssat(20)), ssat(30));
-    assert_eq!(ssat(50).unchecked_sub(ssat(10)), ssat(40));
-    assert_eq!(sat(5).unchecked_add(sat(7)), sat(12));
-    assert_eq!(sat(10).unchecked_sub(sat(7)), sat(3));
-}
-
-#[test]
 fn positive_sub() {
     let ssat = SignedAmount::from_sat;
 
