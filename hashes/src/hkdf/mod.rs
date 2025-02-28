@@ -11,6 +11,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
+use internals::wrap_debug::WrapDebug;
+
 use crate::{GeneralHash, HashEngine, Hmac, HmacEngine, IsByteArray};
 
 /// Output keying material max length multiple.
@@ -110,19 +112,19 @@ impl<T: GeneralHash> fmt::Debug for Hkdf<T> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use crate::{sha256t, sha256t_tag};
 
-        struct Fingerprint([u8; 8]); // Print 16 hex characters as a fingerprint.
-
-        impl fmt::Debug for Fingerprint {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { crate::debug_hex(&self.0, f) }
-        }
-
         sha256t_tag! {
             pub struct Tag = hash_str("bitcoin_hashes1DEBUG");
         }
 
         let hash = sha256t::Hash::<Tag>::hash(self.prk.as_ref());
-        let fingerprint = Fingerprint(core::array::from_fn(|i| hash.as_byte_array()[i]));
-        f.debug_tuple("Hkdf").field(&format_args!("#{:?}", fingerprint)).finish()
+        let fingerprint = &hash.as_byte_array()[0..8];
+
+        f.debug_tuple("Hkdf")
+            .field(&WrapDebug(|f| {
+                f.write_str("#")?;
+                crate::debug_hex(fingerprint, f)
+            }))
+            .finish()
     }
 }
 
