@@ -400,6 +400,16 @@ impl EcdsaSighashType {
         }
     }
 
+    /// Checks if the sighash type is [`Self::Single`] or [`Self::SinglePlusAnyoneCanPay`].
+    ///
+    /// This matches Bitcoin Core's behavior where SIGHASH_SINGLE bug check is based on the base
+    /// type (after masking with 0x1f), regardless of the ANYONECANPAY flag.
+    ///
+    /// See: <https://github.com/bitcoin/bitcoin/blob/e486597/src/script/interpreter.cpp#L1618-L1619>
+    pub fn is_single(&self) -> bool {
+        matches!(self, Self::Single | Self::SinglePlusAnyoneCanPay)
+    }
+
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
@@ -1316,7 +1326,7 @@ impl std::error::Error for AnnexError {
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, outputs_len: usize) -> bool {
     let ty = EcdsaSighashType::from_consensus(sighash);
-    ty == EcdsaSighashType::Single && input_index >= outputs_len
+    ty.is_single() && input_index >= outputs_len
 }
 
 /// Result of [`SighashCache::legacy_encode_signing_data_to`].
@@ -1453,8 +1463,6 @@ mod tests {
 
     #[test]
     fn sighash_single_bug() {
-        const SIGHASH_SINGLE: u32 = 3;
-
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: transaction::Version::ONE,
@@ -1465,10 +1473,16 @@ mod tests {
         let script = ScriptBuf::new();
         let cache = SighashCache::new(&tx);
 
-        let got = cache.legacy_signature_hash(1, &script, SIGHASH_SINGLE).expect("sighash");
-        let want = LegacySighash::from_slice(&UINT256_ONE).unwrap();
+        let sighash_single = 3;
+        let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
+        let want = LegacySighash::from_byte_array(UINT256_ONE);
+        assert_eq!(got, want);
 
-        assert_eq!(got, want)
+        // https://github.com/rust-bitcoin/rust-bitcoin/issues/4112
+        let sighash_single = 131;
+        let got = cache.legacy_signature_hash(1, &script, sighash_single).expect("sighash");
+        let want = LegacySighash::from_byte_array(UINT256_ONE);
+        assert_eq!(got, want);
     }
 
     #[test]
