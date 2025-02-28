@@ -348,7 +348,7 @@ impl<'a> core::iter::Sum<&'a NumOpResult<SignedAmount>> for NumOpResult<SignedAm
     }
 }
 
-pub(in crate::amount) trait OptionExt<T> {
+pub(crate) trait OptionExt<T> {
     fn valid_or_error(self) -> NumOpResult<T>;
 }
 
