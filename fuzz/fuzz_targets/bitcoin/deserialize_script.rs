@@ -9,6 +9,7 @@ fn do_test(data: &[u8]) {
     if let Ok(script) = s {
         let _: Result<Vec<script::Instruction>, script::Error> = script.instructions().collect();
 
+        let _ = script.to_string();
         let mut b = script::Builder::new();
         for ins in script.instructions_minimal() {
             if ins.is_err() {
