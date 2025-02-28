@@ -641,7 +641,8 @@ mod tests {
             witness: Witness::new(),
         };
 
-        let txout = TxOut { value: Amount::from_sat(123456789), script_pubkey: ScriptBuf::new() };
+        let txout =
+            TxOut { value: Amount::from_sat(123456789).unwrap(), script_pubkey: ScriptBuf::new() };
 
         let tx_orig = Transaction {
             version: Version::ONE,
@@ -653,7 +654,7 @@ mod tests {
         // Test changing the transaction
         let mut tx = tx_orig.clone();
         tx.inputs_mut()[0].previous_output.txid = Txid::from_byte_array([0xFF; 32]);
-        tx.outputs_mut()[0].value = Amount::from_sat(987654321);
+        tx.outputs_mut()[0].value = Amount::from_sat(987654321).unwrap();
         assert_eq!(tx.inputs()[0].previous_output.txid.to_byte_array(), [0xFF; 32]);
         assert_eq!(tx.outputs()[0].value.to_sat(), 987654321);
 

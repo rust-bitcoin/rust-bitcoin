@@ -299,7 +299,9 @@ crate::internal_macros::impl_op_for_references! {
 impl ops::Neg for SignedAmount {
     type Output = Self;
 
-    fn neg(self) -> Self::Output { Self::from_sat(self.to_sat().neg()) }
+    fn neg(self) -> Self::Output {
+        Self::from_sat(self.to_sat().neg()).expect("all +ve and -ve values are valid")
+    }
 }
 
 impl core::iter::Sum<NumOpResult<Amount>> for NumOpResult<Amount> {
