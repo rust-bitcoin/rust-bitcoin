@@ -32,13 +32,17 @@ impl Signature {
         match sl.len() {
             64 => {
                 // default type
-                let signature = secp256k1::schnorr::Signature::from_slice(sl)?;
+                let signature = secp256k1::schnorr::Signature::from_byte_array(
+                    sl[0..64].try_into().expect("Slice should be exactly 64 bytes"),
+                );
                 Ok(Signature { signature, sighash_type: TapSighashType::Default })
             }
             65 => {
                 let (sighash_type, signature) = sl.split_last().expect("slice len checked == 65");
                 let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
-                let signature = secp256k1::schnorr::Signature::from_slice(signature)?;
+                let signature = secp256k1::schnorr::Signature::from_byte_array(
+                    signature[0..64].try_into().expect("Slice should be exactly 64 bytes"),
+                );
                 Ok(Signature { signature, sighash_type })
             }
             len => Err(SigFromSliceError::InvalidSignatureSize(len)),
@@ -70,7 +74,7 @@ impl Signature {
     /// You can get a slice from it using deref coercions or turn it into an iterator.
     pub fn serialize(self) -> SerializedSignature {
         let mut buf = [0; serialized_signature::MAX_LEN];
-        let ser_sig = self.signature.serialize();
+        let ser_sig = self.signature.to_byte_array();
         buf[..64].copy_from_slice(&ser_sig);
         let len = if self.sighash_type == TapSighashType::Default {
             // default sighash type, don't add extra sighash byte
@@ -140,7 +144,9 @@ impl<'a> Arbitrary<'a> for Signature {
         let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
 
         Ok(Signature {
-            signature: secp256k1::schnorr::Signature::from_slice(&arbitrary_bytes).unwrap(),
+            signature: secp256k1::schnorr::Signature::from_byte_array(
+                arbitrary_bytes[0..64].try_into().expect("Slice should be exactly 64 bytes"),
+            ),
             sighash_type: TapSighashType::arbitrary(u)?,
         })
     }

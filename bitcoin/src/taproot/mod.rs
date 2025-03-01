@@ -1168,8 +1168,10 @@ impl ControlBlock {
         };
 
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
-            .map_err(TaprootError::InvalidInternalKey)?;
+        let internal_key = UntweakedPublicKey::from_byte_array(
+            &sl[1..TAPROOT_CONTROL_BASE_SIZE].try_into().expect("Slice should be exactly 32 bytes"),
+        )
+        .map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
