@@ -25,7 +25,7 @@ mod safety_boundary {
         /// Constructs an empty `ArrayVec`.
         pub const fn new() -> Self { Self { len: 0, data: [MaybeUninit::uninit(); CAP] } }
 
-        /// Constructs a new `ArrayVec` initialized with the contets of `slice`.
+        /// Constructs a new `ArrayVec` initialized with the contents of `slice`.
         ///
         /// # Panics
         ///
