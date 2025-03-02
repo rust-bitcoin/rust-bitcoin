@@ -92,7 +92,7 @@ pub enum AddressType {
     /// Pay to taproot.
     P2tr,
     /// Pay to anchor.
-    P2a
+    P2a,
 }
 
 impl fmt::Display for AddressType {
@@ -1530,7 +1530,6 @@ mod tests {
         assert_eq!(&rinsed.address, foo_checked.address.as_unchecked());
         assert_eq!(rinsed, foo_unchecked);
     }
-
 
     #[test]
     fn pay_to_anchor_address_regtest() {
