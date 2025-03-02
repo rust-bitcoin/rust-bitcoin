@@ -1289,6 +1289,15 @@ fn num_op_result_ops_integer() {
         }
     }
     check_op! {
+        // Operations on an amount type and an integer.
+        let _ = sat * 3_u64; // Explicit type for the benefit of the reader.
+        let _ = sat / 3;
+        let _ = sat % 3;
+
+        let _ = ssat * 3_i64; // Explicit type for the benefit of the reader.
+        let _ = ssat / 3;
+        let _ = ssat % 3;
+
         // Operations on a `NumOpResult` and integer.
         let _ = res * 3_u64; // Explicit type for the benefit of the reader.
         let _ = res / 3;
