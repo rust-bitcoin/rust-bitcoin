@@ -1,0 +1,6 @@
+[workspace]
+members = ["units"]
+resolver = "2"
+
+[patch.crates-io.bitcoin-units]
+path = "units"
