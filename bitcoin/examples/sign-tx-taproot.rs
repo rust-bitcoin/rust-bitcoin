@@ -49,7 +49,7 @@ fn main() {
     };
 
     // The transaction we want to sign and broadcast.
-    let mut unsigned_tx = Transaction {
+    let unsigned_tx = Transaction {
         version: transaction::Version::TWO,  // Post BIP-68.
         lock_time: absolute::LockTime::ZERO, // Ignore the locktime.
         input: vec![input],                  // Input goes into index 0.
@@ -63,7 +63,7 @@ fn main() {
     let prevouts = vec![dummy_utxo];
     let prevouts = Prevouts::All(&prevouts);
 
-    let mut sighasher = SighashCache::new(&mut unsigned_tx);
+    let mut sighasher = SighashCache::new(unsigned_tx);
     let sighash = sighasher
         .taproot_key_spend_signature_hash(input_index, &prevouts, sighash_type)
         .expect("failed to construct sighash");
