@@ -1127,64 +1127,58 @@ fn trailing_zeros_for_amount() {
 }
 
 #[test]
-#[allow(clippy::op_ref)]
-fn unsigned_addition() {
-    let sat = Amount::from_sat;
+fn add_sub_combos() {
+    // Checks lhs op rhs for all reference combos.
+    macro_rules! check_ref {
+        ($($lhs:ident $op:tt $rhs:ident = $ans:ident);* $(;)?) => {
+            $(
+                assert_eq!($lhs $op $rhs, $ans);
+                assert_eq!(&$lhs $op $rhs, $ans);
+                assert_eq!($lhs $op &$rhs, $ans);
+                assert_eq!(&$lhs $op &$rhs, $ans);
+            )*
+        }
+    }
 
-    let one = sat(1);
-    let two = sat(2);
-    let three = sat(3);
+    // Checks lhs op rhs for all amount and `NumOpResult` combos.
+    macro_rules! check_res {
+        ($($amount:ident, $op:tt, $lhs:literal, $rhs:literal, $ans:literal);* $(;)?) => {
+            $(
+                let amt = |sat| $amount::from_sat(sat);
 
-    assert!((one + two) == three.into());
-    assert!((one + two) == three.into());
-    assert!((&one + two) == three.into());
-    assert!((one + &two) == three.into());
-    assert!((&one + &two) == three.into());
-}
+                let sat_lhs = amt($lhs);
+                let sat_rhs = amt($rhs);
 
-#[test]
-#[allow(clippy::op_ref)]
-fn unsigned_subtract() {
-    let sat = Amount::from_sat;
+                let res_lhs = NumOpResult::from(sat_lhs);
+                let res_rhs = NumOpResult::from(sat_rhs);
 
-    let one = sat(1);
-    let two = sat(2);
-    let three = sat(3);
+                let ans = NumOpResult::from(amt($ans));
 
-    assert!(three - two == one.into());
-    assert!(&three - two == one.into());
-    assert!(three - &two == one.into());
-    assert!(&three - &two == one.into());
-}
+                check_ref! {
+                    sat_lhs $op sat_rhs = ans;
+                    sat_lhs $op res_rhs = ans;
+                    res_lhs $op sat_rhs = ans;
+                    res_lhs $op res_rhs = ans;
+                }
+            )*
+        }
+    }
 
-#[test]
-#[allow(clippy::op_ref)]
-fn signed_addition() {
-    let ssat = SignedAmount::from_sat;
+    // Checks lhs op rhs for both amount types.
+    macro_rules! check_op {
+        ($($lhs:literal $op:tt $rhs:literal = $ans:literal);* $(;)?) => {
+            $(
+                check_res!(Amount, $op, $lhs, $rhs, $ans);
+                check_res!(SignedAmount, $op, $lhs, $rhs, $ans);
+            )*
+        }
+    }
 
-    let one = ssat(1);
-    let two = ssat(2);
-    let three = ssat(3);
-
-    assert!(one + two == three.into());
-    assert!(&one + two == three.into());
-    assert!(one + &two == three.into());
-    assert!(&one + &two == three.into());
-}
-
-#[test]
-#[allow(clippy::op_ref)]
-fn signed_subtract() {
-    let ssat = SignedAmount::from_sat;
-
-    let one = ssat(1);
-    let two = ssat(2);
-    let three = ssat(3);
-
-    assert!(three - two == one.into());
-    assert!(&three - two == one.into());
-    assert!(three - &two == one.into());
-    assert!(&three - &two == one.into());
+    // We do not currently support division involving `NumOpResult` and an amount type.
+    check_op! {
+        307 + 461 = 768;
+        461 - 307 = 154;
+    }
 }
 
 #[test]
