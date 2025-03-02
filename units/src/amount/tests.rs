@@ -1283,6 +1283,38 @@ fn op_int_combos() {
 }
 
 #[test]
+fn unsigned_amount_div_by_amount() {
+    let sat = Amount::from_sat;
+
+    assert_eq!(sat(0) / sat(7), 0);
+    assert_eq!(sat(1897) / sat(7), 271);
+}
+
+#[test]
+#[should_panic(expected = "attempt to divide by zero")]
+fn unsigned_amount_div_by_amount_zero() {
+    let _ = Amount::from_sat(1897) / Amount::ZERO;
+}
+
+#[test]
+fn signed_amount_div_by_amount() {
+    let ssat = SignedAmount::from_sat;
+
+    assert_eq!(ssat(0) / ssat(7), 0);
+
+    assert_eq!(ssat(1897) / ssat(7), 271);
+    assert_eq!(ssat(1897) / ssat(-7), -271);
+    assert_eq!(ssat(-1897) / ssat(7), -271);
+    assert_eq!(ssat(-1897) / ssat(-7), 271);
+}
+
+#[test]
+#[should_panic(expected = "attempt to divide by zero")]
+fn signed_amount_div_by_amount_zero() {
+    let _ = SignedAmount::from_sat(1897) / SignedAmount::ZERO;
+}
+
+#[test]
 fn check_const() {
     assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
     assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
