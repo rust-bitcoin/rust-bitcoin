@@ -139,7 +139,7 @@ impl Denomination {
     }
 }
 
-/// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
+/// These form are ambiguous and could have many meanings.  For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type `PossiblyConfusingDenomination` is returned.
 const CONFUSING_FORMS: [&str; 6] = ["CBTC", "Cbtc", "MBTC", "Mbtc", "UBTC", "Ubtc"];
 
