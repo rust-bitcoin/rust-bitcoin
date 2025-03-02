@@ -287,7 +287,7 @@ generate_network_magic_conversion! {
 
 impl fmt::Display for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
@@ -298,7 +298,7 @@ impl fmt::Debug for Magic {
 
 impl fmt::LowerHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
@@ -306,7 +306,7 @@ impl_to_hex_from_lower_hex!(Magic, |_| 8);
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
+        hex_unstable::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
         Ok(())
     }
 }

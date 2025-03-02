@@ -13,11 +13,12 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = ["alloc", "hex-stable/std", "hex-unstable/std"]
+alloc = ["hex-stable/alloc", "hex-unstable/alloc"]
 
 [dev-dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, features = ["alloc"] }
+hex-unstable = { package = "hex-conservative", version = "0.4.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-0.4", default-features = false, features = ["alloc"] }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", git = "https://github.com/tcharding/hex-conservative", branch = "02-24-release-1.0-alpha.0", default-features = false, features = ["alloc"] }
 
 [package.metadata.docs.rs]
 all-features = true

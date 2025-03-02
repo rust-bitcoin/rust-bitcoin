@@ -86,7 +86,10 @@ extern crate test;
 
 /// Re-export the `hex-conservative` crate.
 #[cfg(feature = "hex")]
-pub extern crate hex;
+pub extern crate hex_stable as hex;
+#[doc(hidden)]
+#[cfg(feature = "hex")]
+pub extern crate hex_unstable;
 
 #[doc(hidden)]
 pub mod _export {

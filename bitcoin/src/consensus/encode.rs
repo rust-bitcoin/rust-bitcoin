@@ -17,7 +17,7 @@
 use core::mem;
 
 use hashes::{sha256, sha256d, GeneralHash, Hash};
-use hex::DisplayHex as _;
+use hex_unstable::DisplayHex as _;
 use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
 

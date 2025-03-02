@@ -936,7 +936,7 @@ macro_rules! impl_hex {
     ($hex:path, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                hex_unstable::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };

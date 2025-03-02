@@ -577,12 +577,13 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
-    use hex::test_hex_unwrap as hex;
     use serde_json::Value;
 
     use super::*;
     use crate::consensus::encode::deserialize;
     use crate::ScriptBuf;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn blockfilters() {

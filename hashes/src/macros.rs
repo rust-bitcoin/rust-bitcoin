@@ -302,7 +302,7 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
-        $crate::hex::impl_fmt_traits! {
+        $crate::hex_unstable::impl_fmt_traits! {
             #[display_backward($reverse)]
             impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness

@@ -38,7 +38,7 @@ pub mod hex {
     use core::fmt;
     use core::marker::PhantomData;
 
-    use hex::buf_encoder::BufEncoder;
+    use hex_unstable::buf_encoder::BufEncoder;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
     ///

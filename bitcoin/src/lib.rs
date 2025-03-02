@@ -74,7 +74,7 @@ pub extern crate bech32;
 pub extern crate hashes;
 
 /// Re-export the `hex-conservative` crate.
-pub extern crate hex;
+pub extern crate hex_stable as hex;
 
 /// Re-export the `bitcoin-io` crate.
 pub extern crate io;
@@ -190,7 +190,7 @@ mod prelude {
 
     pub use crate::io::sink;
 
-    pub use hex::DisplayHex;
+    pub use hex_unstable::DisplayHex;
 }
 
 pub mod amount {

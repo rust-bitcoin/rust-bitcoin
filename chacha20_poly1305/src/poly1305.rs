@@ -225,7 +225,7 @@ fn _print_acc(num: &[u32; 5]) {
 mod tests {
     use alloc::vec::Vec;
 
-    use hex::prelude::*;
+    use hex_unstable::prelude::*;
 
     use super::*;
 

@@ -304,13 +304,14 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::DisplayHex as _;
 
     use super::*;
     use crate::consensus::{deserialize, encode, serialize};
-    use crate::hex::DisplayHex;
     use crate::sighash::EcdsaSighashType;
     use crate::Transaction;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     #[test]
     fn exact_sized_iterator() {

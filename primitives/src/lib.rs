@@ -29,6 +29,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub extern crate hex_stable as hex;
+extern crate hex_unstable;
+
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;

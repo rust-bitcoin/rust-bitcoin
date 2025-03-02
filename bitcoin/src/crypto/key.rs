@@ -11,7 +11,7 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::hash160;
-use hex::{FromHex, HexToArrayError};
+use hex::FromHex;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
@@ -237,20 +237,20 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
-        use HexToArrayError::*;
+        use hex::ToArrayError as E;
 
         match s.len() {
             66 => {
-                let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e.parse_error() {
+                    E::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    E::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
             }
             130 => {
-                let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
-                    InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
-                    InvalidLength(_) => unreachable!("length checked already"),
+                let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e.parse_error() {
+                    E::InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
+                    E::InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
             }

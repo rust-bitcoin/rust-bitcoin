@@ -697,7 +697,6 @@ impl Decodable for V2NetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use hex::test_hex_unwrap as hex;
     use units::BlockHeight;
 
     use super::*;
@@ -715,6 +714,8 @@ mod test {
     use crate::p2p::ServiceFlags;
     use crate::script::ScriptBuf;
     use crate::transaction::Transaction;
+
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hex::FromHex>::from_hex($hex).unwrap()));
 
     fn hash(array: [u8; 32]) -> sha256d::Hash { sha256d::Hash::from_byte_array(array) }
 
