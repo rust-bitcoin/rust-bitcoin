@@ -10,9 +10,8 @@ use crate::key::{
     XOnlyPublicKey,
 };
 use crate::opcodes::all::*;
-use crate::script::witness_program::WitnessProgram;
+use crate::script::witness_program::{WitnessProgram, P2A_PROGRAM};
 use crate::script::witness_version::WitnessVersion;
-use crate::script::witness_program::P2A_PROGRAM;
 use crate::script::{
     self, Builder, PushBytes, RedeemScriptSizeError, Script, ScriptBuf, ScriptExt as _, ScriptHash,
     WScriptHash, WitnessScriptSizeError,

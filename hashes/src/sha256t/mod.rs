@@ -129,9 +129,7 @@ impl<T: Tag> Default for HashEngine<T> {
 }
 
 impl<T: Tag> Clone for HashEngine<T> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), PhantomData)
-    }
+    fn clone(&self) -> Self { Self(self.0.clone(), PhantomData) }
 }
 
 impl<T: Tag> crate::HashEngine for HashEngine<T> {

@@ -26,7 +26,7 @@ pub const MIN_SIZE: usize = 2;
 pub const MAX_SIZE: usize = 40;
 
 /// The P2A program which is given by 0x4e73.
-pub(crate) const P2A_PROGRAM: [u8;2] = [78, 115];
+pub(crate) const P2A_PROGRAM: [u8; 2] = [78, 115];
 
 /// The segregated witness program.
 ///
@@ -110,7 +110,7 @@ impl WitnessProgram {
 
     /// Constructs a new pay to anchor address
     pub const fn p2a() -> Self {
-        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM)}
+        WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
     }
 
     /// Returns the witness program version.
