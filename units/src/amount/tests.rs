@@ -1182,6 +1182,61 @@ fn add_sub_combos() {
 }
 
 #[test]
+fn unsigned_addition() {
+    let sat = Amount::from_sat;
+
+    assert_eq!(sat(0) + sat(0), NumOpResult::from(sat(0)));
+    assert_eq!(sat(0) + sat(307), NumOpResult::from(sat(307)));
+    assert_eq!(sat(307) + sat(0), NumOpResult::from(sat(307)));
+    assert_eq!(sat(307) + sat(461), NumOpResult::from(sat(768)));
+    assert_eq!(sat(0) + Amount::MAX_MONEY, NumOpResult::from(Amount::MAX_MONEY));
+}
+
+#[test]
+fn signed_addition() {
+    let ssat = SignedAmount::from_sat;
+
+    assert_eq!(ssat(0) + ssat(0), NumOpResult::from(ssat(0)));
+    assert_eq!(ssat(0) + ssat(307), NumOpResult::from(ssat(307)));
+    assert_eq!(ssat(307) + ssat(0), NumOpResult::from(ssat(307)));
+    assert_eq!(ssat(307) + ssat(461), NumOpResult::from(ssat(768)));
+    assert_eq!(ssat(0) + SignedAmount::MAX_MONEY, NumOpResult::from(SignedAmount::MAX_MONEY));
+
+    assert_eq!(ssat(0) + ssat(-307), NumOpResult::from(ssat(-307)));
+    assert_eq!(ssat(-307) + ssat(0), NumOpResult::from(ssat(-307)));
+    assert_eq!(ssat(-307) + ssat(461), NumOpResult::from(ssat(154)));
+    assert_eq!(ssat(307) + ssat(-461), NumOpResult::from(ssat(-154)));
+    assert_eq!(ssat(-307) + ssat(-461), NumOpResult::from(ssat(-768)));
+    assert_eq!(SignedAmount::MAX_MONEY + -SignedAmount::MAX_MONEY, NumOpResult::from(SignedAmount::ZERO));
+}
+
+#[test]
+fn unsigned_subtraction() {
+    let sat = Amount::from_sat;
+
+    assert_eq!(sat(0) - sat(0), NumOpResult::from(sat(0)));
+    assert_eq!(sat(307) - sat(0), NumOpResult::from(sat(307)));
+    assert_eq!(sat(461) - sat(307), NumOpResult::from(sat(154)));
+}
+
+#[test]
+fn signed_subtraction() {
+    let ssat = SignedAmount::from_sat;
+
+    assert_eq!(ssat(0) - ssat(0), NumOpResult::from(ssat(0)));
+    assert_eq!(ssat(0) - ssat(307), NumOpResult::from(ssat(-307)));
+    assert_eq!(ssat(307) - ssat(0), NumOpResult::from(ssat(307)));
+    assert_eq!(ssat(307) - ssat(461), NumOpResult::from(ssat(-154)));
+    assert_eq!(ssat(0) - SignedAmount::MAX_MONEY, NumOpResult::from(-SignedAmount::MAX_MONEY));
+
+    assert_eq!(ssat(0) - ssat(-307), NumOpResult::from(ssat(307)));
+    assert_eq!(ssat(-307) - ssat(0), NumOpResult::from(ssat(-307)));
+    assert_eq!(ssat(-307) - ssat(461), NumOpResult::from(ssat(-768)));
+    assert_eq!(ssat(307) - ssat(-461), NumOpResult::from(ssat(768)));
+    assert_eq!(ssat(-307) - ssat(-461), NumOpResult::from(ssat(154)));
+}
+
+#[test]
 fn check_const() {
     assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
     assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
