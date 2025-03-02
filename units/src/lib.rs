@@ -18,7 +18,6 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-mod fee;
 mod internal_macros;
 
 #[doc(hidden)]
@@ -29,7 +28,6 @@ pub mod _export {
     }
 }
 
-pub mod amount;
 pub mod block;
 pub mod fee_rate;
 pub mod locktime;
@@ -39,7 +37,6 @@ pub mod weight;
 #[doc(inline)]
 #[rustfmt::skip]
 pub use self::{
-    amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
     weight::Weight
