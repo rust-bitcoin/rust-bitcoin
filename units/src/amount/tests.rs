@@ -1252,8 +1252,10 @@ fn op_int_combos() {
     assert_eq!(res(23) * 31, res(713));
     assert_eq!(sres(23) * 31, sres(713));
 
-    // assert_eq!(31 * sat(23), res(713));
-    // assert_eq!(31 * ssat(23), sres(713));
+    assert_eq!(31 * sat(23), res(713));
+    assert_eq!(31 * ssat(23), sres(713));
+    assert_eq!(31 * res(23), res(713));
+    assert_eq!(31 * sres(23), sres(713));
 
     // No remainder.
     assert_eq!(sat(1897) / 7, res(271));
