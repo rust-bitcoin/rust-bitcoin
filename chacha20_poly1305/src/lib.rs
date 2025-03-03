@@ -4,6 +4,7 @@
 //!
 //! Combine the ChaCha20 stream cipher with the Poly1305 message authentication code
 //! to form an authenticated encryption with additional data (AEAD) algorithm.
+
 #![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
