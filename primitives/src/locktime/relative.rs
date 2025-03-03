@@ -249,11 +249,11 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_implied_by(self, other: LockTime) -> bool {
-        use LockTime::*;
+        use LockTime as L;
 
         match (self, other) {
-            (Blocks(this), Blocks(other)) => this.value() <= other.value(),
-            (Time(this), Time(other)) => this.value() <= other.value(),
+            (L::Blocks(this), L::Blocks(other)) => this.value() <= other.value(),
+            (L::Time(this), L::Time(other)) => this.value() <= other.value(),
             _ => false, // Not the same units.
         }
     }
@@ -305,11 +305,11 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
-        use LockTime::*;
+        use LockTime as L;
 
         match self {
-            Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
-            Time(time) => Err(IncompatibleHeightError { height, time }),
+            L::Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
+            L::Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
 
@@ -331,11 +331,11 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_satisfied_by_time(self, time: Time) -> Result<bool, IncompatibleTimeError> {
-        use LockTime::*;
+        use LockTime as L;
 
         match self {
-            Time(ref t) => Ok(t.value() <= time.value()),
-            Blocks(height) => Err(IncompatibleTimeError { time, height }),
+            L::Time(ref t) => Ok(t.value() <= time.value()),
+            L::Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
     }
 }
@@ -352,17 +352,17 @@ impl From<Time> for LockTime {
 
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LockTime::*;
+        use LockTime as L;
 
         if f.alternate() {
             match *self {
-                Blocks(ref h) => write!(f, "block-height {}", h),
-                Time(ref t) => write!(f, "block-time {} (512 second intervals)", t),
+                L::Blocks(ref h) => write!(f, "block-height {}", h),
+                L::Time(ref t) => write!(f, "block-time {} (512 second intervals)", t),
             }
         } else {
             match *self {
-                Blocks(ref h) => fmt::Display::fmt(h, f),
-                Time(ref t) => fmt::Display::fmt(t, f),
+                L::Blocks(ref h) => fmt::Display::fmt(h, f),
+                L::Time(ref t) => fmt::Display::fmt(t, f),
             }
         }
     }

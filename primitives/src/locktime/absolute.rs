@@ -42,13 +42,13 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// # Examples
 ///
 /// ```
-/// # use bitcoin_primitives::absolute::{self, LockTime::*};
+/// use bitcoin_primitives::absolute::{self, LockTime as L};
 /// # let n = absolute::LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
 /// # let lock_time = absolute::LockTime::from_consensus(741521);  // nLockTime
 /// // To compare absolute lock times there are various `is_satisfied_*` methods, you may also use:
 /// let _is_satisfied = match (n, lock_time) {
-///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
-///     (Seconds(n), Seconds(lock_time)) => n <= lock_time,
+///     (L::Blocks(n), L::Blocks(lock_time)) => n <= lock_time,
+///     (L::Seconds(n), L::Seconds(lock_time)) => n <= lock_time,
 ///     _ => panic!("handle invalid comparison error"),
 /// };
 /// ```
@@ -236,11 +236,11 @@ impl LockTime {
     /// ````
     #[inline]
     pub fn is_satisfied_by(self, height: Height, time: Time) -> bool {
-        use LockTime::*;
+        use LockTime as L;
 
         match self {
-            Blocks(n) => n <= height,
-            Seconds(n) => n <= time,
+            L::Blocks(n) => n <= height,
+            L::Seconds(n) => n <= time,
         }
     }
 
@@ -265,11 +265,11 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn is_implied_by(self, other: LockTime) -> bool {
-        use LockTime::*;
+        use LockTime as L;
 
         match (self, other) {
-            (Blocks(this), Blocks(other)) => this <= other,
-            (Seconds(this), Seconds(other)) => this <= other,
+            (L::Blocks(this), L::Blocks(other)) => this <= other,
+            (L::Seconds(this), L::Seconds(other)) => this <= other,
             _ => false, // Not the same units.
         }
     }
@@ -286,13 +286,13 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::absolute::{self, LockTime::*};
+    /// use bitcoin_primitives::absolute::{self, LockTime as L};
     /// # let n = absolute::LockTime::from_consensus(741521);  // n OP_CHECKLOCKTIMEVERIFY
     /// # let lock_time = absolute::LockTime::from_consensus(741521 + 1);  // nLockTime
     ///
     /// let _is_satisfied = match (n, lock_time) {
-    ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
-    ///     (Seconds(n), Seconds(lock_time)) => n <= lock_time,
+    ///     (L::Blocks(n), L::Blocks(lock_time)) => n <= lock_time,
+    ///     (L::Seconds(n), L::Seconds(lock_time)) => n <= lock_time,
     ///     _ => panic!("invalid comparison"),
     /// };
     ///
@@ -322,28 +322,28 @@ impl From<Time> for LockTime {
 
 impl fmt::Debug for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LockTime::*;
+        use LockTime as L;
 
         match *self {
-            Blocks(ref h) => write!(f, "{} blocks", h),
-            Seconds(ref t) => write!(f, "{} seconds", t),
+            L::Blocks(ref h) => write!(f, "{} blocks", h),
+            L::Seconds(ref t) => write!(f, "{} seconds", t),
         }
     }
 }
 
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LockTime::*;
+        use LockTime as L;
 
         if f.alternate() {
             match *self {
-                Blocks(ref h) => write!(f, "block-height {}", h),
-                Seconds(ref t) => write!(f, "block-time {} (seconds since epoch)", t),
+                L::Blocks(ref h) => write!(f, "block-height {}", h),
+                L::Seconds(ref t) => write!(f, "block-time {} (seconds since epoch)", t),
             }
         } else {
             match *self {
-                Blocks(ref h) => fmt::Display::fmt(h, f),
-                Seconds(ref t) => fmt::Display::fmt(t, f),
+                L::Blocks(ref h) => fmt::Display::fmt(h, f),
+                L::Seconds(ref t) => fmt::Display::fmt(t, f),
             }
         }
     }

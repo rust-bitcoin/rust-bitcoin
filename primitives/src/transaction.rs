@@ -445,14 +445,14 @@ impl From<Infallible> for ParseOutPointError {
 #[cfg(feature = "alloc")]
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseOutPointError::*;
+        use ParseOutPointError as E;
 
         match *self {
-            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
-            Vout(ref e) => write_err!(f, "error parsing vout"; e),
-            Format => write!(f, "OutPoint not in <txid>:<vout> format"),
-            TooLong => write!(f, "vout should be at most 10 digits"),
-            VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
+            E::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            E::Vout(ref e) => write_err!(f, "error parsing vout"; e),
+            E::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
+            E::TooLong => write!(f, "vout should be at most 10 digits"),
+            E::VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
         }
     }
 }
@@ -460,12 +460,12 @@ impl fmt::Display for ParseOutPointError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseOutPointError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseOutPointError::*;
+        use ParseOutPointError as E;
 
         match self {
-            Txid(e) => Some(e),
-            Vout(e) => Some(e),
-            Format | TooLong | VoutNotCanonical => None,
+            E::Txid(e) => Some(e),
+            E::Vout(e) => Some(e),
+            E::Format | E::TooLong | E::VoutNotCanonical => None,
         }
     }
 }
