@@ -211,10 +211,6 @@ impl ops::Add<BlockInterval> for BlockInterval {
     }
 }
 
-impl ops::AddAssign<BlockInterval> for BlockInterval {
-    fn add_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() + rhs.to_u32(); }
-}
-
 // interval - interval = interval
 impl ops::Sub<BlockInterval> for BlockInterval {
     type Output = BlockInterval;
@@ -223,6 +219,10 @@ impl ops::Sub<BlockInterval> for BlockInterval {
         let height = self.to_u32() - rhs.to_u32();
         BlockInterval::from_u32(height)
     }
+}
+
+impl ops::AddAssign<BlockInterval> for BlockInterval {
+    fn add_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() + rhs.to_u32(); }
 }
 
 impl ops::SubAssign<BlockInterval> for BlockInterval {
