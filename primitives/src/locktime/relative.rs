@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
+//! Provides type [`LockTime`] that implements the logic around `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
 //!
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether bit 22 of the `u32` consensus value is set.
@@ -18,7 +18,7 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
 /// Used for sequence numbers (`nSequence` in Bitcoin Core and [`TxIn::sequence`]
-/// in this library) and also for the argument to opcode 'OP_CHECKSEQUENCEVERIFY`.
+/// in this library) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
 ///
 /// ### Note on ordering
 ///
@@ -64,7 +64,7 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Constructs a new `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
+    /// Constructs a new `LockTime` from an `nSequence` value or the argument to `OP_CHECKSEQUENCEVERIFY`.
     ///
     /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
     /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
@@ -94,7 +94,7 @@ impl LockTime {
         sequence.to_relative_lock_time().ok_or(DisabledLockTimeError(n))
     }
 
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// Returns the `u32` value used to encode this locktime in an `nSequence` field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     ///
     /// # Warning

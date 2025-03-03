@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
+//! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
@@ -22,7 +22,7 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// since epoch).
 ///
 /// Used for transaction lock time (`nLockTime` in Bitcoin Core and [`Transaction::lock_time`]
-/// in this library) and also for the argument to opcode 'OP_CHECKLOCKTIMEVERIFY`.
+/// in this library) and also for the argument to opcode `OP_CHECKLOCKTIMEVERIFY`.
 ///
 /// ### Note on ordering
 ///
@@ -124,7 +124,7 @@ impl LockTime {
         Ok(Self::from_consensus(lock_time))
     }
 
-    /// Constructs a new `LockTime` from an nLockTime value or the argument to OP_CHEKCLOCKTIMEVERIFY.
+    /// Constructs a new `LockTime` from an `nLockTime` value or the argument to `OP_CHEKCLOCKTIMEVERIFY`.
     ///
     /// # Examples
     ///
@@ -218,7 +218,7 @@ impl LockTime {
     /// blocktime based lock it is checked against `time`.
     ///
     /// A 'timelock constraint' refers to the `n` from `n OP_CHEKCLOCKTIMEVERIFY`, this constraint
-    /// is satisfied if a transaction with nLockTime ([`Transaction::lock_time`]) set to
+    /// is satisfied if a transaction with `nLockTime` ([`Transaction::lock_time`]) set to
     /// `height`/`time` is valid.
     ///
     /// # Examples
@@ -275,7 +275,7 @@ impl LockTime {
     }
 
     /// Returns the inner `u32` value. This is the value used when creating this `LockTime`
-    /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or nLockTime.
+    /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or `nLockTime`.
     ///
     /// # Warning
     ///

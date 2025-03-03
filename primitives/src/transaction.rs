@@ -310,9 +310,9 @@ pub struct TxIn {
     /// the miner behavior cannot be enforced.
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
-    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
+    /// Note that this field is *not* (de)serialized with the rest of the `TxIn` in
     /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
+    /// Transaction. It *is* (de)serialized with the rest of the `TxIn` in other
     /// (de)serialization routines.
     pub witness: Witness,
 }
