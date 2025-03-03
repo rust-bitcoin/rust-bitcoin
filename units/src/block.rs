@@ -44,11 +44,9 @@ impl BlockHeight {
     pub const MAX: Self = BlockHeight(u32::MAX);
 
     /// Constructs a new block height from a `u32`.
-    // Because From<u32> is not const.
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block height as a `u32`.
-    // Because type inference doesn't always work using `Into`.
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
@@ -111,11 +109,9 @@ impl BlockInterval {
     pub const MAX: Self = BlockInterval(u32::MAX);
 
     /// Constructs a new block interval from a `u32`.
-    // Because From<u32> is not const.
     pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
     /// Returns block interval as a `u32`.
-    // Because type inference doesn't always work using `Into`.
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
