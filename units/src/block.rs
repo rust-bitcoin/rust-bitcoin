@@ -171,53 +171,55 @@ impl fmt::Display for TooBigForRelativeBlockHeightError {
 #[cfg(feature = "std")]
 impl std::error::Error for TooBigForRelativeBlockHeightError {}
 
-// height - height = interval
-impl ops::Sub<BlockHeight> for BlockHeight {
-    type Output = BlockInterval;
+crate::internal_macros::impl_op_for_references! {
+    // height - height = interval
+    impl ops::Sub<BlockHeight> for BlockHeight {
+        type Output = BlockInterval;
 
-    fn sub(self, rhs: BlockHeight) -> Self::Output {
-        let interval = self.to_u32() - rhs.to_u32();
-        BlockInterval::from_u32(interval)
+        fn sub(self, rhs: BlockHeight) -> Self::Output {
+            let interval = self.to_u32() - rhs.to_u32();
+            BlockInterval::from_u32(interval)
+        }
     }
-}
 
-// height + interval = height
-impl ops::Add<BlockInterval> for BlockHeight {
-    type Output = BlockHeight;
+    // height + interval = height
+    impl ops::Add<BlockInterval> for BlockHeight {
+        type Output = BlockHeight;
 
-    fn add(self, rhs: BlockInterval) -> Self::Output {
-        let height = self.to_u32() + rhs.to_u32();
-        BlockHeight::from_u32(height)
+        fn add(self, rhs: BlockInterval) -> Self::Output {
+            let height = self.to_u32() + rhs.to_u32();
+            BlockHeight::from_u32(height)
+        }
     }
-}
 
-// height - interval = height
-impl ops::Sub<BlockInterval> for BlockHeight {
-    type Output = BlockHeight;
+    // height - interval = height
+    impl ops::Sub<BlockInterval> for BlockHeight {
+        type Output = BlockHeight;
 
-    fn sub(self, rhs: BlockInterval) -> Self::Output {
-        let height = self.to_u32() - rhs.to_u32();
-        BlockHeight::from_u32(height)
+        fn sub(self, rhs: BlockInterval) -> Self::Output {
+            let height = self.to_u32() - rhs.to_u32();
+            BlockHeight::from_u32(height)
+        }
     }
-}
 
-// interval + interval = interval
-impl ops::Add<BlockInterval> for BlockInterval {
-    type Output = BlockInterval;
+    // interval + interval = interval
+    impl ops::Add<BlockInterval> for BlockInterval {
+        type Output = BlockInterval;
 
-    fn add(self, rhs: BlockInterval) -> Self::Output {
-        let height = self.to_u32() + rhs.to_u32();
-        BlockInterval::from_u32(height)
+        fn add(self, rhs: BlockInterval) -> Self::Output {
+            let height = self.to_u32() + rhs.to_u32();
+            BlockInterval::from_u32(height)
+        }
     }
-}
 
-// interval - interval = interval
-impl ops::Sub<BlockInterval> for BlockInterval {
-    type Output = BlockInterval;
+    // interval - interval = interval
+    impl ops::Sub<BlockInterval> for BlockInterval {
+        type Output = BlockInterval;
 
-    fn sub(self, rhs: BlockInterval) -> Self::Output {
-        let height = self.to_u32() - rhs.to_u32();
-        BlockInterval::from_u32(height)
+        fn sub(self, rhs: BlockInterval) -> Self::Output {
+            let height = self.to_u32() - rhs.to_u32();
+            BlockInterval::from_u32(height)
+        }
     }
 }
 
