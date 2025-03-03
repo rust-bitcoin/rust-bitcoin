@@ -166,17 +166,6 @@ impl Witness {
             .copy_from_slice(new_element);
     }
 
-    /// Note `index` is the index into the `content` vector and should be the result of calling
-    /// `decode_cursor`, which returns a valid index.
-    fn element_at(&self, index: usize) -> Option<&[u8]> {
-        let mut slice = &self.content[index..]; // Start of element.
-        let element_len = compact_size::decode_unchecked(&mut slice);
-        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
-        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
-        let end = element_len as usize;
-        Some(&slice[..end])
-    }
-
     /// Returns the last element in the witness, if any.
     pub fn last(&self) -> Option<&[u8]> {
         if self.witness_elements == 0 {
@@ -207,7 +196,13 @@ impl Witness {
     /// Return the nth element in the witness, if any
     pub fn nth(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
-        self.element_at(pos)
+
+        let mut slice = &self.content[pos..]; // Start of element.
+        let element_len = compact_size::decode_unchecked(&mut slice);
+        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
+        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
+        let end = element_len as usize;
+        Some(&slice[..end])
     }
 }
 
