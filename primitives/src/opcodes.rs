@@ -402,10 +402,10 @@ impl Opcode {
 
             // 16 opcodes of PushNum class
             (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
-                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32),
+                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_PUSHNUM_1.code)),
 
             // 76 opcodes of PushBytes class
-            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
+            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(u32::from(self.code)),
 
             // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
             (_, _) => Class::Ordinary(Ordinary::with(self)),
