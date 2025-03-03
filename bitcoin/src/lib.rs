@@ -120,14 +120,15 @@ pub mod taproot;
 pub use primitives::{
     block::{
         Block, BlockHash, Checked as BlockChecked, Header as BlockHeader,
-        Unchecked as BlockUnchecked, Validation as BlockValidation, WitnessCommitment,
+        Unchecked as BlockUnchecked, Validation as BlockValidation, Version as BlockVersion,
+        WitnessCommitment,
     },
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
     opcodes::Opcode,
     pow::CompactTarget, // No `pow` module outside of `primitives`.
     script::{Script, ScriptBuf},
     sequence::{self, Sequence}, // No `sequence` module outside of `primitives`.
-    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Wtxid},
+    transaction::{OutPoint, Transaction, TxIn, TxOut, Txid, Version as TransactionVersion, Wtxid},
     witness::Witness,
 };
 #[doc(inline)]
