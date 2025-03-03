@@ -453,4 +453,23 @@ mod tests {
         w /= Weight(4).into();
         assert_eq!(w, Weight(2));
     }
+
+    #[test]
+    fn remainder() {
+        let weight10 = Weight(10);
+        let weight3 = Weight(3);
+
+        let remainder = weight10 % weight3;
+        assert_eq!(remainder, 1);
+
+        let remainder = weight10 % 3;
+        assert_eq!(remainder, Weight(1));
+    }
+
+    #[test]
+    fn remainder_assign() {
+        let mut weight = Weight(10);
+        weight %= 3;
+        assert_eq!(weight, Weight(1));
+    }
 }
