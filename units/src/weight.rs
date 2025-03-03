@@ -12,10 +12,10 @@ use serde::{Deserialize, Serialize};
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
-/// Represents block weight - the weight of a transaction or block.
+/// Represents weight - the weight of a transaction or block.
 ///
 /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
-/// up the types as well as basic formatting features.
+/// up types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
