@@ -523,14 +523,6 @@ impl<'de> serde::Deserialize<'de> for &'de Script {
     where
         D: serde::Deserializer<'de>,
     {
-        if deserializer.is_human_readable() {
-            use crate::serde::de::Error;
-
-            return Err(D::Error::custom(
-                "deserialization of `&Script` from human-readable formats is not possible",
-            ));
-        }
-
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = &'de Script;
@@ -546,6 +538,15 @@ impl<'de> serde::Deserialize<'de> for &'de Script {
                 Ok(Script::from_bytes(v))
             }
         }
+
+        if deserializer.is_human_readable() {
+            use crate::serde::de::Error;
+
+            return Err(D::Error::custom(
+                "deserialization of `&Script` from human-readable formats is not possible",
+            ));
+        }
+
         deserializer.deserialize_bytes(Visitor)
     }
 }
