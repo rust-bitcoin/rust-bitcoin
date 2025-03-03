@@ -639,6 +639,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)] // This is fine, we never need to read it.
     fn str_roundtrip() {
         let mut unique = HashSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);
