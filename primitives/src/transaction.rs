@@ -547,8 +547,8 @@ impl Version {
     /// As of Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)),
     /// versions 1, 2, and 3 are considered standard.
     #[inline]
-    pub fn is_standard(&self) -> bool {
-        *self == Version::ONE || *self == Version::TWO || *self == Version::THREE
+    pub fn is_standard(self) -> bool {
+        self == Version::ONE || self == Version::TWO || self == Version::THREE
     }
 }
 

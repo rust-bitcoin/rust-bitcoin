@@ -177,7 +177,7 @@ impl LockTime {
 
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
-    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+    pub const fn is_same_unit(self, other: LockTime) -> bool {
         matches!(
             (self, other),
             (LockTime::Blocks(_), LockTime::Blocks(_)) | (LockTime::Time(_), LockTime::Time(_))
@@ -186,11 +186,11 @@ impl LockTime {
 
     /// Returns true if this lock time value is in units of block height.
     #[inline]
-    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+    pub const fn is_block_height(self) -> bool { matches!(self, LockTime::Blocks(_)) }
 
     /// Returns true if this lock time value is in units of time.
     #[inline]
-    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
+    pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
     ///
@@ -210,7 +210,7 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by(current_height(), current_time()));
     /// ```
     #[inline]
-    pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
+    pub fn is_satisfied_by(self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
         } else {
@@ -248,10 +248,10 @@ impl LockTime {
     /// assert!(satisfied);
     /// ```
     #[inline]
-    pub fn is_implied_by(&self, other: LockTime) -> bool {
+    pub fn is_implied_by(self, other: LockTime) -> bool {
         use LockTime::*;
 
-        match (*self, other) {
+        match (self, other) {
             (Blocks(this), Blocks(other)) => this.value() <= other.value(),
             (Time(this), Time(other)) => this.value() <= other.value(),
             _ => false, // Not the same units.
@@ -279,7 +279,7 @@ impl LockTime {
     /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
     /// ```
     #[inline]
-    pub fn is_implied_by_sequence(&self, other: Sequence) -> bool {
+    pub fn is_implied_by_sequence(self, other: Sequence) -> bool {
         if let Ok(other) = LockTime::from_sequence(other) {
             self.is_implied_by(other)
         } else {
@@ -304,10 +304,10 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_height(relative::Height::from(required_height + 1)).expect("a height"));
     /// ```
     #[inline]
-    pub fn is_satisfied_by_height(&self, height: Height) -> Result<bool, IncompatibleHeightError> {
+    pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
         use LockTime::*;
 
-        match *self {
+        match self {
             Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
             Time(time) => Err(IncompatibleHeightError { height, time }),
         }
@@ -330,10 +330,10 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_time(relative::Time::from_512_second_intervals(intervals + 10)).expect("a time"));
     /// ```
     #[inline]
-    pub fn is_satisfied_by_time(&self, time: Time) -> Result<bool, IncompatibleTimeError> {
+    pub fn is_satisfied_by_time(self, time: Time) -> Result<bool, IncompatibleTimeError> {
         use LockTime::*;
 
-        match *self {
+        match self {
             Time(ref t) => Ok(t.value() <= time.value()),
             Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }

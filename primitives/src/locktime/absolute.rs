@@ -195,7 +195,7 @@ impl LockTime {
 
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
-    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+    pub const fn is_same_unit(self, other: LockTime) -> bool {
         matches!(
             (self, other),
             (LockTime::Blocks(_), LockTime::Blocks(_))
@@ -205,11 +205,11 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block height.
     #[inline]
-    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+    pub const fn is_block_height(self) -> bool { matches!(self, LockTime::Blocks(_)) }
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
-    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
+    pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
     /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
@@ -234,10 +234,10 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
-    pub fn is_satisfied_by(&self, height: Height, time: Time) -> bool {
+    pub fn is_satisfied_by(self, height: Height, time: Time) -> bool {
         use LockTime::*;
 
-        match *self {
+        match self {
             Blocks(n) => n <= height,
             Seconds(n) => n <= time,
         }
@@ -263,10 +263,10 @@ impl LockTime {
     /// assert!(lock_time.is_implied_by(check));
     /// ```
     #[inline]
-    pub fn is_implied_by(&self, other: LockTime) -> bool {
+    pub fn is_implied_by(self, other: LockTime) -> bool {
         use LockTime::*;
 
-        match (*self, other) {
+        match (self, other) {
             (Blocks(this), Blocks(other)) => this <= other,
             (Seconds(this), Seconds(other)) => this <= other,
             _ => false, // Not the same units.
