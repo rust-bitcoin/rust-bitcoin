@@ -26,13 +26,14 @@ use std::collections::BTreeMap;
 
 use bitcoin::address::script_pubkey::ScriptBufExt as _;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
+use bitcoin::key::WPubkeyHash;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::Input;
 use bitcoin::secp256k1::{Secp256k1, Signing};
 use bitcoin::witness::WitnessExt as _;
 use bitcoin::{
     consensus, transaction, Address, Amount, EcdsaSighashType, Network, OutPoint, Psbt, ScriptBuf,
-    Sequence, Transaction, TxIn, TxOut, Txid, WPubkeyHash, Witness,
+    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 // The master xpriv, from which we derive the keys we control.

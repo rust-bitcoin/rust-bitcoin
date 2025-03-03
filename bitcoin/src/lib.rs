@@ -144,9 +144,7 @@ pub use crate::{
     bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
-    crypto::key::{
-        self, CompressedPublicKey, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
-    },
+    crypto::key::{self, CompressedPublicKey, PrivateKey, PublicKey, XOnlyPublicKey},
     crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag},
     merkle_tree::MerkleBlock,
     network::params::{self, Params},
@@ -163,7 +161,6 @@ pub use crate::{
     blockdata::locktime::{absolute, relative},
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
-    blockdata::script::{ScriptHash, WScriptHash}, // TODO: Move these down below after they are in primitives.
     // These modules also re-export all the respective `primitives` types.
     blockdata::{
         block, constants, fee_rate, locktime, opcodes, script, transaction, weight, witness,
