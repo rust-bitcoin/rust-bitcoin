@@ -437,7 +437,7 @@ mod test {
         let mut got = Witness::new();
         got.push([]);
         let want = single_empty_element();
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]

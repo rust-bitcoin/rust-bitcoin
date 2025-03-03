@@ -253,7 +253,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
         enc.input(script_sig_bytes);
 
-        enc.input(&input.sequence.0.to_le_bytes())
+        enc.input(&input.sequence.0.to_le_bytes());
     }
 
     // Encode outputs with leading compact size encoded int.
