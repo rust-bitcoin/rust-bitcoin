@@ -232,6 +232,7 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
 /// - Number of witness elements
 /// - Total bytes across all elements
 /// - List of hex-encoded witness elements
+#[allow(clippy::missing_fields_in_debug)] // We don't want to show `indices_start`.
 impl fmt::Debug for Witness {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let total_bytes: usize = self.iter().map(<[u8]>::len).sum();
