@@ -99,7 +99,7 @@ impl Witness {
     }
 
     /// Convenience method to create an array of byte-arrays from this witness.
-    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
+    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(<[u8]>::to_vec).collect() }
 
     /// Returns `true` if the witness contains no element.
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
@@ -234,7 +234,7 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
 /// - List of hex-encoded witness elements
 impl fmt::Debug for Witness {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let total_bytes: usize = self.iter().map(|elem| elem.len()).sum();
+        let total_bytes: usize = self.iter().map(<[u8]>::len).sum();
 
         f.debug_struct("Witness")
             .field("num_elements", &self.witness_elements)
@@ -242,7 +242,7 @@ impl fmt::Debug for Witness {
             .field(
                 "elements",
                 &WrapDebug(|f| {
-                    f.debug_list().entries(self.iter().map(|elem| elem.as_hex())).finish()
+                    f.debug_list().entries(self.iter().map(DisplayHex::as_hex)).finish()
                 }),
             )
             .finish()
