@@ -401,7 +401,7 @@ mod tests {
 
     #[test]
     fn display_and_alternate() {
-        let lock_by_height = LockTime::from_consensus(741521);
+        let lock_by_height = LockTime::from_consensus(741_521);
         let s = format!("{}", lock_by_height);
         assert_eq!(&s, "741521");
 
@@ -412,25 +412,25 @@ mod tests {
     #[test]
     fn lock_time_from_hex_lower() {
         let lock_by_time = LockTime::from_hex("0x6289c350").unwrap();
-        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289C350));
+        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289_C350));
     }
 
     #[test]
     fn lock_time_from_hex_upper() {
         let lock_by_time = LockTime::from_hex("0X6289C350").unwrap();
-        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289C350));
+        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289_C350));
     }
 
     #[test]
     fn lock_time_from_unprefixed_hex_lower() {
         let lock_by_time = LockTime::from_unprefixed_hex("6289c350").unwrap();
-        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289C350));
+        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289_C350));
     }
 
     #[test]
     fn lock_time_from_unprefixed_hex_upper() {
         let lock_by_time = LockTime::from_unprefixed_hex("6289C350").unwrap();
-        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289C350));
+        assert_eq!(lock_by_time, LockTime::from_consensus(0x6289_C350));
     }
 
     #[test]
@@ -447,7 +447,7 @@ mod tests {
         assert!(lock_by_height.is_block_height());
         assert!(!lock_by_height.is_block_time());
 
-        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
         let lock_by_time = LockTime::from_consensus(t);
 
         assert!(!lock_by_time.is_block_height());
@@ -456,7 +456,7 @@ mod tests {
         // Test is_same_unit() logic
         assert!(lock_by_height.is_same_unit(LockTime::from_consensus(800_000)));
         assert!(!lock_by_height.is_same_unit(lock_by_time));
-        assert!(lock_by_time.is_same_unit(LockTime::from_consensus(1653282000)));
+        assert!(lock_by_time.is_same_unit(LockTime::from_consensus(1_653_282_000)));
         assert!(!lock_by_time.is_same_unit(lock_by_height));
     }
 
@@ -468,7 +468,7 @@ mod tests {
         let height_above = Height::from_consensus(800_000).expect("failed to parse height");
         let height_below = Height::from_consensus(700_000).expect("failed to parse height");
 
-        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
         let time = Time::from_consensus(t).expect("invalid time value");
 
         assert!(lock_by_height.is_satisfied_by(height_same, time));
@@ -478,11 +478,11 @@ mod tests {
 
     #[test]
     fn satisfied_by_time() {
-        let lock_by_time = LockTime::from_consensus(1653195600); // May 22nd 2022, 5am UTC.
+        let lock_by_time = LockTime::from_consensus(1_653_195_600); // May 22nd 2022, 5am UTC.
 
-        let time_same = Time::from_consensus(1653195600).expect("May 22nd 2022, 5am UTC");
-        let time_after = Time::from_consensus(1653282000).expect("May 23rd 2022, 5am UTC");
-        let time_before = Time::from_consensus(1653109200).expect("May 21th 2022, 5am UTC");
+        let time_same = Time::from_consensus(1_653_195_600).expect("May 22nd 2022, 5am UTC");
+        let time_after = Time::from_consensus(1_653_282_000).expect("May 23rd 2022, 5am UTC");
+        let time_before = Time::from_consensus(1_653_109_200).expect("May 21th 2022, 5am UTC");
 
         let height = Height::from_consensus(800_000).expect("failed to parse height");
 
@@ -502,17 +502,17 @@ mod tests {
 
     #[test]
     fn time_correctly_implies() {
-        let t: u32 = 1700000005;
+        let t: u32 = 1_700_000_005;
         let lock_by_time = LockTime::from_consensus(t);
 
-        assert!(!lock_by_time.is_implied_by(LockTime::from_consensus(1700000004)));
-        assert!(lock_by_time.is_implied_by(LockTime::from_consensus(1700000005)));
-        assert!(lock_by_time.is_implied_by(LockTime::from_consensus(1700000006)));
+        assert!(!lock_by_time.is_implied_by(LockTime::from_consensus(1_700_000_004)));
+        assert!(lock_by_time.is_implied_by(LockTime::from_consensus(1_700_000_005)));
+        assert!(lock_by_time.is_implied_by(LockTime::from_consensus(1_700_000_006)));
     }
 
     #[test]
     fn incorrect_units_do_not_imply() {
         let lock_by_height = LockTime::from_consensus(750_005);
-        assert!(!lock_by_height.is_implied_by(LockTime::from_consensus(1700000004)));
+        assert!(!lock_by_height.is_implied_by(LockTime::from_consensus(1_700_000_004)));
     }
 }

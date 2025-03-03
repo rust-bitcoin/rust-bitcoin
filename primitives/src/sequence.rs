@@ -36,7 +36,7 @@ impl Sequence {
     /// The maximum allowable sequence number.
     ///
     /// The sequence number that disables replace-by-fee, absolute lock time and relative lock time.
-    pub const MAX: Self = Sequence(0xFFFFFFFF);
+    pub const MAX: Self = Sequence(0xFFFF_FFFF);
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and absolute lock time.
@@ -49,12 +49,12 @@ impl Sequence {
     /// The sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     #[deprecated(since = "TBD", note = "use `ENABLE_LOCKTIME_AND_RBF` instead")]
-    pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
+    pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFF_FFFD);
     /// The maximum sequence number that enables replace-by-fee and absolute lock time but
     /// disables relative lock time.
     ///
     /// This sequence number has no meaning other than to enable RBF and the absolute locktime.
-    pub const ENABLE_LOCKTIME_AND_RBF: Self = Sequence(0xFFFFFFFD);
+    pub const ENABLE_LOCKTIME_AND_RBF: Self = Sequence(0xFFFF_FFFD);
 
     /// The number of bytes that a sequence number contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
@@ -66,11 +66,11 @@ impl Sequence {
     /// (Explicit Signalling [BIP-125]).
     ///
     /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki]>
-    const MIN_NO_RBF: Self = Sequence(0xFFFFFFFE);
+    const MIN_NO_RBF: Self = Sequence(0xFFFF_FFFE);
     /// BIP-68 relative lock time disable flag mask.
-    const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x80000000;
+    const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
     /// BIP-68 relative lock time type flag mask.
-    const LOCK_TYPE_MASK: u32 = 0x00400000;
+    const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
@@ -310,9 +310,9 @@ mod tests {
 
     #[test]
     fn sequence_properties() {
-        let seq_max = Sequence(0xFFFFFFFF);
-        let seq_no_rbf = Sequence(0xFFFFFFFE);
-        let seq_rbf = Sequence(0xFFFFFFFD);
+        let seq_max = Sequence(0xFFFF_FFFF);
+        let seq_no_rbf = Sequence(0xFFFF_FFFE);
+        let seq_rbf = Sequence(0xFFFF_FFFD);
 
         assert!(seq_max.is_final());
         assert!(!seq_no_rbf.is_final());
@@ -323,12 +323,12 @@ mod tests {
         assert!(seq_rbf.is_rbf());
         assert!(!seq_no_rbf.is_rbf());
 
-        let seq_relative = Sequence(0x7FFFFFFF);
+        let seq_relative = Sequence(0x7FFF_FFFF);
         assert!(seq_relative.is_relative_lock_time());
         assert!(!seq_max.is_relative_lock_time());
 
-        let seq_height_locked = Sequence(0x00399999);
-        let seq_time_locked = Sequence(0x00400000);
+        let seq_height_locked = Sequence(0x0039_9999);
+        let seq_time_locked = Sequence(0x0040_0000);
         assert!(seq_height_locked.is_height_locked());
         assert!(seq_time_locked.is_time_locked());
         assert!(!seq_time_locked.is_height_locked());
@@ -337,12 +337,12 @@ mod tests {
 
     #[test]
     fn sequence_formatting() {
-        let sequence = Sequence(0x7FFFFFFF);
+        let sequence = Sequence(0x7FFF_FFFF);
         assert_eq!(format!("{:x}", sequence), "7fffffff");
         assert_eq!(format!("{:X}", sequence), "7FFFFFFF");
 
         // Test From<Sequence> for u32
         let sequence_u32: u32 = sequence.into();
-        assert_eq!(sequence_u32, 0x7FFFFFFF);
+        assert_eq!(sequence_u32, 0x7FFF_FFFF);
     }
 }

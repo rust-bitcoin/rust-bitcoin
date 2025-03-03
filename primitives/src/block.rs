@@ -349,36 +349,36 @@ mod tests {
 
     #[test]
     fn version_is_not_signalling_with_invalid_bit() {
-        let arbitrary_version = Version::from_consensus(1234567890);
+        let arbitrary_version = Version::from_consensus(1_234_567_890);
         // The max bit number to signal is 28.
         assert!(!Version::is_signalling_soft_fork(&arbitrary_version, 29));
     }
 
     #[test]
     fn version_is_not_signalling_when_use_version_bit_not_set() {
-        let version = Version::from_consensus(0b01000000000000000000000000000000);
+        let version = Version::from_consensus(0b0100_0000_0000_0000_0000_0000_0000_0000);
         // Top three bits must be 001 to signal.
         assert!(!Version::is_signalling_soft_fork(&version, 1));
     }
 
     #[test]
     fn version_is_signalling() {
-        let version = Version::from_consensus(0b00100000000000000000000000000010);
+        let version = Version::from_consensus(0b0010_0000_0000_0000_0000_0000_0000_0010);
         assert!(Version::is_signalling_soft_fork(&version, 1));
-        let version = Version::from_consensus(0b00110000000000000000000000000000);
+        let version = Version::from_consensus(0b0011_0000_0000_0000_0000_0000_0000_0000);
         assert!(Version::is_signalling_soft_fork(&version, 28));
     }
 
     #[test]
     fn version_is_not_signalling() {
-        let version = Version::from_consensus(0b00100000000000000000000000000010);
+        let version = Version::from_consensus(0b0010_0000_0000_0000_0000_0000_0000_0010);
         assert!(!Version::is_signalling_soft_fork(&version, 0));
     }
 
     #[test]
     fn version_to_consensus() {
-        let version = Version::from_consensus(1234567890);
-        assert_eq!(version.to_consensus(), 1234567890);
+        let version = Version::from_consensus(1_234_567_890);
+        assert_eq!(version.to_consensus(), 1_234_567_890);
     }
 
     // Check that the size of the header consensus serialization matches the const SIZE value
