@@ -198,6 +198,16 @@ crate::internal_macros::impl_op_for_references! {
 
         fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
     }
+    impl ops::Rem<u64> for Weight {
+        type Output = Weight;
+
+        fn rem(self, rhs: u64) -> Self::Output { Weight(self.0 % rhs) }
+    }
+    impl ops::Rem<Weight> for Weight {
+        type Output = u64;
+
+        fn rem(self, rhs: Weight) -> Self::Output { self.0 % rhs.0 }
+    }
 }
 crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
@@ -208,6 +218,10 @@ impl ops::MulAssign<u64> for Weight {
 
 impl ops::DivAssign<u64> for Weight {
     fn div_assign(&mut self, rhs: u64) { self.0 /= rhs }
+}
+
+impl ops::RemAssign<u64> for Weight {
+    fn rem_assign(&mut self, rhs: u64) { self.0 %= rhs }
 }
 
 impl core::iter::Sum for Weight {
