@@ -144,7 +144,7 @@ impl FeeRate {
     /// ensuring that the transaction fee is enough instead of falling short if
     /// rounded down.
     ///
-    /// [`None`] is returned if an overflow occurred.
+    /// Returns [`None`] if overflow occurred.
     #[must_use]
     pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         // No `?` operator in const context.
@@ -206,7 +206,7 @@ impl Weight {
     /// ensuring that the transaction fee is enough instead of falling short if
     /// rounded down.
     ///
-    /// [`None`] is returned if an overflow occurred.
+    /// Returns [`None`] if overflow occurred.
     #[must_use]
     pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
         fee_rate.checked_mul_by_weight(self)
