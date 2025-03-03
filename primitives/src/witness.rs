@@ -306,7 +306,7 @@ impl serde::Serialize for Witness {
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
         // Note that the `Iter` strips the varints out when iterating.
-        for elem in self.iter() {
+        for elem in self {
             if human_readable {
                 seq.serialize_element(&internals::serde::SerializeBytesAsHex(elem))?;
             } else {

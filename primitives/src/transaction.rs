@@ -273,7 +273,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         for input in &tx.input {
             // Same as `Encodable for Witness`.
             enc.input(compact_size::encode(input.witness.len()).as_slice());
-            for element in input.witness.iter() {
+            for element in &input.witness {
                 enc.input(compact_size::encode(element.len()).as_slice());
                 enc.input(element);
             }
