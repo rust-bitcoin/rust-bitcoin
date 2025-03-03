@@ -44,7 +44,7 @@ pub mod _export {
 pub mod block;
 pub mod locktime;
 pub mod merkle_tree;
-pub mod opcodes;
+mod opcodes;
 pub mod pow;
 #[cfg(feature = "alloc")]
 pub mod script;
@@ -76,7 +76,6 @@ pub use self::{
     block::{BlockHash, Header as BlockHeader, WitnessCommitment},
     locktime::{absolute, relative},
     merkle_tree::{TxMerkleNode, WitnessMerkleNode},
-    opcodes::Opcode,
     pow::CompactTarget,
     sequence::Sequence,
     transaction::{OutPoint, Txid, Wtxid},

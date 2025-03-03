@@ -61,12 +61,12 @@ use core::convert::Infallible;
 use core::fmt;
 
 use io::{BufRead, Write};
-use primitives::opcodes::all::*;
-use primitives::opcodes::Opcode;
 
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::internal_macros::impl_asref_push_bytes;
 use crate::key::WPubkeyHash;
+use crate::opcodes::all::*;
+use crate::opcodes::Opcode;
 use crate::prelude::Vec;
 use crate::OutPoint;
 

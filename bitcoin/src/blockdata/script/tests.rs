@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use hex_lit::hex;
-use primitives::opcodes;
 
 use super::*;
 use crate::address::script_pubkey::{
@@ -9,7 +8,7 @@ use crate::address::script_pubkey::{
 };
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
-use crate::{Amount, FeeRate};
+use crate::{Amount, FeeRate, opcodes};
 
 #[test]
 #[rustfmt::skip]
