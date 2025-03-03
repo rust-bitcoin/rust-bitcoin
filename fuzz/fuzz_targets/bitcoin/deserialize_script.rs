@@ -12,6 +12,7 @@ fn do_test(data: &[u8]) {
         let _ = script.to_string();
         let _ = script.count_sigops();
         let _ = script.count_sigops_legacy();
+        let _ = script.minimal_non_dust();
 
         let mut b = script::Builder::new();
         for ins in script.instructions_minimal() {
