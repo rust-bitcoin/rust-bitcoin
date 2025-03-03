@@ -593,7 +593,9 @@ impl Xpriv {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
-            private_key: secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?,
+            private_key: secp256k1::SecretKey::from_byte_array(
+                &hmac_result.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
+            )?,
             chain_code: ChainCode::from_hmac(hmac_result),
         })
     }
@@ -665,8 +667,10 @@ impl Xpriv {
 
         hmac_engine.input(&u32::from(i).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let sk = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])
-            .expect("statistically impossible to hit");
+        let sk = secp256k1::SecretKey::from_byte_array(
+            &hmac_result.as_ref()[..32].try_into().expect("statistically impossible to hit"),
+        )
+        .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
@@ -705,7 +709,9 @@ impl Xpriv {
             chain_code: data[13..45]
                 .try_into()
                 .expect("45 - 13 == 32, which is the ChainCode length"),
-            private_key: secp256k1::SecretKey::from_slice(&data[46..78])?,
+            private_key: secp256k1::SecretKey::from_byte_array(
+                &data[46..78].try_into().expect("Slice should be exactly 32 bytes"),
+            )?,
         })
     }
 
@@ -812,8 +818,11 @@ impl Xpub {
                 hmac_engine.input(&n.to_be_bytes());
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-
-                let private_key = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?;
+                let private_key = secp256k1::SecretKey::from_byte_array(
+                    &hmac_result.as_ref()[..32]
+                        .try_into()
+                        .expect("Slice should be exactly 32 bytes"),
+                )?;
                 let chain_code = ChainCode::from_hmac(hmac_result);
                 Ok((private_key, chain_code))
             }

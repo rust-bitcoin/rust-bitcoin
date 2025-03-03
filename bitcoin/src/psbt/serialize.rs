@@ -260,7 +260,10 @@ impl Serialize for XOnlyPublicKey {
 
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        XOnlyPublicKey::from_slice(bytes).map_err(|_| Error::InvalidXOnlyPublicKey)
+        XOnlyPublicKey::from_byte_array(
+            bytes[..32].try_into().expect("statistically impossible to hit"),
+        )
+        .map_err(|_| Error::InvalidXOnlyPublicKey)
     }
 }
 
