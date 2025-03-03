@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monodic numeric result type that is used to return the result of
-//! doing mathematical operations (`core::ops`) on amount types.
+//! Provides a monodic numeric type used to return the result of mathematical
+//! operations (`core::ops`) on `Amount` types.
 
 use core::{fmt, ops};
 
