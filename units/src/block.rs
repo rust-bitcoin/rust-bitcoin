@@ -223,13 +223,8 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-impl ops::AddAssign<BlockInterval> for BlockInterval {
-    fn add_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() + rhs.to_u32(); }
-}
-
-impl ops::SubAssign<BlockInterval> for BlockInterval {
-    fn sub_assign(&mut self, rhs: BlockInterval) { self.0 = self.to_u32() - rhs.to_u32(); }
-}
+crate::internal_macros::impl_add_assign!(BlockInterval);
+crate::internal_macros::impl_sub_assign!(BlockInterval);
 
 impl core::iter::Sum for BlockInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
