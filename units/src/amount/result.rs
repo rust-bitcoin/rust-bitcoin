@@ -11,7 +11,7 @@ use super::{Amount, SignedAmount};
 
 /// Result of an operation on [`Amount`] or [`SignedAmount`].
 ///
-/// The type parameter `T` should be normally `Amout` or `SignedAmount`.
+/// The type parameter `T` should be normally `Amount` or `SignedAmount`.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
