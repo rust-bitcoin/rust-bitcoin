@@ -136,6 +136,7 @@ impl LockTime {
     /// let lock_time = absolute::LockTime::from_consensus(n_lock_time);
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_consensus(n: u32) -> Self {
         if units::locktime::absolute::is_block_height(n) {
             Self::Blocks(Height::from_consensus(n).expect("n is valid"))
