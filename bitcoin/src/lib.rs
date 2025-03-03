@@ -141,7 +141,6 @@ pub use units::{
 #[doc(inline)]
 pub use crate::{
     address::{Address, AddressType, KnownHrp},
-    bip158::{FilterHash, FilterHeader},
     bip32::XKeyIdentifier,
     crypto::ecdsa,
     crypto::key::{
