@@ -13,6 +13,7 @@ use hashes::{hash160, sha256};
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
+#[allow(clippy::wildcard_imports)]
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::rc::Rc;

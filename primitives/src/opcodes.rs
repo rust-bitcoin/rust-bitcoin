@@ -30,6 +30,7 @@ pub struct Opcode {
     code: u8,
 }
 
+#[allow(clippy::wildcard_imports)]
 use self::all::*;
 
 macro_rules! all_opcodes {
