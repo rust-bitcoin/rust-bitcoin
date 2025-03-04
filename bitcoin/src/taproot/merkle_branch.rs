@@ -45,18 +45,17 @@ impl TaprootMerkleBranch {
     /// The function returns an error if the number of bytes is not an integer multiple of 32 or
     /// if the number of hashes exceeds 128.
     pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
-        if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
+        use internals::slice::SliceExt;
+        let (node_hashes, remainder) = sl.bitcoin_as_chunks::<TAPROOT_CONTROL_NODE_SIZE>();
+        if !remainder.is_empty() {
             Err(InvalidMerkleBranchSizeError(sl.len()).into())
-        } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
+        } else if node_hashes.len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(sl.len() / TAPROOT_CONTROL_NODE_SIZE).into())
         } else {
-            let inner = sl
-                .chunks_exact(TAPROOT_CONTROL_NODE_SIZE)
-                .map(|chunk| {
-                    let bytes = <[u8; 32]>::try_from(chunk)
-                        .expect("chunks_exact always returns the correct size");
-                    TapNodeHash::from_byte_array(bytes)
-                })
+            let inner = node_hashes
+                .iter()
+                .copied()
+                .map(TapNodeHash::from_byte_array)
                 .collect();
 
             Ok(TaprootMerkleBranch(inner))

@@ -5,6 +5,7 @@ use core::arch::x86::*;
 #[cfg(all(feature = "std", target_arch = "x86_64"))]
 use core::arch::x86_64::*;
 
+use internals::slice::SliceExt;
 use super::{HashEngine, Midstate, BLOCK_SIZE};
 
 #[allow(non_snake_case)]
@@ -526,8 +527,8 @@ impl HashEngine {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 
         let mut w = [0u32; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.chunks_exact(4)) {
-            *w_val = u32::from_be_bytes(buff_bytes.try_into().expect("4 byte slice"));
+        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.bitcoin_as_chunks().0) {
+            *w_val = u32::from_be_bytes(*buff_bytes);
         }
 
         let mut a = self.h[0];

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
+use internals::slice::SliceExt;
 use super::{HashEngine, BLOCK_SIZE};
 
 #[cfg(feature = "small-hash")]
@@ -132,8 +133,8 @@ impl HashEngine {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 
         let mut w = [0u32; 16];
-        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.chunks_exact(4)) {
-            *w_val = u32::from_le_bytes(buff_bytes.try_into().expect("4 byte slice"))
+        for (w_val, buff_bytes) in w.iter_mut().zip(self.buffer.bitcoin_as_chunks().0) {
+            *w_val = u32::from_le_bytes(*buff_bytes)
         }
 
         process_block!(self.h, w,

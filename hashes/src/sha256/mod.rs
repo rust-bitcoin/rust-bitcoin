@@ -9,6 +9,7 @@ mod crypto;
 mod tests;
 
 use core::{cmp, convert, fmt};
+use internals::slice::SliceExt;
 
 use crate::{incomplete_block_len, sha256d, HashEngine as _};
 #[cfg(doc)]
@@ -79,8 +80,8 @@ impl HashEngine {
     /// Please see docs on [`Midstate`] before using this function.
     pub fn from_midstate(midstate: Midstate) -> HashEngine {
         let mut ret = [0; 8];
-        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().chunks_exact(4)) {
-            *ret_val = u32::from_be_bytes(midstate_bytes.try_into().expect("4 byte slice"));
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().bitcoin_as_chunks().0) {
+            *ret_val = u32::from_be_bytes(*midstate_bytes);
         }
 
         HashEngine { buffer: [0; BLOCK_SIZE], h: ret, bytes_hashed: midstate.bytes_hashed }
@@ -108,8 +109,8 @@ impl HashEngine {
     #[cfg(not(hashes_fuzz))]
     fn midstate_unchecked(&self) -> Midstate {
         let mut ret = [0; 32];
-        for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
-            ret_bytes.copy_from_slice(&val.to_be_bytes());
+        for (val, ret_bytes) in self.h.iter().zip(ret.bitcoin_as_chunks_mut::<4>().0) {
+            *ret_bytes = val.to_be_bytes();
         }
         Midstate { bytes: ret, bytes_hashed: self.bytes_hashed }
     }
