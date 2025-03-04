@@ -22,7 +22,7 @@ serde = ["dep:serde", "hex"]
 small-hash = []
 
 [dependencies]
-
+internals = { package = "bitcoin-internals", version = "0.4.0" }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 
