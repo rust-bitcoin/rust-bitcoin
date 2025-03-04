@@ -257,7 +257,7 @@ impl<'a> P2TrSpend<'a> {
             }),
             2 if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
                 let spend = P2TrSpend::Key {
-                    // signature: witness.second_to_last().expect("len > 1"),
+                    // signature: witness.get_back(1).expect("len > 1"),
                     annex: witness.last(),
                 };
                 Some(spend)
@@ -267,15 +267,15 @@ impl<'a> P2TrSpend<'a> {
             //   arm.
             3.. if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
                 let spend = P2TrSpend::Script {
-                    leaf_script: Script::from_bytes(witness.third_to_last().expect("len > 2")),
-                    control_block: witness.second_to_last().expect("len > 1"),
+                    leaf_script: Script::from_bytes(witness.get_back(2).expect("len > 2")),
+                    control_block: witness.get_back(1).expect("len > 1"),
                     annex: witness.last(),
                 };
                 Some(spend)
             }
             _ => {
                 let spend = P2TrSpend::Script {
-                    leaf_script: Script::from_bytes(witness.second_to_last().expect("len > 1")),
+                    leaf_script: Script::from_bytes(witness.get_back(1).expect("len > 1")),
                     control_block: witness.last().expect("len > 0"),
                     annex: None,
                 };
@@ -514,13 +514,10 @@ mod test {
             assert_eq!(expected_wit[i], wit_el.to_lower_hex_string());
         }
         assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_lower_hex_string());
-        assert_eq!(
-            expected_wit[0],
-            tx.input[0].witness.second_to_last().unwrap().to_lower_hex_string()
-        );
-        assert_eq!(expected_wit[0], tx.input[0].witness.nth(0).unwrap().to_lower_hex_string());
-        assert_eq!(expected_wit[1], tx.input[0].witness.nth(1).unwrap().to_lower_hex_string());
-        assert_eq!(None, tx.input[0].witness.nth(2));
+        assert_eq!(expected_wit[0], tx.input[0].witness.get_back(1).unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[0], tx.input[0].witness.get(0).unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.input[0].witness.get(1).unwrap().to_lower_hex_string());
+        assert_eq!(None, tx.input[0].witness.get(2));
         assert_eq!(expected_wit[0], tx.input[0].witness[0].to_lower_hex_string());
         assert_eq!(expected_wit[1], tx.input[0].witness[1].to_lower_hex_string());
 
