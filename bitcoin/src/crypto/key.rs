@@ -466,7 +466,7 @@ impl PrivateKey {
     ) -> Result<PrivateKey, secp256k1::Error> {
         Ok(PrivateKey::new(
             secp256k1::SecretKey::from_byte_array(
-                data[..32].try_into().expect("Slice should be exactly 32 bytes"),
+                data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?,
             )?,
             network,
         ))
