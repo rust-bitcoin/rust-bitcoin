@@ -414,7 +414,7 @@ impl TransactionExt for Transaction {
 
         // coinbase tx is correctly handled because `spent` will always returns None.
         cost = cost.saturating_add(self.count_p2sh_sigops(&mut spent).saturating_mul(4));
-        cost.saturating_add(self.count_witness_sigops(&mut spent))
+        cost.saturating_add(self.count_witness_sigops(spent))
     }
 
     #[inline]
@@ -458,7 +458,7 @@ trait TransactionExtPriv {
         S: FnMut(&OutPoint) -> Option<TxOut>;
 
     /// Includes wrapped SegWit (returns 0 for Taproot spends).
-    fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
+    fn count_witness_sigops<S>(&self, spent: S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>;
 
@@ -506,7 +506,7 @@ impl TransactionExtPriv for Transaction {
     }
 
     /// Includes wrapped SegWit (returns 0 for Taproot spends).
-    fn count_witness_sigops<S>(&self, spent: &mut S) -> usize
+    fn count_witness_sigops<S>(&self, mut spent: S) -> usize
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
     {
