@@ -6,7 +6,7 @@
 set -euox pipefail
 
 main () {
-    for crate in "internals" "hashes" "bitcoin"; do
+    for crate in "bitcoin" "hashes" "internals" "units"; do
         if release_changes $crate; then
             echo "$crate has changes implying this is a release PR, checking if we can publish ..."
 
@@ -35,12 +35,14 @@ release_changes() {
 # We use `set -e` so this will fail the script if the dry-run fails.
 publish_dry_run() {
     local crate=$1
-    if [ "$crate" == "hashes" ]; then
+    if [ "$crate" == "bitcoin" ]; then
+        cargo publish -p "bitcoin" --dry-run
+    elif [ "$crate" == "hashes" ]; then
         cargo publish -p "bitcoin_hashes" --dry-run
     elif [ "$crate" == "internals" ]; then
         cargo publish -p "bitcoin-internals" --dry-run
-    elif [ "$crate" == "bitcoin" ]; then
-        cargo publish -p "bitcoin" --dry-run
+    elif [ "$crate" == "units" ]; then
+        cargo publish -p "bitcoin-units" --dry-run
     fi
 }
 
