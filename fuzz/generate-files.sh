@@ -89,7 +89,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
           echo "Using RUSTFLAGS \$RUSTFLAGS"
           cd fuzz && ./fuzz.sh "\${{ matrix.fuzz_target }}"
       - run: echo "\${{ matrix.fuzz_target }}" >executed_\${{ matrix.fuzz_target }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: executed_\${{ matrix.fuzz_target }}
           path: executed_\${{ matrix.fuzz_target }}
@@ -100,7 +100,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
