@@ -6,7 +6,6 @@
 //! all of the opcodes for that language.
 
 #![allow(non_camel_case_types)]
-#![allow(dead_code)]            // This module is private and is duplicated in `bitcoin`.
 
 use core::fmt;
 
@@ -441,7 +440,6 @@ impl From<u8> for Opcode {
 }
 
 impl fmt::Debug for Opcode {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt::Display::fmt(self, f) }
 }
 

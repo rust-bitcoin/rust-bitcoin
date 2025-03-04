@@ -7,6 +7,7 @@
 
 pub mod block;
 pub mod constants;
+pub mod opcodes;
 pub mod script;
 pub mod transaction;
 pub mod witness;
@@ -68,12 +69,6 @@ pub mod locktime {
             LockTime, Time, TimeOverflowError,
         };
     }
-}
-
-/// Bitcoin script opcodes.
-pub mod opcodes {
-    /// Re-export everything from the [`primitives::opcodes`] module.
-    pub use primitives::opcodes::*;
 }
 
 /// Implements `Weight` and associated features.
