@@ -13,6 +13,7 @@
 
 use core::ops;
 
+use crate::amount::{NumOpResult, OptionExt};
 use crate::{Amount, FeeRate, Weight};
 
 impl Amount {
@@ -27,11 +28,12 @@ impl Amount {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::{Amount, FeeRate, Weight};
-    /// let amount = Amount::from_sat(10);
+    /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
+    /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
     /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
     pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
@@ -150,7 +152,10 @@ impl FeeRate {
         // No `?` operator in const context.
         match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => Some(Amount::from_sat(add_res / 1000)),
+                Some(add_res) => match Amount::from_sat(add_res / 1000) {
+                    Ok(fee) => Some(fee),
+                    Err(_) => None,
+                },
                 None => None,
             },
             None => None,
@@ -160,17 +165,15 @@ impl FeeRate {
 
 /// Computes the ceiling so that the fee computation is conservative.
 impl ops::Mul<FeeRate> for Weight {
-    type Output = Amount;
+    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
-    }
+    fn mul(self, rhs: FeeRate) -> Self::Output { rhs.checked_mul_by_weight(self).valid_or_error() }
 }
 
 impl ops::Mul<Weight> for FeeRate {
-    type Output = Amount;
+    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
+    fn mul(self, rhs: Weight) -> Self::Output { self.checked_mul_by_weight(rhs).valid_or_error() }
 }
 
 impl ops::Div<Weight> for Amount {
@@ -265,7 +268,7 @@ mod tests {
         let three = Weight::from_vb(3).unwrap();
         let six = Amount::from_sat_unchecked(6);
 
-        assert_eq!(two * three, six);
+        assert_eq!(two * three, six.into());
     }
 
     #[test]

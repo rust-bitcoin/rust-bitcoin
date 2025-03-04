@@ -16,81 +16,101 @@ use super::{
     DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
 };
 
-/// A signed amount.
-///
-/// The [`SignedAmount`] type can be used to express Bitcoin amounts that support arithmetic and
-/// conversion to various denominations. The [`SignedAmount`] type does not implement [`serde`]
-/// traits but we do provide modules for serializing as satoshis or bitcoin.
-///
-/// Warning!
-///
-/// This type implements several arithmetic operations from [`core::ops`].
-/// To prevent errors due to overflow or underflow when using these operations,
-/// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`. The operations from [`core::ops`] that [`SignedAmount`]
-/// implements will panic when overflow or underflow occurs.
-///
-/// # Examples
-///
-/// ```
-/// # #[cfg(feature = "serde")] {
-/// use serde::{Serialize, Deserialize};
-/// use bitcoin_units::SignedAmount;
-///
-/// #[derive(Serialize, Deserialize)]
-/// struct Foo {
-///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
-///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
-///     amount: SignedAmount,
-/// }
-/// # }
-/// ```
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SignedAmount(i64);
+mod encapsulate {
+    /// A signed amount.
+    ///
+    /// The [`SignedAmount`] type can be used to express Bitcoin amounts that support arithmetic and
+    /// conversion to various denominations. The [`SignedAmount`] type does not implement [`serde`]
+    /// traits but we do provide modules for serializing as satoshis or bitcoin.
+    ///
+    /// Warning!
+    ///
+    /// This type implements several arithmetic operations from [`core::ops`].
+    /// To prevent errors due to overflow or underflow when using these operations,
+    /// it is advised to instead use the checked arithmetic methods whose names
+    /// start with `checked_`. The operations from [`core::ops`] that [`SignedAmount`]
+    /// implements will panic when overflow or underflow occurs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "serde")] {
+    /// use serde::{Serialize, Deserialize};
+    /// use bitcoin_units::SignedAmount;
+    ///
+    /// #[derive(Serialize, Deserialize)]
+    /// struct Foo {
+    ///     // If you are using `rust-bitcoin` then `bitcoin::amount::serde::as_sat` also works.
+    ///     #[serde(with = "bitcoin_units::amount::serde::as_sat")]  // Also `serde::as_btc`.
+    ///     amount: SignedAmount,
+    /// }
+    /// # }
+    /// ```
+    #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct SignedAmount(i64);
+
+    impl SignedAmount {
+        /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+        ///
+        /// Caller to guarantee that `satoshi` is within valid range.
+        ///
+        /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
+        pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+
+        /// Gets the number of satoshis in this [`SignedAmount`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// # use bitcoin_units::SignedAmount;
+        /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
+        /// ```
+        pub const fn to_sat(self) -> i64 { self.0 }
+    }
+}
+#[doc(inline)]
+pub use encapsulate::SignedAmount;
 
 impl SignedAmount {
     /// The zero amount.
-    pub const ZERO: Self = SignedAmount(0);
+    pub const ZERO: Self = SignedAmount::from_sat_unchecked(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: Self = SignedAmount(1);
+    pub const ONE_SAT: Self = SignedAmount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = SignedAmount(100_000_000);
+    pub const ONE_BTC: Self = SignedAmount::from_sat_unchecked(100_000_000);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Self::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = SignedAmount::from_sat_unchecked(50 * 100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = SignedAmount(21_000_000 * 100_000_000);
+    pub const MAX_MONEY: Self = SignedAmount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
-    pub const MIN: Self = SignedAmount(-21_000_000 * 100_000_000);
+    pub const MIN: Self = SignedAmount::from_sat_unchecked(-21_000_000 * 100_000_000);
     /// The maximum value of an amount.
-    pub const MAX: Self = SignedAmount::MAX_MONEY;
+    pub const MAX: Self = Self::MAX_MONEY;
 
-    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+    /// Constructs a new [`SignedAmount`] from the given number of satoshis.
+    ///
+    /// # Errors
+    ///
+    /// If `satoshi` is outside of valid range (see [`Self::MAX_MONEY`]).
     ///
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::SignedAmount;
-    /// let amount = SignedAmount::from_sat(-100_000);
-    /// assert_eq!(amount.to_sat(), -100_000);
+    /// # use bitcoin_units::amount::{self, SignedAmount};
+    /// # let sat = -100_000;
+    /// let amount = SignedAmount::from_sat(sat)?;
+    /// assert_eq!(amount.to_sat(), sat);
+    /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
-    pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
-
-    /// Gets the number of satoshis in this [`SignedAmount`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::SignedAmount;
-    /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
-    /// ```
-    pub const fn to_sat(self) -> i64 { self.0 }
-
-    /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
-    ///
-    /// Caller to guarantee that `satoshi` is within valid range.
-    ///
-    /// See [`Self::MIN`] and [`Self::MAX_MONEY`].
-    pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+    pub const fn from_sat(satoshi: i64) -> Result<SignedAmount, OutOfRangeError> {
+        if satoshi < Self::MIN.to_sat() {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+        } else if satoshi > Self::MAX_MONEY.to_sat() {
+            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+        } else {
+            Ok(SignedAmount::from_sat_unchecked(satoshi))
+        }
+    }
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///
@@ -103,9 +123,10 @@ impl SignedAmount {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::SignedAmount;
-    /// let amount = SignedAmount::from_btc(-0.01).expect("we know 0.01 is valid");
+    /// # use bitcoin_units::amount::{self, SignedAmount};
+    /// let amount = SignedAmount::from_btc(-0.01)?;
     /// assert_eq!(amount.to_sat(), -1_000_000);
+    /// # Ok::<_, amount::ParseAmountError>(())
     /// ```
     #[cfg(feature = "alloc")]
     pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
@@ -116,26 +137,24 @@ impl SignedAmount {
     ///
     /// # Errors
     ///
-    /// The function errors if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub fn from_int_btc<T: Into<i64>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
-        match whole_bitcoin.into().checked_mul(100_000_000) {
-            Some(amount) => Ok(Self::from_sat(amount)),
-            None => Err(OutOfRangeError { is_signed: true, is_greater_than_max: true }),
-        }
+    /// If `whole_bitcoin` is greater than `21_000_000`.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn from_int_btc<T: Into<i32>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
+        SignedAmount::from_int_btc_const(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows an `i64` type.
-    pub const fn from_int_btc_const(whole_bitcoin: i64) -> SignedAmount {
-        match whole_bitcoin.checked_mul(100_000_000) {
+    /// If `whole_bitcoin` is greater than `21_000_000`.
+    #[allow(clippy::missing_panics_doc)]
+    pub const fn from_int_btc_const(whole_bitcoin: i32) -> Result<SignedAmount, OutOfRangeError> {
+        let btc = whole_bitcoin as i64; // Can't call `into` in const context.
+        match btc.checked_mul(100_000_000) {
             Some(amount) => SignedAmount::from_sat(amount),
-            None => panic!("checked_mul overflowed"),
+            None => panic!("cannot overflow in i64"),
         }
     }
 
@@ -150,14 +169,14 @@ impl SignedAmount {
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
             // (negative, amount)
-            (false, sat) if sat > SignedAmount::MAX.to_sat() as u64 => Err(ParseAmountError(
+            (false, sat) if sat > SignedAmount::MAX_MONEY.to_sat() as u64 => Err(ParseAmountError(
                 ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
             )),
-            (false, sat) => Ok(SignedAmount(sat as i64)), // Cast ok, value in this arm does not wrap.
+            (false, sat) => Ok(SignedAmount::from_sat_unchecked(sat as i64)), // Cast ok, value in this arm does not wrap.
             (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(
                 ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
             ),
-            (true, sat) => Ok(SignedAmount(-(sat as i64))), // Cast ok, value in this arm does not wrap.
+            (true, sat) => Ok(SignedAmount::from_sat_unchecked(-(sat as i64))), // Cast ok, value in this arm does not wrap.
         }
     }
 
@@ -175,7 +194,7 @@ impl SignedAmount {
     /// ```
     /// # use bitcoin_units::{amount, SignedAmount};
     /// let amount = SignedAmount::from_str_with_denomination("0.1 BTC")?;
-    /// assert_eq!(amount, SignedAmount::from_sat(10_000_000));
+    /// assert_eq!(amount, SignedAmount::from_sat(10_000_000).expect("amount is valid"));
     /// # Ok::<_, amount::ParseError>(())
     /// ```
     pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseError> {
@@ -191,8 +210,9 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(100_000);
-    /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001)
+    /// let amount = SignedAmount::from_sat(100_000)?;
+    /// assert_eq!(amount.to_float_in(Denomination::Bitcoin), 0.001);
+    /// # Ok::<_, bitcoin_units::amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
     #[allow(clippy::missing_panics_doc)]
@@ -208,8 +228,9 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(100_000);
-    /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
+    /// let amount = SignedAmount::from_sat(100_000)?;
+    /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin));
+    /// # Ok::<_, bitcoin_units::amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
     pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
@@ -240,7 +261,7 @@ impl SignedAmount {
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
     /// # use std::fmt::Write;
-    /// let amount = SignedAmount::from_sat(10_000_000);
+    /// let amount = SignedAmount::from_sat(10_000_000).expect("amount is valid");
     /// let mut output = String::new();
     /// write!(&mut output, "{}", amount.display_in(Denomination::Bitcoin))?;
     /// assert_eq!(output, "0.1");
@@ -276,9 +297,10 @@ impl SignedAmount {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(10_000_000);
-    /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1")
+    /// # use bitcoin_units::amount::{self, SignedAmount, Denomination};
+    /// let amount = SignedAmount::from_sat(10_000_000)?;
+    /// assert_eq!(amount.to_string_in(Denomination::Bitcoin), "0.1");
+    /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
@@ -290,8 +312,9 @@ impl SignedAmount {
     ///
     /// ```
     /// # use bitcoin_units::amount::{SignedAmount, Denomination};
-    /// let amount = SignedAmount::from_sat(10_000_000);
-    /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC")
+    /// let amount = SignedAmount::from_sat(10_000_000)?;
+    /// assert_eq!(amount.to_string_with_denomination(Denomination::Bitcoin), "0.1 BTC");
+    /// # Ok::<_, bitcoin_units::amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
     pub fn to_string_with_denomination(self, denom: Denomination) -> String {
@@ -299,12 +322,23 @@ impl SignedAmount {
     }
 
     /// Gets the absolute value of this [`SignedAmount`].
+    ///
+    /// This function never overflows or panics, unlike `i64::abs()`.
     #[must_use]
-    pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
+    pub const fn abs(self) -> SignedAmount {
+        // `i64::abs()` can never overflow because SignedAmount::MIN == -MAX_MONEY.
+        match Self::from_sat(self.to_sat().abs()) {
+            Ok(amount) => amount,
+            Err(_) => panic!("a positive signed amount is always valid"),
+        }
+    }
 
     /// Gets the absolute value of this [`SignedAmount`] returning [`Amount`].
     #[must_use]
-    pub fn unsigned_abs(self) -> Amount { Amount::from_sat(self.0.unsigned_abs()) }
+    #[allow(clippy::missing_panics_doc)]
+    pub fn unsigned_abs(self) -> Amount {
+        self.abs().to_unsigned().expect("a positive signed amount is always valid")
+    }
 
     /// Returns a number representing sign of this [`SignedAmount`].
     ///
@@ -312,19 +346,19 @@ impl SignedAmount {
     /// - `1` if the amount is positive
     /// - `-1` if the amount is negative
     #[must_use]
-    pub fn signum(self) -> i64 { self.0.signum() }
+    pub fn signum(self) -> i64 { self.to_sat().signum() }
 
     /// Checks if this [`SignedAmount`] is positive.
     ///
     /// Returns `true` if this [`SignedAmount`] is positive and `false` if
     /// this [`SignedAmount`] is zero or negative.
-    pub fn is_positive(self) -> bool { self.0.is_positive() }
+    pub fn is_positive(self) -> bool { self.to_sat().is_positive() }
 
     /// Checks if this [`SignedAmount`] is negative.
     ///
     /// Returns `true` if this [`SignedAmount`] is negative and `false` if
     /// this [`SignedAmount`] is zero or positive.
-    pub fn is_negative(self) -> bool { self.0.is_negative() }
+    pub fn is_negative(self) -> bool { self.to_sat().is_negative() }
 
     /// Returns the absolute value of this [`SignedAmount`].
     ///
@@ -332,48 +366,53 @@ impl SignedAmount {
     ///
     /// Returns [`None`] if overflow occurred. (`self == i64::MIN`)
     #[must_use]
-    pub const fn checked_abs(self) -> Option<SignedAmount> {
-        // No `map()` in const context.
-        match self.0.checked_abs() {
-            Some(res) => Some(SignedAmount(res)),
-            None => None,
-        }
-    }
+    #[deprecated(since = "TBD", note = "Never returns none, use `abs()` instead")]
+    #[allow(clippy::unnecessary_wraps)] // To match stdlib function definition.
+    pub const fn checked_abs(self) -> Option<SignedAmount> { Some(self.abs()) }
 
     /// Checked addition.
     ///
-    /// Returns [`None`] if the sum is above [`SignedAmount::MAX`] or below [`SignedAmount::MIN`].
+    /// Returns [`None`] if the sum is above [`SignedAmount::MAX_MONEY`] or below [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_add(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
-        match self.0.checked_add(rhs.0) {
-            Some(res) => SignedAmount(res).check_min_max(),
+        match self.to_sat().checked_add(rhs.to_sat()) {
+            Some(res) => match SignedAmount::from_sat(res) {
+                Ok(amount) => Some(amount),
+                Err(_) => None,
+            },
             None => None,
         }
     }
 
     /// Checked subtraction.
     ///
-    /// Returns [`None`] if the difference is above [`SignedAmount::MAX`] or below
+    /// Returns [`None`] if the difference is above [`SignedAmount::MAX_MONEY`] or below
     /// [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         // No `map()` in const context.
-        match self.0.checked_sub(rhs.0) {
-            Some(res) => SignedAmount(res).check_min_max(),
+        match self.to_sat().checked_sub(rhs.to_sat()) {
+            Some(res) => match Self::from_sat(res) {
+                Ok(amount) => Some(amount),
+                Err(_) => None,
+            },
             None => None,
         }
     }
 
     /// Checked multiplication.
     ///
-    /// Returns [`None`] if the product is above [`SignedAmount::MAX`] or below
+    /// Returns [`None`] if the product is above [`SignedAmount::MAX_MONEY`] or below
     /// [`SignedAmount::MIN`].
     #[must_use]
     pub const fn checked_mul(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
-        match self.0.checked_mul(rhs) {
-            Some(res) => SignedAmount(res).check_min_max(),
+        match self.to_sat().checked_mul(rhs) {
+            Some(res) => match Self::from_sat(res) {
+                Ok(amount) => Some(amount),
+                Err(_) => None,
+            },
             None => None,
         }
     }
@@ -386,8 +425,11 @@ impl SignedAmount {
     #[must_use]
     pub const fn checked_div(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
-        match self.0.checked_div(rhs) {
-            Some(res) => Some(SignedAmount(res)),
+        match self.to_sat().checked_div(rhs) {
+            Some(res) => match Self::from_sat(res) {
+                Ok(amount) => Some(amount),
+                Err(_) => None, // Unreachable because of checked_div above.
+            },
             None => None,
         }
     }
@@ -398,33 +440,14 @@ impl SignedAmount {
     #[must_use]
     pub const fn checked_rem(self, rhs: i64) -> Option<SignedAmount> {
         // No `map()` in const context.
-        match self.0.checked_rem(rhs) {
-            Some(res) => Some(SignedAmount(res)),
+        match self.to_sat().checked_rem(rhs) {
+            Some(res) => match Self::from_sat(res) {
+                Ok(amount) => Some(amount),
+                Err(_) => None, // Unreachable because of checked_rem above.
+            },
             None => None,
         }
     }
-
-    /// Unchecked addition.
-    ///
-    /// Computes `self + rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_add(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 + rhs.0) }
-
-    /// Unchecked subtraction.
-    ///
-    /// Computes `self - rhs`.
-    ///
-    /// # Panics
-    ///
-    /// On overflow, panics in debug mode, wraps in release mode.
-    #[must_use]
-    #[deprecated(since = "TBD", note = "consider converting to u64 using `to_sat`")]
-    pub fn unchecked_sub(self, rhs: SignedAmount) -> SignedAmount { Self(self.0 - rhs.0) }
 
     /// Subtraction that doesn't allow negative [`SignedAmount`]s.
     ///
@@ -443,20 +466,14 @@ impl SignedAmount {
     /// # Errors
     ///
     /// If the amount is negative.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_unsigned(self) -> Result<Amount, OutOfRangeError> {
         if self.is_negative() {
             Err(OutOfRangeError::negative())
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64)) // Cast ok, checked not negative above.
-        }
-    }
-
-    /// Checks the amount is within the allowed range.
-    const fn check_min_max(self) -> Option<SignedAmount> {
-        if self.0 < Self::MIN.0 || self.0 > Self::MAX.0 {
-            None
-        } else {
-            Some(self)
+            // Cast ok, checked not negative above.
+            Ok(Amount::from_sat(self.to_sat() as u64)
+                .expect("a positive signed amount is always valid"))
         }
     }
 }
@@ -506,14 +523,14 @@ impl FromStr for SignedAmount {
 impl From<Amount> for SignedAmount {
     fn from(value: Amount) -> Self {
         let v = value.to_sat() as i64; // Cast ok, signed amount and amount share positive range.
-        Self::from_sat_unchecked(v)
+        Self::from_sat(v).expect("all amounts are valid signed amounts")
     }
 }
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for SignedAmount {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let s = i64::arbitrary(u)?;
-        Ok(Self(s))
+        let sats = u.int_in_range(Self::MIN.to_sat()..=Self::MAX.to_sat())?;
+        Ok(Self::from_sat(sats).expect("range is valid"))
     }
 }
