@@ -91,6 +91,9 @@ pub enum Denomination {
     Bit,
     /// satoshi (1 BTC = 100,000,000 satoshi).
     Satoshi,
+    /// Stops users from casting this enum to an integer.
+    #[doc(hidden)]
+    _Never(Infallible),
 }
 
 impl Denomination {
@@ -109,6 +112,7 @@ impl Denomination {
             Denomination::MicroBitcoin => -2,
             Denomination::Bit => -2,
             Denomination::Satoshi => 0,
+            Denomination::_Never(_) => unreachable!("cannot create this variant"),
         }
     }
 
@@ -121,6 +125,7 @@ impl Denomination {
             Denomination::MicroBitcoin => "uBTC",
             Denomination::Bit => "bits",
             Denomination::Satoshi => "satoshi",
+            Denomination::_Never(_) => unreachable!("cannot create this variant"),
         }
     }
 
