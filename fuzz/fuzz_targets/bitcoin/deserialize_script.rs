@@ -1,15 +1,27 @@
 use bitcoin::address::Address;
 use bitcoin::consensus::encode;
 use bitcoin::script::{self, ScriptExt as _};
-use bitcoin::Network;
+use bitcoin::{FeeRate, Network};
 use honggfuzz::fuzz;
 
+mod fuzz_utils;
+use fuzz_utils::{consume_random_bytes, consume_u64};
+
 fn do_test(data: &[u8]) {
-    let s: Result<script::ScriptBuf, _> = encode::deserialize(data);
+    let mut new_data = data;
+    let bytes = consume_random_bytes(&mut new_data);
+    let s: Result<script::ScriptBuf, _> = encode::deserialize(bytes);
     if let Ok(script) = s {
         let _: Result<Vec<script::Instruction>, script::Error> = script.instructions().collect();
 
         let _ = script.to_string();
+        let _ = script.count_sigops();
+        let _ = script.count_sigops_legacy();
+        let _ = script.minimal_non_dust();
+
+        let fee_rate = FeeRate::from_sat_per_kwu(consume_u64(&mut new_data));
+        let _ = script.minimal_non_dust_custom(fee_rate);
+
         let mut b = script::Builder::new();
         for ins in script.instructions_minimal() {
             if ins.is_err() {
