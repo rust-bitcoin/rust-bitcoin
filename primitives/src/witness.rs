@@ -99,18 +99,22 @@ impl Witness {
     }
 
     /// Convenience method to create an array of byte-arrays from this witness.
+    #[inline]
     pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
 
     /// Returns `true` if the witness contains no element.
+    #[inline]
     pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`].
     #[must_use = "iterators are lazy and do nothing unless consumed"]
+    #[inline]
     pub fn iter(&self) -> Iter {
         Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }
 
     /// Returns the number of elements this witness holds.
+    #[inline]
     pub fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the number of bytes this witness contributes to a transactions total size.
@@ -130,6 +134,7 @@ impl Witness {
     }
 
     /// Clear the witness.
+    #[inline]
     pub fn clear(&mut self) {
         self.content.clear();
         self.witness_elements = 0;
@@ -137,6 +142,7 @@ impl Witness {
     }
 
     /// Push a new element on the witness, requires an allocation.
+    #[inline]
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         self.push_slice(new_element.as_ref());
     }
@@ -178,6 +184,7 @@ impl Witness {
     }
 
     /// Returns the last element in the witness, if any.
+    #[inline]
     pub fn last(&self) -> Option<&[u8]> {
         if self.witness_elements == 0 {
             None
@@ -187,6 +194,7 @@ impl Witness {
     }
 
     /// Returns the second-to-last element in the witness, if any.
+    #[inline]
     pub fn second_to_last(&self) -> Option<&[u8]> {
         if self.witness_elements <= 1 {
             None
@@ -196,6 +204,7 @@ impl Witness {
     }
 
     /// Returns the third-to-last element in the witness, if any.
+    #[inline]
     pub fn third_to_last(&self) -> Option<&[u8]> {
         if self.witness_elements <= 2 {
             None
@@ -205,6 +214,7 @@ impl Witness {
     }
 
     /// Return the nth element in the witness, if any
+    #[inline]
     pub fn nth(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
         self.element_at(pos)
@@ -264,6 +274,7 @@ pub struct Iter<'a> {
 impl Index<usize> for Witness {
     type Output = [u8];
 
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("out of bounds") }
 }
 
@@ -281,6 +292,7 @@ impl<'a> Iterator for Iter<'a> {
         Some(&slice[..end])
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let total_count = (self.inner.len() - self.indices_start) / 4;
         let remaining = total_count - self.current_index;
@@ -294,6 +306,7 @@ impl<'a> IntoIterator for &'a Witness {
     type IntoIter = Iter<'a>;
     type Item = &'a [u8];
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
@@ -381,22 +394,27 @@ impl<'de> serde::Deserialize<'de> for Witness {
 }
 
 impl From<Vec<Vec<u8>>> for Witness {
+    #[inline]
     fn from(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
 }
 
 impl From<&[&[u8]]> for Witness {
+    #[inline]
     fn from(slice: &[&[u8]]) -> Self { Witness::from_slice(slice) }
 }
 
 impl From<&[Vec<u8>]> for Witness {
+    #[inline]
     fn from(slice: &[Vec<u8>]) -> Self { Witness::from_slice(slice) }
 }
 
 impl From<Vec<&[u8]>> for Witness {
+    #[inline]
     fn from(vec: Vec<&[u8]>) -> Self { Witness::from_slice(&vec) }
 }
 
 impl Default for Witness {
+    #[inline]
     fn default() -> Self { Self::new() }
 }
 

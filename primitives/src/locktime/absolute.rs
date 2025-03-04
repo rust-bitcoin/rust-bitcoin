@@ -102,6 +102,7 @@ impl LockTime {
     ///
     /// # Ok::<_, units::parse::PrefixedHexError>(())
     /// ```
+    #[inline]
     pub fn from_hex(s: &str) -> Result<Self, PrefixedHexError> {
         let lock_time = parse::hex_u32_prefixed(s)?;
         Ok(Self::from_consensus(lock_time))
@@ -119,6 +120,7 @@ impl LockTime {
     ///
     /// # Ok::<_, units::parse::UnprefixedHexError>(())
     /// ```
+    #[inline]
     pub fn from_unprefixed_hex(s: &str) -> Result<Self, UnprefixedHexError> {
         let lock_time = parse::hex_u32_unprefixed(s)?;
         Ok(Self::from_consensus(lock_time))
@@ -320,6 +322,7 @@ impl From<Time> for LockTime {
 }
 
 impl fmt::Debug for LockTime {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use LockTime::*;
 

@@ -115,15 +115,19 @@ impl Transaction {
     pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
 
     /// Returns a reference to the transaction inputs.
+    #[inline]
     pub fn inputs(&self) -> &[TxIn] { &self.input }
 
     /// Returns a mutable reference to the transaction inputs.
+    #[inline]
     pub fn inputs_mut(&mut self) -> &mut [TxIn] { &mut self.input }
 
     /// Returns a reference to the transaction outputs.
+    #[inline]
     pub fn outputs(&self) -> &[TxOut] { &self.output }
 
     /// Returns a mutable reference to the transaction outputs.
+    #[inline]
     pub fn outputs_mut(&mut self) -> &mut [TxOut] { &mut self.output }
 
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -155,6 +159,7 @@ impl Transaction {
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
     /// this will be equal to [`Transaction::compute_wtxid()`].
     #[doc(alias = "txid")]
+    #[inline]
     pub fn compute_txid(&self) -> Txid {
         let hash = hash_transaction(self, false);
         Txid::from_byte_array(hash.to_byte_array())
@@ -166,6 +171,7 @@ impl Transaction {
     /// witness fields themselves). For non-SegWit transactions which do not have any SegWit data,
     /// this will be equal to [`Transaction::compute_txid()`].
     #[doc(alias = "wtxid")]
+    #[inline]
     pub fn compute_wtxid(&self) -> Wtxid {
         let hash = hash_transaction(self, self.uses_segwit_serialization());
         Wtxid::from_byte_array(hash.to_byte_array())
@@ -173,6 +179,7 @@ impl Transaction {
 
     /// Returns whether or not to serialize transaction as specified in BIP-144.
     // This is duplicated in `bitcoin`, if you change it please do so in both places.
+    #[inline]
     fn uses_segwit_serialization(&self) -> bool {
         if self.input.iter().any(|input| !input.witness.is_empty()) {
             return true;
@@ -185,6 +192,7 @@ impl Transaction {
 
 #[cfg(feature = "alloc")]
 impl cmp::PartialOrd for Transaction {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
 }
 
@@ -201,21 +209,25 @@ impl cmp::Ord for Transaction {
 
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Txid {
+    #[inline]
     fn from(tx: Transaction) -> Txid { tx.compute_txid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Txid {
+    #[inline]
     fn from(tx: &Transaction) -> Txid { tx.compute_txid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<Transaction> for Wtxid {
+    #[inline]
     fn from(tx: Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
 #[cfg(feature = "alloc")]
 impl From<&Transaction> for Wtxid {
+    #[inline]
     fn from(tx: &Transaction) -> Wtxid { tx.compute_wtxid() }
 }
 
@@ -377,6 +389,7 @@ impl OutPoint {
 }
 
 impl fmt::Display for OutPoint {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}", self.txid, self.vout)
     }
@@ -439,6 +452,7 @@ pub enum ParseOutPointError {
 
 #[cfg(feature = "alloc")]
 impl From<Infallible> for ParseOutPointError {
+    #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
@@ -553,10 +567,12 @@ impl Version {
 }
 
 impl fmt::Display for Version {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl From<Version> for u32 {
+    #[inline]
     fn from(version: Version) -> Self { version.0 }
 }
 
