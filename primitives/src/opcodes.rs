@@ -8,6 +8,9 @@
 #![allow(non_camel_case_types)]
 
 use core::fmt;
+// use std::collections::HashMap;
+
+use once_cell::sync::Lazy;
 
 #[cfg(feature = "serde")]
 use crate::prelude::ToString;
@@ -432,7 +435,245 @@ impl Opcode {
             _ => None,
         }
     }
+
+    /// Returns the string representation of the opcode.
+    ///
+    /// This function maps the `Opcode`'s `code` value (a `u8`) to its corresponding  
+    /// Bitcoin Script opcode name.  
+    ///
+    /// ### Special Cases:
+    /// - `0x00` maps to `"OP_0"` (also known as `OP_FALSE`).
+    /// - `0x01..=0x4b` represents push operations and maps to `"OP_PUSHBYTES_N"`,  
+    ///   where `N` is the number of bytes pushed onto the stack.
+    /// - `0x4f` maps to `"OP_PUSHNUM_NEG1"` (pushing `-1` onto the stack).
+    /// - `0x51..=0x60` map to `"OP_PUSHNUM_1"` through `"OP_PUSHNUM_16"`,  
+    ///   corresponding to pushing numbers `1` through `16`.
+    /// - Any unknown or undefined opcode returns `"UNKNOWN_OPCODE"`.
+    ///
+    /// # Example
+    /// ```
+    /// use crate::bitcoin_primitives::opcodes::Opcode;
+    /// 
+    // let op = Opcode { code: 0x51 };
+    // assert_eq!(op.as_str(), "OP_PUSHNUM_1");
+    /// ```
+    pub fn as_str(&self) -> &'static str {
+        if let Some(name) = OPCODE_LOOKUP.get(&self.code) {
+            return name;
+        }
+
+        // Handle OP_PUSHBYTES_N dynamically
+        if (0x01..=0x4b).contains(&self.code) {
+            static mut BUFFER: [u8; 16] = *b"OP_PUSHBYTES_000"; // Buffer
+            // let len = itoa::write(unsafe { &mut BUFFER[13..] }, self.code).unwrap();
+            let mut num_buffer = itoa::Buffer::new();
+            let printed = num_buffer.format(self.code);
+            // return unsafe { core::str::from_utf8_unchecked(&BUFFER[..13 + len]) };
+            unsafe {
+                BUFFER[13..(13 + printed.len())].copy_from_slice(printed.as_bytes());
+                return core::str::from_utf8_unchecked(&BUFFER[..13 + printed.len()]);
+            }
+        }
+
+        "UNKNOWN_OPCODE"
+    }
 }
+
+/// Macro to define the opcode lookup table
+macro_rules! opcode_table {
+    ($( $code:expr => $name:expr ),* $(,)?) => {
+        {
+            let mut map = std::collections::HashMap::new();
+            $( map.insert($code, $name); )*
+            map
+        }
+    };
+}
+
+static OPCODE_LOOKUP: Lazy<std::collections::HashMap<u8, &'static str>> = Lazy::new(|| opcode_table!(
+    0x00 => "OP_PUSHBYTES_0",
+    0x4c => "OP_PUSHDATA1",
+    0x4d => "OP_PUSHDATA2",
+    0x4e => "OP_PUSHDATA4",
+    0x4f => "OP_PUSHNUM_NEG1",
+    0x50 => "OP_RESERVED",
+
+    0x51 => "OP_PUSHNUM_1",
+    0x52 => "OP_PUSHNUM_2",
+    0x53 => "OP_PUSHNUM_3",
+    0x54 => "OP_PUSHNUM_4",
+    0x55 => "OP_PUSHNUM_5",
+    0x56 => "OP_PUSHNUM_6",
+    0x57 => "OP_PUSHNUM_7",
+    0x58 => "OP_PUSHNUM_8",
+    0x59 => "OP_PUSHNUM_9",
+    0x5A => "OP_PUSHNUM_10",
+    0x5B => "OP_PUSHNUM_11",
+    0x5C => "OP_PUSHNUM_12",
+    0x5D => "OP_PUSHNUM_13",
+    0x5E => "OP_PUSHNUM_14",
+    0x5F => "OP_PUSHNUM_15",
+    0x60 => "OP_PUSHNUM_16",
+    0x61 => "OP_NOP",
+    0x62 => "OP_VER",
+    0x63 => "OP_IF",
+    0x64 => "OP_NOTIF",
+    0x65 => "OP_VERIF",
+    0x66 => "OP_VERNOTIF",
+    0x67 => "OP_ELSE",
+    0x68 => "OP_ENDIF",
+    0x69 => "OP_VERIFY",
+    0x6a => "OP_RETURN",
+    0x6b => "OP_TOALTSTACK",
+    0x6c => "OP_FROMALTSTACK",
+    0x6d => "OP_2DROP",
+    0x6e => "OP_2DUP",
+    0x6f => "OP_3DUP",
+    0x70 => "OP_2OVER",
+    0x71 => "OP_2ROT",
+    0x72 => "OP_2SWAP",
+    0x73 => "OP_IFDUP",
+    0x74 => "OP_DEPTH",
+    0x75 => "OP_DROP",
+    0x76 => "OP_DUP",
+    0x77 => "OP_NIP",
+    0x78 => "OP_OVER",
+    0x79 => "OP_PICK",
+    0x7a => "OP_ROLL",
+    0x7b => "OP_ROT",
+    0x7c => "OP_SWAP",
+    0x7d => "OP_TUCK",
+    0x7e => "OP_CAT",
+    0x7f => "OP_SUBSTR",
+    0x80 => "OP_LEFT",
+    0x81 => "OP_RIGHT",
+    0x82 => "OP_SIZE",
+    0x83 => "OP_INVERT",
+    0x84 => "OP_AND",
+    0x85 => "OP_OR",
+    0x86 => "OP_XOR",
+    0x87 => "OP_EQUAL",
+    0x88 => "OP_EQUALVERIFY",
+    0x89 => "OP_RESERVED1",
+    0x8a => "OP_RESERVED2",
+    0x8b => "OP_1ADD",
+    0x8c => "OP_1SUB",
+    0x8d => "OP_2MUL",
+    0x8e => "OP_2DIV",
+    0x8f => "OP_NEGATE",
+    0x90 => "OP_ABS",
+    0x91 => "OP_NOT",
+    0x92 => "OP_0NOTEQUAL",
+    0x93 => "OP_ADD",
+    0x94 => "OP_SUB",
+    0x95 => "OP_MUL",
+    0x96 => "OP_DIV",
+    0x97 => "OP_MOD",
+    0x98 => "OP_LSHIFT",
+    0x99 => "OP_RSHIFT",
+    0x9a => "OP_BOOLAND",
+    0x9b => "OP_BOOLOR",
+    0x9c => "OP_NUMEQUAL",
+    0x9d => "OP_NUMEQUALVERIFY",
+    0x9e => "OP_NUMNOTEQUAL",
+    0x9f => "OP_LESSTHAN",
+    0xa0 => "OP_GREATERTHAN",
+    0xa1 => "OP_LESSTHANOREQUAL",
+    0xa2 => "OP_GREATERTHANOREQUAL",
+    0xa3 => "OP_MIN",
+    0xa4 => "OP_MAX",
+    0xa5 => "OP_WITHIN",
+    0xa6 => "OP_RIPEMD160",
+    0xa7 => "OP_SHA1",
+    0xa8 => "OP_SHA256",
+    0xa9 => "OP_HASH160",
+    0xaa => "OP_HASH256",
+    0xab => "OP_CODESEPARATOR",
+    0xac => "OP_CHECKSIG",
+    0xad => "OP_CHECKSIGVERIFY",
+    0xae => "OP_CHECKMULTISIG",
+    0xaf => "OP_CHECKMULTISIGVERIFY",
+    0xb0 => "OP_NOP1",
+    0xb1 => "OP_CLTV",
+    0xb2 => "OP_CSV",
+    0xb3 => "OP_NOP4",
+    0xb4 => "OP_NOP5",
+    0xb5 => "OP_NOP6",
+    0xb6 => "OP_NOP7",
+    0xb7 => "OP_NOP8",
+    0xb8 => "OP_NOP9",
+    0xb9 => "OP_NOP10",
+    0xba => "OP_CHECKSIGADD",
+    0xbb => "OP_RETURN_187",
+    0xbc => "OP_RETURN_188",
+    0xbd => "OP_RETURN_189",
+    0xbe => "OP_RETURN_190",
+    0xbf => "OP_RETURN_191",
+    0xc0 => "OP_RETURN_192",
+    0xc1 => "OP_RETURN_193",
+    0xc2 => "OP_RETURN_194",
+    0xc3 => "OP_RETURN_195",
+    0xc4 => "OP_RETURN_196",
+    0xc5 => "OP_RETURN_197",
+    0xc6 => "OP_RETURN_198",
+    0xc7 => "OP_RETURN_199",
+    0xc8 => "OP_RETURN_200",
+    0xc9 => "OP_RETURN_201",
+    0xca => "OP_RETURN_202",
+    0xcb => "OP_RETURN_203",
+    0xcc => "OP_RETURN_204",
+    0xcd => "OP_RETURN_205",
+    0xce => "OP_RETURN_206",
+    0xcf => "OP_RETURN_207",
+    0xd0 => "OP_RETURN_208",
+    0xd1 => "OP_RETURN_209",
+    0xd2 => "OP_RETURN_210",
+    0xd3 => "OP_RETURN_211",
+    0xd4 => "OP_RETURN_212",
+    0xd5 => "OP_RETURN_213",
+    0xd6 => "OP_RETURN_214",
+    0xd7 => "OP_RETURN_215",
+    0xd8 => "OP_RETURN_216",
+    0xd9 => "OP_RETURN_217",
+    0xda => "OP_RETURN_218",
+    0xdb => "OP_RETURN_219",
+    0xdc => "OP_RETURN_220",
+    0xdd => "OP_RETURN_221",
+    0xde => "OP_RETURN_222",
+    0xdf => "OP_RETURN_223",
+    0xe0 => "OP_RETURN_224",
+    0xe1 => "OP_RETURN_225",
+    0xe2 => "OP_RETURN_226",
+    0xe3 => "OP_RETURN_227",
+    0xe4 => "OP_RETURN_228",
+    0xe5 => "OP_RETURN_229",
+    0xe6 => "OP_RETURN_230",
+    0xe7 => "OP_RETURN_231",
+    0xe8 => "OP_RETURN_232",
+    0xe9 => "OP_RETURN_233",
+    0xea => "OP_RETURN_234",
+    0xeb => "OP_RETURN_235",
+    0xec => "OP_RETURN_236",
+    0xed => "OP_RETURN_237",
+    0xee => "OP_RETURN_238",
+    0xef => "OP_RETURN_239",
+    0xf0 => "OP_RETURN_240",
+    0xf1 => "OP_RETURN_241",
+    0xf2 => "OP_RETURN_242",
+    0xf3 => "OP_RETURN_243",
+    0xf4 => "OP_RETURN_244",
+    0xf5 => "OP_RETURN_245",
+    0xf6 => "OP_RETURN_246",
+    0xf7 => "OP_RETURN_247",
+    0xf8 => "OP_RETURN_248",
+    0xf9 => "OP_RETURN_249",
+    0xfa => "OP_RETURN_250",
+    0xfb => "OP_RETURN_251",
+    0xfc => "OP_RETURN_252",
+    0xfd => "OP_RETURN_253",
+    0xfe => "OP_RETURN_254",
+    0xff => "OP_INVALIDOPCODE",
+));
 
 impl From<u8> for Opcode {
     #[inline]
@@ -450,7 +691,7 @@ impl serde::Serialize for Opcode {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        serializer.serialize_str(&self.as_str())
     }
 }
 
