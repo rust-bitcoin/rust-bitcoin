@@ -13,6 +13,7 @@ use core::fmt;
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
+use units::Timestamp;
 
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
@@ -82,6 +83,18 @@ impl Encodable for Version {
 impl Decodable for Version {
     fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version::from_consensus)
+    }
+}
+
+impl Encodable for Timestamp {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_u32().consensus_encode(w)
+    }
+}
+
+impl Decodable for Timestamp {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode(r).map(Timestamp::from_u32)
     }
 }
 
@@ -596,7 +609,7 @@ mod tests {
             block::compute_merkle_root(&transactions).unwrap()
         );
         assert_eq!(serialize(&real_decode.header().merkle_root), merkle);
-        assert_eq!(real_decode.header().time, 1231965655);
+        assert_eq!(real_decode.header().time, Timestamp::from_u32(1231965655));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(486604799));
         assert_eq!(real_decode.header().nonce, 2067413810);
         assert_eq!(real_decode.header().work(), work);
@@ -647,7 +660,7 @@ mod tests {
             real_decode.header().merkle_root,
             block::compute_merkle_root(&transactions).unwrap()
         );
-        assert_eq!(real_decode.header().time, 1472004949);
+        assert_eq!(real_decode.header().time, Timestamp::from_u32(1472004949));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(0x1a06d450));
         assert_eq!(real_decode.header().nonce, 1879759182);
         assert_eq!(real_decode.header().work(), work);
