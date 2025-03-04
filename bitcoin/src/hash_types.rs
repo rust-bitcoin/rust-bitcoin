@@ -13,10 +13,9 @@ pub use crate::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        LegacySighash, PubkeyHash, ScriptHash, SegwitV0Sighash, TapSighash, WPubkeyHash,
-        WScriptHash, XKeyIdentifier,
-    };
+    use crate::key::{PubkeyHash, WPubkeyHash};
+    use crate::script::{ScriptHash, WScriptHash};
+    use crate::{LegacySighash, SegwitV0Sighash, TapSighash, XKeyIdentifier};
 
     #[rustfmt::skip]
     /// sha256d of the empty string
