@@ -468,6 +468,7 @@ impl PrivateKey {
     }
 
     /// Deserializes a private key from a slice.
+    #[deprecated(since = "TBD", note = "use from_byte_array instead")]
     pub fn from_slice(
         data: &[u8],
         network: impl Into<NetworkKind>,
@@ -1606,6 +1607,8 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)] // tests the deprecated function
+    #[allow(deprecated_in_future)]
     fn invalid_private_key_len() {
         use crate::Network;
         assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
