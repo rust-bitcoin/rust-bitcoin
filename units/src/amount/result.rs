@@ -161,6 +161,16 @@ crate::internal_macros::impl_op_for_references! {
 
         fn mul(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
     }
+    impl ops::Mul<Amount> for u64 {
+        type Output = NumOpResult<Amount>;
+
+        fn mul(self, rhs: Amount) -> Self::Output { rhs.checked_mul(self).valid_or_error() }
+    }
+    impl ops::Mul<NumOpResult<Amount>> for u64 {
+        type Output = NumOpResult<Amount>;
+
+        fn mul(self, rhs: NumOpResult<Amount>) -> Self::Output { rhs.and_then(|rhs| self * rhs) }
+    }
 
     impl ops::Div<u64> for Amount {
         type Output = NumOpResult<Amount>;
@@ -171,6 +181,11 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Amount>;
 
         fn div(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+    impl ops::Div<Amount> for Amount {
+        type Output = u64;
+
+        fn div(self, rhs: Amount) -> Self::Output { self.to_sat() / rhs.to_sat() }
     }
 
     impl ops::Rem<u64> for Amount {
@@ -221,6 +236,16 @@ crate::internal_macros::impl_op_for_references! {
 
         fn mul(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs * rhs) }
     }
+    impl ops::Mul<SignedAmount> for i64 {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn mul(self, rhs: SignedAmount) -> Self::Output { rhs.checked_mul(self).valid_or_error() }
+    }
+    impl ops::Mul<NumOpResult<SignedAmount>> for i64 {
+        type Output = NumOpResult<SignedAmount>;
+
+        fn mul(self, rhs: NumOpResult<SignedAmount>) -> Self::Output { rhs.and_then(|rhs| self * rhs) }
+    }
 
     impl ops::Div<i64> for SignedAmount {
         type Output = NumOpResult<SignedAmount>;
@@ -231,6 +256,11 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<SignedAmount>;
 
         fn div(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
+    }
+    impl ops::Div<SignedAmount> for SignedAmount {
+        type Output = i64;
+
+        fn div(self, rhs: SignedAmount) -> Self::Output { self.to_sat() / rhs.to_sat() }
     }
 
     impl ops::Rem<i64> for SignedAmount {
