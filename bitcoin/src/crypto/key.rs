@@ -1600,4 +1600,11 @@ mod tests {
             panic!("Expected Invalid char error");
         }
     }
+
+    #[test]
+    fn invalid_private_key_len() {
+        use crate::Network;
+        assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
+        assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
+    }
 }
