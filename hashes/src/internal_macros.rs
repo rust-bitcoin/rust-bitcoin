@@ -14,10 +14,7 @@
 ///
 /// Restrictions on usage:
 ///
-/// * There must be a free-standing `fn from_engine(HashEngine) -> Hash` in the scope
-/// * `fn internal_new([u8; $bits / 8]) -> Self` must exist on `Hash`
-///
-/// `from_engine` obviously implements the finalization algorithm.
+/// * The hash type must implement the `GeneralHash` trait.
 macro_rules! hash_trait_impls {
     ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         $crate::impl_bytelike_traits!(Hash, { $bits / 8 } $(, $gen: $gent)*);
@@ -25,12 +22,6 @@ macro_rules! hash_trait_impls {
         $crate::impl_hex_string_traits!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
         #[cfg(not(feature = "hex"))]
         $crate::impl_debug_only!(Hash, { $bits / 8 }, $reverse $(, $gen: $gent)*);
-
-        impl<$($gen: $gent),*> $crate::GeneralHash for Hash<$($gen),*> {
-            type Engine = HashEngine<$($gen),*>;
-
-            fn from_engine(e: Self::Engine) -> Hash<$($gen),*> { Self::from_engine(e) }
-        }
 
         #[cfg(feature = "serde")]
         $crate::serde_impl!(Hash, { $bits / 8} $(, $gen: $gent)*);
@@ -67,15 +58,18 @@ pub(crate) use hash_trait_impls;
 /// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
 /// * `$doc` - doc string to put on the type
 ///
-/// The `from_engine` free-standing function is still required with this macro. See the doc of
-/// [`hash_trait_impls`].
+/// Restrictions on usage:
+///
+/// * The hash type must implement the `GeneralHash` trait.
 macro_rules! general_hash_type {
     ($bits:expr, $reverse:expr, $doc:literal) => {
         $crate::internal_macros::hash_type_no_default!($bits, $reverse, $doc);
 
         impl Hash {
             /// Produces a hash from the current state of a given engine.
-            pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+            pub fn from_engine(e: HashEngine) -> Hash {
+                <Self as $crate::GeneralHash>::from_engine(e)
+            }
 
             /// Constructs a new engine.
             pub fn engine() -> HashEngine { Default::default() }
@@ -105,12 +99,8 @@ macro_rules! hash_type_no_default {
         pub struct Hash([u8; $bits / 8]);
 
         impl Hash {
-            const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
-
             /// Constructs a new hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
-                Self::internal_new(bytes)
-            }
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self { Hash(bytes) }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
@@ -140,7 +130,7 @@ macro_rules! hash_type_no_default {
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);
-                    Ok(Self::internal_new(ret))
+                    Ok(Self::from_byte_array(ret))
                 }
             }
 

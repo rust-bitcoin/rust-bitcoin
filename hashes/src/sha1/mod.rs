@@ -18,23 +18,27 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA1 hash function."
 }
 
-fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let n_bytes_hashed = e.bytes_hashed;
+impl crate::GeneralHash for Hash {
+    type Engine = HashEngine;
 
-    let zeroes = [0; BLOCK_SIZE - 8];
-    e.input(&[0x80]);
-    if incomplete_block_len(&e) > zeroes.len() {
-        e.input(&zeroes);
+    fn from_engine(mut e: Self::Engine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
+
+        let zeroes = [0; BLOCK_SIZE - 8];
+        e.input(&[0x80]);
+        if incomplete_block_len(&e) > zeroes.len() {
+            e.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - incomplete_block_len(&e);
+        e.input(&zeroes[..pad_length]);
+        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+
+        e.input(&(8 * n_bytes_hashed).to_be_bytes());
+        debug_assert_eq!(incomplete_block_len(&e), 0);
+
+        Hash(e.midstate())
     }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
-
-    e.input(&(8 * n_bytes_hashed).to_be_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
-
-    Hash(e.midstate())
 }
 
 const BLOCK_SIZE: usize = 64;
