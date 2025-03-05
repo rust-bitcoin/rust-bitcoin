@@ -6,7 +6,7 @@ name: Check semver breaks
 jobs:
   PR:
     name: PR Semver - stable toolchain
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     steps:
@@ -45,7 +45,7 @@ jobs:
 
   Feature:
     name: Non additive cargo features - stable toolchain
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     steps:
