@@ -8,7 +8,7 @@ name: Check semver breaks - Label and Comment PR
 jobs:
   Download:
     name: Download, Unzip and Add Labels/Comments
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pull-requests: write

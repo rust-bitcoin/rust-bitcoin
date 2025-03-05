@@ -6,7 +6,7 @@ on:
 jobs:
   format:
     name: Update cargo-semver-checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Update semver-checks to use latest crates.io published version

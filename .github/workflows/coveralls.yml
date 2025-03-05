@@ -7,7 +7,7 @@ name: Code coverage with llvm-cov
 jobs:
   Coveralls:
     name: Code coverage - stable toolchain
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
     steps:
