@@ -42,7 +42,7 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
-use internals::{write_err, ToU64 as _};
+use internals::{write_err, ToU64 as _, array::ArrayExt as _};
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};
@@ -195,8 +195,8 @@ impl<'a, W: Write> BlockFilterWriter<'a, W> {
     /// Constructs a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block<Checked>) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().to_byte_array();
-        let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
-        let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
+        let k0 = u64::from_le_bytes(*block_hash_as_int.sub_array::<0, 8>());
+        let k1 = u64::from_le_bytes(*block_hash_as_int.sub_array::<8, 8>());
         let writer = GcsFilterWriter::new(writer, k0, k1, M, P);
         BlockFilterWriter { block, writer }
     }
@@ -250,8 +250,8 @@ impl BlockFilterReader {
     /// Constructs a new [`BlockFilterReader`] from `block_hash`.
     pub fn new(block_hash: BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.to_byte_array();
-        let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
-        let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
+        let k0 = u64::from_le_bytes(*block_hash_as_int.sub_array::<0, 8>());
+        let k1 = u64::from_le_bytes(*block_hash_as_int.sub_array::<8, 8>());
         BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 
