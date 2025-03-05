@@ -310,9 +310,11 @@ macro_rules! serde_round_trip (
     })
 );
 
+#[cfg(feature = "hex")]
 /// Serializes a byte slice using the `hex` crate.
 pub struct SerializeBytesAsHex<'a>(pub &'a [u8]);
 
+#[cfg(feature = "hex")]
 impl serde::Serialize for SerializeBytesAsHex<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
