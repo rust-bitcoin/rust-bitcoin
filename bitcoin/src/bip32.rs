@@ -588,13 +588,16 @@ impl Xpriv {
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
+        let hmac_bytes = hmac_result.as_ref();
+        assert!(hmac_bytes.len() >= 32, "HMAC output is too short, expected at least 32 bytes");
+
         Ok(Xpriv {
             network: network.into(),
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
-                &hmac_result.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
+                &hmac_bytes[..32].try_into().expect("Slice should be exactly 32 bytes"),
             )?,
             chain_code: ChainCode::from_hmac(hmac_result),
         })
@@ -667,8 +670,12 @@ impl Xpriv {
 
         hmac_engine.input(&u32::from(i).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+
+        let hmac_bytes = hmac_result.as_ref();
+        assert!(hmac_bytes.len() >= 32, "HMAC output is too short, expected at least 32 bytes");
+
         let sk = secp256k1::SecretKey::from_byte_array(
-            &hmac_result.as_ref()[..32].try_into().expect("statistically impossible to hit"),
+            &hmac_bytes[..32].try_into().expect("statistically impossible to hit"),
         )
         .expect("statistically impossible to hit");
         let tweaked =
@@ -699,6 +706,7 @@ impl Xpriv {
             return Err(Error::UnknownVersion([b0, b1, b2, b3]));
         };
 
+        assert!(data.len() >= 78, "data is too short, expected at least 78 bytes");
         Ok(Xpriv {
             network,
             depth: data[4],
@@ -818,10 +826,13 @@ impl Xpub {
                 hmac_engine.input(&n.to_be_bytes());
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+                let hmac_bytes = hmac_result.as_ref();
+                assert!(
+                    hmac_bytes.len() >= 32,
+                    "HMAC output is too short, expected at least 32 bytes"
+                );
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    &hmac_result.as_ref()[..32]
-                        .try_into()
-                        .expect("Slice should be exactly 32 bytes"),
+                    &hmac_bytes[..32].try_into().expect("Slice should be exactly 32 bytes"),
                 )?;
                 let chain_code = ChainCode::from_hmac(hmac_result);
                 Ok((private_key, chain_code))

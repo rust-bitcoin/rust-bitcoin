@@ -464,6 +464,7 @@ impl PrivateKey {
         data: &[u8],
         network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
+        assert!(data.len() >= 32, "data is too short, expected at least 32 bytes");
         Ok(PrivateKey::new(
             secp256k1::SecretKey::from_byte_array(
                 data[..32].try_into().expect("Slice should be exactly 32 bytes"),
@@ -520,7 +521,7 @@ impl PrivateKey {
                 return Err(InvalidAddressVersionError { invalid }.into());
             }
         };
-
+        assert!(data.len() >= 32, "data is too short, expected at least 32 bytes");
         Ok(PrivateKey {
             compressed,
             network,

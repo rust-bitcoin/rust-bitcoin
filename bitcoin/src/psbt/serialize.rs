@@ -260,6 +260,7 @@ impl Serialize for XOnlyPublicKey {
 
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
+        assert!(bytes.len() >= 32, "bytes is too short, expected at least 32 bytes");
         XOnlyPublicKey::from_byte_array(
             bytes[..32].try_into().expect("statistically impossible to hit"),
         )

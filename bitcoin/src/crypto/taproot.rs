@@ -32,6 +32,7 @@ impl Signature {
         match sl.len() {
             64 => {
                 // default type
+                assert!(sl.len() >= 64, "sl data is too short, expected at least 64 bytes");
                 let signature = secp256k1::schnorr::Signature::from_byte_array(
                     sl[0..64].try_into().expect("Slice should be exactly 64 bytes"),
                 );
@@ -40,6 +41,10 @@ impl Signature {
             65 => {
                 let (sighash_type, signature) = sl.split_last().expect("slice len checked == 65");
                 let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
+                assert!(
+                    signature.len() >= 64,
+                    "signature is too short, expected at least 64 bytes"
+                );
                 let signature = secp256k1::schnorr::Signature::from_byte_array(
                     signature[0..64].try_into().expect("Slice should be exactly 64 bytes"),
                 );
@@ -142,7 +147,10 @@ impl From<InvalidSighashTypeError> for SigFromSliceError {
 impl<'a> Arbitrary<'a> for Signature {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
-
+        assert!(
+            arbitrary_bytes.len() >= 64,
+            "arbitrary_bytes is too short, expected at least 64 bytes"
+        );
         Ok(Signature {
             signature: secp256k1::schnorr::Signature::from_byte_array(
                 arbitrary_bytes[0..64].try_into().expect("Slice should be exactly 64 bytes"),

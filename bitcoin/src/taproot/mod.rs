@@ -1168,6 +1168,10 @@ impl ControlBlock {
         };
 
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
+        assert!(
+            sl.len() >= TAPROOT_CONTROL_BASE_SIZE,
+            "s1 is too short, expected at least {} bytes", TAPROOT_CONTROL_BASE_SIZE
+        );
         let internal_key = UntweakedPublicKey::from_byte_array(
             &sl[1..TAPROOT_CONTROL_BASE_SIZE].try_into().expect("Slice should be exactly 32 bytes"),
         )
