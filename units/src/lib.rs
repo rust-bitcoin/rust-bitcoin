@@ -34,6 +34,7 @@ pub mod block;
 pub mod fee_rate;
 pub mod locktime;
 pub mod parse;
+pub mod timestamp;
 pub mod weight;
 
 #[doc(inline)]
@@ -42,5 +43,6 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
+    timestamp::Timestamp,
     weight::Weight
 };
