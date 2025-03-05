@@ -253,7 +253,7 @@ impl Target {
     /// [max]: Target::max
     /// [target]: crate::block::HeaderExt::target
     pub fn difficulty(&self, params: impl AsRef<Params>) -> u128 {
-        // Panic here may be eaiser to debug than during the actual division.
+        // Panic here may be easier to debug than during the actual division.
         assert_ne!(self.0, U256::ZERO, "divide by zero");
 
         let max = params.as_ref().max_attainable_target;
