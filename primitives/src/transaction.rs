@@ -646,6 +646,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn sanity_check() {
+        let version = Version(123);
+        assert_eq!(version.to_u32(), 123);
+        assert_eq!(u32::from(version), 123);
+
+        assert!(!version.is_standard());
+        assert!(Version::ONE.is_standard());
+        assert!(Version::TWO.is_standard());
+        assert!(Version::THREE.is_standard());
+    }
+
+    #[test]
     fn transaction_functions() {
         let txin = TxIn {
             previous_output: OutPoint {

@@ -37,6 +37,11 @@ fn sanity_check() {
         assert_eq!(Amount::from_float_in(2_f64, Denomination::Bitcoin).unwrap(), sat(200_000_000));
         assert!(Amount::from_float_in(-100_f64, Denomination::Bitcoin).is_err());
     }
+
+    let result = NumOpResult::Valid(sat(123));
+    assert_eq!(Some(sat(123)), result.ok());
+    assert!(result.is_valid());
+    assert!(!result.is_error());
 }
 
 #[test]
@@ -1009,6 +1014,12 @@ fn sum_amounts() {
 
     assert_eq!([].iter().sum::<NumOpResult<Amount>>(), Amount::ZERO.into());
     assert_eq!([].iter().sum::<NumOpResult<SignedAmount>>(), SignedAmount::ZERO.into());
+
+    let results = [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
+    assert_eq!(results.iter().sum::<NumOpResult<Amount>>(), NumOpResult::Valid(sat(1400)));
+
+    let signed_results = [NumOpResult::Valid(ssat(42)), NumOpResult::Valid(ssat(1337)), NumOpResult::Valid(ssat(21))];
+    assert_eq!(signed_results.iter().sum::<NumOpResult<SignedAmount>>(), NumOpResult::Valid(ssat(1400)));
 
     let amounts = [sat(42), sat(1337), sat(21)];
     assert_eq!(
