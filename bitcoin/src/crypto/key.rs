@@ -459,17 +459,22 @@ impl PrivateKey {
     /// Serializes the private key to bytes.
     pub fn to_vec(self) -> Vec<u8> { self.inner[..].to_vec() }
 
+    /// Deserializes a private key from a byte array.
+    pub fn from_byte_array(
+        data: [u8; 32],
+        network: impl Into<NetworkKind>
+    ) -> Result<PrivateKey, secp256k1::Error> {
+        Ok(PrivateKey::new(secp256k1::SecretKey::from_byte_array(&data)?, network))
+    }
+
     /// Deserializes a private key from a slice.
+    #[deprecated(since = "TBD", note = "use from_byte_array instead")]
     pub fn from_slice(
         data: &[u8],
         network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
-        Ok(PrivateKey::new(
-            secp256k1::SecretKey::from_byte_array(
-                data[..32].try_into().expect("Slice should be exactly 32 bytes"),
-            )?,
-            network,
-        ))
+        let array = data.try_into().map_err(|_| secp256k1::Error::InvalidSecretKey)?;
+        Self::from_byte_array(array, network)
     }
 
     /// Formats the private key to WIF format.
@@ -1599,5 +1604,14 @@ mod tests {
         } else {
             panic!("Expected Invalid char error");
         }
+    }
+
+    #[test]
+    #[allow(deprecated)] // tests the deprecated function
+    #[allow(deprecated_in_future)]
+    fn invalid_private_key_len() {
+        use crate::Network;
+        assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
+        assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
     }
 }

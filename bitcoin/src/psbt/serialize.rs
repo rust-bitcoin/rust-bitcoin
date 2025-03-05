@@ -261,7 +261,7 @@ impl Serialize for XOnlyPublicKey {
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         XOnlyPublicKey::from_byte_array(
-            bytes[..32].try_into().expect("statistically impossible to hit"),
+            bytes.try_into().map_err(|_| Error::InvalidXOnlyPublicKey)?,
         )
         .map_err(|_| Error::InvalidXOnlyPublicKey)
     }
@@ -459,6 +459,12 @@ mod tests {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
         let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
+    }
+
+    #[test]
+    fn deserialize_xonly_public_key_len() {
+        assert!(XOnlyPublicKey::deserialize(&[1; 31]).is_err());
+        assert!(XOnlyPublicKey::deserialize(&[1; 33]).is_err());
     }
 
     #[test]
