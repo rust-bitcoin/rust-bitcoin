@@ -24,7 +24,7 @@ arbitrary = ["dep:arbitrary", "units/arbitrary"]
 [dependencies]
 hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["hex"] }
 hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
-internals = { package = "bitcoin-internals", version = "0.4.0" }
+internals = { package = "bitcoin-internals", version = "0.4.0", features = ["hex"] }
 units = { package = "bitcoin-units", version = "0.2.0", default-features = false }
 
 arbitrary = { version = "1.4", optional = true }
