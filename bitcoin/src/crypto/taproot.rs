@@ -10,6 +10,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use internals::write_err;
+use internals::array::ArrayExt;
 use io::Write;
 
 use crate::prelude::Vec;
@@ -29,23 +30,17 @@ pub struct Signature {
 impl Signature {
     /// Deserializes the signature from a slice.
     pub fn from_slice(sl: &[u8]) -> Result<Self, SigFromSliceError> {
-        match sl.len() {
-            64 => {
-                // default type
-                let signature = secp256k1::schnorr::Signature::from_byte_array(
-                    sl[0..64].try_into().expect("Slice should be exactly 64 bytes"),
-                );
-                Ok(Signature { signature, sighash_type: TapSighashType::Default })
-            }
-            65 => {
-                let (sighash_type, signature) = sl.split_last().expect("slice len checked == 65");
-                let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
-                let signature = secp256k1::schnorr::Signature::from_byte_array(
-                    signature[0..64].try_into().expect("Slice should be exactly 64 bytes"),
-                );
-                Ok(Signature { signature, sighash_type })
-            }
-            len => Err(SigFromSliceError::InvalidSignatureSize(len)),
+        if let Ok(signature) = <[u8; 64]>::try_from(sl) {
+            // default type
+            let signature = secp256k1::schnorr::Signature::from_byte_array(signature);
+            Ok(Signature { signature, sighash_type: TapSighashType::Default })
+        } else if let Ok(signature) = <[u8; 65]>::try_from(sl) {
+            let (sighash_type, signature) = signature.split_last();
+            let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
+            let signature = secp256k1::schnorr::Signature::from_byte_array(*signature);
+            Ok(Signature { signature, sighash_type })
+        } else {
+            Err(SigFromSliceError::InvalidSignatureSize(sl.len()))
         }
     }
 
@@ -144,9 +139,7 @@ impl<'a> Arbitrary<'a> for Signature {
         let arbitrary_bytes: [u8; secp256k1::constants::SCHNORR_SIGNATURE_SIZE] = u.arbitrary()?;
 
         Ok(Signature {
-            signature: secp256k1::schnorr::Signature::from_byte_array(
-                arbitrary_bytes[0..64].try_into().expect("Slice should be exactly 64 bytes"),
-            ),
+            signature: secp256k1::schnorr::Signature::from_byte_array(arbitrary_bytes),
             sighash_type: TapSighashType::arbitrary(u)?,
         })
     }

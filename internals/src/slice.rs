@@ -26,6 +26,25 @@ pub trait SliceExt {
     fn bitcoin_as_chunks_mut<const N: usize>(
         &mut self,
     ) -> (&mut [[Self::Item; N]], &mut [Self::Item]);
+
+    /// Tries to access a sub-array of length `ARRAY_LEN` at the specified `offset`.
+    ///
+    /// Returns `None` in case of out-of-bounds access.
+    fn get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> Option<&[Self::Item; ARRAY_LEN]>;
+
+    /// Splits the slice into an array and remainder if it's long enough.
+    ///
+    /// Returns `None` if the slice is shorter than `ARRAY_LEN`
+    #[allow(clippy::type_complexity)] // it's not really complex and redefining would make it
+                                      // harder to understand
+    fn split_first_chunk<const ARRAY_LEN: usize>(&self) -> Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])>;
+
+    /// Splits the slice into a remainder and an array if it's long enough.
+    ///
+    /// Returns `None` if the slice is shorter than `ARRAY_LEN`
+    #[allow(clippy::type_complexity)] // it's not really complex and redefining would make it
+                                      // harder to understand
+    fn split_last_chunk<const ARRAY_LEN: usize>(&self) -> Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])>;
 }
 
 impl<T> SliceExt for [T] {
@@ -68,6 +87,27 @@ impl<T> SliceExt for [T] {
             )
         };
         (left, right)
+    }
+
+    fn get_array<const ARRAY_LEN: usize>(&self, offset: usize) -> Option<&[Self::Item; ARRAY_LEN]> {
+        self.get(offset..(offset + ARRAY_LEN))
+            .map(|slice| slice.try_into().expect("the arguments to `get` evaluate to the same length the return type uses"))
+    }
+
+    fn split_first_chunk<const ARRAY_LEN: usize>(&self) -> Option<(&[Self::Item; ARRAY_LEN], &[Self::Item])> {
+        if self.len() < ARRAY_LEN {
+            return None;
+        }
+        let (first, remainder) = self.split_at(ARRAY_LEN);
+        Some((first.try_into().expect("we're passing `ARRAY_LEN` to `split_at` above"), remainder))
+    }
+
+    fn split_last_chunk<const ARRAY_LEN: usize>(&self) -> Option<(&[Self::Item], &[Self::Item; ARRAY_LEN])> {
+        if self.len() < ARRAY_LEN {
+            return None;
+        }
+        let (remainder, last) = self.split_at(self.len() - ARRAY_LEN);
+        Some((remainder, last.try_into().expect("we're passing `self.len() - ARRAY_LEN` to `split_at` above")))
     }
 }
 

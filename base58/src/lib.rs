@@ -20,6 +20,7 @@
 // Exclude lints we don't think are valuable.
 #![allow(clippy::needless_question_mark)] // https://github.com/rust-bitcoin/rust-bitcoin/pull/2134
 #![allow(clippy::manual_range_contains)] // More readable than clippy's format.
+#![allow(clippy::incompatible_msrv)] // Has FPs and we're testing it which is more reliable anyway.
 
 extern crate alloc;
 
@@ -40,7 +41,10 @@ use core::fmt;
 pub use std::{string::String, vec::Vec};
 
 use hashes::sha256d;
+use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
+#[allow(unused)] // MSRV polyfill
+use internals::slice::SliceExt;
 
 use crate::error::{IncorrectChecksumError, TooShortError};
 
@@ -109,15 +113,9 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
-    if ret.len() < 4 {
-        return Err(TooShortError { length: ret.len() }.into());
-    }
-    let check_start = ret.len() - 4;
+    let (remaining, &data_check) = ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
 
-    let hash_check = sha256d::Hash::hash(&ret[..check_start]).as_byte_array()[..4]
-        .try_into()
-        .expect("4 byte slice");
-    let data_check = ret[check_start..].try_into().expect("4 byte slice");
+    let hash_check = *sha256d::Hash::hash(remaining).as_byte_array().sub_array::<0, 4>();
 
     let expected = u32::from_le_bytes(hash_check);
     let actual = u32::from_le_bytes(data_check);
@@ -126,7 +124,7 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
         return Err(IncorrectChecksumError { incorrect: actual, expected }.into());
     }
 
-    ret.truncate(check_start);
+    ret.truncate(remaining.len());
     Ok(ret)
 }
 

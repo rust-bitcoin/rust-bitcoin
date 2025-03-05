@@ -12,6 +12,7 @@ use core::str::FromStr;
 
 use hashes::hash160;
 use hex::{FromHex, HexToArrayError};
+use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
@@ -505,20 +506,20 @@ impl PrivateKey {
     pub fn from_wif(wif: &str) -> Result<PrivateKey, FromWifError> {
         let data = base58::decode_check(wif)?;
 
-        let compressed = match data.len() {
-            33 => false,
-            34 => {
-                if data[33] != 1 {
-                    return Err(InvalidWifCompressionFlagError { invalid: data[33] }.into());
-                }
-                true
+        let (compressed, data) = if let Ok(data) = <&[u8; 33]>::try_from(&*data) {
+            (false, data)
+        } else if let Ok(data) = <&[u8; 34]>::try_from(&*data) {
+            let (compressed_flag, data) = data.split_last::<33>();
+            if *compressed_flag != 1 {
+                return Err(InvalidWifCompressionFlagError { invalid: *compressed_flag }.into());
             }
-            length => {
-                return Err(InvalidBase58PayloadLengthError { length }.into());
-            }
+            (true, data)
+        } else {
+            return Err(InvalidBase58PayloadLengthError { length: data.len() }.into());
         };
 
-        let network = match data[0] {
+        let (network, key) = data.split_first();
+        let network = match *network {
             128 => NetworkKind::Main,
             239 => NetworkKind::Test,
             invalid => {
@@ -529,9 +530,7 @@ impl PrivateKey {
         Ok(PrivateKey {
             compressed,
             network,
-            inner: secp256k1::SecretKey::from_byte_array(
-                &data[1..33].try_into().expect("Slice should be exactly 32 bytes"),
-            )?,
+            inner: secp256k1::SecretKey::from_byte_array(key)?,
         })
     }
 }
