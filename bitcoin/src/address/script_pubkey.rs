@@ -2,6 +2,7 @@
 
 //! Bitcoin scriptPubkey script extensions.
 
+use internals::array::ArrayExt;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::internal_macros::define_extension_trait;
@@ -99,14 +100,16 @@ define_extension_trait! {
     pub(crate) trait ScriptExtPrivate impl for Script {
         /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
         fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
-            match self.len() {
-                67 if self.as_bytes()[0] == OP_PUSHBYTES_65.to_u8()
-                    && self.as_bytes()[66] == OP_CHECKSIG.to_u8() =>
-                    Some(&self.as_bytes()[1..66]),
-                35 if self.as_bytes()[0] == OP_PUSHBYTES_33.to_u8()
-                    && self.as_bytes()[34] == OP_CHECKSIG.to_u8() =>
-                    Some(&self.as_bytes()[1..34]),
-                _ => None,
+            if let Ok(bytes) = <&[u8; 67]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<66>();
+                let (&last, pubkey) = bytes.split_last::<65>();
+                (first == OP_PUSHBYTES_65.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else if let Ok(bytes) = <&[u8; 35]>::try_from(self.as_bytes()) {
+                let (&first, bytes) = bytes.split_first::<34>();
+                let (&last, pubkey) = bytes.split_last::<33>();
+                (first == OP_PUSHBYTES_33.to_u8() && last == OP_CHECKSIG.to_u8()).then_some(pubkey)
+            } else {
+                None
             }
         }
     }

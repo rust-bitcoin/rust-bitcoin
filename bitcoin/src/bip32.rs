@@ -10,7 +10,8 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, GeneralHash, Hash, HashEngine, Hmac, HmacEngine};
+use internals::array::ArrayExt;
 use internals::write_err;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
@@ -44,7 +45,7 @@ impl_array_newtype_stringify!(ChainCode, 32);
 
 impl ChainCode {
     fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
-        hmac.as_ref()[32..].try_into().expect("half of hmac is guaranteed to be 32 bytes")
+        ChainCode(*hmac.as_byte_array().sub_array::<32, 32>())
     }
 }
 
@@ -594,7 +595,7 @@ impl Xpriv {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
-                &hmac_result.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
+                &hmac_result.as_byte_array().sub_array::<0, 32>(),
             )?,
             chain_code: ChainCode::from_hmac(hmac_result),
         })
@@ -668,7 +669,7 @@ impl Xpriv {
         hmac_engine.input(&u32::from(i).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let sk = secp256k1::SecretKey::from_byte_array(
-            &hmac_result.as_ref()[..32].try_into().expect("statistically impossible to hit"),
+            &hmac_result.as_byte_array().sub_array::<0, 32>(),
         )
         .expect("statistically impossible to hit");
         let tweaked =
@@ -686,32 +687,30 @@ impl Xpriv {
 
     /// Decoding extended private key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpriv, Error> {
-        if data.len() != 78 {
-            return Err(Error::WrongExtendedKeyLength(data.len()));
-        }
+        let Common {
+            network,
+            depth,
+            parent_fingerprint,
+            child_number,
+            chain_code,
+            key,
+        } = Common::decode(data)?;
 
-        let network = if data.starts_with(&VERSION_BYTES_MAINNET_PRIVATE) {
-            NetworkKind::Main
-        } else if data.starts_with(&VERSION_BYTES_TESTNETS_PRIVATE) {
-            NetworkKind::Test
-        } else {
-            let (b0, b1, b2, b3) = (data[0], data[1], data[2], data[3]);
-            return Err(Error::UnknownVersion([b0, b1, b2, b3]));
+        let network = match network {
+            VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
+            VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
+            unknown => return Err(Error::UnknownVersion(unknown)),
         };
+
+        let (zero, private_key) = key.split_first();
 
         Ok(Xpriv {
             network,
-            depth: data[4],
-            parent_fingerprint: data[5..9]
-                .try_into()
-                .expect("9 - 5 == 4, which is the Fingerprint length"),
-            child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: data[13..45]
-                .try_into()
-                .expect("45 - 13 == 32, which is the ChainCode length"),
-            private_key: secp256k1::SecretKey::from_byte_array(
-                &data[46..78].try_into().expect("Slice should be exactly 32 bytes"),
-            )?,
+            depth,
+            parent_fingerprint,
+            child_number,
+            chain_code,
+            private_key: secp256k1::SecretKey::from_byte_array(private_key)?,
         })
     }
 
@@ -738,7 +737,7 @@ impl Xpriv {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        self.identifier(secp).as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier(secp).as_byte_array().sub_array::<0, 4>().into()
     }
 }
 
@@ -819,9 +818,7 @@ impl Xpub {
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    &hmac_result.as_ref()[..32]
-                        .try_into()
-                        .expect("Slice should be exactly 32 bytes"),
+                    &hmac_result.as_byte_array().sub_array::<0, 32>()
                 )?;
                 let chain_code = ChainCode::from_hmac(hmac_result);
                 Ok((private_key, chain_code))
@@ -850,30 +847,28 @@ impl Xpub {
 
     /// Decoding extended public key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpub, Error> {
-        if data.len() != 78 {
-            return Err(Error::WrongExtendedKeyLength(data.len()));
-        }
+        let Common {
+            network,
+            depth,
+            parent_fingerprint,
+            child_number,
+            chain_code,
+            key,
+        } = Common::decode(data)?;
 
-        let network = if data.starts_with(&VERSION_BYTES_MAINNET_PUBLIC) {
-            NetworkKind::Main
-        } else if data.starts_with(&VERSION_BYTES_TESTNETS_PUBLIC) {
-            NetworkKind::Test
-        } else {
-            let (b0, b1, b2, b3) = (data[0], data[1], data[2], data[3]);
-            return Err(Error::UnknownVersion([b0, b1, b2, b3]));
+        let network = match network {
+            VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
+            VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
+            unknown => return Err(Error::UnknownVersion(unknown)),
         };
 
         Ok(Xpub {
             network,
-            depth: data[4],
-            parent_fingerprint: data[5..9]
-                .try_into()
-                .expect("9 - 5 == 4, which is the Fingerprint length"),
-            child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: data[13..45]
-                .try_into()
-                .expect("45 - 13 == 32, which is the ChainCode length"),
-            public_key: secp256k1::PublicKey::from_slice(&data[45..78])?,
+            depth,
+            parent_fingerprint,
+            child_number,
+            chain_code,
+            public_key: secp256k1::PublicKey::from_slice(&key)?,
         })
     }
 
@@ -899,7 +894,7 @@ impl Xpub {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint(&self) -> Fingerprint {
-        self.identifier().as_byte_array()[0..4].try_into().expect("4 is the fingerprint length")
+        self.identifier().as_byte_array().sub_array::<0, 4>().into()
     }
 }
 
@@ -975,6 +970,38 @@ impl fmt::Display for InvalidBase58PayloadLengthError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidBase58PayloadLengthError {}
+
+// Helps unify decoding
+struct Common {
+    network: [u8; 4],
+    depth: u8,
+    parent_fingerprint: Fingerprint,
+    child_number: ChildNumber,
+    chain_code: ChainCode,
+    // public key (compressed) or 0 byte followed by a private key 
+    key: [u8; 33],
+}
+
+impl Common {
+    fn decode(data: &[u8]) -> Result<Self, Error> {
+        let data: &[u8; 78] = data.try_into().map_err(|_| Error::WrongExtendedKeyLength(data.len()))?;
+
+        let (&network, data) = data.split_array::<4, 74>();
+        let (&depth, data) = data.split_first::<73>();
+        let (parent_fingerprint, data) = data.split_array::<4, 69>();
+        let (&child_number, data) = data.split_array::<4, 65>();
+        let (&chain_code, &key) = data.split_array::<32, 33>();
+
+        Ok(Common {
+            network,
+            depth,
+            parent_fingerprint: parent_fingerprint.into(),
+            child_number: u32::from_be_bytes(child_number).into(),
+            chain_code: chain_code.into(),
+            key,
+        })
+    }
+}
 
 #[cfg(test)]
 mod tests {
