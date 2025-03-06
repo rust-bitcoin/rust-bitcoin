@@ -10,7 +10,7 @@ use core::ops::Index;
 use core::str::FromStr;
 use core::{fmt, slice};
 
-use hashes::{hash160, hash_newtype, sha512, GeneralHash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, hash_newtype, sha512, HashEngine, Hmac, HmacEngine};
 use internals::write_err;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
@@ -584,9 +584,9 @@ impl From<InvalidBase58PayloadLengthError> for Error {
 impl Xpriv {
     /// Constructs a new master key from a seed value
     pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Result<Xpriv, Error> {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
-        hmac_engine.input(seed);
-        let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+        let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
+        engine.input(seed);
+        let hmac = engine.finalize();
 
         Ok(Xpriv {
             network: network.into(),
@@ -594,9 +594,9 @@ impl Xpriv {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
-                &hmac_result.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
+                &hmac.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
             )?,
-            chain_code: ChainCode::from_hmac(hmac_result),
+            chain_code: ChainCode::from_hmac(hmac),
         })
     }
 
@@ -650,25 +650,25 @@ impl Xpriv {
 
     /// Private->Private child key derivation
     fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Xpriv {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
+        let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
-                hmac_engine.input(
+                engine.input(
                     &secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..],
                 );
             }
             ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
-                hmac_engine.input(&[0u8]);
-                hmac_engine.input(&self.private_key[..]);
+                engine.input(&[0u8]);
+                engine.input(&self.private_key[..]);
             }
         }
 
-        hmac_engine.input(&u32::from(i).to_be_bytes());
-        let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+        engine.input(&u32::from(i).to_be_bytes());
+        let hmac: Hmac<sha512::Hash> = engine.finalize();
         let sk = secp256k1::SecretKey::from_byte_array(
-            &hmac_result.as_ref()[..32].try_into().expect("statistically impossible to hit"),
+            &hmac.as_ref()[..32].try_into().expect("statistically impossible to hit"),
         )
         .expect("statistically impossible to hit");
         let tweaked =
@@ -680,7 +680,7 @@ impl Xpriv {
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
-            chain_code: ChainCode::from_hmac(hmac_result),
+            chain_code: ChainCode::from_hmac(hmac),
         }
     }
 
@@ -812,18 +812,15 @@ impl Xpub {
         match i {
             ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
             ChildNumber::Normal { index: n } => {
-                let mut hmac_engine: HmacEngine<sha512::Hash> =
-                    HmacEngine::new(&self.chain_code[..]);
-                hmac_engine.input(&self.public_key.serialize()[..]);
-                hmac_engine.input(&n.to_be_bytes());
+                let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
+                engine.input(&self.public_key.serialize()[..]);
+                engine.input(&n.to_be_bytes());
 
-                let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+                let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    &hmac_result.as_ref()[..32]
-                        .try_into()
-                        .expect("Slice should be exactly 32 bytes"),
+                    &hmac.as_ref()[..32].try_into().expect("Slice should be exactly 32 bytes"),
                 )?;
-                let chain_code = ChainCode::from_hmac(hmac_result);
+                let chain_code = ChainCode::from_hmac(hmac);
                 Ok((private_key, chain_code))
             }
         }

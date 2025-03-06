@@ -8,7 +8,7 @@
 
 use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha384, sha512, sha512_256, siphash24,
-    GeneralHash as _, HashEngine as _, Hmac, HmacEngine,
+    HashEngine as _, HmacEngine,
 };
 
 const DATA: &str = "arbitrary data to hash as a regression test";
@@ -57,9 +57,9 @@ fn regression_sha256t() {
 
 #[test]
 fn regression_hmac_sha256_with_key() {
-    let mut engine = HmacEngine::<sha256::Hash>::new(HMAC_KEY);
+    let mut engine = HmacEngine::<sha256::HashEngine>::new(HMAC_KEY);
     engine.input(DATA.as_bytes());
-    let hash = Hmac::from_engine(engine);
+    let hash = engine.finalize();
 
     let got = format!("{}", hash);
     let want = "d159cecaf4adf90b6a641bab767e4817d3a51c414acea3682686c35ec0b37b52";
@@ -68,9 +68,9 @@ fn regression_hmac_sha256_with_key() {
 
 #[test]
 fn regression_hmac_sha512_with_key() {
-    let mut engine = HmacEngine::<sha512::Hash>::new(HMAC_KEY);
+    let mut engine = HmacEngine::<sha512::HashEngine>::new(HMAC_KEY);
     engine.input(DATA.as_bytes());
-    let hash = Hmac::from_engine(engine);
+    let hash = engine.finalize();
 
     let got = format!("{}", hash);
     let want = "8511773748f89ba22c07fb3a2981a12c1823695119de41f4a62aead6b848bd34939acf16475c35ed7956114fead3e794cc162ecd35e447a4dabc3227d55f757b";
@@ -85,5 +85,15 @@ fn regression_siphash24_with_key() {
 
     let got = format!("{}", hash);
     let want = "e823ed82311d601a";
+    assert_eq!(got, want);
+}
+
+#[test]
+fn regression_sha256_hash_again() {
+    let hash = sha256::Hash::hash(b"Don't explain your philosophy. Embody it.");
+    let again = hash.hash_again();
+
+    let got = format!("{}", again);
+    let want = "28273103bcd88ab99e2b1007174770ff3f0ea91ee4b3ac942879ed1a2d264b4c";
     assert_eq!(got, want);
 }
