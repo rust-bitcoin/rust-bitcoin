@@ -15,7 +15,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
-    SignedAmount, Weight,
+    SignedAmount, Timestamp, Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -42,6 +42,7 @@ struct Structs {
     i: relative::Height,
     j: relative::Time,
     k: Weight,
+    l: Timestamp,
 }
 
 impl Structs {
@@ -58,6 +59,7 @@ impl Structs {
             i: relative::Height::MAX,
             j: relative::Time::MAX,
             k: Weight::MAX,
+            l: Timestamp::from_u32(u32::MAX),
         }
     }
 }
@@ -87,6 +89,7 @@ struct CommonTraits {
     i: relative::Height,
     j: relative::Time,
     k: Weight,
+    l: Timestamp,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -138,12 +141,14 @@ struct Errors {
 
 #[test]
 fn api_can_use_modules_from_crate_root() {
-    use bitcoin_units::{amount, block, fee_rate, locktime, parse, weight};
+    use bitcoin_units::{amount, block, fee_rate, locktime, parse, timestamp, weight};
 }
 
 #[test]
 fn api_can_use_types_from_crate_root() {
-    use bitcoin_units::{Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
+    use bitcoin_units::{
+        Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Timestamp, Weight,
+    };
 }
 
 #[test]
@@ -184,6 +189,11 @@ fn api_can_use_all_types_from_module_parse() {
 }
 
 #[test]
+fn api_can_use_all_types_from_module_timestamp() {
+    use bitcoin_units::timestamp::Timestamp;
+}
+
+#[test]
 fn api_can_use_all_types_from_module_weight() {
     use bitcoin_units::weight::Weight;
 }
@@ -217,6 +227,8 @@ fn api_all_non_error_types_have_non_empty_debug() {
     let debug = format!("{:?}", t.b.j);
     assert!(!debug.is_empty());
     let debug = format!("{:?}", t.b.k);
+    assert!(!debug.is_empty());
+    let debug = format!("{:?}", t.b.l);
     assert!(!debug.is_empty());
 }
 
@@ -283,6 +295,7 @@ impl<'a> Arbitrary<'a> for Structs {
             i: relative::Height::arbitrary(u)?,
             j: relative::Time::arbitrary(u)?,
             k: Weight::arbitrary(u)?,
+            l: Timestamp::arbitrary(u)?,
         };
         Ok(a)
     }
