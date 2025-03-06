@@ -12,10 +12,10 @@ use serde::{Deserialize, Serialize};
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
-/// Represents block weight - the weight of a transaction or block.
+/// Represents weight - the weight of a transaction or block.
 ///
 /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
-/// up the types as well as basic formatting features.
+/// up types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(transparent))]
@@ -48,7 +48,13 @@ impl Weight {
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
-    pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
+    pub const fn from_kwu(wu: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match wu.checked_mul(1000) {
+            Some(wu) => Some(Weight::from_wu(wu)),
+            None => None,
+        }
+    }
 
     /// Constructs a new [`Weight`] from virtual bytes, returning [`None`] if an overflow occurred.
     pub const fn from_vb(vb: u64) -> Option<Self> {
