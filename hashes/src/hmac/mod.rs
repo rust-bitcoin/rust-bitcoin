@@ -35,6 +35,30 @@ impl<T: GeneralHash> Hmac<T> {
     {
         HmacEngine::new(key)
     }
+
+    /// Hashes some bytes.
+    pub fn hash(key: &[u8], data: &[u8]) -> Self
+    where
+        <T as GeneralHash>::Engine: Default,
+    {
+        let mut engine = HmacEngine::new(key);
+        engine.input(data);
+        Self::from_engine(engine)
+    }
+
+    /// Hashes all the byte slices retrieved from the iterator together.
+    pub fn hash_byte_chunks<B, I>(key: &[u8], byte_slices: I) -> Self
+    where
+        <T as GeneralHash>::Engine: Default,
+        B: AsRef<[u8]>,
+        I: IntoIterator<Item = B>,
+    {
+        let mut engine = HmacEngine::new(key);
+        for slice in byte_slices {
+            engine.input(slice.as_ref());
+        }
+        Self::from_engine(engine)
+    }
 }
 
 impl<T: GeneralHash + str::FromStr> str::FromStr for Hmac<T> {
