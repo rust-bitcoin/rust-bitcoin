@@ -29,8 +29,8 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     // BIP-141: The witness must consist of exactly 2 items (≤ 520 bytes each). The first one a
     // signature, and the second one a public key.
     assert_eq!(witness.len(), 2);
-    let sig_bytes = witness.nth(0).unwrap();
-    let pk_bytes = witness.nth(1).unwrap();
+    let sig_bytes = witness.get(0).unwrap();
+    let pk_bytes = witness.get(1).unwrap();
 
     let sig = ecdsa::Signature::from_slice(sig_bytes).expect("failed to parse sig");
 
@@ -118,7 +118,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
 
     //in an M of N multisig, the witness elements from 1 (0-based) to M-2 are signatures (with sighash flags as the last byte)
     for n in 1..=witness.len() - 2 {
-        let sig_bytes = witness.nth(n).expect("out of bounds");
+        let sig_bytes = witness.get(n).expect("out of bounds");
         let sig = ecdsa::Signature::from_slice(sig_bytes).expect("failed to parse sig");
         let sig_len = sig_bytes.len() - 1; //last byte is EcdsaSighashType sighash flag
                                            //ECDSA signature in DER format lengths are between 70 and 72 bytes

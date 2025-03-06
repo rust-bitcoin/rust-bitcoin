@@ -185,37 +185,41 @@ impl Witness {
 
     /// Returns the last element in the witness, if any.
     #[inline]
-    pub fn last(&self) -> Option<&[u8]> {
-        if self.witness_elements == 0 {
+    pub fn last(&self) -> Option<&[u8]> { self.get_back(0) }
+
+    /// Retrieves an element from the end of the witness by its reverse index.
+    ///
+    /// `index` is 0-based from the end, where 0 is the last element, 1 is the second-to-last, etc.
+    ///
+    /// Returns `None` if the requested index is beyond the witness's elements.
+    ///
+    /// # Examples
+    /// ```
+    /// use bitcoin_primitives::witness::Witness;
+    ///
+    /// let mut witness = Witness::new();
+    /// witness.push(b"A");
+    /// witness.push(b"B");
+    /// witness.push(b"C");
+    /// witness.push(b"D");
+    ///
+    /// assert_eq!(witness.get_back(0), Some(b"D".as_slice()));
+    /// assert_eq!(witness.get_back(1), Some(b"C".as_slice()));
+    /// assert_eq!(witness.get_back(2), Some(b"B".as_slice()));
+    /// assert_eq!(witness.get_back(3), Some(b"A".as_slice()));
+    /// assert_eq!(witness.get_back(4), None);
+    /// ```
+    pub fn get_back(&self, index: usize) -> Option<&[u8]> {
+        if self.witness_elements <= index {
             None
         } else {
-            self.nth(self.witness_elements - 1)
+            self.get(self.witness_elements - 1 - index)
         }
     }
 
-    /// Returns the second-to-last element in the witness, if any.
+    /// Returns a specific element from the witness by its index, if any.
     #[inline]
-    pub fn second_to_last(&self) -> Option<&[u8]> {
-        if self.witness_elements <= 1 {
-            None
-        } else {
-            self.nth(self.witness_elements - 2)
-        }
-    }
-
-    /// Returns the third-to-last element in the witness, if any.
-    #[inline]
-    pub fn third_to_last(&self) -> Option<&[u8]> {
-        if self.witness_elements <= 2 {
-            None
-        } else {
-            self.nth(self.witness_elements - 3)
-        }
-    }
-
-    /// Return the nth element in the witness, if any
-    #[inline]
-    pub fn nth(&self, index: usize) -> Option<&[u8]> {
+    pub fn get(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
         self.element_at(pos)
     }
@@ -274,8 +278,9 @@ pub struct Iter<'a> {
 impl Index<usize> for Witness {
     type Output = [u8];
 
+    #[track_caller]
     #[inline]
-    fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("out of bounds") }
+    fn index(&self, index: usize) -> &Self::Output { self.get(index).expect("out of bounds") }
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -468,12 +473,12 @@ mod test {
         let mut witness = Witness::default();
         assert!(witness.is_empty());
         assert_eq!(witness.last(), None);
-        assert_eq!(witness.second_to_last(), None);
+        assert_eq!(witness.get_back(1), None);
 
-        assert_eq!(witness.nth(0), None);
-        assert_eq!(witness.nth(1), None);
-        assert_eq!(witness.nth(2), None);
-        assert_eq!(witness.nth(3), None);
+        assert_eq!(witness.get(0), None);
+        assert_eq!(witness.get(1), None);
+        assert_eq!(witness.get(2), None);
+        assert_eq!(witness.get(3), None);
 
         // Push a single byte element onto the witness stack.
         let push = [11_u8];
@@ -491,13 +496,13 @@ mod test {
         let element_0 = push.as_slice();
         assert_eq!(element_0, &witness[0]);
 
-        assert_eq!(witness.second_to_last(), None);
+        assert_eq!(witness.get_back(1), None);
         assert_eq!(witness.last(), Some(element_0));
 
-        assert_eq!(witness.nth(0), Some(element_0));
-        assert_eq!(witness.nth(1), None);
-        assert_eq!(witness.nth(2), None);
-        assert_eq!(witness.nth(3), None);
+        assert_eq!(witness.get(0), Some(element_0));
+        assert_eq!(witness.get(1), None);
+        assert_eq!(witness.get(2), None);
+        assert_eq!(witness.get(3), None);
 
         // Now push 2 byte element onto the witness stack.
         let push = [21u8, 22u8];
@@ -514,12 +519,12 @@ mod test {
         let element_1 = push.as_slice();
         assert_eq!(element_1, &witness[1]);
 
-        assert_eq!(witness.nth(0), Some(element_0));
-        assert_eq!(witness.nth(1), Some(element_1));
-        assert_eq!(witness.nth(2), None);
-        assert_eq!(witness.nth(3), None);
+        assert_eq!(witness.get(0), Some(element_0));
+        assert_eq!(witness.get(1), Some(element_1));
+        assert_eq!(witness.get(2), None);
+        assert_eq!(witness.get(3), None);
 
-        assert_eq!(witness.second_to_last(), Some(element_0));
+        assert_eq!(witness.get_back(1), Some(element_0));
         assert_eq!(witness.last(), Some(element_1));
 
         // Now push another 2 byte element onto the witness stack.
@@ -537,13 +542,13 @@ mod test {
         let element_2 = push.as_slice();
         assert_eq!(element_2, &witness[2]);
 
-        assert_eq!(witness.nth(0), Some(element_0));
-        assert_eq!(witness.nth(1), Some(element_1));
-        assert_eq!(witness.nth(2), Some(element_2));
-        assert_eq!(witness.nth(3), None);
+        assert_eq!(witness.get(0), Some(element_0));
+        assert_eq!(witness.get(1), Some(element_1));
+        assert_eq!(witness.get(2), Some(element_2));
+        assert_eq!(witness.get(3), None);
 
-        assert_eq!(witness.third_to_last(), Some(element_0));
-        assert_eq!(witness.second_to_last(), Some(element_1));
+        assert_eq!(witness.get_back(2), Some(element_0));
+        assert_eq!(witness.get_back(1), Some(element_1));
         assert_eq!(witness.last(), Some(element_2));
     }
 
@@ -574,8 +579,8 @@ mod test {
         let indices_start = elements.len();
         let witness =
             Witness::from_parts__unstable(content.clone(), witness_elements, indices_start);
-        assert_eq!(witness.nth(0).unwrap(), [11_u8]);
-        assert_eq!(witness.nth(1).unwrap(), [21_u8, 22]);
+        assert_eq!(witness.get(0).unwrap(), [11_u8]);
+        assert_eq!(witness.get(1).unwrap(), [21_u8, 22]);
         assert_eq!(witness.size(), 6);
     }
 
