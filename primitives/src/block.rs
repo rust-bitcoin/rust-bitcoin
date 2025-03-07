@@ -406,6 +406,12 @@ mod tests {
         assert_eq!(version.to_consensus(), 1234567890);
     }
 
+    #[test]
+    fn version_default() {
+        let version = Version::default();
+        assert_eq!(version.to_consensus(), Version::NO_SOFT_FORK_SIGNALLING.to_consensus());
+    }
+
     // Check that the size of the header consensus serialization matches the const SIZE value
     #[test]
     fn header_size() {
@@ -421,5 +427,152 @@ mod tests {
             + header.nonce.to_le_bytes().len();
 
         assert_eq!(header_size, Header::SIZE);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_new_unchecked() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions.clone());
+        assert_eq!(block.header, header);
+        assert_eq!(block.transactions, transactions);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_assume_checked() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions.clone());
+        let witness_root = Some(WitnessMerkleNode::from_byte_array([0x88; 32]));
+        let checked_block = block.assume_checked(witness_root);
+        assert_eq!(checked_block.header(), &header);
+        assert_eq!(checked_block.transactions(), &transactions);
+        assert_eq!(checked_block.cached_witness_root(), witness_root);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_into_parts() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions.clone());
+        let (block_header, block_transactions) = block.into_parts();
+        assert_eq!(block_header, header);
+        assert_eq!(block_transactions, transactions);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_cached_witness_root() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions);
+        let witness_root = Some(WitnessMerkleNode::from_byte_array([0x88; 32]));
+        let checked_block = block.assume_checked(witness_root);
+        assert_eq!(checked_block.cached_witness_root(), witness_root);
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_block_hash() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions);
+        assert_eq!(block.block_hash(), header.block_hash());
+    }
+
+    #[test]
+    fn block_hash_from_header() {
+        let header = dummy_header();
+        let block_hash = header.block_hash();
+        assert_eq!(block_hash, BlockHash::from(header));
+    }
+
+    #[test]
+    fn block_hash_from_header_ref() {
+        let header = dummy_header();
+        let block_hash: BlockHash = BlockHash::from(&header);
+        assert_eq!(block_hash, header.block_hash());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_hash_from_block() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions);
+        let block_hash: BlockHash = BlockHash::from(block);
+        assert_eq!(block_hash, header.block_hash());
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn block_hash_from_block_ref() {
+        let header = dummy_header();
+        let transactions = vec![];
+        let block = Block::new_unchecked(header, transactions);
+        let block_hash: BlockHash = BlockHash::from(&block);
+        assert_eq!(block_hash, header.block_hash());
+    }
+
+    #[test]
+    fn header_debug() {
+        let header = dummy_header();
+        let expected = format!(
+            "Header {{ block_hash: {:?}, version: {:?}, prev_blockhash: {:?}, merkle_root: {:?}, time: {:?}, bits: {:?}, nonce: {:?} }}",
+            header.block_hash(),
+            header.version,
+            header.prev_blockhash,
+            header.merkle_root,
+            header.time,
+            header.bits,
+            header.nonce
+        );
+        assert_eq!(format!("{:?}", header), expected);
+    }
+
+    #[cfg(feature = "arbitrary")]
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn arbitrary_block() {
+        let data = vec![1u8; 100];
+        let mut unstructured = Unstructured::new(&data);
+
+        let block = Block::arbitrary(&mut unstructured).unwrap();
+
+        println!("{:?}", block);
+        let header = block.header;
+        assert!(header.version.to_consensus() > 0);
+        assert!(header.prev_blockhash.as_byte_array().len() == 32);
+        assert!(header.merkle_root.as_byte_array().len() == 32);
+        assert!(header.version.to_consensus() > 0);
+    }
+
+    #[cfg(feature = "arbitrary")]
+    #[test]
+    fn arbitrary_version_branches() {
+        let data = vec![0u8; 100];
+        let mut unstructured = Unstructured::new(&data);
+
+        // Test branch where choice is 0
+        let version = Version::arbitrary(&mut unstructured).unwrap();
+        assert_eq!(version, Version::ONE);
+
+        let data = vec![1u8; 100];
+        let mut unstructured = Unstructured::new(&data);
+        let version = Version::arbitrary(&mut unstructured).unwrap();
+        assert_eq!(version, Version::TWO);
+
+        let data = vec![2u8; 100];
+        let mut unstructured = Unstructured::new(&data);
+        let version = Version::arbitrary(&mut unstructured).unwrap();
+        assert_eq!(version, Version::NO_SOFT_FORK_SIGNALLING);
+
+        let data = vec![3u8; 100];
+        let mut unstructured = Unstructured::new(&data);
+        let version = Version::arbitrary(&mut unstructured).unwrap();
+        assert!(version.to_consensus() >= 0);
     }
 }
