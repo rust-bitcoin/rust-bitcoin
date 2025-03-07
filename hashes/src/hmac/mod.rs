@@ -20,12 +20,44 @@ use crate::{GeneralHash, Hash, HashEngine};
 pub struct Hmac<T: GeneralHash>(T);
 
 impl<T: GeneralHash> Hmac<T> {
+    /// Produces a hash from the current state of a given engine.
+    pub fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
+        let ihash = T::from_engine(e.iengine);
+        e.oengine.input(ihash.as_byte_array().as_ref());
+        let ohash = T::from_engine(e.oengine);
+        Hmac(ohash)
+    }
+
     /// Constructs a new keyed HMAC engine from `key`.
     pub fn engine(key: &[u8]) -> HmacEngine<T>
     where
         <T as GeneralHash>::Engine: Default,
     {
         HmacEngine::new(key)
+    }
+
+    /// Hashes some bytes.
+    pub fn hash(key: &[u8], data: &[u8]) -> Self
+    where
+        <T as GeneralHash>::Engine: Default,
+    {
+        let mut engine = HmacEngine::new(key);
+        engine.input(data);
+        Self::from_engine(engine)
+    }
+
+    /// Hashes all the byte slices retrieved from the iterator together.
+    pub fn hash_byte_chunks<B, I>(key: &[u8], byte_slices: I) -> Self
+    where
+        <T as GeneralHash>::Engine: Default,
+        B: AsRef<[u8]>,
+        I: IntoIterator<Item = B>,
+    {
+        let mut engine = HmacEngine::new(key);
+        for slice in byte_slices {
+            engine.input(slice.as_ref());
+        }
+        Self::from_engine(engine)
     }
 }
 
@@ -119,12 +151,7 @@ impl<T: GeneralHash> convert::AsRef<[u8]> for Hmac<T> {
 impl<T: GeneralHash> GeneralHash for Hmac<T> {
     type Engine = HmacEngine<T>;
 
-    fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
-        let ihash = T::from_engine(e.iengine);
-        e.oengine.input(ihash.as_byte_array().as_ref());
-        let ohash = T::from_engine(e.oengine);
-        Hmac(ohash)
-    }
+    fn from_engine(e: HmacEngine<T>) -> Hmac<T> { Self::from_engine(e) }
 }
 
 impl<T: GeneralHash> Hash for Hmac<T> {
@@ -172,7 +199,7 @@ crate::internal_macros::impl_write!(
 mod tests {
     #[test]
     fn test() {
-        use crate::{sha256, GeneralHash as _, Hash as _, HashEngine, Hmac, HmacEngine};
+        use crate::{sha256, Hash as _, HashEngine, Hmac, HmacEngine};
 
         #[derive(Clone)]
         struct Test {
