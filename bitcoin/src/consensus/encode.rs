@@ -16,7 +16,7 @@
 
 use core::mem;
 
-use hashes::{sha256, sha256d, GeneralHash, Hash};
+use hashes::{sha256, sha256d, Hash};
 use hex::DisplayHex as _;
 use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
@@ -629,7 +629,7 @@ impl Decodable for Box<[u8]> {
 
 /// Does a double-SHA256 on `data` and returns the first 4 bytes.
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = <sha256d::Hash as GeneralHash>::hash(data);
+    let checksum = sha256d::hash(data);
     let checksum = checksum.to_byte_array();
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }

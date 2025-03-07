@@ -128,19 +128,19 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
+    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64;
 
     fn n_bytes_hashed(&self) -> u64 { self.bytes_hashed }
-
     crate::internal_macros::engine_input_impl!();
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     #[must_use]
-    pub fn hash_again(&self) -> sha256d::Hash {
-        crate::Hash::from_byte_array(<Self as crate::GeneralHash>::hash(&self.0).0)
-    }
+    pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }
 
     /// Computes hash from `bytes` in `const` context.
     ///

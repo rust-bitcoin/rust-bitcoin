@@ -186,6 +186,15 @@ pub type HkdfSha512 = Hkdf<sha512::Hash>;
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone {
+    /// The `Hash` type returned when finalizing this engine.
+    type Hash: Hash;
+
+    /// The byte array that is used internally in `finalize`.
+    type Bytes: Copy + IsByteArray;
+
+    /// Length of the hash, in bytes.
+    const LEN: usize = Self::Bytes::LEN;
+
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 
@@ -194,52 +203,9 @@ pub trait HashEngine: Clone {
 
     /// Return the number of bytes already input into the engine.
     fn n_bytes_hashed(&self) -> u64;
-}
 
-/// Trait describing hash digests which can be constructed by hashing arbitrary data.
-///
-/// Some methods have been bound to engines which implement Default, which is
-/// generally an unkeyed hash function.
-pub trait GeneralHash: Hash {
-    /// A hashing engine which bytes can be serialized into. It is expected
-    /// to implement the `io::Write` trait, and to never return errors under
-    /// any conditions.
-    type Engine: HashEngine;
-
-    /// Constructs a new engine.
-    fn engine() -> Self::Engine
-    where
-        Self::Engine: Default,
-    {
-        Self::Engine::default()
-    }
-
-    /// Produces a hash from the current state of a given engine.
-    fn from_engine(e: Self::Engine) -> Self;
-
-    /// Hashes some bytes.
-    fn hash(data: &[u8]) -> Self
-    where
-        Self::Engine: Default,
-    {
-        let mut engine = Self::engine();
-        engine.input(data);
-        Self::from_engine(engine)
-    }
-
-    /// Hashes all the byte slices retrieved from the iterator together.
-    fn hash_byte_chunks<B, I>(byte_slices: I) -> Self
-    where
-        B: AsRef<[u8]>,
-        I: IntoIterator<Item = B>,
-        Self::Engine: Default,
-    {
-        let mut engine = Self::engine();
-        for slice in byte_slices {
-            engine.input(slice.as_ref());
-        }
-        Self::from_engine(engine)
-    }
+    /// Finalizes this engine.
+    fn finalize(self) -> Self::Hash;
 }
 
 /// Trait which applies to hashes of all types.

@@ -33,9 +33,13 @@ impl Default for HashEngine {
 }
 
 impl crate::HashEngine for HashEngine {
+    type Hash = Hash;
+    type Bytes = [u8; 32];
     const BLOCK_SIZE: usize = 64; // Same as sha256::HashEngine::BLOCK_SIZE;
+
     fn input(&mut self, data: &[u8]) { self.0.input(data) }
     fn n_bytes_hashed(&self) -> u64 { self.0.n_bytes_hashed() }
+    fn finalize(self) -> Self::Hash { Hash::from_engine(self) }
 }
 
 #[cfg(test)]
