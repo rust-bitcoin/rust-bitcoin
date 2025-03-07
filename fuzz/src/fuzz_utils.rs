@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: CC0-1.0
+
+//! Helper functions for fuzzing.
+
 pub fn consume_random_bytes<'a>(data: &mut &'a [u8]) -> &'a [u8] {
     if data.is_empty() {
         return &[];
