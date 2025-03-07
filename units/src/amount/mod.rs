@@ -39,6 +39,7 @@ pub use self::{
     signed::SignedAmount,
     unsigned::Amount,
 };
+pub(crate) use self::result::OptionExt;
 
 /// A set of denominations in which amounts can be expressed.
 ///
@@ -58,7 +59,7 @@ pub use self::{
 /// # Examples
 ///
 /// ```
-/// # use bitcoin_units::Amount;
+/// # use bitcoin_units::{amount, Amount};
 ///
 /// let equal = [
 ///     ("1 BTC", 100_000_000),
@@ -71,9 +72,10 @@ pub use self::{
 /// for (string, sats) in equal {
 ///     assert_eq!(
 ///         string.parse::<Amount>().expect("valid bitcoin amount string"),
-///         Amount::from_sat(sats),
+///         Amount::from_sat(sats)?,
 ///     )
 /// }
+/// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]

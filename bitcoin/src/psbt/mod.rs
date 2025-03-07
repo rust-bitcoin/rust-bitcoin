@@ -1268,7 +1268,7 @@ mod tests {
                     witness: Witness::default(),
                 }],
                 output: vec![TxOut {
-                    value: Amount::from_sat(output),
+                    value: Amount::from_sat(output).unwrap(),
                     script_pubkey: ScriptBuf::from_hex(
                         "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                     )
@@ -1282,7 +1282,7 @@ mod tests {
 
             inputs: vec![Input {
                 witness_utxo: Some(TxOut {
-                    value: Amount::from_sat(input),
+                    value: Amount::from_sat(input).unwrap(),
                     script_pubkey: ScriptBuf::from_hex(
                         "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                     )
@@ -2283,7 +2283,7 @@ mod tests {
             version: transaction::Version::TWO,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::EMPTY_COINBASE, TxIn::EMPTY_COINBASE],
-            output: vec![TxOut { value: Amount::from_sat(0), script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ZERO, script_pubkey: ScriptBuf::new() }],
         };
         let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
 
