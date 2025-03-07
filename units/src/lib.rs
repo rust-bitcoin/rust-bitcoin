@@ -43,6 +43,6 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
-    timestamp::Timestamp,
+    timestamp::BlockTime,
     weight::Weight
 };

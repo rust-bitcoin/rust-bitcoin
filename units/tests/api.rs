@@ -15,7 +15,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
-    SignedAmount, Timestamp, Weight,
+    SignedAmount, BlockTime, Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -42,7 +42,7 @@ struct Structs {
     i: relative::Height,
     j: relative::Time,
     k: Weight,
-    l: Timestamp,
+    l: BlockTime,
 }
 
 impl Structs {
@@ -59,7 +59,7 @@ impl Structs {
             i: relative::Height::MAX,
             j: relative::Time::MAX,
             k: Weight::MAX,
-            l: Timestamp::from_u32(u32::MAX),
+            l: BlockTime::from_u32(u32::MAX),
         }
     }
 }
@@ -89,7 +89,7 @@ struct CommonTraits {
     i: relative::Height,
     j: relative::Time,
     k: Weight,
-    l: Timestamp,
+    l: BlockTime,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -147,7 +147,7 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Timestamp, Weight,
+        Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, BlockTime, Weight,
     };
 }
 
@@ -190,7 +190,7 @@ fn api_can_use_all_types_from_module_parse() {
 
 #[test]
 fn api_can_use_all_types_from_module_timestamp() {
-    use bitcoin_units::timestamp::Timestamp;
+    use bitcoin_units::timestamp::BlockTime;
 }
 
 #[test]
@@ -295,7 +295,7 @@ impl<'a> Arbitrary<'a> for Structs {
             i: relative::Height::arbitrary(u)?,
             j: relative::Time::arbitrary(u)?,
             k: Weight::arbitrary(u)?,
-            l: Timestamp::arbitrary(u)?,
+            l: BlockTime::arbitrary(u)?,
         };
         Ok(a)
     }

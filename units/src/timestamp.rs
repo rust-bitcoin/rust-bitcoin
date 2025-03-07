@@ -26,33 +26,33 @@ use serde::{Deserialize, Serialize};
 /// ref: <https://en.bitcoin.it/wiki/Block_timestamp>
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Timestamp(u32);
+pub struct BlockTime(u32);
 
-impl Timestamp {
-    /// Constructs a new [`Timestamp`] from an unsigned 32 bit integer value.
+impl BlockTime {
+    /// Constructs a new [`BlockTime`] from an unsigned 32 bit integer value.
     #[inline]
-    pub const fn from_u32(t: u32) -> Self { Timestamp(t) }
+    pub const fn from_u32(t: u32) -> Self { BlockTime(t) }
 
     /// Returns the inner `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
-impl From<u32> for Timestamp {
+impl From<u32> for BlockTime {
     #[inline]
     fn from(t: u32) -> Self { Self::from_u32(t) }
 }
 
-impl From<Timestamp> for u32 {
+impl From<BlockTime> for u32 {
     #[inline]
-    fn from(t: Timestamp) -> Self { t.to_u32() }
+    fn from(t: BlockTime) -> Self { t.to_u32() }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Timestamp {
+impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let t: u32 = u.arbitrary()?;
-        Ok(Timestamp::from(t))
+        Ok(BlockTime::from(t))
     }
 }
