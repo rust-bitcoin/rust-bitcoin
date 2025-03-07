@@ -141,7 +141,7 @@ struct Errors {
 
 #[test]
 fn api_can_use_modules_from_crate_root() {
-    use bitcoin_units::{amount, block, fee_rate, locktime, parse, timestamp, weight};
+    use bitcoin_units::{amount, block, fee_rate, locktime, parse, time, weight};
 }
 
 #[test]
@@ -189,8 +189,8 @@ fn api_can_use_all_types_from_module_parse() {
 }
 
 #[test]
-fn api_can_use_all_types_from_module_timestamp() {
-    use bitcoin_units::timestamp::BlockTime;
+fn api_can_use_all_types_from_module_time() {
+    use bitcoin_units::time::BlockTime;
 }
 
 #[test]
