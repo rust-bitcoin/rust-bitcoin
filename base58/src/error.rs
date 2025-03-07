@@ -30,7 +30,7 @@ impl From<Infallible> for ErrorInner {
 }
 
 impl Error {
-    /// Returns the invalid base58 ssscharacter, if encountered.
+    /// Returns the invalid base58 character, if encountered.
     pub fn invalid_character(&self) -> Option<u8> {
         match self.0 {
             ErrorInner::Decode(ref e) => Some(e.invalid_character()),
