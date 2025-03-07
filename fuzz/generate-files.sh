@@ -57,7 +57,7 @@ on:
 jobs:
   fuzz:
     if: \${{ !github.event.act }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -97,7 +97,7 @@ $(for name in $(listTargetNames); do echo "          $name,"; done)
   verify-execution:
     if: \${{ !github.event.act }}
     needs: fuzz
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
