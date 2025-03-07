@@ -997,7 +997,7 @@ impl fmt::Display for FromWifError {
             InvalidBase58PayloadLength(ref e) =>
                 write_err!(f, "decoded base58 data was an invalid length"; e),
             InvalidAddressVersion(ref e) =>
-                write_err!(f, "decoded base58 data contained an invalid address version btye"; e),
+                write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
             Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
             InvalidWifCompressionFlag(ref e) => write_err!(f, "invalid WIF compression flag";e),
         }
