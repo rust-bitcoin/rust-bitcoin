@@ -361,6 +361,17 @@ impl<'a> Arbitrary<'a> for Version {
 mod tests {
     use super::*;
 
+    fn dummy_header() -> Header {
+        Header {
+            version: Version::ONE,
+            prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
+            time: Timestamp::from(2),
+            bits: CompactTarget::from_consensus(3),
+            nonce: 4,
+        }
+    }
+
     #[test]
     fn version_is_not_signalling_with_invalid_bit() {
         let arbitrary_version = Version::from_consensus(1_234_567_890);
@@ -398,14 +409,7 @@ mod tests {
     // Check that the size of the header consensus serialization matches the const SIZE value
     #[test]
     fn header_size() {
-        let header = Header {
-            version: Version::ONE,
-            prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
-            merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
-            time: Timestamp::from(2),
-            bits: CompactTarget::from_consensus(3),
-            nonce: 4,
-        };
+        let header = dummy_header();
 
         // Calculate the size of the block header in bytes from the sum of the serialized lengths
         // it's fields: version, prev_blockhash, merkle_root, time, bits, nonce.
