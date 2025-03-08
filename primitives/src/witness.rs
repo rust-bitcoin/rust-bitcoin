@@ -100,7 +100,7 @@ impl Witness {
 
     /// Convenience method to create an array of byte-arrays from this witness.
     #[inline]
-    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
+    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(<[u8]>::to_vec).collect() }
 
     /// Returns `true` if the witness contains no element.
     #[inline]
@@ -172,17 +172,6 @@ impl Witness {
             .copy_from_slice(new_element);
     }
 
-    /// Note `index` is the index into the `content` vector and should be the result of calling
-    /// `decode_cursor`, which returns a valid index.
-    fn element_at(&self, index: usize) -> Option<&[u8]> {
-        let mut slice = &self.content[index..]; // Start of element.
-        let element_len = compact_size::decode_unchecked(&mut slice);
-        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
-        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
-        let end = element_len as usize;
-        Some(&slice[..end])
-    }
-
     /// Returns the last element in the witness, if any.
     #[inline]
     pub fn last(&self) -> Option<&[u8]> { self.get_back(0) }
@@ -221,7 +210,13 @@ impl Witness {
     #[inline]
     pub fn get(&self, index: usize) -> Option<&[u8]> {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
-        self.element_at(pos)
+
+        let mut slice = &self.content[pos..]; // Start of element.
+        let element_len = compact_size::decode_unchecked(&mut slice);
+        // Compact size should always fit into a u32 because of `MAX_SIZE` in Core.
+        // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
+        let end = element_len as usize;
+        Some(&slice[..end])
     }
 }
 
@@ -251,9 +246,10 @@ fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<
 /// - Number of witness elements
 /// - Total bytes across all elements
 /// - List of hex-encoded witness elements
+#[allow(clippy::missing_fields_in_debug)] // We don't want to show `indices_start`.
 impl fmt::Debug for Witness {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let total_bytes: usize = self.iter().map(|elem| elem.len()).sum();
+        let total_bytes: usize = self.iter().map(<[u8]>::len).sum();
 
         f.debug_struct("Witness")
             .field("num_elements", &self.witness_elements)
@@ -261,7 +257,7 @@ impl fmt::Debug for Witness {
             .field(
                 "elements",
                 &WrapDebug(|f| {
-                    f.debug_list().entries(self.iter().map(|elem| elem.as_hex())).finish()
+                    f.debug_list().entries(self.iter().map(DisplayHex::as_hex)).finish()
                 }),
             )
             .finish()
@@ -328,7 +324,7 @@ impl serde::Serialize for Witness {
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
         // Note that the `Iter` strips the varints out when iterating.
-        for elem in self.iter() {
+        for elem in self {
             if human_readable {
                 seq.serialize_element(&internals::serde::SerializeBytesAsHex(elem))?;
             } else {
@@ -360,7 +356,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
                 use hex::FromHex;
-                use hex::HexToBytesError::*;
+                use hex::HexToBytesError as E;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {
@@ -370,7 +366,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
+                        E::InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
                             Some(c) => de::Error::invalid_value(
                                 Unexpected::Char(c),
                                 &"a valid hex character",
@@ -380,7 +376,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                                 &"a valid hex character",
                             ),
                         },
-                        OddLengthString(ref e) =>
+                        E::OddLengthString(ref e) =>
                             de::Error::invalid_length(e.length(), &"an even length string"),
                     })?;
                     ret.push(vec);
@@ -464,7 +460,7 @@ mod test {
         let mut got = Witness::new();
         got.push([]);
         let want = single_empty_element();
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
