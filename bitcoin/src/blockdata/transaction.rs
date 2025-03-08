@@ -433,7 +433,7 @@ impl TransactionExt for Transaction {
 }
 
 /// Iterates over transaction outputs and for each output yields the length of the scriptPubkey.
-// This exists to hardcode the type of the closure crated by `map`.
+// This exists to hardcode the type of the closure created by `map`.
 pub struct TxOutToScriptPubkeyLengthIter<'a> {
     inner: core::slice::Iter<'a, TxOut>,
 }

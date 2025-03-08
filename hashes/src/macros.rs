@@ -193,7 +193,7 @@ macro_rules! hash_newtype {
     };
 }
 
-/// Implements string functions using hex for a new type crated with [`crate::hash_newtype`] macro.
+/// Implements string functions using hex for a new type created with [`crate::hash_newtype`] macro.
 ///
 /// Implements:
 ///
@@ -210,7 +210,7 @@ macro_rules! impl_hex_for_newtype {
     }
 }
 
-/// Implements `fmt::Debug` using hex for a new type crated with [`crate::hash_newtype`] macro.
+/// Implements `fmt::Debug` using hex for a new type created with [`crate::hash_newtype`] macro.
 ///
 /// This is provided in case you do not want to use the `hex` feature.
 #[macro_export]
