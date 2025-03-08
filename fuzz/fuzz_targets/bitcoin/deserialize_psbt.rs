@@ -1,7 +1,6 @@
 use honggfuzz::fuzz;
 
-mod fuzz_utils;
-use fuzz_utils::consume_random_bytes;
+use bitcoin_fuzz::fuzz_utils::consume_random_bytes;
 
 fn do_test(data: &[u8]) {
     let mut new_data = data;
