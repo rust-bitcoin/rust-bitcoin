@@ -588,8 +588,8 @@ enum DisplayStyle {
 
 /// Calculates the sum over the iterator using checked arithmetic.
 pub trait CheckedSum<R>: sealed::Sealed<R> {
-    /// Calculates the sum over the iterator using checked arithmetic. If an over or underflow would
-    /// happen it returns [`None`].
+    /// Calculates the sum over the iterator using checked arithmetic. If an
+    /// overflow happens it returns [`None`].
     fn checked_sum(self) -> Option<R>;
 }
 

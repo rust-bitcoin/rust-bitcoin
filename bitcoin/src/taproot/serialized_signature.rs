@@ -217,7 +217,7 @@ mod into_iter {
 
         #[inline]
         fn size_hint(&self) -> (usize, Option<usize>) {
-            // can't underflow thanks to the invariant
+            // can't overflow thanks to the invariant
             let len = self.signature.len() - self.pos;
             (len, Some(len))
         }
