@@ -12,6 +12,7 @@
 
 #[cfg(feature = "alloc")]
 use core::cmp;
+#[cfg(feature = "alloc")]
 use core::convert::Infallible;
 use core::fmt;
 
