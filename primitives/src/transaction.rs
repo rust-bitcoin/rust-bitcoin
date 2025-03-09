@@ -265,7 +265,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         enc.input(compact_size::encode(script_sig_bytes.len()).as_slice());
         enc.input(script_sig_bytes);
 
-        enc.input(&input.sequence.0.to_le_bytes())
+        enc.input(&input.sequence.0.to_le_bytes());
     }
 
     // Encode outputs with leading compact size encoded int.
@@ -285,7 +285,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
         for input in &tx.input {
             // Same as `Encodable for Witness`.
             enc.input(compact_size::encode(input.witness.len()).as_slice());
-            for element in input.witness.iter() {
+            for element in &input.witness {
                 enc.input(compact_size::encode(element.len()).as_slice());
                 enc.input(element);
             }
@@ -322,9 +322,9 @@ pub struct TxIn {
     /// the miner behavior cannot be enforced.
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
-    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
+    /// Note that this field is *not* (de)serialized with the rest of the `TxIn` in
     /// Encodable/Decodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
+    /// Transaction. It *is* (de)serialized with the rest of the `TxIn` in other
     /// (de)serialization routines.
     pub witness: Witness,
 }
@@ -459,14 +459,14 @@ impl From<Infallible> for ParseOutPointError {
 #[cfg(feature = "alloc")]
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParseOutPointError::*;
+        use ParseOutPointError as E;
 
         match *self {
-            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
-            Vout(ref e) => write_err!(f, "error parsing vout"; e),
-            Format => write!(f, "OutPoint not in <txid>:<vout> format"),
-            TooLong => write!(f, "vout should be at most 10 digits"),
-            VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
+            E::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            E::Vout(ref e) => write_err!(f, "error parsing vout"; e),
+            E::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
+            E::TooLong => write!(f, "vout should be at most 10 digits"),
+            E::VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
         }
     }
 }
@@ -474,12 +474,12 @@ impl fmt::Display for ParseOutPointError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseOutPointError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use ParseOutPointError::*;
+        use ParseOutPointError as E;
 
         match self {
-            Txid(e) => Some(e),
-            Vout(e) => Some(e),
-            Format | TooLong | VoutNotCanonical => None,
+            E::Txid(e) => Some(e),
+            E::Vout(e) => Some(e),
+            E::Format | E::TooLong | E::VoutNotCanonical => None,
         }
     }
 }
@@ -561,8 +561,8 @@ impl Version {
     /// As of Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)),
     /// versions 1, 2, and 3 are considered standard.
     #[inline]
-    pub fn is_standard(&self) -> bool {
-        *self == Version::ONE || *self == Version::TWO || *self == Version::THREE
+    pub fn is_standard(self) -> bool {
+        self == Version::ONE || self == Version::TWO || self == Version::THREE
     }
 }
 
@@ -669,11 +669,11 @@ mod tests {
             witness: Witness::new(),
         };
 
-        let txout = TxOut { value: Amount::from_sat(123456789), script_pubkey: ScriptBuf::new() };
+        let txout = TxOut { value: Amount::from_sat(123_456_789), script_pubkey: ScriptBuf::new() };
 
         let tx_orig = Transaction {
             version: Version::ONE,
-            lock_time: absolute::LockTime::from_consensus(1738968231), // The time this was written
+            lock_time: absolute::LockTime::from_consensus(1_738_968_231), // The time this was written
             input: vec![txin.clone()],
             output: vec![txout.clone()],
         };
@@ -681,9 +681,9 @@ mod tests {
         // Test changing the transaction
         let mut tx = tx_orig.clone();
         tx.inputs_mut()[0].previous_output.txid = Txid::from_byte_array([0xFF; 32]);
-        tx.outputs_mut()[0].value = Amount::from_sat(987654321);
+        tx.outputs_mut()[0].value = Amount::from_sat(987_654_321);
         assert_eq!(tx.inputs()[0].previous_output.txid.to_byte_array(), [0xFF; 32]);
-        assert_eq!(tx.outputs()[0].value.to_sat(), 987654321);
+        assert_eq!(tx.outputs()[0].value.to_sat(), 987_654_321);
 
         // Test uses_segwit_serialization
         assert!(!tx.uses_segwit_serialization());

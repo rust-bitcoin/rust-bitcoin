@@ -52,9 +52,9 @@ mod tests {
 
     #[test]
     fn compact_target_ordering() {
-        let lower = CompactTarget::from_consensus(0x1d00fffe);
-        let lower_copy = CompactTarget::from_consensus(0x1d00fffe);
-        let higher = CompactTarget::from_consensus(0x1d00ffff);
+        let lower = CompactTarget::from_consensus(0x1d00_fffe);
+        let lower_copy = CompactTarget::from_consensus(0x1d00_fffe);
+        let higher = CompactTarget::from_consensus(0x1d00_ffff);
 
         assert!(lower < higher);
         assert!(lower == lower_copy);
@@ -62,9 +62,9 @@ mod tests {
 
     #[test]
     fn compact_target_formatting() {
-        let compact_target = CompactTarget::from_consensus(0x1d00ffff);
+        let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
-        assert_eq!(compact_target.to_consensus(), 0x1d00ffff);
+        assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
     }
 }

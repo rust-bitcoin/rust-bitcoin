@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
+//! Provides type [`LockTime`] that implements the logic around `nSequence`/`OP_CHECKSEQUENCEVERIFY`.
 //!
 //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
 //! whether bit 22 of the `u32` consensus value is set.
@@ -18,7 +18,7 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 /// A relative lock time value, representing either a block height or time (512 second intervals).
 ///
 /// Used for sequence numbers (`nSequence` in Bitcoin Core and [`TxIn::sequence`]
-/// in this library) and also for the argument to opcode 'OP_CHECKSEQUENCEVERIFY`.
+/// in this library) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
 ///
 /// ### Note on ordering
 ///
@@ -64,7 +64,7 @@ impl LockTime {
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
 
-    /// Constructs a new `LockTime` from an nSequence value or the argument to OP_CHECKSEQUENCEVERIFY.
+    /// Constructs a new `LockTime` from an `nSequence` value or the argument to `OP_CHECKSEQUENCEVERIFY`.
     ///
     /// This method will **not** round-trip with [`Self::to_consensus_u32`], because relative
     /// locktimes only use some bits of the underlying `u32` value and discard the rest. If
@@ -95,7 +95,7 @@ impl LockTime {
         sequence.to_relative_lock_time().ok_or(DisabledLockTimeError(n))
     }
 
-    /// Returns the `u32` value used to encode this locktime in an nSequence field or
+    /// Returns the `u32` value used to encode this locktime in an `nSequence` field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
     ///
     /// # Warning
@@ -178,7 +178,7 @@ impl LockTime {
 
     /// Returns true if both lock times use the same unit i.e., both height based or both time based.
     #[inline]
-    pub const fn is_same_unit(&self, other: LockTime) -> bool {
+    pub const fn is_same_unit(self, other: LockTime) -> bool {
         matches!(
             (self, other),
             (LockTime::Blocks(_), LockTime::Blocks(_)) | (LockTime::Time(_), LockTime::Time(_))
@@ -187,11 +187,11 @@ impl LockTime {
 
     /// Returns true if this lock time value is in units of block height.
     #[inline]
-    pub const fn is_block_height(&self) -> bool { matches!(*self, LockTime::Blocks(_)) }
+    pub const fn is_block_height(self) -> bool { matches!(self, LockTime::Blocks(_)) }
 
     /// Returns true if this lock time value is in units of time.
     #[inline]
-    pub const fn is_block_time(&self) -> bool { !self.is_block_height() }
+    pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by either height or time.
     ///
@@ -211,7 +211,7 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by(current_height(), current_time()));
     /// ```
     #[inline]
-    pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
+    pub fn is_satisfied_by(self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
         } else {
@@ -249,12 +249,12 @@ impl LockTime {
     /// assert!(satisfied);
     /// ```
     #[inline]
-    pub fn is_implied_by(&self, other: LockTime) -> bool {
-        use LockTime::*;
+    pub fn is_implied_by(self, other: LockTime) -> bool {
+        use LockTime as L;
 
-        match (*self, other) {
-            (Blocks(this), Blocks(other)) => this.value() <= other.value(),
-            (Time(this), Time(other)) => this.value() <= other.value(),
+        match (self, other) {
+            (L::Blocks(this), L::Blocks(other)) => this.value() <= other.value(),
+            (L::Time(this), L::Time(other)) => this.value() <= other.value(),
             _ => false, // Not the same units.
         }
     }
@@ -280,7 +280,7 @@ impl LockTime {
     /// # Ok::<_, bitcoin_primitives::relative::DisabledLockTimeError>(())
     /// ```
     #[inline]
-    pub fn is_implied_by_sequence(&self, other: Sequence) -> bool {
+    pub fn is_implied_by_sequence(self, other: Sequence) -> bool {
         if let Ok(other) = LockTime::from_sequence(other) {
             self.is_implied_by(other)
         } else {
@@ -305,12 +305,12 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_height(relative::Height::from(required_height + 1)).expect("a height"));
     /// ```
     #[inline]
-    pub fn is_satisfied_by_height(&self, height: Height) -> Result<bool, IncompatibleHeightError> {
-        use LockTime::*;
+    pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
+        use LockTime as L;
 
-        match *self {
-            Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
-            Time(time) => Err(IncompatibleHeightError { height, time }),
+        match self {
+            L::Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
+            L::Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
 
@@ -331,12 +331,12 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_time(relative::Time::from_512_second_intervals(intervals + 10)).expect("a time"));
     /// ```
     #[inline]
-    pub fn is_satisfied_by_time(&self, time: Time) -> Result<bool, IncompatibleTimeError> {
-        use LockTime::*;
+    pub fn is_satisfied_by_time(self, time: Time) -> Result<bool, IncompatibleTimeError> {
+        use LockTime as L;
 
-        match *self {
-            Time(ref t) => Ok(t.value() <= time.value()),
-            Blocks(height) => Err(IncompatibleTimeError { time, height }),
+        match self {
+            L::Time(ref t) => Ok(t.value() <= time.value()),
+            L::Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
     }
 }
@@ -353,17 +353,17 @@ impl From<Time> for LockTime {
 
 impl fmt::Display for LockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LockTime::*;
+        use LockTime as L;
 
         if f.alternate() {
             match *self {
-                Blocks(ref h) => write!(f, "block-height {}", h),
-                Time(ref t) => write!(f, "block-time {} (512 second intervals)", t),
+                L::Blocks(ref h) => write!(f, "block-height {}", h),
+                L::Time(ref t) => write!(f, "block-time {} (512 second intervals)", t),
             }
         } else {
             match *self {
-                Blocks(ref h) => fmt::Display::fmt(h, f),
-                Time(ref t) => fmt::Display::fmt(t, f),
+                L::Blocks(ref h) => fmt::Display::fmt(h, f),
+                L::Time(ref t) => fmt::Display::fmt(t, f),
             }
         }
     }

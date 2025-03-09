@@ -31,6 +31,7 @@ pub struct Opcode {
     code: u8,
 }
 
+#[allow(clippy::wildcard_imports)]
 use self::all::*;
 
 macro_rules! all_opcodes {
@@ -41,7 +42,7 @@ macro_rules! all_opcodes {
         /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `Opcode`, `Class`).
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
-        /// constants are guaranteed to begin with OP_.
+        /// constants are guaranteed to begin with `OP_`.
         pub mod all {
             use super::Opcode;
             $(
@@ -52,13 +53,13 @@ macro_rules! all_opcodes {
 
         /// Push an empty array onto the stack.
         pub static OP_0: Opcode = OP_PUSHBYTES_0;
-        /// Empty stack is also FALSE.
+        /// Empty stack is also `FALSE`.
         pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
         /// Number 1 is also TRUE.
         pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
-        /// Previously called OP_NOP2.
+        /// Previously called `OP_NOP2`.
         pub static OP_NOP2: Opcode = OP_CLTV;
-        /// Previously called OP_NOP3.
+        /// Previously called `OP_NOP3`.
         pub static OP_NOP3: Opcode = OP_CSV;
 
         impl fmt::Display for Opcode {
@@ -402,10 +403,10 @@ impl Opcode {
 
             // 16 opcodes of PushNum class
             (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
-                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32),
+                Class::PushNum(1 + i32::from(self.code) - i32::from(OP_PUSHNUM_1.code)),
 
             // 76 opcodes of PushBytes class
-            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
+            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(u32::from(self.code)),
 
             // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
             (_, _) => Class::Ordinary(Ordinary::with(self)),
@@ -640,6 +641,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)] // This is fine, we never need to read it.
     fn str_roundtrip() {
         let mut unique = HashSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);
