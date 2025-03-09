@@ -49,7 +49,7 @@ fn main() {
     };
 
     // The transaction we want to sign and broadcast.
-    let mut unsigned_tx = Transaction {
+    let unsigned_tx = Transaction {
         version: transaction::Version::TWO,  // Post BIP-68.
         lock_time: absolute::LockTime::ZERO, // Ignore the locktime.
         input: vec![input],                  // Input goes into index 0.
@@ -59,7 +59,7 @@ fn main() {
 
     // Get the sighash to sign.
     let sighash_type = EcdsaSighashType::All;
-    let mut sighasher = SighashCache::new(&mut unsigned_tx);
+    let mut sighasher = SighashCache::new(unsigned_tx);
     let sighash = sighasher
         .p2wpkh_signature_hash(
             input_index,

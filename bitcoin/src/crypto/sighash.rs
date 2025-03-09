@@ -94,8 +94,8 @@ hashes::impl_serde_for_newtype!(TapSighash);
 impl_message_from_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, SegWit and Taproot inputs.
-#[derive(Debug)]
-pub struct SighashCache<T: Borrow<Transaction>> {
+#[derive(Debug, Clone)]
+pub struct SighashCache<T: Borrow<Transaction> + Clone> {
     /// Access to transaction required for transaction introspection. Moreover, type
     /// `T: Borrow<Transaction>` allows us to use borrowed and mutable borrowed types,
     /// the latter in particular is necessary for [`SighashCache::witness_mut`].
@@ -112,7 +112,7 @@ pub struct SighashCache<T: Borrow<Transaction>> {
 }
 
 /// Common values cached between SegWit and Taproot inputs.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CommonCache {
     prevouts: sha256::Hash,
     sequences: sha256::Hash,
@@ -123,7 +123,7 @@ struct CommonCache {
 }
 
 /// Values cached for SegWit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SegwitCache {
     prevouts: sha256d::Hash,
     sequences: sha256d::Hash,
@@ -131,7 +131,7 @@ struct SegwitCache {
 }
 
 /// Values cached for Taproot inputs.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct TaprootCache {
     amounts: sha256::Hash,
     script_pubkeys: sha256::Hash,
@@ -594,7 +594,7 @@ impl std::error::Error for SighashTypeParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-impl<R: Borrow<Transaction>> SighashCache<R> {
+impl<R: Borrow<Transaction> + Clone> SighashCache<R> {
     /// Constructs a new `SighashCache` from an unsigned transaction.
     ///
     /// The sighash components are computed in a lazy manner when required. For the generated
@@ -1135,7 +1135,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 }
 
-impl<R: BorrowMut<Transaction>> SighashCache<R> {
+impl<R: BorrowMut<Transaction> + Clone> SighashCache<R> {
     /// Allows modification of witnesses.
     ///
     /// As a lint against accidental changes to the transaction that would invalidate the cache and
@@ -2248,4 +2248,59 @@ mod tests {
         bip143_p2wsh_nested_in_p2sh_sighash_none_plus_anyonecanpay, NonePlusAnyoneCanPay, "781ba15f3779d5542ce8ecb5c18716733a5ee42a6f51488ec96154934e2c890a";
         bip143_p2wsh_nested_in_p2sh_sighash_single_plus_anyonecanpay, SinglePlusAnyoneCanPay, "511e8e52ed574121fc1b654970395502128263f62662e076dc6baf05c2e6a99b";
     }
+    
+    #[test]
+    fn test_sighash_cache_clone() {
+        let tx = Transaction {
+            version: transaction::Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            input: vec![TxIn::EMPTY_COINBASE],
+            output: vec![TxOut { value: Amount::from_sat(1000), script_pubkey: ScriptBuf::new() }], 
+        };
+
+        let cache = SighashCache::new(&tx);
+
+        let cloned_cache = cache.clone();
+
+        assert_eq!(
+            format!("{:?}", cache),
+            format!("{:?}", cloned_cache),
+            "Cloned cache does not match original"
+        );
+
+        let new_tx = Transaction {
+            version: transaction::Version::ONE, // Change version to test difference
+            lock_time: absolute::LockTime::ZERO,
+            input: vec![TxIn::EMPTY_COINBASE], 
+            output: vec![TxOut { value: Amount::from_sat(2000), script_pubkey: ScriptBuf::new() }],
+        };
+
+        let modified_cache = SighashCache::new(&new_tx);
+
+        assert_ne!(
+            format!("{:?}", cache),
+            format!("{:?}", modified_cache),
+            "Original cache should not be modified when modifying the clone"
+        );
+    }
+
+    #[test]
+    fn test_sighash_cache_clone_performance() {
+        let tx = Transaction {
+            version: transaction::Version::TWO,
+            lock_time: absolute::LockTime::ZERO,
+            input: vec![TxIn::EMPTY_COINBASE],
+            output: vec![TxOut { value: Amount::from_sat(1000), script_pubkey: ScriptBuf::new() }],
+        };
+
+        let cache = SighashCache::new(&tx);
+
+        let start = std::time::Instant::now();
+        let _cloned_cache = cache.clone();
+        let duration = start.elapsed();
+
+        println!("Cloning took: {:?}", duration);
+        assert!(duration.as_micros() < 100, "Cloning took too long!");
+    }
+
 }
