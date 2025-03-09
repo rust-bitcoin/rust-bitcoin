@@ -164,9 +164,7 @@ pub use crate::{
     blockdata::script::witness_program::{self, WitnessProgram},
     blockdata::script::witness_version::{self, WitnessVersion},
     // These modules also re-export all the respective `primitives` types.
-    blockdata::{
-        block, constants, fee_rate, locktime, script, transaction, weight, witness,
-    },
+    blockdata::{block, constants, fee_rate, locktime, script, transaction, weight, witness},
 };
 
 #[rustfmt::skip]

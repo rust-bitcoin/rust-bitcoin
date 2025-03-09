@@ -21,10 +21,10 @@ pub use self::{
 
 /// Implements `FeeRate` and assoctiated features.
 pub mod fee_rate {
-    /// Re-export everything from the [`units::fee_rate`] module.
-    pub use units::fee_rate::FeeRate;
     #[cfg(feature = "serde")]
     pub use units::fee_rate::serde;
+    /// Re-export everything from the [`units::fee_rate`] module.
+    pub use units::fee_rate::FeeRate;
 }
 
 /// Provides absolute and relative locktimes.

@@ -135,7 +135,7 @@ impl Psbt {
     /// An alias for [`extract_tx_fee_rate_limit`].
     ///
     /// [`extract_tx_fee_rate_limit`]: Psbt::extract_tx_fee_rate_limit
-    #[allow(clippy::result_large_err)]  // The PSBT returned in `SendingToomuch` is large.
+    #[allow(clippy::result_large_err)] // The PSBT returned in `SendingToomuch` is large.
     pub fn extract_tx(self) -> Result<Transaction, ExtractTxError> {
         self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
     }
@@ -147,7 +147,7 @@ impl Psbt {
     /// [`ExtractTxError`] variants will contain either the [`Psbt`] itself or the [`Transaction`]
     /// that was extracted. These can be extracted from the Errors in order to recover.
     /// See the error documentation for info on the variants. In general, it covers large fees.
-    #[allow(clippy::result_large_err)]  // The PSBT returned in `SendingToomuch` is large.
+    #[allow(clippy::result_large_err)] // The PSBT returned in `SendingToomuch` is large.
     pub fn extract_tx_fee_rate_limit(self) -> Result<Transaction, ExtractTxError> {
         self.internal_extract_tx_with_fee_rate_limit(Self::DEFAULT_MAX_FEE_RATE)
     }
@@ -159,7 +159,7 @@ impl Psbt {
     /// See [`extract_tx`].
     ///
     /// [`extract_tx`]: Psbt::extract_tx
-    #[allow(clippy::result_large_err)]  // The PSBT returned in `SendingToomuch` is large.
+    #[allow(clippy::result_large_err)] // The PSBT returned in `SendingToomuch` is large.
     pub fn extract_tx_with_fee_rate_limit(
         self,
         max_fee_rate: FeeRate,
@@ -187,7 +187,7 @@ impl Psbt {
     }
 
     #[inline]
-    #[allow(clippy::result_large_err)]  // The PSBT returned in `SendingToomuch` is large.
+    #[allow(clippy::result_large_err)] // The PSBT returned in `SendingToomuch` is large.
     fn internal_extract_tx_with_fee_rate_limit(
         self,
         max_fee_rate: FeeRate,

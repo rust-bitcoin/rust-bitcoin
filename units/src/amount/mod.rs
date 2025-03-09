@@ -113,7 +113,7 @@ impl Denomination {
             Denomination::MicroBitcoin => -2,
             Denomination::Bit => -2,
             Denomination::Satoshi => 0,
-            Denomination::_DoNotUse(infallible) => match infallible {}
+            Denomination::_DoNotUse(infallible) => match infallible {},
         }
     }
 
@@ -126,7 +126,7 @@ impl Denomination {
             Denomination::MicroBitcoin => "uBTC",
             Denomination::Bit => "bits",
             Denomination::Satoshi => "satoshi",
-            Denomination::_DoNotUse(infallible) => match infallible {}
+            Denomination::_DoNotUse(infallible) => match infallible {},
         }
     }
 

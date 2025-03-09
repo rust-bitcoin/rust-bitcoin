@@ -1015,11 +1015,19 @@ fn sum_amounts() {
     assert_eq!([].iter().sum::<NumOpResult<Amount>>(), Amount::ZERO.into());
     assert_eq!([].iter().sum::<NumOpResult<SignedAmount>>(), SignedAmount::ZERO.into());
 
-    let results = [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
+    let results =
+        [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
     assert_eq!(results.iter().sum::<NumOpResult<Amount>>(), NumOpResult::Valid(sat(1400)));
 
-    let signed_results = [NumOpResult::Valid(ssat(42)), NumOpResult::Valid(ssat(1337)), NumOpResult::Valid(ssat(21))];
-    assert_eq!(signed_results.iter().sum::<NumOpResult<SignedAmount>>(), NumOpResult::Valid(ssat(1400)));
+    let signed_results = [
+        NumOpResult::Valid(ssat(42)),
+        NumOpResult::Valid(ssat(1337)),
+        NumOpResult::Valid(ssat(21)),
+    ];
+    assert_eq!(
+        signed_results.iter().sum::<NumOpResult<SignedAmount>>(),
+        NumOpResult::Valid(ssat(1400))
+    );
 
     let amounts = [sat(42), sat(1337), sat(21)];
     assert_eq!(
@@ -1303,9 +1311,7 @@ fn unsigned_amount_div_by_amount() {
 
 #[test]
 #[should_panic(expected = "attempt to divide by zero")]
-fn unsigned_amount_div_by_amount_zero() {
-    let _ = Amount::from_sat(1897) / Amount::ZERO;
-}
+fn unsigned_amount_div_by_amount_zero() { let _ = Amount::from_sat(1897) / Amount::ZERO; }
 
 #[test]
 fn signed_amount_div_by_amount() {
@@ -1321,9 +1327,7 @@ fn signed_amount_div_by_amount() {
 
 #[test]
 #[should_panic(expected = "attempt to divide by zero")]
-fn signed_amount_div_by_amount_zero() {
-    let _ = SignedAmount::from_sat(1897) / SignedAmount::ZERO;
-}
+fn signed_amount_div_by_amount_zero() { let _ = SignedAmount::from_sat(1897) / SignedAmount::ZERO; }
 
 #[test]
 fn check_const() {

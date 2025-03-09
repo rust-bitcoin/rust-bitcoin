@@ -6,7 +6,7 @@
 //! all of the opcodes for that language.
 
 #![allow(non_camel_case_types)]
-#![allow(dead_code)]            // This module is private and is duplicated in `bitcoin`.
+#![allow(dead_code)] // This module is private and is duplicated in `bitcoin`.
 
 use core::fmt;
 
