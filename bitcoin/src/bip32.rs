@@ -518,6 +518,12 @@ pub enum Error {
     InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+    /// Invalid parent fingerprint
+    InvalidParentFingerprint,
+    /// Invalid index
+    InvalidIndex,
+    /// Invalid private key marker
+    InvalidPrivateKey,
 }
 
 impl From<Infallible> for Error {
@@ -544,6 +550,9 @@ impl fmt::Display for Error {
             InvalidPublicKeyHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+            InvalidParentFingerprint => f.write_str("parent fingerprint must be zero for master keys (depth=0)"),
+            InvalidIndex => f.write_str("child number index must be zero for master keys (depth=0)"),
+            InvalidPrivateKey => f.write_str("private key marker byte must be 0x00"),
         }
     }
 }
@@ -564,7 +573,10 @@ impl std::error::Error for Error {
             | InvalidDerivationPathFormat
             | UnknownVersion(_)
             | WrongExtendedKeyLength(_)
-            | InvalidPublicKeyHexLength(_) => None,
+            | InvalidPublicKeyHexLength(_)
+            | InvalidParentFingerprint
+            | InvalidIndex
+            | InvalidPrivateKey => None,
         }
     }
 }
@@ -699,20 +711,37 @@ impl Xpriv {
             return Err(Error::UnknownVersion([b0, b1, b2, b3]));
         };
 
-        Ok(Xpriv {
-            network,
-            depth: data[4],
-            parent_fingerprint: data[5..9]
-                .try_into()
-                .expect("9 - 5 == 4, which is the Fingerprint length"),
-            child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: data[13..45]
-                .try_into()
-                .expect("45 - 13 == 32, which is the ChainCode length"),
-            private_key: secp256k1::SecretKey::from_byte_array(
-                &data[46..78].try_into().expect("Slice should be exactly 32 bytes"),
-            )?,
-        })
+        let depth = data[4];
+
+        let parent_fingerprint: Fingerprint =
+            data[5..9].try_into().expect("9 - 5 == 4, which is the Fingerprint length");
+
+        // Validate parent fingerprint for master keys
+        if depth == 0 && parent_fingerprint != Fingerprint::default() {
+            return Err(Error::InvalidParentFingerprint);
+        }
+
+        let child_number: ChildNumber =
+            u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into();
+
+        // Validate child number for master keys
+        if depth == 0 && u32::from(child_number) != 0 {
+            return Err(Error::InvalidIndex);
+        }
+
+        let chain_code: ChainCode =
+            data[13..45].try_into().expect("45 - 13 == 32, which is the ChainCode length");
+
+        // Validate private key marker byte
+        if data[45] != 0x00 {
+            return Err(Error::InvalidPrivateKey);
+        }
+
+        let private_key = secp256k1::SecretKey::from_byte_array(
+            &data[46..78].try_into().expect("Slice should be exactly 32 bytes"),
+        )?;
+
+        Ok(Xpriv { network, depth, parent_fingerprint, child_number, chain_code, private_key })
     }
 
     /// Extended private key binary encoding according to BIP 32
@@ -1315,5 +1344,25 @@ mod tests {
         // Xpriv having secret key set to all 0xFF's
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fENZ3QzxW";
         xpriv_str.parse::<Xpriv>().unwrap();
+    }
+
+    #[test]
+    fn test_xpriv_decode_validation() {
+        let mut data = [0u8; 78];
+        data[0..4].copy_from_slice(&VERSION_BYTES_MAINNET_PRIVATE);
+        data[45] = 0x01; // Should be 0x00
+        assert_eq!(Xpriv::decode(&data), Err(Error::InvalidPrivateKey));
+
+        let mut data = [0u8; 78];
+        data[0..4].copy_from_slice(&VERSION_BYTES_MAINNET_PRIVATE);
+        data[4] = 0; // depth = 0
+        data[5] = 1; // non-zero parent fingerprint
+        assert_eq!(Xpriv::decode(&data), Err(Error::InvalidParentFingerprint));
+
+        let mut data = [0u8; 78];
+        data[0..4].copy_from_slice(&VERSION_BYTES_MAINNET_PRIVATE);
+        data[4] = 0; // depth = 0
+        data[9] = 1; // non-zero child number
+        assert_eq!(Xpriv::decode(&data), Err(Error::InvalidIndex));
     }
 }
