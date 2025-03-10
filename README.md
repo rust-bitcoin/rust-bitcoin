@@ -148,7 +148,7 @@ alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features=
 Unit and integration tests are available for those interested, along with benchmarks. For project
 developers, especially new contributors looking for something to work on, we do:
 
-- Fuzz testing with [`Hongfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
+- Fuzz testing with [`Honggfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
 - Mutation testing with [`cargo-mutants`](https://github.com/sourcefrog/cargo-mutants)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
