@@ -25,10 +25,10 @@ use super::{
 /// Warning!
 ///
 /// This type implements several arithmetic operations from [`core::ops`].
-/// To prevent errors due to overflow or underflow when using these operations,
+/// To prevent errors due to an overflow when using these operations,
 /// it is advised to instead use the checked arithmetic methods whose names
 /// start with `checked_`. The operations from [`core::ops`] that [`SignedAmount`]
-/// implements will panic when overflow or underflow occurs.
+/// implements will panic when an overflow occurs.
 ///
 /// # Examples
 ///
