@@ -518,6 +518,12 @@ pub enum Error {
     InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
+    /// Invalid private key prefix (byte 45 must be 0)
+    InvalidPrivateKeyPrefix,
+    /// Non-zero parent fingerprint for a master key (depth 0)
+    NonZeroParentFingerprintForMasterKey,
+    /// Non-zero child number for a master key (depth 0)
+    NonZeroChildNumberForMasterKey,
 }
 
 impl From<Infallible> for Error {
@@ -544,6 +550,11 @@ impl fmt::Display for Error {
             InvalidPublicKeyHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
+            InvalidPrivateKeyPrefix =>
+                f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-32"),
+            NonZeroParentFingerprintForMasterKey =>
+                f.write_str("non-zero parent fingerprint in master key"),
+            NonZeroChildNumberForMasterKey => f.write_str("non-zero child number in master key"),
         }
     }
 }
@@ -565,6 +576,9 @@ impl std::error::Error for Error {
             | UnknownVersion(_)
             | WrongExtendedKeyLength(_)
             | InvalidPublicKeyHexLength(_) => None,
+            InvalidPrivateKeyPrefix => None,
+            NonZeroParentFingerprintForMasterKey => None,
+            NonZeroChildNumberForMasterKey => None,
         }
     }
 }
@@ -698,6 +712,23 @@ impl Xpriv {
             let (b0, b1, b2, b3) = (data[0], data[1], data[2], data[3]);
             return Err(Error::UnknownVersion([b0, b1, b2, b3]));
         };
+
+        // Check that byte 45 is 0 as required by BIP-32 for private keys
+        if data[45] != 0 {
+            return Err(Error::InvalidPrivateKeyPrefix);
+        }
+
+        // For master keys (depth=0), both parent fingerprint and child number must be zero
+        let depth = data[4];
+        if depth == 0 {
+            if !data[5..9].iter().all(|&b| b == 0) {
+                return Err(Error::NonZeroParentFingerprintForMasterKey);
+            }
+
+            if !data[9..13].iter().all(|&b| b == 0) {
+                return Err(Error::NonZeroChildNumberForMasterKey);
+            }
+        }
 
         Ok(Xpriv {
             network,
@@ -1233,6 +1264,44 @@ mod tests {
         test_path(&secp, NetworkKind::Main, &seed, "m/0h".parse().unwrap(),
                   "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
                   "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
+    }
+
+    #[test]
+    fn test_reject_xpriv_with_non_zero_byte_at_index_45() {
+        let mut xpriv = base58::decode_check("xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9").unwrap();
+
+        // Modify byte at index 45 to be non-zero (e.g., 1)
+        xpriv[45] = 1;
+
+        let result = Xpriv::decode(&xpriv);
+        assert!(result.is_err());
+
+        match result {
+            Err(Error::InvalidPrivateKeyPrefix) => {}
+            _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_reject_xpriv_with_zero_depth_and_non_zero_index() {
+        let result = "xprv9s21ZrQH4r4TsiLvyLXqM9P7k1K3EYhA1kkD6xuquB5i39AU8KF42acDyL3qsDbU9NmZn6MsGSUYZEsuoePmjzsB3eFKSUEh3Gu1N3cqVUN".parse::<Xpriv>();
+        assert!(result.is_err());
+
+        match result {
+            Err(Error::NonZeroChildNumberForMasterKey) => {}
+            _ => panic!("Expected NonZeroChildNumberForMasterKey error, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_reject_xpriv_with_zero_depth_and_non_zero_parent_fingerprint() {
+        let result = "xprv9s2SPatNQ9Vc6GTbVMFPFo7jsaZySyzk7L8n2uqKXJen3KUmvQNTuLh3fhZMBoG3G4ZW1N2kZuHEPY53qmbZzCHshoQnNf4GvELZfqTUrcv".parse::<Xpriv>();
+        assert!(result.is_err());
+
+        match result {
+            Err(Error::NonZeroParentFingerprintForMasterKey) => {}
+            _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
+        }
     }
 
     #[test]
