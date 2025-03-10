@@ -39,6 +39,7 @@ pub use self::{
     signed::SignedAmount,
     unsigned::Amount,
 };
+pub(crate) use self::result::OptionExt;
 
 /// A set of denominations in which amounts can be expressed.
 ///

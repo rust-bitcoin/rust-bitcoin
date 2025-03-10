@@ -183,8 +183,8 @@ crate::internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-        fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
-            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
+        fn minimal_non_dust(script_pubkey: ScriptBuf) -> Option<TxOut> {
+            Some(TxOut { value: script_pubkey.minimal_non_dust()?, script_pubkey })
         }
 
         /// Constructs a new `TxOut` with given script and the smallest possible `value` that is **not** dust
@@ -198,8 +198,8 @@ crate::internal_macros::define_extension_trait! {
         /// To use the default Bitcoin Core value, use [`minimal_non_dust`].
         ///
         /// [`minimal_non_dust`]: TxOut::minimal_non_dust
-        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Self {
-            TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee), script_pubkey }
+        fn minimal_non_dust_custom(script_pubkey: ScriptBuf, dust_relay_fee: FeeRate) -> Option<TxOut> {
+            Some(TxOut { value: script_pubkey.minimal_non_dust_custom(dust_relay_fee)?, script_pubkey })
         }
     }
 }
