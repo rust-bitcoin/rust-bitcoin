@@ -286,7 +286,7 @@ pub trait Decodable: Sized {
     ///
     /// ### Rules for trait implementations
     ///
-    /// * Simple types that that have a fixed size (own and member fields), don't have to overwrite
+    /// * Simple types that have a fixed size (own and member fields), don't have to overwrite
     ///   this method, or be concern with it.
     /// * Types that deserialize using externally provided length should implement it:
     ///   * Make `consensus_decode` forward to `consensus_decode_bytes_from_finite_reader` with the
