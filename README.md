@@ -132,7 +132,7 @@ or [`hashes/embedded`](https://github.com/rust-bitcoin/rust-bitcoin/tree/master/
 ### Just
 
 We support [`just`](https://just.systems/man/en/) for running dev workflow commands. Run `just` from
-your shell to see list available sub-commands.
+your shell to see a list of available sub-commands.
 
 ### Building the docs
 
