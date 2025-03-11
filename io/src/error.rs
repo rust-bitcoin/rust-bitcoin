@@ -188,7 +188,7 @@ define_errorkind!(
     WriteZero,
     /// This operation was interrupted.
     Interrupted,
-    /// An error returned when an operation could not be completed because an “end of file” was reached prematurely.
+    /// An error returned when an operation could not be completed because an "end of file" was reached prematurely.
     UnexpectedEof,
     // Note: Any time we bump the MSRV any new error kinds should be added here!
     /// A custom error that does not fall under any other I/O error kind
