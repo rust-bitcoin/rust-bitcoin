@@ -5,5 +5,5 @@ reading and writing objects via standard traits is not generally possible. Thus,
 to export a minimal version of `std::io`'s traits which we use in `rust-bitcoin` so that we can
 support `no-std` applications.
 
-These traits are not one-for-one drop-ins, but are as close as possible while still implementing
+These traits are not one-to-one drop-ins, but are as close as possible while still implementing
 `std::io`'s traits without unnecessary complexity.
