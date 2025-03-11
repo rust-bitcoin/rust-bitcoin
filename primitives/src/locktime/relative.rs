@@ -471,6 +471,36 @@ mod tests {
     use super::*;
 
     #[test]
+    fn display_and_alternate() {
+        let lock_by_height = LockTime::from_height(10);
+        let lock_by_time = LockTime::from_512_second_intervals(70);
+
+        assert_eq!(format!("{}", lock_by_height), "10");
+        assert_eq!(format!("{:#}", lock_by_height), "block-height 10");
+        assert!(!format!("{:?}", lock_by_height).is_empty());
+
+        assert_eq!(format!("{}", lock_by_time), "70");
+        assert_eq!(format!("{:#}", lock_by_time), "block-time 70 (512 second intervals)");
+        assert!(!format!("{:?}", lock_by_time).is_empty());
+    }
+
+    #[test]
+    fn from_seconds_ceil_and_floor() {
+        let time = 70*512+1;
+        let lock_by_time = LockTime::from_seconds_ceil(time).unwrap();
+        assert_eq!(lock_by_time, LockTime::from_512_second_intervals(71));
+
+        let lock_by_time = LockTime::from_seconds_floor(time).unwrap();
+        assert_eq!(lock_by_time, LockTime::from_512_second_intervals(70));
+
+        let mut max_time = 0xffff * 512;
+        assert_eq!(LockTime::from_seconds_ceil(max_time),LockTime::from_seconds_floor(max_time));
+        max_time += 512;
+        assert!(LockTime::from_seconds_ceil(max_time).is_err());
+        assert!(LockTime::from_seconds_floor(max_time).is_err());
+    }
+
+    #[test]
     fn parses_correctly_to_height_or_time() {
         let height1 = Height::from(10);
         let height2 = Height::from(11);
@@ -555,6 +585,10 @@ mod tests {
 
         assert!(lock_by_time.is_implied_by_sequence(seq_time));
         assert!(!lock_by_time.is_implied_by_sequence(seq_height));
+
+        let disabled_sequence = Sequence::from_consensus(1 << 31);
+        assert!(!lock_by_height.is_implied_by_sequence(disabled_sequence));
+        assert!(!lock_by_time.is_implied_by_sequence(disabled_sequence));
     }
 
     #[test]
@@ -586,5 +620,38 @@ mod tests {
             assert_eq!(lt.to_sequence(), seq);
             assert_eq!(LockTime::from_sequence(seq).unwrap().to_sequence(), seq);
         }
+    }
+
+    #[test]
+    fn disabled_locktime_error() {
+        let disabled_sequence = Sequence::from_consensus(1 << 31);
+        let err = LockTime::try_from(disabled_sequence).unwrap_err();
+
+        assert_eq!(err.disabled_locktime_value(), 1 << 31);
+        assert!(!format!("{}", err).is_empty());
+    }
+
+    #[test]
+    fn incompatible_height_error() {
+        let height = Height::from(10);
+        let time = Time::from_512_second_intervals(70);
+        let lock_by_time = LockTime::from(time);
+        let err = lock_by_time.is_satisfied_by_height(height).unwrap_err();
+
+        assert_eq!(err.incompatible(), height);
+        assert_eq!(err.expected(), time);
+        assert!(!format!("{}", err).is_empty());
+    }
+
+    #[test]
+    fn incompatible_time_error() {
+        let height = Height::from(10);
+        let time = Time::from_512_second_intervals(70);
+        let lock_by_height = LockTime::from(height);
+        let err = lock_by_height.is_satisfied_by_time(time).unwrap_err();
+
+        assert_eq!(err.incompatible(), time);
+        assert_eq!(err.expected(), height);
+        assert!(!format!("{}", err).is_empty());
     }
 }
