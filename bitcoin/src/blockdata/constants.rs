@@ -52,6 +52,8 @@ pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
 pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
+/// The maximum allowed size for a serialized block, in bytes (only for buffer size limits)
+pub const MAX_BLOCK_SERIALIZED_SIZE: usize = 4_000_000;
 
 // This is the 65 byte (uncompressed) pubkey used as the one-and-only output of the genesis transaction.
 //
