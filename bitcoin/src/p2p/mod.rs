@@ -405,6 +405,7 @@ mod tests {
             ServiceFlags::WITNESS,
             ServiceFlags::COMPACT_FILTERS,
             ServiceFlags::NETWORK_LIMITED,
+            ServiceFlags::P2P_V2,
         ];
 
         let mut flags = ServiceFlags::NONE;
@@ -430,8 +431,12 @@ mod tests {
         // Test formatting.
         assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
         assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
-        let flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
-        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
+        assert_eq!("ServiceFlags(P2P_V2)", ServiceFlags::P2P_V2.to_string());
+        let flag = ServiceFlags::WITNESS
+            | ServiceFlags::BLOOM
+            | ServiceFlags::NETWORK
+            | ServiceFlags::P2P_V2;
+        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS|P2P_V2)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
