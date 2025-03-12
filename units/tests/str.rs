@@ -22,10 +22,10 @@ macro_rules! check {
 
 check! {
     amount_unsigned_one_sat, Amount, Amount::ONE_SAT, "0.00000001 BTC";
-    amount_unsigned_max_money, Amount, Amount::MAX_MONEY, "21000000 BTC";
+    amount_unsigned_max_money, Amount, Amount::MAX, "21000000 BTC";
 
     amount_signed_one_sat, SignedAmount, SignedAmount::ONE_SAT, "0.00000001 BTC";
-    amount_signed_max_money, SignedAmount, SignedAmount::MAX_MONEY, "21000000 BTC";
+    amount_signed_max_money, SignedAmount, SignedAmount::MAX, "21000000 BTC";
 
     block_height_min, BlockHeight, BlockHeight::MIN, "0";
     block_height_max, BlockHeight, BlockHeight::MAX, "4294967295";

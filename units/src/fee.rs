@@ -13,6 +13,7 @@
 
 use core::ops;
 
+use crate::amount::{NumOpResult, OptionExt};
 use crate::{Amount, FeeRate, Weight};
 
 impl Amount {
@@ -160,17 +161,15 @@ impl FeeRate {
 
 /// Computes the ceiling so that the fee computation is conservative.
 impl ops::Mul<FeeRate> for Weight {
-    type Output = Amount;
+    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
-    }
+    fn mul(self, rhs: FeeRate) -> Self::Output { rhs.checked_mul_by_weight(self).valid_or_error() }
 }
 
 impl ops::Mul<Weight> for FeeRate {
-    type Output = Amount;
+    type Output = NumOpResult<Amount>;
 
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
+    fn mul(self, rhs: Weight) -> Self::Output { self.checked_mul_by_weight(rhs).valid_or_error() }
 }
 
 impl ops::Div<Weight> for Amount {
@@ -265,7 +264,7 @@ mod tests {
         let three = Weight::from_vb(3).unwrap();
         let six = Amount::from_sat_unchecked(6);
 
-        assert_eq!(two * three, six);
+        assert_eq!(two * three, six.into());
     }
 
     #[test]

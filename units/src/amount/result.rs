@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monodic numeric result type that is used to return the result of
-//! doing mathematical operations (`core::ops`) on amount types.
+//! Provides a monodic type used when mathematical operations (`core::ops`) return an amount type.
 
 use core::{fmt, ops};
 
@@ -378,7 +377,7 @@ impl<'a> core::iter::Sum<&'a NumOpResult<SignedAmount>> for NumOpResult<SignedAm
     }
 }
 
-pub(in crate::amount) trait OptionExt<T> {
+pub(crate) trait OptionExt<T> {
     fn valid_or_error(self) -> NumOpResult<T>;
 }
 
