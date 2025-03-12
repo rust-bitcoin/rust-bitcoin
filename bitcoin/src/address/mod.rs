@@ -938,7 +938,7 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
 /// Address can be parsed only with `NetworkUnchecked`.
 ///
 /// Only SegWit bech32 addresses prefixed with `bc`, `bcrt` or `tb` and legacy base58 addresses
-/// prefixed with `1`, `2, `3`, `m` or `n` are supported.
+/// prefixed with `1`, `2`, `3`, `m` or `n` are supported.
 ///
 /// # Errors
 ///
