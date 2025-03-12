@@ -159,42 +159,36 @@ impl FeeRate {
     }
 }
 
-/// Computes the ceiling so that the fee computation is conservative.
-impl ops::Mul<FeeRate> for Weight {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: FeeRate) -> Self::Output { rhs.checked_mul_by_weight(self).valid_or_error() }
-}
-
-impl ops::Mul<Weight> for FeeRate {
-    type Output = NumOpResult<Amount>;
-
-    fn mul(self, rhs: Weight) -> Self::Output { self.checked_mul_by_weight(rhs).valid_or_error() }
-}
-
-impl ops::Div<Weight> for Amount {
-    type Output = FeeRate;
-
-    /// Truncating integer division.
-    ///
-    /// This is likely the wrong thing for a user dividing an amount by a weight. Consider using
-    /// `checked_div_by_weight` instead.
-    fn div(self, rhs: Weight) -> Self::Output {
-        FeeRate::from_sat_per_kwu(self.to_sat() * 1000 / rhs.to_wu())
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Mul<FeeRate> for Weight {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: FeeRate) -> Self::Output {
+            rhs.checked_mul_by_weight(self).valid_or_error()
+        }
     }
-}
 
-impl ops::Div<FeeRate> for Amount {
-    type Output = Weight;
+    impl ops::Mul<Weight> for FeeRate {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: Weight) -> Self::Output {
+            self.checked_mul_by_weight(rhs).valid_or_error()
+        }
+    }
 
-    /// Truncating integer division.
-    ///
-    /// # Panics
-    ///
-    /// This operation will panic if `fee_rate` is zero or the division results in overflow.
-    ///
-    /// Note: This uses floor division. For ceiling division use [`Amount::checked_div_by_fee_rate_ceil`].
-    fn div(self, rhs: FeeRate) -> Self::Output { self.checked_div_by_fee_rate_floor(rhs).unwrap() }
+    impl ops::Div<Weight> for Amount {
+        type Output = FeeRate;
+
+        fn div(self, rhs: Weight) -> Self::Output {
+            FeeRate::from_sat_per_kwu(self.to_sat() * 1000 / rhs.to_wu())
+        }
+    }
+
+    impl ops::Div<FeeRate> for Amount {
+        type Output = Weight;
+
+        fn div(self, rhs: FeeRate) -> Self::Output {
+            self.checked_div_by_fee_rate_floor(rhs).unwrap()
+        }
+    }
 }
 
 impl Weight {
@@ -265,15 +259,29 @@ mod tests {
         let six = Amount::from_sat_unchecked(6);
 
         assert_eq!(two * three, six.into());
+
+        // Test reference operators
+        assert_eq!(&two * three, six.into());
+        assert_eq!(two * &three, six.into());
+        assert_eq!(&two * &three, six.into());
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn amount_div_by_fee_rate() {
         // Test exact division
         let amount = Amount::from_sat_unchecked(1000);
         let fee_rate = FeeRate::from_sat_per_kwu(2);
         let weight = amount / fee_rate;
         assert_eq!(weight, Weight::from_wu(500_000));
+
+        // Test reference division
+        let weight_ref = &amount / fee_rate;
+        assert_eq!(weight_ref, Weight::from_wu(500_000));
+        let weight_ref2 = amount / &fee_rate;
+        assert_eq!(weight_ref2, Weight::from_wu(500_000));
+        let weight_ref3 = &amount / &fee_rate;
+        assert_eq!(weight_ref3, Weight::from_wu(500_000));
 
         // Test truncation behavior
         let amount = Amount::from_sat_unchecked(1000);
