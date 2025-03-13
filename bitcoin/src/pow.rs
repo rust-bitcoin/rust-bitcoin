@@ -1078,7 +1078,7 @@ pub mod test_utils {
 mod tests {
     use super::*;
     use crate::pow::test_utils::{u128_to_work, u32_to_target, u64_to_target};
-    use crate::Timestamp;
+    use crate::BlockTime;
 
     impl U256 {
         fn bit_at(&self, index: usize) -> bool {
@@ -1763,7 +1763,7 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: Timestamp::from_u32(1599332177),
+            time: BlockTime::from_u32(1599332177),
             bits: epoch_start.bits,
             nonce: epoch_start.nonce,
         };
@@ -1785,7 +1785,7 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: Timestamp::from_u32(1599332844),
+            time: BlockTime::from_u32(1599332844),
             bits: starting_bits,
             nonce: 0,
         };
@@ -1795,7 +1795,7 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
-            time: Timestamp::from_u32(1600591200),
+            time: BlockTime::from_u32(1600591200),
             bits: starting_bits,
             nonce: 0,
         };

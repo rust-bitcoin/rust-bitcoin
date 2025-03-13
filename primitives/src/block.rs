@@ -14,7 +14,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
-use units::Timestamp;
+use units::BlockTime;
 
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
@@ -180,7 +180,7 @@ pub struct Header {
     /// The root hash of the Merkle tree of transactions in the block.
     pub merkle_root: TxMerkleNode,
     /// The timestamp of the block, as claimed by the miner.
-    pub time: Timestamp,
+    pub time: BlockTime,
     /// The target value below which the blockhash must lie.
     pub bits: CompactTarget,
     /// The nonce, selected to obtain a low enough blockhash.
@@ -366,7 +366,7 @@ mod tests {
             version: Version::ONE,
             prev_blockhash: BlockHash::from_byte_array([0x99; 32]),
             merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
-            time: Timestamp::from(2),
+            time: BlockTime::from(2),
             bits: CompactTarget::from_consensus(3),
             nonce: 4,
         }
