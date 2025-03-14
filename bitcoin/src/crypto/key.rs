@@ -496,6 +496,20 @@ impl PrivateKey {
             inner: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
+
+    /// Returns a new private key with the negated secret value.
+    ///
+    /// The resulting key corresponds to the same x-only public key (identical x-coordinate)
+    /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility
+    /// with specific public key formats and BIP-340 requirements.
+    #[inline]
+    pub fn negate(&self) -> Self {
+        PrivateKey {
+            compressed: self.compressed,
+            network: self.network,
+            inner: self.inner.negate(),
+        }
+    }
 }
 
 impl fmt::Display for PrivateKey {
