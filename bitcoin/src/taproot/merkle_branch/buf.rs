@@ -92,7 +92,7 @@ impl TaprootMerkleBranchBuf {
     }
 
     /// Appends elements to proof.
-    pub(super) fn push(&mut self, h: TapNodeHash) -> Result<(), InvalidMerkleTreeDepthError> {
+    pub(in super::super) fn push(&mut self, h: TapNodeHash) -> Result<(), InvalidMerkleTreeDepthError> {
         if self.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(self.0.len()))
         } else {
