@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Contains `TaprootMerkleBranch` and its associated types.
+//! Contains `TaprootMerkleBranchBuf` and its associated types.
 
 use hashes::Hash;
 
@@ -15,9 +15,9 @@ use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(into = "Vec<TapNodeHash>"))]
 #[cfg_attr(feature = "serde", serde(try_from = "Vec<TapNodeHash>"))]
-pub struct TaprootMerkleBranch(Vec<TapNodeHash>);
+pub struct TaprootMerkleBranchBuf(Vec<TapNodeHash>);
 
-impl TaprootMerkleBranch {
+impl TaprootMerkleBranchBuf {
     /// Returns a reference to the slice of hashes.
     #[deprecated(since = "0.32.0", note = "use `as_slice` instead")]
     #[inline]
@@ -54,7 +54,7 @@ impl TaprootMerkleBranch {
         } else {
             let inner = node_hashes.iter().copied().map(TapNodeHash::from_byte_array).collect();
 
-            Ok(TaprootMerkleBranch(inner))
+            Ok(TaprootMerkleBranchBuf(inner))
         }
     }
 
@@ -70,7 +70,7 @@ impl TaprootMerkleBranch {
         if collection.as_ref().len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(collection.as_ref().len()))
         } else {
-            Ok(TaprootMerkleBranch(collection.into()))
+            Ok(TaprootMerkleBranchBuf(collection.into()))
         }
     }
 
@@ -113,7 +113,7 @@ impl TaprootMerkleBranch {
 
 macro_rules! impl_try_from {
     ($from:ty) => {
-        impl TryFrom<$from> for TaprootMerkleBranch {
+        impl TryFrom<$from> for TaprootMerkleBranchBuf {
             type Error = InvalidMerkleTreeDepthError;
 
             /// Constructs a new Merkle proof from list of hashes.
@@ -123,7 +123,7 @@ macro_rules! impl_try_from {
             /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
             #[inline]
             fn try_from(v: $from) -> Result<Self, Self::Error> {
-                TaprootMerkleBranch::from_collection(v)
+                TaprootMerkleBranchBuf::from_collection(v)
             }
         }
     };
@@ -135,7 +135,7 @@ impl_try_from!(Box<[TapNodeHash]>);
 macro_rules! impl_try_from_array {
     ($($len:expr),* $(,)?) => {
         $(
-            impl From<[TapNodeHash; $len]> for TaprootMerkleBranch {
+            impl From<[TapNodeHash; $len]> for TaprootMerkleBranchBuf {
                 #[inline]
                 fn from(a: [TapNodeHash; $len]) -> Self {
                     Self(a.to_vec())
@@ -146,7 +146,7 @@ macro_rules! impl_try_from_array {
 }
 // Implement for all values [0, 128] inclusive.
 //
-// The reason zero is included is that `TaprootMerkleBranch` doesn't contain the hash of the node
+// The reason zero is included is that `TaprootMerkleBranchBuf` doesn't contain the hash of the node
 // that's being proven - it's not needed because the script is already right before control block.
 impl_try_from_array!(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
@@ -157,12 +157,12 @@ impl_try_from_array!(
     117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128
 );
 
-impl From<TaprootMerkleBranch> for Vec<TapNodeHash> {
+impl From<TaprootMerkleBranchBuf> for Vec<TapNodeHash> {
     #[inline]
-    fn from(branch: TaprootMerkleBranch) -> Self { branch.0 }
+    fn from(branch: TaprootMerkleBranchBuf) -> Self { branch.0 }
 }
 
-impl IntoIterator for TaprootMerkleBranch {
+impl IntoIterator for TaprootMerkleBranchBuf {
     type IntoIter = IntoIter;
     type Item = TapNodeHash;
 
@@ -170,7 +170,7 @@ impl IntoIterator for TaprootMerkleBranch {
     fn into_iter(self) -> Self::IntoIter { IntoIter(self.0.into_iter()) }
 }
 
-impl<'a> IntoIterator for &'a TaprootMerkleBranch {
+impl<'a> IntoIterator for &'a TaprootMerkleBranchBuf {
     type IntoIter = core::slice::Iter<'a, TapNodeHash>;
     type Item = &'a TapNodeHash;
 
@@ -178,7 +178,7 @@ impl<'a> IntoIterator for &'a TaprootMerkleBranch {
     fn into_iter(self) -> Self::IntoIter { self.0.iter() }
 }
 
-impl<'a> IntoIterator for &'a mut TaprootMerkleBranch {
+impl<'a> IntoIterator for &'a mut TaprootMerkleBranchBuf {
     type IntoIter = core::slice::IterMut<'a, TapNodeHash>;
     type Item = &'a mut TapNodeHash;
 
@@ -186,41 +186,41 @@ impl<'a> IntoIterator for &'a mut TaprootMerkleBranch {
     fn into_iter(self) -> Self::IntoIter { self.0.iter_mut() }
 }
 
-impl core::ops::Deref for TaprootMerkleBranch {
+impl core::ops::Deref for TaprootMerkleBranchBuf {
     type Target = [TapNodeHash];
 
     #[inline]
     fn deref(&self) -> &Self::Target { &self.0 }
 }
 
-impl core::ops::DerefMut for TaprootMerkleBranch {
+impl core::ops::DerefMut for TaprootMerkleBranchBuf {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
 
-impl AsRef<[TapNodeHash]> for TaprootMerkleBranch {
+impl AsRef<[TapNodeHash]> for TaprootMerkleBranchBuf {
     #[inline]
     fn as_ref(&self) -> &[TapNodeHash] { &self.0 }
 }
 
-impl AsMut<[TapNodeHash]> for TaprootMerkleBranch {
+impl AsMut<[TapNodeHash]> for TaprootMerkleBranchBuf {
     #[inline]
     fn as_mut(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
 }
 
-impl Borrow<[TapNodeHash]> for TaprootMerkleBranch {
+impl Borrow<[TapNodeHash]> for TaprootMerkleBranchBuf {
     #[inline]
     fn borrow(&self) -> &[TapNodeHash] { &self.0 }
 }
 
-impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranch {
+impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranchBuf {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
 }
 
 /// Iterator over node hashes within Taproot Merkle branch.
 ///
-/// This is created by `into_iter` method on `TaprootMerkleBranch` (via `IntoIterator` trait).
+/// This is created by `into_iter` method on `TaprootMerkleBranchBuf` (via `IntoIterator` trait).
 #[derive(Clone, Debug)]
 pub struct IntoIter(alloc::vec::IntoIter<TapNodeHash>);
 

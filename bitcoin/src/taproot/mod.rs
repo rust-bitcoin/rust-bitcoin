@@ -27,7 +27,7 @@ use crate::{Script, ScriptBuf};
 #[doc(inline)]
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
-pub use merkle_branch::TaprootMerkleBranch;
+pub use merkle_branch::TaprootMerkleBranchBuf;
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_tag! {
@@ -190,7 +190,7 @@ pub struct LeafScript<S> {
 }
 
 // type alias for versioned tap script corresponding Merkle proof
-type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
+type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranchBuf>>;
 
 /// Represents Taproot spending information.
 ///
@@ -221,7 +221,7 @@ pub struct TaprootSpendInfo {
     output_key_parity: secp256k1::Parity,
     /// The tweaked output key.
     output_key: TweakedPublicKey,
-    /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranch`]. More than one control
+    /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranchBuf`]. More than one control
     /// block for a given script is only possible if it appears in multiple branches of the tree. In
     /// all cases, keeping one should be enough for spending funds, but we keep all of the paths so
     /// that a full tree can be constructed again from spending data if required.
@@ -1037,7 +1037,7 @@ pub struct LeafNode {
     /// The [`TapLeaf`]
     leaf: TapLeaf,
     /// The Merkle proof (hashing partners) to get this node.
-    merkle_branch: TaprootMerkleBranch,
+    merkle_branch: TaprootMerkleBranchBuf,
 }
 
 impl LeafNode {
@@ -1091,9 +1091,9 @@ impl LeafNode {
     pub fn leaf_version(&self) -> Option<LeafVersion> { self.leaf.as_script().map(|x| x.1) }
 
     /// Returns reference to the Merkle proof (hashing partners) to get this
-    /// node in form of [`TaprootMerkleBranch`].
+    /// node in form of [`TaprootMerkleBranchBuf`].
     #[inline]
-    pub fn merkle_branch(&self) -> &TaprootMerkleBranch { &self.merkle_branch }
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranchBuf { &self.merkle_branch }
 
     /// Returns a reference to the leaf of this [`ScriptLeaf`].
     #[inline]
@@ -1109,7 +1109,7 @@ pub struct ScriptLeaf<'leaf> {
     /// The script.
     script: &'leaf Script,
     /// The Merkle proof (hashing partners) to get this node.
-    merkle_branch: &'leaf TaprootMerkleBranch,
+    merkle_branch: &'leaf TaprootMerkleBranchBuf,
 }
 
 impl<'leaf> ScriptLeaf<'leaf> {
@@ -1120,7 +1120,7 @@ impl<'leaf> ScriptLeaf<'leaf> {
     pub fn script(&self) -> &Script { self.script }
 
     /// Obtains a reference to the Merkle proof of the leaf.
-    pub fn merkle_branch(&self) -> &TaprootMerkleBranch { self.merkle_branch }
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranchBuf { self.merkle_branch }
 
     /// Obtains a script leaf from the leaf node if the leaf is not hidden.
     pub fn from_leaf_node(leaf_node: &'leaf LeafNode) -> Option<Self> {
@@ -1140,7 +1140,7 @@ pub struct ControlBlock {
     /// The internal key.
     pub internal_key: UntweakedPublicKey,
     /// The Merkle proof of a script associated with this leaf.
-    pub merkle_branch: TaprootMerkleBranch,
+    pub merkle_branch: TaprootMerkleBranchBuf,
 }
 
 impl ControlBlock {
@@ -1172,7 +1172,7 @@ impl ControlBlock {
             &sl[1..TAPROOT_CONTROL_BASE_SIZE].try_into().expect("Slice should be exactly 32 bytes"),
         )
         .map_err(TaprootError::InvalidInternalKey)?;
-        let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
+        let merkle_branch = TaprootMerkleBranchBuf::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 
@@ -1923,7 +1923,7 @@ mod test {
                 .unwrap()
                 .to_byte_array(),
         );
-        let merkle_branch = TaprootMerkleBranch::from([hash1, hash2]);
+        let merkle_branch = TaprootMerkleBranchBuf::from([hash1, hash2]);
         // use serde_test to test serialization and deserialization
         serde_test::assert_tokens(
             &merkle_branch.readable(),
