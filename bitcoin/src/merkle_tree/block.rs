@@ -519,7 +519,8 @@ mod tests {
     use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use crate::hex::{test_hex_unwrap as hex, DisplayHex, FromHex};
+    use hex::{DisplayHex, FromHex};
+    use hex_lit::hex;
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
@@ -649,7 +650,8 @@ mod tests {
         // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
         let mb_hex = include_str!("../../tests/data/merkle_block.hex");
 
-        let mb: MerkleBlock = encode::deserialize(&hex!(mb_hex)).unwrap();
+        let bytes = Vec::from_hex(mb_hex).unwrap();
+        let mb: MerkleBlock = encode::deserialize(&bytes).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
