@@ -413,7 +413,7 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, CompactTarget, OutPoint, ScriptBuf, Sequence, BlockTime,
+        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf, Sequence,
         TxIn, TxOut, Txid, Witness,
     };
 

@@ -670,7 +670,10 @@ mod tests {
             witness: Witness::new(),
         };
 
-        let txout = TxOut { value: Amount::from_sat(123_456_789).unwrap(), script_pubkey: ScriptBuf::new() };
+        let txout = TxOut {
+            value: Amount::from_sat(123_456_789).unwrap(),
+            script_pubkey: ScriptBuf::new(),
+        };
 
         let tx_orig = Transaction {
             version: Version::ONE,

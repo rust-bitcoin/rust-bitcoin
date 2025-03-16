@@ -462,7 +462,7 @@ impl PrivateKey {
     /// Deserializes a private key from a byte array.
     pub fn from_byte_array(
         data: [u8; 32],
-        network: impl Into<NetworkKind>
+        network: impl Into<NetworkKind>,
     ) -> Result<PrivateKey, secp256k1::Error> {
         Ok(PrivateKey::new(secp256k1::SecretKey::from_byte_array(&data)?, network))
     }

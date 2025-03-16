@@ -355,8 +355,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hex::FromHex;
-                use hex::HexToBytesError as E;
+                use hex::{FromHex, HexToBytesError as E};
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {
@@ -366,16 +365,17 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
                 while let Some(elem) = a.next_element::<String>()? {
                     let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
-                        E::InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
-                            Some(c) => de::Error::invalid_value(
-                                Unexpected::Char(c),
-                                &"a valid hex character",
-                            ),
-                            None => de::Error::invalid_value(
-                                Unexpected::Unsigned(e.invalid_char().into()),
-                                &"a valid hex character",
-                            ),
-                        },
+                        E::InvalidChar(ref e) =>
+                            match core::char::from_u32(e.invalid_char().into()) {
+                                Some(c) => de::Error::invalid_value(
+                                    Unexpected::Char(c),
+                                    &"a valid hex character",
+                                ),
+                                None => de::Error::invalid_value(
+                                    Unexpected::Unsigned(e.invalid_char().into()),
+                                    &"a valid hex character",
+                                ),
+                            },
                         E::OddLengthString(ref e) =>
                             de::Error::invalid_length(e.length(), &"an even length string"),
                     })?;

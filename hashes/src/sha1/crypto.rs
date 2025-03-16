@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use internals::slice::SliceExt;
+
 use super::{HashEngine, BLOCK_SIZE};
 
 impl HashEngine {
