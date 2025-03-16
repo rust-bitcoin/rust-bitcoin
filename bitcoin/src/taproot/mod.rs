@@ -1096,9 +1096,9 @@ impl LeafNode {
     pub fn leaf_version(&self) -> Option<LeafVersion> { self.leaf.as_script().map(|x| x.1) }
 
     /// Returns reference to the Merkle proof (hashing partners) to get this
-    /// node in form of [`TaprootMerkleBranchBuf`].
+    /// node in form of [`TaprootMerkleBranch`].
     #[inline]
-    pub fn merkle_branch(&self) -> &TaprootMerkleBranchBuf { &self.merkle_branch }
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch { &self.merkle_branch }
 
     /// Returns a reference to the leaf of this [`ScriptLeaf`].
     #[inline]
@@ -1114,7 +1114,7 @@ pub struct ScriptLeaf<'leaf> {
     /// The script.
     script: &'leaf Script,
     /// The Merkle proof (hashing partners) to get this node.
-    merkle_branch: &'leaf TaprootMerkleBranchBuf,
+    merkle_branch: &'leaf TaprootMerkleBranch,
 }
 
 impl<'leaf> ScriptLeaf<'leaf> {
@@ -1125,7 +1125,7 @@ impl<'leaf> ScriptLeaf<'leaf> {
     pub fn script(&self) -> &Script { self.script }
 
     /// Obtains a reference to the Merkle proof of the leaf.
-    pub fn merkle_branch(&self) -> &TaprootMerkleBranchBuf { self.merkle_branch }
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch { self.merkle_branch }
 
     /// Obtains a script leaf from the leaf node if the leaf is not hidden.
     pub fn from_leaf_node(leaf_node: &'leaf LeafNode) -> Option<Self> {
