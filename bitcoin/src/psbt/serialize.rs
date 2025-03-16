@@ -368,7 +368,7 @@ impl Serialize for TapTree {
         for leaf_info in self.script_leaves() {
             // # Cast Safety:
             //
-            // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
+            // TaprootMerkleBranch can only have len at most 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
             // safe to cast from usize to u8
             buf.push(leaf_info.merkle_branch().len() as u8);
             buf.push(leaf_info.version().to_consensus());
