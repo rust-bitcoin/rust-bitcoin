@@ -16,14 +16,15 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hashes/std", "hex/std", "internals/std", "units/std"]
-alloc = ["hashes/alloc", "hex/alloc", "internals/alloc", "units/alloc"]
+std = ["alloc", "hashes/std", "hex-stable/std", "hex-unstable/std", "internals/std", "units/std"]
+alloc = ["hashes/alloc", "hex-stable/alloc", "hex-unstable/alloc", "internals/alloc", "units/alloc"]
 serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
 
 [dependencies]
 hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["hex"] }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
+hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", path = "../../../hex-conservative/02-24-release-1.0-alpha.0", default-features = false }
 internals = { package = "bitcoin-internals", version = "0.4.0", features = ["hex"] }
 units = { package = "bitcoin-units", version = "0.2.0", default-features = false }
 

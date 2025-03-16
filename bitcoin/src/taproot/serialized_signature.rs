@@ -28,7 +28,7 @@ impl fmt::Debug for SerializedSignature {
 
 impl fmt::Display for SerializedSignature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        hex::fmt_hex_exact!(f, MAX_LEN, self, hex::Case::Lower)
+        hex_unstable::fmt_hex_exact!(f, MAX_LEN, self, hex_unstable::Case::Lower)
     }
 }
 
