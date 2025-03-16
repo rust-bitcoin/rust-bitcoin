@@ -5,8 +5,8 @@
 use hashes::Hash;
 
 use super::{
-    InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash, TaprootError,
-    TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
+    InvalidMerkleTreeDepthError, TapNodeHash, TaprootError, TaprootMerkleBranch,
+    TAPROOT_CONTROL_MAX_NODE_COUNT,
 };
 use crate::prelude::{Borrow, BorrowMut, Box, Vec};
 
@@ -49,17 +49,7 @@ impl TaprootMerkleBranchBuf {
     /// The function returns an error if the number of bytes is not an integer multiple of 32 or
     /// if the number of hashes exceeds 128.
     pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
-        use internals::slice::SliceExt;
-        let (node_hashes, remainder) = sl.bitcoin_as_chunks::<TAPROOT_CONTROL_NODE_SIZE>();
-        if !remainder.is_empty() {
-            Err(InvalidMerkleBranchSizeError(sl.len()).into())
-        } else if node_hashes.len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(InvalidMerkleTreeDepthError(sl.len() / TAPROOT_CONTROL_NODE_SIZE).into())
-        } else {
-            let inner = node_hashes.iter().copied().map(TapNodeHash::from_byte_array).collect();
-
-            Ok(TaprootMerkleBranchBuf(inner))
-        }
+        TaprootMerkleBranch::decode(sl).map(alloc::borrow::ToOwned::to_owned).map_err(Into::into)
     }
 
     /// Constructs a new Merkle proof from list of hashes.
@@ -220,6 +210,12 @@ impl Borrow<[TapNodeHash]> for TaprootMerkleBranchBuf {
 impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranchBuf {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
+}
+
+impl<'a> From<&'a TaprootMerkleBranch> for TaprootMerkleBranchBuf {
+    fn from(value: &'a TaprootMerkleBranch) -> Self {
+        Self(value.as_slice().into())
+    }
 }
 
 /// Iterator over node hashes within Taproot Merkle branch.

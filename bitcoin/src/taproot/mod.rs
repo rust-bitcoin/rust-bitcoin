@@ -28,6 +28,10 @@ use crate::{Script, ScriptBuf};
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranchBuf;
+#[doc(inline)]
+pub use merkle_branch::TaprootMerkleBranch;
+
+type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_tag! {
@@ -53,6 +57,7 @@ hash_newtype! {
     /// Tagged hash used in Taproot trees.
     ///
     /// See BIP-340 for tagging rules.
+    #[repr(transparent)]
     pub struct TapNodeHash(sha256t::Hash<TapBranchTag>);
 }
 
@@ -1132,7 +1137,7 @@ impl<'leaf> ScriptLeaf<'leaf> {
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ControlBlock {
+pub struct ControlBlock<Branch = TaprootMerkleBranchBuf> where Branch: ?Sized {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
@@ -1140,7 +1145,7 @@ pub struct ControlBlock {
     /// The internal key.
     pub internal_key: UntweakedPublicKey,
     /// The Merkle proof of a script associated with this leaf.
-    pub merkle_branch: TaprootMerkleBranchBuf,
+    pub merkle_branch: Branch,
 }
 
 impl ControlBlock {
@@ -1175,11 +1180,13 @@ impl ControlBlock {
         let merkle_branch = TaprootMerkleBranchBuf::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
+}
 
+impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
     /// Returns the size of control block. Faster and more efficient than calling
     /// `Self::serialize().len()`. Can be handy for fee estimation.
     pub fn size(&self) -> usize {
-        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.len()
+        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.as_ref().len()
     }
 
     /// Serializes to a writer.
@@ -1188,12 +1195,26 @@ impl ControlBlock {
     ///
     /// The number of bytes written to the writer.
     pub fn encode<W: Write + ?Sized>(&self, writer: &mut W) -> io::Result<usize> {
+        self.encode_inner(move |bytes| writer.write_all(bytes))?;
+        Ok(self.size())
+    }
+
+    pub(crate) fn encode_to_arrayvec(&self) -> ControlBlockArrayVec {
+        let mut result = ControlBlockArrayVec::new();
+        self.encode_inner(|bytes| -> Result<(), core::convert::Infallible> {
+            result.extend_from_slice(bytes);
+            Ok(())
+        }).unwrap_or_else(|never| match never {});
+        result
+    }
+
+    fn encode_inner<E>(&self, mut write: impl FnMut(&[u8]) -> Result<(), E>) -> Result<(), E> {
         let first_byte: u8 =
             i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
-        writer.write_all(&[first_byte])?;
-        writer.write_all(&self.internal_key.serialize())?;
-        self.merkle_branch.encode(writer)?;
-        Ok(self.size())
+        write(&[first_byte])?;
+        write(&self.internal_key.serialize())?;
+        write(self.merkle_branch.as_ref().as_bytes())?;
+        Ok(())
     }
 
     /// Serializes the control block.
@@ -1221,7 +1242,7 @@ impl ControlBlock {
         // Initially the curr_hash is the leaf hash
         let mut curr_hash = TapNodeHash::from_script(script, self.leaf_version);
         // Verify the proof
-        for elem in &self.merkle_branch {
+        for elem in self.merkle_branch.as_ref() {
             // Recalculate the curr hash as parent hash
             curr_hash = TapNodeHash::from_node_hashes(curr_hash, *elem);
         }
