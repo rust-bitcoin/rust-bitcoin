@@ -1137,7 +1137,8 @@ mod sealed {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
+    use hex_lit::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
     use units::parse;
@@ -1376,7 +1377,7 @@ mod tests {
         assert_eq!(tx.output.len(), 1);
 
         let reser = serialize(&tx);
-        assert_eq!(tx_bytes, reser);
+        assert_eq!(tx_bytes, *reser);
     }
 
     #[test]
@@ -1522,8 +1523,8 @@ mod tests {
 
     #[test]
     fn huge_witness() {
-        deserialize::<Transaction>(&hex!(include_str!("../../tests/data/huge_witness.hex").trim()))
-            .unwrap();
+        let hex = Vec::from_hex(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap();
+        deserialize::<Transaction>(&hex).unwrap();
     }
 
     #[test]
@@ -1858,7 +1859,7 @@ mod tests {
         fn return_none(_outpoint: &OutPoint) -> Option<TxOut> { None }
 
         for (hx, expected, spent_fn, expected_none) in tx_hexes.iter() {
-            let tx_bytes = hex!(hx);
+            let tx_bytes = Vec::from_hex(hx).unwrap();
             let tx: Transaction = deserialize(&tx_bytes).unwrap();
             assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
             assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
@@ -2007,6 +2008,7 @@ mod benches {
 
     #[bench]
     pub fn bench_transaction_deserialize(bh: &mut Bencher) {
+        // hex_lit does not work in bench code for some reason. Perhaps criterion fixes this.
         let raw_tx = <Vec<u8> as hex::FromHex>::from_hex(SOME_TX).unwrap();
 
         bh.iter(|| {

@@ -301,7 +301,8 @@ impl ToSocketAddrs for AddrV2Message {
 mod test {
     use std::net::IpAddr;
 
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
+    use hex_lit::hex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
@@ -422,7 +423,7 @@ mod test {
         let ip = AddrV2::Cjdns("fc01:1:2:3:4:5:6:7".parse::<Ipv6Addr>().unwrap());
         assert_eq!(serialize(&ip), hex!("0610fc010001000200030004000500060007"));
 
-        let ip = AddrV2::Unknown(170, hex!("01020304"));
+        let ip = AddrV2::Unknown(170, hex!("01020304").to_vec());
         assert_eq!(serialize(&ip), hex!("aa0401020304"));
     }
 
@@ -517,7 +518,7 @@ mod test {
 
         // Unknown, with reasonable length.
         let ip: AddrV2 = deserialize(&hex!("aa0401020304")).unwrap();
-        assert_eq!(ip, AddrV2::Unknown(170, hex!("01020304")));
+        assert_eq!(ip, AddrV2::Unknown(170, hex!("01020304").to_vec()));
 
         // Unknown, with zero length.
         let ip: AddrV2 = deserialize(&hex!("aa00")).unwrap();
@@ -536,7 +537,7 @@ mod test {
                     services: ServiceFlags::NETWORK,
                     time: 0x4966bc61,
                     port: 8333,
-                    addr: AddrV2::Unknown(153, hex!("abab"))
+                    addr: AddrV2::Unknown(153, hex!("abab").to_vec())
                 },
                 AddrV2Message {
                     services: ServiceFlags::NETWORK_LIMITED
