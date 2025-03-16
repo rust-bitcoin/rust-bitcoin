@@ -27,6 +27,10 @@ impl TaprootMerkleBranchBuf {
     #[inline]
     pub fn as_slice(&self) -> &[TapNodeHash] { &self.0 }
 
+    /// Returns a mutable reference to the slice of hashes.
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
+
     /// Returns the number of nodes in this Merkle proof.
     #[inline]
     pub fn len(&self) -> usize { self.0.len() }
