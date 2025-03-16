@@ -252,8 +252,7 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-
-    use hex::test_hex_unwrap as hex;
+    use hex::FromHex as _;
 
     use super::*;
 
@@ -282,7 +281,7 @@ mod tests {
         assert_eq!(&res, exp);
 
         // Addresses
-        let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
+        let addr = Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
         assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
     }
 
@@ -301,7 +300,7 @@ mod tests {
         // Addresses
         assert_eq!(
             decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-            Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
+            Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap())
         );
         // Non Base58 char.
         assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError::new(194));

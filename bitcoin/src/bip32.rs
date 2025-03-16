@@ -1006,7 +1006,7 @@ impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 
