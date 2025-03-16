@@ -181,15 +181,15 @@ impl<'a> IntoIterator for &'a mut TaprootMerkleBranchBuf {
 }
 
 impl core::ops::Deref for TaprootMerkleBranchBuf {
-    type Target = [TapNodeHash];
+    type Target = TaprootMerkleBranch;
 
     #[inline]
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target { self.as_ref() }
 }
 
 impl core::ops::DerefMut for TaprootMerkleBranchBuf {
     #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut() }
 }
 
 impl AsRef<[TapNodeHash]> for TaprootMerkleBranchBuf {
