@@ -17,7 +17,7 @@
 use core::mem;
 
 use hashes::{sha256, sha256d, Hash};
-use hex::DisplayHex as _;
+use hex_unstable::DisplayHex as _;
 use internals::{compact_size, ToU64};
 use io::{BufRead, Cursor, Read, Write};
 
@@ -67,7 +67,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, DeserializeError> {
 /// Deserialize any decodable type from a hex string, will error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T, FromHexError> {
-    let iter = hex::HexSliceToBytesIter::new(hex)?;
+    let iter = hex_unstable::HexSliceToBytesIter::new(hex)?;
     let reader = IterReader::new(iter);
     Ok(reader.decode().map_err(FromHexError::Decode)?)
 }

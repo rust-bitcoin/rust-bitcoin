@@ -440,7 +440,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
 #[cfg(feature = "alloc")]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hex::HexToArrayError),
+    Txid(hex_stable::DecodeToArrayError),
     /// Error in vout part.
     Vout(parse::ParseIntError),
     /// Error in general format.

@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 
 use bitcoin::bip32::{Fingerprint, IntoDerivationPath, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
-use bitcoin::hex::FromHex;
 use bitcoin::opcodes::OP_0;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::script::{PushBytes, ScriptBufExt as _};
@@ -17,7 +16,7 @@ use bitcoin::{
 
 #[track_caller]
 fn hex_psbt(s: &str) -> Psbt {
-    let v: Vec<u8> = Vec::from_hex(s).expect("valid hex digits");
+    let v = hex_stable::decode_vec(s).expect("valid hex digits");
     Psbt::deserialize(&v).expect("valid magic and valid separators")
 }
 
@@ -233,7 +232,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
 
     let mut input_0 = psbt.inputs[0].clone();
 
-    let v = Vec::from_hex(previous_tx_1).unwrap();
+    let v = hex_stable::decode_vec(previous_tx_1).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
     input_0.non_witness_utxo = Some(tx);
     input_0.redeem_script = Some(hex_script(redeem_script_0));
@@ -241,7 +240,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
 
     let mut input_1 = psbt.inputs[1].clone();
 
-    let v = Vec::from_hex(previous_tx_0).unwrap();
+    let v = hex_stable::decode_vec(previous_tx_0).unwrap();
     let tx: Transaction = deserialize(&v).unwrap();
     input_1.witness_utxo = Some(tx.output[1].clone());
 
@@ -394,10 +393,10 @@ fn combine_lexicographically() {
     let expected_psbt_hex = include_str!("data/lex_combine_psbt_hex");
     let expected_psbt: Psbt = hex_psbt(expected_psbt_hex);
 
-    let v = Vec::from_hex(psbt_1_hex).unwrap();
+    let v = hex_stable::decode_vec(psbt_1_hex).unwrap();
     let mut psbt_1 = Psbt::deserialize(&v).expect("failed to deserialize psbt 1");
 
-    let v = Vec::from_hex(psbt_2_hex).unwrap();
+    let v = hex_stable::decode_vec(psbt_2_hex).unwrap();
     let psbt_2 = Psbt::deserialize(&v).expect("failed to deserialize psbt 2");
 
     psbt_1.combine(psbt_2).expect("failed to combine PSBTs");

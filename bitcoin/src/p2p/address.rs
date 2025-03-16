@@ -301,7 +301,7 @@ impl ToSocketAddrs for AddrV2Message {
 mod test {
     use std::net::IpAddr;
 
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex_unstable::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};

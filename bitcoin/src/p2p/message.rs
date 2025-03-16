@@ -697,7 +697,7 @@ impl Decodable for V2NetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
     use units::BlockHeight;
 
     use super::*;

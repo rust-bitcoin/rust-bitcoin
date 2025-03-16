@@ -148,7 +148,7 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};

@@ -28,7 +28,6 @@ use bincode::serialize;
 use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
-use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
@@ -126,9 +125,8 @@ fn serde_regression_transaction() {
 
 #[test]
 fn serde_regression_witness() {
-    let w0 = Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")
-        .unwrap();
-    let w1 = Vec::from_hex("000000").unwrap();
+    let w0 = hex_stable::decode_vec("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap();
+    let w1 = hex_stable::decode_vec("000000").unwrap();
     let vec = [w0, w1];
     let witness = Witness::from_slice(&vec);
 
@@ -182,7 +180,7 @@ fn serde_regression_ecdsa_sig() {
 #[test]
 fn serde_regression_control_block() {
     let s = include_str!("data/serde/control_block_hex");
-    let block = ControlBlock::decode(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
+    let block = ControlBlock::decode(&hex_stable::decode_vec(s.trim()).unwrap()).unwrap();
     let got = serialize(&block).unwrap();
 
     let want = include_bytes!("data/serde/control_block_bincode") as &[_];
@@ -229,7 +227,7 @@ fn serde_regression_psbt() {
             script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985")
                 .unwrap(),
             sequence: Sequence::from_consensus(4294967295),
-            witness: Witness::from_slice(&[Vec::from_hex(
+            witness: Witness::from_slice(&[hex_stable::decode_vec(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
             )
             .unwrap()]),

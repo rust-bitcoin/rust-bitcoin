@@ -1137,7 +1137,7 @@ mod sealed {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex_unstable::{test_hex_unwrap as hex, FromHex};
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
     use units::parse;
@@ -1966,7 +1966,7 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
     use io::sink;
     use test::{black_box, Bencher};
 

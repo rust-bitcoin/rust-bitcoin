@@ -84,9 +84,13 @@ extern crate serde_test;
 #[cfg(bench)]
 extern crate test;
 
-/// Re-export the `hex-conservative` crate.
+/// Re-export the `hex-conservative v1.x` crate.
 #[cfg(feature = "hex")]
-pub extern crate hex;
+pub extern crate hex_stable;
+
+/// Re-export the `hex-conservative v0.x` crate.
+#[cfg(feature = "hex")]
+pub extern crate hex_unstable;
 
 #[doc(hidden)]
 pub mod _export {

@@ -2,7 +2,6 @@ use std::{env, process};
 
 use bitcoin::address::{Address, KnownHrp};
 use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
-use bitcoin::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{CompressedPublicKey, NetworkKind};
@@ -25,7 +24,7 @@ fn main() {
     println!("Seed: {}", seed_hex);
     println!("Using mainnet network");
 
-    let seed = Vec::from_hex(seed_hex).unwrap();
+    let seed = bitcoin::hex_stable::decode_vec(seed_hex).unwrap();
 
     // we need secp256k1 context for key derivation
     let mut buf: Vec<AlignedType> = Vec::new();

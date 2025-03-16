@@ -1629,7 +1629,7 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hex::{DisplayHex, FromHex};
+    use hex_unstable::{DisplayHex, FromHex};
     use secp256k1::VerifyOnly;
 
     use super::*;

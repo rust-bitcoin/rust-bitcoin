@@ -10,7 +10,6 @@ use core::{fmt, iter};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex::FromHex;
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 
@@ -90,7 +89,7 @@ impl FromStr for Signature {
     type Err = ParseSignatureError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes = Vec::from_hex(s)?;
+        let bytes = hex_stable::decode_vec(s)?;
         Ok(Self::from_slice(&bytes)?)
     }
 }
@@ -256,7 +255,7 @@ impl From<NonStandardSighashTypeError> for DecodeError {
 #[non_exhaustive]
 pub enum ParseSignatureError {
     /// Hex string decoding error.
-    Hex(hex::HexToBytesError),
+    Hex(hex_stable::DecodeToBytesError),
     /// Signature byte slice decoding error.
     Decode(DecodeError),
 }
@@ -288,8 +287,8 @@ impl std::error::Error for ParseSignatureError {
     }
 }
 
-impl From<hex::HexToBytesError> for ParseSignatureError {
-    fn from(e: hex::HexToBytesError) -> Self { Self::Hex(e) }
+impl From<hex_stable::DecodeToBytesError> for ParseSignatureError {
+    fn from(e: hex_stable::DecodeToBytesError) -> Self { Self::Hex(e) }
 }
 
 impl From<DecodeError> for ParseSignatureError {

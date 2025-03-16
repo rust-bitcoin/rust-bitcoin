@@ -55,21 +55,21 @@ macro_rules! impl_array_newtype_stringify {
     ($t:ident, $len:literal) => {
         impl $t {
             /// Constructs a new `Self` from a hex string.
-            pub fn from_hex(s: &str) -> Result<Self, hex::HexToArrayError> {
-                Ok($t($crate::hex::FromHex::from_hex(s)?))
+            pub fn from_hex(s: &str) -> Result<Self, hex_stable::DecodeToArrayError> {
+                Ok($t($crate::hex_stable::decode_array::<{ $len }>(s)?))
             }
         }
 
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use $crate::hex::{display, Case};
+                use $crate::hex_unstable::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Lower)
             }
         }
 
         impl core::fmt::UpperHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use $crate::hex::{display, Case};
+                use $crate::hex_unstable::{display, Case};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Upper)
             }
         }
@@ -87,7 +87,7 @@ macro_rules! impl_array_newtype_stringify {
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hex::HexToArrayError;
+            type Err = $crate::hex_stable::DecodeToArrayError;
             fn from_str(s: &str) -> core::result::Result<Self, Self::Err> { Self::from_hex(s) }
         }
 

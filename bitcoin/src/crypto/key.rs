@@ -11,7 +11,6 @@ use core::ops;
 use core::str::FromStr;
 
 use hashes::hash160;
-use hex::{FromHex, HexToArrayError};
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
 use internals::{impl_to_hex_from_lower_hex, write_err};
@@ -238,18 +237,18 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = ParsePublicKeyError;
     fn from_str(s: &str) -> Result<PublicKey, ParsePublicKeyError> {
-        use HexToArrayError::*;
+        use hex_stable::DecodeToArrayError::*;
 
         match s.len() {
             66 => {
-                let bytes = <[u8; 33]>::from_hex(s).map_err(|e| match e {
+                let bytes = hex_stable::decode_array::<33>(s).map_err(|e| match e {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
                     InvalidLength(_) => unreachable!("length checked already"),
                 })?;
                 Ok(PublicKey::from_slice(&bytes)?)
             }
             130 => {
-                let bytes = <[u8; 65]>::from_hex(s).map_err(|e| match e {
+                let bytes = hex_stable::decode_array::<65>(s).map_err(|e| match e {
                     InvalidChar(e) => ParsePublicKeyError::InvalidChar(e),
                     InvalidLength(_) => unreachable!("length checked already"),
                 })?;
@@ -371,7 +370,7 @@ impl FromStr for CompressedPublicKey {
     type Err = ParseCompressedPublicKeyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        CompressedPublicKey::from_slice(&<[u8; 33]>::from_hex(s)?).map_err(Into::into)
+        CompressedPublicKey::from_slice(&hex_stable::decode_array::<33>(s)?).map_err(Into::into)
     }
 }
 
@@ -1048,7 +1047,7 @@ pub enum ParsePublicKeyError {
     /// Error originated while parsing string.
     Encoding(FromSliceError),
     /// Hex decoding error.
-    InvalidChar(hex::InvalidCharError),
+    InvalidChar(hex_stable::InvalidCharError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -1092,7 +1091,7 @@ pub enum ParseCompressedPublicKeyError {
     /// Secp256k1 Error.
     Secp256k1(secp256k1::Error),
     /// hex to array conversion error.
-    Hex(hex::HexToArrayError),
+    Hex(hex_stable::DecodeToArrayError),
 }
 
 impl From<Infallible> for ParseCompressedPublicKeyError {
@@ -1125,8 +1124,8 @@ impl From<secp256k1::Error> for ParseCompressedPublicKeyError {
     fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
 }
 
-impl From<hex::HexToArrayError> for ParseCompressedPublicKeyError {
-    fn from(e: hex::HexToArrayError) -> Self { Self::Hex(e) }
+impl From<hex_stable::DecodeToArrayError> for ParseCompressedPublicKeyError {
+    fn from(e: hex_stable::DecodeToArrayError) -> Self { Self::Hex(e) }
 }
 
 /// SegWit public keys must always be compressed.
@@ -1394,13 +1393,13 @@ mod tests {
             .unwrap();
         let key2 = PublicKey { inner: key1.inner, compressed: false };
         let arrayvec1 = ArrayVec::from_slice(
-            &<[u8; 33]>::from_hex(
+            &hex_stable::decode_array::<33>(
                 "02ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f8",
             )
             .unwrap(),
         );
         let expected1 = SortKey(arrayvec1);
-        let arrayvec2 = ArrayVec::from_slice(&<[u8; 65]>::from_hex(
+        let arrayvec2 = ArrayVec::from_slice(&hex_stable::decode_array::<65>(
             "04ff12471208c14bd580709cb2358d98975247d8765f92bc25eab3b2763ed605f81794e7f3d5e420641a3bc690067df5541470c966cbca8c694bf39aa16d836918",
         ).unwrap());
         let expected2 = SortKey(arrayvec2);

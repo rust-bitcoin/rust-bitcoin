@@ -5,8 +5,8 @@
 use core::convert::Infallible;
 use core::fmt;
 
-use hex::error::{InvalidCharError, OddLengthStringError};
-use hex::DisplayHex as _;
+use hex_unstable::error::{InvalidCharError, OddLengthStringError};
+use hex_unstable::DisplayHex as _;
 use internals::write_err;
 
 #[cfg(doc)]

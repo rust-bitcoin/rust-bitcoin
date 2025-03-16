@@ -130,7 +130,7 @@ impl<T: HashEngine> fmt::Debug for Hkdf<T> {
 #[cfg(feature = "alloc")]
 #[cfg(feature = "hex")]
 mod tests {
-    use hex::prelude::{DisplayHex, FromHex};
+    use hex_unstable::prelude::{DisplayHex, FromHex};
 
     use super::*;
     use crate::sha256;
