@@ -273,6 +273,16 @@ impl From<Network> for KnownHrp {
     fn from(n: Network) -> Self { Self::from_network(n) }
 }
 
+impl From<KnownHrp> for NetworkKind {
+    fn from(hrp: KnownHrp) -> Self {
+        match hrp {
+            KnownHrp::Mainnet => NetworkKind::Main,
+            KnownHrp::Testnets => NetworkKind::Test,
+            KnownHrp::Regtest => NetworkKind::Test,
+        }
+    }
+}
+
 /// The data encoded by an `Address`.
 ///
 /// This is the data used to encumber an output that pays to this address i.e., it is the address
@@ -450,6 +460,16 @@ impl<V: NetworkValidation> Address<V> {
 
     /// Marks the network of this address as unchecked.
     pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address(self.0, PhantomData) }
+
+    /// Returns the [`NetworkKind`] of this address.
+    pub fn network_kind(&self) -> NetworkKind {
+        use AddressInner::*;
+        match self.0 {
+            P2pkh { hash: _, ref network } => *network,
+            P2sh { hash: _, ref network } => *network,
+            Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
+        }
+    }
 }
 
 /// Methods and functions that can be called only on `Address<NetworkChecked>`.
