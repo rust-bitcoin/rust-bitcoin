@@ -77,9 +77,9 @@ impl SignedAmount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = SignedAmount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = SignedAmount::from_sat_unchecked(100_000_000);
+    pub const ONE_BTC: Self = SignedAmount::from_int_btc_const(1);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = SignedAmount::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = SignedAmount::from_int_btc_const(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = SignedAmount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
@@ -134,27 +134,21 @@ impl SignedAmount {
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
-    ///
-    /// # Errors
-    ///
-    /// If `whole_bitcoin` is greater than `21_000_000`.
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_int_btc<T: Into<i32>>(whole_bitcoin: T) -> Result<SignedAmount, OutOfRangeError> {
+    pub fn from_int_btc<T: Into<i16>>(whole_bitcoin: T) -> SignedAmount {
         SignedAmount::from_int_btc_const(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
-    ///
-    /// # Errors
-    ///
-    /// If `whole_bitcoin` is greater than `21_000_000`.
     #[allow(clippy::missing_panics_doc)]
-    pub const fn from_int_btc_const(whole_bitcoin: i32) -> Result<SignedAmount, OutOfRangeError> {
+    pub const fn from_int_btc_const(whole_bitcoin: i16) -> SignedAmount {
         let btc = whole_bitcoin as i64; // Can't call `into` in const context.
-        match btc.checked_mul(100_000_000) {
-            Some(amount) => SignedAmount::from_sat(amount),
-            None => panic!("cannot overflow in i64"),
+        let sats = btc * 100_000_000;
+
+        match SignedAmount::from_sat(sats) {
+            Ok(amount) => amount,
+            Err(_) => panic!("unreachable - 65536 BTC is within range"),
         }
     }
 
