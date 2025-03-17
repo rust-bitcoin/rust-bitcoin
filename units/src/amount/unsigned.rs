@@ -75,9 +75,9 @@ impl Amount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = Amount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = Amount::from_sat_unchecked(100_000_000);
+    pub const ONE_BTC: Self = Amount::from_int_btc_const(1);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Amount::from_sat_unchecked(50 * 100_000_000);
+    pub const FIFTY_BTC: Self = Amount::from_int_btc_const(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = Amount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
@@ -132,27 +132,21 @@ impl Amount {
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
-    ///
-    /// # Errors
-    ///
-    /// If `whole_bitcoin` is greater than `21_000_000`.
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_int_btc<T: Into<u32>>(whole_bitcoin: T) -> Result<Amount, OutOfRangeError> {
+    pub fn from_int_btc<T: Into<u16>>(whole_bitcoin: T) -> Amount {
         Amount::from_int_btc_const(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`]
     /// in const context.
-    ///
-    /// # Errors
-    ///
-    /// If `whole_bitcoin` is greater than `21_000_000`.
     #[allow(clippy::missing_panics_doc)]
-    pub const fn from_int_btc_const(whole_bitcoin: u32) -> Result<Amount, OutOfRangeError> {
+    pub const fn from_int_btc_const(whole_bitcoin: u16) -> Amount {
         let btc = whole_bitcoin as u64; // Can't call `into` in const context.
-        match btc.checked_mul(100_000_000) {
-            Some(amount) => Amount::from_sat(amount),
-            None => panic!("cannot overflow a u64"),
+        let sats = btc * 100_000_000;
+
+        match Amount::from_sat(sats) {
+            Ok(amount) => amount,
+            Err(_) => panic!("unreachable - 65536 BTC is within range")
         }
     }
 
