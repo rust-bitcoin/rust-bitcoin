@@ -243,7 +243,7 @@ pub struct ChaCha20 {
     nonce: Nonce,
     /// Internal block index of keystream.
     block_count: u32,
-    /// Interal byte offset index of the block_count.
+    /// Internal byte offset index of the block_count.
     seek_offset_bytes: usize,
 }
 
