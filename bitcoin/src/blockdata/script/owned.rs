@@ -203,7 +203,7 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 /// Pretends that this is a mutable reference to [`ScriptBuf`]'s internal buffer.
 ///
 /// In reality the backing `Vec<u8>` is swapped with an empty one and this is holding both the
-/// reference and the vec. The vec is put back when this drops so it also covers paics. (But not
+/// reference and the vec. The vec is put back when this drops so it also covers panics. (But not
 /// leaks, which is OK since we never leak.)
 pub(crate) struct ScriptBufAsVec<'a>(&'a mut ScriptBuf, Vec<u8>);
 
