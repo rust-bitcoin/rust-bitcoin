@@ -1,3 +1,7 @@
+# 0.32.6 - 2025-01-13
+
+- Backport -  Bound `Address` parsing on `NetworkValidationUnchecked` [#3896](https://github.com/rust-bitcoin/rust-bitcoin/pull/3896)
+
 # 0.32.5 - 2024-11-27
 
 - Backport - Re-export `bech32` crate [#3662](https://github.com/rust-bitcoin/rust-bitcoin/pull/3662)
