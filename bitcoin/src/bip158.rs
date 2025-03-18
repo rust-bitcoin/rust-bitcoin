@@ -577,7 +577,7 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
     use serde_json::Value;
 
     use super::*;

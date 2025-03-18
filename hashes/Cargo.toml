@@ -15,15 +15,17 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "hex?/std"]
-alloc = ["hex?/alloc"]
+std = ["alloc", "hex-stable?/std", "hex-unstable?/std"]
+alloc = ["hex-stable?/alloc", "hex-unstable?/alloc"]
+hex = ["hex-unstable", "hex-stable"]
 serde = ["dep:serde", "hex"]
 # Smaller (but slower) implementation of sha256, sha512 and ripemd160
 small-hash = []
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.4.0" }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-stable = { package = "hex-conservative", version = "1.0.0-alpha.0", path = "../../../hex-conservative/02-24-release-1.0-alpha.0", default-features = false, optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
 
 [dev-dependencies]

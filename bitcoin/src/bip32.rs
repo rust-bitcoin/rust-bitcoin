@@ -513,7 +513,7 @@ pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
     /// Hexadecimal decoding error
-    Hex(hex::HexToArrayError),
+    Hex(hex_stable::HexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
@@ -1006,7 +1006,7 @@ impl std::error::Error for InvalidBase58PayloadLengthError {}
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
 

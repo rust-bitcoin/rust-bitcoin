@@ -9,7 +9,7 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use hex::DisplayHex;
+use hex_unstable::DisplayHex;
 use internals::compact_size;
 use internals::wrap_debug::WrapDebug;
 
@@ -355,8 +355,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hex::FromHex;
-                use hex::HexToBytesError as E;
+                use hex_stable::ToBytesError as E;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {
@@ -365,7 +364,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 };
 
                 while let Some(elem) = a.next_element::<String>()? {
-                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
+                    let vec = hex_stable::decode_vec(&elem).map_err(|e| match e.parse_error() {
                         E::InvalidChar(ref e) => match core::char::from_u32(e.invalid_char().into()) {
                             Some(c) => de::Error::invalid_value(
                                 Unexpected::Char(c),
