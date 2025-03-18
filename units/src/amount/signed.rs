@@ -57,6 +57,14 @@ mod encapsulate {
         /// See [`Self::MIN`] and [`Self::MAX`].
         pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
+        /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
+        ///
+        /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
+        /// represent roughly -21.47 to 21.47 BTC.
+        pub const fn from_sat_i32(satoshi: i32) -> SignedAmount {
+            SignedAmount(satoshi as i64) // cannot use i64::from in a constfn
+        }
+
         /// Gets the number of satoshis in this [`SignedAmount`].
         ///
         /// # Examples
@@ -73,9 +81,9 @@ pub use encapsulate::SignedAmount;
 
 impl SignedAmount {
     /// The zero amount.
-    pub const ZERO: Self = SignedAmount::from_sat_unchecked(0);
+    pub const ZERO: Self = SignedAmount::from_sat_i32(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: Self = SignedAmount::from_sat_unchecked(1);
+    pub const ONE_SAT: Self = SignedAmount::from_sat_i32(1);
     /// Exactly one bitcoin.
     pub const ONE_BTC: Self = SignedAmount::from_btc_i16(1);
     /// Exactly fifty bitcoin.
