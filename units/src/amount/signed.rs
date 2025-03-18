@@ -77,9 +77,9 @@ impl SignedAmount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Self = SignedAmount::from_sat_unchecked(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = SignedAmount::from_int_btc_const(1);
+    pub const ONE_BTC: Self = SignedAmount::from_btc_i16(1);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = SignedAmount::from_int_btc_const(50);
+    pub const FIFTY_BTC: Self = SignedAmount::from_btc_i16(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Self = SignedAmount::from_sat_unchecked(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
@@ -136,13 +136,13 @@ impl SignedAmount {
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`].
     #[allow(clippy::missing_panics_doc)]
     pub fn from_int_btc<T: Into<i16>>(whole_bitcoin: T) -> SignedAmount {
-        SignedAmount::from_int_btc_const(whole_bitcoin.into())
+        SignedAmount::from_btc_i16(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to a [`SignedAmount`]
     /// in const context.
     #[allow(clippy::missing_panics_doc)]
-    pub const fn from_int_btc_const(whole_bitcoin: i16) -> SignedAmount {
+    pub const fn from_btc_i16(whole_bitcoin: i16) -> SignedAmount {
         let btc = whole_bitcoin as i64; // Can't call `into` in const context.
         let sats = btc * 100_000_000;
 

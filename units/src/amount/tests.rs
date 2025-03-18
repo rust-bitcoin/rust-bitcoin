@@ -102,8 +102,10 @@ fn from_str_zero_without_denomination() {
 
 #[test]
 fn from_int_btc() {
-    let amt = Amount::from_int_btc_const(2);
+    let amt = Amount::from_btc_u16(2);
     assert_eq!(sat(200_000_000), amt);
+    let amt = SignedAmount::from_btc_i16(-2);
+    assert_eq!(ssat(-200_000_000), amt);
 }
 
 #[test]
