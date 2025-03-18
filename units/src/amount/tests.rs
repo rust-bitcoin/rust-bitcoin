@@ -648,9 +648,9 @@ fn from_str() {
 fn to_from_string_in() {
     use super::Denomination as D;
     let ua_str = Amount::from_str_in;
-    let ua_sat = Amount::from_sat_unchecked;
+    let ua_sat = |n| Amount::from_sat(n).unwrap();
     let sa_str = SignedAmount::from_str_in;
-    let sa_sat = SignedAmount::from_sat_unchecked;
+    let sa_sat = |n| SignedAmount::from_sat(n).unwrap();
 
     assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
     assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));
