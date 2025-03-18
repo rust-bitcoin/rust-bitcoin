@@ -17,6 +17,8 @@ use super::{
 };
 
 mod encapsulate {
+    use super::OutOfRangeError;
+
     /// A signed amount.
     ///
     /// The [`SignedAmount`] type can be used to express Bitcoin amounts that support arithmetic and
@@ -50,6 +52,11 @@ mod encapsulate {
     pub struct SignedAmount(i64);
 
     impl SignedAmount {
+        /// The maximum value of an amount.
+        pub const MAX: Self = Self(21_000_000 * 100_000_000);
+        /// The minimum value of an amount.
+        pub const MIN: Self = Self(-21_000_000 * 100_000_000);
+
         /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
         ///
         /// Caller to guarantee that `satoshi` is within valid range.
@@ -74,6 +81,31 @@ mod encapsulate {
         /// assert_eq!(SignedAmount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
         pub const fn to_sat(self) -> i64 { self.0 }
+
+        /// Constructs a new [`SignedAmount`] from the given number of satoshis.
+        ///
+        /// # Errors
+        ///
+        /// If `satoshi` is outside of valid range (see [`Self::MAX_MONEY`]).
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// # use bitcoin_units::{amount, SignedAmount};
+        /// # let sat = -100_000;
+        /// let amount = SignedAmount::from_sat(sat)?;
+        /// assert_eq!(amount.to_sat(), sat);
+        /// # Ok::<_, amount::OutOfRangeError>(())
+        /// ```
+        pub const fn from_sat(satoshi: i64) -> Result<SignedAmount, OutOfRangeError> {
+            if satoshi < Self::MIN.to_sat() {
+                Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
+            } else if satoshi > Self::MAX_MONEY.to_sat() {
+                Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
+            } else {
+                Ok(Self(satoshi))
+            }
+        }
     }
 }
 #[doc(inline)]
@@ -89,36 +121,7 @@ impl SignedAmount {
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = SignedAmount::from_btc_i16(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = SignedAmount::from_sat_unchecked(21_000_000 * 100_000_000);
-    /// The minimum value of an amount.
-    pub const MIN: Self = SignedAmount::from_sat_unchecked(-21_000_000 * 100_000_000);
-    /// The maximum value of an amount.
-    pub const MAX: Self = SignedAmount::MAX_MONEY;
-
-    /// Constructs a new [`SignedAmount`] from the given number of satoshis.
-    ///
-    /// # Errors
-    ///
-    /// If `satoshi` is outside of valid range (see [`Self::MAX_MONEY`]).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::{amount, SignedAmount};
-    /// # let sat = -100_000;
-    /// let amount = SignedAmount::from_sat(sat)?;
-    /// assert_eq!(amount.to_sat(), sat);
-    /// # Ok::<_, amount::OutOfRangeError>(())
-    /// ```
-    pub const fn from_sat(satoshi: i64) -> Result<SignedAmount, OutOfRangeError> {
-        if satoshi < Self::MIN.to_sat() {
-            Err(OutOfRangeError { is_signed: true, is_greater_than_max: false })
-        } else if satoshi > Self::MAX_MONEY.to_sat() {
-            Err(OutOfRangeError { is_signed: true, is_greater_than_max: true })
-        } else {
-            Ok(SignedAmount::from_sat_unchecked(satoshi))
-        }
-    }
+    pub const MAX_MONEY: Self = Self::MAX;
 
     /// Converts from a value expressing a decimal number of bitcoin to a [`SignedAmount`].
     ///

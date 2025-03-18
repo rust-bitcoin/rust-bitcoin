@@ -17,6 +17,8 @@ use super::{
 };
 
 mod encapsulate {
+    use super::OutOfRangeError;
+
     /// An amount.
     ///
     /// The [`Amount`] type can be used to express Bitcoin amounts that support arithmetic and
@@ -50,6 +52,11 @@ mod encapsulate {
     pub struct Amount(u64);
 
     impl Amount {
+        /// The maximum value of an amount.
+        pub const MAX: Self = Self(21_000_000 * 100_000_000);
+        /// The minimum value of an amount.
+        pub const MIN: Self = Self(0);
+
         /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
         ///
         /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX`].
@@ -72,6 +79,29 @@ mod encapsulate {
         /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
         pub const fn to_sat(self) -> u64 { self.0 }
+
+        /// Constructs a new [`Amount`] from the given number of satoshis.
+        ///
+        /// # Errors
+        ///
+        /// If `satoshi` is outside of valid range (greater than [`Self::MAX_MONEY`]).
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// # use bitcoin_units::{amount, Amount};
+        /// # let sat = 100_000;
+        /// let amount = Amount::from_sat(sat)?;
+        /// assert_eq!(amount.to_sat(), sat);
+        /// # Ok::<_, amount::OutOfRangeError>(())
+        /// ```
+        pub const fn from_sat(satoshi: u64) -> Result<Amount, OutOfRangeError> {
+            if satoshi > Self::MAX_MONEY.to_sat() {
+                Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
+            } else {
+                Ok(Self(satoshi))
+            }
+        }
     }
 }
 #[doc(inline)]
@@ -87,36 +117,9 @@ impl Amount {
     /// Exactly fifty bitcoin.
     pub const FIFTY_BTC: Self = Amount::from_btc_u16(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Amount::from_sat_unchecked(21_000_000 * 100_000_000);
-    /// The minimum value of an amount.
-    pub const MIN: Self = Amount::ZERO;
-    /// The maximum value of an amount.
-    pub const MAX: Self = Amount::MAX_MONEY;
+    pub const MAX_MONEY: Self = Amount::MAX;
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
-
-    /// Constructs a new [`Amount`] from the given number of satoshis.
-    ///
-    /// # Errors
-    ///
-    /// If `satoshi` is outside of valid range (greater than [`Self::MAX_MONEY`]).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use bitcoin_units::{amount, Amount};
-    /// # let sat = 100_000;
-    /// let amount = Amount::from_sat(sat)?;
-    /// assert_eq!(amount.to_sat(), sat);
-    /// # Ok::<_, amount::OutOfRangeError>(())
-    /// ```
-    pub const fn from_sat(satoshi: u64) -> Result<Amount, OutOfRangeError> {
-        if satoshi > Self::MAX_MONEY.to_sat() {
-            Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
-        } else {
-            Ok(Self::from_sat_unchecked(satoshi))
-        }
-    }
 
     /// Converts from a value expressing a decimal number of bitcoin to an [`Amount`].
     ///
