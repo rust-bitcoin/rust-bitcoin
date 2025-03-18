@@ -235,7 +235,7 @@ fn serde_regression_psbt() {
             .unwrap()]),
         }],
         output: vec![TxOut {
-            value: Amount::from_sat_unchecked(190_303_501_938),
+            value: Amount::from_sat(190_303_501_938).unwrap(),
             script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
         }],
@@ -282,7 +282,7 @@ fn serde_regression_psbt() {
         inputs: vec![Input {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
-                value: Amount::from_sat_unchecked(190_303_501_938),
+                value: Amount::from_sat(190_303_501_938).unwrap(),
                 script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap())),

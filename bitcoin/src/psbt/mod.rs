@@ -1502,7 +1502,7 @@ mod tests {
                 )]),
             }],
             output: vec![TxOut {
-                value: Amount::from_sat_unchecked(190_303_501_938),
+                value: Amount::from_sat(190_303_501_938).unwrap(),
                 script_pubkey: ScriptBuf::from_hex(
                     "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                 )
@@ -1553,7 +1553,7 @@ mod tests {
                 Input {
                     non_witness_utxo: Some(tx),
                     witness_utxo: Some(TxOut {
-                        value: Amount::from_sat_unchecked(190_303_501_938),
+                        value: Amount::from_sat(190_303_501_938).unwrap(),
                         script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                     }),
                     sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap()),
@@ -1729,7 +1729,7 @@ mod tests {
                                     script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                                 },
                                 TxOut {
-                                    value: Amount::from_sat_unchecked(190_303_501_938),
+                                    value: Amount::from_sat(190_303_501_938).unwrap(),
                                     script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                                 },
                             ],
@@ -2062,7 +2062,7 @@ mod tests {
                                 script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                             },
                             TxOut {
-                                value: Amount::from_sat_unchecked(190_303_501_938),
+                                value: Amount::from_sat(190_303_501_938).unwrap(),
                                 script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                             },
                         ],
@@ -2234,7 +2234,7 @@ mod tests {
                                 script_pubkey:  ScriptBuf::new()
                             },
                             TxOut {
-                                value: Amount::from_sat_unchecked(190_303_501_938),
+                                value: Amount::from_sat(190_303_501_938).unwrap(),
                                 script_pubkey:  ScriptBuf::new()
                             },
                         ],
