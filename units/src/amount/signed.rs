@@ -59,13 +59,6 @@ mod encapsulate {
 
         /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
         ///
-        /// Caller to guarantee that `satoshi` is within valid range.
-        ///
-        /// See [`Self::MIN`] and [`Self::MAX`].
-        pub const fn from_sat_unchecked(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
-
-        /// Constructs a new [`SignedAmount`] with satoshi precision and the given number of satoshis.
-        ///
         /// Accepts an `i32` which is guaranteed to be in range for the type, but which can only
         /// represent roughly -21.47 to 21.47 BTC.
         pub const fn from_sat_i32(satoshi: i32) -> SignedAmount {

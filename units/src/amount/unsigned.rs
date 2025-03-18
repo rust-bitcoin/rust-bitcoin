@@ -59,11 +59,6 @@ mod encapsulate {
 
         /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
         ///
-        /// Caller to guarantee that `satoshi` is within valid range. See [`Self::MAX`].
-        pub const fn from_sat_unchecked(satoshi: u64) -> Amount { Self(satoshi) }
-
-        /// Constructs a new [`Amount`] with satoshi precision and the given number of satoshis.
-        ///
         /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
         /// represent roughly 0 to 42.95 BTC.
         pub const fn from_sat_u32(satoshi: u32) -> Amount {
@@ -398,8 +393,10 @@ impl Amount {
 
     /// Converts to a signed amount.
     #[rustfmt::skip] // Moves code comments to the wrong line.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_signed(self) -> SignedAmount {
-        SignedAmount::from_sat_unchecked(self.to_sat() as i64) // Cast ok, signed amount and amount share positive range.
+        SignedAmount::from_sat(self.to_sat() as i64) // Cast ok, signed amount and amount share positive range.
+            .expect("range of Amount is within range of SignedAmount")
     }
 }
 
