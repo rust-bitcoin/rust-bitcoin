@@ -52,11 +52,7 @@ impl TaprootMerkleBranch {
         } else if node_hashes.len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(sl.len() / TAPROOT_CONTROL_NODE_SIZE).into())
         } else {
-            let inner = node_hashes
-                .iter()
-                .copied()
-                .map(TapNodeHash::from_byte_array)
-                .collect();
+            let inner = node_hashes.iter().copied().map(TapNodeHash::from_byte_array).collect();
 
             Ok(TaprootMerkleBranch(inner))
         }

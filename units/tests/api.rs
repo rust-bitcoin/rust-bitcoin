@@ -14,8 +14,8 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, FeeRate,
-    SignedAmount, BlockTime, Weight,
+    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval,
+    BlockTime, FeeRate, SignedAmount, Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -147,7 +147,7 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, BlockTime, Weight,
+        Amount, BlockHeight, BlockInterval, BlockTime, FeeRate, SignedAmount, Weight,
     };
 }
 

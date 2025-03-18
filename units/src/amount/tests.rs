@@ -345,14 +345,8 @@ fn parsing() {
     assert_eq!(p("1.1", den_btc), Ok(sat(1_100_000_00)));
     assert_eq!(p("100", den_sat), Ok(sat(100)));
     assert_eq!(p("55", den_sat), Ok(sat(55)));
-    assert_eq!(
-        p("2100000000000000", den_sat),
-        Ok(sat(21_000_000__000_000_00))
-    );
-    assert_eq!(
-        p("2100000000000000.", den_sat),
-        Ok(sat(21_000_000__000_000_00))
-    );
+    assert_eq!(p("2100000000000000", den_sat), Ok(sat(21_000_000__000_000_00)));
+    assert_eq!(p("2100000000000000.", den_sat), Ok(sat(21_000_000__000_000_00)));
     assert_eq!(p("21000000", den_btc), Ok(sat(21_000_000__000_000_00)));
 
     // exactly 50 chars.
@@ -702,28 +696,15 @@ fn to_from_string_in() {
     assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
     assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
 
-    assert!(
-        ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok()
-    );
-    assert!(ua_str(
-        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin),
-        D::CentiBitcoin
-    )
-    .is_ok());
-    assert!(ua_str(
-        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin),
-        D::MilliBitcoin
-    )
-    .is_ok());
-    assert!(ua_str(
-        &ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin),
-        D::MicroBitcoin
-    )
-    .is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bitcoin), D::Bitcoin).is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::CentiBitcoin), D::CentiBitcoin)
+        .is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MilliBitcoin), D::MilliBitcoin)
+        .is_ok());
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::MicroBitcoin), D::MicroBitcoin)
+        .is_ok());
     assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Bit), D::Bit).is_ok());
-    assert!(
-        ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok()
-    );
+    assert!(ua_str(&ua_sat(Amount::MAX.to_sat()).to_string_in(D::Satoshi), D::Satoshi).is_ok());
 
     assert_eq!(
         sa_str(&SignedAmount::MAX.to_string_in(D::Satoshi), D::MicroBitcoin),
@@ -970,11 +951,19 @@ fn sum_amounts() {
     assert_eq!([].iter().sum::<NumOpResult<Amount>>(), Amount::ZERO.into());
     assert_eq!([].iter().sum::<NumOpResult<SignedAmount>>(), SignedAmount::ZERO.into());
 
-    let results = [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
+    let results =
+        [NumOpResult::Valid(sat(42)), NumOpResult::Valid(sat(1337)), NumOpResult::Valid(sat(21))];
     assert_eq!(results.iter().sum::<NumOpResult<Amount>>(), NumOpResult::Valid(sat(1400)));
 
-    let signed_results = [NumOpResult::Valid(ssat(42)), NumOpResult::Valid(ssat(1337)), NumOpResult::Valid(ssat(21))];
-    assert_eq!(signed_results.iter().sum::<NumOpResult<SignedAmount>>(), NumOpResult::Valid(ssat(1400)));
+    let signed_results = [
+        NumOpResult::Valid(ssat(42)),
+        NumOpResult::Valid(ssat(1337)),
+        NumOpResult::Valid(ssat(21)),
+    ];
+    assert_eq!(
+        signed_results.iter().sum::<NumOpResult<SignedAmount>>(),
+        NumOpResult::Valid(ssat(1400))
+    );
 
     let amounts = [sat(42), sat(1337), sat(21)];
     assert_eq!(
@@ -1240,9 +1229,7 @@ fn unsigned_amount_div_by_amount() {
 
 #[test]
 #[should_panic(expected = "attempt to divide by zero")]
-fn unsigned_amount_div_by_amount_zero() {
-    let _ = sat(1897) / Amount::ZERO;
-}
+fn unsigned_amount_div_by_amount_zero() { let _ = sat(1897) / Amount::ZERO; }
 
 #[test]
 fn signed_amount_div_by_amount() {
@@ -1256,9 +1243,7 @@ fn signed_amount_div_by_amount() {
 
 #[test]
 #[should_panic(expected = "attempt to divide by zero")]
-fn signed_amount_div_by_amount_zero() {
-    let _ = ssat(1897) / SignedAmount::ZERO;
-}
+fn signed_amount_div_by_amount_zero() { let _ = ssat(1897) / SignedAmount::ZERO; }
 
 #[test]
 fn check_const() {

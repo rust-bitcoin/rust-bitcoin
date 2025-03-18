@@ -2,9 +2,8 @@ use bitcoin::address::Address;
 use bitcoin::consensus::encode;
 use bitcoin::script::{self, ScriptExt as _};
 use bitcoin::{FeeRate, Network};
-use honggfuzz::fuzz;
-
 use bitcoin_fuzz::fuzz_utils::{consume_random_bytes, consume_u64};
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let mut new_data = data;

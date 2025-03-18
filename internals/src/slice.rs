@@ -23,7 +23,9 @@ pub trait SliceExt {
     /// let mut slice = [1, 2, 3];
     /// let fail = slice.as_chunks_mut::<0>();
     /// ```
-    fn bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::Item; N]], &mut [Self::Item]);
+    fn bitcoin_as_chunks_mut<const N: usize>(
+        &mut self,
+    ) -> (&mut [[Self::Item; N]], &mut [Self::Item]);
 }
 
 impl<T> SliceExt for [T] {
@@ -40,11 +42,15 @@ impl<T> SliceExt for [T] {
         // we're merely casting, so no aliasing issues here
         // arrays of T have same alignment as T
         // the resulting slice points within the obtained slice as was computed above
-        let left = unsafe { core::slice::from_raw_parts(left.as_ptr().cast::<[Self::Item; N]>(), chunks_count) };
+        let left = unsafe {
+            core::slice::from_raw_parts(left.as_ptr().cast::<[Self::Item; N]>(), chunks_count)
+        };
         (left, right)
     }
 
-    fn bitcoin_as_chunks_mut<const N: usize>(&mut self) -> (&mut [[Self::Item; N]], &mut [Self::Item]) {
+    fn bitcoin_as_chunks_mut<const N: usize>(
+        &mut self,
+    ) -> (&mut [[Self::Item; N]], &mut [Self::Item]) {
         #[allow(clippy::let_unit_value)]
         let _ = Hack::<N>::IS_NONZERO;
 
@@ -55,7 +61,12 @@ impl<T> SliceExt for [T] {
         // we're merely casting, so no aliasing issues here
         // arrays of T have same alignment as T
         // the resulting slice points within the obtained slice as was computed above
-        let left = unsafe { core::slice::from_raw_parts_mut(left.as_mut_ptr().cast::<[Self::Item; N]>(), chunks_count) };
+        let left = unsafe {
+            core::slice::from_raw_parts_mut(
+                left.as_mut_ptr().cast::<[Self::Item; N]>(),
+                chunks_count,
+            )
+        };
         (left, right)
     }
 }
@@ -63,7 +74,9 @@ impl<T> SliceExt for [T] {
 struct Hack<const N: usize>;
 
 impl<const N: usize> Hack<N> {
-    const IS_NONZERO: () = { assert!(N != 0); };
+    const IS_NONZERO: () = {
+        assert!(N != 0);
+    };
 }
 
 #[cfg(test)]

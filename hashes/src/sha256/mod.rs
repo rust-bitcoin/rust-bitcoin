@@ -9,6 +9,7 @@ mod crypto;
 mod tests;
 
 use core::{cmp, convert, fmt};
+
 use internals::slice::SliceExt;
 
 use crate::{incomplete_block_len, sha256d, HashEngine as _};
@@ -80,7 +81,8 @@ impl HashEngine {
     /// Please see docs on [`Midstate`] before using this function.
     pub fn from_midstate(midstate: Midstate) -> HashEngine {
         let mut ret = [0; 8];
-        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().bitcoin_as_chunks().0) {
+        for (ret_val, midstate_bytes) in ret.iter_mut().zip(midstate.as_ref().bitcoin_as_chunks().0)
+        {
             *ret_val = u32::from_be_bytes(*midstate_bytes);
         }
 

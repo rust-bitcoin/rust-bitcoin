@@ -6,6 +6,7 @@ use core::arch::x86::*;
 use core::arch::x86_64::*;
 
 use internals::slice::SliceExt;
+
 use super::{HashEngine, Midstate, BLOCK_SIZE};
 
 #[allow(non_snake_case)]
