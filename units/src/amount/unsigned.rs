@@ -167,19 +167,14 @@ impl Amount {
     ///
     /// If the amount is too precise, negative, or greater than 21,000,000.
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
-        let (negative, sats) =
+        let (is_neg, amount) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
-        if negative {
+        if is_neg {
             return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
                 OutOfRangeError::negative(),
             )));
         }
-        if sats > Self::MAX.to_sat() {
-            return Err(ParseAmountError(ParseAmountErrorInner::OutOfRange(
-                OutOfRangeError::too_big(false),
-            )));
-        }
-        Ok(Self::from_sat_unchecked(sats))
+        Self::try_from(amount).map_err(|e| ParseAmountError(ParseAmountErrorInner::OutOfRange(e)))
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]

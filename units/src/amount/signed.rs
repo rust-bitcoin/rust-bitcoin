@@ -10,7 +10,7 @@ use core::{default, fmt};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use super::error::{ParseAmountErrorInner, ParseErrorInner};
+use super::error::ParseErrorInner;
 use super::{
     parse_signed_to_satoshi, split_amount_and_denomination, Amount, Denomination, Display,
     DisplayStyle, OutOfRangeError, ParseAmountError, ParseError,
@@ -169,17 +169,9 @@ impl SignedAmount {
     ///
     /// If the amount is too big (positive or negative) or too precise.
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
-        match parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(true))? {
-            // (negative, amount)
-            (false, sat) if sat > SignedAmount::MAX.to_sat() as u64 => Err(ParseAmountError(
-                ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_big(true)),
-            )),
-            (false, sat) => Ok(SignedAmount::from_sat_unchecked(sat as i64)), // Cast ok, value in this arm does not wrap.
-            (true, sat) if sat > SignedAmount::MIN.to_sat().unsigned_abs() => Err(
-                ParseAmountError(ParseAmountErrorInner::OutOfRange(OutOfRangeError::too_small())),
-            ),
-            (true, sat) => Ok(SignedAmount::from_sat_unchecked(-(sat as i64))), // Cast ok, value in this arm does not wrap.
-        }
+        parse_signed_to_satoshi(s, denom)
+            .map(|(_, amount)| amount)
+            .map_err(|error| error.convert(true))
     }
 
     /// Parses amounts with denomination suffix as produced by [`Self::to_string_with_denomination`]
