@@ -152,7 +152,7 @@ impl SignedAmount {
 
         match Self::from_sat(sats) {
             Ok(amount) => amount,
-            Err(_) => panic!("unreachable - 65536 BTC is within range"),
+            Err(_) => panic!("unreachable - 32,767 BTC is within range"),
         }
     }
 
