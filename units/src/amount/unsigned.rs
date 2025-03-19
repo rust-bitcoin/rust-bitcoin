@@ -152,7 +152,7 @@ impl Amount {
 
         match Amount::from_sat(sats) {
             Ok(amount) => amount,
-            Err(_) => panic!("unreachable - 65536 BTC is within range"),
+            Err(_) => panic!("unreachable - 65,535 BTC is within range"),
         }
     }
 
