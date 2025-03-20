@@ -110,7 +110,7 @@ impl Midstate {
             0x5be0cd19,
         ];
 
-        let num_chunks = (bytes.len() + 9 + 63) / 64;
+        let num_chunks = (bytes.len() + 9).div_ceil(64);
         let mut chunk = 0;
         #[allow(clippy::precedence)]
         while chunk < num_chunks {
