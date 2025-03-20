@@ -102,8 +102,10 @@ fn from_str_zero_without_denomination() {
 
 #[test]
 fn from_int_btc() {
-    let amt = Amount::from_int_btc_const(2).unwrap();
+    let amt = Amount::from_btc_u16(2);
     assert_eq!(sat(200_000_000), amt);
+    let amt = SignedAmount::from_btc_i16(-2);
+    assert_eq!(ssat(-200_000_000), amt);
 }
 
 #[test]
@@ -646,9 +648,9 @@ fn from_str() {
 fn to_from_string_in() {
     use super::Denomination as D;
     let ua_str = Amount::from_str_in;
-    let ua_sat = Amount::from_sat_unchecked;
+    let ua_sat = |n| Amount::from_sat(n).unwrap();
     let sa_str = SignedAmount::from_str_in;
-    let sa_sat = SignedAmount::from_sat_unchecked;
+    let sa_sat = |n| SignedAmount::from_sat(n).unwrap();
 
     assert_eq!("0.5", ua_sat(50).to_string_in(D::Bit));
     assert_eq!("-0.5", sa_sat(-50).to_string_in(D::Bit));

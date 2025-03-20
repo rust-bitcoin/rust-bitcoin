@@ -202,10 +202,12 @@ const INPUT_STRING_LEN_LIMIT: usize = 50;
 
 /// Parses a decimal string in the given denomination into a satoshi value and a
 /// [`bool`] indicator for a negative amount.
+///
+/// The `bool` is only needed to distinguish -0 from 0.
 fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
-) -> Result<(bool, u64), InnerParseError> {
+) -> Result<(bool, SignedAmount), InnerParseError> {
     if s.is_empty() {
         return Err(InnerParseError::MissingDigits(MissingDigitsError {
             kind: MissingDigitsKind::Empty,
@@ -237,7 +239,7 @@ fn parse_signed_to_satoshi(
             let last_n = precision_diff.unsigned_abs().into();
             if let Some(position) = is_too_precise(s, last_n) {
                 match s.parse::<i64>() {
-                    Ok(0) => return Ok((is_negative, 0)),
+                    Ok(0) => return Ok((is_negative, SignedAmount::ZERO)),
                     _ =>
                         return Err(InnerParseError::TooPrecise(TooPreciseError {
                             position: position + usize::from(is_negative),
@@ -252,14 +254,14 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
-    let mut value: u64 = 0; // as satoshis
+    let mut value: i64 = 0; // as satoshis
     for (i, c) in s.char_indices() {
         match c {
             '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
-                match 10_u64.checked_mul(value) {
+                match 10_i64.checked_mul(value) {
                     None => return Err(InnerParseError::Overflow { is_negative }),
-                    Some(val) => match val.checked_add(u64::from(c as u8 - b'0')) {
+                    Some(val) => match val.checked_add(i64::from(c as u8 - b'0')) {
                         None => return Err(InnerParseError::Overflow { is_negative }),
                         Some(val) => value = val,
                     },
@@ -295,13 +297,18 @@ fn parse_signed_to_satoshi(
     // Decimally shift left by `max_decimals - decimals`.
     let scale_factor = max_decimals - decimals.unwrap_or(0);
     for _ in 0..scale_factor {
-        value = match 10_u64.checked_mul(value) {
+        value = match 10_i64.checked_mul(value) {
             Some(v) => v,
             None => return Err(InnerParseError::Overflow { is_negative }),
         };
     }
 
-    Ok((is_negative, value))
+    let mut ret =
+        SignedAmount::from_sat(value).map_err(|_| InnerParseError::Overflow { is_negative })?;
+    if is_negative {
+        ret = -ret;
+    }
+    Ok((is_negative, ret))
 }
 
 #[derive(Debug)]
