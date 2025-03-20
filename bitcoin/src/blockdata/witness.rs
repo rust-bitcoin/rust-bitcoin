@@ -14,8 +14,8 @@ use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{
-    self, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
-    TAPROOT_LEAF_MASK,
+    self, ControlBlock, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
+    TAPROOT_LEAF_MASK, TaprootMerkleBranch,
 };
 use crate::Script;
 
@@ -133,6 +133,15 @@ crate::internal_macros::define_extension_trait! {
             let mut witness = Witness::new();
             witness.push(signature.serialize());
             witness
+        }
+
+        /// Finishes constructing the P2TR script spend witness by pushing the required items.
+        fn push_p2tr_script_spend(&mut self, script: &Script, control_block: &ControlBlock<impl AsRef<TaprootMerkleBranch>>, annex: Option<&[u8]>) {
+            self.push(script.as_bytes());
+            self.push(&*control_block.encode_to_arrayvec());
+            if let Some(annex) = annex {
+                self.push(annex);
+            }
         }
 
         /// Pushes, as a new element on the witness, an ECDSA signature.
