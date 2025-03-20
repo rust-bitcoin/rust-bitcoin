@@ -682,10 +682,9 @@ impl Xpriv {
 
         engine.input(&u32::from(i).to_be_bytes());
         let hmac: Hmac<sha512::Hash> = engine.finalize();
-        let sk = secp256k1::SecretKey::from_byte_array(
-            hmac.as_byte_array().split_array::<32, 32>().0,
-        )
-        .expect("statistically impossible to hit");
+        let sk =
+            secp256k1::SecretKey::from_byte_array(hmac.as_byte_array().split_array::<32, 32>().0)
+                .expect("statistically impossible to hit");
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
@@ -701,14 +700,8 @@ impl Xpriv {
 
     /// Decoding extended private key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpriv, Error> {
-        let Common {
-            network,
-            depth,
-            parent_fingerprint,
-            child_number,
-            chain_code,
-            key,
-        } = Common::decode(data)?;
+        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
+            Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
@@ -834,7 +827,7 @@ impl Xpub {
 
                 let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
-                    hmac.as_byte_array().split_array::<32, 32>().0
+                    hmac.as_byte_array().split_array::<32, 32>().0,
                 )?;
                 let chain_code = ChainCode::from_hmac(hmac);
                 Ok((private_key, chain_code))
@@ -863,14 +856,8 @@ impl Xpub {
 
     /// Decoding extended public key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<Xpub, Error> {
-        let Common {
-            network,
-            depth,
-            parent_fingerprint,
-            child_number,
-            chain_code,
-            key,
-        } = Common::decode(data)?;
+        let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
+            Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
@@ -994,13 +981,14 @@ struct Common {
     parent_fingerprint: Fingerprint,
     child_number: ChildNumber,
     chain_code: ChainCode,
-    // public key (compressed) or 0 byte followed by a private key 
+    // public key (compressed) or 0 byte followed by a private key
     key: [u8; 33],
 }
 
 impl Common {
     fn decode(data: &[u8]) -> Result<Self, Error> {
-        let data: &[u8; 78] = data.try_into().map_err(|_| Error::WrongExtendedKeyLength(data.len()))?;
+        let data: &[u8; 78] =
+            data.try_into().map_err(|_| Error::WrongExtendedKeyLength(data.len()))?;
 
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();

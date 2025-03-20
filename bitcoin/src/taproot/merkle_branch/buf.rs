@@ -86,7 +86,10 @@ impl TaprootMerkleBranchBuf {
     }
 
     /// Appends elements to proof.
-    pub(in super::super) fn push(&mut self, h: TapNodeHash) -> Result<(), InvalidMerkleTreeDepthError> {
+    pub(in super::super) fn push(
+        &mut self,
+        h: TapNodeHash,
+    ) -> Result<(), InvalidMerkleTreeDepthError> {
         if self.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
             Err(InvalidMerkleTreeDepthError(self.0.len()))
         } else {
@@ -213,9 +216,7 @@ impl BorrowMut<[TapNodeHash]> for TaprootMerkleBranchBuf {
 }
 
 impl<'a> From<&'a TaprootMerkleBranch> for TaprootMerkleBranchBuf {
-    fn from(value: &'a TaprootMerkleBranch) -> Self {
-        Self(value.as_slice().into())
-    }
+    fn from(value: &'a TaprootMerkleBranch) -> Self { Self(value.as_slice().into()) }
 }
 
 /// Iterator over node hashes within Taproot Merkle branch.

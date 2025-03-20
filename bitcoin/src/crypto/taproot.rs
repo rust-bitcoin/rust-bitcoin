@@ -9,8 +9,8 @@ use core::fmt;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-use internals::write_err;
 use internals::array::ArrayExt;
+use internals::write_err;
 use io::Write;
 
 use crate::prelude::Vec;

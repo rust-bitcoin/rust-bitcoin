@@ -113,7 +113,8 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
-    let (remaining, &data_check) = ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
+    let (remaining, &data_check) =
+        ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
 
     let hash_check = *sha256d::Hash::hash(remaining).as_byte_array().sub_array::<0, 4>();
 

@@ -14,8 +14,8 @@ use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
 use crate::taproot::{
-    self, ControlBlock, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
-    TAPROOT_LEAF_MASK, TaprootMerkleBranch,
+    self, ControlBlock, LeafScript, LeafVersion, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX,
+    TAPROOT_CONTROL_BASE_SIZE, TAPROOT_LEAF_MASK,
 };
 use crate::Script;
 
