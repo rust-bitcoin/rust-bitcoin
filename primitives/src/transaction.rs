@@ -389,6 +389,7 @@ impl OutPoint {
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for OutPoint {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -500,7 +501,10 @@ hashes::hash_newtype! {
     pub struct Wtxid(sha256d::Hash);
 }
 
+#[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(Txid, Wtxid);
+#[cfg(not(feature = "hex"))]
+hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(Txid, Wtxid);
 
