@@ -828,12 +828,6 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     ///
-    /// # Errors
-    ///
-    /// This function only ever returns the [`ParseError::NetworkValidation`] variant of
-    /// `ParseError`. This is not how we normally implement errors in this library but
-    /// `require_network` is not a typical function, it is conceptually part of string parsing.
-    ///
     ///  # Examples
     ///
     /// ```
@@ -849,8 +843,8 @@ impl Address<NetworkUnchecked> {
     /// }
     ///
     /// fn parse_and_validate_address_combinator(network: Network) -> Result<Address, ParseError> {
-    ///     let address = ADDR.parse::<Address<_>>()
-    ///                       .and_then(|a| a.require_network(network))?;
+    ///     let address = ADDR.parse::<Address<_>>()?
+    ///                       .require_network(network)?;
     ///     Ok(address)
     /// }
     ///
@@ -866,11 +860,11 @@ impl Address<NetworkUnchecked> {
     /// let _ = parse_and_validate_address_show_types(network).unwrap();
     /// ```
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, ParseError> {
+    pub fn require_network(self, required: Network) -> Result<Address, NetworkValidationError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(NetworkValidationError { required, address: self }.into())
+            Err(NetworkValidationError { required, address: self })
         }
     }
 
