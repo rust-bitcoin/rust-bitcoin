@@ -151,7 +151,7 @@ impl Transaction {
                 .collect(),
             output: self.output.clone(),
         };
-        cloned_tx.compute_txid().into()
+        sha256d::Hash::from_byte_array(cloned_tx.compute_txid().to_byte_array())
     }
 
     /// Computes the [`Txid`].

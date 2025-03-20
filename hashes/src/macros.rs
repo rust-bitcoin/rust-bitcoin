@@ -158,12 +158,6 @@ macro_rules! hash_newtype {
             }
         }
 
-        impl $crate::_export::_core::convert::From<$newtype> for $hash {
-            fn from(hashtype: $newtype) -> $hash {
-                hashtype.0
-            }
-        }
-
         impl $crate::Hash for $newtype {
             type Bytes = <$hash as $crate::Hash>::Bytes;
 
