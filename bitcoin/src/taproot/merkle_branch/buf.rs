@@ -126,7 +126,7 @@ impl_try_from!(&[TapNodeHash]);
 impl_try_from!(Vec<TapNodeHash>);
 impl_try_from!(Box<[TapNodeHash]>);
 
-macro_rules! impl_try_from_array {
+macro_rules! impl_from_array {
     ($($len:expr),* $(,)?) => {
         $(
             impl From<[TapNodeHash; $len]> for TaprootMerkleBranchBuf {
@@ -142,7 +142,7 @@ macro_rules! impl_try_from_array {
 //
 // The reason zero is included is that `TaprootMerkleBranchBuf` doesn't contain the hash of the node
 // that's being proven - it's not needed because the script is already right before control block.
-impl_try_from_array!(
+impl_from_array!(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
     50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73,

@@ -61,8 +61,8 @@ mod encapsulate {
         ///
         /// Accepts an `u32` which is guaranteed to be in range for the type, but which can only
         /// represent roughly 0 to 42.95 BTC.
-        pub const fn from_sat_u32(satoshi: u32) -> Amount {
-            Amount(satoshi as u64) // cannot use u64::from in a constfn
+        pub const fn from_sat_u32(satoshi: u32) -> Self {
+            Self(satoshi as u64) // cannot use u64::from in a constfn
         }
 
         /// Gets the number of satoshis in this [`Amount`].
@@ -90,7 +90,7 @@ mod encapsulate {
         /// assert_eq!(amount.to_sat(), sat);
         /// # Ok::<_, amount::OutOfRangeError>(())
         /// ```
-        pub const fn from_sat(satoshi: u64) -> Result<Amount, OutOfRangeError> {
+        pub const fn from_sat(satoshi: u64) -> Result<Self, OutOfRangeError> {
             if satoshi > Self::MAX_MONEY.to_sat() {
                 Err(OutOfRangeError { is_signed: false, is_greater_than_max: true })
             } else {
@@ -104,15 +104,15 @@ pub use encapsulate::Amount;
 
 impl Amount {
     /// The zero amount.
-    pub const ZERO: Self = Amount::from_sat_u32(0);
+    pub const ZERO: Self = Self::from_sat_u32(0);
     /// Exactly one satoshi.
-    pub const ONE_SAT: Self = Amount::from_sat_u32(1);
+    pub const ONE_SAT: Self = Self::from_sat_u32(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Self = Amount::from_btc_u16(1);
+    pub const ONE_BTC: Self = Self::from_btc_u16(1);
     /// Exactly fifty bitcoin.
-    pub const FIFTY_BTC: Self = Amount::from_btc_u16(50);
+    pub const FIFTY_BTC: Self = Self::from_btc_u16(50);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Self = Amount::MAX;
+    pub const MAX_MONEY: Self = Self::MAX;
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
@@ -133,24 +133,24 @@ impl Amount {
     /// # Ok::<_, amount::ParseAmountError>(())
     /// ```
     #[cfg(feature = "alloc")]
-    pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
+    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
         Self::from_float_in(btc, Denomination::Bitcoin)
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`].
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_int_btc<T: Into<u16>>(whole_bitcoin: T) -> Amount {
-        Amount::from_btc_u16(whole_bitcoin.into())
+    pub fn from_int_btc<T: Into<u16>>(whole_bitcoin: T) -> Self {
+        Self::from_btc_u16(whole_bitcoin.into())
     }
 
     /// Converts from a value expressing a whole number of bitcoin to an [`Amount`]
     /// in const context.
     #[allow(clippy::missing_panics_doc)]
-    pub const fn from_btc_u16(whole_bitcoin: u16) -> Amount {
+    pub const fn from_btc_u16(whole_bitcoin: u16) -> Self {
         let btc = whole_bitcoin as u64; // Can't call `into` in const context.
         let sats = btc * 100_000_000;
 
-        match Amount::from_sat(sats) {
+        match Self::from_sat(sats) {
             Ok(amount) => amount,
             Err(_) => panic!("unreachable - 65536 BTC is within range"),
         }
@@ -164,7 +164,7 @@ impl Amount {
     /// # Errors
     ///
     /// If the amount is too precise, negative, or greater than 21,000,000.
-    pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
+    pub fn from_str_in(s: &str, denom: Denomination) -> Result<Self, ParseAmountError> {
         let (is_neg, amount) =
             parse_signed_to_satoshi(s, denom).map_err(|error| error.convert(false))?;
         if is_neg {
@@ -192,7 +192,7 @@ impl Amount {
     /// assert_eq!(amount, Amount::from_sat(10_000_000)?);
     /// # Ok::<_, amount::ParseError>(())
     /// ```
-    pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseError> {
+    pub fn from_str_with_denomination(s: &str) -> Result<Self, ParseError> {
         let (amt, denom) = split_amount_and_denomination(s)?;
         Self::from_str_in(amt, denom).map_err(Into::into)
     }
@@ -238,7 +238,7 @@ impl Amount {
     ///
     /// Please be aware of the risk of using floating-point numbers.
     #[cfg(feature = "alloc")]
-    pub fn from_float_in(value: f64, denom: Denomination) -> Result<Amount, ParseAmountError> {
+    pub fn from_float_in(value: f64, denom: Denomination) -> Result<Self, ParseAmountError> {
         if value < 0.0 {
             return Err(OutOfRangeError::negative().into());
         }
@@ -320,7 +320,7 @@ impl Amount {
     ///
     /// Returns [`None`] if the sum is larger than [`Amount::MAX`].
     #[must_use]
-    pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
+    pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         // Unchecked add ok, adding two values less than `MAX_MONEY` cannot overflow an `i64`.
         match Self::from_sat(self.to_sat() + rhs.to_sat()) {
@@ -333,7 +333,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
+    pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat().checked_sub(rhs.to_sat()) {
             Some(res) => match Self::from_sat(res) {
@@ -348,7 +348,7 @@ impl Amount {
     ///
     /// Returns [`None`] if the product is larger than [`Amount::MAX`].
     #[must_use]
-    pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
+    pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat().checked_mul(rhs) {
             Some(res) => match Self::from_sat(res) {
@@ -365,7 +365,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_div(self, rhs: u64) -> Option<Amount> {
+    pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat().checked_div(rhs) {
             Some(res) => match Self::from_sat(res) {
@@ -380,7 +380,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_rem(self, rhs: u64) -> Option<Amount> {
+    pub const fn checked_rem(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
         match self.to_sat().checked_rem(rhs) {
             Some(res) => match Self::from_sat(res) {
@@ -401,7 +401,7 @@ impl Amount {
 }
 
 impl default::Default for Amount {
-    fn default() -> Self { Amount::ZERO }
+    fn default() -> Self { Self::ZERO }
 }
 
 impl fmt::Debug for Amount {
