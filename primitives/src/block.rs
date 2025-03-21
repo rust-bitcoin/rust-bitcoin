@@ -207,6 +207,34 @@ impl Header {
     }
 }
 
+impl fmt::Display for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(
+                f,
+                "{}:{}:{}:{}:{}:{}",
+                self.version,
+                self.prev_blockhash,
+                self.merkle_root,
+                self.time,
+                self.bits,
+                self.nonce
+            )
+        } else {
+            write!(
+                f,
+                "{}{}{}{}{}{}",
+                self.version,
+                self.prev_blockhash,
+                self.merkle_root,
+                self.time,
+                self.bits,
+                self.nonce
+            )
+        }
+    }
+}
+
 impl fmt::Debug for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Header")
@@ -244,7 +272,7 @@ impl From<&Header> for BlockHash {
 ///
 /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
 /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
-#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(i32);
 
@@ -301,6 +329,40 @@ impl Version {
 impl Default for Version {
     #[inline]
     fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
+}
+
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::Debug for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Version({:08x})", self.to_consensus())
+    }
+}
+
+impl fmt::LowerHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08x}", self.to_consensus())
+        } else {
+            write!(f, "{:08x}", self.to_consensus())
+        }
+    }
+}
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Version, |_: &Version| 8);
+
+impl fmt::UpperHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08X}", self.to_consensus())
+        } else {
+            write!(f, "{:08X}", self.to_consensus())
+        }
+    }
 }
 
 hashes::hash_newtype! {
@@ -531,5 +593,34 @@ mod tests {
             header.nonce
         );
         assert_eq!(format!("{:?}", header), expected);
+    }
+
+    #[test]
+    fn header_display() {
+        let header = dummy_header();
+        let expected = "0000000199999999999999999999999999999999999999999999999999999999999999997777777777777777777777777777777777777777777777777777777777777777000000020000000300000004";
+        let got = format!("{}", header);
+        assert_eq!(got.len(), 160); // Sanity check
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn header_display_alternate() {
+        let header = dummy_header();
+        let expected = "00000001:9999999999999999999999999999999999999999999999999999999999999999:7777777777777777777777777777777777777777777777777777777777777777:00000002:00000003:00000004";
+        let got = format!("{:#}", header);
+        assert_eq!(got.len(), 165); // Sanity check
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn version_formatting() {
+        let version = Version::from_consensus(i32::MAX);
+        assert_eq!(format!("{}", version), "7fffffff");
+        assert_eq!(format!("{:x}", version), "7fffffff");
+        assert_eq!(format!("{:X}", version), "7FFFFFFF");
+        assert_eq!(format!("{:#x}", version), "0x7fffffff");
+        assert_eq!(format!("{:#X}", version), "0x7FFFFFFF");
+        assert_eq!(format!("{:?}", version), "Version(7fffffff)");
     }
 }

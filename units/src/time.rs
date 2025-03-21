@@ -7,6 +7,8 @@
 //! This differs from other UNIX timestamps in that we only use non-negative values. The Epoch
 //! pre-dates Bitcoin so timestamps before this are not useful for block timestamps.
 
+use core::fmt;
+
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
@@ -24,7 +26,7 @@ use serde::{Deserialize, Serialize};
 /// > an hour or two.
 ///
 /// ref: <https://en.bitcoin.it/wiki/Block_timestamp>
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockTime(u32);
 
@@ -48,11 +50,64 @@ impl From<BlockTime> for u32 {
     fn from(t: BlockTime) -> Self { t.to_u32() }
 }
 
+impl fmt::Display for BlockTime {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::Debug for BlockTime {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "BlockTime({:08x})", self.to_u32())
+    }
+}
+
+impl fmt::LowerHex for BlockTime {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08x}", self.to_u32())
+        } else {
+            write!(f, "{:08x}", self.to_u32())
+        }
+    }
+}
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(BlockTime, |_: &BlockTime| 8);
+
+impl fmt::UpperHex for BlockTime {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08X}", self.to_u32())
+        } else {
+            write!(f, "{:08X}", self.to_u32())
+        }
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let t: u32 = u.arbitrary()?;
         Ok(BlockTime::from(t))
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests {
+    use alloc::format;
+
+    use super::*;
+
+    #[test]
+    fn formatting() {
+        let nonce = BlockTime::from_u32(0xdead_beef);
+        assert_eq!(format!("{}", nonce), "deadbeef");
+        assert_eq!(format!("{:x}", nonce), "deadbeef");
+        assert_eq!(format!("{:X}", nonce), "DEADBEEF");
+        assert_eq!(format!("{:#x}", nonce), "0xdeadbeef");
+        assert_eq!(format!("{:#X}", nonce), "0xDEADBEEF");
+        assert_eq!(format!("{:?}", nonce), "BlockTime(deadbeef)");
     }
 }
