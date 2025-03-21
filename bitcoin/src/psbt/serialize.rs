@@ -7,6 +7,8 @@
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
+#[allow(unused)] // MSRV polyfill
+use internals::slice::SliceExt;
 use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
@@ -214,14 +216,12 @@ impl Serialize for KeySource {
 
 impl Deserialize for KeySource {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        if bytes.len() < 4 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
-        }
+        let (fingerprint, mut d) = bytes.split_first_chunk::<4>()
+            .ok_or(io::Error::from(io::ErrorKind::UnexpectedEof))?;
 
-        let fprint: Fingerprint = bytes[0..4].try_into().expect("4 is the fingerprint length");
+        let fprint: Fingerprint = fingerprint.into();
         let mut dpath: Vec<ChildNumber> = Default::default();
 
-        let mut d = &bytes[4..];
         while !d.is_empty() {
             match u32::consensus_decode(&mut d) {
                 Ok(index) => dpath.push(index.into()),

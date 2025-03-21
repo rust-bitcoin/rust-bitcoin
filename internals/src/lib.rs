@@ -35,6 +35,7 @@ pub mod rust_version {
     include!(concat!(env!("OUT_DIR"), "/rust_version.rs"));
 }
 
+pub mod array;
 pub mod array_vec;
 pub mod compact_size;
 pub mod const_tools;

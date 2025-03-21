@@ -13,7 +13,11 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use internals::array::ArrayExt;
 use internals::{impl_to_hex_from_lower_hex, write_err};
+#[allow(unused)] // MSRV polyfill
+use internals::slice::SliceExt;
+
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
@@ -1162,22 +1166,20 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
     pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
-        if sl.len() < TAPROOT_CONTROL_BASE_SIZE
-            || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
-        {
-            return Err(InvalidControlBlockSizeError(sl.len()).into());
-        }
-        let output_key_parity = match sl[0] & 1 {
+        let (base, merkle_branch) = sl.split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
+            .ok_or(InvalidControlBlockSizeError(sl.len()))?;
+
+        let (&first, internal_key) = base.split_first();
+
+        let output_key_parity = match first & 1 {
             0 => secp256k1::Parity::Even,
             _ => secp256k1::Parity::Odd,
         };
 
-        let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_byte_array(
-            &sl[1..TAPROOT_CONTROL_BASE_SIZE].try_into().expect("Slice should be exactly 32 bytes"),
-        )
-        .map_err(TaprootError::InvalidInternalKey)?;
-        let merkle_branch = TaprootMerkleBranchBuf::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
+        let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
+        let internal_key = UntweakedPublicKey::from_byte_array(internal_key)
+            .map_err(TaprootError::InvalidInternalKey)?;
+        let merkle_branch = TaprootMerkleBranchBuf::decode(merkle_branch)?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 }

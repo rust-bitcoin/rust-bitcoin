@@ -49,6 +49,7 @@ use core::str::FromStr;
 use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
+use internals::array::ArrayExt;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::address::script_pubkey::ScriptBufExt as _;
@@ -902,12 +903,9 @@ impl Address<NetworkUnchecked> {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
         let data = base58::decode_check(s)?;
-        if data.len() != 21 {
-            return Err(InvalidBase58PayloadLengthError { length: s.len() }.into());
-        }
+        let data: &[u8; 21] = (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
 
-        let (prefix, data) = data.split_first().expect("length checked above");
-        let data: [u8; 20] = data.try_into().expect("length checked above");
+        let (prefix, &data) = data.split_first();
 
         let inner = match *prefix {
             PUBKEY_ADDRESS_PREFIX_MAIN => {

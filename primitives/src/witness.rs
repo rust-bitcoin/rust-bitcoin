@@ -12,6 +12,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use hex::DisplayHex;
 use internals::compact_size;
 use internals::wrap_debug::WrapDebug;
+use internals::slice::SliceExt;
 
 use crate::prelude::Vec;
 
@@ -234,12 +235,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
     let start = start_of_indices + index * 4;
-    let end = start + 4;
-    if end > bytes.len() {
-        None
-    } else {
-        Some(u32::from_ne_bytes(bytes[start..end].try_into().expect("is u32 size")) as usize)
-    }
+    bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
 }
 
 /// Debug implementation that displays the witness as a structured output containing:
