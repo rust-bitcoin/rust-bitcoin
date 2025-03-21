@@ -15,19 +15,20 @@ rust-version = "1.63.0"
 exclude = ["tests", "contrib"]
 
 [features]
-default = ["std"]
-std = ["alloc", "hashes/std", "hex/std", "internals/std", "units/std"]
-alloc = ["hashes/alloc", "hex/alloc", "internals/alloc", "units/alloc"]
-serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc"]
+default = ["std", "hex"]
+std = ["alloc", "hashes/std", "hex?/std", "internals/std", "units/std"]
+alloc = ["hashes/alloc", "hex?/alloc", "internals/alloc", "units/alloc"]
+serde = ["dep:serde", "hashes/serde", "internals/serde", "units/serde", "alloc", "hex"]
 arbitrary = ["dep:arbitrary", "units/arbitrary"]
+hex = ["dep:hex", "internals/hex", "hashes/hex"]
 
 [dependencies]
-hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = ["hex"] }
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false }
-internals = { package = "bitcoin-internals", version = "0.4.0", features = ["hex"] }
+hashes = { package = "bitcoin_hashes", version = "0.16.0", default-features = false, features = [] }
+internals = { package = "bitcoin-internals", version = "0.4.0", features = [] }
 units = { package = "bitcoin-units", version = "0.2.0", default-features = false }
 
 arbitrary = { version = "1.4", optional = true }
+hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"], optional = true }
 
 [dev-dependencies]

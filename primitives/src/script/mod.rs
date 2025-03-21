@@ -10,6 +10,7 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hashes::{hash160, sha256};
+#[cfg(feature = "hex")]
 use hex::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
@@ -49,7 +50,10 @@ hashes::hash_newtype! {
     pub struct WScriptHash(sha256::Hash);
 }
 
+#[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(ScriptHash, WScriptHash);
+#[cfg(not(feature = "hex"))]
+hashes::impl_debug_only_for_newtype!(ScriptHash, WScriptHash);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(ScriptHash, WScriptHash);
 
@@ -439,6 +443,7 @@ impl fmt::Display for ScriptBuf {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_script(), f) }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for Script {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -446,15 +451,19 @@ impl fmt::LowerHex for Script {
     }
 }
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 internals::impl_to_hex_from_lower_hex!(Script, |script: &Self| script.len() * 2);
 
+#[cfg(feature = "hex")]
 impl fmt::LowerHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf.len() * 2);
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for Script {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -462,6 +471,7 @@ impl fmt::UpperHex for Script {
     }
 }
 
+#[cfg(feature = "hex")]
 impl fmt::UpperHex for ScriptBuf {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
