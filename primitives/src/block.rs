@@ -14,7 +14,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
-use units::BlockTime;
+use units::{BlockTime, Nonce};
 
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
@@ -184,7 +184,7 @@ pub struct Header {
     /// The target value below which the blockhash must lie.
     pub bits: CompactTarget,
     /// The nonce, selected to obtain a low enough blockhash.
-    pub nonce: u32,
+    pub nonce: Nonce,
 }
 
 impl Header {
@@ -201,9 +201,37 @@ impl Header {
         engine.input(self.merkle_root.as_byte_array());
         engine.input(&self.time.to_u32().to_le_bytes());
         engine.input(&self.bits.to_consensus().to_le_bytes());
-        engine.input(&self.nonce.to_le_bytes());
+        engine.input(&self.nonce.to_u32().to_le_bytes());
 
         BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+    }
+}
+
+impl fmt::Display for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(
+                f,
+                "{}:{}:{}:{}:{}:{}",
+                self.version,
+                self.prev_blockhash,
+                self.merkle_root,
+                self.time,
+                self.bits,
+                self.nonce
+            )
+        } else {
+            write!(
+                f,
+                "{}{}{}{}{}{}",
+                self.version,
+                self.prev_blockhash,
+                self.merkle_root,
+                self.time,
+                self.bits,
+                self.nonce
+            )
+        }
     }
 }
 
@@ -244,7 +272,7 @@ impl From<&Header> for BlockHash {
 ///
 /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
 /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
-#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Version(i32);
 
@@ -301,6 +329,40 @@ impl Version {
 impl Default for Version {
     #[inline]
     fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
+}
+
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::Debug for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Version({:08x})", self.to_consensus())
+    }
+}
+
+impl fmt::LowerHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08x}", self.to_consensus())
+        } else {
+            write!(f, "{:08x}", self.to_consensus())
+        }
+    }
+}
+#[cfg(feature = "alloc")]
+internals::impl_to_hex_from_lower_hex!(Version, |_: &Version| 8);
+
+impl fmt::UpperHex for Version {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08X}", self.to_consensus())
+        } else {
+            write!(f, "{:08X}", self.to_consensus())
+        }
+    }
 }
 
 hashes::hash_newtype! {
@@ -368,7 +430,7 @@ mod tests {
             merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
             time: BlockTime::from(2),
             bits: CompactTarget::from_consensus(3),
-            nonce: 4,
+            nonce: Nonce::from(4),
         }
     }
 
@@ -424,7 +486,7 @@ mod tests {
             + header.merkle_root.as_byte_array().len()
             + header.time.to_u32().to_le_bytes().len()
             + header.bits.to_consensus().to_le_bytes().len()
-            + header.nonce.to_le_bytes().len();
+            + header.nonce.to_u32().to_le_bytes().len();
 
         assert_eq!(header_size, Header::SIZE);
     }
@@ -531,5 +593,34 @@ mod tests {
             header.nonce
         );
         assert_eq!(format!("{:?}", header), expected);
+    }
+
+    #[test]
+    fn header_display() {
+        let header = dummy_header();
+        let expected = "0000000199999999999999999999999999999999999999999999999999999999999999997777777777777777777777777777777777777777777777777777777777777777000000020000000300000004";
+        let got = format!("{}", header);
+        assert_eq!(got.len(), 160); // Sanity check
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn header_display_alternate() {
+        let header = dummy_header();
+        let expected = "00000001:9999999999999999999999999999999999999999999999999999999999999999:7777777777777777777777777777777777777777777777777777777777777777:00000002:00000003:00000004";
+        let got = format!("{:#}", header);
+        assert_eq!(got.len(), 165); // Sanity check
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn version_formatting() {
+        let version = Version::from_consensus(i32::MAX);
+        assert_eq!(format!("{}", version), "7fffffff");
+        assert_eq!(format!("{:x}", version), "7fffffff");
+        assert_eq!(format!("{:X}", version), "7FFFFFFF");
+        assert_eq!(format!("{:#x}", version), "0x7fffffff");
+        assert_eq!(format!("{:#X}", version), "0x7FFFFFFF");
+        assert_eq!(format!("{:?}", version), "Version(7fffffff)");
     }
 }

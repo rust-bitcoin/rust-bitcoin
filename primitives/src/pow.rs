@@ -18,7 +18,7 @@ use core::fmt;
 /// `CompactTarget` and `Target` is lossy *in both directions* (there are multiple `CompactTarget`
 /// values that map to the same `Target` value). Ordering and equality for this type are defined in
 /// terms of the underlying `u32`.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct CompactTarget(u32);
 
@@ -32,18 +32,38 @@ impl CompactTarget {
     pub fn to_consensus(self) -> u32 { self.0 }
 }
 
+impl fmt::Display for CompactTarget {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::Debug for CompactTarget {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "CompactTarget({:08x})", self.to_consensus())
+    }
+}
+
 impl fmt::LowerHex for CompactTarget {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08x}", self.to_consensus())
+        } else {
+            write!(f, "{:08x}", self.to_consensus())
+        }
+    }
 }
 #[cfg(feature = "alloc")]
-internals::impl_to_hex_from_lower_hex!(CompactTarget, |compact_target: &CompactTarget| {
-    8 - compact_target.0.leading_zeros() as usize / 4
-});
+internals::impl_to_hex_from_lower_hex!(CompactTarget, |_: &CompactTarget| 8);
 
 impl fmt::UpperHex for CompactTarget {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#08X}", self.to_consensus())
+        } else {
+            write!(f, "{:08X}", self.to_consensus())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -63,8 +83,12 @@ mod tests {
     #[test]
     fn compact_target_formatting() {
         let compact_target = CompactTarget::from_consensus(0x1d00_ffff);
+        assert_eq!(format!("{}", compact_target), "1d00ffff");
         assert_eq!(format!("{:x}", compact_target), "1d00ffff");
         assert_eq!(format!("{:X}", compact_target), "1D00FFFF");
+        assert_eq!(format!("{:#x}", compact_target), "0x1d00ffff");
+        assert_eq!(format!("{:#X}", compact_target), "0x1D00FFFF");
+        assert_eq!(format!("{:?}", compact_target), "CompactTarget(1d00ffff)");
         assert_eq!(compact_target.to_consensus(), 0x1d00_ffff);
     }
 }

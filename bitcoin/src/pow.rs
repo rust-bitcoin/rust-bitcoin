@@ -1078,7 +1078,7 @@ pub mod test_utils {
 mod tests {
     use super::*;
     use crate::pow::test_utils::{u128_to_work, u32_to_target, u64_to_target};
-    use crate::BlockTime;
+    use crate::{BlockTime, Nonce};
 
     impl U256 {
         fn bit_at(&self, index: usize) -> bool {
@@ -1787,7 +1787,7 @@ mod tests {
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
             time: BlockTime::from_u32(1599332844),
             bits: starting_bits,
-            nonce: 0,
+            nonce: Nonce::from_u32(0),
         };
 
         // Block 4031, the only information used are `bits` and `time`
@@ -1797,7 +1797,7 @@ mod tests {
             merkle_root: TxMerkleNode::from_byte_array([0; 32]),
             time: BlockTime::from_u32(1600591200),
             bits: starting_bits,
-            nonce: 0,
+            nonce: Nonce::from_u32(0),
         };
         let adjustment =
             CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
