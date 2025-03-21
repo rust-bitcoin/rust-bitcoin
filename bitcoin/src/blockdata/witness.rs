@@ -318,7 +318,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
 
     use super::*;
     use crate::consensus::{deserialize, encode, serialize};
@@ -357,8 +357,8 @@ mod test {
 
     #[test]
     fn consensus_serialize() {
-        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
-        let el_1 = hex!("000000");
+        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").to_vec();
+        let el_1 = hex!("000000").to_vec();
 
         let mut want_witness = Witness::default();
         want_witness.push(&el_0);
@@ -382,10 +382,10 @@ mod test {
 
     #[test]
     fn get_tapscript() {
-        let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let tapscript = hex!("deadbeef").to_vec();
+        let control_block = hex!("02").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
 
         let witness_vec = vec![tapscript.clone(), control_block.clone()];
         let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
@@ -403,11 +403,11 @@ mod test {
 
     #[test]
     fn get_taproot_leaf_script() {
-        let tapscript = hex!("deadbeef");
+        let tapscript = hex!("deadbeef").to_vec();
         let control_block =
-            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
 
         let witness_vec = vec![tapscript.clone(), control_block.clone()];
         let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
@@ -428,9 +428,9 @@ mod test {
 
     #[test]
     fn get_tapscript_from_keypath() {
-        let signature = hex!("deadbeef");
+        let signature = hex!("deadbeef").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
 
         let witness_vec = vec![signature.clone()];
         let witness_vec_annex = vec![signature.clone(), annex];
@@ -448,10 +448,10 @@ mod test {
 
     #[test]
     fn get_control_block() {
-        let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let tapscript = hex!("deadbeef").to_vec();
+        let control_block = hex!("02").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
         let signature = vec![0xff; 64];
 
         let witness_vec = vec![tapscript.clone(), control_block.clone()];
@@ -475,10 +475,10 @@ mod test {
 
     #[test]
     fn get_annex() {
-        let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let tapscript = hex!("deadbeef").to_vec();
+        let control_block = hex!("02").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
 
         let witness_vec = vec![tapscript.clone(), control_block.clone()];
         let witness_vec_annex = vec![tapscript.clone(), control_block.clone(), annex.clone()];
@@ -494,9 +494,9 @@ mod test {
         assert_eq!(witness_annex.taproot_annex(), Some(&annex[..]));
 
         // Now for keyspend
-        let signature = hex!("deadbeef");
+        let signature = hex!("deadbeef").to_vec();
         // annex starting with 0x50 causes the branching logic.
-        let annex = hex!("50");
+        let annex = hex!("50").to_vec();
 
         let witness_vec = vec![signature.clone()];
         let witness_vec_annex = vec![signature.clone(), annex.clone()];
