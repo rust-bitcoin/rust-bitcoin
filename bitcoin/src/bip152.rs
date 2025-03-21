@@ -413,8 +413,8 @@ mod test {
     use crate::merkle_tree::TxMerkleNode;
     use crate::transaction::OutPointExt;
     use crate::{
-        transaction, Amount, BlockChecked, BlockTime, CompactTarget, OutPoint, ScriptBuf, Sequence,
-        TxIn, TxOut, Txid, Witness,
+        transaction, Amount, BlockChecked, BlockTime, CompactTarget, Nonce, OutPoint, ScriptBuf,
+        Sequence, TxIn, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -439,7 +439,7 @@ mod test {
             merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
             time: BlockTime::from_u32(2),
             bits: CompactTarget::from_consensus(3),
-            nonce: 4,
+            nonce: Nonce::from_u32(4),
         };
         let transactions = vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])];
         Block::new_unchecked(header, transactions).assume_checked(None)

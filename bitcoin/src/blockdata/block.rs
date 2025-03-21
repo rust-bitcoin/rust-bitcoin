@@ -13,7 +13,7 @@ use core::fmt;
 use hashes::{sha256d, HashEngine};
 use internals::{compact_size, ToU64};
 use io::{BufRead, Write};
-use units::BlockTime;
+use units::{BlockTime, Nonce};
 
 use super::Weight;
 use crate::consensus::encode::WriteExt as _;
@@ -71,6 +71,18 @@ crate::internal_macros::define_extension_trait! {
 
         /// Returns the total work of the block.
         fn work(&self) -> Work { self.target().to_work() }
+    }
+}
+
+impl Encodable for Nonce {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.to_u32().consensus_encode(w)
+    }
+}
+
+impl Decodable for Nonce {
+    fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode(r).map(Nonce::from_u32)
     }
 }
 
@@ -611,7 +623,7 @@ mod tests {
         assert_eq!(serialize(&real_decode.header().merkle_root), merkle);
         assert_eq!(real_decode.header().time, BlockTime::from_u32(1231965655));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(486604799));
-        assert_eq!(real_decode.header().nonce, 2067413810);
+        assert_eq!(real_decode.header().nonce, Nonce::from_u32(2067413810));
         assert_eq!(real_decode.header().work(), work);
 
         assert_eq!(real_decode.header().difficulty(&params), 1);
@@ -662,7 +674,7 @@ mod tests {
         );
         assert_eq!(real_decode.header().time, BlockTime::from_u32(1472004949));
         assert_eq!(real_decode.header().bits, CompactTarget::from_consensus(0x1a06d450));
-        assert_eq!(real_decode.header().nonce, 1879759182);
+        assert_eq!(real_decode.header().nonce, Nonce::from_u32(1879759182));
         assert_eq!(real_decode.header().work(), work);
         assert_eq!(real_decode.header().difficulty(&params), 2456598);
         assert_eq!(real_decode.header().difficulty_float(&params), 2456598.4399242126);
