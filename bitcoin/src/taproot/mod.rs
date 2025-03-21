@@ -27,9 +27,9 @@ use crate::{Script, ScriptBuf};
 #[doc(inline)]
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
-pub use merkle_branch::TaprootMerkleBranchBuf;
-#[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
+#[doc(inline)]
+pub use merkle_branch::TaprootMerkleBranchBuf;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
@@ -1137,7 +1137,10 @@ impl<'leaf> ScriptLeaf<'leaf> {
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ControlBlock<Branch = TaprootMerkleBranchBuf> where Branch: ?Sized {
+pub struct ControlBlock<Branch = TaprootMerkleBranchBuf>
+where
+    Branch: ?Sized,
+{
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
@@ -1204,7 +1207,8 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         self.encode_inner(|bytes| -> Result<(), core::convert::Infallible> {
             result.extend_from_slice(bytes);
             Ok(())
-        }).unwrap_or_else(|never| match never {});
+        })
+        .unwrap_or_else(|never| match never {});
         result
     }
 
