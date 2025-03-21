@@ -6,8 +6,6 @@
 //! consensus code. In particular, it defines the genesis block and its
 //! single transaction.
 
-use hashes::sha256d;
-
 use crate::block::{self, Block, Checked};
 use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
 use crate::locktime::absolute;
@@ -124,8 +122,7 @@ fn bitcoin_genesis_tx(params: &Params) -> Transaction {
 pub fn genesis_block(params: impl AsRef<Params>) -> Block<Checked> {
     let params = params.as_ref();
     let transactions = vec![bitcoin_genesis_tx(params)];
-    let hash: sha256d::Hash = transactions[0].compute_txid().into();
-    let merkle_root: crate::TxMerkleNode = hash.into();
+    let merkle_root = block::compute_merkle_root(&transactions).expect("transactions is not empty");
     let witness_root = block::compute_witness_root(&transactions);
 
     match params.network {
