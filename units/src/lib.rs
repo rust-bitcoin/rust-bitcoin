@@ -33,6 +33,7 @@ pub mod amount;
 pub mod block;
 pub mod fee_rate;
 pub mod locktime;
+pub mod nonce;
 pub mod parse;
 pub mod time;
 pub mod weight;
@@ -43,6 +44,7 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
+    nonce::Nonce,
     time::BlockTime,
     weight::Weight
 };
