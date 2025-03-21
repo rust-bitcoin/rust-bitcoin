@@ -31,7 +31,7 @@ mod primitive {
         if len < 0x100000000 {
             Ok(())
         } else {
-            Err(PushBytesError { len })
+            Err(PushBytesError { len, max: 0x100000000 })
         }
     }
 
@@ -439,6 +439,8 @@ mod error {
     pub struct PushBytesError {
         /// How long the input was.
         pub(super) len: usize,
+        /// How long the input can be.
+        pub(super) max: usize,
     }
 
     impl super::PushBytesErrorReport for PushBytesError {
