@@ -14,7 +14,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
-use units::BlockTime;
+use units::{BlockTime, Nonce};
 
 use crate::merkle_tree::TxMerkleNode;
 #[cfg(feature = "alloc")]
@@ -184,7 +184,7 @@ pub struct Header {
     /// The target value below which the blockhash must lie.
     pub bits: CompactTarget,
     /// The nonce, selected to obtain a low enough blockhash.
-    pub nonce: u32,
+    pub nonce: Nonce,
 }
 
 impl Header {
@@ -201,7 +201,7 @@ impl Header {
         engine.input(self.merkle_root.as_byte_array());
         engine.input(&self.time.to_u32().to_le_bytes());
         engine.input(&self.bits.to_consensus().to_le_bytes());
-        engine.input(&self.nonce.to_le_bytes());
+        engine.input(&self.nonce.to_u32().to_le_bytes());
 
         BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
     }
@@ -368,7 +368,7 @@ mod tests {
             merkle_root: TxMerkleNode::from_byte_array([0x77; 32]),
             time: BlockTime::from(2),
             bits: CompactTarget::from_consensus(3),
-            nonce: 4,
+            nonce: Nonce::from(4),
         }
     }
 
@@ -424,7 +424,7 @@ mod tests {
             + header.merkle_root.as_byte_array().len()
             + header.time.to_u32().to_le_bytes().len()
             + header.bits.to_consensus().to_le_bytes().len()
-            + header.nonce.to_le_bytes().len();
+            + header.nonce.to_u32().to_le_bytes().len();
 
         assert_eq!(header_size, Header::SIZE);
     }
