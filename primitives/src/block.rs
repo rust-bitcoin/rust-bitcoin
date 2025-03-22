@@ -14,6 +14,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::{sha256d, HashEngine as _};
+use hex::DisplayHex as _;
 use units::BlockTime;
 
 use crate::merkle_tree::TxMerkleNode;
@@ -204,6 +205,25 @@ impl Header {
         engine.input(&self.nonce.to_le_bytes());
 
         BlockHash::from_byte_array(sha256d::Hash::from_engine(engine).to_byte_array())
+    }
+}
+
+impl fmt::Display for Header {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use fmt::Write as _;
+
+        let mut buf = arrayvec::ArrayString::<160>::new();
+        write!(
+            &mut buf,
+            "{}{}{}{}{}{}",
+            self.version.to_consensus().to_le_bytes().as_hex(),
+            self.prev_blockhash.as_byte_array().as_hex(),
+            self.merkle_root.as_byte_array().as_hex(),
+            self.time.to_u32().to_le_bytes().as_hex(),
+            self.bits.to_consensus().to_le_bytes().as_hex(),
+            self.nonce.to_le_bytes().as_hex(),
+        )?;
+        fmt::Display::fmt(&buf, f)
     }
 }
 
@@ -531,5 +551,35 @@ mod tests {
             header.nonce
         );
         assert_eq!(format!("{:?}", header), expected);
+    }
+
+    #[test]
+    fn header_display() {
+        let seconds: u32 = 1_653_195_600; // Arbitrary timestamp: May 22nd, 5am UTC.
+
+        let header = Header {
+            version: Version::TWO,
+            prev_blockhash: BlockHash::from_byte_array([0xab; 32]),
+            merkle_root: TxMerkleNode::from_byte_array([0xcd; 32]),
+            time: BlockTime::from(seconds),
+            bits: CompactTarget::from_consensus(0xbeef),
+            nonce: 0xcafe,
+        };
+
+        let want = concat!(
+            "02000000",                                                         // version
+            "abababababababababababababababababababababababababababababababab", // prev_blockhash
+            "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd", // merkle_root
+            "50c38962",                                                         // time
+            "efbe0000",                                                         // bits
+            "feca0000",                                                         // nonce
+        );
+        assert_eq!(want.len(), 160);
+        assert_eq!(format!("{}", header), want);
+
+        // Check how formatting options are handled.
+        let want = format!("{:.20}", want);
+        let got = format!("{:.20}", header);
+        assert_eq!(got, want);
     }
 }
