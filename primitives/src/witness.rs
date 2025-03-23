@@ -14,7 +14,7 @@ use internals::compact_size;
 use internals::wrap_debug::WrapDebug;
 use internals::slice::SliceExt;
 
-use crate::prelude::Vec;
+use crate::prelude::{Box, Vec};
 
 /// The Witness is the data used to unlock bitcoin since the [SegWit upgrade].
 ///
@@ -236,6 +236,109 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
     let start = start_of_indices + index * 4;
     bytes.get_array::<4>(start).map(|index_bytes| u32::from_ne_bytes(*index_bytes) as usize)
+}
+
+// Note: we use `Borrow` in the following `PartialEq` impls specifically because of its additional
+// constraints on equality semantics.
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<[T]> for Witness {
+    fn eq(&self, rhs: &[T]) -> bool {
+        if self.len() != rhs.len() {
+            return false;
+        }
+        self.iter().zip(rhs).all(|(left, right)| left == right.borrow())
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<&[T]> for Witness {
+    fn eq(&self, rhs: &&[T]) -> bool {
+        *self == **rhs
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for [T] {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for &[T] {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == **self
+    }
+}
+
+impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<[T; N]> for Witness {
+    fn eq(&self, rhs: &[T; N]) -> bool {
+        *self == *rhs.as_slice()
+    }
+}
+
+impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<&[T; N]> for Witness {
+    fn eq(&self, rhs: &&[T; N]) -> bool {
+        *self == *rhs.as_slice()
+    }
+}
+
+impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for [T; N] {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
+}
+
+impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for &[T; N] {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == **self
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Vec<T>> for Witness {
+    fn eq(&self, rhs: &Vec<T>) -> bool {
+        *self == **rhs
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for Vec<T> {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Box<[T]>> for Witness {
+    fn eq(&self, rhs: &Box<[T]>) -> bool {
+        *self == **rhs
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for Box<[T]> {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<alloc::rc::Rc<[T]>> for Witness {
+    fn eq(&self, rhs: &alloc::rc::Rc<[T]>) -> bool {
+        *self == **rhs
+    }
+}
+
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for alloc::rc::Rc<[T]> {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
+}
+
+#[cfg(target_has_atomic = "ptr")]
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<alloc::sync::Arc<[T]>> for Witness {
+    fn eq(&self, rhs: &alloc::sync::Arc<[T]>) -> bool {
+        *self == **rhs
+    }
+}
+
+#[cfg(target_has_atomic = "ptr")]
+impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for alloc::sync::Arc<[T]> {
+    fn eq(&self, rhs: &Witness) -> bool {
+        *rhs == *self
+    }
 }
 
 /// Debug implementation that displays the witness as a structured output containing:
@@ -641,6 +744,27 @@ mod test {
         // Test clear method
         expected.clear();
         assert!(expected.is_empty());
+    }
+
+    #[test]
+    fn partial_eq() {
+        const EMPTY_BYTES: &[u8] = &[];
+        assert_eq!(Vec::<&[u8]>::new(), Witness::new());
+        macro_rules! ck {
+            ($container:expr) => {
+                {
+                    let container = $container;
+                    let witness = Witness::from(Clone::clone(&container));
+                    assert_eq!(witness, container, stringify!($container));
+                }
+            }
+        }
+        ck!([EMPTY_BYTES]);
+        ck!([EMPTY_BYTES, EMPTY_BYTES]);
+        ck!([[42]]);
+        ck!([[42, 21]]);
+        ck!([&[42], EMPTY_BYTES]);
+        ck!([[42u8], [21]]);
     }
 
     #[test]
