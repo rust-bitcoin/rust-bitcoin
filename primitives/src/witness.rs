@@ -581,11 +581,7 @@ mod test {
 
     // A witness with a single element that is empty (zero length).
     fn single_empty_element() -> Witness {
-        // The first is 0 serialized as a compact size integer.
-        // The last four bytes represent start at index 0.
-        let content = [0_u8; 5];
-
-        Witness { witness_elements: 1, content: content.to_vec(), indices_start: 1 }
+        Witness::from([[0u8; 0]])
     }
 
     #[test]
@@ -620,13 +616,7 @@ mod test {
         witness.push(push);
         assert!(!witness.is_empty());
 
-        let elements = [1u8, 11];
-        let expected = Witness {
-            witness_elements: 1,
-            content: append_u32_vec(&elements, &[0]), // Start at index 0.
-            indices_start: elements.len(),
-        };
-        assert_eq!(witness, expected);
+        assert_eq!(witness, [[11_u8]]);
 
         let element_0 = push.as_slice();
         assert_eq!(element_0, &witness[0]);
@@ -643,13 +633,7 @@ mod test {
         let push = [21u8, 22u8];
         witness.push(push);
 
-        let elements = [1u8, 11, 2, 21, 22];
-        let expected = Witness {
-            witness_elements: 2,
-            content: append_u32_vec(&elements, &[0, 2]),
-            indices_start: elements.len(),
-        };
-        assert_eq!(witness, expected);
+        assert_eq!(witness, [&[11_u8] as &[_], &[21, 22]]);
 
         let element_1 = push.as_slice();
         assert_eq!(element_1, &witness[1]);
@@ -666,13 +650,7 @@ mod test {
         let push = [31u8, 32u8];
         witness.push(push);
 
-        let elements = [1u8, 11, 2, 21, 22, 2, 31, 32];
-        let expected = Witness {
-            witness_elements: 3,
-            content: append_u32_vec(&elements, &[0, 2, 5]),
-            indices_start: elements.len(),
-        };
-        assert_eq!(witness, expected);
+        assert_eq!(witness, [&[11_u8] as &[_], &[21, 22], &[31, 32]]);
 
         let element_2 = push.as_slice();
         assert_eq!(element_2, &witness[2]);
