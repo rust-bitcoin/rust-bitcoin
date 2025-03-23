@@ -410,6 +410,46 @@ impl From<Vec<&[u8]>> for Witness {
     fn from(vec: Vec<&[u8]>) -> Self { Witness::from_slice(&vec) }
 }
 
+impl<const N: usize> From<[&[u8]; N]> for Witness {
+    #[inline]
+    fn from(arr: [&[u8]; N]) -> Self { Witness::from_slice(&arr) }
+}
+
+impl<const N: usize> From<&[&[u8]; N]> for Witness {
+    #[inline]
+    fn from(arr: &[&[u8]; N]) -> Self { Witness::from_slice(arr) }
+}
+
+impl<const N: usize> From<&[[u8; N]]> for Witness {
+    #[inline]
+    fn from(slice: &[[u8; N]]) -> Self { Witness::from_slice(slice) }
+}
+
+impl<const N: usize> From<&[&[u8; N]]> for Witness {
+    #[inline]
+    fn from(slice: &[&[u8; N]]) -> Self { Witness::from_slice(slice) }
+}
+
+impl<const N: usize, const M: usize> From<[[u8; M]; N]> for Witness {
+    #[inline]
+    fn from(slice: [[u8; M]; N]) -> Self { Witness::from_slice(&slice) }
+}
+
+impl<const N: usize, const M: usize> From<&[[u8; M]; N]> for Witness {
+    #[inline]
+    fn from(slice: &[[u8; M]; N]) -> Self { Witness::from_slice(slice) }
+}
+
+impl<const N: usize, const M: usize> From<[&[u8; M]; N]> for Witness {
+    #[inline]
+    fn from(slice: [&[u8; M]; N]) -> Self { Witness::from_slice(&slice) }
+}
+
+impl<const N: usize, const M: usize> From<&[&[u8; M]; N]> for Witness {
+    #[inline]
+    fn from(slice: &[&[u8; M]; N]) -> Self { Witness::from_slice(slice) }
+}
+
 impl Default for Witness {
     #[inline]
     fn default() -> Self { Self::new() }
