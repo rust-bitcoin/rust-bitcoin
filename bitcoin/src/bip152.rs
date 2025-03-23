@@ -10,7 +10,8 @@ use core::{convert, fmt, mem};
 use std::error;
 
 use hashes::{sha256, siphash24};
-use internals::{ToU64 as _, array::ArrayExt as _};
+use internals::array::ArrayExt as _;
+use internals::ToU64 as _;
 use io::{BufRead, Write};
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, WriteExt};

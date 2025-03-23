@@ -11,8 +11,8 @@ use core::ops::Index;
 use arbitrary::{Arbitrary, Unstructured};
 use hex::DisplayHex;
 use internals::compact_size;
-use internals::wrap_debug::WrapDebug;
 use internals::slice::SliceExt;
+use internals::wrap_debug::WrapDebug;
 
 use crate::prelude::Vec;
 

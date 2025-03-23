@@ -42,7 +42,8 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hashes::{sha256d, siphash24, HashEngine as _};
-use internals::{write_err, ToU64 as _, array::ArrayExt as _};
+use internals::array::ArrayExt as _;
+use internals::{write_err, ToU64 as _};
 use io::{BufRead, Write};
 
 use crate::block::{Block, BlockHash, Checked};

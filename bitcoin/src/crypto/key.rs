@@ -527,11 +527,7 @@ impl PrivateKey {
             }
         };
 
-        Ok(PrivateKey {
-            compressed,
-            network,
-            inner: secp256k1::SecretKey::from_byte_array(key)?,
-        })
+        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_byte_array(key)? })
     }
 }
 
