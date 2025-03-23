@@ -387,14 +387,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness_vec = vec![tapscript.clone(), control_block.clone()];
-        let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+        let witness = Witness::from([&*tapscript, &control_block]);
+        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
@@ -409,14 +403,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness_vec = vec![tapscript.clone(), control_block.clone()];
-        let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+        let witness = Witness::from([&*tapscript, &control_block]);
+        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
 
         let expected_leaf_script =
             LeafScript { version: LeafVersion::TapScript, script: Script::from_bytes(&tapscript) };
@@ -432,14 +420,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness_vec = vec![signature.clone()];
-        let witness_vec_annex = vec![signature.clone(), annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+        let witness = Witness::from([&*signature]);
+        let witness_annex = Witness::from([&*signature, &annex]);
 
         // With or without annex, no tapscript should be returned.
         assert_eq!(witness.tapscript(), None);
@@ -454,18 +436,9 @@ mod test {
         let annex = hex!("50");
         let signature = vec![0xff; 64];
 
-        let witness_vec = vec![tapscript.clone(), control_block.clone()];
-        let witness_vec_annex = vec![tapscript.clone(), control_block.clone(), annex.clone()];
-        let witness_vec_key_spend_annex = vec![signature, annex];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-        let witness_serialized_key_spend_annex: Vec<u8> = serialize(&witness_vec_key_spend_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
-        let witness_key_spend_annex =
-            deserialize::<Witness>(&witness_serialized_key_spend_annex[..]).unwrap();
+        let witness = Witness::from([&*tapscript, &control_block]);
+        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
+        let witness_key_spend_annex = Witness::from([&*signature, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_control_block(), Some(&control_block[..]));
@@ -480,14 +453,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness_vec = vec![tapscript.clone(), control_block.clone()];
-        let witness_vec_annex = vec![tapscript.clone(), control_block.clone(), annex.clone()];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+        let witness = Witness::from([&*tapscript, &control_block]);
+        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_annex(), None);
@@ -498,14 +465,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness_vec = vec![signature.clone()];
-        let witness_vec_annex = vec![signature.clone(), annex.clone()];
-
-        let witness_serialized: Vec<u8> = serialize(&witness_vec);
-        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
-
-        let witness = deserialize::<Witness>(&witness_serialized[..]).unwrap();
-        let witness_annex = deserialize::<Witness>(&witness_serialized_annex[..]).unwrap();
+        let witness = Witness::from([&*signature]);
+        let witness_annex = Witness::from([&*signature, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_annex(), None);
