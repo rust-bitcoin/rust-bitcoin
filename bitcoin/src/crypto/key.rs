@@ -26,6 +26,7 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
+pub use serialized_x_only::SerializedXOnlyPublicKey;
 
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
@@ -1207,6 +1208,63 @@ impl fmt::Display for InvalidWifCompressionFlagError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidWifCompressionFlagError {}
+
+mod serialized_x_only {
+    internals::transparent_newtype! {
+        /// An array of bytes that's semantically an x-only public but was **not** validated.
+        ///
+        /// This can be useful when validation is not desired but semantics of the bytes should be
+        /// preserved. The validation can still happen using `to_validated()` method.
+        #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+        pub struct SerializedXOnlyPublicKey([u8; 32]);
+
+        impl SerializedXOnlyPublicKey {
+            pub(crate) fn from_bytes_ref(bytes: &_) -> Self;
+        }
+    }
+
+    impl SerializedXOnlyPublicKey {
+        /// Marks the supplied bytes as a serialized x-only public key.
+        pub const fn from_byte_array(bytes: [u8; 32]) -> Self {
+            Self(bytes)
+        }
+
+        /// Returns the raw bytes.
+        pub const fn to_byte_array(self) -> [u8; 32] {
+            self.0
+        }
+
+        /// Returns a reference to the raw bytes.
+        pub const fn as_byte_array(&self) -> &[u8; 32] {
+            &self.0
+        }
+    }
+}
+
+impl SerializedXOnlyPublicKey {
+    /// Returns `XOnlyPublicKey` if the bytes are valid.
+    pub fn to_validated(self) -> Result<XOnlyPublicKey, secp256k1::Error> {
+        XOnlyPublicKey::from_byte_array(self.as_byte_array())
+    }
+}
+
+impl AsRef<[u8; 32]> for SerializedXOnlyPublicKey {
+    fn as_ref(&self) -> &[u8; 32] {
+        self.as_byte_array()
+    }
+}
+
+impl From<&SerializedXOnlyPublicKey> for SerializedXOnlyPublicKey {
+    fn from(borrowed: &SerializedXOnlyPublicKey) -> Self {
+        *borrowed
+    }
+}
+
+impl fmt::Debug for SerializedXOnlyPublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.as_byte_array().as_hex(), f)
+    }
+}
 
 #[cfg(test)]
 mod tests {
