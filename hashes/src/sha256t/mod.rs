@@ -45,13 +45,13 @@ pub trait Tag {
 
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
-pub struct Hash<T>([u8; 32], PhantomData<T>);
+pub struct Hash<T>(PhantomData<T>, [u8; 32]);
 
 impl<T> Hash<T>
 where
     T: Tag,
 {
-    const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
+    const fn internal_new(arr: [u8; 32]) -> Self { Hash(PhantomData, arr) }
 
     /// Constructs a new hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
@@ -117,10 +117,10 @@ where
     }
 
     /// Returns the underlying byte array.
-    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; 32] { self.1 }
 
     /// Returns a reference to the underlying byte array.
-    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.1 }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
