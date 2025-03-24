@@ -1,34 +1,25 @@
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(feature = "alloc")]
-use alloc::boxed::Box;
-
 use internals::rust_version;
 
-/// A bridging wrapper providing the I/O traits for types that already implement `std` I/O traits.
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct FromStd<T>(T);
+internals::transparent_newtype! {
+    /// A bridging wrapper providing the I/O traits for types that already implement `std` I/O traits.
+    #[derive(Debug)]
+    pub struct FromStd<T>(T);
+
+    impl<T> FromStd<T> {
+        /// Wraps a mutable reference to I/O type.
+        pub fn new_mut(inner: &mut _) -> &mut Self;
+
+        /// Wraps a boxed I/O type.
+        pub fn new_boxed(inner: Box<_>) -> Box<Self>;
+    }
+}
 
 impl<T> FromStd<T> {
     /// Wraps an I/O type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
-
-    /// Wraps a mutable reference to I/O type.
-    #[inline]
-    pub fn new_mut(inner: &mut T) -> &mut Self {
-        // SAFETY: the type is repr(transparent) and the lifetimes match
-        unsafe { &mut *(inner as *mut _ as *mut Self) }
-    }
-
-    /// Wraps a boxed I/O type.
-    #[cfg(feature = "alloc")]
-    #[inline]
-    pub fn new_boxed(inner: Box<T>) -> Box<Self> {
-        // SAFETY: the type is repr(transparent) and the pointer is created from Box
-        unsafe { Box::from_raw(Box::into_raw(inner) as *mut Self) }
-    }
 
     /// Returns the wrapped value.
     #[inline]
@@ -117,30 +108,24 @@ impl<T: std::io::Write> std::io::Write for FromStd<T> {
     fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> { self.0.write_all(buf) }
 }
 
-/// A bridging wrapper providing the std traits for types that already implement our traits.
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ToStd<T>(T);
+internals::transparent_newtype! {
+    /// A bridging wrapper providing the std traits for types that already implement our traits.
+    #[derive(Debug)]
+    pub struct ToStd<T>(T);
+
+    impl<T> ToStd<T> {
+        /// Wraps a mutable reference to I/O type.
+        pub fn new_mut(inner: &mut _) -> &mut Self;
+
+        /// Wraps a boxed I/O type.
+        pub fn new_boxed(inner: Box<_>) -> Box<Self>;
+    }
+}
 
 impl<T> ToStd<T> {
     /// Wraps an I/O type.
     #[inline]
     pub const fn new(inner: T) -> Self { Self(inner) }
-
-    /// Wraps a mutable reference to I/O type.
-    #[inline]
-    pub fn new_mut(inner: &mut T) -> &mut Self {
-        // SAFETY: the type is repr(transparent) and the lifetimes match
-        unsafe { &mut *(inner as *mut _ as *mut Self) }
-    }
-
-    /// Wraps a boxed I/O type.
-    #[cfg(feature = "alloc")]
-    #[inline]
-    pub fn new_boxed(inner: Box<T>) -> Box<Self> {
-        // SAFETY: the type is repr(transparent) and the pointer is created from Box
-        unsafe { Box::from_raw(Box::into_raw(inner) as *mut Self) }
-    }
 
     /// Returns the wrapped value.
     #[inline]

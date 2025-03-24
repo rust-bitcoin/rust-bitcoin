@@ -35,33 +35,29 @@ mod primitive {
         }
     }
 
-    /// Byte slices that can be in Bitcoin script.
-    ///
-    /// The encoding of Bitcoin script restricts data pushes to be less than 2^32 bytes long.
-    /// This type represents slices that are guaranteed to be within the limit so they can be put in
-    /// the script safely.
-    #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-    #[repr(transparent)]
-    pub struct PushBytes([u8]);
+    internals::transparent_newtype! {
+        /// Byte slices that can be in Bitcoin script.
+        ///
+        /// The encoding of Bitcoin script restricts data pushes to be less than 2^32 bytes long.
+        /// This type represents slices that are guaranteed to be within the limit so they can be put in
+        /// the script safely.
+        #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+        pub struct PushBytes([u8]);
+
+        impl PushBytes {
+            /// Constructs a new `&PushBytes` without checking the length.
+            ///
+            /// The caller is responsible for checking that the length is less than the 2^32.
+            fn from_slice_unchecked(bytes: &_) -> &Self;
+
+            /// Constructs a new `&mut PushBytes` without checking the length.
+            ///
+            /// The caller is responsible for checking that the length is less than the 2^32.
+            fn from_mut_slice_unchecked(bytes: &mut _) -> &mut Self;
+        }
+    }
 
     impl PushBytes {
-        /// Constructs a new `&PushBytes` without checking the length.
-        ///
-        /// The caller is responsible for checking that the length is less than the 2^32.
-        fn from_slice_unchecked(bytes: &[u8]) -> &Self {
-            // SAFETY: The conversion is sound because &[u8] and &PushBytes
-            // have the same layout (because of #[repr(transparent)] on PushBytes).
-            unsafe { &*(bytes as *const [u8] as *const PushBytes) }
-        }
-
-        /// Constructs a new `&mut PushBytes` without checking the length.
-        ///
-        /// The caller is responsible for checking that the length is less than the 2^32.
-        fn from_mut_slice_unchecked(bytes: &mut [u8]) -> &mut Self {
-            // SAFETY: The conversion is sound because &mut [u8] and &mut PushBytes
-            // have the same layout (because of #[repr(transparent)] on PushBytes).
-            unsafe { &mut *(bytes as *mut [u8] as *mut PushBytes) }
-        }
 
         /// Constructs an empty `&PushBytes`.
         pub fn empty() -> &'static Self { Self::from_slice_unchecked(&[]) }

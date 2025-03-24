@@ -277,24 +277,14 @@ impl<'a> From<&'a Script> for Cow<'a, Script> {
 impl<'a> From<&'a Script> for Arc<Script> {
     #[inline]
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Arc::into_raw(Arc::from(value.as_bytes()));
-        // SAFETY: copied from `std`
-        // The pointer was just created from an Arc without deallocating
-        // Casting a slice to a transparent struct wrapping that slice is sound (same
-        // layout).
-        unsafe { Arc::from_raw(rw as *const Script) }
+        Script::from_arc_bytes(Arc::from(value.as_bytes()))
     }
 }
 
 impl<'a> From<&'a Script> for Rc<Script> {
     #[inline]
     fn from(value: &'a Script) -> Self {
-        let rw: *const [u8] = Rc::into_raw(Rc::from(value.as_bytes()));
-        // SAFETY: copied from `std`
-        // The pointer was just created from an Rc without deallocating
-        // Casting a slice to a transparent struct wrapping that slice is sound (same
-        // layout).
-        unsafe { Rc::from_raw(rw as *const Script) }
+        Script::from_rc_bytes(Rc::from(value.as_bytes()))
     }
 }
 

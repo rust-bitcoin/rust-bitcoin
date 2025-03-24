@@ -308,96 +308,101 @@ pub enum AddressData {
     },
 }
 
-/// A Bitcoin address.
-///
-/// ### Parsing addresses
-///
-/// When parsing string as an address, one has to pay attention to the network, on which the parsed
-/// address is supposed to be valid. For the purpose of this validation, `Address` has
-/// [`is_valid_for_network`](Address<NetworkUnchecked>::is_valid_for_network) method. In order to provide more safety,
-/// enforced by compiler, `Address` also contains a special marker type, which indicates whether network of the parsed
-/// address has been checked. This marker type will prevent from calling certain functions unless the network
-/// verification has been successfully completed.
-///
-/// The result of parsing an address is `Address<NetworkUnchecked>` suggesting that network of the parsed address
-/// has not yet been verified. To perform this verification, method [`require_network`](Address<NetworkUnchecked>::require_network)
-/// can be called, providing network on which the address is supposed to be valid. If the verification succeeds,
-/// `Address<NetworkChecked>` is returned.
-///
-/// The types `Address` and `Address<NetworkChecked>` are synonymous, i. e. they can be used interchangeably.
-///
-/// ```rust
-/// use std::str::FromStr;
-/// use bitcoin::{Address, Network};
-/// use bitcoin::address::{NetworkUnchecked, NetworkChecked};
-///
-/// // variant 1
-/// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-/// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
-///
-/// // variant 2
-/// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
-///                .require_network(Network::Bitcoin).unwrap();
-///
-/// // variant 3
-/// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
-///                .unwrap().require_network(Network::Bitcoin).unwrap();
-/// ```
-///
-/// ### Formatting addresses
-///
-/// To format address into its textual representation, both `Debug` (for usage in programmer-facing,
-/// debugging context) and `Display` (for user-facing output) can be used, with the following caveats:
-///
-/// 1. `Display` is implemented only for `Address<NetworkChecked>`:
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap().assume_checked();
-/// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
-///
-/// ```ignore
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap();
-/// let s = address.to_string(); // does not compile
-/// ```
-///
-/// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
-///    an indicator that its network has not been checked. This is to encourage programmer to properly
-///    check the network and use `Display` in user-facing context.
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkUnchecked};
-/// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap();
-/// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
-/// ```
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap().assume_checked();
-/// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
-///
-/// ### Relevant BIPs
-///
-/// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
-/// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
-/// * [BIP141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-/// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
-/// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
-/// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-// The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
-// is an implementation detail and users should not rely on it in their code.
-#[repr(transparent)]
-pub struct Address<V = NetworkChecked>(PhantomData<V>, AddressInner)
-where
-    V: NetworkValidation;
+internals::transparent_newtype! {
+    /// A Bitcoin address.
+    ///
+    /// ### Parsing addresses
+    ///
+    /// When parsing string as an address, one has to pay attention to the network, on which the parsed
+    /// address is supposed to be valid. For the purpose of this validation, `Address` has
+    /// [`is_valid_for_network`](Address<NetworkUnchecked>::is_valid_for_network) method. In order to provide more safety,
+    /// enforced by compiler, `Address` also contains a special marker type, which indicates whether network of the parsed
+    /// address has been checked. This marker type will prevent from calling certain functions unless the network
+    /// verification has been successfully completed.
+    ///
+    /// The result of parsing an address is `Address<NetworkUnchecked>` suggesting that network of the parsed address
+    /// has not yet been verified. To perform this verification, method [`require_network`](Address<NetworkUnchecked>::require_network)
+    /// can be called, providing network on which the address is supposed to be valid. If the verification succeeds,
+    /// `Address<NetworkChecked>` is returned.
+    ///
+    /// The types `Address` and `Address<NetworkChecked>` are synonymous, i. e. they can be used interchangeably.
+    ///
+    /// ```rust
+    /// use std::str::FromStr;
+    /// use bitcoin::{Address, Network};
+    /// use bitcoin::address::{NetworkUnchecked, NetworkChecked};
+    ///
+    /// // variant 1
+    /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
+    /// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
+    ///
+    /// // variant 2
+    /// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
+    ///                .require_network(Network::Bitcoin).unwrap();
+    ///
+    /// // variant 3
+    /// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
+    ///                .unwrap().require_network(Network::Bitcoin).unwrap();
+    /// ```
+    ///
+    /// ### Formatting addresses
+    ///
+    /// To format address into its textual representation, both `Debug` (for usage in programmer-facing,
+    /// debugging context) and `Display` (for user-facing output) can be used, with the following caveats:
+    ///
+    /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap().assume_checked();
+    /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// ```
+    ///
+    /// ```ignore
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap();
+    /// let s = address.to_string(); // does not compile
+    /// ```
+    ///
+    /// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
+    ///    an indicator that its network has not been checked. This is to encourage programmer to properly
+    ///    check the network and use `Display` in user-facing context.
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkUnchecked};
+    /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap();
+    /// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
+    /// ```
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap().assume_checked();
+    /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// ```
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
+    /// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
+    /// * [BIP141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
+    /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
+    /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
+    #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    // The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
+    // is an implementation detail and users should not rely on it in their code.
+    pub struct Address<V = NetworkChecked>(PhantomData<V>, AddressInner)
+    where
+        V: NetworkValidation;
+
+    impl<V> Address<V> {
+        fn from_inner_ref(inner: &_) -> &Self;
+    }
+}
 
 #[cfg(feature = "serde")]
 struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
@@ -468,7 +473,7 @@ impl<V: NetworkValidation> Address<V> {
 
     /// Returns a reference to the address as if it was unchecked.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
-        unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
+        Address::from_inner_ref(self.inner())
     }
 
     /// Marks the network of this address as unchecked.
@@ -803,7 +808,7 @@ impl Address<NetworkUnchecked> {
     ///
     /// This function is dangerous in case the address is not a valid checked address.
     pub fn assume_checked_ref(&self) -> &Address {
-        unsafe { &*(self as *const Address<NetworkUnchecked> as *const Address) }
+        Address::from_inner_ref(self.inner())
     }
 
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,

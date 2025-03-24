@@ -117,10 +117,21 @@ pub(crate) use general_hash_type;
 
 macro_rules! hash_type_no_default {
     ($bits:expr, $reverse:expr, $doc:literal) => {
-        #[doc = $doc]
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        #[repr(transparent)]
-        pub struct Hash([u8; $bits / 8]);
+        internals::transparent_newtype! {
+            #[doc = $doc]
+            #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+            pub struct Hash([u8; $bits / 8]);
+
+            impl Hash {
+                /// Zero cost conversion between a fixed length byte array shared reference and
+                /// a shared reference to this Hash type.
+                pub fn from_bytes_ref(bytes: &_) -> &Self;
+
+                /// Zero cost conversion between a fixed length byte array exclusive reference and
+                /// an exclusive reference to this Hash type.
+                pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
+            }
+        }
 
         impl Hash {
             const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
@@ -128,20 +139,6 @@ macro_rules! hash_type_no_default {
             /// Constructs a new hash from the underlying byte array.
             pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
                 Self::internal_new(bytes)
-            }
-
-            /// Zero cost conversion between a fixed length byte array shared reference and
-            /// a shared reference to this Hash type.
-            pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
-                unsafe { &*(bytes as *const _ as *const Self) }
-            }
-
-            /// Zero cost conversion between a fixed length byte array exclusive reference and
-            /// an exclusive reference to this Hash type.
-            pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
-                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
-                unsafe { &mut *(bytes as *mut _ as *mut Self) }
             }
 
             /// Copies a byte slice into a hash object.

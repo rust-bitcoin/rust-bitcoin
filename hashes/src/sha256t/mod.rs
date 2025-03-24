@@ -43,9 +43,20 @@ pub trait Tag {
     const MIDSTATE: sha256::Midstate;
 }
 
-/// Output of the SHA256t hash function.
-#[repr(transparent)]
-pub struct Hash<T>(PhantomData<T>, [u8; 32]);
+internals::transparent_newtype! {
+    /// Output of the SHA256t hash function.
+    pub struct Hash<T>(PhantomData<T>, [u8; 32]);
+
+    impl<T> Hash<T> {
+        /// Zero cost conversion between a fixed length byte array shared reference and
+        /// a shared reference to this Hash type.
+        pub fn from_bytes_ref(bytes: &_) -> &Self;
+
+        /// Zero cost conversion between a fixed length byte array exclusive reference and
+        /// an exclusive reference to this Hash type.
+        pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
+    }
+}
 
 impl<T> Hash<T>
 where
@@ -55,20 +66,6 @@ where
 
     /// Constructs a new hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
-
-    /// Zero cost conversion between a fixed length byte array shared reference and
-    /// a shared reference to this Hash type.
-    pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
-        unsafe { &*(bytes as *const _ as *const Self) }
-    }
-
-    /// Zero cost conversion between a fixed length byte array exclusive reference and
-    /// an exclusive reference to this Hash type.
-    pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
-        unsafe { &mut *(bytes as *mut _ as *mut Self) }
-    }
 
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
