@@ -395,7 +395,7 @@ pub enum AddressData {
 // The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
 // is an implementation detail and users should not rely on it in their code.
 #[repr(transparent)]
-pub struct Address<V = NetworkChecked>(AddressInner, PhantomData<V>)
+pub struct Address<V = NetworkChecked>(PhantomData<V>, AddressInner)
 where
     V: NetworkValidation;
 
@@ -455,15 +455,15 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
     fn from_inner(inner: AddressInner) -> Self {
-        Address(inner, PhantomData)
+        Address(PhantomData, inner)
     }
 
     fn into_inner(self) -> AddressInner {
-        self.0
+        self.1
     }
 
     fn inner(&self) -> &AddressInner {
-        &self.0
+        &self.1
     }
 
     /// Returns a reference to the address as if it was unchecked.
