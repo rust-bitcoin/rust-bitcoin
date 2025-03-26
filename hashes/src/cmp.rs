@@ -15,41 +15,50 @@
 /// As of rust 1.31.0 disassembly looks completely within reason for this, see
 /// <https://godbolt.org/z/mMbGQv>.
 pub fn fixed_time_eq(a: &[u8], b: &[u8]) -> bool {
-    assert!(a.len() == b.len());
-    let count = a.len();
-    let lhs = &a[..count];
-    let rhs = &b[..count];
+    #[cfg(hashes_fuzz)]
+    {
+        // Fuzzers want to break memcmp calls into separate comparisons for coverage monitoring,
+        // so we avoid our fancy fixed-time comparison below for fuzzers.
+        a == b
+    }
+    #[cfg(not(hashes_fuzz))]
+    {
+        assert!(a.len() == b.len());
+        let count = a.len();
+        let lhs = &a[..count];
+        let rhs = &b[..count];
 
-    let mut r: u8 = 0;
-    for i in 0..count {
-        let mut rs = unsafe { core::ptr::read_volatile(&r) };
-        rs |= lhs[i] ^ rhs[i];
-        unsafe {
-            core::ptr::write_volatile(&mut r, rs);
+        let mut r: u8 = 0;
+        for i in 0..count {
+            let mut rs = unsafe { core::ptr::read_volatile(&r) };
+            rs |= lhs[i] ^ rhs[i];
+            unsafe {
+                core::ptr::write_volatile(&mut r, rs);
+            }
         }
-    }
-    {
-        let mut t = unsafe { core::ptr::read_volatile(&r) };
-        t |= t >> 4;
-        unsafe {
-            core::ptr::write_volatile(&mut r, t);
+        {
+            let mut t = unsafe { core::ptr::read_volatile(&r) };
+            t |= t >> 4;
+            unsafe {
+                core::ptr::write_volatile(&mut r, t);
+            }
         }
-    }
-    {
-        let mut t = unsafe { core::ptr::read_volatile(&r) };
-        t |= t >> 2;
-        unsafe {
-            core::ptr::write_volatile(&mut r, t);
+        {
+            let mut t = unsafe { core::ptr::read_volatile(&r) };
+            t |= t >> 2;
+            unsafe {
+                core::ptr::write_volatile(&mut r, t);
+            }
         }
-    }
-    {
-        let mut t = unsafe { core::ptr::read_volatile(&r) };
-        t |= t >> 1;
-        unsafe {
-            core::ptr::write_volatile(&mut r, t);
+        {
+            let mut t = unsafe { core::ptr::read_volatile(&r) };
+            t |= t >> 1;
+            unsafe {
+                core::ptr::write_volatile(&mut r, t);
+            }
         }
+        unsafe { (::core::ptr::read_volatile(&r) & 1) == 0 }
     }
-    unsafe { (::core::ptr::read_volatile(&r) & 1) == 0 }
 }
 
 #[cfg(test)]
