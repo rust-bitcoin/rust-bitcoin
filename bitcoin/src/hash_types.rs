@@ -6,9 +6,11 @@
 
 #[deprecated(since = "TBD", note = "use `crate::T` instead")]
 pub use crate::{
-    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode,
+    BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode,
     Wtxid,
 };
+#[deprecated(since = "TBD", note = "use `crate::T` instead")]
+pub use crate::bip158::{FilterHash, FilterHeader};
 
 #[cfg(test)]
 mod tests {
