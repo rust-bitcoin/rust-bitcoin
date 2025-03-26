@@ -14,10 +14,9 @@ use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
 use internals::array::ArrayExt;
-use internals::{impl_to_hex_from_lower_hex, write_err};
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
-
+use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
@@ -31,9 +30,9 @@ use crate::{Script, ScriptBuf};
 #[doc(inline)]
 pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 #[doc(inline)]
-pub use merkle_branch::TaprootMerkleBranchBuf;
-#[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranch;
+#[doc(inline)]
+pub use merkle_branch::TaprootMerkleBranchBuf;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
@@ -1141,7 +1140,10 @@ impl<'leaf> ScriptLeaf<'leaf> {
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ControlBlock<Branch = TaprootMerkleBranchBuf> where Branch: ?Sized {
+pub struct ControlBlock<Branch = TaprootMerkleBranchBuf>
+where
+    Branch: ?Sized,
+{
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
@@ -1166,7 +1168,8 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
     pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
-        let (base, merkle_branch) = sl.split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
+        let (base, merkle_branch) = sl
+            .split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
             .ok_or(InvalidControlBlockSizeError(sl.len()))?;
 
         let (&first, internal_key) = base.split_first();
@@ -1206,7 +1209,8 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         self.encode_inner(|bytes| -> Result<(), core::convert::Infallible> {
             result.extend_from_slice(bytes);
             Ok(())
-        }).unwrap_or_else(|never| match never {});
+        })
+        .unwrap_or_else(|never| match never {});
         result
     }
 

@@ -903,7 +903,8 @@ impl Address<NetworkUnchecked> {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
         let data = base58::decode_check(s)?;
-        let data: &[u8; 21] = (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
+        let data: &[u8; 21] =
+            (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
 
         let (prefix, &data) = data.split_first();
 

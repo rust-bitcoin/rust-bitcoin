@@ -1,12 +1,13 @@
 //! Contains `TaprootMerkleBranchBuf` and its associated types.
 
-mod buf;
 mod borrowed;
-
-pub use buf::TaprootMerkleBranchBuf;
-pub use borrowed::TaprootMerkleBranch;
+mod buf;
 
 use core::fmt;
+
+pub use borrowed::TaprootMerkleBranch;
+pub use buf::TaprootMerkleBranchBuf;
+
 use super::{
     InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash, TaprootError,
     TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
@@ -28,27 +29,30 @@ pub struct DecodeError {
 }
 
 impl From<InvalidMerkleBranchSizeError> for DecodeError {
-    fn from(value: InvalidMerkleBranchSizeError) -> Self {
-        Self {
-            num_bytes: value.0,
-        }
-    }
+    fn from(value: InvalidMerkleBranchSizeError) -> Self { Self { num_bytes: value.0 } }
 }
 
 impl From<InvalidMerkleTreeDepthError> for DecodeError {
     fn from(value: InvalidMerkleTreeDepthError) -> Self {
-        Self {
-            num_bytes: value.0 * TAPROOT_CONTROL_NODE_SIZE,
-        }
+        Self { num_bytes: value.0 * TAPROOT_CONTROL_NODE_SIZE }
     }
 }
 
 impl fmt::Display for DecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.num_bytes % TAPROOT_CONTROL_NODE_SIZE == 0 {
-            write!(f, "the Merkle branch has {} nodes which is more than the limit {}", self.num_bytes / TAPROOT_CONTROL_NODE_SIZE, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            write!(
+                f,
+                "the Merkle branch has {} nodes which is more than the limit {}",
+                self.num_bytes / TAPROOT_CONTROL_NODE_SIZE,
+                TAPROOT_CONTROL_MAX_NODE_COUNT
+            )
         } else {
-            write!(f, "the Merkle branch is {} bytes long which is not an integer multiple of {}", self.num_bytes, TAPROOT_CONTROL_NODE_SIZE)
+            write!(
+                f,
+                "the Merkle branch is {} bytes long which is not an integer multiple of {}",
+                self.num_bytes, TAPROOT_CONTROL_NODE_SIZE
+            )
         }
     }
 }

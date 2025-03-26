@@ -113,7 +113,8 @@ pub fn decode(data: &str) -> Result<Vec<u8>, InvalidCharacterError> {
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
-    let (remaining, &data_check) = ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
+    let (remaining, &data_check) =
+        ret.split_last_chunk::<4>().ok_or(TooShortError { length: ret.len() })?;
 
     let hash_check = *sha256d::Hash::hash(remaining).as_byte_array().sub_array::<0, 4>();
 
@@ -250,8 +251,7 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-
-    use hex::test_hex_unwrap as hex;
+    use hex::FromHex as _;
 
     use super::*;
 
@@ -280,7 +280,7 @@ mod tests {
         assert_eq!(&res, exp);
 
         // Addresses
-        let addr = hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d");
+        let addr = Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
         assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
     }
 
@@ -299,7 +299,7 @@ mod tests {
         // Addresses
         assert_eq!(
             decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-            Some(hex!("00f8917303bfa8ef24f292e8fa1419b20460ba064d"))
+            Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap())
         );
         // Non Base58 char.
         assert_eq!(decode("¢").unwrap_err(), InvalidCharacterError::new(194));
