@@ -936,13 +936,13 @@ macro_rules! impl_hex {
     ($hex:path, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> core::fmt::Result {
-                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                hex_unstable::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(fmt::LowerHex, hex::Case::Lower);
-impl_hex!(fmt::UpperHex, hex::Case::Upper);
+impl_hex!(fmt::LowerHex, hex_unstable::Case::Lower);
+impl_hex!(fmt::UpperHex, hex_unstable::Case::Upper);
 
 #[cfg(feature = "serde")]
 impl crate::serde::Serialize for U256 {
@@ -968,8 +968,6 @@ impl crate::serde::Serialize for U256 {
 #[cfg(feature = "serde")]
 impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        use hex::FromHex;
-
         use crate::serde::de;
 
         if d.is_human_readable() {
@@ -990,7 +988,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
                         return Err(de::Error::invalid_length(s.len(), &self));
                     }
 
-                    let b = <[u8; 32]>::from_hex(s)
+                    let b = hex_stable::decode_array::<32>(s)
                         .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
 
                     Ok(U256::from_be_bytes(b))
@@ -1001,7 +999,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
                     E: de::Error,
                 {
                     if let Ok(hex) = core::str::from_utf8(v) {
-                        let b = <[u8; 32]>::from_hex(hex).map_err(|_| {
+                        let b = hex_stable::decode_array::<32>(hex).map_err(|_| {
                             de::Error::invalid_value(de::Unexpected::Str(hex), &self)
                         })?;
 

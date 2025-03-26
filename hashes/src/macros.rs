@@ -276,12 +276,10 @@ macro_rules! impl_bytelike_traits {
 macro_rules! impl_hex_string_traits {
     ($ty:ident, $len:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> $crate::_export::_core::str::FromStr for $ty<$($gen),*> {
-            type Err = $crate::hex::HexToArrayError;
+            type Err = $crate::hex_stable::DecodeToArrayError;
 
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<Self, Self::Err> {
-                use $crate::hex::FromHex;
-
-                let mut bytes = <[u8; { $len }]>::from_hex(s)?;
+                let mut bytes = $crate::hex_stable::decode_array::<{$len}>(s)?;
                 if $reverse {
                     bytes.reverse();
                 }
@@ -289,7 +287,7 @@ macro_rules! impl_hex_string_traits {
             }
         }
 
-        $crate::hex::impl_fmt_traits! {
+        $crate::hex_unstable::impl_fmt_traits! {
             #[display_backward($reverse)]
             impl<$($gen: $gent),*> fmt_traits for $ty<$($gen),*> {
                 const LENGTH: usize = ($len); // parens required due to rustc parser weirdness

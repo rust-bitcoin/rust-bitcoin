@@ -3,7 +3,6 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex::FromHex;
 use internals::ToU64 as _;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptExtPriv as _};
@@ -27,8 +26,8 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            let v = Vec::from_hex(s)?;
+        fn from_hex(s: &str) -> Result<ScriptBuf, hex_stable::DecodeToBytesError> {
+            let v = hex_stable::decode_vec(s)?;
             Ok(ScriptBuf::from_bytes(v))
         }
 

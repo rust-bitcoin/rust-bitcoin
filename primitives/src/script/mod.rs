@@ -10,7 +10,7 @@ use core::convert::Infallible;
 use core::fmt;
 
 use hashes::{hash160, sha256};
-use hex::DisplayHex;
+use hex_unstable::DisplayHex;
 use internals::script::{self, PushDataLenLen};
 
 #[allow(clippy::wildcard_imports)]
@@ -570,8 +570,6 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     {
         use core::fmt::Formatter;
 
-        use hex::FromHex;
-
         if deserializer.is_human_readable() {
             struct Visitor;
             impl serde::de::Visitor<'_> for Visitor {
@@ -585,7 +583,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
                 where
                     E: serde::de::Error,
                 {
-                    let v = Vec::from_hex(v).map_err(E::custom)?;
+                    let v = hex_stable::decode_vec(v).map_err(E::custom)?;
                     Ok(ScriptBuf::from(v))
                 }
             }

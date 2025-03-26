@@ -503,7 +503,7 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
     use internals::ToU64 as _;
 
     use super::*;

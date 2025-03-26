@@ -15,13 +15,14 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = []
-std = ["alloc", "hex?/std"]
-alloc = ["hex?/alloc"]
+std = ["alloc", "hex-unstable?/std"]
+alloc = ["hex-unstable?/alloc"]
+hex = ["hex-unstable"]
 
 test-serde = ["serde", "serde_json", "bincode"]
 
 [dependencies]
-hex = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
+hex-unstable = { package = "hex-conservative", version = "0.3.0", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, optional = true }
 
 # Don't enable these directly, use `test-serde` feature instead.

@@ -251,7 +251,7 @@ where
 mod tests {
     use alloc::vec;
 
-    use hex::test_hex_unwrap as hex;
+    use hex_unstable::test_hex_unwrap as hex;
 
     use super::*;
 
