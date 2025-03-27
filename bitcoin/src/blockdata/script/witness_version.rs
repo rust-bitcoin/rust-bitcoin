@@ -28,7 +28,7 @@ use crate::script::Instruction;
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u8)]
 pub enum WitnessVersion {
-    /// Initial version of witness program. Used for P2WPKH and P2WPK outputs
+    /// Initial version of witness program. Used for P2WPKH and P2WSH outputs
     V0 = 0,
     /// Version of witness program used for Taproot P2TR outputs.
     V1 = 1,
