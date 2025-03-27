@@ -27,20 +27,6 @@ codegen-units = 1 # better optimizations
 debug = true # symbols are nice and they don't increase the size on Flash
 lto = true # better optimizations
 
-[patch.crates-io.base58ck]
-path = "../../base58"
 
 [patch.crates-io.bitcoin_hashes]
 path = "../../hashes"
-
-[patch.crates-io.bitcoin-internals]
-path = "../../internals"
-
-[patch.crates-io.bitcoin-io]
-path = "../../io"
-
-[patch.crates-io.bitcoin-primitives]
-path = "../../primitives"
-
-[patch.crates-io.bitcoin-units]
-path = "../../units"
