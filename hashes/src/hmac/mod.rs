@@ -15,14 +15,23 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::{Hash, HashEngine};
 
 /// A hash computed from a RFC 2104 HMAC. Parameterized by the underlying hash function.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
+#[allow(clippy::derived_hash_with_manual_eq)]
 pub struct Hmac<T: Hash>(T);
 
 impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
     type Err = <T as str::FromStr>::Err;
     fn from_str(s: &str) -> Result<Self, Self::Err> { Ok(Hmac(str::FromStr::from_str(s)?)) }
 }
+
+impl<T: Hash> PartialEq for Hmac<T> {
+    fn eq(&self, other: &Self) -> bool {
+        crate::cmp::fixed_time_eq(self.as_ref(), other.as_ref())
+    }
+}
+
+impl<T: Hash> Eq for Hmac<T> {}
 
 /// Pair of underlying hash engines, used for the inner and outer hash of HMAC.
 #[derive(Debug, Clone)]
