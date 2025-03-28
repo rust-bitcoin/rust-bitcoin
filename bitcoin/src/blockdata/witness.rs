@@ -10,14 +10,14 @@ use io::{BufRead, Write};
 use crate::consensus::encode::{self, Error, ReadExt, WriteExt, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable};
 use crate::crypto::ecdsa;
+use crate::crypto::key::SerializedXOnlyPublicKey;
 use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
-use crate::taproot::{
-    self, ControlBlock, LeafScript, LeafVersion, TAPROOT_ANNEX_PREFIX, TAPROOT_CONTROL_BASE_SIZE,
-    TAPROOT_LEAF_MASK, TaprootMerkleBranch,
-};
+use crate::taproot::{self, ControlBlock, LeafScript, TAPROOT_ANNEX_PREFIX, TaprootMerkleBranch};
 use crate::Script;
+
+type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a SerializedXOnlyPublicKey>;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -176,9 +176,8 @@ crate::internal_macros::define_extension_trait! {
         /// version.
         fn taproot_leaf_script(&self) -> Option<LeafScript<&Script>> {
             match P2TrSpend::from_witness(self) {
-                Some(P2TrSpend::Script { leaf_script, control_block, .. }) if control_block.len() >= TAPROOT_CONTROL_BASE_SIZE => {
-                    let version = LeafVersion::from_consensus(control_block[0] & TAPROOT_LEAF_MASK).ok()?;
-                    Some(LeafScript { version, script: leaf_script, })
+                Some(P2TrSpend::Script { leaf_script, control_block, .. }) => {
+                    Some(LeafScript { version: control_block.leaf_version, script: leaf_script, })
                 },
                 _ => None,
             }
@@ -191,7 +190,7 @@ crate::internal_macros::define_extension_trait! {
         /// byte of the last element being equal to 0x50.
         ///
         /// See [`Script::is_p2tr`] to check whether this is actually a Taproot witness.
-        fn taproot_control_block(&self) -> Option<&[u8]> {
+        fn taproot_control_block(&self) -> Option<BorrowedControlBlock<'_>> {
             match P2TrSpend::from_witness(self) {
                 Some(P2TrSpend::Script { control_block, .. }) => Some(control_block),
                 _ => None,
@@ -236,7 +235,7 @@ enum P2TrSpend<'a> {
     },
     Script {
         leaf_script: &'a Script,
-        control_block: &'a [u8],
+        control_block: BorrowedControlBlock<'a>,
         annex: Option<&'a [u8]>,
     },
 }
@@ -275,17 +274,21 @@ impl<'a> P2TrSpend<'a> {
             //   last one does NOT start with TAPROOT_ANNEX_PREFIX. This is handled in the catchall
             //   arm.
             3.. if witness.last().expect("len > 0").starts_with(&[TAPROOT_ANNEX_PREFIX]) => {
+                let control_block = witness.get_back(1).expect("len > 1");
+                let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
                     leaf_script: Script::from_bytes(witness.get_back(2).expect("len > 2")),
-                    control_block: witness.get_back(1).expect("len > 1"),
+                    control_block,
                     annex: witness.last(),
                 };
                 Some(spend)
             }
             _ => {
+                let control_block = witness.last().expect("len > 0");
+                let control_block = BorrowedControlBlock::decode_borrowed(control_block).ok()?;
                 let spend = P2TrSpend::Script {
                     leaf_script: Script::from_bytes(witness.get_back(1).expect("len > 1")),
-                    control_block: witness.last().expect("len > 0"),
+                    control_block,
                     annex: None,
                 };
                 Some(spend)
@@ -324,6 +327,7 @@ mod test {
     use crate::consensus::{deserialize, encode, serialize};
     use crate::hex::DisplayHex;
     use crate::sighash::EcdsaSighashType;
+    use crate::taproot::LeafVersion;
     use crate::Transaction;
 
     #[test]
@@ -383,7 +387,7 @@ mod test {
     #[test]
     fn get_tapscript() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
@@ -431,7 +435,8 @@ mod test {
     #[test]
     fn get_control_block() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let expected_control_block = BorrowedControlBlock::decode_borrowed(&control_block).unwrap();
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
         let signature = vec![0xff; 64];
@@ -441,15 +446,15 @@ mod test {
         let witness_key_spend_annex = Witness::from([&*signature, &annex]);
 
         // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.taproot_control_block(), Some(&control_block[..]));
-        assert_eq!(witness_annex.taproot_control_block(), Some(&control_block[..]));
+        assert_eq!(witness.taproot_control_block().unwrap(), expected_control_block);
+        assert_eq!(witness_annex.taproot_control_block().unwrap(), expected_control_block);
         assert!(witness_key_spend_annex.taproot_control_block().is_none())
     }
 
     #[test]
     fn get_annex() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("02");
+        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 

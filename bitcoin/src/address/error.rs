@@ -158,7 +158,7 @@ pub struct NetworkValidationError {
 impl fmt::Display for NetworkValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "address ")?;
-        fmt::Display::fmt(&self.address.0, f)?;
+        fmt::Display::fmt(&self.address.inner(), f)?;
         write!(f, " is not valid on {}", self.required)
     }
 }

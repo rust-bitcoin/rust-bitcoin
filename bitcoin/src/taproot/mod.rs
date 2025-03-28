@@ -22,7 +22,7 @@ use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
-use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::crypto::key::{SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{Script, ScriptBuf};
 
@@ -1141,13 +1141,13 @@ impl<'leaf> ScriptLeaf<'leaf> {
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ControlBlock<Branch = TaprootMerkleBranchBuf> where Branch: ?Sized {
+pub struct ControlBlock<Branch = TaprootMerkleBranchBuf, Key = UntweakedPublicKey> where Branch: ?Sized {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
     pub output_key_parity: secp256k1::Parity,
     /// The internal key.
-    pub internal_key: UntweakedPublicKey,
+    pub internal_key: Key,
     /// The Merkle proof of a script associated with this leaf.
     pub merkle_branch: Branch,
 }
@@ -1166,6 +1166,24 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if Merkle tree is too deep (more than 128 levels).
     pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+        use alloc::borrow::ToOwned;
+
+        let ControlBlock {
+            leaf_version,
+            output_key_parity,
+            internal_key,
+            merkle_branch,
+        } = ControlBlock::<&TaprootMerkleBranch, &SerializedXOnlyPublicKey>::decode_borrowed(sl)?;
+
+        let internal_key = internal_key.to_validated().map_err(TaprootError::InvalidInternalKey)?;
+        let merkle_branch = merkle_branch.to_owned();
+
+        Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
+    }
+}
+
+impl<B, K> ControlBlock<B, K> {
+    pub(crate) fn decode_borrowed<'a>(sl: &'a [u8]) -> Result<Self, TaprootError> where B: From<&'a TaprootMerkleBranch>, K: From<&'a SerializedXOnlyPublicKey> {
         let (base, merkle_branch) = sl.split_first_chunk::<TAPROOT_CONTROL_BASE_SIZE>()
             .ok_or(InvalidControlBlockSizeError(sl.len()))?;
 
@@ -1177,9 +1195,8 @@ impl ControlBlock {
         };
 
         let leaf_version = LeafVersion::from_consensus(first & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_byte_array(internal_key)
-            .map_err(TaprootError::InvalidInternalKey)?;
-        let merkle_branch = TaprootMerkleBranchBuf::decode(merkle_branch)?;
+        let internal_key = SerializedXOnlyPublicKey::from_bytes_ref(internal_key).into();
+        let merkle_branch = TaprootMerkleBranch::decode(merkle_branch)?.into();
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 }

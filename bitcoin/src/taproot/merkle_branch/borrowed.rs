@@ -9,10 +9,16 @@ pub use privacy_boundary::TaprootMerkleBranch;
 mod privacy_boundary {
     use super::*;
 
-    /// The Merkle proof for inclusion of a tree in a Taproot tree hash.
-    #[repr(transparent)]
-    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct TaprootMerkleBranch([TapNodeHash]);
+    internals::transparent_newtype! {
+        /// The Merkle proof for inclusion of a tree in a Taproot tree hash.
+        #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub struct TaprootMerkleBranch([TapNodeHash]);
+
+        impl TaprootMerkleBranch {
+            pub(super) const fn from_hashes_unchecked(hashes: &_) -> &Self;
+            pub(super) fn from_mut_hashes_unchecked(hashes: &mut _) -> &mut Self;
+        }
+    }
 
     impl TaprootMerkleBranch {
         /// Returns a reference to the slice of hashes.
@@ -22,18 +28,6 @@ mod privacy_boundary {
         /// Returns a reference to the mutable slice of hashes.
         #[inline]
         pub fn as_mut_slice(&mut self) -> &mut [TapNodeHash] { &mut self.0 }
-
-        pub(super) const fn from_hashes_unchecked(hashes: &[TapNodeHash]) -> &Self {
-            unsafe {
-                &*(hashes as *const _ as *const Self)
-            }
-        }
-
-        pub(super) fn from_mut_hashes_unchecked(hashes: &mut [TapNodeHash]) -> &mut Self {
-            unsafe {
-                &mut *(hashes as *mut _ as *mut Self)
-            }
-        }
     }
 }
 

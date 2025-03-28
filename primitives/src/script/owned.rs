@@ -54,9 +54,7 @@ impl ScriptBuf {
     #[must_use]
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script> {
-        // Copied from PathBuf::into_boxed_path
-        let rw = Box::into_raw(self.into_bytes().into_boxed_slice()) as *mut Script;
-        unsafe { Box::from_raw(rw) }
+        Script::from_boxed_bytes(self.into_bytes().into_boxed_slice())
     }
 
     /// Constructs a new empty script with pre-allocated capacity.

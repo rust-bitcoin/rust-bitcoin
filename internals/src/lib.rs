@@ -35,6 +35,12 @@ pub mod rust_version {
     include!(concat!(env!("OUT_DIR"), "/rust_version.rs"));
 }
 
+#[doc(hidden)]
+pub mod _export {
+    #[cfg(feature = "alloc")]
+    pub extern crate alloc;
+}
+
 pub mod array;
 pub mod array_vec;
 pub mod compact_size;

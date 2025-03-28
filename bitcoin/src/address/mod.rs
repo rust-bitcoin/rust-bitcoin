@@ -308,103 +308,108 @@ pub enum AddressData {
     },
 }
 
-/// A Bitcoin address.
-///
-/// ### Parsing addresses
-///
-/// When parsing string as an address, one has to pay attention to the network, on which the parsed
-/// address is supposed to be valid. For the purpose of this validation, `Address` has
-/// [`is_valid_for_network`](Address<NetworkUnchecked>::is_valid_for_network) method. In order to provide more safety,
-/// enforced by compiler, `Address` also contains a special marker type, which indicates whether network of the parsed
-/// address has been checked. This marker type will prevent from calling certain functions unless the network
-/// verification has been successfully completed.
-///
-/// The result of parsing an address is `Address<NetworkUnchecked>` suggesting that network of the parsed address
-/// has not yet been verified. To perform this verification, method [`require_network`](Address<NetworkUnchecked>::require_network)
-/// can be called, providing network on which the address is supposed to be valid. If the verification succeeds,
-/// `Address<NetworkChecked>` is returned.
-///
-/// The types `Address` and `Address<NetworkChecked>` are synonymous, i. e. they can be used interchangeably.
-///
-/// ```rust
-/// use std::str::FromStr;
-/// use bitcoin::{Address, Network};
-/// use bitcoin::address::{NetworkUnchecked, NetworkChecked};
-///
-/// // variant 1
-/// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-/// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
-///
-/// // variant 2
-/// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
-///                .require_network(Network::Bitcoin).unwrap();
-///
-/// // variant 3
-/// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
-///                .unwrap().require_network(Network::Bitcoin).unwrap();
-/// ```
-///
-/// ### Formatting addresses
-///
-/// To format address into its textual representation, both `Debug` (for usage in programmer-facing,
-/// debugging context) and `Display` (for user-facing output) can be used, with the following caveats:
-///
-/// 1. `Display` is implemented only for `Address<NetworkChecked>`:
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap().assume_checked();
-/// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
-///
-/// ```ignore
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap();
-/// let s = address.to_string(); // does not compile
-/// ```
-///
-/// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
-///    an indicator that its network has not been checked. This is to encourage programmer to properly
-///    check the network and use `Display` in user-facing context.
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkUnchecked};
-/// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap();
-/// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
-/// ```
-///
-/// ```
-/// # use bitcoin::address::{Address, NetworkChecked};
-/// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
-///                .unwrap().assume_checked();
-/// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-/// ```
-///
-/// ### Relevant BIPs
-///
-/// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
-/// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
-/// * [BIP141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
-/// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
-/// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
-/// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-// The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
-// is an implementation detail and users should not rely on it in their code.
-#[repr(transparent)]
-pub struct Address<V = NetworkChecked>(AddressInner, PhantomData<V>)
-where
-    V: NetworkValidation;
+internals::transparent_newtype! {
+    /// A Bitcoin address.
+    ///
+    /// ### Parsing addresses
+    ///
+    /// When parsing string as an address, one has to pay attention to the network, on which the parsed
+    /// address is supposed to be valid. For the purpose of this validation, `Address` has
+    /// [`is_valid_for_network`](Address<NetworkUnchecked>::is_valid_for_network) method. In order to provide more safety,
+    /// enforced by compiler, `Address` also contains a special marker type, which indicates whether network of the parsed
+    /// address has been checked. This marker type will prevent from calling certain functions unless the network
+    /// verification has been successfully completed.
+    ///
+    /// The result of parsing an address is `Address<NetworkUnchecked>` suggesting that network of the parsed address
+    /// has not yet been verified. To perform this verification, method [`require_network`](Address<NetworkUnchecked>::require_network)
+    /// can be called, providing network on which the address is supposed to be valid. If the verification succeeds,
+    /// `Address<NetworkChecked>` is returned.
+    ///
+    /// The types `Address` and `Address<NetworkChecked>` are synonymous, i. e. they can be used interchangeably.
+    ///
+    /// ```rust
+    /// use std::str::FromStr;
+    /// use bitcoin::{Address, Network};
+    /// use bitcoin::address::{NetworkUnchecked, NetworkChecked};
+    ///
+    /// // variant 1
+    /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
+    /// let _address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
+    ///
+    /// // variant 2
+    /// let _address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
+    ///                .require_network(Network::Bitcoin).unwrap();
+    ///
+    /// // variant 3
+    /// let _address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
+    ///                .unwrap().require_network(Network::Bitcoin).unwrap();
+    /// ```
+    ///
+    /// ### Formatting addresses
+    ///
+    /// To format address into its textual representation, both `Debug` (for usage in programmer-facing,
+    /// debugging context) and `Display` (for user-facing output) can be used, with the following caveats:
+    ///
+    /// 1. `Display` is implemented only for `Address<NetworkChecked>`:
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap().assume_checked();
+    /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// ```
+    ///
+    /// ```ignore
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap();
+    /// let s = address.to_string(); // does not compile
+    /// ```
+    ///
+    /// 2. `Debug` on `Address<NetworkUnchecked>` does not produce clean address but address wrapped by
+    ///    an indicator that its network has not been checked. This is to encourage programmer to properly
+    ///    check the network and use `Display` in user-facing context.
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkUnchecked};
+    /// let address: Address<NetworkUnchecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap();
+    /// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
+    /// ```
+    ///
+    /// ```
+    /// # use bitcoin::address::{Address, NetworkChecked};
+    /// let address: Address<NetworkChecked> = "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>()
+    ///                .unwrap().assume_checked();
+    /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    /// ```
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
+    /// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)
+    /// * [BIP141 - Segregated Witness (Consensus layer)](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
+    /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
+    /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
+    #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    // The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
+    // is an implementation detail and users should not rely on it in their code.
+    pub struct Address<V = NetworkChecked>(PhantomData<V>, AddressInner)
+    where
+        V: NetworkValidation;
+
+    impl<V> Address<V> {
+        fn from_inner_ref(inner: &_) -> &Self;
+    }
+}
 
 #[cfg(feature = "serde")]
 struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0 .0, fmt) }
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0.inner(), fmt) }
 }
 
 #[cfg(feature = "serde")]
@@ -433,7 +438,7 @@ impl<'de, U: NetworkValidationUnchecked> serde::Deserialize<'de> for Address<U> 
             {
                 // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
                 let address = v.parse::<Address<NetworkUnchecked>>().map_err(E::custom)?;
-                Ok(Address(address.0, PhantomData::<U>))
+                Ok(Address::from_inner(address.into_inner()))
             }
         }
 
@@ -454,18 +459,30 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
+    fn from_inner(inner: AddressInner) -> Self {
+        Address(PhantomData, inner)
+    }
+
+    fn into_inner(self) -> AddressInner {
+        self.1
+    }
+
+    fn inner(&self) -> &AddressInner {
+        &self.1
+    }
+
     /// Returns a reference to the address as if it was unchecked.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
-        unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
+        Address::from_inner_ref(self.inner())
     }
 
     /// Marks the network of this address as unchecked.
-    pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address(self.0, PhantomData) }
+    pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address::from_inner(self.into_inner()) }
 
     /// Returns the [`NetworkKind`] of this address.
     pub fn network_kind(&self) -> NetworkKind {
         use AddressInner::*;
-        match self.0 {
+        match *self.inner() {
             P2pkh { hash: _, ref network } => *network,
             P2sh { hash: _, ref network } => *network,
             Segwit { program: _, ref hrp } => NetworkKind::from(*hrp),
@@ -481,7 +498,7 @@ impl Address {
     #[inline]
     pub fn p2pkh(pk: impl Into<PubkeyHash>, network: impl Into<NetworkKind>) -> Address {
         let hash = pk.into();
-        Self(AddressInner::P2pkh { hash, network: network.into() }, PhantomData)
+        Self::from_inner(AddressInner::P2pkh { hash, network: network.into() })
     }
 
     /// Constructs a new pay-to-script-hash (P2SH) [`Address`] from a script.
@@ -504,7 +521,7 @@ impl Address {
     /// The `hash` pre-image (redeem script) must not exceed 520 bytes in length
     /// otherwise outputs created from the returned address will be un-spendable.
     pub fn p2sh_from_hash(hash: ScriptHash, network: impl Into<NetworkKind>) -> Address {
-        Self(AddressInner::P2sh { hash, network: network.into() }, PhantomData)
+        Self::from_inner(AddressInner::P2sh { hash, network: network.into() })
     }
 
     /// Constructs a new pay-to-witness-public-key-hash (P2WPKH) [`Address`] from a public key.
@@ -577,7 +594,7 @@ impl Address {
     /// then you likely do not need this constructor.
     pub fn from_witness_program(program: WitnessProgram, hrp: impl Into<KnownHrp>) -> Address {
         let inner = AddressInner::Segwit { program, hrp: hrp.into() };
-        Address(inner, PhantomData)
+        Address::from_inner(inner)
     }
 
     /// Gets the address type of the [`Address`].
@@ -587,7 +604,7 @@ impl Address {
     /// None if unknown, non-standard or related to the future witness version.
     #[inline]
     pub fn address_type(&self) -> Option<AddressType> {
-        match self.0 {
+        match *self.inner() {
             AddressInner::P2pkh { .. } => Some(AddressType::P2pkh),
             AddressInner::P2sh { .. } => Some(AddressType::P2sh),
             AddressInner::Segwit { ref program, hrp: _ } =>
@@ -609,7 +626,7 @@ impl Address {
     pub fn to_address_data(&self) -> AddressData {
         use AddressData::*;
 
-        match self.0 {
+        match *self.inner() {
             AddressInner::P2pkh { hash, network: _ } => P2pkh { pubkey_hash: hash },
             AddressInner::P2sh { hash, network: _ } => P2sh { script_hash: hash },
             AddressInner::Segwit { program, hrp: _ } => Segwit { witness_program: program },
@@ -620,7 +637,7 @@ impl Address {
     pub fn pubkey_hash(&self) -> Option<PubkeyHash> {
         use AddressInner::*;
 
-        match self.0 {
+        match *self.inner() {
             P2pkh { ref hash, network: _ } => Some(*hash),
             _ => None,
         }
@@ -630,7 +647,7 @@ impl Address {
     pub fn script_hash(&self) -> Option<ScriptHash> {
         use AddressInner::*;
 
-        match self.0 {
+        match *self.inner() {
             P2sh { ref hash, network: _ } => Some(*hash),
             _ => None,
         }
@@ -640,7 +657,7 @@ impl Address {
     pub fn witness_program(&self) -> Option<WitnessProgram> {
         use AddressInner::*;
 
-        match self.0 {
+        match *self.inner() {
             Segwit { ref program, hrp: _ } => Some(*program),
             _ => None,
         }
@@ -689,7 +706,7 @@ impl Address {
     /// Generates a script pubkey spending to this address.
     pub fn script_pubkey(&self) -> ScriptBuf {
         use AddressInner::*;
-        match self.0 {
+        match *self.inner() {
             P2pkh { hash, network: _ } => ScriptBuf::new_p2pkh(hash),
             P2sh { hash, network: _ } => ScriptBuf::new_p2sh(hash),
             Segwit { ref program, hrp: _ } => {
@@ -756,7 +773,7 @@ impl Address {
     /// This function doesn't make any allocations.
     pub fn matches_script_pubkey(&self, script: &Script) -> bool {
         use AddressInner::*;
-        match self.0 {
+        match *self.inner() {
             P2pkh { ref hash, network: _ } if script.is_p2pkh() =>
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             P2sh { ref hash, network: _ } if script.is_p2sh() =>
@@ -777,7 +794,7 @@ impl Address {
     /// - For SegWit addresses, the payload is the witness program.
     fn payload_as_bytes(&self) -> &[u8] {
         use AddressInner::*;
-        match self.0 {
+        match *self.inner() {
             P2sh { ref hash, network: _ } => hash.as_ref(),
             P2pkh { ref hash, network: _ } => hash.as_ref(),
             Segwit { ref program, hrp: _ } => program.program().as_bytes(),
@@ -791,7 +808,7 @@ impl Address<NetworkUnchecked> {
     ///
     /// This function is dangerous in case the address is not a valid checked address.
     pub fn assume_checked_ref(&self) -> &Address {
-        unsafe { &*(self as *const Address<NetworkUnchecked> as *const Address) }
+        Address::from_inner_ref(self.inner())
     }
 
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
@@ -817,7 +834,7 @@ impl Address<NetworkUnchecked> {
     /// ```
     pub fn is_valid_for_network(&self, n: Network) -> bool {
         use AddressInner::*;
-        match self.0 {
+        match *self.inner() {
             P2pkh { hash: _, ref network } => *network == NetworkKind::from(n),
             P2sh { hash: _, ref network } => *network == NetworkKind::from(n),
             Segwit { program: _, ref hrp } => *hrp == KnownHrp::from_network(n),
@@ -882,7 +899,7 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn assume_checked(self) -> Address { Address(self.0, PhantomData) }
+    pub fn assume_checked(self) -> Address { Address::from_inner(self.into_inner()) }
 
     /// Parse a bech32 Address string
     pub fn from_bech32_str(s: &str) -> Result<Address<NetworkUnchecked>, Bech32Error> {
@@ -894,7 +911,7 @@ impl Address<NetworkUnchecked> {
 
         let hrp = KnownHrp::from_hrp(hrp)?;
         let inner = AddressInner::Segwit { program, hrp };
-        Ok(Address(inner, PhantomData))
+        Ok(Address::from_inner(inner))
     }
 
     /// Parse a base58 Address string
@@ -927,7 +944,7 @@ impl Address<NetworkUnchecked> {
             invalid => return Err(InvalidLegacyPrefixError { invalid }.into()),
         };
 
-        Ok(Address(inner, PhantomData))
+        Ok(Address::from_inner(inner))
     }
 }
 
@@ -938,16 +955,16 @@ impl From<Address> for ScriptBuf {
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
 impl fmt::Display for Address {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, fmt) }
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.inner(), fmt) }
 }
 
 impl<V: NetworkValidation> fmt::Debug for Address<V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if V::IS_CHECKED {
-            fmt::Display::fmt(&self.0, f)
+            fmt::Display::fmt(&self.inner(), f)
         } else {
             write!(f, "Address<NetworkUnchecked>(")?;
-            fmt::Display::fmt(&self.0, f)?;
+            fmt::Display::fmt(&self.inner(), f)?;
             write!(f, ")")
         }
     }
@@ -975,10 +992,10 @@ impl<U: NetworkValidationUnchecked> FromStr for Address<U> {
         if ["bc1", "bcrt1", "tb1"].iter().any(|&prefix| s.to_lowercase().starts_with(prefix)) {
             let address = Address::from_bech32_str(s)?;
             // We know that `U` is only ever `NetworkUnchecked` but the compiler does not.
-            Ok(Address(address.0, PhantomData::<U>))
+            Ok(Address::from_inner(address.into_inner()))
         } else if ["1", "2", "3", "m", "n"].iter().any(|&prefix| s.starts_with(prefix)) {
             let address = Address::from_base58_str(s)?;
-            Ok(Address(address.0, PhantomData::<U>))
+            Ok(Address::from_inner(address.into_inner()))
         } else {
             let hrp = match s.rfind('1') {
                 Some(pos) => &s[..pos],

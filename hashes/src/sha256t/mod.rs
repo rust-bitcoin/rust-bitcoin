@@ -43,32 +43,29 @@ pub trait Tag {
     const MIDSTATE: sha256::Midstate;
 }
 
-/// Output of the SHA256t hash function.
-#[repr(transparent)]
-pub struct Hash<T>([u8; 32], PhantomData<T>);
+internals::transparent_newtype! {
+    /// Output of the SHA256t hash function.
+    pub struct Hash<T>(PhantomData<T>, [u8; 32]);
+
+    impl<T> Hash<T> {
+        /// Zero cost conversion between a fixed length byte array shared reference and
+        /// a shared reference to this Hash type.
+        pub fn from_bytes_ref(bytes: &_) -> &Self;
+
+        /// Zero cost conversion between a fixed length byte array exclusive reference and
+        /// an exclusive reference to this Hash type.
+        pub fn from_bytes_mut(bytes: &mut _) -> &mut Self;
+    }
+}
 
 impl<T> Hash<T>
 where
     T: Tag,
 {
-    const fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData) }
+    const fn internal_new(arr: [u8; 32]) -> Self { Hash(PhantomData, arr) }
 
     /// Constructs a new hash from the underlying byte array.
     pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
-
-    /// Zero cost conversion between a fixed length byte array shared reference and
-    /// a shared reference to this Hash type.
-    pub fn from_bytes_ref(bytes: &[u8; 32]) -> &Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
-        unsafe { &*(bytes as *const _ as *const Self) }
-    }
-
-    /// Zero cost conversion between a fixed length byte array exclusive reference and
-    /// an exclusive reference to this Hash type.
-    pub fn from_bytes_mut(bytes: &mut [u8; 32]) -> &mut Self {
-        // Safety: Sound because Self is #[repr(transparent)] containing [u8; 32]
-        unsafe { &mut *(bytes as *mut _ as *mut Self) }
-    }
 
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
@@ -117,10 +114,10 @@ where
     }
 
     /// Returns the underlying byte array.
-    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; 32] { self.1 }
 
     /// Returns a reference to the underlying byte array.
-    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
+    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.1 }
 }
 
 impl<T: Tag> Copy for Hash<T> {}
@@ -128,7 +125,7 @@ impl<T: Tag> Clone for Hash<T> {
     fn clone(&self) -> Self { *self }
 }
 impl<T: Tag> PartialEq for Hash<T> {
-    fn eq(&self, other: &Hash<T>) -> bool { self.0 == other.0 }
+    fn eq(&self, other: &Hash<T>) -> bool { self.as_byte_array() == other.as_byte_array() }
 }
 impl<T: Tag> Eq for Hash<T> {}
 impl<T: Tag> PartialOrd for Hash<T> {
@@ -137,10 +134,10 @@ impl<T: Tag> PartialOrd for Hash<T> {
     }
 }
 impl<T: Tag> Ord for Hash<T> {
-    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering { cmp::Ord::cmp(&self.0, &other.0) }
+    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering { cmp::Ord::cmp(&self.as_byte_array(), &other.as_byte_array()) }
 }
 impl<T: Tag> core::hash::Hash for Hash<T> {
-    fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.0.hash(h) }
+    fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.as_byte_array().hash(h) }
 }
 
 crate::internal_macros::hash_trait_impls!(256, false, T: Tag);
