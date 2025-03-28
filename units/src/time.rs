@@ -56,3 +56,14 @@ impl<'a> Arbitrary<'a> for BlockTime {
         Ok(BlockTime::from(t))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn block_time_round_trip() {
+        let t = BlockTime::from(1_742_979_600); // 26 Mar 2025 9:00 UTC
+        assert_eq!(u32::from(t), 1_742_979_600);
+    }
+}
