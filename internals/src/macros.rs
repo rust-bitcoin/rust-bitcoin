@@ -8,7 +8,7 @@ macro_rules! const_assert {
     ($x:expr $(; $message:expr)?) => {
         const _: () = {
             if !$x {
-                // We can't use formatting in const, only concating literals.
+                // We can't use formatting in const, only concatenating literals.
                 panic!(concat!("assertion ", stringify!($x), " failed" $(, ": ", $message)?))
             }
         };

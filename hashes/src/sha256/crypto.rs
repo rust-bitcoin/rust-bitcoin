@@ -80,7 +80,7 @@ mod fast_hash {
 }
 
 impl Midstate {
-    #[allow(clippy::identity_op)] // more readble
+    #[allow(clippy::identity_op)] // more readable
     const fn read_u32(bytes: &[u8], index: usize) -> u32 {
         ((bytes[index + 0] as u32) << 24)
             | ((bytes[index + 1] as u32) << 16)
@@ -130,7 +130,7 @@ impl Midstate {
                 if (bytes.len() % 64 <= 64 - 9) || (chunk + 2 == num_chunks) {
                     buf[i] = 0x80;
                 }
-                #[allow(clippy::identity_op)] // more readble
+                #[allow(clippy::identity_op)] // more readable
                 #[allow(clippy::erasing_op)]
                 if chunk + 1 == num_chunks {
                     let bit_len = bytes.len() as u64 * 8;
@@ -235,7 +235,7 @@ impl Midstate {
         }
         let mut output = [0u8; 32];
         let mut i = 0;
-        #[allow(clippy::identity_op)] // more readble
+        #[allow(clippy::identity_op)] // more readable
         while i < 8 {
             output[i * 4 + 0] = (state[i + 0] >> 24) as u8;
             output[i * 4 + 1] = (state[i + 0] >> 16) as u8;
