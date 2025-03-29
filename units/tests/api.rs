@@ -2,7 +2,7 @@
 
 //! Test the API surface of `units`.
 //!
-//! The point of these tests are to check the API surface as opposed to test the API functionality.
+//! The point of these tests is to check the API surface as opposed to test the API functionality.
 //!
 //! ref: <https://rust-lang.github.io/api-guidelines/about.html>
 

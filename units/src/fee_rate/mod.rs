@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Implements `FeeRate` and assoctiated features.
+//! Implements `FeeRate` and associated features.
 
 #[cfg(feature = "serde")]
 pub mod serde;

@@ -311,7 +311,7 @@ In particular consider having some type that implements `AsRef<Params>`, we have
   - Rename `ExtendedPubKey` to `Xpub` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
   - Rename `ExtendedPrivKey` to `Xpriv` [#2019](https://github.com/rust-bitcoin/rust-bitcoin/pull/2019)
   - Remove `_v0` from various function names (eg, `new_v0_p2wpkh`) [#1994](https://github.com/rust-bitcoin/rust-bitcoin/pull/1994)
-  - Remove `SighashCache::segwit_signature_hash` (add `p2wpkh_signiture_hash` and `p2wsh_signature_hash`) [#1995](https://github.com/rust-bitcoin/rust-bitcoin/pull/1995)
+  - Remove `SighashCache::segwit_signature_hash` (add `p2wpkh_signature_hash` and `p2wsh_signature_hash`) [#1995](https://github.com/rust-bitcoin/rust-bitcoin/pull/1995)
   - Reexport all the hash types from the crate root [#1998](https://github.com/rust-bitcoin/rust-bitcoin/pull/1998)
   - Rename `opcodes::All` to `Opcode` [#1995](https://github.com/rust-bitcoin/rust-bitcoin/pull/1995)
   - Removed `TxOut::default()`, the same logic now exists as `TxOut::NULL` [#1811](https://github.com/rust-bitcoin/rust-bitcoin/pull/1811) and [#1838](https://github.com/rust-bitcoin/rust-bitcoin/pull/1838)

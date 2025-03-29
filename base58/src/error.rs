@@ -141,7 +141,7 @@ impl fmt::Display for TooShortError {
 #[cfg(feature = "std")]
 impl std::error::Error for TooShortError {}
 
-/// Found a invalid ASCII byte while decoding base58 string.
+/// Found an invalid ASCII byte while decoding base58 string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InvalidCharacterError(pub(super) InvalidCharacterErrorInner);
 
