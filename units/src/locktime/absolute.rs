@@ -111,7 +111,7 @@ impl<'de> serde::Deserialize<'de> for Height {
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Ok(Height::from_consensus(u).map_err(serde::de::Error::custom)?)
+        Height::from_consensus(u).map_err(serde::de::Error::custom)
     }
 }
 
@@ -191,7 +191,7 @@ impl<'de> serde::Deserialize<'de> for Time {
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Ok(Time::from_consensus(u).map_err(serde::de::Error::custom)?)
+        Time::from_consensus(u).map_err(serde::de::Error::custom)
     }
 }
 

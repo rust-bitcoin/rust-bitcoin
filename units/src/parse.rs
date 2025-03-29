@@ -284,7 +284,7 @@ pub fn hex_check_unprefixed(s: &str) -> Result<&str, UnprefixedHexError> {
 /// If the input string is not a valid hex encoding of a `u32`.
 pub fn hex_u32(s: &str) -> Result<u32, ParseIntError> {
     let unchecked = hex_remove_optional_prefix(s);
-    Ok(hex_u32_unchecked(unchecked)?)
+    hex_u32_unchecked(unchecked)
 }
 
 /// Parses a `u32` from a prefixed hex string.
@@ -333,7 +333,7 @@ pub fn hex_u32_unchecked(s: &str) -> Result<u32, ParseIntError> {
 /// If the input string is not a valid hex encoding of a `u128`.
 pub fn hex_u128(s: &str) -> Result<u128, ParseIntError> {
     let unchecked = hex_remove_optional_prefix(s);
-    Ok(hex_u128_unchecked(unchecked)?)
+    hex_u128_unchecked(unchecked)
 }
 
 /// Parses a `u128` from a prefixed hex string.

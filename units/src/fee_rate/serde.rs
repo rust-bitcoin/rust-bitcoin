@@ -108,9 +108,9 @@ pub mod as_sat_per_vb_floor {
 
     // Errors on overflow.
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        Ok(FeeRate::from_sat_per_vb(u64::deserialize(d)?)
+        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
             .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)?)
+            .map_err(serde::de::Error::custom)
     }
 
     pub mod opt {
@@ -184,9 +184,9 @@ pub mod as_sat_per_vb_ceil {
 
     // Errors on overflow.
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        Ok(FeeRate::from_sat_per_vb(u64::deserialize(d)?)
+        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
             .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)?)
+            .map_err(serde::de::Error::custom)
     }
 
     pub mod opt {
