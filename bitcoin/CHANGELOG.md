@@ -68,7 +68,7 @@ For changes to our dependencies included in this release see:
 - transaction: Remove `Default` implementations [#3386](https://github.com/rust-bitcoin/rust-bitcoin/pull/3386)
 - Add `FeeRate` addition and subtraction traits [#3381](https://github.com/rust-bitcoin/rust-bitcoin/pull/3381)
 - Add `Xpriv::to_xpub` and improve related method names [#3358](https://github.com/rust-bitcoin/rust-bitcoin/pull/3358)
-- Support `impl AsRef<[#u8]>` in `signed_msg_hash` [3357](https://github.com/rust-bitcoin/rust-bitcoin/pull/u8)
+- Support `impl AsRef<[u8]>` in `signed_msg_hash` [#3357](https://github.com/rust-bitcoin/rust-bitcoin/pull/3357)
 - Fix `GetKey` for sets (plus some related changes) [#3356](https://github.com/rust-bitcoin/rust-bitcoin/pull/3356)
 - Add a condition for parsing zero from string when not denominated [#3346](https://github.com/rust-bitcoin/rust-bitcoin/pull/3346)
 - Add basic `miri` checks [#3328](https://github.com/rust-bitcoin/rust-bitcoin/pull/3328)
@@ -84,7 +84,7 @@ For changes to our dependencies included in this release see:
 - `OP_RETURN` standardness check [#2949](https://github.com/rust-bitcoin/rust-bitcoin/pull/2949)
 - Support Testnet4 Network [#2945](https://github.com/rust-bitcoin/rust-bitcoin/pull/2945)
 - Remove `VarInt` and use `ReadExt` and `WriteExt` trait methods instead [#2931](https://github.com/rust-bitcoin/rust-bitcoin/pull/2931)
-- bip32: Add `From<&'a [#u32]>` for `DerivationPath` [2909](https://github.com/rust-bitcoin/rust-bitcoin/pull/u32)
+- bip32: Add `From<&'a [#u32]>` for `DerivationPath` [#2909](https://github.com/rust-bitcoin/rust-bitcoin/pull/2909)
 - psbt: Encode keytype as a compact size unsigned integer [#2906](https://github.com/rust-bitcoin/rust-bitcoin/pull/2906)
 - Pass sigs and associated types by value [#2899](https://github.com/rust-bitcoin/rust-bitcoin/pull/2899)
 - Re-export `UnprefixedHexError` in the bitcoin crate root [#2895](https://github.com/rust-bitcoin/rust-bitcoin/pull/2895)
@@ -435,7 +435,7 @@ to support human-readable formats.
   [#1033](https://github.com/rust-bitcoin/rust-bitcoin/pull/1033) [#996](https://github.com/rust-bitcoin/rust-bitcoin/pull/996)
   [#1053](https://github.com/rust-bitcoin/rust-bitcoin/pull/1053) [#1023](https://github.com/rust-bitcoin/rust-bitcoin/pull/1023)
 - PSBT improvements
-  [#853](https://github.com/rust-bitcoin/rust-bitcoin/pull/853) [#951] (https://github.com/rust-bitcoin/rust-bitcoin/pull/951)
+  [#853](https://github.com/rust-bitcoin/rust-bitcoin/pull/853) [#951](https://github.com/rust-bitcoin/rust-bitcoin/pull/951)
   [#940](https://github.com/rust-bitcoin/rust-bitcoin/pull/940)
 - Script improvements
   [#1021](https://github.com/rust-bitcoin/rust-bitcoin/pull/1021) [#954](https://github.com/rust-bitcoin/rust-bitcoin/pull/954)
