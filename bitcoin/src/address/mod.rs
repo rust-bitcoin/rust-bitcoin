@@ -409,7 +409,9 @@ struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
 #[cfg(feature = "serde")]
 impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0.inner(), fmt) }
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&self.0.inner(), fmt)
+    }
 }
 
 #[cfg(feature = "serde")]
@@ -459,17 +461,11 @@ impl<V: NetworkValidation> serde::Serialize for Address<V> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
-    fn from_inner(inner: AddressInner) -> Self {
-        Address(PhantomData, inner)
-    }
+    fn from_inner(inner: AddressInner) -> Self { Address(PhantomData, inner) }
 
-    fn into_inner(self) -> AddressInner {
-        self.1
-    }
+    fn into_inner(self) -> AddressInner { self.1 }
 
-    fn inner(&self) -> &AddressInner {
-        &self.1
-    }
+    fn inner(&self) -> &AddressInner { &self.1 }
 
     /// Returns a reference to the address as if it was unchecked.
     pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
@@ -477,7 +473,9 @@ impl<V: NetworkValidation> Address<V> {
     }
 
     /// Marks the network of this address as unchecked.
-    pub fn into_unchecked(self) -> Address<NetworkUnchecked> { Address::from_inner(self.into_inner()) }
+    pub fn into_unchecked(self) -> Address<NetworkUnchecked> {
+        Address::from_inner(self.into_inner())
+    }
 
     /// Returns the [`NetworkKind`] of this address.
     pub fn network_kind(&self) -> NetworkKind {
@@ -807,9 +805,7 @@ impl Address<NetworkUnchecked> {
     /// Returns a reference to the checked address.
     ///
     /// This function is dangerous in case the address is not a valid checked address.
-    pub fn assume_checked_ref(&self) -> &Address {
-        Address::from_inner_ref(self.inner())
-    }
+    pub fn assume_checked_ref(&self) -> &Address { Address::from_inner_ref(self.inner()) }
 
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
     /// regtest and signet addresses use the same prefix instead of multiple different ones. When
@@ -920,7 +916,8 @@ impl Address<NetworkUnchecked> {
             return Err(LegacyAddressTooLongError { length: s.len() }.into());
         }
         let data = base58::decode_check(s)?;
-        let data: &[u8; 21] = (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
+        let data: &[u8; 21] =
+            (&*data).try_into().map_err(|_| InvalidBase58PayloadLengthError { length: s.len() })?;
 
         let (prefix, &data) = data.split_first();
 

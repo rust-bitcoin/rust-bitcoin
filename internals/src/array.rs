@@ -17,9 +17,7 @@ pub trait ArrayExt {
     /// Returns an item at given statically-known index.
     ///
     /// This is just like normal indexing except the check happens at compile time.
-    fn get_static<const INDEX: usize>(&self) -> &Self::Item {
-        &self.sub_array::<INDEX, 1>()[0]
-    }
+    fn get_static<const INDEX: usize>(&self) -> &Self::Item { &self.sub_array::<INDEX, 1>()[0] }
 
     /// Returns the first item in an array.
     ///
@@ -30,9 +28,7 @@ pub trait ArrayExt {
     /// that this will not return `None` so trying to keep the `std` method around is pointless.
     /// Importing the trait will also cause compile failures - that's also intentional to expose
     /// the places where useless checks are made.
-    fn first(&self) -> &Self::Item {
-        self.get_static::<0>()
-    }
+    fn first(&self) -> &Self::Item { self.get_static::<0>() }
 
     /// Splits the array into two, non-overlaping smaller arrays covering the entire range.
     ///
@@ -40,7 +36,9 @@ pub trait ArrayExt {
     /// checks that the arrays don't overlap and that they cover the full range. This is very useful
     /// for demonstrating correctness, especially when chained. Using this technique even revealed
     /// a bug in the past. ([#4195](https://github.com/rust-bitcoin/rust-bitcoin/issues/4195))
-    fn split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]);
+    fn split_array<const LEFT: usize, const RIGHT: usize>(
+        &self,
+    ) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]);
 
     /// Splits the array into the first element and the remaining, one element shorter, array.
     ///
@@ -84,7 +82,9 @@ impl<const N: usize, T> ArrayExt for [T; N] {
         self[OFFSET..(OFFSET + LEN)].try_into().expect("this is also compiler-checked above")
     }
 
-    fn split_array<const LEFT: usize, const RIGHT: usize>(&self) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]) {
+    fn split_array<const LEFT: usize, const RIGHT: usize>(
+        &self,
+    ) -> (&[Self::Item; LEFT], &[Self::Item; RIGHT]) {
         #[allow(clippy::let_unit_value)]
         let _ = Hack2::<N, LEFT, RIGHT>::IS_FULL_RANGE;
 

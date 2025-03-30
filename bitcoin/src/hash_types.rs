@@ -5,12 +5,9 @@
 //! This module is deprecated. You can find hash types in their respective, hopefully obvious, modules.
 
 #[deprecated(since = "TBD", note = "use `crate::T` instead")]
-pub use crate::{
-    BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode,
-    Wtxid,
-};
-#[deprecated(since = "TBD", note = "use `crate::T` instead")]
 pub use crate::bip158::{FilterHash, FilterHeader};
+#[deprecated(since = "TBD", note = "use `crate::T` instead")]
+pub use crate::{BlockHash, TxMerkleNode, Txid, WitnessCommitment, WitnessMerkleNode, Wtxid};
 
 #[cfg(test)]
 mod tests {

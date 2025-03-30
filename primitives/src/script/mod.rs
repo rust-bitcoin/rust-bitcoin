@@ -276,16 +276,12 @@ impl<'a> From<&'a Script> for Cow<'a, Script> {
 #[cfg(target_has_atomic = "ptr")]
 impl<'a> From<&'a Script> for Arc<Script> {
     #[inline]
-    fn from(value: &'a Script) -> Self {
-        Script::from_arc_bytes(Arc::from(value.as_bytes()))
-    }
+    fn from(value: &'a Script) -> Self { Script::from_arc_bytes(Arc::from(value.as_bytes())) }
 }
 
 impl<'a> From<&'a Script> for Rc<Script> {
     #[inline]
-    fn from(value: &'a Script) -> Self {
-        Script::from_rc_bytes(Rc::from(value.as_bytes()))
-    }
+    fn from(value: &'a Script) -> Self { Script::from_rc_bytes(Rc::from(value.as_bytes())) }
 }
 
 impl From<Vec<u8>> for ScriptBuf {

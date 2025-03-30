@@ -58,7 +58,6 @@ mod primitive {
     }
 
     impl PushBytes {
-
         /// Constructs an empty `&PushBytes`.
         pub fn empty() -> &'static Self { Self::from_slice_unchecked(&[]) }
 
