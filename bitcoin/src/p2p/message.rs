@@ -702,7 +702,7 @@ mod test {
 
     use super::*;
     use crate::bip152::BlockTransactionsRequest;
-    use crate::bip158::{FilterHeader, FilterHash};
+    use crate::bip158::{FilterHash, FilterHeader};
     use crate::block::{Block, BlockHash};
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::p2p::address::AddrV2;
@@ -738,19 +738,25 @@ mod test {
                 45,
                 Address::new(&([123, 255, 000, 100], 833).into(), ServiceFlags::NETWORK),
             )]),
-            NetworkMessage::Inv(vec![Inventory::Block(BlockHash::from_byte_array(hash([8u8; 32]).to_byte_array()))]),
-            NetworkMessage::GetData(vec![Inventory::Transaction(Txid::from_byte_array(hash([45u8; 32]).to_byte_array()))]),
+            NetworkMessage::Inv(vec![Inventory::Block(BlockHash::from_byte_array(
+                hash([8u8; 32]).to_byte_array(),
+            ))]),
+            NetworkMessage::GetData(vec![Inventory::Transaction(Txid::from_byte_array(
+                hash([45u8; 32]).to_byte_array(),
+            ))]),
             NetworkMessage::NotFound(vec![Inventory::Error([0u8; 32])]),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(
                 vec![
                     BlockHash::from_byte_array(hash([1u8; 32]).to_byte_array()),
-                    BlockHash::from_byte_array(hash([4u8; 32]).to_byte_array())],
+                    BlockHash::from_byte_array(hash([4u8; 32]).to_byte_array()),
+                ],
                 BlockHash::from_byte_array(hash([5u8; 32]).to_byte_array()),
             )),
             NetworkMessage::GetHeaders(GetHeadersMessage::new(
                 vec![
                     BlockHash::from_byte_array(hash([10u8; 32]).to_byte_array()),
-                    BlockHash::from_byte_array(hash([40u8; 32]).to_byte_array())],
+                    BlockHash::from_byte_array(hash([40u8; 32]).to_byte_array()),
+                ],
                 BlockHash::from_byte_array(hash([50u8; 32]).to_byte_array()),
             )),
             NetworkMessage::MemPool,
@@ -791,8 +797,13 @@ mod test {
             NetworkMessage::CFHeaders(CFHeaders {
                 filter_type: 13,
                 stop_hash: BlockHash::from_byte_array(hash([53u8; 32]).to_byte_array()),
-                previous_filter_header: FilterHeader::from_byte_array(hash([12u8; 32]).to_byte_array()),
-                filter_hashes: vec![FilterHash::from_byte_array(hash([4u8; 32]).to_byte_array()), FilterHash::from_byte_array(hash([12u8; 32]).to_byte_array())],
+                previous_filter_header: FilterHeader::from_byte_array(
+                    hash([12u8; 32]).to_byte_array(),
+                ),
+                filter_hashes: vec![
+                    FilterHash::from_byte_array(hash([4u8; 32]).to_byte_array()),
+                    FilterHash::from_byte_array(hash([12u8; 32]).to_byte_array()),
+                ],
             }),
             NetworkMessage::GetCFCheckpt(GetCFCheckpt {
                 filter_type: 17,
@@ -801,7 +812,10 @@ mod test {
             NetworkMessage::CFCheckpt(CFCheckpt {
                 filter_type: 27,
                 stop_hash: BlockHash::from_byte_array(hash([77u8; 32]).to_byte_array()),
-                filter_headers: vec![FilterHeader::from_byte_array(hash([3u8; 32]).to_byte_array()), FilterHeader::from_byte_array(hash([99u8; 32]).to_byte_array())],
+                filter_headers: vec![
+                    FilterHeader::from_byte_array(hash([3u8; 32]).to_byte_array()),
+                    FilterHeader::from_byte_array(hash([99u8; 32]).to_byte_array()),
+                ],
             }),
             NetworkMessage::Alert(vec![45, 66, 3, 2, 6, 8, 9, 12, 3, 130]),
             NetworkMessage::Reject(Reject {

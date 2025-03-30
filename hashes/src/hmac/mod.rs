@@ -26,9 +26,7 @@ impl<T: Hash + str::FromStr> str::FromStr for Hmac<T> {
 }
 
 impl<T: Hash> PartialEq for Hmac<T> {
-    fn eq(&self, other: &Self) -> bool {
-        crate::cmp::fixed_time_eq(self.as_ref(), other.as_ref())
-    }
+    fn eq(&self, other: &Self) -> bool { crate::cmp::fixed_time_eq(self.as_ref(), other.as_ref()) }
 }
 
 impl<T: Hash> Eq for Hmac<T> {}

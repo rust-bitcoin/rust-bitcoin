@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn from_seconds_ceil_and_floor() {
-        let time = 70*512+1;
+        let time = 70 * 512 + 1;
         let lock_by_time = LockTime::from_seconds_ceil(time).unwrap();
         assert_eq!(lock_by_time, LockTime::from_512_second_intervals(71));
 
@@ -494,7 +494,7 @@ mod tests {
         assert_eq!(lock_by_time, LockTime::from_512_second_intervals(70));
 
         let mut max_time = 0xffff * 512;
-        assert_eq!(LockTime::from_seconds_ceil(max_time),LockTime::from_seconds_floor(max_time));
+        assert_eq!(LockTime::from_seconds_ceil(max_time), LockTime::from_seconds_floor(max_time));
         max_time += 512;
         assert!(LockTime::from_seconds_ceil(max_time).is_err());
         assert!(LockTime::from_seconds_floor(max_time).is_err());

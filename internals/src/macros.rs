@@ -209,10 +209,12 @@ macro_rules! _check_tts_eq {
     ($left:tt, $right:tt, $message:literal) => {
         macro_rules! token_eq {
             ($right) => {};
-            ($any:tt) => { compile_error!($message) };
+            ($any:tt) => {
+                compile_error!($message)
+            };
         }
         token_eq!($left);
-    }
+    };
 }
 
 #[doc(hidden)]

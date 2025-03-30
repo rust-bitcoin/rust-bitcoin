@@ -26,10 +26,9 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 pub use secp256k1::{constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
-pub use serialized_x_only::SerializedXOnlyPublicKey;
-
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
+pub use serialized_x_only::SerializedXOnlyPublicKey;
 
 /// A Bitcoin ECDSA public key.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -528,17 +527,13 @@ impl PrivateKey {
             }
         };
 
-        Ok(PrivateKey {
-            compressed,
-            network,
-            inner: secp256k1::SecretKey::from_byte_array(key)?,
-        })
+        Ok(PrivateKey { compressed, network, inner: secp256k1::SecretKey::from_byte_array(key)? })
     }
 
     /// Returns a new private key with the negated secret value.
     ///
     /// The resulting key corresponds to the same x-only public key (identical x-coordinate)
-    /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility 
+    /// but with the opposite y-coordinate parity. This is useful for ensuring compatibility
     /// with specific public key formats and BIP-340 requirements.
     #[inline]
     pub fn negate(&self) -> Self {
@@ -1239,19 +1234,13 @@ mod serialized_x_only {
 
     impl SerializedXOnlyPublicKey {
         /// Marks the supplied bytes as a serialized x-only public key.
-        pub const fn from_byte_array(bytes: [u8; 32]) -> Self {
-            Self(bytes)
-        }
+        pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(bytes) }
 
         /// Returns the raw bytes.
-        pub const fn to_byte_array(self) -> [u8; 32] {
-            self.0
-        }
+        pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
         /// Returns a reference to the raw bytes.
-        pub const fn as_byte_array(&self) -> &[u8; 32] {
-            &self.0
-        }
+        pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
     }
 }
 
@@ -1263,15 +1252,11 @@ impl SerializedXOnlyPublicKey {
 }
 
 impl AsRef<[u8; 32]> for SerializedXOnlyPublicKey {
-    fn as_ref(&self) -> &[u8; 32] {
-        self.as_byte_array()
-    }
+    fn as_ref(&self) -> &[u8; 32] { self.as_byte_array() }
 }
 
 impl From<&SerializedXOnlyPublicKey> for SerializedXOnlyPublicKey {
-    fn from(borrowed: &SerializedXOnlyPublicKey) -> Self {
-        *borrowed
-    }
+    fn from(borrowed: &SerializedXOnlyPublicKey) -> Self { *borrowed }
 }
 
 impl fmt::Debug for SerializedXOnlyPublicKey {
