@@ -1,9 +1,12 @@
 use core::borrow::{Borrow, BorrowMut};
+
 use internals::slice::SliceExt;
-
-use super::{DecodeError, InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TaprootMerkleBranchBuf, TapNodeHash, TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE};
-
 pub use privacy_boundary::TaprootMerkleBranch;
+
+use super::{
+    DecodeError, InvalidMerkleBranchSizeError, InvalidMerkleTreeDepthError, TapNodeHash,
+    TaprootMerkleBranchBuf, TAPROOT_CONTROL_MAX_NODE_COUNT, TAPROOT_CONTROL_NODE_SIZE,
+};
 
 /// Makes sure only the allowed conversions are accessible to external code.
 mod privacy_boundary {
@@ -33,9 +36,7 @@ mod privacy_boundary {
 
 impl TaprootMerkleBranch {
     /// Returns an empty branch.
-    pub const fn new() -> &'static Self {
-        Self::from_hashes_unchecked(&[])
-    }
+    pub const fn new() -> &'static Self { Self::from_hashes_unchecked(&[]) }
 
     /// Returns the number of nodes in this Merkle proof.
     #[inline]
@@ -91,7 +92,9 @@ impl TaprootMerkleBranch {
     /// Decodes a byte slice that is statically known to be multiple of 32.
     ///
     /// This can be used as a building block for other ways of decoding.
-    fn decode_exact(nodes: &[[u8; TAPROOT_CONTROL_NODE_SIZE]]) -> Result<&Self, InvalidMerkleTreeDepthError> {
+    fn decode_exact(
+        nodes: &[[u8; TAPROOT_CONTROL_NODE_SIZE]],
+    ) -> Result<&Self, InvalidMerkleTreeDepthError> {
         // SAFETY:
         // The lifetime of the returned reference is the same as the lifetime of the input
         // reference, the size of `TapNodeHash` is equal to `TAPROOT_CONTROL_NODE_SIZE` and the
@@ -99,7 +102,7 @@ impl TaprootMerkleBranch {
         Self::from_hashes(unsafe { &*(nodes as *const _ as *const [TapNodeHash]) })
     }
 
-    fn from_hashes(nodes: &[TapNodeHash]) -> Result<&Self, InvalidMerkleTreeDepthError>{
+    fn from_hashes(nodes: &[TapNodeHash]) -> Result<&Self, InvalidMerkleTreeDepthError> {
         if nodes.len() <= TAPROOT_CONTROL_MAX_NODE_COUNT {
             Ok(Self::from_hashes_unchecked(nodes))
         } else {
@@ -109,21 +112,15 @@ impl TaprootMerkleBranch {
 }
 
 impl Default for &'_ TaprootMerkleBranch {
-    fn default() -> Self {
-        TaprootMerkleBranch::new()
-    }
+    fn default() -> Self { TaprootMerkleBranch::new() }
 }
 
 impl AsRef<TaprootMerkleBranch> for TaprootMerkleBranch {
-    fn as_ref(&self) -> &TaprootMerkleBranch {
-        self
-    }
+    fn as_ref(&self) -> &TaprootMerkleBranch { self }
 }
 
 impl AsMut<TaprootMerkleBranch> for TaprootMerkleBranch {
-    fn as_mut(&mut self) -> &mut TaprootMerkleBranch {
-        self
-    }
+    fn as_mut(&mut self) -> &mut TaprootMerkleBranch { self }
 }
 
 impl AsRef<TaprootMerkleBranch> for TaprootMerkleBranchBuf {
@@ -248,18 +245,14 @@ impl alloc::borrow::ToOwned for TaprootMerkleBranch {
     // `Cow`.
     type Owned = TaprootMerkleBranchBuf;
 
-    fn to_owned(&self) -> Self::Owned {
-        self.into()
-    }
+    fn to_owned(&self) -> Self::Owned { self.into() }
 }
 
 impl<'a> IntoIterator for &'a TaprootMerkleBranch {
     type IntoIter = core::slice::Iter<'a, TapNodeHash>;
     type Item = &'a TapNodeHash;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.as_slice().iter()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.as_slice().iter() }
 }
 
 impl<'a> IntoIterator for &'a mut TaprootMerkleBranch {
@@ -274,7 +267,10 @@ impl<'a> IntoIterator for &'a mut TaprootMerkleBranch {
 mod tests {
     #[test]
     fn alignment() {
-        assert!(core::mem::align_of_val(super::TaprootMerkleBranch::new()) == core::mem::align_of::<u8>());
+        assert!(
+            core::mem::align_of_val(super::TaprootMerkleBranch::new())
+                == core::mem::align_of::<u8>()
+        );
     }
 
     const _: () = {

@@ -14,7 +14,7 @@ use crate::crypto::key::SerializedXOnlyPublicKey;
 use crate::prelude::Vec;
 #[cfg(doc)]
 use crate::script::ScriptExt as _;
-use crate::taproot::{self, ControlBlock, LeafScript, TAPROOT_ANNEX_PREFIX, TaprootMerkleBranch};
+use crate::taproot::{self, ControlBlock, LeafScript, TaprootMerkleBranch, TAPROOT_ANNEX_PREFIX};
 use crate::Script;
 
 type BorrowedControlBlock<'a> = ControlBlock<&'a TaprootMerkleBranch, &'a SerializedXOnlyPublicKey>;
@@ -387,7 +387,8 @@ mod test {
     #[test]
     fn get_tapscript() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let control_block =
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
@@ -435,7 +436,8 @@ mod test {
     #[test]
     fn get_control_block() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let control_block =
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         let expected_control_block = BorrowedControlBlock::decode_borrowed(&control_block).unwrap();
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
@@ -454,7 +456,8 @@ mod test {
     #[test]
     fn get_annex() {
         let tapscript = hex!("deadbeef");
-        let control_block = hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let control_block =
+            hex!("c0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 

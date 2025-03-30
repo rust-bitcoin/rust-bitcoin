@@ -134,7 +134,9 @@ impl<T: Tag> PartialOrd for Hash<T> {
     }
 }
 impl<T: Tag> Ord for Hash<T> {
-    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering { cmp::Ord::cmp(&self.as_byte_array(), &other.as_byte_array()) }
+    fn cmp(&self, other: &Hash<T>) -> cmp::Ordering {
+        cmp::Ord::cmp(&self.as_byte_array(), &other.as_byte_array())
+    }
 }
 impl<T: Tag> core::hash::Hash for Hash<T> {
     fn hash<H: core::hash::Hasher>(&self, h: &mut H) { self.as_byte_array().hash(h) }

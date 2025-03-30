@@ -11,8 +11,8 @@ use core::ops::Index;
 use arbitrary::{Arbitrary, Unstructured};
 use hex::DisplayHex;
 use internals::compact_size;
-use internals::wrap_debug::WrapDebug;
 use internals::slice::SliceExt;
+use internals::wrap_debug::WrapDebug;
 
 use crate::prelude::{Box, Vec};
 
@@ -250,95 +250,65 @@ impl<T: core::borrow::Borrow<[u8]>> PartialEq<[T]> for Witness {
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<&[T]> for Witness {
-    fn eq(&self, rhs: &&[T]) -> bool {
-        *self == **rhs
-    }
+    fn eq(&self, rhs: &&[T]) -> bool { *self == **rhs }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for [T] {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for &[T] {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == **self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == **self }
 }
 
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<[T; N]> for Witness {
-    fn eq(&self, rhs: &[T; N]) -> bool {
-        *self == *rhs.as_slice()
-    }
+    fn eq(&self, rhs: &[T; N]) -> bool { *self == *rhs.as_slice() }
 }
 
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<&[T; N]> for Witness {
-    fn eq(&self, rhs: &&[T; N]) -> bool {
-        *self == *rhs.as_slice()
-    }
+    fn eq(&self, rhs: &&[T; N]) -> bool { *self == *rhs.as_slice() }
 }
 
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for [T; N] {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 impl<const N: usize, T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for &[T; N] {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == **self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == **self }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Vec<T>> for Witness {
-    fn eq(&self, rhs: &Vec<T>) -> bool {
-        *self == **rhs
-    }
+    fn eq(&self, rhs: &Vec<T>) -> bool { *self == **rhs }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for Vec<T> {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Box<[T]>> for Witness {
-    fn eq(&self, rhs: &Box<[T]>) -> bool {
-        *self == **rhs
-    }
+    fn eq(&self, rhs: &Box<[T]>) -> bool { *self == **rhs }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for Box<[T]> {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<alloc::rc::Rc<[T]>> for Witness {
-    fn eq(&self, rhs: &alloc::rc::Rc<[T]>) -> bool {
-        *self == **rhs
-    }
+    fn eq(&self, rhs: &alloc::rc::Rc<[T]>) -> bool { *self == **rhs }
 }
 
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for alloc::rc::Rc<[T]> {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 #[cfg(target_has_atomic = "ptr")]
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<alloc::sync::Arc<[T]>> for Witness {
-    fn eq(&self, rhs: &alloc::sync::Arc<[T]>) -> bool {
-        *self == **rhs
-    }
+    fn eq(&self, rhs: &alloc::sync::Arc<[T]>) -> bool { *self == **rhs }
 }
 
 #[cfg(target_has_atomic = "ptr")]
 impl<T: core::borrow::Borrow<[u8]>> PartialEq<Witness> for alloc::sync::Arc<[T]> {
-    fn eq(&self, rhs: &Witness) -> bool {
-        *rhs == *self
-    }
+    fn eq(&self, rhs: &Witness) -> bool { *rhs == *self }
 }
 
 /// Debug implementation that displays the witness as a structured output containing:
@@ -580,9 +550,7 @@ mod test {
     }
 
     // A witness with a single element that is empty (zero length).
-    fn single_empty_element() -> Witness {
-        Witness::from([[0u8; 0]])
-    }
+    fn single_empty_element() -> Witness { Witness::from([[0u8; 0]]) }
 
     #[test]
     fn witness_debug_can_display_empty_element() {
@@ -729,13 +697,11 @@ mod test {
         const EMPTY_BYTES: &[u8] = &[];
         assert_eq!(Vec::<&[u8]>::new(), Witness::new());
         macro_rules! ck {
-            ($container:expr) => {
-                {
-                    let container = $container;
-                    let witness = Witness::from(Clone::clone(&container));
-                    assert_eq!(witness, container, stringify!($container));
-                }
-            }
+            ($container:expr) => {{
+                let container = $container;
+                let witness = Witness::from(Clone::clone(&container));
+                assert_eq!(witness, container, stringify!($container));
+            }};
         }
         ck!([EMPTY_BYTES]);
         ck!([EMPTY_BYTES, EMPTY_BYTES]);
