@@ -148,7 +148,6 @@ dependencies = [
  "bitcoin-internals",
  "hex-conservative 0.3.0",
  "serde",
- "serde_json",
  "serde_test",
 ]
 
