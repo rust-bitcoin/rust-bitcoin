@@ -2,6 +2,8 @@
 
 use core::fmt;
 
+use primitives::relative;
+
 use super::{opcode_to_verify, write_scriptint, Error, PushBytes, Script, ScriptBuf};
 use crate::locktime::absolute;
 use crate::opcodes::all::*;
@@ -115,7 +117,26 @@ impl Builder {
         self.push_int_unchecked(lock_time.to_consensus_u32().into())
     }
 
+    /// Adds instructions to push a relative lock time onto the stack.
+    ///
+    /// This is used when creating scripts that use CHECKSEQUENCEVERIFY (CSV) to enforce
+    /// relative time locks.
+    pub fn push_relative_lock_time(self, lock_time: relative::LockTime) -> Builder {
+        self.push_int_unchecked(lock_time.to_consensus_u32().into())
+    }
+
     /// Adds instructions to push a sequence number onto the stack.
+    ///
+    /// # Deprecated
+    /// This method is deprecated in favor of `push_relative_lock_time`.
+    /// 
+    /// In Bitcoin script semantics, when using CHECKSEQUENCEVERIFY, you typically
+    /// want to push a relative locktime value to be compared against the input's
+    /// sequence number, not the sequence number itself.
+    #[deprecated(
+        since = "TBD",
+        note = "Use push_relative_lock_time instead for working with timelocks in scripts"
+    )]
     pub fn push_sequence(self, sequence: Sequence) -> Builder {
         self.push_int_unchecked(sequence.to_consensus_u32().into())
     }
