@@ -31,9 +31,9 @@ pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
 /// Mainnet (bitcoin) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
-/// Test (tesnet, signet, regtest) pubkey address prefix.
+/// Test (testnet, signet, regtest) pubkey address prefix.
 pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
-/// Test (tesnet, signet, regtest) script address prefix.
+/// Test (testnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
 /// The maximum allowed redeem script size for a P2SH output.
 pub const MAX_REDEEM_SCRIPT_SIZE: usize = primitives::script::MAX_REDEEM_SCRIPT_SIZE; // 520
@@ -41,7 +41,7 @@ pub const MAX_REDEEM_SCRIPT_SIZE: usize = primitives::script::MAX_REDEEM_SCRIPT_
 pub const MAX_WITNESS_SCRIPT_SIZE: usize = primitives::script::MAX_WITNESS_SCRIPT_SIZE; // 10_000
 /// The maximum allowed size of any single witness stack element.
 pub const MAX_STACK_ELEMENT_SIZE: usize = 520;
-/// How may blocks between halvings.
+/// How many blocks between halvings.
 pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
 /// Maximum allowed value for an integer in Script.
 /// This constant has ambiguous semantics. Please carefully check your intended use-case and define
