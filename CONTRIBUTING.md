@@ -16,6 +16,7 @@ changes to this document in a pull request.
 - [Contribution workflow](#contribution-workflow)
   * [Preparing PRs](#preparing-prs)
   * [Peer review](#peer-review)
+  * [CI and Merging](#merging)
   * [Repository maintainers](#repository-maintainers)
 - [Coding conventions](#coding-conventions)
   * [Naming conventions](#naming-conventions)
@@ -160,7 +161,19 @@ running `just check-api`.
 Check the [API text files](api/README.md) for more information
 on how to install the dependencies and create the text files.
 
+### CI and Merging
+
+We use GitHub for CI as well to test the final state of each PR.
+
+Also we use a local CI box which runs a large matrix of feature combinations as
+well as testing each patch in a PR. This box is often very backlogged, sometimes
+by multiple days. Please be patient, we will get to merging your PRs when the
+backlog clears.
+
 ### Repository maintainers
+
+Like all open source projects our maintainers are busy. Please take it easy on
+them and only bump if you get no response for a week or two.
 
 Pull request merge requirements:
 - all CI test should pass,
