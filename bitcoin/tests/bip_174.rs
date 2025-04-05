@@ -263,15 +263,15 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     psbt
 }
 
-/// `pk_path` holds tuples of `(public_key, derivation_path)`. `indecies` is used to access the
+/// `pk_path` holds tuples of `(public_key, derivation_path)`. `indices` is used to access the
 /// `pk_path` vector. `fingerprint` is from the parent extended public key.
 fn bip32_derivation(
     fingerprint: Fingerprint,
     pk_path: &[(&str, &str)],
-    indecies: Vec<usize>,
+    indices: Vec<usize>,
 ) -> BTreeMap<secp256k1::PublicKey, KeySource> {
     let mut tree = BTreeMap::new();
-    for i in indecies {
+    for i in indices {
         let pk = pk_path[i].0;
         let path = pk_path[i].1;
 
