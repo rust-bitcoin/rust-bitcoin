@@ -14,7 +14,6 @@ alloc = ["alloc-cortex-m", "bitcoin_hashes/alloc"]
 hex = ["bitcoin_hashes/hex"]
 
 [dependencies]
-cortex-m = "0.6.0"
 cortex-m-rt = "0.6.10"
 cortex-m-semihosting = "0.3.3"
 panic-halt = "0.2.0"
