@@ -129,7 +129,7 @@ impl Builder {
     ///
     /// # Deprecated
     /// This method is deprecated in favor of `push_relative_lock_time`.
-    /// 
+    ///
     /// In Bitcoin script semantics, when using CHECKSEQUENCEVERIFY, you typically
     /// want to push a relative locktime value to be compared against the input's
     /// sequence number, not the sequence number itself.
