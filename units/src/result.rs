@@ -6,7 +6,7 @@ use core::fmt;
 
 use NumOpResult as R;
 
-use crate::{Amount, SignedAmount};
+use crate::{Amount, FeeRate, SignedAmount, Weight};
 
 /// Result of a mathematical operation on two numeric types.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -125,7 +125,7 @@ macro_rules! impl_opt_ext {
         )*
     }
 }
-impl_opt_ext!(Amount, SignedAmount);
+impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
 
 /// An error occurred while doing a mathematical operation.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

@@ -178,18 +178,18 @@ crate::internal_macros::impl_op_for_references! {
     }
 
     impl ops::Div<Weight> for Amount {
-        type Output = FeeRate;
+        type Output = NumOpResult<FeeRate>;
 
         fn div(self, rhs: Weight) -> Self::Output {
-            FeeRate::from_sat_per_kwu(self.to_sat() * 1000 / rhs.to_wu())
+            self.checked_div_by_weight_floor(rhs).valid_or_error()
         }
     }
 
     impl ops::Div<FeeRate> for Amount {
-        type Output = Weight;
+        type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
-            self.checked_div_by_fee_rate_floor(rhs).unwrap()
+            self.checked_div_by_fee_rate_floor(rhs).valid_or_error()
         }
     }
 }
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn fee_rate_div_by_weight() {
-        let fee_rate = Amount::from_sat_u32(329) / Weight::from_wu(381);
+        let fee_rate = (Amount::from_sat_u32(329) / Weight::from_wu(381)).unwrap();
         assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
     }
 
@@ -275,21 +275,21 @@ mod tests {
         // Test exact division
         let amount = Amount::from_sat_u32(1000);
         let fee_rate = FeeRate::from_sat_per_kwu(2);
-        let weight = amount / fee_rate;
+        let weight = (amount / fee_rate).unwrap();
         assert_eq!(weight, Weight::from_wu(500_000));
 
         // Test reference division
-        let weight_ref = &amount / fee_rate;
+        let weight_ref = (&amount / fee_rate).unwrap();
         assert_eq!(weight_ref, Weight::from_wu(500_000));
-        let weight_ref2 = amount / &fee_rate;
+        let weight_ref2 = (amount / &fee_rate).unwrap();
         assert_eq!(weight_ref2, Weight::from_wu(500_000));
-        let weight_ref3 = &amount / &fee_rate;
+        let weight_ref3 = (&amount / &fee_rate).unwrap();
         assert_eq!(weight_ref3, Weight::from_wu(500_000));
 
         // Test truncation behavior
         let amount = Amount::from_sat_u32(1000);
         let fee_rate = FeeRate::from_sat_per_kwu(3);
-        let weight = amount / fee_rate;
+        let weight = (amount / fee_rate).unwrap();
         // 1000 * 1000 = 1,000,000 msats
         // 1,000,000 / 3 = 333,333.33... wu
         // Should truncate down to 333,333 wu

@@ -83,9 +83,11 @@ crate::internal_macros::impl_op_for_references! {
         fn div(self, rhs: u64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
     }
     impl ops::Div<Amount> for Amount {
-        type Output = u64;
+        type Output = NumOpResult<u64>;
 
-        fn div(self, rhs: Amount) -> Self::Output { self.to_sat() / rhs.to_sat() }
+        fn div(self, rhs: Amount) -> Self::Output {
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error()
+        }
     }
 
     impl ops::Rem<u64> for Amount {
@@ -158,9 +160,11 @@ crate::internal_macros::impl_op_for_references! {
         fn div(self, rhs: i64) -> Self::Output { self.and_then(|lhs| lhs / rhs) }
     }
     impl ops::Div<SignedAmount> for SignedAmount {
-        type Output = i64;
+        type Output = NumOpResult<i64>;
 
-        fn div(self, rhs: SignedAmount) -> Self::Output { self.to_sat() / rhs.to_sat() }
+        fn div(self, rhs: SignedAmount) -> Self::Output {
+            self.to_sat().checked_div(rhs.to_sat()).valid_or_error()
+        }
     }
 
     impl ops::Rem<i64> for SignedAmount {
