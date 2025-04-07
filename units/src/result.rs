@@ -107,7 +107,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
 }
 
 pub(crate) trait OptionExt<T> {
-    fn valid_or_error(self) -> NumOpResult<T>;
+    fn valid_or_error(self, op: MathOp) -> NumOpResult<T>;
 }
 
 macro_rules! impl_opt_ext {
@@ -115,10 +115,10 @@ macro_rules! impl_opt_ext {
         $(
             impl OptionExt<$ty> for Option<$ty> {
                 #[inline]
-                fn valid_or_error(self) -> NumOpResult<$ty> {
+                fn valid_or_error(self, op: MathOp) -> NumOpResult<$ty> {
                     match self {
                         Some(amount) => R::Valid(amount),
-                        None => R::Error(NumOpError {}),
+                        None => R::Error(NumOpError(op)),
                     }
                 }
             }
@@ -130,13 +130,62 @@ impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
 /// An error occurred while doing a mathematical operation.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct NumOpError;
+pub struct NumOpError(MathOp);
+
+impl NumOpError {
+    /// Creates a [`NumOpError`] caused by `op`.
+    pub fn while_doing(op: MathOp) -> Self { NumOpError(op) }
+
+    /// Returns the [`MathOp`] that caused this error.
+    pub fn operation(self) -> MathOp { self.0 }
+}
 
 impl fmt::Display for NumOpError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "a math operation gave an invalid numeric result")
+        write!(f, "math operation '{}' gave an invalid numeric result", self.operation())
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for NumOpError {}
+
+/// The math operation that caused the error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum MathOp {
+    /// Addition failed ([`core::ops::Add`] resulted in an invalid value).
+    Add,
+    /// Subtraction failed ([`core::ops::Sub`] resulted in an invalid value).
+    Sub,
+    /// Multiplication failed ([`core::ops::Mul`] resulted in an invalid value).
+    Mul,
+    /// Division failed ([`core::ops::Div`] attempted div-by-zero).
+    Div,
+    /// Calculating the remainder failed ([`core::ops::Rem`] attempted div-by-zero).
+    Rem,
+    /// Negation failed ([`core::ops::Neg`] resulted in an invalid value).
+    Neg,
+}
+
+impl MathOp {
+    /// Returns `true` if this operation error'ed due to overflow.
+    pub fn is_overflow(self) -> bool {
+        matches!(self, MathOp::Add | MathOp::Sub | MathOp::Mul | MathOp::Neg)
+    }
+
+    /// Returns `true` if this operation error'ed due to division by zero.
+    pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
+}
+
+impl fmt::Display for MathOp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MathOp::Add => write!(f, "add"),
+            MathOp::Sub => write!(f, "sub"),
+            MathOp::Mul => write!(f, "mul"),
+            MathOp::Div => write!(f, "div"),
+            MathOp::Rem => write!(f, "rem"),
+            MathOp::Neg => write!(f, "neg"),
+        }
+    }
+}

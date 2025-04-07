@@ -44,7 +44,7 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
-    result::{NumOpError, NumOpResult},
+    result::{NumOpError, NumOpResult, MathOp},
     time::BlockTime,
     weight::Weight
 };

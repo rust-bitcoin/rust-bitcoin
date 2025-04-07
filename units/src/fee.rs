@@ -13,7 +13,7 @@
 
 use core::ops;
 
-use crate::{Amount, FeeRate, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.
@@ -166,14 +166,14 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: FeeRate) -> Self::Output {
-            rhs.checked_mul_by_weight(self).valid_or_error()
+            rhs.checked_mul_by_weight(self).valid_or_error(MathOp::Mul)
         }
     }
 
     impl ops::Mul<Weight> for FeeRate {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: Weight) -> Self::Output {
-            self.checked_mul_by_weight(rhs).valid_or_error()
+            self.checked_mul_by_weight(rhs).valid_or_error(MathOp::Mul)
         }
     }
 
@@ -181,7 +181,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<FeeRate>;
 
         fn div(self, rhs: Weight) -> Self::Output {
-            self.checked_div_by_weight_floor(rhs).valid_or_error()
+            self.checked_div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
         }
     }
 
@@ -189,7 +189,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
-            self.checked_div_by_fee_rate_floor(rhs).valid_or_error()
+            self.checked_div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
         }
     }
 }
