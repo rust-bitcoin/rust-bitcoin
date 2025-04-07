@@ -110,25 +110,22 @@ pub(crate) trait OptionExt<T> {
     fn valid_or_error(self) -> NumOpResult<T>;
 }
 
-impl OptionExt<Amount> for Option<Amount> {
-    #[inline]
-    fn valid_or_error(self) -> NumOpResult<Amount> {
-        match self {
-            Some(amount) => R::Valid(amount),
-            None => R::Error(NumOpError {}),
-        }
+macro_rules! impl_opt_ext {
+    ($($ty:ident),* $(,)?) => {
+        $(
+            impl OptionExt<$ty> for Option<$ty> {
+                #[inline]
+                fn valid_or_error(self) -> NumOpResult<$ty> {
+                    match self {
+                        Some(amount) => R::Valid(amount),
+                        None => R::Error(NumOpError {}),
+                    }
+                }
+            }
+        )*
     }
 }
-
-impl OptionExt<SignedAmount> for Option<SignedAmount> {
-    #[inline]
-    fn valid_or_error(self) -> NumOpResult<SignedAmount> {
-        match self {
-            Some(amount) => R::Valid(amount),
-            None => R::Error(NumOpError {}),
-        }
-    }
-}
+impl_opt_ext!(Amount, SignedAmount);
 
 /// An error occurred while doing a mathematical operation.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
