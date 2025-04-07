@@ -19,7 +19,7 @@ pub use self::{
     weight::Weight
 };
 
-/// Implements `FeeRate` and assoctiated features.
+/// Implements `FeeRate` and associated features.
 pub mod fee_rate {
     #[cfg(feature = "serde")]
     pub use units::fee_rate::serde;
