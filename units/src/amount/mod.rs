@@ -35,11 +35,9 @@ pub use self::{
         OutOfRangeError, ParseAmountError, ParseDenominationError, ParseError,
         PossiblyConfusingDenominationError, TooPreciseError, UnknownDenominationError,
     },
-    result::{NumOpError, NumOpResult},
     signed::SignedAmount,
     unsigned::Amount,
 };
-pub(crate) use self::result::OptionExt;
 
 /// A set of denominations in which amounts can be expressed.
 ///

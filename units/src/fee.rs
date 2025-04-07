@@ -13,8 +13,7 @@
 
 use core::ops;
 
-use crate::amount::{NumOpResult, OptionExt};
-use crate::{Amount, FeeRate, Weight};
+use crate::{Amount, FeeRate, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.

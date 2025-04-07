@@ -13,6 +13,7 @@ use std::panic;
 use ::serde::{Deserialize, Serialize};
 
 use super::*;
+use crate::NumOpResult;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
