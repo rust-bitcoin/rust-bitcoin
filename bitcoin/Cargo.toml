@@ -94,5 +94,9 @@ name = "sighash"
 name = "io"
 required-features = ["std"]
 
+[[example]]
+name = "script"
+required-features = ["std"]
+
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)'] }
