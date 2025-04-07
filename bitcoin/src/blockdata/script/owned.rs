@@ -3,13 +3,13 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hex::FromHex;
 use internals::ToU64 as _;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptExtPriv as _};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
+use crate::consensus;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -27,9 +27,10 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
-            let v = Vec::from_hex(s)?;
-            Ok(ScriptBuf::from_bytes(v))
+        ///
+        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
+        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
+            consensus::encode::deserialize_hex(s)
         }
 
         /// Adds a single opcode to the script.
