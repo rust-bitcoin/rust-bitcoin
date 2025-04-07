@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides a monodic type used when mathematical operations (`core::ops`) return an amount type.
+//! Provides a monodic type returned by mathematical operations (`core::ops`).
 
 use core::{fmt, ops};
 
@@ -8,9 +8,7 @@ use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
 
-/// Result of an operation on [`Amount`] or [`SignedAmount`].
-///
-/// The type parameter `T` should be normally `Amount` or `SignedAmount`.
+/// Result of a mathematical operation on two numeric types.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
@@ -21,7 +19,7 @@ pub enum NumOpResult<T> {
 }
 
 impl<T: fmt::Debug> NumOpResult<T> {
-    /// Returns the contained valid amount, consuming `self`.
+    /// Returns the contained valid numeric type, consuming `self`.
     ///
     /// # Panics
     ///
@@ -30,12 +28,12 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn expect(self, msg: &str) -> T {
         match self {
-            R::Valid(amount) => amount,
+            R::Valid(x) => x,
             R::Error(_) => panic!("{}", msg),
         }
     }
 
-    /// Returns the contained valid amount, consuming `self`.
+    /// Returns the contained valid numeric type, consuming `self`.
     ///
     /// # Panics
     ///
@@ -44,7 +42,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[track_caller]
     pub fn unwrap(self) -> T {
         match self {
-            R::Valid(amount) => amount,
+            R::Valid(x) => x,
             R::Error(e) => panic!("tried to unwrap an invalid numeric result: {:?}", e),
         }
     }
@@ -53,7 +51,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the numeric result is a valid amount.
+    /// Panics if the numeric result is valid.
     #[inline]
     #[track_caller]
     pub fn unwrap_err(self) -> NumOpError {
@@ -67,7 +65,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[inline]
     pub fn ok(self) -> Option<T> {
         match self {
-            R::Valid(amount) => Some(amount),
+            R::Valid(x) => Some(x),
             R::Error(_) => None,
         }
     }
@@ -77,7 +75,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
     #[allow(clippy::missing_errors_doc)]
     pub fn into_result(self) -> Result<T, NumOpError> {
         match self {
-            R::Valid(amount) => Ok(amount),
+            R::Valid(x) => Ok(x),
             R::Error(e) => Err(e),
         }
     }
@@ -89,12 +87,12 @@ impl<T: fmt::Debug> NumOpResult<T> {
         F: FnOnce(T) -> NumOpResult<T>,
     {
         match self {
-            R::Valid(amount) => op(amount),
+            R::Valid(x) => op(x),
             R::Error(e) => R::Error(e),
         }
     }
 
-    /// Returns `true` if the numeric result is a valid amount.
+    /// Returns `true` if the numeric result is valid.
     #[inline]
     pub fn is_valid(&self) -> bool {
         match self {
@@ -103,7 +101,7 @@ impl<T: fmt::Debug> NumOpResult<T> {
         }
     }
 
-    /// Returns `true` if the numeric result is an invalid amount.
+    /// Returns `true` if the numeric result is invalid.
     #[inline]
     pub fn is_error(&self) -> bool { !self.is_valid() }
 }
@@ -410,7 +408,7 @@ pub struct NumOpError;
 
 impl fmt::Display for NumOpError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "a math operation on amounts gave an invalid numeric result")
+        write!(f, "a math operation gave an invalid numeric result")
     }
 }
 
