@@ -12,8 +12,8 @@ use arbitrary::{Arbitrary, Unstructured};
 
 /// Represents fee rate.
 ///
-/// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against mixing
-/// up the types as well as basic formatting features.
+/// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against
+/// mixing up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct FeeRate(u64);
 
