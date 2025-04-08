@@ -141,10 +141,9 @@ impl FeeRate {
 
     /// Checked weight multiplication.
     ///
-    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate.
-    /// When the resulting fee is a non-integer amount, the amount is rounded up,
-    /// ensuring that the transaction fee is enough instead of falling short if
-    /// rounded down.
+    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
+    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
+    /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
@@ -198,10 +197,9 @@ crate::internal_macros::impl_op_for_references! {
 impl Weight {
     /// Checked fee rate multiplication.
     ///
-    /// Computes the absolute fee amount for a given [`FeeRate`] at this weight.
-    /// When the resulting fee is a non-integer amount, the amount is rounded up,
-    /// ensuring that the transaction fee is enough instead of falling short if
-    /// rounded down.
+    /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
+    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
+    /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
