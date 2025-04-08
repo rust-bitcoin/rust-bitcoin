@@ -9,6 +9,74 @@ use NumOpResult as R;
 use crate::{Amount, FeeRate, SignedAmount, Weight};
 
 /// Result of a mathematical operation on two numeric types.
+///
+/// In order to prevent overflow we provide a custom result type that is similar to the normal
+/// [`core::result::Result`] but implements mathematical operatons (e.g. [`core::ops::Add`]) so that
+/// math operations can be chained ergonomically. This is very similar to how `NaN` works.
+///
+/// `NumOpResult` is a monadic type that contains `Valid` and `Error` (similar to `Ok` and `Err`).
+/// It supports a subset of functions similar to `Result` (e.g. `unwrap`).
+///
+/// # Examples
+///
+/// The `NumOpResult` type provides protection against overflow and div-by-zero.
+///
+/// ## Overflow protection
+///
+/// ```
+/// # use bitcoin_units::{amount, Amount};
+/// // Example UTXO value.
+/// let a1 = Amount::from_sat(1_000_000)?;
+/// // And another value from some other UTXO.
+/// let a2 = Amount::from_sat(765_432)?;
+/// // Just an example (typically one would calculate fee using weight and fee rate).
+/// let fee = Amount::from_sat(1_00)?;
+/// // The amount we want to send.
+/// let spend = Amount::from_sat(1_200_000)?;
+///
+/// // We can error if the change calculation overflows.
+/// //
+/// // For example if the `spend` value comes from the user and the `change` value is later
+/// // used then overflow here could be an attack vector.
+/// let change = (a1 + a2 - spend - fee).into_result().expect("handle this error");
+///
+/// // Or if we control all the values and know they are sane we can just `unwrap`.
+/// let change = (a1 + a2 - spend - fee).unwrap();
+/// // `NumOpResult` also implements `expect`.
+/// let change = (a1 + a2 - spend - fee).expect("we know values don't overflow");
+/// # Ok::<_, amount::OutOfRangeError>(())
+/// ```
+///
+/// ## Divide-by-zero (overflow in `Div` or `Rem`)
+///
+/// In some instances one may wish to differentiate div-by-zero from overflow.
+///
+/// ```
+/// # use bitcoin_units::{amount, Amount, FeeRate, NumOpResult, NumOpError};
+/// // Two amounts that will be added to calculate the max fee.
+/// let a = Amount::from_sat(123).expect("valid amount");
+/// let b = Amount::from_sat(467).expect("valid amount");
+/// // Fee rate for transaction.
+/// let fee_rate = FeeRate::from_sat_per_vb(1).unwrap();
+///
+/// // Somewhat contrived example to show addition operator chained with division.
+/// let max_fee = a + b;
+/// let _fee = match max_fee / fee_rate {
+///     NumOpResult::Valid(fee) => fee,
+///     NumOpResult::Error(e) if e.is_div_by_zero() => {
+///         // Do something when div by zero.
+///         return Err(e);
+///     },
+///     NumOpResult::Error(e) => {
+///         // We separate div-by-zero from overflow in case it needs to be handled separately.
+///         //
+///         // This branch could be hit since `max_fee` came from some previous calculation. And if
+///         // an input to that calculation was from the user then overflow could be an attack vector.
+///         return Err(e);
+///     }
+/// };
+/// # Ok::<_, NumOpError>(())
+/// ```
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[must_use]
 pub enum NumOpResult<T> {
@@ -135,6 +203,12 @@ pub struct NumOpError(MathOp);
 impl NumOpError {
     /// Creates a [`NumOpError`] caused by `op`.
     pub fn while_doing(op: MathOp) -> Self { NumOpError(op) }
+
+    /// Returns `true` if this operation error'ed due to overflow.
+    pub fn is_overflow(self) -> bool { self.0.is_overflow() }
+
+    /// Returns `true` if this operation error'ed due to division by zero.
+    pub fn is_div_by_zero(self) -> bool { self.0.is_div_by_zero() }
 
     /// Returns the [`MathOp`] that caused this error.
     pub fn operation(self) -> MathOp { self.0 }
