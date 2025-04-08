@@ -31,8 +31,8 @@ impl Amount {
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
+    /// assert_eq!(fee_rate, Some(FeeRate::from_sat_per_kwu(34)));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
