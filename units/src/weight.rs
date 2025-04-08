@@ -6,46 +6,58 @@ use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
-/// The weight of a transaction or block.
-///
-/// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
-/// up types as well as basic formatting features.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(transparent))]
-pub struct Weight(u64);
+mod encapsulate {
+    #[cfg(feature = "serde")]
+    use serde::{Deserialize, Serialize};
+
+    /// The weight of a transaction or block.
+    ///
+    /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection against mixing
+    /// up types as well as basic formatting features.
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct Weight(u64);
+
+    impl Weight {
+        /// Constructs a new [`Weight`] from weight units.
+        pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
+
+        /// Returns raw weight units.
+        ///
+        /// Can be used instead of `into()` to avoid inference issues.
+        pub const fn to_wu(self) -> u64 { self.0 }
+    }
+}
+#[doc(inline)]
+pub use encapsulate::Weight;
 
 impl Weight {
     /// 0 wu.
     ///
     /// Equivalent to [`MIN`](Self::MIN), may better express intent in some contexts.
-    pub const ZERO: Weight = Weight(0);
+    pub const ZERO: Weight = Weight::from_wu(0);
 
     /// Minimum possible value (0 wu).
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
-    pub const MIN: Weight = Weight(u64::MIN);
+    pub const MIN: Weight = Weight::from_wu(u64::MIN);
 
     /// Maximum possible value.
-    pub const MAX: Weight = Weight(u64::MAX);
+    pub const MAX: Weight = Weight::from_wu(u64::MAX);
 
     /// The factor that non-witness serialization data is multiplied by during weight calculation.
     pub const WITNESS_SCALE_FACTOR: u64 = WITNESS_SCALE_FACTOR as u64;
 
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
-    pub const MAX_BLOCK: Weight = Weight(4_000_000);
+    pub const MAX_BLOCK: Weight = Weight::from_wu(4_000_000);
 
     /// The minimum transaction weight for a valid serialized transaction.
-    pub const MIN_TRANSACTION: Weight = Weight(Self::WITNESS_SCALE_FACTOR * 60);
-
-    /// Constructs a new [`Weight`] from weight units.
-    pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
+    pub const MIN_TRANSACTION: Weight = Weight::from_wu(Self::WITNESS_SCALE_FACTOR * 60);
 
     /// Constructs a new [`Weight`] from kilo weight units returning [`None`] if an overflow occurred.
     pub const fn from_kwu(wu: u64) -> Option<Self> {
@@ -73,7 +85,7 @@ impl Weight {
     #[deprecated(since = "TBD", note = "use `from_vb_unchecked` instead")]
     pub const fn from_vb_unwrap(vb: u64) -> Weight {
         match vb.checked_mul(Self::WITNESS_SCALE_FACTOR) {
-            Some(weight) => Weight(weight),
+            Some(weight) => Weight::from_wu(weight),
             None => panic!("checked_mul overflowed"),
         }
     }
@@ -82,30 +94,25 @@ impl Weight {
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
 
     /// Constructs a new [`Weight`] from witness size.
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight(witness_size) }
+    pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
 
     /// Constructs a new [`Weight`] from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
-        Weight(non_witness_size * Self::WITNESS_SCALE_FACTOR)
+        Weight::from_wu(non_witness_size * Self::WITNESS_SCALE_FACTOR)
     }
 
-    /// Returns raw weight units.
-    ///
-    /// Can be used instead of `into()` to avoid inference issues.
-    pub const fn to_wu(self) -> u64 { self.0 }
-
     /// Converts to kilo weight units rounding down.
-    pub const fn to_kwu_floor(self) -> u64 { self.0 / 1000 }
+    pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
 
     /// Converts to kilo weight units rounding up.
-    pub const fn to_kwu_ceil(self) -> u64 { (self.0 + 999) / 1000 }
+    pub const fn to_kwu_ceil(self) -> u64 { (self.to_wu() + 999) / 1000 }
 
     /// Converts to vB rounding down.
-    pub const fn to_vbytes_floor(self) -> u64 { self.0 / Self::WITNESS_SCALE_FACTOR }
+    pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
 
     /// Converts to vB rounding up.
     pub const fn to_vbytes_ceil(self) -> u64 {
-        (self.0 + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
+        (self.to_wu() + Self::WITNESS_SCALE_FACTOR - 1) / Self::WITNESS_SCALE_FACTOR
     }
 
     /// Checked addition.
@@ -114,7 +121,7 @@ impl Weight {
     #[must_use]
     pub const fn checked_add(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
-        match self.0.checked_add(rhs.0) {
+        match self.to_wu().checked_add(rhs.to_wu()) {
             Some(wu) => Some(Weight::from_wu(wu)),
             None => None,
         }
@@ -126,7 +133,7 @@ impl Weight {
     #[must_use]
     pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
         // No `map()` in const context.
-        match self.0.checked_sub(rhs.0) {
+        match self.to_wu().checked_sub(rhs.to_wu()) {
             Some(wu) => Some(Weight::from_wu(wu)),
             None => None,
         }
@@ -138,7 +145,7 @@ impl Weight {
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
-        match self.0.checked_mul(rhs) {
+        match self.to_wu().checked_mul(rhs) {
             Some(wu) => Some(Weight::from_wu(wu)),
             None => None,
         }
@@ -150,7 +157,7 @@ impl Weight {
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
-        match self.0.checked_div(rhs) {
+        match self.to_wu().checked_div(rhs) {
             Some(wu) => Some(Weight::from_wu(wu)),
             None => None,
         }
@@ -161,9 +168,9 @@ impl Weight {
 impl fmt::Display for Weight {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{} wu", self.0)
+            write!(f, "{} wu", self.to_wu())
         } else {
-            fmt::Display::fmt(&self.0, f)
+            fmt::Display::fmt(&self.to_wu(), f)
         }
     }
 }
@@ -176,28 +183,28 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<Weight> for Weight {
         type Output = Weight;
 
-        fn add(self, rhs: Weight) -> Self::Output { Weight(self.0 + rhs.0) }
+        fn add(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() + rhs.to_wu()) }
     }
     impl ops::Sub<Weight> for Weight {
         type Output = Weight;
 
-        fn sub(self, rhs: Weight) -> Self::Output { Weight(self.0 - rhs.0) }
+        fn sub(self, rhs: Weight) -> Self::Output { Weight::from_wu(self.to_wu() - rhs.to_wu()) }
     }
 
     impl ops::Mul<u64> for Weight {
         type Output = Weight;
 
-        fn mul(self, rhs: u64) -> Self::Output { Weight(self.0 * rhs) }
+        fn mul(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() * rhs) }
     }
     impl ops::Mul<Weight> for u64 {
         type Output = Weight;
 
-        fn mul(self, rhs: Weight) -> Self::Output { Weight(self * rhs.0) }
+        fn mul(self, rhs: Weight) -> Self::Output { Weight::from_wu(self * rhs.to_wu()) }
     }
     impl ops::Div<u64> for Weight {
         type Output = Weight;
 
-        fn div(self, rhs: u64) -> Self::Output { Weight(self.0 / rhs) }
+        fn div(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() / rhs) }
     }
     impl ops::Div<Weight> for Weight {
         type Output = u64;
@@ -207,27 +214,33 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Rem<u64> for Weight {
         type Output = Weight;
 
-        fn rem(self, rhs: u64) -> Self::Output { Weight(self.0 % rhs) }
+        fn rem(self, rhs: u64) -> Self::Output { Weight::from_wu(self.to_wu() % rhs) }
     }
     impl ops::Rem<Weight> for Weight {
         type Output = u64;
 
-        fn rem(self, rhs: Weight) -> Self::Output { self.0 % rhs.0 }
+        fn rem(self, rhs: Weight) -> Self::Output { self.to_wu() % rhs.to_wu() }
     }
 }
 crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
-    fn mul_assign(&mut self, rhs: u64) { self.0 *= rhs }
+    fn mul_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() * rhs);
+    }
 }
 
 impl ops::DivAssign<u64> for Weight {
-    fn div_assign(&mut self, rhs: u64) { self.0 /= rhs }
+    fn div_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() / rhs );
+    }
 }
 
 impl ops::RemAssign<u64> for Weight {
-    fn rem_assign(&mut self, rhs: u64) { self.0 %= rhs }
+    fn rem_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() % rhs);
+    }
 }
 
 impl core::iter::Sum for Weight {
@@ -235,7 +248,7 @@ impl core::iter::Sum for Weight {
     where
         I: Iterator<Item = Self>,
     {
-        Weight(iter.map(Weight::to_wu).sum())
+        Weight::from_wu(iter.map(Weight::to_wu).sum())
     }
 }
 
@@ -254,7 +267,7 @@ crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
 impl<'a> Arbitrary<'a> for Weight {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let w = u64::arbitrary(u)?;
-        Ok(Weight(w))
+        Ok(Weight::from_wu(w))
     }
 }
 
@@ -262,19 +275,19 @@ impl<'a> Arbitrary<'a> for Weight {
 mod tests {
     use super::*;
 
-    const ONE: Weight = Weight(1);
-    const TWO: Weight = Weight(2);
-    const FOUR: Weight = Weight(4);
+    const ONE: Weight = Weight::from_wu(1);
+    const TWO: Weight = Weight::from_wu(2);
+    const FOUR: Weight = Weight::from_wu(4);
 
     #[test]
     fn sanity_check() {
-        assert_eq!(Weight::MIN_TRANSACTION, Weight(240));
+        assert_eq!(Weight::MIN_TRANSACTION, Weight::from_wu(240));
     }
 
     #[test]
     fn from_kwu() {
         let got = Weight::from_kwu(1).unwrap();
-        let want = Weight(1_000);
+        let want = Weight::from_wu(1_000);
         assert_eq!(got, want);
     }
 
@@ -284,7 +297,7 @@ mod tests {
     #[test]
     fn from_vb() {
         let got = Weight::from_vb(1).unwrap();
-        let want = Weight(4);
+        let want = Weight::from_wu(4);
         assert_eq!(got, want);
     }
 
@@ -296,7 +309,7 @@ mod tests {
     #[test]
     fn from_vb_unchecked() {
         let got = Weight::from_vb_unchecked(1);
-        let want = Weight(4);
+        let want = Weight::from_wu(4);
         assert_eq!(got, want);
     }
 
@@ -309,7 +322,7 @@ mod tests {
     fn from_witness_data_size() {
         let witness_data_size = 1;
         let got = Weight::from_witness_data_size(witness_data_size);
-        let want = Weight(witness_data_size);
+        let want = Weight::from_wu(witness_data_size);
         assert_eq!(got, want);
     }
 
@@ -317,32 +330,32 @@ mod tests {
     fn from_non_witness_data_size() {
         let non_witness_data_size = 1;
         let got = Weight::from_non_witness_data_size(non_witness_data_size);
-        let want = Weight(non_witness_data_size * 4);
+        let want = Weight::from_wu(non_witness_data_size * 4);
         assert_eq!(got, want);
     }
 
     #[test]
     fn to_kwu_floor() {
-        assert_eq!(Weight(5_000).to_kwu_floor(), 5);
-        assert_eq!(Weight(5_999).to_kwu_floor(), 5);
+        assert_eq!(Weight::from_wu(5_000).to_kwu_floor(), 5);
+        assert_eq!(Weight::from_wu(5_999).to_kwu_floor(), 5);
     }
 
     #[test]
     fn to_kwu_ceil() {
-        assert_eq!(Weight(1_000).to_kwu_ceil(), 1);
-        assert_eq!(Weight(1_001).to_kwu_ceil(), 2);
+        assert_eq!(Weight::from_wu(1_000).to_kwu_ceil(), 1);
+        assert_eq!(Weight::from_wu(1_001).to_kwu_ceil(), 2);
     }
 
     #[test]
     fn to_vb_floor() {
-        assert_eq!(Weight(8).to_vbytes_floor(), 2);
-        assert_eq!(Weight(9).to_vbytes_floor(), 2);
+        assert_eq!(Weight::from_wu(8).to_vbytes_floor(), 2);
+        assert_eq!(Weight::from_wu(9).to_vbytes_floor(), 2);
     }
 
     #[test]
     fn to_vb_ceil() {
-        assert_eq!(Weight(4).to_vbytes_ceil(), 1);
-        assert_eq!(Weight(5).to_vbytes_ceil(), 2);
+        assert_eq!(Weight::from_wu(4).to_vbytes_ceil(), 1);
+        assert_eq!(Weight::from_wu(5).to_vbytes_ceil(), 2);
     }
 
     #[test]
@@ -382,9 +395,9 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn addition() {
-        let one = Weight(1);
-        let two = Weight(2);
-        let three = Weight(3);
+        let one = Weight::from_wu(1);
+        let two = Weight::from_wu(2);
+        let three = Weight::from_wu(3);
 
         assert!(one + two == three);
         assert!(&one + two == three);
@@ -395,9 +408,9 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn subtract() {
-        let ten = Weight(10);
-        let seven = Weight(7);
-        let three = Weight(3);
+        let ten = Weight::from_wu(10);
+        let seven = Weight::from_wu(7);
+        let three = Weight::from_wu(3);
 
         assert_eq!(ten - seven, three);
         assert_eq!(&ten - seven, three);
@@ -408,8 +421,8 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn multiply() {
-        let two = Weight(2);
-        let six = Weight(6);
+        let two = Weight::from_wu(2);
+        let six = Weight::from_wu(6);
 
         assert_eq!(3_u64 * two, six);
         assert_eq!(two * 3_u64, six);
@@ -417,65 +430,65 @@ mod tests {
 
     #[test]
     fn divide() {
-        let eight = Weight(8);
-        let four = Weight(4);
+        let eight = Weight::from_wu(8);
+        let four = Weight::from_wu(4);
 
         assert_eq!(eight / four, 2_u64);
-        assert_eq!(eight / 4_u64, Weight(2));
+        assert_eq!(eight / 4_u64, Weight::from_wu(2));
     }
 
     #[test]
     fn add_assign() {
-        let mut f = Weight(1);
-        f += Weight(2);
-        assert_eq!(f, Weight(3));
+        let mut f = Weight::from_wu(1);
+        f += Weight::from_wu(2);
+        assert_eq!(f, Weight::from_wu(3));
 
-        let mut f = Weight(1);
-        f += &Weight(2);
-        assert_eq!(f, Weight(3));
+        let mut f = Weight::from_wu(1);
+        f += &Weight::from_wu(2);
+        assert_eq!(f, Weight::from_wu(3));
     }
 
     #[test]
     fn sub_assign() {
-        let mut f = Weight(3);
-        f -= Weight(2);
-        assert_eq!(f, Weight(1));
+        let mut f = Weight::from_wu(3);
+        f -= Weight::from_wu(2);
+        assert_eq!(f, Weight::from_wu(1));
 
-        let mut f = Weight(3);
-        f -= &Weight(2);
-        assert_eq!(f, Weight(1));
+        let mut f = Weight::from_wu(3);
+        f -= &Weight::from_wu(2);
+        assert_eq!(f, Weight::from_wu(1));
     }
 
     #[test]
     fn mul_assign() {
-        let mut w = Weight(3);
+        let mut w = Weight::from_wu(3);
         w *= 2_u64;
-        assert_eq!(w, Weight(6));
+        assert_eq!(w, Weight::from_wu(6));
     }
 
     #[test]
     fn div_assign() {
-        let mut w = Weight(8);
-        w /= Weight(4).into();
-        assert_eq!(w, Weight(2));
+        let mut w = Weight::from_wu(8);
+        w /= Weight::from_wu(4).into();
+        assert_eq!(w, Weight::from_wu(2));
     }
 
     #[test]
     fn remainder() {
-        let weight10 = Weight(10);
-        let weight3 = Weight(3);
+        let weight10 = Weight::from_wu(10);
+        let weight3 = Weight::from_wu(3);
 
         let remainder = weight10 % weight3;
         assert_eq!(remainder, 1);
 
         let remainder = weight10 % 3;
-        assert_eq!(remainder, Weight(1));
+        assert_eq!(remainder, Weight::from_wu(1));
     }
 
     #[test]
     fn remainder_assign() {
-        let mut weight = Weight(10);
+        let mut weight = Weight::from_wu(10);
         weight %= 3;
-        assert_eq!(weight, Weight(1));
+        assert_eq!(weight, Weight::from_wu(1));
     }
 }
