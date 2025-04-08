@@ -226,21 +226,15 @@ crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
-    fn mul_assign(&mut self, rhs: u64) {
-        *self = Weight::from_wu(self.to_wu() * rhs);
-    }
+    fn mul_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() * rhs); }
 }
 
 impl ops::DivAssign<u64> for Weight {
-    fn div_assign(&mut self, rhs: u64) {
-        *self = Weight::from_wu(self.to_wu() / rhs );
-    }
+    fn div_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() / rhs); }
 }
 
 impl ops::RemAssign<u64> for Weight {
-    fn rem_assign(&mut self, rhs: u64) {
-        *self = Weight::from_wu(self.to_wu() % rhs);
-    }
+    fn rem_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() % rhs); }
 }
 
 impl core::iter::Sum for Weight {

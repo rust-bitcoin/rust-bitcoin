@@ -66,7 +66,9 @@ impl FeeRate {
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes without overflow check.
-    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_vb * (1000 / 4)) }
+    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self {
+        FeeRate::from_sat_per_kwu(sat_vb * (1000 / 4))
+    }
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
@@ -75,7 +77,9 @@ impl FeeRate {
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.to_sat_per_kwu() + (1000 / 4 - 1)) / (1000 / 4) }
+    pub const fn to_sat_per_vb_ceil(self) -> u64 {
+        (self.to_sat_per_kwu() + (1000 / 4 - 1)) / (1000 / 4)
+    }
 
     /// Checked multiplication.
     ///
@@ -315,7 +319,8 @@ mod tests {
 
     #[test]
     fn checked_mul() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10).checked_mul(10).expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_mul(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate::from_sat_per_kwu(100), fee_rate);
 
         let fee_rate = FeeRate::from_sat_per_kwu(10).checked_mul(u64::MAX);
@@ -324,7 +329,8 @@ mod tests {
 
     #[test]
     fn checked_div() {
-        let fee_rate = FeeRate::from_sat_per_kwu(10).checked_div(10).expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_sat_per_kwu(10).checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate::from_sat_per_kwu(1), fee_rate);
 
         let fee_rate = FeeRate::from_sat_per_kwu(10).checked_div(0);
