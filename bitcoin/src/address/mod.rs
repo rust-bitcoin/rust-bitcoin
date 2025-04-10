@@ -1474,7 +1474,7 @@ mod tests {
     fn fail_address_from_script() {
         use crate::witness_program;
 
-        let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
+        let bad_p2wpkh = ScriptBuf::from_hex("15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
         let bad_p2wsh = ScriptBuf::from_hex(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
         )
