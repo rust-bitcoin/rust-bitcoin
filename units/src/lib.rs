@@ -20,6 +20,7 @@ extern crate std;
 
 mod fee;
 mod internal_macros;
+mod result;
 
 #[doc(hidden)]
 pub mod _export {
@@ -43,6 +44,8 @@ pub use self::{
     amount::{Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
+    result::{NumOpError, NumOpResult, MathOp},
     time::BlockTime,
     weight::Weight
 };
+pub(crate) use self::result::OptionExt;

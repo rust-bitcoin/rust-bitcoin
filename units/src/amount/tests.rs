@@ -13,6 +13,7 @@ use std::panic;
 use ::serde::{Deserialize, Serialize};
 
 use super::*;
+use crate::NumOpResult;
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
@@ -1230,27 +1231,31 @@ fn op_int_combos() {
 
 #[test]
 fn unsigned_amount_div_by_amount() {
-    assert_eq!(sat(0) / sat(7), 0);
-    assert_eq!(sat(1897) / sat(7), 271);
+    assert_eq!((sat(0) / sat(7)).unwrap(), 0);
+    assert_eq!((sat(1897) / sat(7)).unwrap(), 271);
 }
 
 #[test]
-#[should_panic(expected = "attempt to divide by zero")]
-fn unsigned_amount_div_by_amount_zero() { let _ = sat(1897) / Amount::ZERO; }
+fn unsigned_amount_div_by_amount_zero() {
+    let res = sat(1897) / Amount::ZERO;
+    assert!(res.into_result().is_err());
+}
 
 #[test]
 fn signed_amount_div_by_amount() {
-    assert_eq!(ssat(0) / ssat(7), 0);
+    assert_eq!((ssat(0) / ssat(7)).unwrap(), 0);
 
-    assert_eq!(ssat(1897) / ssat(7), 271);
-    assert_eq!(ssat(1897) / ssat(-7), -271);
-    assert_eq!(ssat(-1897) / ssat(7), -271);
-    assert_eq!(ssat(-1897) / ssat(-7), 271);
+    assert_eq!((ssat(1897) / ssat(7)).unwrap(), 271);
+    assert_eq!((ssat(1897) / ssat(-7)).unwrap(), -271);
+    assert_eq!((ssat(-1897) / ssat(7)).unwrap(), -271);
+    assert_eq!((ssat(-1897) / ssat(-7)).unwrap(), 271);
 }
 
 #[test]
-#[should_panic(expected = "attempt to divide by zero")]
-fn signed_amount_div_by_amount_zero() { let _ = ssat(1897) / SignedAmount::ZERO; }
+fn signed_amount_div_by_amount_zero() {
+    let res = ssat(1897) / SignedAmount::ZERO;
+    assert!(res.into_result().is_err());
+}
 
 #[test]
 fn check_const() {

@@ -4,7 +4,7 @@
 //!
 //! Macros meant to be used inside the `bitcoin-units` library.
 
-/// Implements an opcode for various reference combinations.
+/// Implements a mathematical operation for various reference combinations.
 ///
 /// Given `$ty`, assumes the `$op_trait<$other_ty>` trait is implemented on it,
 /// and implements the same trait with the full matrix of `&$ty` and `&$other_ty`:
