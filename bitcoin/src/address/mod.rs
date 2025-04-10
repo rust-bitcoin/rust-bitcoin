@@ -135,7 +135,7 @@ mod sealed {
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + Unpin {
+pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + Unpin + Copy {
     /// Indicates whether this `NetworkValidation` is `NetworkChecked` or not.
     const IS_CHECKED: bool;
 }
@@ -151,13 +151,13 @@ pub trait NetworkValidationUnchecked:
 
 /// Marker that address's network has been successfully validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NetworkChecked {}
 
 /// Marker that address's network has not yet been validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum NetworkUnchecked {}
 
@@ -174,7 +174,7 @@ impl NetworkValidationUnchecked for NetworkUnchecked {}
 ///
 /// This struct represents the inner representation of an address without the network validation
 /// tag, which is used to ensure that addresses are used only on the appropriate network.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum AddressInner {
     P2pkh { hash: PubkeyHash, network: NetworkKind },
     P2sh { hash: ScriptHash, network: NetworkKind },
@@ -392,7 +392,7 @@ internals::transparent_newtype! {
     /// * [BIP142 - Address Format for Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0142.mediawiki)
     /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
     /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
-    #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     // The `#[repr(transparent)]` attribute is used to guarantee the layout of the `Address` struct. It
     // is an implementation detail and users should not rely on it in their code.
     pub struct Address<V = NetworkChecked>(PhantomData<V>, AddressInner)
@@ -621,7 +621,7 @@ impl Address {
     }
 
     /// Gets the address data from this address.
-    pub fn to_address_data(&self) -> AddressData {
+    pub fn to_address_data(self) -> AddressData {
         use AddressData::*;
 
         match *self.inner() {
@@ -742,7 +742,7 @@ impl Address {
     /// # })().unwrap();
     /// # assert_eq!(writer, ADDRESS);
     /// ```
-    pub fn to_qr_uri(&self) -> String { format!("bitcoin:{:#}", self) }
+    pub fn to_qr_uri(self) -> String { format!("bitcoin:{:#}", self) }
 
     /// Returns true if the given pubkey is directly related to the address payload.
     ///
@@ -1176,7 +1176,7 @@ mod tests {
         let unchecked = addr_str.parse::<Address<_>>().unwrap();
 
         assert_eq!(
-            format!("{:?}", Test { address: unchecked.clone() }),
+            format!("{:?}", Test { address: unchecked }),
             format!("Test {{ address: Address<NetworkUnchecked>({}) }}", addr_str)
         );
 
@@ -1223,7 +1223,7 @@ mod tests {
 
         let addr =
             "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".parse::<Address<_>>().unwrap().assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = serde_json::to_value(addr).unwrap();
         assert_eq!(
             json,
             serde_json::Value::String("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".to_owned())
@@ -1237,7 +1237,7 @@ mod tests {
 
         let addr =
             "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k".parse::<Address<_>>().unwrap().assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = serde_json::to_value(addr).unwrap();
         assert_eq!(
             json,
             serde_json::Value::String("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k".to_owned())
@@ -1265,7 +1265,7 @@ mod tests {
             .parse::<Address<_>>()
             .unwrap()
             .assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = serde_json::to_value(addr).unwrap();
         assert_eq!(
             json,
             serde_json::Value::String(
@@ -1286,7 +1286,7 @@ mod tests {
             .parse::<Address<_>>()
             .unwrap()
             .assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = serde_json::to_value(addr).unwrap();
         assert_eq!(
             json,
             serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned())
@@ -1548,7 +1548,7 @@ mod tests {
         let unchecked = addr_str.parse::<Address<_>>().unwrap();
 
         // Serialize with an unchecked address.
-        let foo_unchecked = Foo { address: unchecked.clone() };
+        let foo_unchecked = Foo { address: unchecked };
         let ser = serde_json::to_string(&foo_unchecked).expect("failed to serialize");
         let rinsed: Foo<NetworkUnchecked> =
             serde_json::from_str(&ser).expect("failed to deserialize");
