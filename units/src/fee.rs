@@ -30,8 +30,8 @@ impl Amount {
     /// # use bitcoin_units::{amount, Amount, FeeRate, Weight};
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
-    /// let fee_rate = amount.checked_div_by_weight_ceil(weight).expect("Division by weight failed");
-    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
+    /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
+    /// assert_eq!(fee_rate, Some(FeeRate::from_sat_per_kwu(34)));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
@@ -140,10 +140,9 @@ impl FeeRate {
 
     /// Checked weight multiplication.
     ///
-    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate.
-    /// When the resulting fee is a non-integer amount, the amount is rounded up,
-    /// ensuring that the transaction fee is enough instead of falling short if
-    /// rounded down.
+    /// Computes the absolute fee amount for a given [`Weight`] at this fee rate. When the resulting
+    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
+    /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
@@ -197,10 +196,9 @@ crate::internal_macros::impl_op_for_references! {
 impl Weight {
     /// Checked fee rate multiplication.
     ///
-    /// Computes the absolute fee amount for a given [`FeeRate`] at this weight.
-    /// When the resulting fee is a non-integer amount, the amount is rounded up,
-    /// ensuring that the transaction fee is enough instead of falling short if
-    /// rounded down.
+    /// Computes the absolute fee amount for a given [`FeeRate`] at this weight. When the resulting
+    /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
+    /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
     #[must_use]
