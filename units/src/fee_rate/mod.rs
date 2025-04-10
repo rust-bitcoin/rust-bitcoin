@@ -15,17 +15,42 @@ mod encapsulate {
     ///
     /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection
     /// against mixing up the types as well as basic formatting features.
+    ///
+    /// We reserve the right post-1.0 to play around with precision.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-    pub struct FeeRate(u64);
+    pub struct FeeRate {
+        /// The fee rat in sats per kwu.
+        pub(crate) sat_per_kwu: u64,
+        /// Some if this fee rate was created using `from_sat_per_kvb`.
+        pub(crate) sat_per_kvb: Option<u64>,
+    }
 
     impl FeeRate {
         /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
-        pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
+        pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self {
+            FeeRate { sat_per_kwu: sat_kwu, sat_per_kvb: None }
+        }
+
+        /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
+        pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self {
+            // This looses precision hence the additional field.
+            FeeRate { sat_per_kwu: sat_kvb / 4, sat_per_kvb: Some(sat_kvb) }
+        }
 
         /// Returns raw fee rate.
         ///
         /// Can be used instead of `into()` to avoid inference issues.
-        pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
+        pub const fn to_sat_per_kwu(self) -> u64 { self.sat_per_kwu }
+
+        /// Returns raw fee rate.
+        ///
+        /// Can be used instead of `into()` to avoid inference issues.
+        pub const fn to_sat_per_kvb(self) -> u64 {
+            match self.sat_per_kvb {
+                Some(sat_kvb) => sat_kvb,
+                None => self.sat_per_kwu * 4,
+            }
+        }
     }
 }
 #[doc(inline)]
@@ -69,9 +94,6 @@ impl FeeRate {
     pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self {
         FeeRate::from_sat_per_kwu(sat_vb * (1000 / 4))
     }
-
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
 
     /// Converts to sat/vB rounding down.
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
@@ -289,7 +311,7 @@ mod tests {
     #[test]
     fn fee_rate_from_sat_per_kvb() {
         let fee_rate = FeeRate::from_sat_per_kvb(11);
-        assert_eq!(FeeRate::from_sat_per_kwu(2), fee_rate);
+        assert_eq!(FeeRate::from_sat_per_kwu(2).to_sat_per_kwu(), fee_rate.to_sat_per_kwu());
     }
 
     #[test]
