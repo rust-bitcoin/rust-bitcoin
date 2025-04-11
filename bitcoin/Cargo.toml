@@ -35,15 +35,15 @@ primitives = { package = "bitcoin-primitives", path = "../primitives", default-f
 secp256k1 = { version = "0.30.0", default-features = false, features = ["hashes", "alloc", "rand"] }
 units = { package = "bitcoin-units", path = "../units", default-features = false, features = ["alloc"] }
 
-arbitrary = { version = "1.4", optional = true }
+arbitrary = { version = "1.4.1", optional = true }
 base64 = { version = "0.22.0", optional = true }
 # `bitcoinconsensus` version includes metadata which indicates the version of Core. Use `cargo tree` to see it.
 bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
-serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+serde = { version = "1.0.156", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", features = ["test-serde"] }
-serde_json = "1.0.0"
+serde_json = "1.0.68"
 serde_test = "1.0.19"
 bincode = "1.3.1"
 hex_lit = "0.1.1"

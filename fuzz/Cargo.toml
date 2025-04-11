@@ -12,8 +12,8 @@ cargo-fuzz = true
 honggfuzz = { version = "0.5.56", default-features = false }
 bitcoin = { path = "../bitcoin", features = [ "serde" ] }
 
-serde = { version = "1.0.103", features = [ "derive" ] }
-serde_json = "1.0"
+serde = { version = "1.0.156", features = [ "derive" ] }
+serde_json = "1.0.68"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
