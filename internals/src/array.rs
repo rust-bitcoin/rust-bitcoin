@@ -30,7 +30,7 @@ pub trait ArrayExt {
     /// the places where useless checks are made.
     fn first(&self) -> &Self::Item { self.get_static::<0>() }
 
-    /// Splits the array into two, non-overlaping smaller arrays covering the entire range.
+    /// Splits the array into two, non-overlapping smaller arrays covering the entire range.
     ///
     /// This is almost equivalent to just calling [`sub_array`](Self::sub_array) twice, except it also
     /// checks that the arrays don't overlap and that they cover the full range. This is very useful
