@@ -74,12 +74,36 @@ impl Builder {
     pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
-        self.push_slice(&<&PushBytes>::from(&buf)[..len])
+        self.push_slice_non_minimal(&<&PushBytes>::from(&buf)[..len])
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice<T: AsRef<PushBytes>>(mut self, data: T) -> Builder {
-        self.0.push_slice(data);
+    pub fn push_slice<T: AsRef<PushBytes>>(self, data: T) -> Builder {
+        let bytes = data.as_ref().as_bytes();
+        if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+            match bytes[0] {
+                0x81 => self.push_opcode(OP_PUSHNUM_NEG1),
+                0 => self.push_opcode(OP_PUSHBYTES_0),
+                1..=16 => {
+                    self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1)))
+                }
+                _ => self, // unreachable arm
+            }
+        } else {
+            self.push_slice_non_minimal(data.as_ref())
+        }
+    }
+
+    /// Adds instructions to push some arbitrary data onto the stack without [BIP62] check.
+    ///
+    /// See [BIP62] regarding minimal push policy.
+    ///
+    /// [BIP62]: <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
+    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(
+        mut self,
+        data: T,
+    ) -> Builder {
+        self.0.push_slice_non_minimal(data);
         self.1 = None;
         self
     }
