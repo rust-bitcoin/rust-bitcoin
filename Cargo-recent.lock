@@ -110,6 +110,7 @@ name = "bitcoin-primitives"
 version = "0.101.0"
 dependencies = [
  "arbitrary",
+ "arrayvec",
  "bincode",
  "bitcoin-internals",
  "bitcoin-units",
