@@ -693,22 +693,97 @@ mod test {
     }
 
     #[test]
+    fn witness_from_array_impl() {
+        const DATA_1: [u8; 3] = [1, 2, 3];
+        const DATA_2: [u8; 3] = [4, 5, 6];
+        let witness  = Witness::from_slice(&[DATA_1, DATA_2]);
+
+        let witness_from_array_ref = Witness::from(&[DATA_1, DATA_2]);
+        let witness_from_array_of_refs = Witness::from([&DATA_1, &DATA_2]);
+        let witness_from_ref_to_array_of_refs = Witness::from(&[&DATA_1, &DATA_2]);
+        let witness_from_fixed_array = Witness::from([DATA_1, DATA_2]);
+        let witness_from_slice_of_refs = Witness::from(&[&DATA_1, &DATA_2][..]);
+        let witness_from_nested_array = Witness::from(&[DATA_1, DATA_2][..]);
+
+        assert_eq!(witness_from_array_ref, witness);
+        assert_eq!(witness_from_array_of_refs, witness);
+        assert_eq!(witness_from_ref_to_array_of_refs, witness);
+        assert_eq!(witness_from_fixed_array, witness);
+        assert_eq!(witness_from_slice_of_refs, witness);
+        assert_eq!(witness_from_nested_array, witness);
+    }
+
+    #[test]
     fn partial_eq() {
         const EMPTY_BYTES: &[u8] = &[];
-        assert_eq!(Vec::<&[u8]>::new(), Witness::new());
+        const DATA_1: &[u8] = &[42];
+        const DATA_2: &[u8] = &[42, 21];
+
         macro_rules! ck {
-            ($container:expr) => {{
+            ($witness:expr, $container:expr, $different:expr) => {{
+                let witness = $witness;
                 let container = $container;
-                let witness = Witness::from(Clone::clone(&container));
+                let different = $different;
+
                 assert_eq!(witness, container, stringify!($container));
+                assert_eq!(container, witness, stringify!($container));
+
+                assert_ne!(witness, different, stringify!($container));
+                assert_ne!(different, witness, stringify!($container));
             }};
         }
-        ck!([EMPTY_BYTES]);
-        ck!([EMPTY_BYTES, EMPTY_BYTES]);
-        ck!([[42]]);
-        ck!([[42, 21]]);
-        ck!([&[42], EMPTY_BYTES]);
-        ck!([[42u8], [21]]);
+
+        let witness = Witness::from_slice(&[DATA_1, DATA_2]);
+
+        // &[T]
+        let container: &[&[u8]] = &[EMPTY_BYTES];
+        let different: &[&[u8]] = &[DATA_1];
+        ck!(Witness::from(container), container, different);
+
+        let container: &[&[u8]] = &[DATA_1];
+        let different: &[&[u8]] = &[DATA_2];
+        ck!(Witness::from(container), container, different);
+
+        // &[T; N]
+        let container: &[&[u8]; 2] = &[DATA_1, DATA_2];
+        let different: &[&[u8]; 2] = &[DATA_2, DATA_1];
+        ck!(Witness::from(container), container, different);
+
+        // [&[T]; N]
+        let container: [&[u8]; 2] = [DATA_1, DATA_2];
+        let different: [&[u8]; 2] = [DATA_2, DATA_1];
+        ck!(Witness::from(container), container, different);
+
+        // Vec<T>
+        let container: Vec<&[u8]> = vec![DATA_1, DATA_2];
+        let different: Vec<&[u8]> = vec![DATA_2, DATA_1];
+        ck!(witness.clone(), container, different);
+
+        // Box<[T]>
+        let container: Box<[&[u8]]> = vec![DATA_1, DATA_2].into_boxed_slice();
+        let different: Box<[&[u8]]> = vec![DATA_2, DATA_1].into_boxed_slice();
+        ck!(witness.clone(), container, different);
+
+        // Rc<[T]>
+        let container: alloc::rc::Rc<[&[u8]]> = vec![DATA_1, DATA_2].into();
+        let different: alloc::rc::Rc<[&[u8]]> = vec![DATA_2, DATA_1].into();
+        ck!(witness.clone(), container, different);
+
+        // Arc<[T]>
+        let container: alloc::sync::Arc<[&[u8]]> = vec![DATA_1, DATA_2].into();
+        let different: alloc::sync::Arc<[&[u8]]> = vec![DATA_2, DATA_1].into();
+        ck!(witness, container, different);
+    }
+
+    #[test]
+    fn partial_eq_for_slice() {
+        let witness = Witness::from_slice(&[vec![1, 2, 3], vec![4, 5, 6]]);
+        let container: &[Vec<u8>] = &[vec![1, 2, 3], vec![4, 5, 6]];
+        let different: &[Vec<u8>] = &[vec![1, 2], vec![4, 5]];
+
+        // Explicitly dereference the slice to invoke the `[T]` implementation.
+        assert_eq!(*container, witness);
+        assert_ne!(*different, witness);
     }
 
     #[test]
