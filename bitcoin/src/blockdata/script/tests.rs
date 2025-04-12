@@ -65,7 +65,7 @@ fn p2pk_pubkey_bytes_no_checksig_returns_none() {
 }
 
 #[test]
-fn p2pk_pubkey_bytes_emptry_script_returns_none() {
+fn p2pk_pubkey_bytes_empty_script_returns_none() {
     let empty_script = Script::builder().into_script();
     assert!(empty_script.p2pk_pubkey_bytes().is_none());
 }
