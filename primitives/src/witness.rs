@@ -696,7 +696,7 @@ mod test {
     fn witness_from_array_impl() {
         const DATA_1: [u8; 3] = [1, 2, 3];
         const DATA_2: [u8; 3] = [4, 5, 6];
-        let witness  = Witness::from_slice(&[DATA_1, DATA_2]);
+        let witness = Witness::from_slice(&[DATA_1, DATA_2]);
 
         let witness_from_array_ref = Witness::from(&[DATA_1, DATA_2]);
         let witness_from_array_of_refs = Witness::from([&DATA_1, &DATA_2]);
