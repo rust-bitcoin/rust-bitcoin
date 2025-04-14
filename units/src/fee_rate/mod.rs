@@ -15,7 +15,12 @@ use arbitrary::{Arbitrary, Unstructured};
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against
 /// mixing up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct FeeRate(u64);
+pub struct FeeRate {
+    /// The fee rat in sats per kwu.
+    sat_per_kwu: u64,
+    /// Some if this fee rate was created using `from_sat_per_kvb`.
+    sat_per_kvb: Option<u64>,
+}
 
 impl FeeRate {
     /// 0 sat/kwu.
@@ -40,7 +45,7 @@ impl FeeRate {
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
 
     /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
-    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
+    pub const fn from_sat_per_kwu(sat_per_kwu: u64) -> Self { FeeRate { sat_per_kwu, sat_per_kvb: None } }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
     ///
@@ -51,25 +56,41 @@ impl FeeRate {
         // 1 vb == 4 wu
         // 1 sat/vb == 1/4 sat/wu
         // sat_vb sat/vb * 1000 / 4 == sat/kwu
+        // Div by 4 here does not loose precision so we do not use `from_sat_per_kvb`.
         Some(FeeRate::from_sat_per_kwu(sat_vb.checked_mul(1000 / 4)?))
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes without overflow check.
-    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_vb * (1000 / 4)) }
+    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self {
+        // Div by 4 here does not loose precision so we do not use `from_sat_per_kvb`.
+        FeeRate::from_sat_per_kwu(sat_vb * (1000 / 4))
+    }
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
+    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self {
+        FeeRate { sat_per_kwu: sat_kvb / 4, sat_per_kvb: Some(sat_kvb) }
+    }
 
     /// Returns raw fee rate.
     ///
     /// Can be used instead of `into()` to avoid inference issues.
-    pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
+    pub const fn to_sat_per_kwu(self) -> u64 { self.sat_per_kwu }
+
+    /// Returns raw fee rate.
+    pub const fn to_sat_per_kvb(self) -> u64 {
+        match self.sat_per_kvb {
+            Some(kvb) => kvb,
+            None => self.sat_per_kwu * 4,
+        }
+    }
 
     /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
+    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kvb() / 1000 }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.to_sat_per_kwu() + (1000 / 4 - 1)) / (1000 / 4) }
+    pub const fn to_sat_per_vb_ceil(self) -> u64 {
+        (self.to_sat_per_kvb() + 999) / 1000
+    }
 
     /// Checked multiplication.
     ///
@@ -273,13 +294,13 @@ mod tests {
     #[test]
     fn fee_rate_from_sat_per_vb() {
         let fee_rate = FeeRate::from_sat_per_vb(10).expect("expected feerate in sat/kwu");
-        assert_eq!(FeeRate::from_sat_per_kwu(2500), fee_rate);
+        assert_eq!(FeeRate::from_sat_per_kwu(2500).to_sat_per_kwu(), fee_rate.to_sat_per_kwu());
     }
 
     #[test]
     fn fee_rate_from_sat_per_kvb() {
         let fee_rate = FeeRate::from_sat_per_kvb(11);
-        assert_eq!(FeeRate::from_sat_per_kwu(2), fee_rate);
+        assert_eq!(FeeRate::from_sat_per_kwu(2).to_sat_per_kwu(), fee_rate.to_sat_per_kwu());
     }
 
     #[test]
@@ -291,7 +312,7 @@ mod tests {
     #[test]
     fn from_sat_per_vb_unchecked() {
         let fee_rate = FeeRate::from_sat_per_vb_unchecked(10);
-        assert_eq!(FeeRate::from_sat_per_kwu(2500), fee_rate);
+        assert_eq!(FeeRate::from_sat_per_kwu(2500).to_sat_per_kwu(), fee_rate.to_sat_per_kwu());
     }
 
     #[test]
