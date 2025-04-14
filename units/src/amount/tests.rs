@@ -1405,3 +1405,22 @@ fn amount_op_result_sum() {
     let _ = amount_refs.iter().copied().sum::<NumOpResult<Amount>>();
     let _ = amount_refs.into_iter().sum::<NumOpResult<Amount>>();
 }
+
+#[test]
+fn math_op_errors() {
+    let overflow = Amount::MAX + Amount::from_sat(1).unwrap();
+    if let NumOpResult::Error(err) = overflow {
+        assert!(err.operation().is_overflow());
+        assert!(!err.operation().is_div_by_zero());
+    } else {
+        panic!("Expected an overflow error, but got a valid result");
+    }
+
+    let div_by_zero = Amount::from_sat(10).unwrap() / Amount::ZERO;
+    if let NumOpResult::Error(err) = div_by_zero {
+        assert!(!err.operation().is_overflow());
+        assert!(err.operation().is_div_by_zero());
+    } else {
+        panic!("Expected a division by zero error, but got a valid result");
+    }
+}
