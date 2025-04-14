@@ -90,14 +90,20 @@ impl Script {
     pub const fn new() -> &'static Self { Self::from_bytes(&[]) }
 
     /// Returns the script data as a byte slice.
-    #[inline]
+    ///
+    /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
+   #[inline]
     pub const fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns the script data as a mutable byte slice.
+    ///
+    /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
 
     /// Returns a copy of the script data.
+    ///
+    /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
     #[inline]
     pub fn to_vec(&self) -> Vec<u8> { self.as_bytes().to_owned() }
 
