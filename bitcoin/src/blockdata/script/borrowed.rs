@@ -261,7 +261,7 @@ crate::internal_macros::define_extension_trait! {
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today’s Bitcoin network.
         #[deprecated(since = "0.32.0", note = "use `minimal_non_dust` etc. instead")]
-        fn dust_value(&self) -> Option<Amount> { self.minimal_non_dust() }
+        fn dust_value(&self) -> Amount { self.minimal_non_dust() }
 
         /// Returns the minimum value an output with this script should have in order to be
         /// broadcastable on today's Bitcoin network.
@@ -272,8 +272,9 @@ crate::internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: Script::minimal_non_dust_custom
-        fn minimal_non_dust(&self) -> Option<Amount> {
+        fn minimal_non_dust(&self) -> Amount {
             self.minimal_non_dust_internal(DUST_RELAY_TX_FEE.into())
+                .expect("dust_relay_fee or script length should not be absurdly large")
         }
 
         /// Returns the minimum value an output with this script should have in order to be

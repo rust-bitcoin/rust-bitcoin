@@ -183,8 +183,8 @@ crate::internal_macros::define_extension_trait! {
         /// To use a custom value, use [`minimal_non_dust_custom`].
         ///
         /// [`minimal_non_dust_custom`]: TxOut::minimal_non_dust_custom
-        fn minimal_non_dust(script_pubkey: ScriptBuf) -> Option<TxOut> {
-            Some(TxOut { value: script_pubkey.minimal_non_dust()?, script_pubkey })
+        fn minimal_non_dust(script_pubkey: ScriptBuf) -> TxOut {
+            TxOut { value: script_pubkey.minimal_non_dust(), script_pubkey }
         }
 
         /// Constructs a new `TxOut` with given script and the smallest possible `value` that is **not** dust
