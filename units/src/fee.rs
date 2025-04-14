@@ -114,10 +114,17 @@ impl Amount {
 impl FeeRate {
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
-    ///
-    /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
-    pub fn to_fee(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn to_fee(self, weight: Weight) -> Option<Amount> {
+        match self.sat_per_kvb {
+            None => self.checked_mul_by_weight(weight),
+            Some(sat_per_kvb) => {
+                let fee = sat_per_kvb.checked_mul(weight.to_wu())? / 4;
+                let fee = fee.checked_add(999)? / 1000;
+                Amount::from_sat(fee).ok()
+            }
+        }
+    }
 
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.

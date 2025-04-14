@@ -19,7 +19,7 @@ pub struct FeeRate {
     /// The fee rat in sats per kwu.
     sat_per_kwu: u64,
     /// Some if this fee rate was created using `from_sat_per_kvb`.
-    sat_per_kvb: Option<u64>,
+    pub(crate) sat_per_kvb: Option<u64>,
 }
 
 impl FeeRate {
