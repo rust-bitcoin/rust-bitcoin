@@ -309,4 +309,35 @@ mod tests {
         assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
         assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
     }
+
+    macro_rules! check_fee {
+        ($($test_name:ident, $vb:literal, $fee:literal);* $(;)?) => {
+            $(
+                #[test]
+                fn $test_name() {
+                    // Bitcoin Core's GetFee function uses virtual bytes where
+                    // as we use weight units. Remember `1vb = 4wu`.
+                    let fee_rate = FeeRate::from_sat_per_kvb(123); // div by 4
+                    let weight = Weight::from_vb($vb).unwrap(); // mul by 4
+
+                    let want = Amount::from_sat($fee).unwrap();
+                    let got = fee_rate.to_fee(weight).unwrap();
+
+                    assert_eq!(got, want);
+                }
+            )*
+
+        }
+    }
+
+    check_fee! {
+        check_fee_a, 0, 0;
+        check_fee_b, 8, 1;
+        check_fee_c, 9, 2;
+        check_fee_d, 121, 15;
+        check_fee_e, 122, 16;
+        check_fee_f, 999, 123;
+        check_fee_g, 1_000, 123;
+        check_fee_h, 9_000, 1107;
+    }
 }
