@@ -708,11 +708,47 @@ mod tests {
     }
 
     #[test]
+    fn try_from_scriptbuf_ref_for_scripthash() {
+        let script = ScriptBuf::from(vec![0x51; 520]);
+        assert!(ScriptHash::try_from(&script).is_ok());
+
+        let script = ScriptBuf::from(vec![0x51; 521]);
+        assert!(ScriptHash::try_from(&script).is_err());
+    }
+    #[test]
+    fn try_from_script_for_scripthash() {
+        let script = Script::from_bytes(&[0x51; 520]);
+        assert!(ScriptHash::try_from(script).is_ok());
+
+        let script = Script::from_bytes(&[0x51; 521]);
+        assert!(ScriptHash::try_from(script).is_err());
+    }
+
+    #[test]
     fn try_from_scriptbuf_for_wscript_hash() {
         let script = ScriptBuf::from(vec![0x51; 10_000]);
         assert!(WScriptHash::try_from(script).is_ok());
 
         let script = ScriptBuf::from(vec![0x51; 10_001]);
+        assert!(WScriptHash::try_from(script).is_err());
+    }
+
+    #[test]
+    fn try_from_scriptbuf_ref_for_wscript_hash() {
+        let script = ScriptBuf::from(vec![0x51; 10_000]);
+        assert!(WScriptHash::try_from(&script).is_ok());
+
+        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        assert!(WScriptHash::try_from(&script).is_err());
+    }
+
+
+    #[test]
+    fn try_from_script_for_wscript_hash() {
+        let script = Script::from_bytes(&[0x51; 10_000]);
+        assert!(WScriptHash::try_from(script).is_ok());
+
+        let script = Script::from_bytes(&[0x51; 10_001]);
         assert!(WScriptHash::try_from(script).is_err());
     }
 

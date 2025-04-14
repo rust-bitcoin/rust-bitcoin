@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn script_is_empty() {
-        let script = Script::new();
+        let script: &Script = Default::default();
         assert!(script.is_empty());
 
         let script = Script::from_bytes(&[1, 2, 3]);
