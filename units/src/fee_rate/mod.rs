@@ -10,7 +10,7 @@ use core::{fmt, ops};
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-/// Represents fee rate.
+/// Fee rate.
 ///
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against
 /// mixing up the types as well as basic formatting features.

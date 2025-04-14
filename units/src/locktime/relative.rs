@@ -128,7 +128,7 @@ impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-/// Input time in seconds was too large to be encoded to a 16 bit 512 second interval.
+/// Error returned when the input time in seconds was too large to be encoded to a 16 bit 512 second interval.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TimeOverflowError {
     /// Time value in seconds that overflowed.
