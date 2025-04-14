@@ -1053,7 +1053,7 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
         );
         assert_eq!(&addr.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
@@ -1082,7 +1082,7 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap(),
+            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap(),
         );
         assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
@@ -1091,7 +1091,7 @@ mod tests {
 
     #[test]
     fn p2sh_parse() {
-        let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae").unwrap();
+        let script = ScriptBuf::from_hex_no_length_prefix("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae").unwrap();
         let addr = Address::p2sh(&script, NetworkKind::Test).unwrap();
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
@@ -1100,7 +1100,7 @@ mod tests {
 
     #[test]
     fn p2sh_parse_for_large_script() {
-        let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
+        let script = ScriptBuf::from_hex_no_length_prefix("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
         let res = Address::p2sh(&script, NetworkKind::Test);
         assert_eq!(res.unwrap_err().invalid_size(), script.len())
     }
@@ -1120,7 +1120,7 @@ mod tests {
     #[test]
     fn p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
-        let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
+        let script = ScriptBuf::from_hex_no_length_prefix("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
         let addr = Address::p2wsh(&script, KnownHrp::Mainnet).expect("script is valid");
         assert_eq!(
             &addr.to_string(),
@@ -1145,7 +1145,7 @@ mod tests {
     #[test]
     fn p2shwsh() {
         // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
-        let script = ScriptBuf::from_hex("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
+        let script = ScriptBuf::from_hex_no_length_prefix("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
         let addr = Address::p2shwsh(&script, NetworkKind::Main).expect("script is valid");
         assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
@@ -1234,7 +1234,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
         );
 
         let addr =
@@ -1248,7 +1248,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
         );
 
         let addr: Address<NetworkUnchecked> =
@@ -1278,7 +1278,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex(
+            ScriptBuf::from_hex_no_length_prefix(
                 "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
             )
             .unwrap()
@@ -1297,7 +1297,7 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
         );
     }
 
@@ -1476,13 +1476,13 @@ mod tests {
     fn fail_address_from_script() {
         use crate::witness_program;
 
-        let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
-        let bad_p2wsh = ScriptBuf::from_hex(
+        let bad_p2wpkh = ScriptBuf::from_hex_no_length_prefix("15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
+        let bad_p2wsh = ScriptBuf::from_hex_no_length_prefix(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
         )
         .unwrap();
         let invalid_segwitv0_script =
-            ScriptBuf::from_hex("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
+            ScriptBuf::from_hex_no_length_prefix("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
         let expected = Err(FromScriptError::UnrecognizedScript);
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);

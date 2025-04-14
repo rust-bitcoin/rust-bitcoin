@@ -2,6 +2,7 @@
 
 use core::fmt;
 
+use hex::DisplayHex as _;
 use internals::ToU64 as _;
 
 use super::witness_version::WitnessVersion;
@@ -9,11 +10,11 @@ use super::{
     Builder, Instruction, InstructionIndices, Instructions, PushBytes, RedeemScriptSizeError,
     ScriptHash, WScriptHash, WitnessScriptSizeError,
 };
-use crate::consensus::Encodable;
+use crate::consensus::{self, Encodable};
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::policy::{DUST_RELAY_TX_FEE, MAX_OP_RETURN_RELAY};
-use crate::prelude::{sink, DisplayHex, String, ToString};
+use crate::prelude::{sink, String, ToString};
 use crate::taproot::{LeafVersion, TapLeafHash};
 use crate::{Amount, FeeRate};
 
@@ -374,12 +375,16 @@ crate::internal_macros::define_extension_trait! {
         #[deprecated(since = "TBD", note = "use `to_string()` instead")]
         fn to_asm_string(&self) -> String { self.to_string() }
 
-        /// Formats the script as lower-case hex.
+        /// Consensus encodes the script as lower-case hex.
+        fn to_hex_string(&self) -> String { consensus::encode::serialize_hex(self) }
+
+        /// Consensus encodes the script as lower-case hex.
         ///
-        /// This is a more convenient and performant way to write `format!("{:x}", script)`.
-        /// For better performance you should generally prefer displaying the script but if `String` is
-        /// required (this is common in tests) this method can be used.
-        fn to_hex_string(&self) -> String { self.as_bytes().to_lower_hex_string() }
+        /// This is **not** consensus encoding, you likely want to use `to_hex_string`. The returned
+        /// hex string will not include the length prefix.
+        fn to_hex_string_no_length_prefix(&self) -> String {
+            self.as_bytes().to_lower_hex_string()
+        }
 
         /// Returns the first opcode of the script (if there is any).
         fn first_opcode(&self) -> Option<Opcode> {
