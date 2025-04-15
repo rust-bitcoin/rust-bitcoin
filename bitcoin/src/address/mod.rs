@@ -135,7 +135,9 @@ mod sealed {
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-pub trait NetworkValidation: sealed::NetworkValidation + Sync + Send + Sized + Unpin + Copy {
+pub trait NetworkValidation:
+    sealed::NetworkValidation + Sync + Send + Sized + Unpin + Copy
+{
     /// Indicates whether this `NetworkValidation` is `NetworkChecked` or not.
     const IS_CHECKED: bool;
 }

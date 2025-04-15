@@ -83,11 +83,8 @@ fn psbt_sign_taproot() {
         //
         // Step 1: create psbt for key path spend.
         //
-        let mut psbt_key_path_spend = create_psbt_for_taproot_key_path_spend(
-            address,
-            to_address,
-            tree.clone(),
-        );
+        let mut psbt_key_path_spend =
+            create_psbt_for_taproot_key_path_spend(address, to_address, tree.clone());
 
         //
         // Step 2: sign psbt.
