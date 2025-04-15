@@ -782,26 +782,28 @@ mod tests {
 
     #[test]
     fn script_display() {
-        let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
-        assert_eq!(format!("{}", script), "OP_LESSTHANOREQUAL OP_CSV OP_RETURN_195");
+        let script = Script::from_bytes(&[0x00, 0xa1, 0xb2]);
+        assert_eq!(format!("{}", script), "OP_0 OP_LESSTHANOREQUAL OP_CSV");
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script), "a1b2c3");
-            assert_eq!(format!("{:X}", script), "A1B2C3");
+            assert_eq!(format!("{:x}", script), "00a1b2");
+            assert_eq!(format!("{:X}", script), "00A1B2");
         }
+        assert!(!format!("{:?}", script).is_empty());
     }
 
     #[test]
     fn scriptbuf_display() {
-        let script_buf = ScriptBuf::from(vec![0xa1, 0xb2, 0xc3]);
-        assert_eq!(format!("{}", script_buf), "OP_LESSTHANOREQUAL OP_CSV OP_RETURN_195");
+        let script_buf = ScriptBuf::from(vec![0x00, 0xa1, 0xb2]);
+        assert_eq!(format!("{}", script_buf), "OP_0 OP_LESSTHANOREQUAL OP_CSV");
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script_buf), "a1b2c3");
-            assert_eq!(format!("{:X}", script_buf), "A1B2C3");
+            assert_eq!(format!("{:x}", script_buf), "00a1b2");
+            assert_eq!(format!("{:X}", script_buf), "00A1B2");
         }
+        assert!(!format!("{:?}", script_buf).is_empty());
     }
 
     #[test]
