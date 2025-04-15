@@ -651,6 +651,15 @@ mod tests {
     }
 
     #[test]
+    fn scriptbuf_borrow_mut() {
+        let mut script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let script_mut: &mut Script = script_buf.borrow_mut();
+        script_mut.as_mut_bytes()[0] = 0x50;
+
+        assert_eq!(script_buf.as_bytes(), &[0x50, 0x52, 0x53]);
+    }
+
+    #[test]
     #[allow(clippy::useless_asref)]
     fn script_as_ref() {
         let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
@@ -832,6 +841,14 @@ mod tests {
     }
 
     #[test]
+    fn cow_owned_to_scriptbuf() {
+        let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+        let cow_owned: Cow<Script> = Cow::Owned(script_buf.clone());
+        let script_buf_2: ScriptBuf = cow_owned.into();
+        assert_eq!(script_buf_2, script_buf);
+    }
+
+    #[test]
     fn cow_script_to_box_script() {
         let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
         let cow_borrowed: Cow<Script> = Cow::Borrowed(script);
@@ -843,5 +860,83 @@ mod tests {
 
         let cow_from_script: Cow<Script> = Cow::from(script);
         assert_eq!(cow_from_script.as_ref().as_bytes(), &[0x51, 0x52, 0x53]);
+    }
+
+    #[test]
+    fn redeem_script_size_error() {
+        let script = ScriptBuf::from(vec![0x51; 521]);
+        let result = ScriptHash::try_from(script);
+
+        let err = result.unwrap_err();
+        assert_eq!(err.invalid_size(), 521);
+
+        let err_msg = format!("{}", err);
+        assert!(err_msg.contains("521"));
+    }
+
+    #[test]
+    fn witness_script_size_error() {
+        let script = ScriptBuf::from(vec![0x51; 10_001]);
+        let result = WScriptHash::try_from(script);
+
+        let err = result.unwrap_err();
+        assert_eq!(err.invalid_size(), 10_001);
+
+        let err_msg = format!("{}", err);
+        assert!(err_msg.contains("10001"));
+    }
+
+    #[test]
+    #[cfg(target_has_atomic = "ptr")]
+    fn script_to_arc() {
+        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let arc_script: Arc<Script> = Arc::from(script);
+
+        assert_eq!(arc_script.as_bytes(), script.as_bytes());
+        assert_eq!(Arc::strong_count(&arc_script), 1);
+    }
+
+    #[test]
+    fn script_to_rc() {
+        let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
+        let rc_script: Rc<Script> = Rc::from(script);
+
+        assert_eq!(rc_script.as_bytes(), script.as_bytes());
+        assert_eq!(Rc::strong_count(&rc_script), 1);
+    }
+
+    #[test]
+    fn pushdata_end_conditions() {
+        let push_past_end_script = Script::from_bytes(&[0x4c, 0x02]);
+        let formatted_script = format!("{}", push_past_end_script);
+        assert!(formatted_script.contains("<push past end>"));
+
+        let unexpected_end_script = Script::from_bytes(&[0x4c]);
+        let formatted_script = format!("{}", unexpected_end_script);
+        assert!(formatted_script.contains("<unexpected end>"));
+    }
+
+     #[test]
+    fn legacy_opcode() {
+        let script = Script::from_bytes(&[0x03, 0xaa, 0xbb, 0xcc]);
+        assert_eq!(format!("{}", script), "OP_PUSHBYTES_3 aabbcc");
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn script_to_hex() {
+        let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
+        let hex = script.to_hex();
+        assert_eq!(hex, "a1b2c3");
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn scriptbuf_to_hex() {
+        let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
+        let hex = script.to_hex();
+        assert_eq!(hex, "a1b2c3");
     }
 }
