@@ -484,7 +484,7 @@ mod test {
     #[test]
     fn getblocktx_differential_encoding_de_and_serialization() {
         let testcases = vec![
-            // differentially encoded VarInts, indicies
+            // differentially encoded VarInts, indices
             (vec![4, 0, 5, 1, 10], vec![0, 6, 8, 19]),
             (vec![1, 0], vec![0]),
             (vec![5, 0, 0, 0, 0, 0], vec![0, 1, 2, 3, 4]),
