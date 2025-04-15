@@ -632,30 +632,48 @@ mod tests {
         let script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
         let script_ref: &[u8] = script_buf.as_ref();
         assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
+
+        let script_ref: &Script = script_buf.as_ref();
+        assert_eq!(script_ref.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
     fn scriptbuf_as_mut() {
         let mut script_buf = ScriptBuf::from(vec![0x51, 0x52, 0x53]);
+
         let script_mut: &mut [u8] = script_buf.as_mut();
         script_mut[0] = 0x50;
         assert_eq!(script_mut, [0x50, 0x52, 0x53]);
+
+        let script_mut: &mut Script = script_buf.as_mut();
+        script_mut.as_mut_bytes()[1] = 0x51;
+        assert_eq!(script_buf.as_bytes(), &[0x50, 0x51, 0x53]);
     }
 
     #[test]
+    #[allow(clippy::useless_asref)]
     fn script_as_ref() {
         let script = Script::from_bytes(&[0x51, 0x52, 0x53]);
         let script_ref: &[u8] = script.as_ref();
         assert_eq!(script_ref, &[0x51, 0x52, 0x53]);
+
+        let script_ref: &Script = script.as_ref();
+        assert_eq!(script_ref.as_bytes(), &[0x51, 0x52, 0x53]);
     }
 
     #[test]
+    #[allow(clippy::useless_asref)]
     fn script_as_mut() {
         let bytes = &mut [0x51, 0x52, 0x53];
         let script = Script::from_bytes_mut(bytes);
+
         let script_mut: &mut [u8] = script.as_mut();
         script_mut[0] = 0x50;
         assert_eq!(script_mut, [0x50, 0x52, 0x53]);
+
+        let script_mut: &mut Script = script.as_mut();
+        script_mut.as_mut_bytes()[1] = 0x51;
+        assert_eq!(script.as_bytes(), &[0x50, 0x51, 0x53]);
     }
 
     #[test]
