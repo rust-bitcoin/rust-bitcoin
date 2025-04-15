@@ -11,6 +11,9 @@ hashes::hash_newtype! {
     pub struct WitnessMerkleNode(sha256d::Hash);
 }
 
+#[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(TxMerkleNode, WitnessMerkleNode);
+#[cfg(not(feature = "hex"))]
+hashes::impl_debug_only_for_newtype!(TxMerkleNode, WitnessMerkleNode);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(TxMerkleNode, WitnessMerkleNode);

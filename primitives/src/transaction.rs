@@ -13,6 +13,7 @@
 #[cfg(feature = "alloc")]
 use core::cmp;
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 use core::convert::Infallible;
 use core::fmt;
 
@@ -20,9 +21,13 @@ use core::fmt;
 use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 #[cfg(feature = "alloc")]
-use internals::{compact_size, write_err};
+use internals::compact_size;
+#[cfg(feature = "hex")]
+use internals::write_err;
+#[cfg(feature = "hex")]
+use units::parse;
 #[cfg(feature = "alloc")]
-use units::{parse, Amount, Weight};
+use units::{Amount, Weight};
 
 #[cfg(feature = "alloc")]
 use crate::locktime::absolute;
@@ -389,6 +394,7 @@ impl OutPoint {
     pub const COINBASE_PREVOUT: Self = Self { txid: Txid::COINBASE_PREVOUT, vout: u32::MAX };
 }
 
+#[cfg(feature = "hex")]
 impl fmt::Display for OutPoint {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -397,6 +403,7 @@ impl fmt::Display for OutPoint {
 }
 
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 impl core::str::FromStr for OutPoint {
     type Err = ParseOutPointError;
 
@@ -424,6 +431,7 @@ impl core::str::FromStr for OutPoint {
 ///
 /// Does not permit leading zeroes or non-digit characters.
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
         let first = s.chars().next().unwrap();
@@ -438,6 +446,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hex::HexToArrayError),
@@ -452,12 +461,14 @@ pub enum ParseOutPointError {
 }
 
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 impl From<Infallible> for ParseOutPointError {
     #[inline]
     fn from(never: Infallible) -> Self { match never {} }
 }
 
 #[cfg(feature = "alloc")]
+#[cfg(feature = "hex")]
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseOutPointError as E;
@@ -473,6 +484,7 @@ impl fmt::Display for ParseOutPointError {
 }
 
 #[cfg(feature = "std")]
+#[cfg(feature = "hex")]
 impl std::error::Error for ParseOutPointError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use ParseOutPointError as E;
@@ -500,7 +512,10 @@ hashes::hash_newtype! {
     pub struct Wtxid(sha256d::Hash);
 }
 
+#[cfg(feature = "hex")]
 hashes::impl_hex_for_newtype!(Txid, Wtxid);
+#[cfg(not(feature = "hex"))]
+hashes::impl_debug_only_for_newtype!(Txid, Wtxid);
 #[cfg(feature = "serde")]
 hashes::impl_serde_for_newtype!(Txid, Wtxid);
 
@@ -699,6 +714,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn outpoint_from_str() {
         // Check format errors
         let mut outpoint_str = "0".repeat(64); // No ":"
@@ -725,6 +741,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "hex")]
     fn canonical_vout() {
         assert_eq!(parse_vout("0").unwrap(), 0);
         assert_eq!(parse_vout("1").unwrap(), 1);
