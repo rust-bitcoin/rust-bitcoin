@@ -684,7 +684,7 @@ fn default_dust_value() {
     // well-known scriptPubKey types.
     let script_p2wpkh = Builder::new().push_int_unchecked(0).push_slice([42; 20]).into_script();
     assert!(script_p2wpkh.is_p2wpkh());
-    assert_eq!(script_p2wpkh.minimal_non_dust(), Some(Amount::from_sat_u32(294)));
+    assert_eq!(script_p2wpkh.minimal_non_dust(), Amount::from_sat_u32(294));
     assert_eq!(
         script_p2wpkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
         Some(Amount::from_sat_u32(588))
@@ -698,7 +698,7 @@ fn default_dust_value() {
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(script_p2pkh.is_p2pkh());
-    assert_eq!(script_p2pkh.minimal_non_dust(), Some(Amount::from_sat_u32(546)));
+    assert_eq!(script_p2pkh.minimal_non_dust(), Amount::from_sat_u32(546));
     assert_eq!(
         script_p2pkh.minimal_non_dust_custom(FeeRate::from_sat_per_vb_unchecked(6)),
         Some(Amount::from_sat_u32(1092))
