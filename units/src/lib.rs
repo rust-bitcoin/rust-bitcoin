@@ -3,6 +3,20 @@
 //! # Rust Bitcoin - unit types
 //!
 //! This library provides basic types used by the Rust Bitcoin ecosystem.
+//!
+//! If you are using `rust-bitcoin` then you do not need to access this crate directly. Everything
+//! here is re-exported in `rust-bitcoin` at the same path. Also the same re-exports exist in
+//! `primitives` if you are using that crate instead of `bitcoin`.
+//!
+//! # Examples
+//!
+//! ```
+//! // Exactly the same as `use bitcoin::{amount, Amount}`.
+//! use bitcoin_units::{amount, Amount};
+//!
+//! let amount = Amount::from_sat(1_000)?;
+//! # Ok::<_, amount::OutOfRangeError>(())
+//! ```
 
 #![no_std]
 // Experimental features we need.
