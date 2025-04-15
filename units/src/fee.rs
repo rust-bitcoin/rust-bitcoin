@@ -15,6 +15,8 @@ use core::ops;
 
 use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
 
+use NumOpResult as R;
+
 impl Amount {
     /// Checked weight ceiling division.
     ///
@@ -168,11 +170,71 @@ crate::internal_macros::impl_op_for_references! {
             rhs.checked_mul_by_weight(self).valid_or_error(MathOp::Mul)
         }
     }
+    impl ops::Mul<FeeRate> for NumOpResult<Weight> {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: FeeRate) -> Self::Output {
+            match self {
+                R::Valid(lhs) => lhs * rhs,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Mul<NumOpResult<FeeRate>> for Weight {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
+            match rhs {
+                R::Valid(fee_rate) => self * fee_rate,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Mul<NumOpResult<FeeRate>> for NumOpResult<Weight> {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
+            match self {
+                R::Valid(lhs) => { match rhs {
+                    R::Valid(fee_rate) => lhs * fee_rate,
+                    R::Error(e) => NumOpResult::Error(e),
+                }}
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
 
     impl ops::Mul<Weight> for FeeRate {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: Weight) -> Self::Output {
             self.checked_mul_by_weight(rhs).valid_or_error(MathOp::Mul)
+        }
+    }
+    impl ops::Mul<Weight> for NumOpResult<FeeRate> {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: Weight) -> Self::Output {
+            match self {
+                R::Valid(lhs) => lhs * rhs,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Mul<NumOpResult<Weight>> for FeeRate {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: NumOpResult<Weight>) -> Self::Output {
+            match rhs {
+                R::Valid(weight) => self * weight,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Mul<NumOpResult<Weight>> for NumOpResult<FeeRate> {
+        type Output = NumOpResult<Amount>;
+        fn mul(self, rhs: NumOpResult<Weight>) -> Self::Output {
+            match self {
+                R::Valid(lhs) => { match rhs {
+                    R::Valid(weight) => lhs * weight,
+                    R::Error(e) => NumOpResult::Error(e),
+                }}
+                R::Error(e) => NumOpResult::Error(e),
+            }
         }
     }
 
@@ -183,12 +245,78 @@ crate::internal_macros::impl_op_for_references! {
             self.checked_div_by_weight_floor(rhs).valid_or_error(MathOp::Div)
         }
     }
+    impl ops::Div<Weight> for NumOpResult<Amount> {
+        type Output = NumOpResult<FeeRate>;
+
+        fn div(self, rhs: Weight) -> Self::Output {
+            match self {
+                R::Valid(lhs) => lhs / rhs,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Div<NumOpResult<Weight>> for Amount {
+        type Output = NumOpResult<FeeRate>;
+
+        fn div(self, rhs: NumOpResult<Weight>) -> Self::Output {
+            match rhs {
+                R::Valid(weight) => self / weight,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Div<NumOpResult<Weight>> for NumOpResult<Amount> {
+        type Output = NumOpResult<FeeRate>;
+
+        fn div(self, rhs: NumOpResult<Weight>) -> Self::Output {
+            match self {
+                R::Valid(lhs) => { match rhs {
+                    R::Valid(weight) => lhs / weight,
+                    R::Error(e) => NumOpResult::Error(e),
+                }}
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
 
     impl ops::Div<FeeRate> for Amount {
         type Output = NumOpResult<Weight>;
 
         fn div(self, rhs: FeeRate) -> Self::Output {
             self.checked_div_by_fee_rate_floor(rhs).valid_or_error(MathOp::Div)
+        }
+    }
+    impl ops::Div<FeeRate> for NumOpResult<Amount> {
+        type Output = NumOpResult<Weight>;
+
+        fn div(self, rhs: FeeRate) -> Self::Output {
+            match self {
+                R::Valid(lhs) => lhs / rhs,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Div<NumOpResult<FeeRate>> for Amount {
+        type Output = NumOpResult<Weight>;
+
+        fn div(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
+            match rhs {
+                R::Valid(fee_rate) => self / fee_rate,
+                R::Error(e) => NumOpResult::Error(e),
+            }
+        }
+    }
+    impl ops::Div<NumOpResult<FeeRate>> for NumOpResult<Amount> {
+        type Output = NumOpResult<Weight>;
+
+        fn div(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
+            match self {
+                R::Valid(lhs) => { match rhs {
+                    R::Valid(fee_rate) => lhs / fee_rate,
+                    R::Error(e) => NumOpResult::Error(e),
+                }}
+                R::Error(e) => NumOpResult::Error(e),
+            }
         }
     }
 }
