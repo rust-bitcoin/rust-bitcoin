@@ -725,6 +725,7 @@ mod tests {
         let script = ScriptBuf::from(vec![0x51; 521]);
         assert!(ScriptHash::try_from(&script).is_err());
     }
+
     #[test]
     fn try_from_script_for_scripthash() {
         let script = Script::from_bytes(&[0x51; 520]);
@@ -751,7 +752,6 @@ mod tests {
         let script = ScriptBuf::from(vec![0x51; 10_001]);
         assert!(WScriptHash::try_from(&script).is_err());
     }
-
 
     #[test]
     fn try_from_script_for_wscript_hash() {
