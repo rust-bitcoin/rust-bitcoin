@@ -21,7 +21,7 @@ impl Amount {
     /// Checked weight ceiling division.
     ///
     /// Be aware that integer division loses the remainder if no exact division
-    /// can be made. This method rounds up ensuring the transaction fee-rate is
+    /// can be made. This method rounds up ensuring the transaction fee rate is
     /// sufficient. See also [`Self::checked_div_by_weight_floor`].
     ///
     /// Returns [`None`] if overflow occurred.

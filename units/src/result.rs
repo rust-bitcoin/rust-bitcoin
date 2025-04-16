@@ -127,7 +127,7 @@ macro_rules! impl_opt_ext {
 }
 impl_opt_ext!(Amount, SignedAmount, u64, i64, FeeRate, Weight);
 
-/// An error occurred while doing a mathematical operation.
+/// Error returned when a mathematical operation fails.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct NumOpError(MathOp);

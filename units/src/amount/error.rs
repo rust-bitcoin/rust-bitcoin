@@ -10,7 +10,7 @@ use internals::write_err;
 
 use super::INPUT_STRING_LEN_LIMIT;
 
-/// An error during amount parsing amount with denomination.
+/// Error returned when parsing an amount with denomination fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseError(pub(crate) ParseErrorInner);
 
@@ -84,7 +84,7 @@ impl std::error::Error for ParseError {
     }
 }
 
-/// An error during amount parsing.
+/// Error returned when parsing an amount fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseAmountError(pub(crate) ParseAmountErrorInner);
 

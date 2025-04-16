@@ -25,7 +25,7 @@ mod encapsulate {
     /// conversion to various denominations. The [`Amount`] type does not implement [`serde`] traits
     /// but we do provide modules for serializing as satoshis or bitcoin.
     ///
-    /// Warning!
+    /// **Warning!**
     ///
     /// This type implements several arithmetic operations from [`core::ops`].
     /// To prevent errors due to an overflow when using these operations,

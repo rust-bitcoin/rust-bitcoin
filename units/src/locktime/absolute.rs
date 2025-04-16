@@ -256,7 +256,7 @@ pub const fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 /// Returns true if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
 pub const fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 
-/// An error that occurs when converting a `u32` to a lock time variant.
+/// Error returned when converting a `u32` to a lock time variant fails.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct ConversionError {
