@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: CC0-1.0
 
+//! Demonstrates the API for parsing and formatting Bitcoin scripts.
+//!
+//! Bitcoin script is conceptually a vector of bytes. As such it is consensus encoded with a compact
+//! size encoded length prefix. See [CompactSize].
+//!
+//! [`CompactSize`]: <https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer>
+
 use bitcoin::consensus::encode;
 use bitcoin::key::WPubkeyHash;
 use bitcoin::script::{self, ScriptExt, ScriptBufExt};
@@ -8,6 +15,7 @@ use bitcoin::ScriptBuf;
 fn main() {
     let pk = "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".parse::<WPubkeyHash>().unwrap();
 
+    // TL;DR Use `to_hex_string` and `from_hex`.
     let script_code = script::p2wpkh_script_code(pk);
     let hex = script_code.to_hex_string();
     let decoded = ScriptBuf::from_hex(&hex).unwrap();
@@ -19,16 +27,19 @@ fn main() {
     // We do not implement parsing scripts from human-readable format.
     // let decoded = s.parse::<ScriptBuf>().unwrap();
 
-    // This is not equivalent to consensus encoding i.e., does not include the length prefix.
+    // This is equivalent to consensus encoding i.e., includes the length prefix.
     let hex_lower_hex_trait = format!("{:x}", script_code);
     println!("hex created using `LowerHex`: {}", hex_lower_hex_trait);
 
     // The `deserialize_hex` function requires the length prefix.
-    assert!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).is_err());
+    assert_eq!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).unwrap(), script_code);
     // And so does `from_hex`.
-    assert!(ScriptBuf::from_hex(&hex_lower_hex_trait).is_err());
-    // But we provide an explicit constructor that does not.
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap(), script_code);
+    assert_eq!(ScriptBuf::from_hex(&hex_lower_hex_trait).unwrap(), script_code);
+
+    // And we also provide an explicit constructor that does not use the length prefix.
+    let other = ScriptBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap();
+    // Without a prefix the script parses but its not the one we meant.
+    assert_ne!(other, script_code);
 
     // This is consensus encoding i.e., includes the length prefix.
     let hex_inherent = script_code.to_hex_string(); // Defined in `ScriptExt`.
@@ -47,12 +58,7 @@ fn main() {
 
     let decoded: ScriptBuf = encode::deserialize_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
-
-    let decoded = ScriptBuf::from_hex(&encoded).unwrap();
-    assert_eq!(decoded, script_code);
-
     // And we can mix these to calls because both include the length prefix.
-    let encoded = encode::serialize_hex(&script_code);
     let decoded = ScriptBuf::from_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
