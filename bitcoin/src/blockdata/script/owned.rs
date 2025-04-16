@@ -37,6 +37,25 @@ crate::internal_macros::define_extension_trait! {
 
         /// Adds instructions to push some arbitrary data onto the stack.
         fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+            let bytes = data.as_ref().as_bytes();
+            if bytes.len() == 1 && (bytes[0] == 0x81 || bytes[0] <= 16) {
+                match bytes[0] {
+                    0x81 => { self.push_opcode(OP_PUSHNUM_NEG1); },
+                    0 => { self.push_opcode(OP_PUSHBYTES_0); },
+                    1..=16 => { self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))); },
+                    _ => {}, // unreachable arm
+                }
+            } else {
+                self.push_slice_non_minimal(data);
+            }
+        }
+
+        /// Adds instructions to push some arbitrary data onto the stack without minimality.
+        ///
+        /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
+        ///
+        /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
+        fn push_slice_non_minimal<T: AsRef<PushBytes>>(&mut self, data: T) {
             let data = data.as_ref();
             self.reserve(ScriptBuf::reserved_len_for_slice(data.len()));
             self.push_slice_no_opt(data);
