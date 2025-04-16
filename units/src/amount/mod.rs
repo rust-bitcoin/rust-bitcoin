@@ -605,9 +605,7 @@ where
     T: Iterator<Item = Amount>,
 {
     fn checked_sum(mut self) -> Option<Amount> {
-        let first = Some(self.next().unwrap_or_default());
-
-        self.fold(first, |acc, item| acc.and_then(|acc| acc.checked_add(item)))
+        self.try_fold(Amount::ZERO, Amount::checked_add)
     }
 }
 
@@ -616,9 +614,7 @@ where
     T: Iterator<Item = SignedAmount>,
 {
     fn checked_sum(mut self) -> Option<SignedAmount> {
-        let first = Some(self.next().unwrap_or_default());
-
-        self.fold(first, |acc, item| acc.and_then(|acc| acc.checked_add(item)))
+        self.try_fold(SignedAmount::ZERO, SignedAmount::checked_add)
     }
 }
 
