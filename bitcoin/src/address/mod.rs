@@ -1053,7 +1053,10 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
+            ScriptBuf::from_hex_no_length_prefix(
+                "76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"
+            )
+            .unwrap()
         );
         assert_eq!(&addr.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
@@ -1082,7 +1085,8 @@ mod tests {
 
         assert_eq!(
             addr.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap(),
+            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
+                .unwrap(),
         );
         assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
@@ -1234,7 +1238,10 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
+            ScriptBuf::from_hex_no_length_prefix(
+                "76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"
+            )
+            .unwrap()
         );
 
         let addr =
@@ -1248,7 +1255,8 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
+                .unwrap()
         );
 
         let addr: Address<NetworkUnchecked> =
@@ -1297,7 +1305,8 @@ mod tests {
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
-            ScriptBuf::from_hex_no_length_prefix("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
+            ScriptBuf::from_hex_no_length_prefix("001454d26dddb59c7073c6a197946ea1841951fa7a74")
+                .unwrap()
         );
     }
 
@@ -1476,7 +1485,9 @@ mod tests {
     fn fail_address_from_script() {
         use crate::witness_program;
 
-        let bad_p2wpkh = ScriptBuf::from_hex_no_length_prefix("15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
+        let bad_p2wpkh =
+            ScriptBuf::from_hex_no_length_prefix("15000014dbc5b0a8f9d4353b4b54c3db48846bb15abfec")
+                .unwrap();
         let bad_p2wsh = ScriptBuf::from_hex_no_length_prefix(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
         )

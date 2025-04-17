@@ -7,10 +7,10 @@ use hex::FromHex as _;
 use internals::ToU64 as _;
 
 use super::{opcode_to_verify, Builder, Instruction, PushBytes, ScriptExtPriv as _};
+use crate::consensus;
 use crate::opcodes::all::*;
 use crate::opcodes::{self, Opcode};
 use crate::prelude::Vec;
-use crate::consensus;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
