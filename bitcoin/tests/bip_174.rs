@@ -22,7 +22,9 @@ fn hex_psbt(s: &str) -> Psbt {
 }
 
 #[track_caller]
-fn hex_script(s: &str) -> ScriptBuf { ScriptBuf::from_hex(s).expect("valid hex digits") }
+fn hex_script(s: &str) -> ScriptBuf {
+    ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
+}
 
 #[test]
 fn bip174_psbt_workflow() {
@@ -181,13 +183,13 @@ fn create_transaction() -> Transaction {
             TxOut {
                 value: Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount"),
-                script_pubkey: ScriptBuf::from_hex(output_0.script_pubkey)
+                script_pubkey: ScriptBuf::from_hex_no_length_prefix(output_0.script_pubkey)
                     .expect("failed to parse script"),
             },
             TxOut {
                 value: Amount::from_str_in(output_1.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount"),
-                script_pubkey: ScriptBuf::from_hex(output_1.script_pubkey)
+                script_pubkey: ScriptBuf::from_hex_no_length_prefix(output_1.script_pubkey)
                     .expect("failed to parse script"),
             },
         ],

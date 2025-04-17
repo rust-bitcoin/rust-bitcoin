@@ -1335,7 +1335,7 @@ mod tests {
                 }],
                 output: vec![TxOut {
                     value: Amount::from_sat(output).unwrap(),
-                    script_pubkey: ScriptBuf::from_hex(
+                    script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                         "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                     )
                     .unwrap(),
@@ -1349,7 +1349,7 @@ mod tests {
             inputs: vec![Input {
                 witness_utxo: Some(TxOut {
                     value: Amount::from_sat(input).unwrap(),
-                    script_pubkey: ScriptBuf::from_hex(
+                    script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                         "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                     )
                     .unwrap(),
@@ -1462,10 +1462,16 @@ mod tests {
 
         let expected: Output = Output {
             redeem_script: Some(
-                ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                ScriptBuf::from_hex_no_length_prefix(
+                    "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
+                )
+                .unwrap(),
             ),
             witness_script: Some(
-                ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                ScriptBuf::from_hex_no_length_prefix(
+                    "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+                )
+                .unwrap(),
             ),
             bip32_derivation: hd_keypaths,
             ..Default::default()
@@ -1496,14 +1502,14 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: Amount::from_sat_u32(99_999_699),
-                        script_pubkey: ScriptBuf::from_hex(
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                             "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
                         )
                         .unwrap(),
                     },
                     TxOut {
                         value: Amount::from_sat_u32(100_000_000),
-                        script_pubkey: ScriptBuf::from_hex(
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                             "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
                         )
                         .unwrap(),
@@ -1560,8 +1566,10 @@ mod tests {
                         .unwrap(),
                     vout: 1,
                 },
-                script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985")
-                    .unwrap(),
+                script_sig: ScriptBuf::from_hex_no_length_prefix(
+                    "160014be18d152a9b012039daf3da7de4f53349eecb985",
+                )
+                .unwrap(),
                 sequence: Sequence::MAX,
                 witness: Witness::from_slice(&[hex!(
                     "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"
@@ -1569,7 +1577,7 @@ mod tests {
             }],
             output: vec![TxOut {
                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                script_pubkey: ScriptBuf::from_hex(
+                script_pubkey: ScriptBuf::from_hex_no_length_prefix(
                     "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
                 )
                 .unwrap(),
@@ -1620,7 +1628,7 @@ mod tests {
                     non_witness_utxo: Some(tx),
                     witness_utxo: Some(TxOut {
                         value: Amount::from_sat(190_303_501_938).unwrap(),
-                        script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                     }),
                     sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap()),
                     redeem_script: Some(vec![0x51].into()),
@@ -1745,11 +1753,11 @@ mod tests {
                     output: vec![
                         TxOut {
                             value: Amount::from_sat_u32(99_999_699),
-                            script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                         },
                         TxOut {
                             value: Amount::from_sat_u32(100_000_000),
-                            script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                            script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                         },
                     ],
                 },
@@ -1769,7 +1777,7 @@ mod tests {
                                         txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
@@ -1781,7 +1789,7 @@ mod tests {
                                         txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                    script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
@@ -1792,11 +1800,11 @@ mod tests {
                             output: vec![
                                 TxOut {
                                     value: Amount::from_sat_u32(200_000_000),
-                                    script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
+                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                                 },
                                 TxOut {
                                     value: Amount::from_sat(190_303_501_938).unwrap(),
-                                    script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                                    script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                                 },
                             ],
                         }),
@@ -1837,8 +1845,10 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_some());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
@@ -1883,8 +1893,10 @@ mod tests {
             assert!(&psbt.inputs[1].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
@@ -1908,8 +1920,10 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[0].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wsh());
             assert_eq!(
@@ -2078,11 +2092,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: Amount::from_sat_u32(99_999_699),
-                        script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                     },
                     TxOut {
                         value: Amount::from_sat_u32(100_000_000),
-                        script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                        script_pubkey: ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
             },
@@ -2102,7 +2116,7 @@ mod tests {
                                     txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
@@ -2114,7 +2128,7 @@ mod tests {
                                     txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
+                                script_sig: ScriptBuf::from_hex_no_length_prefix("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
@@ -2125,11 +2139,11 @@ mod tests {
                         output: vec![
                             TxOut {
                                 value: Amount::from_sat_u32(200_000_000),
-                                script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
+                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                             },
                             TxOut {
                                 value: Amount::from_sat(190_303_501_938).unwrap(),
-                                script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                                script_pubkey: ScriptBuf::from_hex_no_length_prefix("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                             },
                         ],
                     }),

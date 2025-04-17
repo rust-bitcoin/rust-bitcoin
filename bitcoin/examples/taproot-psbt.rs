@@ -257,7 +257,7 @@ fn generate_bip86_key_spend_tx(
 
     let mut input = Input {
         witness_utxo: {
-            let script_pubkey = ScriptBuf::from_hex(input_utxo.script_pubkey)
+            let script_pubkey = ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey)
                 .expect("failed to parse input utxo scriptPubkey");
             Some(TxOut { value: from_amount, script_pubkey })
         },
@@ -275,7 +275,7 @@ fn generate_bip86_key_spend_tx(
     for input in [&input_utxo].iter() {
         input_txouts.push(TxOut {
             value: input.amount,
-            script_pubkey: ScriptBuf::from_hex(input.script_pubkey)?,
+            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input.script_pubkey)?,
         });
     }
 
@@ -333,7 +333,7 @@ fn generate_bip86_key_spend_tx(
     tx.verify(|_| {
         Some(TxOut {
             value: from_amount,
-            script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey).unwrap(),
+            script_pubkey: ScriptBuf::from_hex_no_length_prefix(input_utxo.script_pubkey).unwrap(),
         })
     })
     .expect("failed to verify transaction");

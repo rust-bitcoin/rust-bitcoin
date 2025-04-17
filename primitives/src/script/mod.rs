@@ -431,9 +431,12 @@ impl fmt::Display for ScriptBuf {
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Script {
+    // Currently we drop all formatter options.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
+        let compact = internals::compact_size::encode(self.as_bytes().len());
+        write!(f, "{:x}", compact.as_slice().as_hex())?;
+        write!(f, "{:x}", self.as_bytes().as_hex())
     }
 }
 #[cfg(feature = "alloc")]
@@ -451,9 +454,12 @@ internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Script {
+    // Currently we drop all formatter options.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
+        let compact = internals::compact_size::encode(self.as_bytes().len());
+        write!(f, "{:X}", compact.as_slice().as_hex())?;
+        write!(f, "{:X}", self.as_bytes().as_hex())
     }
 }
 
@@ -505,7 +511,8 @@ impl serde::Serialize for Script {
         S: serde::Serializer,
     {
         if serializer.is_human_readable() {
-            serializer.collect_str(&format_args!("{:x}", self))
+            // Do not call LowerHex because we don't want to add the len prefix.
+            serializer.collect_str(&format_args!("{}", self.as_bytes().as_hex()))
         } else {
             serializer.serialize_bytes(self.as_bytes())
         }
@@ -752,7 +759,6 @@ mod tests {
         assert!(WScriptHash::try_from(&script).is_err());
     }
 
-
     #[test]
     fn try_from_script_for_wscript_hash() {
         let script = Script::from_bytes(&[0x51; 10_000]);
@@ -769,8 +775,8 @@ mod tests {
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script), "a1b2c3");
-            assert_eq!(format!("{:X}", script), "A1B2C3");
+            assert_eq!(format!("{:x}", script), "03a1b2c3");
+            assert_eq!(format!("{:X}", script), "03A1B2C3");
         }
     }
 
@@ -781,8 +787,8 @@ mod tests {
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script_buf), "a1b2c3");
-            assert_eq!(format!("{:X}", script_buf), "A1B2C3");
+            assert_eq!(format!("{:x}", script_buf), "03a1b2c3");
+            assert_eq!(format!("{:X}", script_buf), "03A1B2C3");
         }
     }
 
