@@ -321,7 +321,7 @@ fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value:
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
 
     use super::*;
     use crate::consensus::{deserialize, encode, serialize};
@@ -361,14 +361,14 @@ mod test {
 
     #[test]
     fn consensus_serialize() {
-        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
-        let el_1 = hex!("000000");
+        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").to_vec();
+        let el_1 = hex!("000000").to_vec();
 
         let mut want_witness = Witness::default();
         want_witness.push(&el_0);
         want_witness.push(&el_1);
 
-        let vec = vec![el_0.clone(), el_1.clone()];
+        let vec = vec![el_0, el_1];
 
         // Puts a CompactSize at the front as well as one at the front of each element.
         let want_ser: Vec<u8> = encode::serialize(&vec);
@@ -392,8 +392,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness = Witness::from([&*tapscript, &control_block]);
-        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
+        let witness = Witness::from([tapscript.as_slice(), &control_block]);
+        let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
@@ -408,8 +408,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness = Witness::from([&*tapscript, &control_block]);
-        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
+        let witness = Witness::from([tapscript.as_slice(), &control_block]);
+        let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
 
         let expected_leaf_script =
             LeafScript { version: LeafVersion::TapScript, script: Script::from_bytes(&tapscript) };
@@ -425,8 +425,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness = Witness::from([&*signature]);
-        let witness_annex = Witness::from([&*signature, &annex]);
+        let witness = Witness::from([signature]);
+        let witness_annex = Witness::from([signature.as_slice(), &annex]);
 
         // With or without annex, no tapscript should be returned.
         assert_eq!(witness.tapscript(), None);
@@ -443,9 +443,9 @@ mod test {
         let annex = hex!("50");
         let signature = vec![0xff; 64];
 
-        let witness = Witness::from([&*tapscript, &control_block]);
-        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
-        let witness_key_spend_annex = Witness::from([&*signature, &annex]);
+        let witness = Witness::from([tapscript.as_slice(), &control_block]);
+        let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
+        let witness_key_spend_annex = Witness::from([signature.as_slice(), &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_control_block().unwrap(), expected_control_block);
@@ -461,8 +461,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness = Witness::from([&*tapscript, &control_block]);
-        let witness_annex = Witness::from([&*tapscript, &control_block, &annex]);
+        let witness = Witness::from([tapscript.as_slice(), &control_block]);
+        let witness_annex = Witness::from([tapscript.as_slice(), &control_block, &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_annex(), None);
@@ -473,8 +473,8 @@ mod test {
         // annex starting with 0x50 causes the branching logic.
         let annex = hex!("50");
 
-        let witness = Witness::from([&*signature]);
-        let witness_annex = Witness::from([&*signature, &annex]);
+        let witness = Witness::from([signature]);
+        let witness_annex = Witness::from([signature.as_slice(), &annex]);
 
         // With or without annex, the tapscript should be returned.
         assert_eq!(witness.taproot_annex(), None);

@@ -697,7 +697,7 @@ impl Decodable for V2NetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
 
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
     use units::BlockHeight;
 
     use super::*;
@@ -769,7 +769,7 @@ mod test {
             NetworkMessage::Pong(23),
             NetworkMessage::MerkleBlock(merkle_block),
             NetworkMessage::FilterLoad(FilterLoad {
-                filter: hex!("03614e9b050000000000000001"),
+                filter: hex!("03614e9b050000000000000001").to_vec(),
                 hash_funcs: 1,
                 tweak: 2,
                 flags: BloomFlags::All,
