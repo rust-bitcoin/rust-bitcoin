@@ -23,6 +23,7 @@ serde = ["dep:serde", "hashes/serde", "internals/serde", "primitives/serde", "se
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 arbitrary = ["dep:arbitrary", "units/arbitrary", "primitives/arbitrary"]
+standard_test = ["dep:standard_test", "units/standard_test"]
 
 [dependencies]
 base58 = { package = "base58ck", path = "../base58", default-features = false, features = ["alloc"] }
@@ -40,6 +41,7 @@ base64 = { version = "0.22.0", optional = true, default-features = false, featur
 # `bitcoinconsensus` version includes metadata which indicates the version of Core. Use `cargo tree` to see it.
 bitcoinconsensus = { version = "0.106.0", default-features = false, optional = true }
 serde = { version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+standard_test = { version = "0.1.0", optional = true }
 
 [dev-dependencies]
 internals = { package = "bitcoin-internals", path = "../internals", features = ["test-serde"] }

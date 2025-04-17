@@ -10,10 +10,11 @@ cargo-fuzz = true
 
 [dependencies]
 honggfuzz = { version = "0.5.56", default-features = false }
-bitcoin = { path = "../bitcoin", features = [ "serde" ] }
+bitcoin = { path = "../bitcoin", features = [ "serde", "arbitrary", "standard_test" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
+standard_test = "0.1.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(fuzzing)'] }
@@ -85,3 +86,7 @@ path = "fuzz_targets/hashes/sha512.rs"
 [[bin]]
 name = "units_deserialize_amount"
 path = "fuzz_targets/units/deserialize_amount.rs"
+
+[[bin]]
+name = "units_standard_checks"
+path = "fuzz_targets/units/standard_checks.rs"

@@ -459,3 +459,6 @@ impl<'a> Arbitrary<'a> for Amount {
         Ok(Self::from_sat(sats).expect("range is valid"))
     }
 }
+
+#[cfg(feature = "standard_test")]
+standard_test::standard_checks!(Amount);
