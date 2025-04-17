@@ -752,7 +752,6 @@ mod tests {
         assert!(WScriptHash::try_from(&script).is_err());
     }
 
-
     #[test]
     fn try_from_script_for_wscript_hash() {
         let script = Script::from_bytes(&[0x51; 10_000]);

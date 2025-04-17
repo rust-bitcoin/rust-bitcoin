@@ -92,7 +92,7 @@ impl Script {
     /// Returns the script data as a byte slice.
     ///
     /// This is just the script bytes **not** consensus encoding (which includes a length prefix).
-   #[inline]
+    #[inline]
     pub const fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns the script data as a mutable byte slice.

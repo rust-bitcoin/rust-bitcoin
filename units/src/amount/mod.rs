@@ -604,9 +604,7 @@ impl<T> CheckedSum<Amount> for T
 where
     T: Iterator<Item = Amount>,
 {
-    fn checked_sum(mut self) -> Option<Amount> {
-        self.try_fold(Amount::ZERO, Amount::checked_add)
-    }
+    fn checked_sum(mut self) -> Option<Amount> { self.try_fold(Amount::ZERO, Amount::checked_add) }
 }
 
 impl<T> CheckedSum<SignedAmount> for T
