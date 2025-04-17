@@ -138,7 +138,7 @@ pub struct Reject {
     pub message: Cow<'static, str>,
     /// reason of rejection as code
     pub ccode: RejectReason,
-    /// reason of rejectection
+    /// reason of rejection
     pub reason: Cow<'static, str>,
     /// reference to rejected item
     pub hash: sha256d::Hash,
