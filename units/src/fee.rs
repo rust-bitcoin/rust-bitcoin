@@ -13,9 +13,9 @@
 
 use core::ops;
 
-use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
-
 use NumOpResult as R;
+
+use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.
