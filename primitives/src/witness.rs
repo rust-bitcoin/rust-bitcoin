@@ -386,6 +386,16 @@ impl<'a> IntoIterator for &'a Witness {
     fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
+impl<T: AsRef<[u8]>> FromIterator<T> for Witness {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut witness = Witness::new();
+        for item in iter {
+            witness.push(item);
+        }
+        witness
+    }
+}
+
 // Serde keep backward compatibility with old Vec<Vec<u8>> format
 #[cfg(feature = "serde")]
 impl serde::Serialize for Witness {
@@ -839,5 +849,37 @@ mod test {
         let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
         let json = serde_json::to_string(&witness).unwrap();
         assert_eq!(json, r#"["007b4b","0206030708"]"#);
+    }
+
+    #[test]
+    fn test_witness_from_iterator() {
+        let bytes1 = [1u8, 2, 3];
+        let bytes2 = [4u8, 5];
+        let bytes3 = [6u8, 7, 8, 9];
+        let data = [&bytes1[..], &bytes2[..], &bytes3[..]];
+
+        // Use FromIterator directly
+        let witness1 = Witness::from_iter(data);
+
+        // Create a witness manually for comparison
+        let mut witness2 = Witness::new();
+        for item in &data {
+            witness2.push(item);
+        }
+        assert_eq!(witness1.len(), witness2.len());
+        assert_eq!(witness1.to_vec(), witness2.to_vec());
+
+        // Test with collect
+        let bytes4 = [0u8, 123, 75];
+        let bytes5 = [2u8, 6, 3, 7, 8];
+        let data = [bytes4.to_vec(), bytes5.to_vec()];
+        let witness3: Witness = data.iter().collect();
+        assert_eq!(witness3.len(), 2);
+        assert_eq!(witness3.to_vec(), data);
+
+        // Test with empty iterator
+        let empty_data: Vec<Vec<u8>> = vec![];
+        let witness4: Witness = empty_data.iter().collect();
+        assert!(witness4.is_empty());
     }
 }
