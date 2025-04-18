@@ -2,6 +2,8 @@
 
 //! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `relative::LockTime` type.
 
+use super::mtp_height::MtpAndHeight;
+use crate::BlockTime;
 use core::fmt;
 
 #[cfg(feature = "arbitrary")]
@@ -38,6 +40,25 @@ impl Height {
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 {
         self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    }
+
+    /// Determines whether a relative‐height locktime has matured, taking into account
+    /// both the chain tip and the height at which the UTXO was confirmed.
+    ///
+    /// # Parameters
+    /// - `self` – The relative block‐height delay (`n`) required after confirmation.
+    /// - `chain_state` – The current chain state (contains the tip height).
+    /// - `utxo_state` – The chain state at the UTXO’s confirmation block (contains that height).
+    ///
+    /// # Returns
+    /// - `true` if `chain_state.height >= utxo_state.height + self`, i.e.
+    ///   the required number of blocks have passed since the UTXO was mined.
+    /// - `false` otherwise or safely handles overflow by returning false if the addition would overflow
+    pub fn is_satisfied_by(self, chain_state: MtpAndHeight, utxo_state: MtpAndHeight) -> bool {
+        match self.0.checked_add(utxo_state.height.0) {
+            Some(target_height) => chain_state.height.0 >= target_height,
+            None => false,
+        }
     }
 }
 
@@ -119,6 +140,27 @@ impl Time {
     #[inline]
     pub const fn to_consensus_u32(self) -> u32 {
         (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
+    }
+
+    /// Determines whether a relative‑time lock has matured, taking into account both
+    /// the UTXO’s Median Time Past at confirmation and the required delay.
+    ///
+    /// # Parameters
+    /// - `self` – The relative time delay (`t`) in 512‑second intervals.
+    /// - `chain_state` – The current chain state, providing the tip’s MTP (`mtp_seconds`).  
+    /// - `utxo_state` – The chain state at the UTXO’s confirmation, providing its MTP.
+    ///
+    /// # Returns
+    /// - `true` if `chain_state.mtp >= utxo_state.mtp + (self.value() * 512)`  
+    /// - `false` otherwise or safely handles overflow by returning false if the addition would overflow
+    pub fn is_satisfied_by(self, chain_state: MtpAndHeight, utxo_state: MtpAndHeight) -> bool {
+        match u32::from(self.value()).checked_mul(512) {
+            Some(seconds) => match seconds.checked_add(utxo_state.mtp.to_u32()) {
+                Some(required_seconds) => chain_state.mtp >= BlockTime::from_u32(required_seconds),
+                None => false,
+            },
+            None => false,
+        }
     }
 }
 
@@ -264,5 +306,75 @@ mod tests {
         serde_round_trip!(Time::ZERO);
         serde_round_trip!(Time::MIN);
         serde_round_trip!(Time::MAX);
+    }
+
+    fn generate_timestamps(start: u32, step: u16) -> [BlockTime; 11] {
+        let mut timestamps = [BlockTime::from_u32(0); 11];
+        for (i, ts) in timestamps.iter_mut().enumerate() {
+            *ts = BlockTime::from_u32(start.saturating_sub((step * i as u16).into()));
+        }
+        timestamps
+    }
+
+    #[test]
+    fn test_time_chain_state() {
+        let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
+        let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
+
+        let timestamps2: [BlockTime; 11] = generate_timestamps(1_599_995_119, 200);
+        let utxo_timestamps2: [BlockTime; 11] = generate_timestamps(1_599_990_000, 200);
+
+        let timestamps3: [BlockTime; 11] = generate_timestamps(1_600_050_000, 200);
+        let utxo_timestamps3: [BlockTime; 11] = generate_timestamps(1_599_990_000, 200);
+
+        // Test case 1: Satisfaction (current_mtp >= utxo_mtp + required_seconds)
+        // 10 intervals × 512 seconds = 5120 seconds
+        let time_lock = Time::from_512_second_intervals(10);
+        let chain_state1 = MtpAndHeight::new(Height::from_height(100), timestamps);
+        let utxo_state1 = MtpAndHeight::new(Height::from_height(80), utxo_timestamps);
+        assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1));
+
+        // Test case 2: Not satisfied (current_mtp < utxo_mtp + required_seconds)
+        let chain_state2 = MtpAndHeight::new(Height::from_height(100), timestamps2);
+        let utxo_state2 = MtpAndHeight::new(Height::from_height(80), utxo_timestamps2);
+        assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2));
+
+        // Test case 3: Test with a larger value (100 intervals = 51200 seconds)
+        let larger_lock = Time::from_512_second_intervals(100);
+        let chain_state3 = MtpAndHeight::new(Height::from_height(100), timestamps3);
+        let utxo_state3 = MtpAndHeight::new(Height::from_height(80), utxo_timestamps3);
+        assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3));
+
+        // Test case 4: Overflow handling - tests that is_satisfied_by handles overflow gracefully
+        let max_time_lock = Time::MAX;
+        let chain_state4 = MtpAndHeight::new(Height::from_height(100), timestamps);
+        let utxo_state4 = MtpAndHeight::new(Height::from_height(80), utxo_timestamps);
+        assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4));
+    }
+
+    #[test]
+    fn test_height_chain_state() {
+        let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
+        let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
+
+        let current_height = Height::from_height(100);
+        let utxo_height = Height::from_height(80);
+
+        // Test case 1: Satisfaction (current_height >= utxo_height + required)
+        let chain_state1 = MtpAndHeight::new(current_height, timestamps);
+        let utxo_state1 = MtpAndHeight::new(utxo_height, utxo_timestamps);
+        let height_lock = Height::from_height(10);
+        assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1));
+
+        // Test case 2: Not satisfied (current_height < utxo_height + required)
+        let chain_state2 = MtpAndHeight::new(Height::from_height(89), timestamps);
+        let utxo_state2 = MtpAndHeight::new(Height::from_height(80), utxo_timestamps);
+        assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2));
+
+        // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
+        let max_height_lock = Height::MAX;
+        let chain_state3 = MtpAndHeight::new(Height::from_height(1000), timestamps);
+        let utxo_state3 = MtpAndHeight::new(Height::from_height(100), utxo_timestamps);
+        assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3));
     }
 }
