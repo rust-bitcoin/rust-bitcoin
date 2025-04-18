@@ -9,6 +9,8 @@ use core::ops::Index;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "hex")]
+use hex::{error::HexToBytesError, FromHex};
 use internals::compact_size;
 use internals::slice::SliceExt;
 use internals::wrap_debug::WrapDebug;
@@ -217,6 +219,21 @@ impl Witness {
         // ref: https://github.com/rust-bitcoin/rust-bitcoin/issues/3264
         let end = element_len as usize;
         Some(&slice[..end])
+    }
+
+    /// Creates a new witness from a list of hex strings.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if any of the hex strings are invalid.
+    #[cfg(feature = "hex")]
+    pub fn from_hex<I, T>(iter: I) -> Result<Self, HexToBytesError>
+    where
+        I: IntoIterator<Item = T>,
+        T: AsRef<str>,
+    {
+        let result: Vec<Vec<u8>> = iter.into_iter().map(|hex_str| Vec::from_hex(hex_str.as_ref())).collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::from_slice(&result))
     }
 }
 
@@ -839,5 +856,17 @@ mod test {
         let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
         let json = serde_json::to_string(&witness).unwrap();
         assert_eq!(json, r#"["007b4b","0206030708"]"#);
+    }
+
+    #[cfg(feature = "hex")]
+    #[test]
+    fn test_from_hex() {
+        let hex_strings = [
+            "30440220703350f1c8be5b41b4cb03b3b680c4f3337f987514a6b08e16d5d9f81e9b5f72022018fb269ba5b82864c0e1edeaf788829eb332fe34a859cc1f99c4a02edfb5d0df01",
+            "0208689fe2cca52d8726cefaf274de8fa61d5faa5e1058ad35b49fb194c035f9a4",
+        ];
+
+        let witness = Witness::from_hex(hex_strings).unwrap();
+        assert_eq!(witness.len(), 2);
     }
 }
