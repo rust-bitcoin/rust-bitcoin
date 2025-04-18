@@ -183,7 +183,7 @@ crate::internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get the taproot control block following BIP341 rules.
+        /// Get the Taproot control block following BIP341 rules.
         ///
         /// This does not guarantee that this represents a P2TR [`Witness`]. It
         /// merely gets the last or second to last element depending on the first
@@ -197,7 +197,7 @@ crate::internal_macros::define_extension_trait! {
             }
         }
 
-        /// Get the taproot annex following BIP341 rules.
+        /// Get the Taproot annex following BIP341 rules.
         ///
         /// This does not guarantee that this represents a P2TR [`Witness`].
         ///
@@ -241,9 +241,9 @@ enum P2TrSpend<'a> {
 }
 
 impl<'a> P2TrSpend<'a> {
-    /// Parses `Witness` to determine what kind of taproot spend this is.
+    /// Parses `Witness` to determine what kind of Taproot spend this is.
     ///
-    /// Note: this assumes `witness` is a taproot spend. The function cannot figure it out for sure
+    /// Note: this assumes `witness` is a Taproot spend. The function cannot figure it out for sure
     /// (without knowing the output), so it doesn't attempt to check anything other than what is
     /// required for the program to not crash.
     ///

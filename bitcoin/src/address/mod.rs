@@ -90,7 +90,7 @@ pub enum AddressType {
     P2wpkh,
     /// Pay to witness script hash.
     P2wsh,
-    /// Pay to taproot.
+    /// Pay to Taproot.
     P2tr,
     /// Pay to anchor.
     P2a,
