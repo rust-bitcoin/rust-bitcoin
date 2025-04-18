@@ -152,7 +152,7 @@ developers, especially new contributors looking for something to work on, we do:
 - Mutation testing with [`cargo-mutants`](https://github.com/sourcefrog/cargo-mutants)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
-There are always more tests to write and more bugs to find, contributions to our testing efforts are
+There are always more tests to write and more bugs to find. Contributions to our testing efforts are
 extremely welcome. Please consider testing code a first class citizen, we definitely do take PRs
 improving and cleaning up test code.
 
