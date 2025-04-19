@@ -3,6 +3,7 @@
 //! Provides a monodic type returned by mathematical operations (`core::ops`).
 
 use core::fmt;
+use core::convert::Infallible;
 
 use NumOpResult as R;
 
@@ -202,7 +203,7 @@ pub struct NumOpError(MathOp);
 
 impl NumOpError {
     /// Creates a [`NumOpError`] caused by `op`.
-    pub fn while_doing(op: MathOp) -> Self { NumOpError(op) }
+    pub(crate) fn while_doing(op: MathOp) -> Self { NumOpError(op) }
 
     /// Returns `true` if this operation error'ed due to overflow.
     pub fn is_overflow(self) -> bool { self.0.is_overflow() }
@@ -239,6 +240,10 @@ pub enum MathOp {
     Rem,
     /// Negation failed ([`core::ops::Neg`] resulted in an invalid value).
     Neg,
+    /// Stops users from casting this enum to an integer.
+    // May get removed if one day Rust supports disabling casts natively.
+    #[doc(hidden)]
+    _DoNotUse(Infallible),
 }
 
 impl MathOp {
@@ -253,13 +258,14 @@ impl MathOp {
 
 impl fmt::Display for MathOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
+        match *self {
             MathOp::Add => write!(f, "add"),
             MathOp::Sub => write!(f, "sub"),
             MathOp::Mul => write!(f, "mul"),
             MathOp::Div => write!(f, "div"),
             MathOp::Rem => write!(f, "rem"),
             MathOp::Neg => write!(f, "neg"),
+            MathOp::_DoNotUse(infallible) => match infallible {},
         }
     }
 }
