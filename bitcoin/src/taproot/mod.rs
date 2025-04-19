@@ -543,7 +543,22 @@ impl TaprootBuilder {
 
     /// Converts the builder into a [`TapTree`] if the builder is a full tree and
     /// does not contain any hidden nodes
+    #[deprecated(since = "TBD", note = "use `try_into_tap_tree()` instead")]
+    #[doc(hidden)]
     pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilderError> {
+        self.try_into_tap_tree()
+    }
+
+    /// Converts the builder into a [`TapTree`] if the builder is a full tree and
+    /// does not contain any hidden nodes.
+    ///
+    /// This function finalizes the taproot construction process by validating that the builder
+    /// is complete, and there are no hidden nodes, which would make the tree incomplete or ambiguous.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`IncompleteBuilderError::HiddenParts`] if the builder contains any hidden nodes.
+    pub fn try_into_tap_tree(self) -> Result<TapTree, IncompleteBuilderError> {
         let node = self.try_into_node_info()?;
         if node.has_hidden_nodes {
             // Reconstruct the builder as it was if it has hidden nodes
@@ -770,7 +785,7 @@ impl TryFrom<TaprootBuilder> for TapTree {
     ///
     /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilderError`]
     /// error with the content of incomplete `builder` instance.
-    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> { builder.try_into_taptree() }
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> { builder.try_into_tap_tree() }
 }
 
 impl TryFrom<NodeInfo> for TapTree {
