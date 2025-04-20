@@ -916,7 +916,7 @@ mod tests {
         assert!(formatted_script.contains("<unexpected end>"));
     }
 
-     #[test]
+    #[test]
     fn legacy_opcode() {
         let script = Script::from_bytes(&[0x03, 0xaa, 0xbb, 0xcc]);
         assert_eq!(format!("{}", script), "OP_PUSHBYTES_3 aabbcc");

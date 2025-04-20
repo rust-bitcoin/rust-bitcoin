@@ -84,9 +84,7 @@ impl Builder {
             match bytes[0] {
                 0x81 => self.push_opcode(OP_PUSHNUM_NEG1),
                 0 => self.push_opcode(OP_PUSHBYTES_0),
-                1..=16 => {
-                    self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1)))
-                }
+                1..=16 => self.push_opcode(Opcode::from(bytes[0] + (OP_PUSHNUM_1.to_u8() - 1))),
                 _ => self, // unreachable arm
             }
         } else {
@@ -99,10 +97,7 @@ impl Builder {
     /// Standardness rules require push minimality according to [CheckMinimalPush] of core.
     ///
     /// [CheckMinimalPush]: <https://github.com/bitcoin/bitcoin/blob/99a4ddf5ab1b3e514d08b90ad8565827fda7b63b/src/script/script.cpp#L366>
-    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(
-        mut self,
-        data: T,
-    ) -> Builder {
+    pub fn push_slice_non_minimal<T: AsRef<PushBytes>>(mut self, data: T) -> Builder {
         self.0.push_slice_non_minimal(data);
         self.1 = None;
         self
