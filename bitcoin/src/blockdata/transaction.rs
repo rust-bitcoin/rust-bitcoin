@@ -772,13 +772,13 @@ impl Decodable for Transaction {
 /// # Parameters
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
-/// * `satisfaction_weight` - satisfied spending conditions weight.
+/// * `input_weight_prediction` - the predicted input weight.
 pub fn effective_value(
     fee_rate: FeeRate,
-    satisfaction_weight: Weight,
+    input_weight_prediction: InputWeightPrediction,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = satisfaction_weight.checked_add(TX_IN_BASE_WEIGHT)?;
+    let weight = input_weight_prediction.total_weight();
     let signed_input_fee = fee_rate.to_fee(weight)?.to_signed();
     value.to_signed().checked_sub(signed_input_fee)
 }
@@ -1651,24 +1651,19 @@ mod tests {
     fn effective_value_happy_path() {
         let value = "1 cBTC".parse::<Amount>().unwrap();
         let fee_rate = FeeRate::from_sat_per_kwu(10);
-        let satisfaction_weight = Weight::from_wu(204);
-        let effective_value = effective_value(fee_rate, satisfaction_weight, value).unwrap();
+        let effective_value =
+            effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value).unwrap();
 
-        // 10 sat/kwu * (204wu + BASE_WEIGHT) = 4 sats
-        let expected_fee = "4 sats".parse::<SignedAmount>().unwrap();
+        // 10 sat/kwu * 272 wu = 4 sats (rounding up)
+        let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
         let expected_effective_value = (value.to_signed() - expected_fee).unwrap();
         assert_eq!(effective_value, expected_effective_value);
     }
 
     #[test]
     fn effective_value_fee_rate_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::MAX, Weight::ZERO, Amount::ZERO);
-        assert!(eff_value.is_none());
-    }
-
-    #[test]
-    fn effective_value_weight_does_not_overflow() {
-        let eff_value = effective_value(FeeRate::ZERO, Weight::MAX, Amount::ZERO);
+        let eff_value =
+            effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
         assert!(eff_value.is_none());
     }
 
