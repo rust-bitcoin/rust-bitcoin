@@ -1784,7 +1784,7 @@ mod test {
         let script = ScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
+        assert!(control_block.verify_taproot_commitment(secp, out_pk.to_x_only_public_key(), &script));
     }
 
     #[test]
@@ -1893,7 +1893,7 @@ mod test {
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(
                 &secp,
-                output_key.to_inner(),
+                output_key.to_x_only_public_key(),
                 &ver_script.0
             ))
         }
@@ -1967,7 +1967,7 @@ mod test {
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(
                 &secp,
-                output_key.to_inner(),
+                output_key.to_x_only_public_key(),
                 &ver_script.0
             ))
         }
@@ -2099,7 +2099,7 @@ mod test {
             let addr = Address::p2tr(secp, internal_key, merkle_root, KnownHrp::Mainnet);
             let spk = addr.script_pubkey();
 
-            assert_eq!(expected_output_key, output_key.to_inner());
+            assert_eq!(expected_output_key, output_key.to_x_only_public_key());
             assert_eq!(expected_tweak, tweak);
             assert_eq!(expected_addr, addr);
             assert_eq!(expected_spk, spk);
