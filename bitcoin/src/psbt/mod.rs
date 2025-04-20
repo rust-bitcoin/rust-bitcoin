@@ -442,7 +442,7 @@ impl Psbt {
                     let (msg, sighash_type) = self.sighash_taproot(input_index, cache, None)?;
                     let key_pair = Keypair::from_secret_key(secp, &sk.inner)
                         .tap_tweak(secp, input.tap_merkle_root)
-                        .to_inner();
+                        .to_keypair();
 
                     #[cfg(feature = "rand-std")]
                     let signature = secp.sign_schnorr(&msg, &key_pair);
