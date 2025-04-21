@@ -598,12 +598,12 @@ impl From<InvalidBase58PayloadLengthError> for Error {
 
 impl Xpriv {
     /// Constructs a new master key from a seed value
-    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Result<Xpriv, Error> {
+    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Xpriv {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
         engine.input(seed);
         let hmac = engine.finalize();
 
-        Ok(Xpriv {
+        Xpriv {
             network: network.into(),
             depth: 0,
             parent_fingerprint: Default::default(),
@@ -613,7 +613,7 @@ impl Xpriv {
             )
             .expect("cryptographically unreachable"),
             chain_code: ChainCode::from_hmac(hmac),
-        })
+        }
     }
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
@@ -1111,7 +1111,7 @@ mod tests {
         expected_sk: &str,
         expected_pk: &str,
     ) {
-        let mut sk = Xpriv::new_master(network, seed).unwrap();
+        let mut sk = Xpriv::new_master(network, seed);
         let mut pk = Xpub::from_xpriv(secp, &sk);
 
         // Check derivation convenience method for Xpriv

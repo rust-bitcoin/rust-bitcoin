@@ -1439,7 +1439,7 @@ mod tests {
 
         let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
-        let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
+        let mut sk: Xpriv = Xpriv::new_master(NetworkKind::Main, &seed);
 
         let fprint = sk.fingerprint(secp);
 

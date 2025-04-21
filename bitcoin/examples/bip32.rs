@@ -33,7 +33,7 @@ fn main() {
     let secp = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
 
     // calculate root key from seed
-    let root = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
+    let root = Xpriv::new_master(NetworkKind::Main, &seed);
     println!("Root key: {}", root);
 
     // derive child xpub
