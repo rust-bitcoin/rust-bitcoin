@@ -223,7 +223,7 @@ impl fmt::Display for Header {
             self.time.to_u32().to_le_bytes().as_hex(),
             self.bits.to_consensus().to_le_bytes().as_hex(),
             self.nonce.to_le_bytes().as_hex(),
-        )?;
+        ).expect("total length of written objects is 160 characters");
         fmt::Display::fmt(&buf, f)
     }
 }
