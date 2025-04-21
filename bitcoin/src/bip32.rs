@@ -503,18 +503,12 @@ pub enum Error {
     InvalidChildNumber(u32),
     /// Invalid childnumber format.
     InvalidChildNumberFormat,
-    /// Invalid derivation path format.
-    InvalidDerivationPathFormat,
     /// Unknown version magic bytes
     UnknownVersion([u8; 4]),
     /// Encoded extended key data has wrong length
     WrongExtendedKeyLength(usize),
     /// Base58 encoding error
     Base58(base58::Error),
-    /// Hexadecimal decoding error
-    Hex(hex::HexToArrayError),
-    /// `PublicKey` hex should be 66 or 130 digits long.
-    InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
     /// Invalid private key prefix (byte 45 must be 0)
@@ -538,14 +532,10 @@ impl fmt::Display for Error {
             InvalidChildNumber(ref n) =>
                 write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
             InvalidChildNumberFormat => f.write_str("invalid child number format"),
-            InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
             WrongExtendedKeyLength(ref len) =>
                 write!(f, "encoded extended key data has wrong length {}", len),
             Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-            Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
-            InvalidPublicKeyHexLength(got) =>
-                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
             InvalidPrivateKeyPrefix =>
                 f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-32"),
@@ -564,14 +554,11 @@ impl std::error::Error for Error {
         match *self {
             Secp256k1(ref e) => Some(e),
             Base58(ref e) => Some(e),
-            Hex(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
             InvalidChildNumber(_)
             | InvalidChildNumberFormat
-            | InvalidDerivationPathFormat
             | UnknownVersion(_)
-            | WrongExtendedKeyLength(_)
-            | InvalidPublicKeyHexLength(_) => None,
+            | WrongExtendedKeyLength(_) => None,
             InvalidPrivateKeyPrefix => None,
             NonZeroParentFingerprintForMasterKey => None,
             NonZeroChildNumberForMasterKey => None,
