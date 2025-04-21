@@ -497,8 +497,6 @@ pub type KeySource = (Fingerprint, DerivationPath);
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// A pk->pk derivation was attempted on a hardened key
-    CannotDeriveFromHardenedKey,
     /// A secp256k1 error occurred
     Secp256k1(secp256k1::Error),
     /// A child number was provided that was out of range
@@ -536,8 +534,6 @@ impl fmt::Display for Error {
         use Error::*;
 
         match *self {
-            CannotDeriveFromHardenedKey =>
-                f.write_str("cannot derive hardened key from public key"),
             Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
             InvalidChildNumber(ref n) =>
                 write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
@@ -570,8 +566,7 @@ impl std::error::Error for Error {
             Base58(ref e) => Some(e),
             Hex(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
-            CannotDeriveFromHardenedKey
-            | InvalidChildNumber(_)
+            InvalidChildNumber(_)
             | InvalidChildNumberFormat
             | InvalidDerivationPathFormat
             | UnknownVersion(_)
@@ -594,6 +589,33 @@ impl From<base58::Error> for Error {
 
 impl From<InvalidBase58PayloadLengthError> for Error {
     fn from(e: InvalidBase58PayloadLengthError) -> Error { Self::InvalidBase58PayloadLength(e) }
+}
+
+/// A BIP32 error
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DerivationError {
+    /// Attempted to derive a hardened child from an xpub.
+    ///
+    /// You can only derive hardened children from xprivs.
+    CannotDeriveHardenedChild,
+    /// Attempted to derive a child of depth 256 or higher.
+    ///
+    /// There is no way to encode such xkeys.
+    MaximumDepthExceeded,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DerivationError {}
+
+impl fmt::Display for DerivationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::CannotDeriveHardenedChild =>
+                f.write_str("cannot derive hardened child of public key"),
+            Self::MaximumDepthExceeded => f.write_str("cannot derive child of depth 256 or higher"),
+        }
+    }
 }
 
 impl Xpriv {
@@ -795,7 +817,7 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         self.derive_xpub(secp, path)
     }
 
@@ -806,7 +828,7 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         let mut pk: Xpub = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(secp, *cnum)?
@@ -818,9 +840,9 @@ impl Xpub {
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,
-    ) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
+    ) -> Result<(secp256k1::SecretKey, ChainCode), DerivationError> {
         match i {
-            ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
+            ChildNumber::Hardened { .. } => Err(DerivationError::CannotDeriveHardenedChild),
             ChildNumber::Normal { index: n } => {
                 let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
                 engine.input(&self.public_key.serialize()[..]);
@@ -842,7 +864,7 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         i: ChildNumber,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let tweaked =
             self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
@@ -1120,7 +1142,10 @@ mod tests {
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(pk.derive_xpub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
+            assert_eq!(
+                pk.derive_xpub(secp, &path),
+                Err(DerivationError::CannotDeriveHardenedChild)
+            );
         } else {
             assert_eq!(&pk.derive_xpub(secp, &path).unwrap().to_string()[..], expected_pk);
         }
@@ -1135,7 +1160,10 @@ mod tests {
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
-                    assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
+                    assert_eq!(
+                        pk.ckd_pub(secp, num),
+                        Err(DerivationError::CannotDeriveHardenedChild)
+                    );
                     pk = Xpub::from_xpriv(secp, &sk);
                 }
             }
