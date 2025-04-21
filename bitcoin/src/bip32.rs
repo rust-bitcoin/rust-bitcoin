@@ -610,7 +610,8 @@ impl Xpriv {
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
                 hmac.as_byte_array().split_array::<32, 32>().0,
-            )?,
+            )
+            .expect("cryptographically unreachable"),
             chain_code: ChainCode::from_hmac(hmac),
         })
     }
@@ -828,7 +829,8 @@ impl Xpub {
                 let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
                     hmac.as_byte_array().split_array::<32, 32>().0,
-                )?;
+                )
+                .expect("cryptographically unreachable");
                 let chain_code = ChainCode::from_hmac(hmac);
                 Ok((private_key, chain_code))
             }
@@ -842,7 +844,8 @@ impl Xpub {
         i: ChildNumber,
     ) -> Result<Xpub, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
-        let tweaked = self.public_key.add_exp_tweak(secp, &sk.into())?;
+        let tweaked =
+            self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
 
         Ok(Xpub {
             network: self.network,
