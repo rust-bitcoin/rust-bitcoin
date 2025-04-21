@@ -13,6 +13,7 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use hashes::{hash_newtype, sha256t, sha256t_tag, HashEngine};
+use hex::{FromHex, HexToBytesError};
 use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
@@ -1198,6 +1199,12 @@ impl ControlBlock {
 
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
+
+    /// Constructs a new [`ControlBlock`] from a hex string.
+    pub fn from_hex(hex: &str) -> Result<Self, TaprootError> {
+        let vec = Vec::from_hex(hex).map_err(TaprootError::InvalidControlBlockHex)?;
+        ControlBlock::decode(vec.as_slice())
+    }
 }
 
 impl<B, K> ControlBlock<B, K> {
@@ -1514,6 +1521,8 @@ pub enum TaprootError {
     InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid Taproot internal key.
     InvalidInternalKey(secp256k1::Error),
+    /// Invalid control block hex
+    InvalidControlBlockHex(HexToBytesError),
     /// Empty Taproot tree.
     EmptyTree,
 }
@@ -1531,6 +1540,7 @@ impl fmt::Display for TaprootError {
             InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
             InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
             InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
+            InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
             InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
             EmptyTree => write!(f, "Taproot tree must contain at least one script"),
         }
@@ -1546,6 +1556,7 @@ impl std::error::Error for TaprootError {
             InvalidInternalKey(e) => Some(e),
             InvalidTaprootLeafVersion(ref e) => Some(e),
             InvalidMerkleTreeDepth(ref e) => Some(e),
+            InvalidControlBlockHex(ref e) => Some(e),
             InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) | EmptyTree => None,
         }
     }
@@ -1670,7 +1681,7 @@ impl std::error::Error for InvalidControlBlockSizeError {}
 #[cfg(test)]
 mod test {
     use hashes::sha256;
-    use hex::{DisplayHex, FromHex};
+    use hex::DisplayHex;
     use secp256k1::VerifyOnly;
 
     use super::*;
@@ -1771,8 +1782,7 @@ mod test {
         let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = ScriptBuf::from_hex(script_hex).unwrap();
-        let control_block =
-            ControlBlock::decode(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
+        let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
         assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
     }
@@ -2053,10 +2063,8 @@ mod test {
                 let spend_info = builder.finalize(secp, internal_key).unwrap();
                 for (i, script_ver) in leaves.iter().enumerate() {
                     let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
-                    let expected_ctrl_blk = ControlBlock::decode(
-                        &Vec::<u8>::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap(),
-                    )
-                    .unwrap();
+                    let expected_ctrl_blk =
+                        ControlBlock::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap();
 
                     let leaf_hash = TapLeafHash::from_script(&script_ver.0, script_ver.1);
                     let ctrl_blk = spend_info.control_block(script_ver).unwrap();
