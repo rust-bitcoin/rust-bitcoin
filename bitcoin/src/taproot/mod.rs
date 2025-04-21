@@ -22,7 +22,7 @@ use secp256k1::{Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{
-    SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey,
+    SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{Script, ScriptBuf};
@@ -35,6 +35,9 @@ pub use crate::crypto::taproot::{SigFromSliceError, Signature};
 pub use merkle_branch::TaprootMerkleBranch;
 #[doc(inline)]
 pub use merkle_branch::TaprootMerkleBranchBuf;
+
+#[doc(inline)]
+pub use crate::XOnlyPublicKey;
 
 type ControlBlockArrayVec = internals::array_vec::ArrayVec<u8, TAPROOT_CONTROL_MAX_SIZE>;
 
