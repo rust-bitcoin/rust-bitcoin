@@ -33,6 +33,13 @@ fn script() {
 
     // data
     script = script.push_slice(b"NRA4VR"); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // data push minimality
+    for n in 1..=16 {
+        script = script.push_slice([n]); comp.extend([0x50 + n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+        script = script.push_slice_non_minimal([n]); comp.extend([1, n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    }
+    script = script.push_slice([0x81]); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_slice_non_minimal([0x81]); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);    
 
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
