@@ -210,7 +210,7 @@ impl Psbt {
 
         // Now that the extracted Transaction is made, decide how to return it.
         let fee_rate =
-            FeeRate::from_sat_per_kwu(fee.to_sat().saturating_mul(1000) / tx.weight().to_wu());
+            fee.checked_div_by_weight_floor(tx.weight()).expect("weight() is always non-zero");
         // Prefer to return an AbsurdFeeRate error when both trigger.
         if fee_rate > max_fee_rate {
             return Err(ExtractTxError::AbsurdFeeRate { fee_rate, tx });
