@@ -500,7 +500,7 @@ pub type KeySource = (Fingerprint, DerivationPath);
 /// A BIP32 error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Error {
+pub enum ParseError {
     /// A secp256k1 error occurred
     Secp256k1(secp256k1::Error),
     /// Unknown version magic bytes
@@ -519,13 +519,13 @@ pub enum Error {
     NonZeroChildNumberForMasterKey,
 }
 
-impl From<Infallible> for Error {
+impl From<Infallible> for ParseError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use ParseError::*;
 
         match *self {
             Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
@@ -544,9 +544,9 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+        use ParseError::*;
 
         match *self {
             Secp256k1(ref e) => Some(e),
@@ -560,16 +560,18 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
+impl From<secp256k1::Error> for ParseError {
+    fn from(e: secp256k1::Error) -> ParseError { ParseError::Secp256k1(e) }
 }
 
-impl From<base58::Error> for Error {
-    fn from(err: base58::Error) -> Self { Error::Base58(err) }
+impl From<base58::Error> for ParseError {
+    fn from(err: base58::Error) -> Self { ParseError::Base58(err) }
 }
 
-impl From<InvalidBase58PayloadLengthError> for Error {
-    fn from(e: InvalidBase58PayloadLengthError) -> Error { Self::InvalidBase58PayloadLength(e) }
+impl From<InvalidBase58PayloadLengthError> for ParseError {
+    fn from(e: InvalidBase58PayloadLengthError) -> ParseError {
+        Self::InvalidBase58PayloadLength(e)
+    }
 }
 
 /// A BIP32 error
@@ -759,19 +761,19 @@ impl Xpriv {
     }
 
     /// Decoding extended private key from binary data according to BIP 32
-    pub fn decode(data: &[u8]) -> Result<Xpriv, Error> {
+    pub fn decode(data: &[u8]) -> Result<Xpriv, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
-            unknown => return Err(Error::UnknownVersion(unknown)),
+            unknown => return Err(ParseError::UnknownVersion(unknown)),
         };
 
         let (&zero, private_key) = key.split_first();
         if zero != 0 {
-            return Err(Error::InvalidPrivateKeyPrefix);
+            return Err(ParseError::InvalidPrivateKeyPrefix);
         }
 
         Ok(Xpriv {
@@ -917,14 +919,14 @@ impl Xpub {
     }
 
     /// Decoding extended public key from binary data according to BIP 32
-    pub fn decode(data: &[u8]) -> Result<Xpub, Error> {
+    pub fn decode(data: &[u8]) -> Result<Xpub, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
-            unknown => return Err(Error::UnknownVersion(unknown)),
+            unknown => return Err(ParseError::UnknownVersion(unknown)),
         };
 
         Ok(Xpub {
@@ -970,9 +972,9 @@ impl fmt::Display for Xpriv {
 }
 
 impl FromStr for Xpriv {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(inp: &str) -> Result<Xpriv, Error> {
+    fn from_str(inp: &str) -> Result<Xpriv, ParseError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
@@ -990,9 +992,9 @@ impl fmt::Display for Xpub {
 }
 
 impl FromStr for Xpub {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(inp: &str) -> Result<Xpub, Error> {
+    fn from_str(inp: &str) -> Result<Xpub, ParseError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
@@ -1048,9 +1050,9 @@ struct Common {
 }
 
 impl Common {
-    fn decode(data: &[u8]) -> Result<Self, Error> {
+    fn decode(data: &[u8]) -> Result<Self, ParseError> {
         let data: &[u8; 78] =
-            data.try_into().map_err(|_| Error::WrongExtendedKeyLength(data.len()))?;
+            data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
 
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
@@ -1060,11 +1062,11 @@ impl Common {
 
         if depth == 0 {
             if parent_fingerprint != [0u8; 4] {
-                return Err(Error::NonZeroParentFingerprintForMasterKey);
+                return Err(ParseError::NonZeroParentFingerprintForMasterKey);
             }
 
             if child_number != [0u8; 4] {
-                return Err(Error::NonZeroChildNumberForMasterKey);
+                return Err(ParseError::NonZeroChildNumberForMasterKey);
             }
         }
 
@@ -1370,7 +1372,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::InvalidPrivateKeyPrefix) => {}
+            Err(ParseError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
         }
     }
@@ -1381,7 +1383,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::NonZeroChildNumberForMasterKey) => {}
+            Err(ParseError::NonZeroChildNumberForMasterKey) => {}
             _ => panic!("Expected NonZeroChildNumberForMasterKey error, got {:?}", result),
         }
     }
@@ -1392,7 +1394,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::NonZeroParentFingerprintForMasterKey) => {}
+            Err(ParseError::NonZeroParentFingerprintForMasterKey) => {}
             _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
         }
     }

@@ -916,7 +916,7 @@ impl_get_key_for_xonly_map!(HashMap);
 #[non_exhaustive]
 pub enum GetKeyError {
     /// A bip32 error.
-    Bip32(bip32::Error),
+    Bip32(bip32::ParseError),
     /// The GetKey operation is not supported for this key request.
     NotSupported,
 }
@@ -949,8 +949,8 @@ impl std::error::Error for GetKeyError {
     }
 }
 
-impl From<bip32::Error> for GetKeyError {
-    fn from(e: bip32::Error) -> Self { GetKeyError::Bip32(e) }
+impl From<bip32::ParseError> for GetKeyError {
+    fn from(e: bip32::ParseError) -> Self { GetKeyError::Bip32(e) }
 }
 
 /// The various output types supported by the Bitcoin network.
