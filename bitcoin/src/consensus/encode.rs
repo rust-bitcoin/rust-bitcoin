@@ -284,7 +284,7 @@ pub trait Decodable: Sized {
     /// vector of a limited size, calling this function directly might be marginally faster (due to
     /// avoiding extra checks).
     ///
-    /// ### Rules for trait implementations
+    /// # Rules for trait implementations
     ///
     /// * Simple types that have a fixed size (own and member fields), don't have to overwrite
     ///   this method, or be concern with it.

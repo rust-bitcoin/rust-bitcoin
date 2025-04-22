@@ -19,7 +19,7 @@ internals::transparent_newtype! {
     /// form `&Script`. It is always encoded as a series of bytes representing the opcodes and data
     /// pushes.
     ///
-    /// ## Validity
+    /// # Validity
     ///
     /// `Script` does not have any validity invariants - it's essentially just a marked slice of
     /// bytes. This is similar to [`Path`](std::path::Path) vs [`OsStr`](std::ffi::OsStr) where they
@@ -30,7 +30,7 @@ internals::transparent_newtype! {
     /// allowed to be in a transaction (outputs just become unspendable) and there even are such
     /// transactions in the chain. Thus we must allow such scripts to be placed in the transaction.
     ///
-    /// ## Slicing safety
+    /// # Slicing safety
     ///
     /// Slicing is similar to how `str` works: some ranges may be incorrect and indexing by
     /// `usize` is not supported. However, as opposed to `std`, we have no way of checking
@@ -44,7 +44,7 @@ internals::transparent_newtype! {
     /// It is recommended to use `.instructions()` method to get an iterator over script
     /// instructions and work with that instead.
     ///
-    /// ## Memory safety
+    /// # Memory safety
     ///
     /// The type is `#[repr(transparent)]` for internal purposes only!
     /// No consumer crate may rely on the representation of the struct!

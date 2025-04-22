@@ -24,7 +24,7 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// Used for transaction lock time (`nLockTime` in Bitcoin Core and [`Transaction::lock_time`]
 /// in this library) and also for the argument to opcode `OP_CHECKLOCKTIMEVERIFY`.
 ///
-/// ### Note on ordering
+/// # Note on ordering
 ///
 /// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
 /// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
@@ -34,7 +34,7 @@ pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, P
 /// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
 /// consensus encoding to order it.
 ///
-/// ### Relevant BIPs
+/// # Relevant BIPs
 ///
 /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
 /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)

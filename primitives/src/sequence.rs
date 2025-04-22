@@ -81,7 +81,7 @@ impl Sequence {
     /// Instead of this method please consider using `!enables_absolute_lock_time` because it
     /// is equivalent and improves readability for those not steeped in Bitcoin folklore.
     ///
-    /// ## Historical note
+    /// # Historical note
     ///
     /// The term 'final' is an archaic Bitcoin term, it may have come about because the sequence
     /// number in the original Bitcoin code was intended to be incremented in order to replace a

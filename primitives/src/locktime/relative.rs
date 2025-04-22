@@ -20,13 +20,13 @@ pub use units::locktime::relative::{Height, Time, TimeOverflowError};
 /// Used for sequence numbers (`nSequence` in Bitcoin Core and [`TxIn::sequence`]
 /// in this library) and also for the argument to opcode `OP_CHECKSEQUENCEVERIFY`.
 ///
-/// ### Note on ordering
+/// # Note on ordering
 ///
 /// Locktimes may be height- or time-based, and these metrics are incommensurate; there is no total
 /// ordering on locktimes. In order to compare locktimes, instead of using `<` or `>` we provide the
 /// [`LockTime::is_satisfied_by`] API.
 ///
-/// ### Relevant BIPs
+/// # Relevant BIPs
 ///
 /// * [BIP 68 Relative lock-time using consensus-enforced sequence numbers](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
 /// * [BIP 112 CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki)

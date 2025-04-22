@@ -218,7 +218,7 @@ macro_rules! impl_debug_only_for_newtype {
 /// * `Borrow<[u8; $len]>`
 /// * `Borrow<[u8]>`
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// * `ty` - The bytelike type to implement the traits on.
 /// * `$len` - The number of bytes this type has.
@@ -262,7 +262,7 @@ macro_rules! impl_bytelike_traits {
 ///
 /// (See also [`hex-conservative::fmt_hex_exact`].)
 ///
-/// ## Parameters
+/// # Parameters
 ///
 /// * `ty` - The bytelike type to implement the traits on.
 /// * `$len` - The number of bytes this type has.

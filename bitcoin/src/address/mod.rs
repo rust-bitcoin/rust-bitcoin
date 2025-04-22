@@ -313,7 +313,7 @@ pub enum AddressData {
 internals::transparent_newtype! {
     /// A Bitcoin address.
     ///
-    /// ### Parsing addresses
+    /// # Parsing addresses
     ///
     /// When parsing string as an address, one has to pay attention to the network, on which the parsed
     /// address is supposed to be valid. For the purpose of this validation, `Address` has
@@ -386,7 +386,7 @@ internals::transparent_newtype! {
     /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
     /// ```
     ///
-    /// ### Relevant BIPs
+    /// # Relevant BIPs
     ///
     /// * [BIP13 - Address Format for pay-to-script-hash](https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki)
     /// * [BIP16 - Pay to Script Hash](https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki)

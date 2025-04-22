@@ -5,7 +5,7 @@
 //!
 //! You can verify the workflow using `bitcoind` and `bitcoin-cli`.
 //!
-//! ## Example Setup
+//! # Example Setup
 //!
 //! 1. Start Bitcoin Core in Regtest mode, for example:
 //!
