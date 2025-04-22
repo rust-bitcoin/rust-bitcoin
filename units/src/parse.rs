@@ -139,7 +139,7 @@ fn int<T: Integer, S: AsRef<str> + Into<InputString>>(s: S) -> Result<T, ParseIn
 /// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
@@ -204,7 +204,7 @@ macro_rules! impl_parse_str_from_int_infallible {
 /// * `TryFrom<Box<str>>`
 /// * `TryFrom<String>`
 ///
-/// # Arguments
+/// # Parameters
 ///
 /// * `to` - the type converted to e.g., `impl From<&str> for $to`.
 /// * `err` - the error type returned by `$inner_fn` (implies returned by `FromStr` and `TryFrom`).
