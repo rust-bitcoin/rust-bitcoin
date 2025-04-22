@@ -221,7 +221,7 @@ impl Witness {
         Some(&slice[..end])
     }
 
-    /// Creates a new witness from a list of hex strings.
+    /// Constructs a new witness from a list of hex strings.
     ///
     /// # Errors
     ///
