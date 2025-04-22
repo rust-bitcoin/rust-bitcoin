@@ -775,14 +775,14 @@ impl GetKey for Xpriv {
             KeyRequest::XOnlyPubkey(_) => Err(GetKeyError::NotSupported),
             KeyRequest::Bip32((fingerprint, path)) => {
                 let key = if self.fingerprint(secp) == *fingerprint {
-                    let k = self.derive_xpriv(secp, &path);
+                    let k = self.derive_xpriv(secp, &path).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else if self.parent_fingerprint == *fingerprint
                     && !path.is_empty()
                     && path[0] == self.child_number
                 {
                     let path = DerivationPath::from_iter(path.into_iter().skip(1).copied());
-                    let k = self.derive_xpriv(secp, &path);
+                    let k = self.derive_xpriv(secp, &path).map_err(GetKeyError::Bip32)?;
                     Some(k.to_private_key())
                 } else {
                     None
@@ -915,8 +915,8 @@ impl_get_key_for_xonly_map!(HashMap);
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum GetKeyError {
-    /// A bip32 error.
-    Bip32(bip32::ParseError),
+    /// A bip32 derivation error.
+    Bip32(bip32::DerivationError),
     /// The GetKey operation is not supported for this key request.
     NotSupported,
 }
@@ -930,7 +930,7 @@ impl fmt::Display for GetKeyError {
         use GetKeyError::*;
 
         match *self {
-            Bip32(ref e) => write_err!(f, "a bip23 error"; e),
+            Bip32(ref e) => write_err!(f, "bip32 derivation"; e),
             NotSupported =>
                 f.write_str("the GetKey operation is not supported for this key request"),
         }
@@ -947,10 +947,6 @@ impl std::error::Error for GetKeyError {
             Bip32(ref e) => Some(e),
         }
     }
-}
-
-impl From<bip32::ParseError> for GetKeyError {
-    fn from(e: bip32::ParseError) -> Self { GetKeyError::Bip32(e) }
 }
 
 /// The various output types supported by the Bitcoin network.
@@ -1454,7 +1450,7 @@ mod tests {
             ChildNumber::from_normal_idx(31337).unwrap(),
         ];
 
-        sk = sk.derive_xpriv(secp, &dpath);
+        sk = sk.derive_xpriv(secp, &dpath).unwrap();
 
         let pk = Xpub::from_xpriv(secp, &sk);
 

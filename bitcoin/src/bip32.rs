@@ -185,6 +185,9 @@ impl ChildNumber {
 
     /// Returns the child number that is a single increment from this one.
     pub fn increment(self) -> Result<ChildNumber, IndexOutOfRangeError> {
+        // Bare addition in this function is okay, because we have an invariant that
+        // `index` is always within [0, 2^31 - 1]. FIXME this is not actually an
+        // invariant because the fields are public.
         match self {
             ChildNumber::Normal { index: idx } => ChildNumber::from_normal_idx(idx + 1),
             ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
@@ -706,7 +709,7 @@ impl Xpriv {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Xpriv {
+    ) -> Result<Xpriv, DerivationError> {
         self.derive_xpriv(secp, path)
     }
 
@@ -717,16 +720,20 @@ impl Xpriv {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Xpriv {
+    ) -> Result<Xpriv, DerivationError> {
         let mut sk: Xpriv = *self;
         for cnum in path.as_ref() {
-            sk = sk.ckd_priv(secp, *cnum)
+            sk = sk.ckd_priv(secp, *cnum)?;
         }
-        sk
+        Ok(sk)
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Xpriv {
+    fn ckd_priv<C: secp256k1::Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        i: ChildNumber,
+    ) -> Result<Xpriv, DerivationError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
@@ -750,14 +757,14 @@ impl Xpriv {
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
-        Xpriv {
+        Ok(Xpriv {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac),
-        }
+        })
     }
 
     /// Decoding extended private key from binary data according to BIP 32
@@ -910,7 +917,7 @@ impl Xpub {
 
         Ok(Xpub {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: tweaked,
@@ -1188,7 +1195,7 @@ mod tests {
         let mut pk = Xpub::from_xpriv(secp, &sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_xpriv(secp, &path).to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_xpriv(secp, &path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
@@ -1203,7 +1210,7 @@ mod tests {
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.0.iter() {
-            sk = sk.ckd_priv(secp, num);
+            sk = sk.ckd_priv(secp, num).unwrap();
             match num {
                 Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();

@@ -38,7 +38,7 @@ fn main() {
 
     // derive child xpub
     let path = "84h/0h/0h".parse::<DerivationPath>().unwrap();
-    let child = root.derive_xpriv(&secp, &path);
+    let child = root.derive_xpriv(&secp, &path).expect("only deriving three steps");
     println!("Child at {}: {}", path, child);
     let xpub = Xpub::from_xpriv(&secp, &child);
     println!("Public key at {}: {}", path, xpub);

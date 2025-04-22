@@ -62,11 +62,12 @@ fn get_external_address_xpriv<C: Signing>(
 ) -> Xpriv {
     let derivation_path =
         BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
-    let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
+    let child_xpriv =
+        master_xpriv.derive_xpriv(secp, &derivation_path).expect("only deriving three steps");
     let external_index = ChildNumber::ZERO_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, &[external_index, idx])
+    child_xpriv.derive_xpriv(secp, &[external_index, idx]).expect("only deriving two more steps")
 }
 
 // Derive the internal address xpriv.
@@ -77,11 +78,12 @@ fn get_internal_address_xpriv<C: Signing>(
 ) -> Xpriv {
     let derivation_path =
         BIP84_DERIVATION_PATH.into_derivation_path().expect("valid derivation path");
-    let child_xpriv = master_xpriv.derive_xpriv(secp, &derivation_path);
+    let child_xpriv =
+        master_xpriv.derive_xpriv(secp, &derivation_path).expect("only deriving three steps");
     let internal_index = ChildNumber::ONE_NORMAL;
     let idx = ChildNumber::from_normal_idx(index).expect("valid index number");
 
-    child_xpriv.derive_xpriv(secp, &[internal_index, idx])
+    child_xpriv.derive_xpriv(secp, &[internal_index, idx]).expect("only deriving two more steps")
 }
 
 // The address to send to.
