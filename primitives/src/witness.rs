@@ -232,7 +232,11 @@ impl Witness {
         I: IntoIterator<Item = T>,
         T: AsRef<str>,
     {
-        let result: Vec<Vec<u8>> = iter.into_iter().map(|hex_str| Vec::from_hex(hex_str.as_ref())).collect::<Result<Vec<_>, _>>()?;
+        let result = iter
+            .into_iter()
+            .map(|hex_str| Vec::from_hex(hex_str.as_ref()))
+            .collect::<Result<Vec<_>, _>>()?;
+
         Ok(Self::from_slice(&result))
     }
 }
