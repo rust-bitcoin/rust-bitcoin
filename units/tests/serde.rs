@@ -31,18 +31,16 @@ struct Serde {
     #[serde(with = "bitcoin_units::amount::serde::as_btc::opt")]
     signed_opt_as_btc: Option<SignedAmount>,
 
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_floor")]
-    vb_floor: FeeRate,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil")]
-    vb_ceil: FeeRate,
+    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kvb")]
+    kvb: FeeRate,
+    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kvb::opt")]
+    kvb_opt: Option<FeeRate>,
     #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu")]
-    kwu: FeeRate,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt")]
-    opt_vb_floor: Option<FeeRate>,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt")]
-    opt_vb_ceil: Option<FeeRate>,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu::opt")]
-    opt_kwu: Option<FeeRate>,
+    kwu: Option<FeeRate>,
+    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_floor")]
+    vb_floor: Option<FeeRate>,
+    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil")]
+    vb_ceil: Option<FeeRate>,
 
     a: BlockHeight,
     b: BlockInterval,
@@ -69,13 +67,11 @@ impl Serde {
             signed_opt_as_sat: Some(SignedAmount::MAX),
             signed_opt_as_btc: Some(SignedAmount::MAX),
 
-            vb_floor: FeeRate::BROADCAST_MIN,
-            vb_ceil: FeeRate::BROADCAST_MIN,
-            kwu: FeeRate::BROADCAST_MIN,
-
-            opt_vb_floor: Some(FeeRate::BROADCAST_MIN),
-            opt_vb_ceil: Some(FeeRate::BROADCAST_MIN),
-            opt_kwu: Some(FeeRate::BROADCAST_MIN),
+            kvb: FeeRate::BROADCAST_MIN,
+            kvb_opt: Some(FeeRate::BROADCAST_MIN),
+            kwu: Some(FeeRate::BROADCAST_MIN),
+            vb_floor: Some(FeeRate::BROADCAST_MIN),
+            vb_ceil: Some(FeeRate::BROADCAST_MIN),
 
             a: BlockHeight::MAX,
             b: BlockInterval::MAX,
@@ -92,6 +88,7 @@ impl Serde {
 fn serde_regression() {
     let t = Serde::new();
     let got = serialize(&t).unwrap();
+
     let want = include_bytes!("data/serde_bincode");
     assert_eq!(got, want);
 }

@@ -35,7 +35,7 @@ check! {
 
     fee_rate_min, FeeRate, FeeRate::MIN, "0";
     fee_rate_max, FeeRate, FeeRate::MAX, "18446744073709551615";
-    fee_rate_dust, FeeRate, FeeRate::DUST, "750";
+    fee_rate_dust, FeeRate, FeeRate::DUST, "3000";
 
     lock_time_absolute_min, absolute::Height, absolute::Height::MIN, "0";
     lock_time_absolute_max, absolute::Height, absolute::Height::MAX, "499999999";

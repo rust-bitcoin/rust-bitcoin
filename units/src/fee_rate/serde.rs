@@ -18,7 +18,7 @@
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct Foo {
-//!     #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu")]
+//!     #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kvb")]
 //!     pub fee_rate: FeeRate,
 //! }
 //! ```
@@ -26,27 +26,28 @@
 use core::convert::Infallible;
 use core::fmt;
 
-pub mod as_sat_per_kwu {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 weight units.
+pub mod as_sat_per_kvb {
+    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per 1000 virtual bytes.
     //!
-    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu")]`.
+    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kvb")]`.
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     use crate::FeeRate;
 
+    #[allow(clippy::ref_option)] // API forced by serde.
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
-        u64::serialize(&f.to_sat_per_kwu(), s)
+        u64::serialize(&f.to_sat_per_kvb(), s)
     }
 
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        Ok(FeeRate::from_sat_per_kwu(u64::deserialize(d)?))
+        Ok(FeeRate::from_sat_per_kvb(u64::deserialize(d)?))
     }
 
     pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
+        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 virtual bytes.
         //!
-        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu::opt")]`.
+        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kvb::opt")]`.
 
         use core::fmt;
 
@@ -57,7 +58,7 @@ pub mod as_sat_per_kwu {
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
             match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_kwu()),
+                Some(f) => s.serialize_some(&f.to_sat_per_kvb()),
                 None => s.serialize_none(),
             }
         }
@@ -83,163 +84,164 @@ pub mod as_sat_per_kwu {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(FeeRate::from_sat_per_kwu(u64::deserialize(d)?)))
+                    Ok(Some(FeeRate::from_sat_per_kvb(u64::deserialize(d)?)))
                 }
             }
             d.deserialize_option(VisitOpt)
         }
+    }
+}
+
+pub mod as_sat_per_kwu {
+    //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per 1000 weight units.
+    //!
+    //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_kwu")]`.
+
+    use core::fmt;
+
+    use serde::{de, Deserialize, Deserializer, Serializer};
+
+    use crate::FeeRate;
+
+    #[allow(clippy::ref_option)] // API forced by serde.
+    pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
+        match *f {
+            Some(f) => s.serialize_some(&f.to_sat_per_kwu()),
+            None => s.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+        struct VisitOpt;
+
+        impl<'de> de::Visitor<'de> for VisitOpt {
+            type Value = Option<FeeRate>;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "An Option<FeeRate>")
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(None)
+            }
+
+            fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok(FeeRate::from_sat_per_kwu(u64::deserialize(d)?))
+            }
+        }
+        d.deserialize_option(VisitOpt)
     }
 }
 
 pub mod as_sat_per_vb_floor {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
+    //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use floor division to convert per kwu to per virtual byte.
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]`.
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use core::fmt;
+
+    use serde::{de, Deserialize, Deserializer, Serializer};
 
     use crate::fee_rate::serde::OverflowError;
     use crate::fee_rate::FeeRate;
 
-    pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
-        u64::serialize(&f.to_sat_per_vb_floor(), s)
+    #[allow(clippy::ref_option)] // API forced by serde.
+    pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
+        match *f {
+            Some(f) => s.serialize_some(&f.to_sat_per_vb_floor()),
+            None => s.serialize_none(),
+        }
     }
 
-    // Errors on overflow.
-    pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-            .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)
-    }
+    pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+        struct VisitOpt;
 
-    pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
-        //!
-        //! When serializing use floor division to convert per kwu to per virtual byte.
-        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_floor::opt")]`.
+        impl<'de> de::Visitor<'de> for VisitOpt {
+            type Value = Option<FeeRate>;
 
-        use core::fmt;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "An Option<FeeRate>")
+            }
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(None)
+            }
 
-        use crate::fee_rate::serde::OverflowError;
-        use crate::fee_rate::FeeRate;
-
-        #[allow(clippy::ref_option)] // API forced by serde.
-        pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
-            match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_vb_floor()),
-                None => s.serialize_none(),
+            fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok(Some(
+                    FeeRate::from_sat_per_vb(u64::deserialize(d)?)
+                        .ok_or(OverflowError)
+                        .map_err(serde::de::Error::custom)?,
+                ))
             }
         }
-
-        pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
-            struct VisitOpt;
-
-            impl<'de> de::Visitor<'de> for VisitOpt {
-                type Value = Option<FeeRate>;
-
-                fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
-                }
-
-                fn visit_none<E>(self) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
-                {
-                    Ok(None)
-                }
-
-                fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
-                where
-                    D: Deserializer<'de>,
-                {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
-                }
-            }
-            d.deserialize_option(VisitOpt)
-        }
+        d.deserialize_option(VisitOpt)
     }
 }
 
 pub mod as_sat_per_vb_ceil {
-    //! Serialize and deserialize [`FeeRate`] denominated in satoshis per virtual byte.
+    //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
     //!
     //! When serializing use ceil division to convert per kwu to per virtual byte.
     //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]`.
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use core::fmt;
+
+    use serde::{de, Deserialize, Deserializer, Serializer};
 
     use crate::fee_rate::serde::OverflowError;
     use crate::fee_rate::FeeRate;
 
-    pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
-        u64::serialize(&f.to_sat_per_vb_ceil(), s)
+    #[allow(clippy::ref_option)] // API forced by serde.
+    pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
+        match *f {
+            Some(f) => s.serialize_some(&f.to_sat_per_vb_ceil()),
+            None => s.serialize_none(),
+        }
     }
 
-    // Errors on overflow.
-    pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
-        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-            .ok_or(OverflowError)
-            .map_err(serde::de::Error::custom)
-    }
+    pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+        struct VisitOpt;
 
-    pub mod opt {
-        //! Serialize and deserialize [`Option<FeeRate>`] denominated in satoshis per virtual byte.
-        //!
-        //! When serializing use ceil division to convert per kwu to per virtual byte.
-        //! Use with `#[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::opt")]`.
+        impl<'de> de::Visitor<'de> for VisitOpt {
+            type Value = Option<FeeRate>;
 
-        use core::fmt;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "An Option<FeeRate>")
+            }
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(None)
+            }
 
-        use crate::fee_rate::serde::OverflowError;
-        use crate::fee_rate::FeeRate;
-
-        #[allow(clippy::ref_option)] // API forced by serde.
-        pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
-            match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_vb_ceil()),
-                None => s.serialize_none(),
+            fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                Ok(Some(
+                    FeeRate::from_sat_per_vb(u64::deserialize(d)?)
+                        .ok_or(OverflowError)
+                        .map_err(serde::de::Error::custom)?,
+                ))
             }
         }
-
-        pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<Option<FeeRate>, D::Error> {
-            struct VisitOpt;
-
-            impl<'de> de::Visitor<'de> for VisitOpt {
-                type Value = Option<FeeRate>;
-
-                fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
-                }
-
-                fn visit_none<E>(self) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
-                {
-                    Ok(None)
-                }
-
-                fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
-                where
-                    D: Deserializer<'de>,
-                {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
-                }
-            }
-            d.deserialize_option(VisitOpt)
-        }
+        d.deserialize_option(VisitOpt)
     }
 }
 

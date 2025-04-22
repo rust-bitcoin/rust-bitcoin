@@ -17,7 +17,7 @@ fn do_test(data: &[u8]) {
         let _ = script.count_sigops_legacy();
         let _ = script.minimal_non_dust();
 
-        let fee_rate = FeeRate::from_sat_per_kwu(consume_u64(&mut new_data));
+        let fee_rate = FeeRate::from_sat_per_kvb(consume_u64(&mut new_data));
         let _ = script.minimal_non_dust_custom(fee_rate);
 
         let mut b = script::Builder::new();
