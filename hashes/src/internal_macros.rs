@@ -4,7 +4,7 @@
 
 /// Adds trait impls to the type called `Hash` in the current scope.
 ///
-/// Implpements various conversion traits as well as the [`crate::Hash`] trait.
+/// Implements various conversion traits as well as the [`crate::Hash`] trait.
 /// Arguments:
 ///
 /// * `$bits` - number of bits this hash type has
