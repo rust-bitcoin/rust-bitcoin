@@ -47,7 +47,7 @@ pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
 ///
 /// [wiki-block]: https://en.bitcoin.it/wiki/Block
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[cfg(feature = "alloc")]
@@ -167,7 +167,7 @@ mod sealed {
 ///
 /// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]

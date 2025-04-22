@@ -48,7 +48,7 @@ use crate::witness::Witness;
 ///
 /// [wiki-transaction]: https://en.bitcoin.it/wiki/Transaction
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
 ///
@@ -310,7 +310,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 /// that it spends and set of scripts that satisfy its spending
 /// conditions.
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -354,7 +354,7 @@ impl TxIn {
 ///
 /// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -370,7 +370,7 @@ pub struct TxOut {
 
 /// A reference to a transaction output.
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]

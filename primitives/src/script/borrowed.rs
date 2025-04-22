@@ -49,10 +49,7 @@ internals::transparent_newtype! {
     /// The type is `#[repr(transparent)]` for internal purposes only!
     /// No consumer crate may rely on the representation of the struct!
     ///
-    /// ## References
-    ///
-    ///
-    /// ### Bitcoin Core References
+    /// # Bitcoin Core References
     ///
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
     ///
