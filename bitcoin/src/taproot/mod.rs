@@ -1510,6 +1510,7 @@ impl From<InvalidMerkleTreeDepthError> for TaprootBuilderError {
 /// Detailed error type for Taproot utilities.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
+#[allow(clippy::enum_variant_names)]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
     InvalidMerkleBranchSize(InvalidMerkleBranchSizeError),
@@ -1523,8 +1524,6 @@ pub enum TaprootError {
     InvalidInternalKey(secp256k1::Error),
     /// Invalid control block hex
     InvalidControlBlockHex(HexToBytesError),
-    /// Empty Taproot tree.
-    EmptyTree,
 }
 
 impl From<Infallible> for TaprootError {
@@ -1542,7 +1541,6 @@ impl fmt::Display for TaprootError {
             InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
             InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
             InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
-            EmptyTree => write!(f, "Taproot tree must contain at least one script"),
         }
     }
 }
@@ -1557,7 +1555,7 @@ impl std::error::Error for TaprootError {
             InvalidTaprootLeafVersion(ref e) => Some(e),
             InvalidMerkleTreeDepth(ref e) => Some(e),
             InvalidControlBlockHex(ref e) => Some(e),
-            InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) | EmptyTree => None,
+            InvalidMerkleBranchSize(_) | InvalidControlBlockSize(_) => None,
         }
     }
 }
