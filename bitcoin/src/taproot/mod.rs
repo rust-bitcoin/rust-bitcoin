@@ -1316,7 +1316,7 @@ impl FutureLeafVersion {
     ) -> Result<FutureLeafVersion, InvalidTaprootLeafVersionError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => unreachable!(
-                "FutureLeafVersion::from_consensus should be never called for 0xC0 value"
+                "FutureLeafVersion::from_consensus should never be called for 0xC0 value"
             ),
             TAPROOT_ANNEX_PREFIX => Err(InvalidTaprootLeafVersionError(TAPROOT_ANNEX_PREFIX)),
             odd if odd & 0xFE != odd => Err(InvalidTaprootLeafVersionError(odd)),
