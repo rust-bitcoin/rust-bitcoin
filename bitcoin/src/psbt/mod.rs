@@ -1285,7 +1285,8 @@ pub use self::display_from_str::PsbtParseError;
 #[cfg(test)]
 mod tests {
     use hashes::{hash160, ripemd160, sha256};
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
+    use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {
         crate::address::script_pubkey::ScriptBufExt as _,
@@ -1772,8 +1773,8 @@ mod tests {
                                     script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
-                                        hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
-                                        hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
+                                        hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
+                                        hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").as_slice(),
                                     ]),
                                 },
                                 TxIn {
@@ -1784,8 +1785,8 @@ mod tests {
                                     script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
-                                        hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
-                                        hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
+                                        hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),
+                                        hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").as_slice(),
                                     ]),
                                 }
                             ],
@@ -1935,8 +1936,8 @@ mod tests {
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
             let key: raw::Key =
-                raw::Key { type_value: 0x0fu64, key_data: hex!("010203040506070809") };
-            let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
+                raw::Key { type_value: 0x0fu64, key_data: hex!("010203040506070809").to_vec() };
+            let value = hex!("0102030405060708090a0b0c0d0e0f").to_vec();
 
             unknown.insert(key, value);
 
@@ -2105,8 +2106,8 @@ mod tests {
                                 script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
-                                    hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
-                                    hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
+                                    hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").as_slice(),
+                                    hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").as_slice(),
                                 ]),
                             },
                             TxIn {
@@ -2117,8 +2118,8 @@ mod tests {
                                 script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
-                                    hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
-                                    hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
+                                    hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").as_slice(),
+                                    hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").as_slice(),
                                 ]),
                             }
                         ],

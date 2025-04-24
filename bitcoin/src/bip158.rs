@@ -578,7 +578,7 @@ impl<'a, W: Write> BitStreamWriter<'a, W> {
 mod test {
     use std::collections::HashMap;
 
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
     use serde_json::Value;
 
     use super::*;
@@ -587,19 +587,21 @@ mod test {
 
     #[test]
     fn blockfilters() {
+        let hex = |b| <Vec<u8> as hex::FromHex>::from_hex(b).unwrap();
+
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = include_str!("../tests/data/blockfilters.json");
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
             let block_hash = t.get(1).unwrap().as_str().unwrap().parse::<BlockHash>().unwrap();
-            let block: Block = deserialize(&hex!(t.get(2).unwrap().as_str().unwrap())).unwrap();
+            let block: Block = deserialize(&hex(t.get(2).unwrap().as_str().unwrap())).unwrap();
             let block = block.assume_checked(None);
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_header =
                 t.get(4).unwrap().as_str().unwrap().parse::<FilterHeader>().unwrap();
-            let filter_content = hex!(t.get(5).unwrap().as_str().unwrap());
+            let filter_content = hex(t.get(5).unwrap().as_str().unwrap());
             let filter_header =
                 t.get(6).unwrap().as_str().unwrap().parse::<FilterHeader>().unwrap();
 
@@ -609,7 +611,7 @@ mod test {
                 for input in tx.input.iter() {
                     txmap.insert(
                         input.previous_output,
-                        ScriptBuf::from(hex!(si.next().unwrap().as_str().unwrap())),
+                        ScriptBuf::from(hex(si.next().unwrap().as_str().unwrap())),
                     );
                 }
             }
@@ -702,7 +704,7 @@ mod test {
             let reader = GcsFilterReader::new(0, 0, M, P);
             let mut query = Vec::new();
             for p in &patterns {
-                query.push(p.clone());
+                query.push(p);
             }
             assert!(reader
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
@@ -712,9 +714,9 @@ mod test {
             let reader = GcsFilterReader::new(0, 0, M, P);
             let mut query = Vec::new();
             for p in &patterns {
-                query.push(p.clone());
+                query.push(p);
             }
-            query.push(hex!("abcdef"));
+            query.push(&hex!("abcdef"));
             assert!(!reader
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());

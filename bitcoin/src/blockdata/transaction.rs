@@ -1137,7 +1137,8 @@ mod sealed {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex, FromHex};
+    use hex::FromHex;
+    use hex_lit::hex;
     #[cfg(feature = "serde")]
     use internals::serde_round_trip;
     use units::parse;
@@ -1376,7 +1377,7 @@ mod tests {
         assert_eq!(tx.output.len(), 1);
 
         let reser = serialize(&tx);
-        assert_eq!(tx_bytes, reser);
+        assert_eq!(tx_bytes, *reser);
     }
 
     #[test]
@@ -1522,8 +1523,8 @@ mod tests {
 
     #[test]
     fn huge_witness() {
-        deserialize::<Transaction>(&hex!(include_str!("../../tests/data/huge_witness.hex").trim()))
-            .unwrap();
+        let hex = Vec::from_hex(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap();
+        deserialize::<Transaction>(&hex).unwrap();
     }
 
     #[test]
@@ -1853,7 +1854,7 @@ mod tests {
         fn return_none(_outpoint: &OutPoint) -> Option<TxOut> { None }
 
         for (hx, expected, spent_fn, expected_none) in tx_hexes.iter() {
-            let tx_bytes = hex!(hx);
+            let tx_bytes = Vec::from_hex(hx).unwrap();
             let tx: Transaction = deserialize(&tx_bytes).unwrap();
             assert_eq!(tx.total_sigop_cost(spent_fn), *expected);
             assert_eq!(tx.total_sigop_cost(return_none), *expected_none);
@@ -1961,20 +1962,17 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
-    use hex::test_hex_unwrap as hex;
     use io::sink;
     use test::{black_box, Bencher};
 
     use super::*;
-    use crate::consensus::{deserialize, Encodable};
+    use crate::consensus::{encode, Encodable};
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
     #[bench]
     pub fn bench_transaction_size(bh: &mut Bencher) {
-        let raw_tx = hex!(SOME_TX);
-
-        let mut tx: Transaction = deserialize(&raw_tx).unwrap();
+        let mut tx: Transaction = encode::deserialize_hex(SOME_TX).unwrap();
 
         bh.iter(|| {
             black_box(black_box(&mut tx).total_size());
@@ -1983,10 +1981,8 @@ mod benches {
 
     #[bench]
     pub fn bench_transaction_serialize(bh: &mut Bencher) {
-        let raw_tx = hex!(SOME_TX);
-        let tx: Transaction = deserialize(&raw_tx).unwrap();
-
-        let mut data = Vec::with_capacity(raw_tx.len());
+        let tx: Transaction = encode::deserialize_hex(SOME_TX).unwrap();
+        let mut data = Vec::with_capacity(SOME_TX.len());
 
         bh.iter(|| {
             let result = tx.consensus_encode(&mut data);
@@ -1997,8 +1993,7 @@ mod benches {
 
     #[bench]
     pub fn bench_transaction_serialize_logic(bh: &mut Bencher) {
-        let raw_tx = hex!(SOME_TX);
-        let tx: Transaction = deserialize(&raw_tx).unwrap();
+        let tx: Transaction = encode::deserialize_hex(SOME_TX).unwrap();
 
         bh.iter(|| {
             let size = tx.consensus_encode(&mut sink());
@@ -2008,10 +2003,19 @@ mod benches {
 
     #[bench]
     pub fn bench_transaction_deserialize(bh: &mut Bencher) {
-        let raw_tx = hex!(SOME_TX);
+        // hex_lit does not work in bench code for some reason. Perhaps criterion fixes this.
+        let raw_tx = <Vec<u8> as hex::FromHex>::from_hex(SOME_TX).unwrap();
 
         bh.iter(|| {
-            let tx: Transaction = deserialize(&raw_tx).unwrap();
+            let tx: Transaction = encode::deserialize(&raw_tx).unwrap();
+            black_box(&tx);
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_deserialize_hex(bh: &mut Bencher) {
+        bh.iter(|| {
+            let tx: Transaction = encode::deserialize_hex(SOME_TX).unwrap();
             black_box(&tx);
         });
     }

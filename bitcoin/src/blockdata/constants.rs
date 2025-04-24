@@ -265,7 +265,7 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
-    use hex::test_hex_unwrap as hex;
+    use hex_lit::hex;
 
     use super::*;
     use crate::consensus::encode::serialize;
