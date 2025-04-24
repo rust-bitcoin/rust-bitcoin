@@ -146,21 +146,6 @@ test out the patch set and opine on the technical merits of the patch. Please,
 first review PR on the conceptual level before focusing on code style or
 grammar fixes.
 
-### API changes
-
-The API of the following crates is almost stable. Changing it is supposed to be non-trivial. To
-assist in this effort ll PRs that change the public API of any these crates must include a patch to
-the `api/` text files. This should be a separate final patch to the PR that is the diff created by
-running `just check-api`.
-
-- `hashes`
-- `io`
-- `primitives`
-- `units`
-
-Check the [API text files](api/README.md) for more information
-on how to install the dependencies and create the text files.
-
 ### CI and Merging
 
 We use GitHub for CI as well to test the final state of each PR.
