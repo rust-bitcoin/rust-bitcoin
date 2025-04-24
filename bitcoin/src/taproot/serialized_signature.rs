@@ -230,7 +230,7 @@ mod into_iter {
                 self.pos = self.signature.len();
                 None
             } else {
-                // if n < signtature.len() - self.pos then n + self.pos < signature.len() which neither
+                // if n < signature.len() - self.pos then n + self.pos < signature.len() which neither
                 // overflows nor breaks the invariant
                 self.pos += n;
                 self.next()
