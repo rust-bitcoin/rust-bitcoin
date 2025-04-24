@@ -75,7 +75,7 @@ impl ChaCha20Poly1305 {
 
     /// Encrypt content in place and return the Poly1305 16-byte authentication tag.
     ///
-    /// # Arguments
+    /// # Parameters
     ///
     /// - `content` - Plaintext to be encrypted in place.
     /// - `aad`     - Optional metadata covered by the authentication tag.
@@ -110,7 +110,7 @@ impl ChaCha20Poly1305 {
 
     /// Decrypt the ciphertext in place if authentication tag is correct.
     ///
-    /// # Arguments
+    /// # Parameters
     ///
     /// - `content` - Ciphertext to be decrypted in place.
     /// - `tag`     - 16-byte authentication tag.

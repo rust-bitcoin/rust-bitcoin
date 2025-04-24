@@ -31,7 +31,7 @@
 //! and forcing them to be larger would waste memory and, in case of Bitcoin script, even some
 //! performance (forcing allocations).
 //!
-//! ## `Script` vs `ScriptBuf` vs `Builder`
+//! # `Script` vs `ScriptBuf` vs `Builder`
 //!
 //! These are the most important types in this module and they are quite similar, so it may seem
 //! confusing what the differences are. `Script` is an unsized type much like `str` or `Path` are

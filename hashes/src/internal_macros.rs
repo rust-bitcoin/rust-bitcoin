@@ -4,8 +4,9 @@
 
 /// Adds trait impls to the type called `Hash` in the current scope.
 ///
-/// Implpements various conversion traits as well as the [`crate::Hash`] trait.
-/// Arguments:
+/// Implements various conversion traits as well as the [`crate::Hash`] trait.
+///
+/// # Parameters
 ///
 /// * `$bits` - number of bits this hash type has
 /// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
@@ -55,7 +56,7 @@ pub(crate) use hash_trait_impls;
 /// The created type has a single field and will have all standard derives as well as an
 /// implementation of [`crate::Hash`].
 ///
-/// Arguments:
+/// # Parameters
 ///
 /// * `$bits` - the number of bits of the hash type
 /// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise

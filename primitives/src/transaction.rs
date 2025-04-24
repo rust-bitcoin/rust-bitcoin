@@ -48,11 +48,11 @@ use crate::witness::Witness;
 ///
 /// [wiki-transaction]: https://en.bitcoin.it/wiki/Transaction
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
 ///
-/// ### Serialization notes
+/// # Serialization notes
 ///
 /// If any inputs have nonempty witnesses, the entire transaction is serialized
 /// in the post-BIP141 SegWit format which includes a list of witnesses. If all
@@ -83,7 +83,7 @@ use crate::witness::Witness;
 /// We therefore deviate from the spec by always using the SegWit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
 ///
-/// ### A note on ordering
+/// # A note on ordering
 ///
 /// This type implements `Ord`, even though it contains a locktime, which is not
 /// itself `Ord`. This was done to simplify applications that may need to hold
@@ -103,7 +103,7 @@ pub struct Transaction {
     pub version: Version,
     /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
     ///
-    /// ### Relevant BIPs
+    /// # Relevant BIPs
     ///
     /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
@@ -310,7 +310,7 @@ fn hash_transaction(tx: &Transaction, uses_segwit_serialization: bool) -> sha256
 /// that it spends and set of scripts that satisfy its spending
 /// conditions.
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -354,7 +354,7 @@ impl TxIn {
 ///
 /// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -370,7 +370,7 @@ pub struct TxOut {
 
 /// A reference to a transaction output.
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]

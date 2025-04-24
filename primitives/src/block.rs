@@ -47,7 +47,7 @@ pub trait Validation: sealed::Validation + Sync + Send + Sized + Unpin {
 ///
 /// [wiki-block]: https://en.bitcoin.it/wiki/Block
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[cfg(feature = "alloc")]
@@ -167,7 +167,7 @@ mod sealed {
 ///
 /// [Merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
 ///
-/// ### Bitcoin Core References
+/// # Bitcoin Core References
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
@@ -261,7 +261,7 @@ impl From<&Header> for BlockHash {
 ///
 /// > When a block nVersion does not have top bits 001, it is treated as if all bits are 0 for the purposes of deployments.
 ///
-/// ### Relevant BIPs
+/// # Relevant BIPs
 ///
 /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
 /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)

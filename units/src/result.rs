@@ -22,7 +22,7 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 ///
 /// The `NumOpResult` type provides protection against overflow and div-by-zero.
 ///
-/// ## Overflow protection
+/// ### Overflow protection
 ///
 /// ```
 /// # use bitcoin_units::{amount, Amount};
@@ -48,7 +48,7 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 /// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 ///
-/// ## Divide-by-zero (overflow in `Div` or `Rem`)
+/// ### Divide-by-zero (overflow in `Div` or `Rem`)
 ///
 /// In some instances one may wish to differentiate div-by-zero from overflow.
 ///

@@ -11,7 +11,7 @@
 //! is an alternative to Bloom filters, as used in BIP 37, that minimizes filter
 //! size by using Golomb-Rice coding for compression.
 //!
-//! ### Relevant BIPS
+//! # Relevant BIPS
 //!
 //! * [BIP 157 - Client Side Block Filtering](https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki)
 //! * [BIP 158 - Compact Block Filters for Light Clients](https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki)
