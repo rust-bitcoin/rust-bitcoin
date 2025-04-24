@@ -564,7 +564,7 @@ impl Version {
     ///
     /// This can accept both standard and non-standard versions.
     #[inline]
-    pub fn maybe_non_standard(version: u32) -> Version { Self(version) }
+    pub const fn maybe_non_standard(version: u32) -> Version { Self(version) }
 
     /// Returns the inner `u32` value of this `Version`.
     #[inline]
@@ -577,8 +577,8 @@ impl Version {
     /// As of Bitcoin Core 28.0 ([release notes](https://bitcoincore.org/en/releases/28.0/)),
     /// versions 1, 2, and 3 are considered standard.
     #[inline]
-    pub fn is_standard(self) -> bool {
-        self == Version::ONE || self == Version::TWO || self == Version::THREE
+    pub const fn is_standard(self) -> bool {
+        self.0 == Version::ONE.0 || self.0 == Version::TWO.0 || self.0 == Version::THREE.0
     }
 }
 
