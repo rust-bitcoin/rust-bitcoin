@@ -565,7 +565,7 @@ impl U256 {
     fn low_u128(&self) -> u128 { self.1 }
 
     /// Returns this `U256` as a `u128` saturating to `u128::MAX` if `self` is too big.
-    // Matagen gives false positive because >= and > both return u128::MAX
+    // Mutagen gives false positive because >= and > both return u128::MAX
     fn saturating_to_u128(&self) -> u128 {
         if *self > U256::from(u128::MAX) {
             u128::MAX
