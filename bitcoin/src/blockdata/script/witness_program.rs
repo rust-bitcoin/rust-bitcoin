@@ -224,6 +224,13 @@ mod tests {
         let arbitrary_bytes = [0x00; 32];
         assert!(WitnessProgram::new(WitnessVersion::V1, &arbitrary_bytes)
             .expect("valid witness program")
-            .is_p2tr());
+            .is_p2tr()
+        );
+
+        let p2a_bytes = [78, 115];
+        assert!(WitnessProgram::new(WitnessVersion::V1, &p2a_bytes)
+            .expect("valid witness program")
+            .is_p2a()
+        );
     }
 }
