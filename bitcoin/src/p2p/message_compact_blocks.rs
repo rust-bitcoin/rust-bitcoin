@@ -9,7 +9,7 @@ use crate::internal_macros::impl_consensus_encoding;
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]
 pub struct SendCmpct {
-    /// Request to be send compact blocks.
+    /// Request to be sent compact blocks.
     pub send_compact: bool,
     /// Compact Blocks protocol version number.
     pub version: u64,

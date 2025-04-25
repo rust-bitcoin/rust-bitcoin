@@ -244,7 +244,7 @@ macro_rules! only_non_doc_attrs {
 }
 pub(crate) use only_non_doc_attrs;
 
-/// Defines an trait `$trait_name` and implements it for `ty`, used to define extension traits.
+/// Defines a trait `$trait_name` and implements it for `ty`, used to define extension traits.
 macro_rules! define_extension_trait {
     ($(#[$($trait_attrs:tt)*])* $trait_vis:vis trait $trait_name:ident impl for $ty:ident {
         $(

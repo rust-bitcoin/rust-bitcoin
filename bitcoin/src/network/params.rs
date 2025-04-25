@@ -8,7 +8,7 @@
 //! # Custom Signets Example
 //!
 //! In various places in this crate we take `AsRef<Params>` as a parameter, in order to create a
-//! custom type that can be used is such places you might want to do the following:
+//! custom type that can be used in such places you might want to do the following:
 //!
 //! ```
 //! use bitcoin::network::Params;

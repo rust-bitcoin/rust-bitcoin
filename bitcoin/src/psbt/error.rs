@@ -96,7 +96,7 @@ pub enum Error {
     InvalidLeafVersion,
     /// Parsing error indicating a Taproot error
     Taproot(&'static str),
-    /// Taproot tree deserilaization error
+    /// Taproot tree deserialization error
     TapTree(crate::taproot::IncompleteBuilderError),
     /// Error related to an xpub key
     XPubKey(&'static str),
