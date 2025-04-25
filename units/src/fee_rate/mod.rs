@@ -130,13 +130,14 @@ impl FeeRate {
     }
 }
 
-/// Alternative will display the unit.
+/// Displays [`FeeRate`] rounded up to the next integer
+/// in sat/vbyte. The alternate form will also display the unit.
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
             write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
         } else {
-            fmt::Display::fmt(&self.to_sat_per_kwu(), f)
+            fmt::Display::fmt(&self.to_sat_per_vb_ceil(), f)
         }
     }
 }
@@ -197,7 +198,10 @@ impl<'a> Arbitrary<'a> for FeeRate {
 
 #[cfg(test)]
 mod tests {
+    use alloc::format;
+
     use super::*;
+    use crate::alloc::string::ToString;
 
     #[test]
     fn sanity_check() {
@@ -335,5 +339,16 @@ mod tests {
 
         let fee_rate = FeeRate::from_sat_per_kwu(10).checked_div(0);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn fee_rate_display() {
+        let fee_rate = FeeRate::from_sat_per_kwu(750); // 3 sat/vb
+
+        assert_eq!("3", format!("{}", fee_rate));
+
+        assert_eq!("3.00 sat/vbyte", format!("{:#}", fee_rate));
+
+        assert_eq!("750", fee_rate.to_sat_per_kwu().to_string());
     }
 }
