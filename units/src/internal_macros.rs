@@ -96,3 +96,31 @@ macro_rules! impl_sub_assign {
     };
 }
 pub(crate) use impl_sub_assign;
+
+/// Implement `ops::MulAssign` for `$ty` multiplied by `$rhs` and `&$rhs`.
+macro_rules! impl_mul_assign {
+    ($ty:ty, $rhs:ident) => {
+        impl core::ops::MulAssign<$rhs> for $ty {
+            fn mul_assign(&mut self, rhs: $rhs) { *self = *self * rhs }
+        }
+
+        impl core::ops::MulAssign<&$rhs> for $ty {
+            fn mul_assign(&mut self, rhs: &$rhs) { *self = *self * *rhs }
+        }
+    };
+}
+pub(crate) use impl_mul_assign;
+
+/// Implement `ops::DivAssign` for `$ty` divided by `$rhs` and `&$rhs`.
+macro_rules! impl_div_assign {
+    ($ty:ty, $rhs:ident) => {
+        impl core::ops::DivAssign<$rhs> for $ty {
+            fn div_assign(&mut self, rhs: $rhs) { *self = *self / rhs }
+        }
+
+        impl core::ops::DivAssign<&$rhs> for $ty {
+            fn div_assign(&mut self, rhs: &$rhs) { *self = *self / *rhs }
+        }
+    };
+}
+pub(crate) use impl_div_assign;

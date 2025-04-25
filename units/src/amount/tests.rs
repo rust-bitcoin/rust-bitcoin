@@ -23,6 +23,16 @@ fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 #[track_caller]
 fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
+#[track_caller]
+fn res(n_sat: u64) -> NumOpResult<Amount>{
+    NumOpResult::from(sat(n_sat))
+}
+
+#[track_caller]
+fn sres(n_sat: i64) -> NumOpResult<SignedAmount>{
+    NumOpResult::from(ssat(n_sat))
+}
+
 #[test]
 fn sanity_check() {
     assert_eq!(ssat(-100).abs(), ssat(100));
@@ -1191,9 +1201,6 @@ fn signed_subtraction() {
 
 #[test]
 fn op_int_combos() {
-    let res = |n_sat| NumOpResult::from(sat(n_sat));
-    let sres = |n_ssat| NumOpResult::from(ssat(n_ssat));
-
     assert_eq!(sat(23) * 31, res(713));
     assert_eq!(ssat(23) * 31, sres(713));
     assert_eq!(res(23) * 31, res(713));
@@ -1255,6 +1262,40 @@ fn signed_amount_div_by_amount() {
 fn signed_amount_div_by_amount_zero() {
     let res = ssat(1897) / SignedAmount::ZERO;
     assert!(res.into_result().is_err());
+}
+
+#[test]
+fn mul_assign() {
+    let mut result = res(113);
+    result *= 367;
+    assert_eq!(result, res(41471));
+
+    let mut max = res(Amount::MAX.to_sat());
+    max *= 2;
+    assert!(max.is_error());
+
+    let mut signed_result = sres(-211);
+    signed_result *= 431;
+    assert_eq!(signed_result, sres(-90941));
+
+    let mut min = sres(SignedAmount::MIN.to_sat());
+    min *= 2;
+    assert!(min.is_error());
+}
+
+#[test]
+fn div_assign() {
+    let mut result = res(41471);
+    result /= 367;
+    assert_eq!(result, res(113));
+    result /= 0;
+    assert!(result.is_error());
+
+    let mut signed_result = sres(-90941);
+    signed_result /= 211;
+    assert_eq!(signed_result, sres(-431));
+    signed_result /= 0;
+    assert!(signed_result.is_error());
 }
 
 #[test]

@@ -8,6 +8,7 @@ use NumOpResult as R;
 
 use super::{Amount, SignedAmount};
 use crate::{MathOp, NumOpError, NumOpResult, OptionExt};
+use crate::internal_macros::{impl_mul_assign, impl_div_assign};
 
 impl From<Amount> for NumOpResult<Amount> {
     fn from(a: Amount) -> Self { Self::Valid(a) }
@@ -229,6 +230,11 @@ crate::internal_macros::impl_op_for_references! {
         }
     }
 }
+
+impl_mul_assign!(NumOpResult<Amount>, u64);
+impl_mul_assign!(NumOpResult<SignedAmount>, i64);
+impl_div_assign!(NumOpResult<Amount>, u64);
+impl_div_assign!(NumOpResult<SignedAmount>, i64);
 
 impl ops::Neg for SignedAmount {
     type Output = Self;
