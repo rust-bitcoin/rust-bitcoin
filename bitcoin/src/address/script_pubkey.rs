@@ -198,7 +198,7 @@ pub(super) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
 ) -> ScriptBuf {
     let program = program.as_ref();
     debug_assert!(program.len() >= 2 && program.len() <= 40);
-    // In SegWit v0, the program must be either 20 (P2WPKH) bytes or 32 (P2WSH) bytes long
+    // In SegWit v0, the program must be either 20 bytes (P2WPKH) or 32 bytes (P2WSH) long.
     debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
     Builder::new().push_opcode(version.into()).push_slice(program).into_script()
 }

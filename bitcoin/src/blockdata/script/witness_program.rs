@@ -70,7 +70,7 @@ impl WitnessProgram {
         WitnessProgram { version: WitnessVersion::V0, program: ArrayVec::from_slice(&program) }
     }
 
-    /// Constructs a new [`WitnessProgram`] from a 32 byte serialize Taproot xonly pubkey.
+    /// Constructs a new [`WitnessProgram`] from a 32 byte serialized Taproot x-only pubkey.
     fn new_p2tr(program: [u8; 32]) -> Self {
         WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&program) }
     }
@@ -91,7 +91,10 @@ impl WitnessProgram {
         WitnessProgram::new_p2wsh(hash.to_byte_array())
     }
 
-    /// Constructs a new pay to Taproot address from an untweaked key.
+    /// Constructs a new [`WitnessProgram`] from an untweaked key for a P2TR output.
+    ///
+    /// This function applies BIP341 key-tweaking to the untweaked
+    /// key using the merkle root, if it's present.
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -102,13 +105,13 @@ impl WitnessProgram {
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    /// Constructs a new pay to Taproot address from a pre-tweaked output key.
+    /// Constructs a new [`WitnessProgram`] from a tweaked key for a P2TR output.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         let pubkey = output_key.to_inner().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }
 
-    /// Constructs a new pay to anchor address
+    /// Constructs a new [`WitnessProgram`] for a P2A output.
     pub const fn p2a() -> Self {
         WitnessProgram { version: WitnessVersion::V1, program: ArrayVec::from_slice(&P2A_PROGRAM) }
     }
@@ -137,7 +140,7 @@ impl WitnessProgram {
     /// Returns true if this witness program is for a P2TR output.
     pub fn is_p2tr(&self) -> bool { self.version == WitnessVersion::V1 && self.program.len() == 32 }
 
-    /// Returns true if this is a pay to anchor output.
+    /// Returns true if this witness program is for a P2A output.
     pub fn is_p2a(&self) -> bool {
         self.version == WitnessVersion::V1 && self.program == P2A_PROGRAM
     }
@@ -221,6 +224,13 @@ mod tests {
         let arbitrary_bytes = [0x00; 32];
         assert!(WitnessProgram::new(WitnessVersion::V1, &arbitrary_bytes)
             .expect("valid witness program")
-            .is_p2tr());
+            .is_p2tr()
+        );
+
+        let p2a_bytes = [78, 115];
+        assert!(WitnessProgram::new(WitnessVersion::V1, &p2a_bytes)
+            .expect("valid witness program")
+            .is_p2a()
+        );
     }
 }

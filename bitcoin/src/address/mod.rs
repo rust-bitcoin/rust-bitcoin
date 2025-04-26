@@ -1567,7 +1567,7 @@ mod tests {
 
     #[test]
     fn pay_to_anchor_address_regtest() {
-        // Verify that p2a uses the expected address for regtest.
+        // Verify that P2A uses the expected address for regtest.
         // This test-vector is borrowed from the bitcoin source code.
         let address_str = "bcrt1pfeesnyr2tx";
 
@@ -1578,7 +1578,7 @@ mod tests {
         assert_eq!(address.to_string(), address_str);
 
         // Verify that the address is considered standard
-        // and that the output type is P2a
+        // and that the output type is P2A.
         assert!(address.is_spend_standard());
         assert_eq!(address.address_type(), Some(AddressType::P2a));
     }
