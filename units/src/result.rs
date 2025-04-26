@@ -12,7 +12,7 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 /// Result of a mathematical operation on two numeric types.
 ///
 /// In order to prevent overflow we provide a custom result type that is similar to the normal
-/// [`core::result::Result`] but implements mathematical operatons (e.g. [`core::ops::Add`]) so that
+/// [`core::result::Result`] but implements mathematical operations (e.g. [`core::ops::Add`]) so that
 /// math operations can be chained ergonomically. This is very similar to how `NaN` works.
 ///
 /// `NumOpResult` is a monadic type that contains `Valid` and `Error` (similar to `Ok` and `Err`).
