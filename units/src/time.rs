@@ -53,6 +53,13 @@ impl From<BlockTime> for u32 {
     fn from(t: BlockTime) -> Self { t.to_u32() }
 }
 
+impl core::ops::Sub for BlockTime {
+    type Output = i64;
+
+    fn sub(self, other: Self) -> Self::Output {
+        i64::from(self.to_u32()) - i64::from(other.to_u32())
+    }
+}
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for BlockTime {
     #[inline]
@@ -70,5 +77,13 @@ mod tests {
     fn block_time_round_trip() {
         let t = BlockTime::from(1_742_979_600); // 26 Mar 2025 9:00 UTC
         assert_eq!(u32::from(t), 1_742_979_600);
+    }
+
+    #[test]
+    fn block_time_sub() {
+        let t1 = BlockTime::from(1_700_000_000);
+        let t2 = BlockTime::from(1_700_000_100);
+        assert_eq!(t1-t2, -100);
+        assert_eq!(t2-t1, 100);
     }
 }
