@@ -2,8 +2,8 @@
 
 //! Provides a monodic type returned by mathematical operations (`core::ops`).
 
-use core::fmt;
 use core::convert::Infallible;
+use core::fmt;
 
 use NumOpResult as R;
 

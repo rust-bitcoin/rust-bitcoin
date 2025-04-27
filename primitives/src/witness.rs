@@ -901,7 +901,7 @@ mod test {
         let witness4: Witness = empty_data.iter().collect();
         assert!(witness4.is_empty());
     }
-    
+
     #[cfg(feature = "hex")]
     #[test]
     fn test_from_hex() {

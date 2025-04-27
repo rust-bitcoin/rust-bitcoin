@@ -361,7 +361,8 @@ mod test {
 
     #[test]
     fn consensus_serialize() {
-        let el_0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").to_vec();
+        let el_0 =
+            hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").to_vec();
         let el_1 = hex!("000000").to_vec();
 
         let mut want_witness = Witness::default();
