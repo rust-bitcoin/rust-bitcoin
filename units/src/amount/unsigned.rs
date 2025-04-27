@@ -248,13 +248,23 @@ impl Amount {
     ///
     /// * `fee_rate` - the fee rate of the transaction being created.
     /// * `weight` - the predicted input weight.
+    ///
+    /// # Errors
+    ///  
+    /// If fee rate multiplied by weight exceeds [`SignedAmount::MAX`]
     pub fn to_effective_value(
         self,
         fee_rate: FeeRate,
-        weight: Weight,
-    ) -> Option<SignedAmount> {
-        let signed_input_fee = fee_rate.to_fee(weight)?.to_signed();
-        self.to_signed().checked_sub(signed_input_fee)
+        weight: Weight
+    ) -> Result<SignedAmount, OutOfRangeError> {
+        let signed_input_fee = fee_rate.to_fee(weight).ok_or(
+            OutOfRangeError { is_signed: false, is_greater_than_max: true }
+        )?.to_signed();
+
+        // it's not possible to overflow when subtracted by the smallest given:
+        // Amount::MIN - SignedAmount::MAX = SignedAmount::MIN
+        let eff_val = (self.to_signed() - signed_input_fee).unwrap();  //unwrap ok
+        Ok(eff_val)
     }
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].

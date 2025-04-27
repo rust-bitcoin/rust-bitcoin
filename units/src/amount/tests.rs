@@ -1467,8 +1467,8 @@ fn math_op_errors() {
 fn to_effective_value() {
     let amt = "1 cBTC".parse::<Amount>().unwrap();
     let fee_rate = FeeRate::from_sat_per_kwu(10);
-    let effective_value =
-        amt.to_effective_value(fee_rate, Weight::from_wu(272)).unwrap();
+    let effective_value = amt.to_effective_value(
+        fee_rate, Weight::from_wu(272)).unwrap();
 
     // 10 sat/kwu * 272 wu = 4 sats (rounding up)
     let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
@@ -1478,7 +1478,7 @@ fn to_effective_value() {
 
 #[test]
 #[cfg(feature = "alloc")]
-fn effective_value_fee_rate_does_not_overflow() {
-    let eff_value =Amount::ZERO.to_effective_value(FeeRate::MAX, Weight::from_wu(272));
-    assert!(eff_value.is_none());
+fn to_effective_value_error() {
+    let eff_val = Amount::ZERO.to_effective_value(FeeRate::MAX, Weight::from_wu(272));
+    assert_eq!(eff_val, Err(OutOfRangeError::too_big(false)));
 }
