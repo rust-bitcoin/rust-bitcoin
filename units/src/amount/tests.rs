@@ -24,14 +24,10 @@ fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
 fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
 
 #[track_caller]
-fn res(n_sat: u64) -> NumOpResult<Amount>{
-    NumOpResult::from(sat(n_sat))
-}
+fn res(n_sat: u64) -> NumOpResult<Amount> { NumOpResult::from(sat(n_sat)) }
 
 #[track_caller]
-fn sres(n_sat: i64) -> NumOpResult<SignedAmount>{
-    NumOpResult::from(ssat(n_sat))
-}
+fn sres(n_sat: i64) -> NumOpResult<SignedAmount> { NumOpResult::from(ssat(n_sat)) }
 
 #[test]
 fn sanity_check() {

@@ -512,6 +512,8 @@ impl std::error::Error for MerkleBlockError {
 
 #[cfg(test)]
 mod tests {
+    use hex::{DisplayHex, FromHex};
+    use hex_lit::hex;
     #[cfg(feature = "rand-std")]
     use {core::cmp, secp256k1::rand::prelude::*};
 
@@ -519,8 +521,6 @@ mod tests {
     use crate::block::{BlockUncheckedExt as _, Unchecked};
     use crate::consensus::encode;
     use crate::hash_types::Txid;
-    use hex::{DisplayHex, FromHex};
-    use hex_lit::hex;
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {

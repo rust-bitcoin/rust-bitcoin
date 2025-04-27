@@ -789,7 +789,9 @@ impl TryFrom<TaprootBuilder> for TapTree {
     ///
     /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilderError`]
     /// error with the content of incomplete `builder` instance.
-    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> { builder.try_into_tap_tree() }
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
+        builder.try_into_tap_tree()
+    }
 }
 
 impl TryFrom<NodeInfo> for TapTree {

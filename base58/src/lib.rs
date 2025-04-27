@@ -251,6 +251,7 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
+
     use hex::FromHex as _;
 
     use super::*;
