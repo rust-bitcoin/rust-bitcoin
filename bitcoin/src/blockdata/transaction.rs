@@ -773,6 +773,8 @@ impl Decodable for Transaction {
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `weight` - the predicted input weight.
+#[deprecated(since = "TBD", note = "use `Amount.to_effective_value()` instead")]
+// removes SignedAmount import from transaction once this is deprecated function is removed.
 pub fn effective_value(
     fee_rate: FeeRate,
     weight: Weight,
@@ -1645,28 +1647,6 @@ mod tests {
         let hex = "0xzb93";
         let result = Sequence::from_hex(hex);
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn effective_value_happy_path() {
-        let value = "1 cBTC".parse::<Amount>().unwrap();
-        let fee_rate = FeeRate::from_sat_per_kwu(10);
-        let effective_value =
-            effective_value(
-                fee_rate, InputWeightPrediction::P2WPKH_MAX.total_weight(), value
-            ).unwrap();
-
-        // 10 sat/kwu * 272 wu = 4 sats (rounding up)
-        let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
-        let expected_effective_value = (value.to_signed() - expected_fee).unwrap();
-        assert_eq!(effective_value, expected_effective_value);
-    }
-
-    #[test]
-    fn effective_value_fee_rate_does_not_overflow() {
-        let eff_value =
-            effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX.total_weight(), Amount::ZERO);
-        assert!(eff_value.is_none());
     }
 
     #[test]
