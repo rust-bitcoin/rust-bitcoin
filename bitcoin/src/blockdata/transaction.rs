@@ -772,13 +772,12 @@ impl Decodable for Transaction {
 /// # Parameters
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
-/// * `input_weight_prediction` - the predicted input weight.
+/// * `weight` - the predicted input weight.
 pub fn effective_value(
     fee_rate: FeeRate,
-    input_weight_prediction: InputWeightPrediction,
+    weight: Weight,
     value: Amount,
 ) -> Option<SignedAmount> {
-    let weight = input_weight_prediction.total_weight();
     let signed_input_fee = fee_rate.to_fee(weight)?.to_signed();
     value.to_signed().checked_sub(signed_input_fee)
 }
@@ -1653,7 +1652,9 @@ mod tests {
         let value = "1 cBTC".parse::<Amount>().unwrap();
         let fee_rate = FeeRate::from_sat_per_kwu(10);
         let effective_value =
-            effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value).unwrap();
+            effective_value(
+                fee_rate, InputWeightPrediction::P2WPKH_MAX.total_weight(), value
+            ).unwrap();
 
         // 10 sat/kwu * 272 wu = 4 sats (rounding up)
         let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
@@ -1664,7 +1665,7 @@ mod tests {
     #[test]
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
-            effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
+            effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX.total_weight(), Amount::ZERO);
         assert!(eff_value.is_none());
     }
 
