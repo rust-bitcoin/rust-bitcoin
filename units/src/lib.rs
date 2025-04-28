@@ -48,6 +48,7 @@ pub mod amount;
 pub mod block;
 pub mod fee_rate;
 pub mod locktime;
+pub mod mtp_height;
 pub mod parse;
 pub mod time;
 pub mod weight;
