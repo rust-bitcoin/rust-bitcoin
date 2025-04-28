@@ -87,7 +87,7 @@ fn main() -> Result<()> {
     tx.verify(|_| Some(previous_output())).expect("failed to verify transaction");
 
     let hex = encode::serialize_hex(&tx);
-    println!("You should now be able to broadcast the following transaction: \n\n{}", hex);
+    println!("You should now be able to broadcast the following transaction: \n\n{hex}");
 
     Ok(())
 }

@@ -22,14 +22,14 @@ fn main() {
     assert_eq!(decoded, script_code);
 
     // Writes the script as human-readable eg, OP_DUP OP_HASH160 OP_PUSHBYTES_20 ...
-    println!("human-readable script: {}", script_code);
+    println!("human-readable script: {script_code}");
 
     // We do not implement parsing scripts from human-readable format.
     // let decoded = s.parse::<ScriptBuf>().unwrap();
 
     // This is equivalent to consensus encoding i.e., includes the length prefix.
-    let hex_lower_hex_trait = format!("{:x}", script_code);
-    println!("hex created using `LowerHex`: {}", hex_lower_hex_trait);
+    let hex_lower_hex_trait = format!("{script_code:x}");
+    println!("hex created using `LowerHex`: {hex_lower_hex_trait}");
 
     // The `deserialize_hex` function requires the length prefix.
     assert_eq!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).unwrap(), script_code);
@@ -43,7 +43,7 @@ fn main() {
 
     // This is consensus encoding i.e., includes the length prefix.
     let hex_inherent = script_code.to_hex_string(); // Defined in `ScriptExt`.
-    println!("hex created using inherent `to_hex_string`: {}", hex_inherent);
+    println!("hex created using inherent `to_hex_string`: {hex_inherent}");
 
     // The inverse of `to_hex_string` is `from_hex`.
     let decoded = ScriptBuf::from_hex(&hex_inherent).unwrap(); // Defined in `ScriptBufExt`.
@@ -54,7 +54,7 @@ fn main() {
 
     // We also support encode/decode using `consensus::encode` functions.
     let encoded = encode::serialize_hex(&script_code);
-    println!("hex created using consensus::encode::serialize_hex: {}", encoded);
+    println!("hex created using consensus::encode::serialize_hex: {encoded}");
 
     let decoded: ScriptBuf = encode::deserialize_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
