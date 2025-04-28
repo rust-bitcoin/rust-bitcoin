@@ -8,6 +8,8 @@
 
 #![allow(dead_code)]
 #![allow(unused_imports)]
+// Exclude lints we don't think are valuable.
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
 
 // Import using module style e.g., `sha256::Hash`.
 use bitcoin_hashes::{

@@ -1,3 +1,6 @@
+// Exclude lints we don't think are valuable.
+#![allow(clippy::uninlined_format_args)] // Allow `format!("{}", x)`instead of enforcing `format!("{x}")`
+
 const MAX_USED_VERSION: u64 = 80;
 
 use std::io;
