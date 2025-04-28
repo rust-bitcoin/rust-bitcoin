@@ -97,10 +97,11 @@ impl From<TapLeafHash> for TapNodeHash {
 impl TapTweakHash {
     /// Constructs a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_tweak(
-        internal_key: UntweakedPublicKey,
+    pub fn from_key_and_tweak<K: Into<UntweakedPublicKey>>(
+        internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> TapTweakHash {
+        let internal_key = internal_key.into();
         let mut eng = sha256t::Hash::<TapTweakTag>::engine();
         // always hash the key
         eng.input(&internal_key.serialize());
@@ -248,14 +249,15 @@ impl TaprootSpendInfo {
     /// weights of satisfaction for that script.
     ///
     /// See [`TaprootBuilder::with_huffman_tree`] for more detailed documentation.
-    pub fn with_huffman_tree<C, I>(
+    pub fn with_huffman_tree<C, I, K>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
         I: IntoIterator<Item = (u32, ScriptBuf)>,
         C: secp256k1::Verification,
+        K: Into<UntweakedPublicKey>,
     {
         let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
         Ok(builder.finalize(secp, internal_key).expect("Huffman tree is always complete"))
@@ -272,11 +274,12 @@ impl TaprootSpendInfo {
     ///
     /// Refer to BIP 341 footnote ('Why should the output key always have a Taproot commitment, even
     /// if there is no script path?') for more details.
-    pub fn new_key_spend<C: secp256k1::Verification>(
+    pub fn new_key_spend<C: secp256k1::Verification, K: Into<UntweakedPublicKey>>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
+        let internal_key = internal_key.into();
         let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
         Self {
             internal_key,
@@ -312,9 +315,9 @@ impl TaprootSpendInfo {
     ///
     /// This is useful when you want to manually build a Taproot tree without using
     /// [`TaprootBuilder`].
-    pub fn from_node_info<C: secp256k1::Verification>(
+    pub fn from_node_info<C: secp256k1::Verification, K: Into<UntweakedPublicKey>>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         node: NodeInfo,
     ) -> TaprootSpendInfo {
         // Create as if it is a key spend path with the given Merkle root
@@ -583,11 +586,12 @@ impl TaprootBuilder {
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
-    pub fn finalize<C: secp256k1::Verification>(
+    pub fn finalize<C: secp256k1::Verification, K: Into<XOnlyPublicKey>>(
         mut self,
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
     ) -> Result<TaprootSpendInfo, TaprootBuilder> {
+        let internal_key = internal_key.into();
         match self.branch.len() {
             0 => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
             1 =>

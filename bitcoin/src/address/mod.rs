@@ -59,6 +59,7 @@ use crate::constants::{
 };
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+    XOnlyPublicKey,
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
@@ -69,7 +70,6 @@ use crate::script::{
     WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
-use crate::XOnlyPublicKey;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
@@ -573,12 +573,13 @@ impl Address {
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
-    pub fn p2tr<C: Verification>(
+    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
     ) -> Address {
+        let internal_key = internal_key.into();
         let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
         Address::from_witness_program(program, hrp)
     }

@@ -404,7 +404,7 @@ impl BenefactorWallet {
 
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
-            .finalize(&self.secp, internal_keypair.x_only_public_key().0.into())
+            .finalize(&self.secp, internal_keypair.x_only_public_key().0)
             .expect("should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
         let script_pubkey = ScriptBuf::new_p2tr(
@@ -502,7 +502,7 @@ impl BenefactorWallet {
 
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?
-                .finalize(&self.secp, new_internal_keypair.x_only_public_key().0.into())
+                .finalize(&self.secp, new_internal_keypair.x_only_public_key().0)
                 .expect("should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();

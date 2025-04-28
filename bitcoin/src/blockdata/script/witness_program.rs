@@ -95,11 +95,12 @@ impl WitnessProgram {
     ///
     /// This function applies BIP341 key-tweaking to the untweaked
     /// key using the merkle root, if it's present.
-    pub fn p2tr<C: Verification>(
+    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
+        let internal_key = internal_key.into();
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         let pubkey = output_key.to_inner().serialize();
         WitnessProgram::new_p2tr(pubkey)

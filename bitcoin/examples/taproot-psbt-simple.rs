@@ -83,11 +83,12 @@ fn get_internal_address_xpriv<C: Signing>(
 }
 
 // Get the Taproot Key Origin.
-fn get_tap_key_origin(
-    x_only_key: UntweakedPublicKey,
+fn get_tap_key_origin<K: Into<UntweakedPublicKey> + std::cmp::Ord>(
+    x_only_key: K,
     master_fingerprint: Fingerprint,
     path: DerivationPath,
 ) -> BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, (Fingerprint, DerivationPath))> {
+    let x_only_key = x_only_key.into();
     let mut map = BTreeMap::new();
     map.insert(x_only_key, (vec![], (master_fingerprint, path)));
     map
@@ -151,12 +152,12 @@ fn main() {
     // Get the Tap Key Origins
     // Map of tap root X-only keys to origin info and leaf hashes contained in it.
     let origin_input_1 = get_tap_key_origin(
-        pk_input_1.into(),
+        pk_input_1,
         MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
         "m/86'/0'/0'/0/0".parse::<DerivationPath>().unwrap(),
     );
     let origin_input_2 = get_tap_key_origin(
-        pk_input_2.into(),
+        pk_input_2,
         MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
         "m/86'/0'/0'/1/0".parse::<DerivationPath>().unwrap(),
     );
@@ -187,7 +188,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, pk_change.into(), None), // Change comes back to us.
+        script_pubkey: ScriptBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.

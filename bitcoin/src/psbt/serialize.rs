@@ -13,7 +13,7 @@ use internals::slice::SliceExt;
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
+use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::crypto::{ecdsa, taproot};
 use crate::io::Write;
 use crate::prelude::{DisplayHex, String, Vec};
@@ -24,7 +24,6 @@ use crate::taproot::{
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
-use crate::XOnlyPublicKey;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
