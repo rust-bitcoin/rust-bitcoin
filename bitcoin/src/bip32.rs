@@ -13,12 +13,13 @@ use core::{fmt, slice};
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
 use internals::write_err;
-use secp256k1::{Secp256k1, XOnlyPublicKey};
+use secp256k1::Secp256k1;
 
 use crate::crypto::key::{CompressedPublicKey, Keypair, PrivateKey};
 use crate::internal_macros::{impl_array_newtype, impl_array_newtype_stringify};
 use crate::network::NetworkKind;
 use crate::prelude::{String, Vec};
+use crate::XOnlyPublicKey;
 
 /// Version bytes for extended public keys on the Bitcoin network.
 const VERSION_BYTES_MAINNET_PUBLIC: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];

@@ -11,9 +11,9 @@ use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
     absolute, script, Address, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
-use secp256k1::{Keypair, Secp256k1, Signing, XOnlyPublicKey};
+use secp256k1::{Keypair, Secp256k1, Signing};
 use units::Amount;
 
 #[test]
@@ -66,7 +66,7 @@ fn psbt_sign_taproot() {
     let internal_key = kp.x_only_public_key().0; // Ignore the parity.
 
     let tree =
-        create_taproot_tree(secp, script1.clone(), script2.clone(), script3.clone(), internal_key);
+        create_taproot_tree(secp, script1.clone(), script2.clone(), script3.clone(), internal_key.into());
 
     let address = create_p2tr_address(tree.clone());
     assert_eq!(
@@ -131,7 +131,7 @@ fn psbt_sign_taproot() {
             address,
             to_address,
             tree.clone(),
-            x_only_pubkey,
+            x_only_pubkey.into(),
             signing_key_path,
             script2.clone(),
         );
@@ -146,7 +146,7 @@ fn psbt_sign_taproot() {
             sig,
             psbt_script_path_spend.inputs[0]
                 .tap_script_sigs
-                .get(&(x_only_pubkey, script2.clone().tapscript_leaf_hash()))
+                .get(&(x_only_pubkey.into(), script2.clone().tapscript_leaf_hash()))
                 .unwrap()
                 .signature
                 .to_string()

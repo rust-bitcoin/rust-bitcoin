@@ -9,7 +9,6 @@ use hashes::{hash160, ripemd160, sha256, sha256d};
 use internals::compact_size;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
-use secp256k1::XOnlyPublicKey;
 
 use super::map::{Input, Map, Output, PsbtSighashType};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
@@ -25,6 +24,7 @@ use crate::taproot::{
 };
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
+use crate::XOnlyPublicKey;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.

@@ -151,12 +151,12 @@ fn main() {
     // Get the Tap Key Origins
     // Map of tap root X-only keys to origin info and leaf hashes contained in it.
     let origin_input_1 = get_tap_key_origin(
-        pk_input_1,
+        pk_input_1.into(),
         MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
         "m/86'/0'/0'/0/0".parse::<DerivationPath>().unwrap(),
     );
     let origin_input_2 = get_tap_key_origin(
-        pk_input_2,
+        pk_input_2.into(),
         MASTER_FINGERPRINT.parse::<Fingerprint>().unwrap(),
         "m/86'/0'/0'/1/0".parse::<DerivationPath>().unwrap(),
     );
@@ -187,7 +187,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, pk_change, None), // Change comes back to us.
+        script_pubkey: ScriptBuf::new_p2tr(&secp, pk_change.into(), None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
@@ -210,14 +210,14 @@ fn main() {
         Input {
             witness_utxo: Some(utxos[0].clone()),
             tap_key_origins: origins[0].clone(),
-            tap_internal_key: Some(pk_input_1),
+            tap_internal_key: Some(pk_input_1.into()),
             sighash_type: Some(ty),
             ..Default::default()
         },
         Input {
             witness_utxo: Some(utxos[1].clone()),
             tap_key_origins: origins[1].clone(),
-            tap_internal_key: Some(pk_input_2),
+            tap_internal_key: Some(pk_input_2.into()),
             sighash_type: Some(ty),
             ..Default::default()
         },

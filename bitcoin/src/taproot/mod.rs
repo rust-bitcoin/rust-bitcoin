@@ -25,6 +25,7 @@ use crate::consensus::Encodable;
 use crate::crypto::key::{
     SerializedXOnlyPublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey,
 };
+use crate::key::ParseXOnlyPublicKeyError;
 use crate::prelude::{BTreeMap, BTreeSet, BinaryHeap, Vec};
 use crate::{Script, ScriptBuf};
 
@@ -1523,7 +1524,7 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(InvalidControlBlockSizeError),
     /// Invalid Taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(ParseXOnlyPublicKeyError),
     /// Invalid control block hex
     InvalidControlBlockHex(HexToBytesError),
 }

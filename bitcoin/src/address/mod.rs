@@ -50,7 +50,7 @@ use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::{Secp256k1, Verification};
 
 use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::constants::{
@@ -69,6 +69,7 @@ use crate::script::{
     WitnessScriptSizeError,
 };
 use crate::taproot::TapNodeHash;
+use crate::XOnlyPublicKey;
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]

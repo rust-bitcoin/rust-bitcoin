@@ -4,7 +4,6 @@ use core::fmt;
 use core::str::FromStr;
 
 use hashes::{hash160, ripemd160, sha256, sha256d};
-use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
 use crate::crypto::key::PublicKey;
@@ -21,6 +20,7 @@ use crate::sighash::{
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 use crate::transaction::{Transaction, TxOut};
 use crate::witness::Witness;
+use crate::XOnlyPublicKey;
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u64 = 0x00;

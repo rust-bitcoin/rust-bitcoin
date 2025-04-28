@@ -26,7 +26,7 @@ fn main() {
 
     // Get an unspent output that is locked to the key above that we control.
     // In a real application these would come from the chain.
-    let (dummy_out_point, dummy_utxo) = dummy_unspent_transaction_output(&secp, internal_key);
+    let (dummy_out_point, dummy_utxo) = dummy_unspent_transaction_output(&secp, internal_key.into());
 
     // Get an address to send to.
     let address = receivers_address();
@@ -45,7 +45,7 @@ fn main() {
     // The change output is locked to a key controlled by us.
     let change = TxOut {
         value: CHANGE_AMOUNT,
-        script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key, None), // Change comes back to us.
+        script_pubkey: ScriptBuf::new_p2tr(&secp, internal_key.into(), None), // Change comes back to us.
     };
 
     // The transaction we want to sign and broadcast.
