@@ -16,12 +16,34 @@ impl fmt::Display for Decimal<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let Decimal {
             negative,
-            num_before_decimal_point,
+            mut num_before_decimal_point,
             exp,
             mut num_after_decimal_point,
             nb_decimals,
             unit,
         } = *self;
+
+        // round the number if needed
+        // rather than fiddling with chars, we just modify the number and let the simpler algorithm take over.
+        if let Some(format_precision) = f.precision() {
+            if usize::from(nb_decimals) > format_precision {
+                // precision is u8 so in this branch f.precision() < 255 which fits in u32
+                let rounding_divisor =
+                    10u64.pow(u32::from(nb_decimals) - format_precision as u32); // Cast ok, commented above.
+                let remainder = num_after_decimal_point % rounding_divisor;
+                num_after_decimal_point -= remainder;
+                if remainder / (rounding_divisor / 10) >= 5 {
+                    num_after_decimal_point += rounding_divisor;
+                    // This is basically addition with carry - if the number after decimal point
+                    // gets too large we have to add carry to the number before decimal point
+                    let one_past_largest_nadp = 10u64.pow(u32::from(nb_decimals));
+                    if num_after_decimal_point >= one_past_largest_nadp {
+                        num_before_decimal_point += 1;
+                        num_after_decimal_point -= one_past_largest_nadp;
+                    }
+                }
+            }
+        }
 
         // normalize by stripping trailing zeros
         let norm_nb_decimals = if num_after_decimal_point == 0 {
@@ -32,6 +54,7 @@ impl fmt::Display for Decimal<'_> {
                 norm_nb_decimals -= 1;
                 num_after_decimal_point /= 10;
             }
+
             norm_nb_decimals
         };
 

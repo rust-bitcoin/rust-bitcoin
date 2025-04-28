@@ -351,7 +351,7 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
 
 /// Format the given satoshi amount in the given denomination.
 fn fmt_satoshi_in(
-    mut satoshi: u64,
+    satoshi: u64,
     negative: bool,
     f: &mut fmt::Formatter,
     denom: Denomination,
@@ -373,20 +373,6 @@ fn fmt_satoshi_in(
         }
         Ordering::Less => {
             let precision = precision.unsigned_abs();
-            // round the number if needed
-            // rather than fiddling with chars, we just modify satoshi and let the simpler algorithm take over.
-            if let Some(format_precision) = f.precision() {
-                if usize::from(precision) > format_precision {
-                    // precision is u8 so in this branch f.precision() < 255 which fits in u32
-                    let rounding_divisor =
-                        10u64.pow(u32::from(precision) - format_precision as u32); // Cast ok, commented above.
-                    let remainder = satoshi % rounding_divisor;
-                    satoshi -= remainder;
-                    if remainder / (rounding_divisor / 10) >= 5 {
-                        satoshi += rounding_divisor;
-                    }
-                }
-            }
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
             num_after_decimal_point = satoshi % divisor;
