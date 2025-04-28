@@ -361,7 +361,7 @@ fn fmt_satoshi_in(
     // First we normalize the number:
     // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
     let mut num_after_decimal_point = 0;
-    let mut norm_nb_decimals = 0;
+    let mut nb_decimals = 0;
     let mut num_before_decimal_point = satoshi;
     let mut exp = 0;
     match precision.cmp(&0) {
@@ -390,16 +390,7 @@ fn fmt_satoshi_in(
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
             num_after_decimal_point = satoshi % divisor;
-            // normalize by stripping trailing zeros
-            if num_after_decimal_point == 0 {
-                norm_nb_decimals = 0;
-            } else {
-                norm_nb_decimals = usize::from(precision);
-                while num_after_decimal_point % 10 == 0 {
-                    norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10;
-                }
-            }
+            nb_decimals = precision;
         }
         Ordering::Equal => (),
     }
@@ -408,7 +399,7 @@ fn fmt_satoshi_in(
         num_before_decimal_point,
         exp,
         num_after_decimal_point,
-        norm_nb_decimals,
+        nb_decimals,
         unit: show_denom.then_some(denom.as_str()),
     };
     fmt::Display::fmt(&decimal, f)

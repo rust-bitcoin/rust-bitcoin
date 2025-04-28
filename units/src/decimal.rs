@@ -8,7 +8,7 @@ pub(crate) struct Decimal<'a> {
     /// The number after decimal points normalized to not end with 0 if it's not 0
     pub(crate) num_after_decimal_point: u64,
     /// Number of decimals
-    pub(crate) norm_nb_decimals: usize,
+    pub(crate) nb_decimals: u8,
     pub(crate) unit: Option<&'a str>,
 }
 
@@ -18,10 +18,22 @@ impl fmt::Display for Decimal<'_> {
             negative,
             num_before_decimal_point,
             exp,
-            num_after_decimal_point,
-            norm_nb_decimals,
+            mut num_after_decimal_point,
+            nb_decimals,
             unit,
         } = *self;
+
+        // normalize by stripping trailing zeros
+        let norm_nb_decimals = if num_after_decimal_point == 0 {
+            0
+        } else {
+            let mut norm_nb_decimals = usize::from(nb_decimals);
+            while num_after_decimal_point % 10 == 0 {
+                norm_nb_decimals -= 1;
+                num_after_decimal_point /= 10;
+            }
+            norm_nb_decimals
+        };
 
         let trailing_decimal_zeros = f.precision().unwrap_or(0).saturating_sub(norm_nb_decimals);
         let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
