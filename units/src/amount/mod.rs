@@ -349,25 +349,6 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     Ok((&s[..i], s[j..].parse()?))
 }
 
-fn dec_width(mut num: u64) -> usize {
-    let mut width = 1;
-    loop {
-        num /= 10;
-        if num == 0 {
-            break;
-        }
-        width += 1;
-    }
-    width
-}
-
-fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
-    for _ in 0..count {
-        f.write_char(c)?;
-    }
-    Ok(())
-}
-
 /// Format the given satoshi amount in the given denomination.
 fn fmt_satoshi_in(
     mut satoshi: u64,
@@ -382,7 +363,6 @@ fn fmt_satoshi_in(
     let mut num_after_decimal_point = 0;
     let mut norm_nb_decimals = 0;
     let mut num_before_decimal_point = satoshi;
-    let trailing_decimal_zeros;
     let mut exp = 0;
     match precision.cmp(&0) {
         // We add the number of zeroes to the end
@@ -390,7 +370,6 @@ fn fmt_satoshi_in(
             if satoshi > 0 {
                 exp = precision as usize; // Cast ok, checked not negative above.
             }
-            trailing_decimal_zeros = f.precision().unwrap_or(0);
         }
         Ordering::Less => {
             let precision = precision.unsigned_abs();
@@ -421,75 +400,18 @@ fn fmt_satoshi_in(
                     num_after_decimal_point /= 10;
                 }
             }
-            // compute requested precision
-            let opt_precision = f.precision().unwrap_or(0);
-            trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
         }
-        Ordering::Equal => trailing_decimal_zeros = f.precision().unwrap_or(0),
+        Ordering::Equal => (),
     }
-    let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
-    // Compute expected width of the number
-    let mut num_width = if total_decimals > 0 {
-        // 1 for decimal point
-        1 + total_decimals
-    } else {
-        0
+    let decimal = crate::decimal::Decimal {
+        negative,
+        num_before_decimal_point,
+        exp,
+        num_after_decimal_point,
+        norm_nb_decimals,
+        unit: show_denom.then_some(denom.as_str()),
     };
-    num_width += dec_width(num_before_decimal_point) + exp;
-    if f.sign_plus() || negative {
-        num_width += 1;
-    }
-
-    if show_denom {
-        // + 1 for space
-        num_width += denom.as_str().len() + 1;
-    }
-
-    let width = f.width().unwrap_or(0);
-    let align = f.align().unwrap_or(fmt::Alignment::Right);
-    let (left_pad, pad_right) = match (num_width < width, f.sign_aware_zero_pad(), align) {
-        (false, _, _) => (0, 0),
-        // Alignment is always right (ignored) when zero-padding
-        (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
-        (true, false, fmt::Alignment::Left) => (0, width - num_width),
-        // If the required padding is odd it needs to be skewed to the left
-        (true, false, fmt::Alignment::Center) =>
-            ((width - num_width) / 2, (width - num_width + 1) / 2),
-    };
-
-    let fill = f.fill();
-    if !f.sign_aware_zero_pad() {
-        repeat_char(f, fill, left_pad)?;
-    }
-
-    if negative {
-        write!(f, "-")?;
-    } else if f.sign_plus() {
-        write!(f, "+")?;
-    }
-
-    if f.sign_aware_zero_pad() {
-        repeat_char(f, '0', left_pad)?;
-    }
-
-    write!(f, "{}", num_before_decimal_point)?;
-
-    repeat_char(f, '0', exp)?;
-
-    if total_decimals > 0 {
-        write!(f, ".")?;
-    }
-    if norm_nb_decimals > 0 {
-        write!(f, "{:0width$}", num_after_decimal_point, width = norm_nb_decimals)?;
-    }
-    repeat_char(f, '0', trailing_decimal_zeros)?;
-
-    if show_denom {
-        write!(f, " {}", denom.as_str())?;
-    }
-
-    repeat_char(f, fill, pad_right)?;
-    Ok(())
+    fmt::Display::fmt(&decimal, f)
 }
 
 /// A helper/builder that displays amount with specified settings.
