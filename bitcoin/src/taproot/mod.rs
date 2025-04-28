@@ -1781,7 +1781,7 @@ mod test {
     ) {
         let out_pk = out_spk_hex[4..].parse::<XOnlyPublicKey>().unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
-        let script = ScriptBuf::from_hex(script_hex).unwrap();
+        let script = ScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
         assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
@@ -1847,11 +1847,11 @@ mod test {
             .unwrap();
 
         let script_weights = [
-            (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
-            (20, ScriptBuf::from_hex("52").unwrap()),
-            (20, ScriptBuf::from_hex("53").unwrap()),
-            (30, ScriptBuf::from_hex("54").unwrap()),
-            (19, ScriptBuf::from_hex("55").unwrap()),
+            (10, ScriptBuf::from_hex_no_length_prefix("51").unwrap()), // semantics of script don't matter for this test
+            (20, ScriptBuf::from_hex_no_length_prefix("52").unwrap()),
+            (20, ScriptBuf::from_hex_no_length_prefix("53").unwrap()),
+            (30, ScriptBuf::from_hex_no_length_prefix("54").unwrap()),
+            (19, ScriptBuf::from_hex_no_length_prefix("55").unwrap()),
         ];
         let tree_info =
             TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights.clone())
@@ -1872,7 +1872,10 @@ mod test {
                 *length,
                 tree_info
                     .script_map
-                    .get(&(ScriptBuf::from_hex(script).unwrap(), LeafVersion::TapScript))
+                    .get(&(
+                        ScriptBuf::from_hex_no_length_prefix(script).unwrap(),
+                        LeafVersion::TapScript
+                    ))
                     .expect("Present Key")
                     .iter()
                     .next()
@@ -1913,11 +1916,11 @@ mod test {
         //                                   /  \    /  \
         //                                  A    B  C  / \
         //                                            D   E
-        let a = ScriptBuf::from_hex("51").unwrap();
-        let b = ScriptBuf::from_hex("52").unwrap();
-        let c = ScriptBuf::from_hex("53").unwrap();
-        let d = ScriptBuf::from_hex("54").unwrap();
-        let e = ScriptBuf::from_hex("55").unwrap();
+        let a = ScriptBuf::from_hex_no_length_prefix("51").unwrap();
+        let b = ScriptBuf::from_hex_no_length_prefix("52").unwrap();
+        let c = ScriptBuf::from_hex_no_length_prefix("53").unwrap();
+        let d = ScriptBuf::from_hex_no_length_prefix("54").unwrap();
+        let e = ScriptBuf::from_hex_no_length_prefix("55").unwrap();
         let builder = builder.add_leaf(2, a.clone()).unwrap();
         let builder = builder.add_leaf(2, b.clone()).unwrap();
         let builder = builder.add_leaf(2, c.clone()).unwrap();
@@ -2025,7 +2028,8 @@ mod test {
                     builder = process_script_trees(leaf, builder, leaves, depth + 1);
                 }
             } else {
-                let script = ScriptBuf::from_hex(v["script"].as_str().unwrap()).unwrap();
+                let script =
+                    ScriptBuf::from_hex_no_length_prefix(v["script"].as_str().unwrap()).unwrap();
                 let ver =
                     LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
                 leaves.push((script.clone(), ver));
@@ -2079,8 +2083,10 @@ mod test {
                 .unwrap();
             let expected_tweak =
                 arr["intermediary"]["tweak"].as_str().unwrap().parse::<TapTweakHash>().unwrap();
-            let expected_spk =
-                ScriptBuf::from_hex(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+            let expected_spk = ScriptBuf::from_hex_no_length_prefix(
+                arr["expected"]["scriptPubKey"].as_str().unwrap(),
+            )
+            .unwrap();
             let expected_addr = arr["expected"]["bip350Address"]
                 .as_str()
                 .unwrap()

@@ -275,7 +275,7 @@ fn input_derivation_path() -> Result<DerivationPath> {
 }
 
 fn previous_output() -> TxOut {
-    let script_pubkey = ScriptBuf::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
+    let script_pubkey = ScriptBuf::from_hex_no_length_prefix(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
     let amount = INPUT_UTXO_VALUE.parse::<Amount>().expect("failed to parse input utxo value");
 
