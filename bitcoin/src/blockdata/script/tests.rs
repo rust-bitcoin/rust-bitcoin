@@ -203,7 +203,10 @@ fn script_builder() {
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
-    assert_eq!(script.to_hex_string_no_length_prefix(), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
+    assert_eq!(
+        script.to_hex_string_no_length_prefix(),
+        "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac"
+    );
 }
 
 #[test]
@@ -383,10 +386,12 @@ fn script_hashes() {
         "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324"
     );
     assert_eq!(
-        ScriptBuf::from_hex_no_length_prefix("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac")
-            .unwrap()
-            .tapscript_leaf_hash()
-            .to_string(),
+        ScriptBuf::from_hex_no_length_prefix(
+            "20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac"
+        )
+        .unwrap()
+        .tapscript_leaf_hash()
+        .to_string(),
         "5b75adecf53548f3ec6ad7d78383bf84cc57b55a3127c72b9a2481752dd88b21"
     );
 }
@@ -397,30 +402,40 @@ fn provably_unspendable() {
     assert!(!ScriptBuf::from_hex_no_length_prefix("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_op_return());
     assert!(!ScriptBuf::from_hex_no_length_prefix("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_op_return());
     // p2pkhash
-    assert!(!ScriptBuf::from_hex_no_length_prefix("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac")
-        .unwrap()
-        .is_op_return());
-    assert!(ScriptBuf::from_hex_no_length_prefix("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
-        .unwrap()
-        .is_op_return());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
+    )
+    .unwrap()
+    .is_op_return());
+    assert!(ScriptBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_op_return());
 }
 
 #[test]
 fn op_return() {
-    assert!(ScriptBuf::from_hex_no_length_prefix("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
-        .unwrap()
-        .is_op_return());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac")
-        .unwrap()
-        .is_op_return());
+    assert!(ScriptBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_op_return());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac"
+    )
+    .unwrap()
+    .is_op_return());
     assert!(!ScriptBuf::from_hex_no_length_prefix("").unwrap().is_op_return());
 }
 
 #[test]
 fn standard_op_return() {
-    assert!(ScriptBuf::from_hex_no_length_prefix("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
-        .unwrap()
-        .is_standard_op_return());
+    assert!(ScriptBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_standard_op_return());
     assert!(ScriptBuf::from_hex_no_length_prefix("6a48656c6c6f2c2074686973206973206d7920666972737420636f6e747269627574696f6e20746f207275737420626974636f696e2e20506c6561736520617070726f7665206d79205052206672656e")
         .unwrap()
         .is_standard_op_return());
@@ -474,9 +489,11 @@ fn multisig() {
     .unwrap()
     .is_multisig());
     // OP_RETURN from another test
-    assert!(!ScriptBuf::from_hex_no_length_prefix("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87")
-        .unwrap()
-        .is_multisig());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87"
+    )
+    .unwrap()
+    .is_multisig());
 }
 
 #[test]
@@ -504,10 +521,19 @@ fn script_asm() {
                "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
     // Various weird scripts found in transaction 6d7ed9914625c73c0288694a6819196a27ef6c08f98e1270d975a8e65a3dc09a
     // which triggered overflow bugs on 32-bit machines in script formatting in the past.
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("01").unwrap().to_string(), "OP_PUSHBYTES_1 <push past end>");
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("0201").unwrap().to_string(), "OP_PUSHBYTES_2 <push past end>");
+    assert_eq!(
+        ScriptBuf::from_hex_no_length_prefix("01").unwrap().to_string(),
+        "OP_PUSHBYTES_1 <push past end>"
+    );
+    assert_eq!(
+        ScriptBuf::from_hex_no_length_prefix("0201").unwrap().to_string(),
+        "OP_PUSHBYTES_2 <push past end>"
+    );
     assert_eq!(ScriptBuf::from_hex_no_length_prefix("4c").unwrap().to_string(), "<unexpected end>");
-    assert_eq!(ScriptBuf::from_hex_no_length_prefix("4c0201").unwrap().to_string(), "OP_PUSHDATA1 <push past end>");
+    assert_eq!(
+        ScriptBuf::from_hex_no_length_prefix("4c0201").unwrap().to_string(),
+        "OP_PUSHDATA1 <push past end>"
+    );
     assert_eq!(ScriptBuf::from_hex_no_length_prefix("4d").unwrap().to_string(), "<unexpected end>");
     assert_eq!(
         ScriptBuf::from_hex_no_length_prefix("4dffff01").unwrap().to_string(),
@@ -529,25 +555,35 @@ fn script_buf_collect() {
 #[test]
 fn script_p2sh_p2p2k_template() {
     // random outputs I picked out of the mempool
-    assert!(ScriptBuf::from_hex_no_length_prefix("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac")
-        .unwrap()
-        .is_p2pkh());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac")
-        .unwrap()
-        .is_p2sh());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad")
-        .unwrap()
-        .is_p2pkh());
+    assert!(ScriptBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
+    )
+    .unwrap()
+    .is_p2pkh());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac"
+    )
+    .unwrap()
+    .is_p2sh());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad"
+    )
+    .unwrap()
+    .is_p2pkh());
     assert!(!ScriptBuf::from_hex_no_length_prefix("").unwrap().is_p2pkh());
     assert!(ScriptBuf::from_hex_no_length_prefix("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87")
         .unwrap()
         .is_p2sh());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87")
-        .unwrap()
-        .is_p2pkh());
-    assert!(!ScriptBuf::from_hex_no_length_prefix("a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87")
-        .unwrap()
-        .is_p2sh());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
+    )
+    .unwrap()
+    .is_p2pkh());
+    assert!(!ScriptBuf::from_hex_no_length_prefix(
+        "a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87"
+    )
+    .unwrap()
+    .is_p2sh());
 }
 
 #[test]
@@ -565,26 +601,30 @@ fn p2sh_p2wsh_conversion() {
     // Test vectors taken from Core tests/data/script_tests.json
     // bare p2wsh
     let witness_script = ScriptBuf::from_hex_no_length_prefix("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
-    let expected_without =
-        ScriptBuf::from_hex_no_length_prefix("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64")
-            .unwrap();
+    let expected_without = ScriptBuf::from_hex_no_length_prefix(
+        "0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64",
+    )
+    .unwrap();
     assert!(witness_script.to_p2wsh().unwrap().is_p2wsh());
     assert_eq!(witness_script.to_p2wsh().unwrap(), expected_without);
 
     // p2sh
     let redeem_script = ScriptBuf::from_hex_no_length_prefix("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
     let expected_p2shout =
-        ScriptBuf::from_hex_no_length_prefix("a91491b24bf9f5288532960ac687abb035127b1d28a587").unwrap();
+        ScriptBuf::from_hex_no_length_prefix("a91491b24bf9f5288532960ac687abb035127b1d28a587")
+            .unwrap();
     assert!(redeem_script.to_p2sh().unwrap().is_p2sh());
     assert_eq!(redeem_script.to_p2sh().unwrap(), expected_p2shout);
 
     // p2sh-p2wsh
     let witness_script = ScriptBuf::from_hex_no_length_prefix("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
-    let expected_without =
-        ScriptBuf::from_hex_no_length_prefix("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64")
-            .unwrap();
+    let expected_without = ScriptBuf::from_hex_no_length_prefix(
+        "0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64",
+    )
+    .unwrap();
     let expected_out =
-        ScriptBuf::from_hex_no_length_prefix("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887").unwrap();
+        ScriptBuf::from_hex_no_length_prefix("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887")
+            .unwrap();
     assert!(witness_script.to_p2sh().unwrap().is_p2sh());
     assert_eq!(witness_script.to_p2wsh().unwrap(), expected_without);
     assert_eq!(witness_script.to_p2wsh().unwrap().to_p2sh().unwrap(), expected_out);

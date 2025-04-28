@@ -1463,10 +1463,16 @@ mod tests {
 
         let expected: Output = Output {
             redeem_script: Some(
-                ScriptBuf::from_hex_no_length_prefix("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
+                ScriptBuf::from_hex_no_length_prefix(
+                    "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac",
+                )
+                .unwrap(),
             ),
             witness_script: Some(
-                ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
+                ScriptBuf::from_hex_no_length_prefix(
+                    "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+                )
+                .unwrap(),
             ),
             bip32_derivation: hd_keypaths,
             ..Default::default()
@@ -1561,8 +1567,10 @@ mod tests {
                         .unwrap(),
                     vout: 1,
                 },
-                script_sig: ScriptBuf::from_hex_no_length_prefix("160014be18d152a9b012039daf3da7de4f53349eecb985")
-                    .unwrap(),
+                script_sig: ScriptBuf::from_hex_no_length_prefix(
+                    "160014be18d152a9b012039daf3da7de4f53349eecb985",
+                )
+                .unwrap(),
                 sequence: Sequence::MAX,
                 witness: Witness::from_slice(&[hex!(
                     "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"
@@ -1838,8 +1846,10 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_some());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
@@ -1884,8 +1894,10 @@ mod tests {
             assert!(&psbt.inputs[1].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex_no_length_prefix("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
@@ -1909,8 +1921,10 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[0].redeem_script.as_ref().unwrap();
-            let expected_out =
-                ScriptBuf::from_hex_no_length_prefix("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87").unwrap();
+            let expected_out = ScriptBuf::from_hex_no_length_prefix(
+                "a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87",
+            )
+            .unwrap();
 
             assert!(redeem_script.is_p2wsh());
             assert_eq!(

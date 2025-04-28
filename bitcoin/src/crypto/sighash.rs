@@ -2089,7 +2089,9 @@ mod tests {
             ),
         ).unwrap();
 
-        let spk = ScriptBuf::from_hex_no_length_prefix("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1").unwrap();
+        let spk =
+            ScriptBuf::from_hex_no_length_prefix("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1")
+                .unwrap();
         let value = Amount::from_sat_u32(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
@@ -2130,7 +2132,8 @@ mod tests {
         ).unwrap();
 
         let redeem_script =
-            ScriptBuf::from_hex_no_length_prefix("001479091972186c449eb1ded22b78e40d009bdf0089").unwrap();
+            ScriptBuf::from_hex_no_length_prefix("001479091972186c449eb1ded22b78e40d009bdf0089")
+                .unwrap();
         let value = Amount::from_sat_u32(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);

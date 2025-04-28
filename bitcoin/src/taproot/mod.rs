@@ -1872,7 +1872,10 @@ mod test {
                 *length,
                 tree_info
                     .script_map
-                    .get(&(ScriptBuf::from_hex_no_length_prefix(script).unwrap(), LeafVersion::TapScript))
+                    .get(&(
+                        ScriptBuf::from_hex_no_length_prefix(script).unwrap(),
+                        LeafVersion::TapScript
+                    ))
                     .expect("Present Key")
                     .iter()
                     .next()
@@ -2025,7 +2028,8 @@ mod test {
                     builder = process_script_trees(leaf, builder, leaves, depth + 1);
                 }
             } else {
-                let script = ScriptBuf::from_hex_no_length_prefix(v["script"].as_str().unwrap()).unwrap();
+                let script =
+                    ScriptBuf::from_hex_no_length_prefix(v["script"].as_str().unwrap()).unwrap();
                 let ver =
                     LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
                 leaves.push((script.clone(), ver));
@@ -2079,8 +2083,10 @@ mod test {
                 .unwrap();
             let expected_tweak =
                 arr["intermediary"]["tweak"].as_str().unwrap().parse::<TapTweakHash>().unwrap();
-            let expected_spk =
-                ScriptBuf::from_hex_no_length_prefix(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+            let expected_spk = ScriptBuf::from_hex_no_length_prefix(
+                arr["expected"]["scriptPubKey"].as_str().unwrap(),
+            )
+            .unwrap();
             let expected_addr = arr["expected"]["bip350Address"]
                 .as_str()
                 .unwrap()

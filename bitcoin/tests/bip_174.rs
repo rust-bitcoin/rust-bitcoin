@@ -22,7 +22,9 @@ fn hex_psbt(s: &str) -> Psbt {
 }
 
 #[track_caller]
-fn hex_script(s: &str) -> ScriptBuf { ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits") }
+fn hex_script(s: &str) -> ScriptBuf {
+    ScriptBuf::from_hex_no_length_prefix(s).expect("valid hex digits")
+}
 
 #[test]
 fn bip174_psbt_workflow() {
