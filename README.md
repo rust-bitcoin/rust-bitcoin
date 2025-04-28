@@ -41,7 +41,7 @@ trustworthiness of each of your dependencies, including this one.
 This library **must not** be used for consensus code (i.e. fully validating blockchain data). It
 technically supports doing this, but doing so is very ill-advised because there are many deviations,
 known and unknown, between this library and the Bitcoin Core reference implementation. In a
-consensus based cryptocurrency such as Bitcoin it is critical that all parties are using the same
+consensus based cryptocurrency, such as Bitcoin, it is critical that all parties are using the same
 rules to validate data, and this library is simply unable to implement the same rules as Core.
 
 Given the complexity of both C++ and Rust, it is unlikely that this will ever be fixed, and there
@@ -68,11 +68,11 @@ and to expand on existing docs would be extremely appreciated.
 
 Contributions are generally welcome. If you intend to make larger changes please discuss them in an
 issue before PRing them to avoid duplicate work and architectural mismatches. If you have any
-questions or ideas you want to discuss please join us in
+questions or ideas you want to discuss, please join us in
 [#bitcoin-rust](https://web.libera.chat/?channel=#bitcoin-rust) on
 [libera.chat](https://libera.chat).
 
-For more information please see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+For more information, please see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Minimum Supported Rust Version (MSRV)
 
@@ -83,7 +83,7 @@ Use `Cargo-minimal.lock` to build the MSRV by copying to `Cargo.lock` and buildi
 ## External dependencies
 
 We integrate with a few external libraries, most notably `serde`. These
-are available via feature flags. To ensure compatibility and MSRV stability we
+are available via feature flags. To ensure compatibility and MSRV stability, we
 provide two lock files as a means of inspecting compatible versions:
 `Cargo-minimal.lock` containing minimal versions of dependencies and
 `Cargo-recent.lock` containing recent versions of dependencies tested in our CI.
@@ -152,8 +152,8 @@ developers, especially new contributors looking for something to work on, we do:
 - Mutation testing with [`cargo-mutants`](https://github.com/sourcefrog/cargo-mutants)
 - Code verification with [`Kani`](https://github.com/model-checking/kani)
 
-There are always more tests to write and more bugs to find, contributions to our testing efforts
-extremely welcomed. Please consider testing code a first class citizen, we definitely do take PRs
+There are always more tests to write and more bugs to find. PRs are extremely welcomed.
+Please consider testing code as a first-class citizen. We definitely do take PRs
 improving and cleaning up test code.
 
 ### Unit/Integration tests
@@ -178,7 +178,7 @@ We have started using [kani](https://github.com/model-checking/kani), install wi
 
 ## Pull Requests
 
-Every PR needs at least two reviews to get merged. During the review phase maintainers and
+Every PR needs at least two reviews to get merged. During the review phase, maintainers and
 contributors are likely to leave comments and request changes. Please try to address them, otherwise
 your PR might get closed without merging after a longer time of inactivity. If your PR isn't ready
 for review yet please mark it by prefixing the title with `WIP: `.
@@ -201,7 +201,7 @@ to your githooks folder or run `just githooks-install` to copy them all.
 
 Since the altcoin landscape includes projects which [frequently appear and disappear, and are poorly
 designed anyway](https://download.wpsoftware.net/bitcoin/alts.pdf) we do not support any altcoins.
-Supporting Bitcoin properly is already difficult enough and we do not want to increase the
+Supporting Bitcoin properly is already difficult enough, and we do not want to increase the
 maintenance burden and decrease API stability by adding support for other coins.
 
 Our code is public domain so by all means fork it and go wild :)
