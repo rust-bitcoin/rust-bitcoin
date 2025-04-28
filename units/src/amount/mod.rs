@@ -349,43 +349,6 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     Ok((&s[..i], s[j..].parse()?))
 }
 
-/// Options given by `fmt::Formatter`
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-struct FormatOptions {
-    fill: char,
-    align: Option<fmt::Alignment>,
-    width: Option<usize>,
-    precision: Option<usize>,
-    sign_plus: bool,
-    sign_aware_zero_pad: bool,
-}
-
-impl FormatOptions {
-    fn from_formatter(f: &fmt::Formatter) -> Self {
-        FormatOptions {
-            fill: f.fill(),
-            align: f.align(),
-            width: f.width(),
-            precision: f.precision(),
-            sign_plus: f.sign_plus(),
-            sign_aware_zero_pad: f.sign_aware_zero_pad(),
-        }
-    }
-}
-
-impl Default for FormatOptions {
-    fn default() -> Self {
-        FormatOptions {
-            fill: ' ',
-            align: None,
-            width: None,
-            precision: None,
-            sign_plus: false,
-            sign_aware_zero_pad: false,
-        }
-    }
-}
-
 fn dec_width(mut num: u64) -> usize {
     let mut width = 1;
     loop {
@@ -409,10 +372,9 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
 fn fmt_satoshi_in(
     mut satoshi: u64,
     negative: bool,
-    f: &mut dyn fmt::Write,
+    f: &mut fmt::Formatter,
     denom: Denomination,
     show_denom: bool,
-    options: FormatOptions,
 ) -> fmt::Result {
     let precision = denom.precision();
     // First we normalize the number:
@@ -428,15 +390,15 @@ fn fmt_satoshi_in(
             if satoshi > 0 {
                 exp = precision as usize; // Cast ok, checked not negative above.
             }
-            trailing_decimal_zeros = options.precision.unwrap_or(0);
+            trailing_decimal_zeros = f.precision().unwrap_or(0);
         }
         Ordering::Less => {
             let precision = precision.unsigned_abs();
             // round the number if needed
             // rather than fiddling with chars, we just modify satoshi and let the simpler algorithm take over.
-            if let Some(format_precision) = options.precision {
+            if let Some(format_precision) = f.precision() {
                 if usize::from(precision) > format_precision {
-                    // precision is u8 so in this branch options.precision() < 255 which fits in u32
+                    // precision is u8 so in this branch f.precision() < 255 which fits in u32
                     let rounding_divisor =
                         10u64.pow(u32::from(precision) - format_precision as u32); // Cast ok, commented above.
                     let remainder = satoshi % rounding_divisor;
@@ -460,10 +422,10 @@ fn fmt_satoshi_in(
                 }
             }
             // compute requested precision
-            let opt_precision = options.precision.unwrap_or(0);
+            let opt_precision = f.precision().unwrap_or(0);
             trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
         }
-        Ordering::Equal => trailing_decimal_zeros = options.precision.unwrap_or(0),
+        Ordering::Equal => trailing_decimal_zeros = f.precision().unwrap_or(0),
     }
     let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
     // Compute expected width of the number
@@ -474,7 +436,7 @@ fn fmt_satoshi_in(
         0
     };
     num_width += dec_width(num_before_decimal_point) + exp;
-    if options.sign_plus || negative {
+    if f.sign_plus() || negative {
         num_width += 1;
     }
 
@@ -483,9 +445,9 @@ fn fmt_satoshi_in(
         num_width += denom.as_str().len() + 1;
     }
 
-    let width = options.width.unwrap_or(0);
-    let align = options.align.unwrap_or(fmt::Alignment::Right);
-    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, align) {
+    let width = f.width().unwrap_or(0);
+    let align = f.align().unwrap_or(fmt::Alignment::Right);
+    let (left_pad, pad_right) = match (num_width < width, f.sign_aware_zero_pad(), align) {
         (false, _, _) => (0, 0),
         // Alignment is always right (ignored) when zero-padding
         (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
@@ -495,17 +457,18 @@ fn fmt_satoshi_in(
             ((width - num_width) / 2, (width - num_width + 1) / 2),
     };
 
-    if !options.sign_aware_zero_pad {
-        repeat_char(f, options.fill, left_pad)?;
+    let fill = f.fill();
+    if !f.sign_aware_zero_pad() {
+        repeat_char(f, fill, left_pad)?;
     }
 
     if negative {
         write!(f, "-")?;
-    } else if options.sign_plus {
+    } else if f.sign_plus() {
         write!(f, "+")?;
     }
 
-    if options.sign_aware_zero_pad {
+    if f.sign_aware_zero_pad() {
         repeat_char(f, '0', left_pad)?;
     }
 
@@ -525,7 +488,7 @@ fn fmt_satoshi_in(
         write!(f, " {}", denom.as_str())?;
     }
 
-    repeat_char(f, options.fill, pad_right)?;
+    repeat_char(f, fill, pad_right)?;
     Ok(())
 }
 
@@ -572,16 +535,15 @@ impl Display {
 impl fmt::Display for Display {
     #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let format_options = FormatOptions::from_formatter(f);
         match &self.style {
             DisplayStyle::FixedDenomination { show_denomination, denomination } => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination)
             },
             DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.to_sat() => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true)
             },
             DisplayStyle::DynamicDenomination => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true)
             },
         }
     }
