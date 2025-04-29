@@ -6,11 +6,13 @@
 pub mod serde;
 
 use core::{fmt, ops};
+use internals::error::InputString;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
 use crate::decimal::Rounding;
+use crate::parse::ParseIntError;
 
 mod encapsulate {
     /// Fee rate.
@@ -201,15 +203,36 @@ impl FeeRate {
             None => None,
         }
     }
+
+    fn parse<S: AsRef<str>>(s: S) -> Result<Self, ParseError> {
+        let s = s.as_ref();
+        let (value, unit) = if let Some((value, unit)) = s.split_once(' ') {
+            (value, unit)
+        } else {
+            let pos = s
+                .find(|c: char| c.is_alphabetic())
+                .ok_or(ParseError(ParseErrorInner::MissingUnit))?;
+            (&s[..pos], &s[(pos + 1)..])
+        };
+        match unit {
+            "sat/kwu" => {
+                crate::parse::int_from_str(value)
+                    .map(Self::from_sat_per_kwu)
+                    .map_err(|error| ParseError(ParseErrorInner::InvalidSatPerKwu(error)))
+            },
+            "sat/vb" => Err(ParseError(ParseErrorInner::UnsupportedSatPerVB)),
+            other => Err(ParseError(ParseErrorInner::UnknownUnit(other.into()))),
+        }
+    }
 }
 
 /// Alternative will display the unit.
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
+            fmt::Display::fmt(&self.display_sat_per_vb_ceil(), f)
         } else {
-            fmt::Display::fmt(&self.to_sat_per_kwu(), f)
+            fmt::Display::fmt(&self.display_sat_per_kwu(), f)
         }
     }
 }
@@ -252,7 +275,13 @@ impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+impl core::str::FromStr for FeeRate {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {
@@ -344,6 +373,18 @@ impl fmt::Display for Display {
 enum Format {
     SatPerKwu,
     SatPerVB { rounding: Rounding },
+}
+
+/// Error returned when parsing of `FeeRate` fails.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParseError(ParseErrorInner);
+
+#[derive(Debug, Clone, PartialEq)]
+enum ParseErrorInner {
+    MissingUnit,
+    UnknownUnit(InputString),
+    UnsupportedSatPerVB,
+    InvalidSatPerKwu(ParseIntError),
 }
 
 #[cfg(test)]
