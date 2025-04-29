@@ -387,6 +387,7 @@ fn fmt_satoshi_in(
         num_after_decimal_point,
         nb_decimals,
         unit: show_denom.then_some(denom.as_str()),
+        rounding: crate::decimal::Rounding::Round,
     };
     fmt::Display::fmt(&decimal, f)
 }

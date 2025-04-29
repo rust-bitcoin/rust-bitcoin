@@ -10,6 +10,7 @@ pub(crate) struct Decimal<'a> {
     /// Number of decimals
     pub(crate) nb_decimals: u8,
     pub(crate) unit: Option<&'a str>,
+    pub(crate) rounding: Rounding,
 }
 
 impl fmt::Display for Decimal<'_> {
@@ -21,6 +22,7 @@ impl fmt::Display for Decimal<'_> {
             mut num_after_decimal_point,
             nb_decimals,
             unit,
+            rounding,
         } = *self;
 
         // round the number if needed
@@ -32,14 +34,16 @@ impl fmt::Display for Decimal<'_> {
                     10u64.pow(u32::from(nb_decimals) - format_precision as u32); // Cast ok, commented above.
                 let remainder = num_after_decimal_point % rounding_divisor;
                 num_after_decimal_point -= remainder;
-                if remainder / (rounding_divisor / 10) >= 5 {
-                    num_after_decimal_point += rounding_divisor;
-                    // This is basically addition with carry - if the number after decimal point
-                    // gets too large we have to add carry to the number before decimal point
-                    let one_past_largest_nadp = 10u64.pow(u32::from(nb_decimals));
-                    if num_after_decimal_point >= one_past_largest_nadp {
-                        num_before_decimal_point += 1;
-                        num_after_decimal_point -= one_past_largest_nadp;
+                if remainder != 0 && !rounding.is_floor() {
+                    if rounding.is_ceil() || remainder / (rounding_divisor / 10) >= 5 {
+                        num_after_decimal_point += rounding_divisor;
+                        // This is basically addition with carry - if the number after decimal point
+                        // gets too large we have to add carry to the number before decimal point
+                        let one_past_largest_nadp = 10u64.pow(u32::from(nb_decimals));
+                        if num_after_decimal_point >= one_past_largest_nadp {
+                            num_before_decimal_point += 1;
+                            num_after_decimal_point -= one_past_largest_nadp;
+                        }
                     }
                 }
             }
@@ -142,6 +146,23 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
         f.write_char(c)?;
     }
     Ok(())
+}
+
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum Rounding {
+    Floor,
+    Round,
+    Ceil,
+}
+
+impl Rounding {
+    fn is_floor(self) -> bool {
+        matches!(self, Rounding::Floor)
+    }
+
+    fn is_ceil(self) -> bool {
+        matches!(self, Rounding::Ceil)
+    }
 }
 
 #[cfg(test)]
