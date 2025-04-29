@@ -20,6 +20,7 @@ mod verification;
 use core::cmp::Ordering;
 use core::convert::Infallible;
 use core::fmt;
+use core::num::{NonZeroI8, NonZeroU8, NonZeroU64};
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
@@ -360,34 +361,38 @@ fn fmt_satoshi_in(
     let precision = denom.precision();
     // First we normalize the number:
     // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
-    let mut num_after_decimal_point = 0;
-    let mut nb_decimals = 0;
     let mut num_before_decimal_point = satoshi;
     let mut exp = 0;
-    match precision.cmp(&0) {
-        // We add the number of zeroes to the end
-        Ordering::Greater => {
+    let num_after_decimal_point = match NonZeroI8::new(precision) {
+        Some(precision) if i8::from(precision) > 0 => {
             if satoshi > 0 {
-                exp = precision as usize; // Cast ok, checked not negative above.
+                exp = i8::from(precision) as usize; // Cast ok, checked not negative above.
             }
-        }
-        Ordering::Less => {
-            let precision = precision.unsigned_abs();
-            let divisor = 10u64.pow(precision.into());
+            None
+        },
+        Some(precision) => {
+            // TODO(msrv >= 1.64): use unsized_abs
+            let precision = NonZeroU8::new(i8::from(precision).unsigned_abs())
+                .expect("unsigned_abs doesn't produce zero from non-zero value");
+            let divisor = 10u64.pow(u8::from(precision).into());
             num_before_decimal_point = satoshi / divisor;
-            num_after_decimal_point = satoshi % divisor;
-            nb_decimals = precision;
-        }
-        Ordering::Equal => (),
-    }
+            let num_after_decimal_point = satoshi % divisor;
+            NonZeroU64::new(num_after_decimal_point).map(|num_after_decimal_point| {
+                crate::decimal::NumAfterDecimalPoint {
+                    value: num_after_decimal_point,
+                    nb_decimals: precision,
+                    rounding: crate::decimal::Rounding::Round,
+                }
+            })
+        },
+        None => None,
+    };
     let decimal = crate::decimal::Decimal {
         negative,
         num_before_decimal_point,
         exp,
         num_after_decimal_point,
-        nb_decimals,
         unit: show_denom.then_some(denom.as_str()),
-        rounding: crate::decimal::Rounding::Round,
     };
     fmt::Display::fmt(&decimal, f)
 }

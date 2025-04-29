@@ -6,6 +6,7 @@
 pub mod serde;
 
 use core::{fmt, ops};
+use core::num::{NonZeroU8, NonZeroU64};
 use internals::error::InputString;
 
 #[cfg(feature = "arbitrary")]
@@ -337,13 +338,18 @@ impl fmt::Display for Display {
                     negative: false,
                     num_before_decimal_point: self.fee_rate.to_sat_per_kwu(),
                     exp: 0,
-                    num_after_decimal_point: 0,
-                    nb_decimals: 0,
+                    num_after_decimal_point: None,
                     unit: self.display_unit.then_some("sat/kwu"),
-                    rounding: Rounding::Floor,
                 }
             },
             Format::SatPerVB { rounding } => {
+                const NB_DECIMALS: NonZeroU8 = {
+                    match NonZeroU8::new(3) {
+                        Some(value) => value,
+                        None => panic!("the value is 3, which is not 0")
+                    }
+                };
+
                 // sat/vB = sat/kwu / 250
                 // if one has a number x known to have 3 decimal places multiplying by 1000 gives
                 // an integer
@@ -353,14 +359,19 @@ impl fmt::Display for Display {
                 // which is fee_rate * 4 % 1000
                 // `as` will not truncate because of % 1000
                 let thousandths = (u128::from(self.fee_rate.to_sat_per_kwu()) * 4 % 1000) as u64;
+                let num_after_decimal_point = NonZeroU64::new(thousandths).map(|value| {
+                    crate::decimal::NumAfterDecimalPoint {
+                        value,
+                        nb_decimals: NB_DECIMALS,
+                        rounding,
+                    }
+                });
                 Decimal {
                     negative: false,
                     num_before_decimal_point: self.fee_rate.to_sat_per_vb_floor(),
                     exp: 0,
-                    num_after_decimal_point: thousandths,
-                    nb_decimals: 3,
+                    num_after_decimal_point,
                     unit: self.display_unit.then_some("sat/kwu"),
-                    rounding,
                 }
             },
         };
