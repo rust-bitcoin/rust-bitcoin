@@ -13,7 +13,7 @@ use std::panic;
 use ::serde::{Deserialize, Serialize};
 
 use super::*;
-use crate::NumOpResult;
+use crate::{MathOp, NumOpResult};
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
 
@@ -118,6 +118,75 @@ fn from_int_btc() {
     assert_eq!(ssat(-200_000_000), amt);
     let amt = SignedAmount::from_int_btc(-2_i16);
     assert_eq!(ssat(-200_000_000), amt);
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn display_display_struct() {
+    let display_fixed_btc = Display {
+        sats_abs: 100_000_000,
+        is_negative: false,
+        style: DisplayStyle::FixedDenomination {
+            denomination: Denomination::Bitcoin,
+            show_denomination: true,
+        },
+    };
+    assert_eq!(format!("{}", display_fixed_btc), "1 BTC");
+
+    let display_fixed_sat = Display {
+        sats_abs: 1,
+        is_negative: false,
+        style: DisplayStyle::FixedDenomination {
+            denomination: Denomination::Satoshi,
+            show_denomination: true,
+        },
+    };
+    assert_eq!(format!("{}", display_fixed_sat), "1 satoshi");
+
+    let display_dynamic_btc = Display {
+        sats_abs: 100_000_000,
+        is_negative: false,
+        style: DisplayStyle::DynamicDenomination,
+    };
+    assert_eq!(format!("{}", display_dynamic_btc), "1 BTC");
+
+    let display_dynamic_sat = Display {
+        sats_abs: 99_999_999,
+        is_negative: false,
+        style: DisplayStyle::DynamicDenomination,
+    };
+    assert_eq!(format!("{}", display_dynamic_sat), "99999999 satoshi");
+
+    let display_negative_btc = Display {
+        sats_abs: 100_000_000,
+        is_negative: true,
+        style: DisplayStyle::DynamicDenomination,
+    };
+    assert_eq!(format!("{}", display_negative_btc), "-1 BTC");
+
+    let display_negative_sat = Display {
+        sats_abs: 99_999_999,
+        is_negative: true,
+        style: DisplayStyle::DynamicDenomination,
+    };
+    assert_eq!(format!("{}", display_negative_sat), "-99999999 satoshi");
+}
+
+#[test]
+#[cfg(feature = "alloc")]
+fn display_math_op() {
+    let cases = [
+        (MathOp::Add, "add"),
+        (MathOp::Sub, "sub"),
+        (MathOp::Mul, "mul"),
+        (MathOp::Div, "div"),
+        (MathOp::Rem, "rem"),
+        (MathOp::Neg, "neg"),
+    ];
+
+    for (op, expected) in cases {
+        assert_eq!(format!("{}", op), expected);
+    }
 }
 
 #[test]

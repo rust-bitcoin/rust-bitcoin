@@ -503,4 +503,15 @@ mod tests {
         serde_round_trip!(Time::MIN);
         serde_round_trip!(Time::MAX);
     }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn locktime_unit_display() {
+        use alloc::format;
+        let blocks = LockTimeUnit::Blocks;
+        let seconds = LockTimeUnit::Seconds;
+
+        assert_eq!(format!("{}", blocks), "expected lock-by-blockheight (must be < 500000000)");
+        assert_eq!(format!("{}", seconds), "expected lock-by-blocktime (must be >= 500000000)");
+    }
 }
