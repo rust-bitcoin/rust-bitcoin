@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Checks semver compatibility between the `--no-features` and `all-features`.
-# This is important since it tests for the presence non-additive cargo features.
+# This is important since it tests for the presence of non-additive cargo features.
 #
 # Under the hood uses cargo semver-checks to check for breaking changes.
 # We cannot use it directly since it only supports checking against published
@@ -40,7 +40,7 @@ main() {
     generate_json_files_all_features "bitcoin-io"
     generate_json_files_no_default_features "bitcoin-io"
 
-    # Check for API semver non-addivite cargo features on all the generated JSON files above.
+    # Check for API semver non-additive cargo features on all the generated JSON files above.
     run_cargo_semver_check "bitcoin"
     run_cargo_semver_check "base58ck"
     run_cargo_semver_check "bitcoin_hashes"
