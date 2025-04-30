@@ -748,4 +748,19 @@ mod tests {
         assert!(parse_vout("01").is_err()); // Leading zero not allowed
         assert!(parse_vout("+1").is_err()); // Non digits not allowed
     }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    #[cfg(feature = "hex")]
+    fn outpoint_display_roundtrip() {
+        let outpoint_str = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20:1";
+        let outpoint: OutPoint = outpoint_str.parse().unwrap();
+        assert_eq!(format!("{}", outpoint), outpoint_str);
+    }
+
+    #[test]
+    fn version_display() {
+        let version = Version(123);
+        assert_eq!(format!("{}", version), "123");
+    }
 }
