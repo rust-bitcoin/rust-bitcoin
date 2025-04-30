@@ -148,11 +148,11 @@ impl ChildNumber {
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
+    pub fn from_normal_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
         if index & (1 << 31) == 0 {
             Ok(ChildNumber::Normal { index })
         } else {
-            Err(Error::InvalidChildNumber(index))
+            Err(IndexOutOfRangeError { index })
         }
     }
 
@@ -160,11 +160,11 @@ impl ChildNumber {
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
+    pub fn from_hardened_idx(index: u32) -> Result<Self, IndexOutOfRangeError> {
         if index & (1 << 31) == 0 {
             Ok(ChildNumber::Hardened { index })
         } else {
-            Err(Error::InvalidChildNumber(index))
+            Err(IndexOutOfRangeError { index })
         }
     }
 
@@ -184,7 +184,10 @@ impl ChildNumber {
     }
 
     /// Returns the child number that is a single increment from this one.
-    pub fn increment(self) -> Result<ChildNumber, Error> {
+    pub fn increment(self) -> Result<ChildNumber, IndexOutOfRangeError> {
+        // Bare addition in this function is okay, because we have an invariant that
+        // `index` is always within [0, 2^31 - 1]. FIXME this is not actually an
+        // invariant because the fields are public.
         match self {
             ChildNumber::Normal { index: idx } => ChildNumber::from_normal_idx(idx + 1),
             ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
@@ -225,16 +228,18 @@ impl fmt::Display for ChildNumber {
 }
 
 impl FromStr for ChildNumber {
-    type Err = Error;
+    type Err = ParseChildNumberError;
 
-    fn from_str(inp: &str) -> Result<ChildNumber, Error> {
+    fn from_str(inp: &str) -> Result<Self, Self::Err> {
         let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
         Ok(if is_hardened {
             ChildNumber::from_hardened_idx(
-                inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?,
-            )?
+                inp[0..inp.len() - 1].parse().map_err(ParseChildNumberError::ParseInt)?,
+            )
+            .map_err(ParseChildNumberError::IndexOutOfRange)?
         } else {
-            ChildNumber::from_normal_idx(inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
+            ChildNumber::from_normal_idx(inp.parse().map_err(ParseChildNumberError::ParseInt)?)
+                .map_err(ParseChildNumberError::IndexOutOfRange)?
         })
     }
 }
@@ -267,7 +272,7 @@ impl serde::Serialize for ChildNumber {
 /// derivation path
 pub trait IntoDerivationPath {
     /// Converts a given type into a [`DerivationPath`] with possible error
-    fn into_derivation_path(self) -> Result<DerivationPath, Error>;
+    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError>;
 }
 
 /// A BIP-32 derivation path.
@@ -295,15 +300,17 @@ impl<T> IntoDerivationPath for T
 where
     T: Into<DerivationPath>,
 {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> { Ok(self.into()) }
+    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> {
+        Ok(self.into())
+    }
 }
 
 impl IntoDerivationPath for String {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
+    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> { self.parse() }
 }
 
 impl IntoDerivationPath for &'_ str {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
+    fn into_derivation_path(self) -> Result<DerivationPath, ParseChildNumberError> { self.parse() }
 }
 
 impl From<Vec<ChildNumber>> for DerivationPath {
@@ -338,9 +345,9 @@ impl AsRef<[ChildNumber]> for DerivationPath {
 }
 
 impl FromStr for DerivationPath {
-    type Err = Error;
+    type Err = ParseChildNumberError;
 
-    fn from_str(path: &str) -> Result<DerivationPath, Error> {
+    fn from_str(path: &str) -> Result<Self, Self::Err> {
         if path.is_empty() || path == "m" || path == "m/" {
             return Ok(vec![].into());
         }
@@ -348,7 +355,7 @@ impl FromStr for DerivationPath {
         let path = path.strip_prefix("m/").unwrap_or(path);
 
         let parts = path.split('/');
-        let ret: Result<Vec<ChildNumber>, Error> = parts.map(str::parse).collect();
+        let ret: Result<Vec<ChildNumber>, _> = parts.map(str::parse).collect();
         Ok(DerivationPath(ret?))
     }
 }
@@ -496,27 +503,15 @@ pub type KeySource = (Fingerprint, DerivationPath);
 /// A BIP32 error
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Error {
-    /// A pk->pk derivation was attempted on a hardened key
-    CannotDeriveFromHardenedKey,
+pub enum ParseError {
     /// A secp256k1 error occurred
     Secp256k1(secp256k1::Error),
-    /// A child number was provided that was out of range
-    InvalidChildNumber(u32),
-    /// Invalid childnumber format.
-    InvalidChildNumberFormat,
-    /// Invalid derivation path format.
-    InvalidDerivationPathFormat,
     /// Unknown version magic bytes
     UnknownVersion([u8; 4]),
     /// Encoded extended key data has wrong length
     WrongExtendedKeyLength(usize),
     /// Base58 encoding error
     Base58(base58::Error),
-    /// Hexadecimal decoding error
-    Hex(hex::HexToArrayError),
-    /// `PublicKey` hex should be 66 or 130 digits long.
-    InvalidPublicKeyHexLength(usize),
     /// Base58 decoded data was an invalid length.
     InvalidBase58PayloadLength(InvalidBase58PayloadLengthError),
     /// Invalid private key prefix (byte 45 must be 0)
@@ -527,29 +522,20 @@ pub enum Error {
     NonZeroChildNumberForMasterKey,
 }
 
-impl From<Infallible> for Error {
+impl From<Infallible> for ParseError {
     fn from(never: Infallible) -> Self { match never {} }
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use ParseError::*;
 
         match *self {
-            CannotDeriveFromHardenedKey =>
-                f.write_str("cannot derive hardened key from public key"),
             Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-            InvalidChildNumber(ref n) =>
-                write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
-            InvalidChildNumberFormat => f.write_str("invalid child number format"),
-            InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
             WrongExtendedKeyLength(ref len) =>
                 write!(f, "encoded extended key data has wrong length {}", len),
             Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-            Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
-            InvalidPublicKeyHexLength(got) =>
-                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
             InvalidPrivateKeyPrefix =>
                 f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-32"),
@@ -561,22 +547,15 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+        use ParseError::*;
 
         match *self {
             Secp256k1(ref e) => Some(e),
             Base58(ref e) => Some(e),
-            Hex(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
-            CannotDeriveFromHardenedKey
-            | InvalidChildNumber(_)
-            | InvalidChildNumberFormat
-            | InvalidDerivationPathFormat
-            | UnknownVersion(_)
-            | WrongExtendedKeyLength(_)
-            | InvalidPublicKeyHexLength(_) => None,
+            UnknownVersion(_) | WrongExtendedKeyLength(_) => None,
             InvalidPrivateKeyPrefix => None,
             NonZeroParentFingerprintForMasterKey => None,
             NonZeroChildNumberForMasterKey => None,
@@ -584,35 +563,121 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
+impl From<secp256k1::Error> for ParseError {
+    fn from(e: secp256k1::Error) -> ParseError { ParseError::Secp256k1(e) }
 }
 
-impl From<base58::Error> for Error {
-    fn from(err: base58::Error) -> Self { Error::Base58(err) }
+impl From<base58::Error> for ParseError {
+    fn from(err: base58::Error) -> Self { ParseError::Base58(err) }
 }
 
-impl From<InvalidBase58PayloadLengthError> for Error {
-    fn from(e: InvalidBase58PayloadLengthError) -> Error { Self::InvalidBase58PayloadLength(e) }
+impl From<InvalidBase58PayloadLengthError> for ParseError {
+    fn from(e: InvalidBase58PayloadLengthError) -> ParseError {
+        Self::InvalidBase58PayloadLength(e)
+    }
+}
+
+/// A BIP32 error
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum DerivationError {
+    /// Attempted to derive a hardened child from an xpub.
+    ///
+    /// You can only derive hardened children from xprivs.
+    CannotDeriveHardenedChild,
+    /// Attempted to derive a child of depth 256 or higher.
+    ///
+    /// There is no way to encode such xkeys.
+    MaximumDepthExceeded,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DerivationError {}
+
+impl fmt::Display for DerivationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::CannotDeriveHardenedChild =>
+                f.write_str("cannot derive hardened child of public key"),
+            Self::MaximumDepthExceeded => f.write_str("cannot derive child of depth 256 or higher"),
+        }
+    }
+}
+
+/// Out-of-range index when constructing a child number.
+///
+/// *Indices* are always in the range [0, 2^31 - 1]. Normal child numbers have the
+/// same range, while hardened child numbers lie in the range [2^31, 2^32 - 1].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct IndexOutOfRangeError {
+    /// The index that was out of range for a child number.
+    pub index: u32,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IndexOutOfRangeError {}
+
+impl From<Infallible> for IndexOutOfRangeError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+impl fmt::Display for IndexOutOfRangeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "index {} out of range [0, 2^31 - 1] (do you have an hardened child number, rather than an index?)", self.index)
+    }
+}
+
+/// Error parsing a child number.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParseChildNumberError {
+    /// Parsed the child number as an integer, but the integer was out of range.
+    IndexOutOfRange(IndexOutOfRangeError),
+    /// Failed to parse the child number as an integer.
+    ParseInt(core::num::ParseIntError),
+}
+
+impl From<Infallible> for ParseChildNumberError {
+    fn from(never: Infallible) -> Self { match never {} }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseChildNumberError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            Self::IndexOutOfRange(ref e) => Some(e),
+            Self::ParseInt(ref e) => Some(e),
+        }
+    }
+}
+
+impl fmt::Display for ParseChildNumberError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Self::IndexOutOfRange(ref e) => e.fmt(f),
+            Self::ParseInt(ref e) => e.fmt(f),
+        }
+    }
 }
 
 impl Xpriv {
     /// Constructs a new master key from a seed value
-    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Result<Xpriv, Error> {
+    pub fn new_master(network: impl Into<NetworkKind>, seed: &[u8]) -> Xpriv {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(b"Bitcoin seed");
         engine.input(seed);
         let hmac = engine.finalize();
 
-        Ok(Xpriv {
+        Xpriv {
             network: network.into(),
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::ZERO_NORMAL,
             private_key: secp256k1::SecretKey::from_byte_array(
                 hmac.as_byte_array().split_array::<32, 32>().0,
-            )?,
+            )
+            .expect("cryptographically unreachable"),
             chain_code: ChainCode::from_hmac(hmac),
-        })
+        }
     }
 
     /// Constructs a new ECDSA compressed private key matching internal secret key representation.
@@ -644,7 +709,7 @@ impl Xpriv {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Xpriv {
+    ) -> Result<Xpriv, DerivationError> {
         self.derive_xpriv(secp, path)
     }
 
@@ -655,16 +720,20 @@ impl Xpriv {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Xpriv {
+    ) -> Result<Xpriv, DerivationError> {
         let mut sk: Xpriv = *self;
         for cnum in path.as_ref() {
-            sk = sk.ckd_priv(secp, *cnum)
+            sk = sk.ckd_priv(secp, *cnum)?;
         }
-        sk
+        Ok(sk)
     }
 
     /// Private->Private child key derivation
-    fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Xpriv {
+    fn ckd_priv<C: secp256k1::Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        i: ChildNumber,
+    ) -> Result<Xpriv, DerivationError> {
         let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
@@ -688,30 +757,30 @@ impl Xpriv {
         let tweaked =
             sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
-        Xpriv {
+        Ok(Xpriv {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
             chain_code: ChainCode::from_hmac(hmac),
-        }
+        })
     }
 
     /// Decoding extended private key from binary data according to BIP 32
-    pub fn decode(data: &[u8]) -> Result<Xpriv, Error> {
+    pub fn decode(data: &[u8]) -> Result<Xpriv, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PRIVATE => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PRIVATE => NetworkKind::Test,
-            unknown => return Err(Error::UnknownVersion(unknown)),
+            unknown => return Err(ParseError::UnknownVersion(unknown)),
         };
 
         let (&zero, private_key) = key.split_first();
         if zero != 0 {
-            return Err(Error::InvalidPrivateKeyPrefix);
+            return Err(ParseError::InvalidPrivateKeyPrefix);
         }
 
         Ok(Xpriv {
@@ -794,7 +863,7 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         self.derive_xpub(secp, path)
     }
 
@@ -805,7 +874,7 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         let mut pk: Xpub = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(secp, *cnum)?
@@ -817,9 +886,9 @@ impl Xpub {
     pub fn ckd_pub_tweak(
         &self,
         i: ChildNumber,
-    ) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
+    ) -> Result<(secp256k1::SecretKey, ChainCode), DerivationError> {
         match i {
-            ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
+            ChildNumber::Hardened { .. } => Err(DerivationError::CannotDeriveHardenedChild),
             ChildNumber::Normal { index: n } => {
                 let mut engine = HmacEngine::<sha512::HashEngine>::new(&self.chain_code[..]);
                 engine.input(&self.public_key.serialize()[..]);
@@ -828,7 +897,8 @@ impl Xpub {
                 let hmac = engine.finalize();
                 let private_key = secp256k1::SecretKey::from_byte_array(
                     hmac.as_byte_array().split_array::<32, 32>().0,
-                )?;
+                )
+                .expect("cryptographically unreachable");
                 let chain_code = ChainCode::from_hmac(hmac);
                 Ok((private_key, chain_code))
             }
@@ -840,13 +910,14 @@ impl Xpub {
         &self,
         secp: &Secp256k1<C>,
         i: ChildNumber,
-    ) -> Result<Xpub, Error> {
+    ) -> Result<Xpub, DerivationError> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
-        let tweaked = self.public_key.add_exp_tweak(secp, &sk.into())?;
+        let tweaked =
+            self.public_key.add_exp_tweak(secp, &sk.into()).expect("cryptographically unreachable");
 
         Ok(Xpub {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(DerivationError::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: tweaked,
@@ -855,14 +926,14 @@ impl Xpub {
     }
 
     /// Decoding extended public key from binary data according to BIP 32
-    pub fn decode(data: &[u8]) -> Result<Xpub, Error> {
+    pub fn decode(data: &[u8]) -> Result<Xpub, ParseError> {
         let Common { network, depth, parent_fingerprint, child_number, chain_code, key } =
             Common::decode(data)?;
 
         let network = match network {
             VERSION_BYTES_MAINNET_PUBLIC => NetworkKind::Main,
             VERSION_BYTES_TESTNETS_PUBLIC => NetworkKind::Test,
-            unknown => return Err(Error::UnknownVersion(unknown)),
+            unknown => return Err(ParseError::UnknownVersion(unknown)),
         };
 
         Ok(Xpub {
@@ -908,9 +979,9 @@ impl fmt::Display for Xpriv {
 }
 
 impl FromStr for Xpriv {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(inp: &str) -> Result<Xpriv, Error> {
+    fn from_str(inp: &str) -> Result<Xpriv, ParseError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
@@ -928,9 +999,9 @@ impl fmt::Display for Xpub {
 }
 
 impl FromStr for Xpub {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(inp: &str) -> Result<Xpub, Error> {
+    fn from_str(inp: &str) -> Result<Xpub, ParseError> {
         let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
@@ -986,9 +1057,9 @@ struct Common {
 }
 
 impl Common {
-    fn decode(data: &[u8]) -> Result<Self, Error> {
+    fn decode(data: &[u8]) -> Result<Self, ParseError> {
         let data: &[u8; 78] =
-            data.try_into().map_err(|_| Error::WrongExtendedKeyLength(data.len()))?;
+            data.try_into().map_err(|_| ParseError::WrongExtendedKeyLength(data.len()))?;
 
         let (&network, data) = data.split_array::<4, 74>();
         let (&depth, data) = data.split_first::<73>();
@@ -998,11 +1069,11 @@ impl Common {
 
         if depth == 0 {
             if parent_fingerprint != [0u8; 4] {
-                return Err(Error::NonZeroParentFingerprintForMasterKey);
+                return Err(ParseError::NonZeroParentFingerprintForMasterKey);
             }
 
             if child_number != [0u8; 4] {
-                return Err(Error::NonZeroChildNumberForMasterKey);
+                return Err(ParseError::NonZeroChildNumberForMasterKey);
             }
         }
 
@@ -1028,13 +1099,25 @@ mod tests {
 
     #[test]
     fn parse_derivation_path() {
-        assert_eq!("n/0'/0".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
-        assert_eq!("4/m/5".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
-        assert_eq!("//3/0'".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
-        assert_eq!("0h/0x".parse::<DerivationPath>(), Err(Error::InvalidChildNumberFormat));
+        assert!(matches!(
+            "n/0'/0".parse::<DerivationPath>(),
+            Err(ParseChildNumberError::ParseInt(..)),
+        ));
+        assert!(matches!(
+            "4/m/5".parse::<DerivationPath>(),
+            Err(ParseChildNumberError::ParseInt(..)),
+        ));
+        assert!(matches!(
+            "//3/0'".parse::<DerivationPath>(),
+            Err(ParseChildNumberError::ParseInt(..)),
+        ));
+        assert!(matches!(
+            "0h/0x".parse::<DerivationPath>(),
+            Err(ParseChildNumberError::ParseInt(..)),
+        ));
         assert_eq!(
             "2147483648".parse::<DerivationPath>(),
-            Err(Error::InvalidChildNumber(2147483648))
+            Err(ParseChildNumberError::IndexOutOfRange(IndexOutOfRangeError { index: 2147483648 })),
         );
 
         assert_eq!(DerivationPath::master(), "".parse::<DerivationPath>().unwrap());
@@ -1108,23 +1191,26 @@ mod tests {
         expected_sk: &str,
         expected_pk: &str,
     ) {
-        let mut sk = Xpriv::new_master(network, seed).unwrap();
+        let mut sk = Xpriv::new_master(network, seed);
         let mut pk = Xpub::from_xpriv(secp, &sk);
 
         // Check derivation convenience method for Xpriv
-        assert_eq!(&sk.derive_xpriv(secp, &path).to_string()[..], expected_sk);
+        assert_eq!(&sk.derive_xpriv(secp, &path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for Xpub, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(pk.derive_xpub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
+            assert_eq!(
+                pk.derive_xpub(secp, &path),
+                Err(DerivationError::CannotDeriveHardenedChild)
+            );
         } else {
             assert_eq!(&pk.derive_xpub(secp, &path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.0.iter() {
-            sk = sk.ckd_priv(secp, num);
+            sk = sk.ckd_priv(secp, num).unwrap();
             match num {
                 Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
@@ -1132,7 +1218,10 @@ mod tests {
                     assert_eq!(pk, pk2);
                 }
                 Hardened { .. } => {
-                    assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
+                    assert_eq!(
+                        pk.ckd_pub(secp, num),
+                        Err(DerivationError::CannotDeriveHardenedChild)
+                    );
                     pk = Xpub::from_xpriv(secp, &sk);
                 }
             }
@@ -1158,9 +1247,9 @@ mod tests {
 
         let max = (1 << 31) - 1;
         let cn = ChildNumber::from_normal_idx(max).unwrap();
-        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
+        assert_eq!(cn.increment(), Err(IndexOutOfRangeError { index: 1 << 31 }),);
         let cn = ChildNumber::from_hardened_idx(max).unwrap();
-        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
+        assert_eq!(cn.increment(), Err(IndexOutOfRangeError { index: 1 << 31 }),);
 
         let cn = ChildNumber::from_normal_idx(350).unwrap();
         let path = "42'".parse::<DerivationPath>().unwrap();
@@ -1290,7 +1379,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::InvalidPrivateKeyPrefix) => {}
+            Err(ParseError::InvalidPrivateKeyPrefix) => {}
             _ => panic!("Expected InvalidPrivateKeyPrefix error, got {:?}", result),
         }
     }
@@ -1301,7 +1390,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::NonZeroChildNumberForMasterKey) => {}
+            Err(ParseError::NonZeroChildNumberForMasterKey) => {}
             _ => panic!("Expected NonZeroChildNumberForMasterKey error, got {:?}", result),
         }
     }
@@ -1312,7 +1401,7 @@ mod tests {
         assert!(result.is_err());
 
         match result {
-            Err(Error::NonZeroParentFingerprintForMasterKey) => {}
+            Err(ParseError::NonZeroParentFingerprintForMasterKey) => {}
             _ => panic!("Expected NonZeroParentFingerprintForMasterKey error, got {:?}", result),
         }
     }

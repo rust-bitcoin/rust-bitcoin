@@ -33,12 +33,12 @@ fn main() {
     let secp = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
 
     // calculate root key from seed
-    let root = Xpriv::new_master(NetworkKind::Main, &seed).unwrap();
+    let root = Xpriv::new_master(NetworkKind::Main, &seed);
     println!("Root key: {}", root);
 
     // derive child xpub
     let path = "84h/0h/0h".parse::<DerivationPath>().unwrap();
-    let child = root.derive_xpriv(&secp, &path);
+    let child = root.derive_xpriv(&secp, &path).expect("only deriving three steps");
     println!("Child at {}: {}", path, child);
     let xpub = Xpub::from_xpriv(&secp, &child);
     println!("Public key at {}: {}", path, xpub);

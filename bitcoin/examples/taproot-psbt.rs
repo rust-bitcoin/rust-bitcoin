@@ -299,7 +299,7 @@ fn generate_bip86_key_spend_tx(
                 .ok_or("missing Taproot key origin")?;
 
             let secret_key =
-                master_xpriv.derive_xpriv(secp, &derivation_path).to_private_key().inner;
+                master_xpriv.derive_xpriv(secp, &derivation_path)?.to_private_key().inner;
             sign_psbt_taproot(
                 secret_key,
                 input.tap_internal_key.unwrap(),
@@ -393,8 +393,11 @@ impl BenefactorWallet {
         // We use some other derivation path in this example for our inheritance protocol. The important thing is to ensure
         // that we use an unhardened path so we can make use of xpubs.
         let derivation_path = format!("101/1/0/0/{}", self.next).parse::<DerivationPath>()?;
-        let internal_keypair =
-            self.master_xpriv.derive_xpriv(&self.secp, &derivation_path).to_keypair(&self.secp);
+        let internal_keypair = self
+            .master_xpriv
+            .derive_xpriv(&self.secp, &derivation_path)
+            .expect("derivation path is short")
+            .to_keypair(&self.secp);
         let beneficiary_key =
             self.beneficiary_xpub.derive_xpub(&self.secp, &derivation_path)?.to_x_only_public_key();
 
@@ -486,6 +489,7 @@ impl BenefactorWallet {
             let new_internal_keypair = self
                 .master_xpriv
                 .derive_xpriv(&self.secp, &new_derivation_path)
+                .expect("derivation path is short")
                 .to_keypair(&self.secp);
             let beneficiary_key = self
                 .beneficiary_xpub
@@ -538,6 +542,7 @@ impl BenefactorWallet {
                 let secret_key = self
                     .master_xpriv
                     .derive_xpriv(&self.secp, &derivation_path)
+                    .expect("derivation path is short")
                     .to_private_key()
                     .inner;
                 sign_psbt_taproot(
@@ -660,8 +665,11 @@ impl BeneficiaryWallet {
         for (x_only_pubkey, (leaf_hashes, (_, derivation_path))) in
             &psbt.inputs[0].tap_key_origins.clone()
         {
-            let secret_key =
-                self.master_xpriv.derive_xpriv(&self.secp, &derivation_path).to_private_key().inner;
+            let secret_key = self
+                .master_xpriv
+                .derive_xpriv(&self.secp, &derivation_path)?
+                .to_private_key()
+                .inner;
             for lh in leaf_hashes {
                 let sighash_type = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
