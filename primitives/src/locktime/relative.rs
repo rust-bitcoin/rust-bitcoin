@@ -213,41 +213,58 @@ impl LockTime {
     pub const fn is_block_time(self) -> bool { !self.is_block_height() }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by the given chain state.
+    ///
+    /// This function returns `true` if a transaction with this lock can be included in the next
+    /// block.
+    ///
     /// # Examples
     ///
-    /// ```rust
-    /// # use bitcoin_primitives::locktime::relative::Height;
-    /// # use bitcoin_primitives::relative::Time;
-    /// # use units::mtp_height::MtpAndHeight;
-    /// # use bitcoin_primitives::BlockHeight;
-    /// # use bitcoin_primitives::relative::LockTime;
-    /// # use bitcoin_primitives::BlockTime;
+    /// ```ignore
+    /// let chain = list_of_data_structures_that_encapsulates_the_chain();
     ///
-    /// fn generate_timestamps(start: u32, step: u16) -> [BlockTime; 11] {
-    ///     let mut timestamps = [BlockTime::from_u32(0); 11];
-    ///     for (i, ts) in timestamps.iter_mut().enumerate() {
-    ///         *ts = BlockTime::from_u32(start.saturating_sub((step * i as u16).into()));
-    ///     }
-    ///     timestamps
-    /// }
-    /// // time extracted from BlockHeader
-    /// let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
-    /// let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
+    /// // Get the MTP and height for block that included the UTXO encumbered by this lock.
+    /// let block = chain.get_block_for_utxo(utxo)?; // Pointer to the block that mined the UXTO.
+    /// let height = block.height();
+    /// let timestamps = mtp(block.previous_block());
+    /// let utxo_mined_at = MtpAndHeight::new(height, timestamps);
     ///
-    /// let current_height = BlockHeight::from_u32(100);
-    /// let utxo_height = BlockHeight::from_u32(80);
+    /// // And for the chain tip.
+    /// let height = chain.tip().height();
+    /// let timestamps = mtp(chain);
+    /// let chain_tip = MtpAndHeight::new(height, timestamps);
     ///
-    /// let chain_tip = MtpAndHeight::new(current_height, timestamps);
-    /// let utxo_mined_at = MtpAndHeight::new(utxo_height, utxo_timestamps);
     /// let locktime = LockTime::Time(Time::from_512_second_intervals(10));
-    ///
-    /// // Check if locktime is satisfied
-    /// assert!(locktime.is_satisfied_by(chain_tip, utxo_mined_at));
+    /// if locktime.is_satisfied_by(chain_tip, utxo_mined_at) {
+    ///     // do something
+    /// }
     /// ```
-    pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
+    pub fn is_satisfied(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
         match self {
-            LockTime::Blocks(blocks) => blocks.is_satisfied_by(chain_tip, utxo_mined_at),
-            LockTime::Time(time) => time.is_satisfied_by(chain_tip, utxo_mined_at),
+            LockTime::Blocks(_) => {
+                match chain_tip.to_height().to_u32().checked_sub(utxo_mined_at.to_height().to_u32()) {
+                    Some(delta) => {
+                        match u16::try_from(delta) {
+                            Ok(delta) => {
+                                let height = Height::from_height(delta as u16); // cast ok, checked above.
+                                self.is_satisfied_by_height(height).expect("lock type check by match statement")
+                            }
+                            Err(_) => false
+                        }
+                    },
+                    None => false,
+                }
+            },
+            LockTime::Time(_) => {
+                match chain_tip.to_mtp().to_u32().checked_sub(utxo_mined_at.to_mtp().to_u32()) {
+                    Some(delta) => {
+                        match Time::from_seconds_floor(delta) {
+                            Ok(time) => self.is_satisfied_by_time(time).expect("lock type check by match statement"),
+                            Err(_) => false
+                        }
+                    },
+                    None => false,
+                }
+            }
         }
     }
 
@@ -694,8 +711,12 @@ mod tests {
         let lock1 = LockTime::Blocks(Height::from(10));
         assert!(lock1.is_satisfied_by(chain_tip, utxo_mined_at));
 
+        // 20 blocks have elapsed already so on the next one 21 will have elapsed.
         let lock2 = LockTime::Blocks(Height::from(21));
-        assert!(!lock2.is_satisfied_by(chain_tip, utxo_mined_at));
+        assert!(lock2.is_satisfied_by(chain_tip, utxo_mined_at));
+
+        let lock2a = LockTime::Blocks(Height::from(22));
+        assert!(!lock2a.is_satisfied_by(chain_tip, utxo_mined_at));
 
         let lock3 = LockTime::Time(Time::from_512_second_intervals(10));
         assert!(lock3.is_satisfied_by(chain_tip, utxo_mined_at));
