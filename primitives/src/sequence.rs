@@ -70,7 +70,7 @@ impl Sequence {
     /// BIP-68 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
     /// BIP-68 relative lock time type flag mask.
-    const LOCK_TYPE_MASK: u32 = 0x0040_0000;
+    pub(super) const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
@@ -263,8 +263,14 @@ impl<'a> Arbitrary<'a> for Sequence {
             3 => Ok(Sequence::ENABLE_LOCKTIME_AND_RBF),
             4 => Ok(Sequence::from_consensus(relative::Height::MIN.to_consensus_u32())),
             5 => Ok(Sequence::from_consensus(relative::Height::MAX.to_consensus_u32())),
-            6 => Ok(Sequence::from_consensus(relative::MtpInterval::MIN.to_consensus_u32())),
-            7 => Ok(Sequence::from_consensus(relative::MtpInterval::MAX.to_consensus_u32())),
+            6 => Ok(Sequence::from_consensus(
+                Sequence::LOCK_TYPE_MASK
+                    | u32::from(relative::MtpInterval::MIN.to_512_second_intervals()),
+            )),
+            7 => Ok(Sequence::from_consensus(
+                Sequence::LOCK_TYPE_MASK
+                    | u32::from(relative::MtpInterval::MAX.to_512_second_intervals()),
+            )),
             _ => Ok(Sequence(u.arbitrary()?)),
         }
     }

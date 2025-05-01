@@ -101,6 +101,11 @@ impl MtpInterval {
     #[inline]
     pub const fn from_512_second_intervals(intervals: u16) -> Self { MtpInterval(intervals) }
 
+    /// Express the [`MtpInterval`] as an integer number of 512-second intervals.
+    #[inline]
+    #[must_use]
+    pub const fn to_512_second_intervals(self) -> u16 { self.0 }
+
     /// Constructs a new [`MtpInterval`] from seconds, converting the seconds into 512 second interval with
     /// truncating division.
     ///
@@ -138,11 +143,16 @@ impl MtpInterval {
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]
+    #[deprecated(since = "TBD", note = "use `to_512_second_intervals` instead")]
+    #[doc(hidden)]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[inline]
+    #[deprecated(
+        since = "TBD",
+        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
+    )]
     pub const fn to_consensus_u32(self) -> u32 {
         (1u32 << 22) | self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
     }
@@ -159,7 +169,7 @@ impl MtpInterval {
     /// - `true` if the relative‐time lock has expired by the tip’s MTP
     /// - `false` if the lock has not yet expired by the tip’s MTP
     pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
-        match u32::from(self.value()).checked_mul(512) {
+        match u32::from(self.to_512_second_intervals()).checked_mul(512) {
             Some(seconds) => match seconds.checked_add(utxo_mined_at.to_mtp().to_u32()) {
                 Some(required_seconds) => chain_tip.to_mtp().to_u32() >= required_seconds,
                 None => false,
@@ -245,6 +255,7 @@ mod tests {
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
 
     #[test]
+    #[allow(deprecated_in_future)]
     fn sanity_check() {
         assert_eq!(Height::MAX.to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(MtpInterval::from_512_second_intervals(100).value(), 100u16);

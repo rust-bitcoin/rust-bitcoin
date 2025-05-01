@@ -129,7 +129,8 @@ impl LockTime {
     pub fn to_consensus_u32(self) -> u32 {
         match self {
             LockTime::Blocks(ref h) => h.to_consensus_u32(),
-            LockTime::Time(ref t) => t.to_consensus_u32(),
+            LockTime::Time(ref t) =>
+                Sequence::LOCK_TYPE_MASK | u32::from(t.to_512_second_intervals()),
         }
     }
 
@@ -289,8 +290,8 @@ impl LockTime {
         use LockTime as L;
 
         match (self, other) {
-            (L::Blocks(this), L::Blocks(other)) => this.value() <= other.value(),
-            (L::Time(this), L::Time(other)) => this.value() <= other.value(),
+            (L::Blocks(this), L::Blocks(other)) => this <= other,
+            (L::Time(this), L::Time(other)) => this <= other,
             _ => false, // Not the same units.
         }
     }
@@ -371,7 +372,7 @@ impl LockTime {
         use LockTime as L;
 
         match self {
-            L::Time(ref t) => Ok(t.value() <= time.value()),
+            L::Time(ref t) => Ok(t.to_512_second_intervals() <= time.to_512_second_intervals()),
             L::Blocks(height) => Err(IncompatibleTimeError { time, height }),
         }
     }
