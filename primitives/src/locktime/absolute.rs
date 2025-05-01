@@ -16,7 +16,11 @@ use crate::{absolute, Transaction};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, ParseTimeError, Time, LOCK_TIME_THRESHOLD};
+pub use units::locktime::absolute::{ConversionError, Height, ParseHeightError, ParseTimeError, Mtp, LOCK_TIME_THRESHOLD};
+
+#[deprecated(since = "TBD", note = "use `Mtp` instead")]
+#[doc(hidden)]
+pub type Time = Mtp;
 
 /// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
 /// since epoch).
@@ -79,7 +83,7 @@ pub enum LockTime {
     /// assert!(n.is_block_time());
     /// assert_eq!(n.to_consensus_u32(), seconds);
     /// ```
-    Seconds(Time),
+    Seconds(Mtp),
 }
 
 impl LockTime {
@@ -143,7 +147,7 @@ impl LockTime {
         if units::locktime::absolute::is_block_height(n) {
             Self::Blocks(Height::from_consensus(n).expect("n is valid"))
         } else {
-            Self::Seconds(Time::from_consensus(n).expect("n is valid"))
+            Self::Seconds(Mtp::from_consensus(n).expect("n is valid"))
         }
     }
 
@@ -192,7 +196,7 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn from_time(n: u32) -> Result<Self, ConversionError> {
-        let time = Time::from_consensus(n)?;
+        let time = Mtp::from_consensus(n)?;
         Ok(LockTime::Seconds(time))
     }
 
@@ -229,7 +233,7 @@ impl LockTime {
     /// # use bitcoin_primitives::absolute;
     /// // Can be implemented if block chain data is available.
     /// fn get_height() -> absolute::Height { todo!("return the current block height") }
-    /// fn get_time() -> absolute::Time { todo!("return the current block time") }
+    /// fn get_time() -> absolute::Mtp { todo!("return the current block time") }
     ///
     /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
     /// if n.is_satisfied_by(get_height(), get_time()) {
@@ -237,7 +241,7 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
-    pub fn is_satisfied_by(self, height: Height, time: Time) -> bool {
+    pub fn is_satisfied_by(self, height: Height, time: Mtp) -> bool {
         use LockTime as L;
 
         match self {
@@ -317,9 +321,9 @@ impl From<Height> for LockTime {
     fn from(h: Height) -> Self { LockTime::Blocks(h) }
 }
 
-impl From<Time> for LockTime {
+impl From<Mtp> for LockTime {
     #[inline]
-    fn from(t: Time) -> Self { LockTime::Seconds(t) }
+    fn from(t: Mtp) -> Self { LockTime::Seconds(t) }
 }
 
 impl fmt::Debug for LockTime {
@@ -496,7 +500,7 @@ mod tests {
         let lock_by_height = LockTime::from(height);
 
         let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
-        let time = Time::from_consensus(t).unwrap();
+        let time = Mtp::from_consensus(t).unwrap();
 
         assert!(!lock_by_height.is_satisfied_by(height_below, time));
         assert!(lock_by_height.is_satisfied_by(height, time));
@@ -505,9 +509,9 @@ mod tests {
 
     #[test]
     fn satisfied_by_time() {
-        let time_before = Time::from_consensus(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
-        let time = Time::from_consensus(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
-        let time_after = Time::from_consensus(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
+        let time_before = Mtp::from_consensus(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
+        let time = Mtp::from_consensus(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
+        let time_after = Mtp::from_consensus(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
 
         let lock_by_time = LockTime::from(time);
 
