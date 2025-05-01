@@ -145,7 +145,7 @@ impl LockTime {
     #[allow(clippy::missing_panics_doc)]
     pub fn from_consensus(n: u32) -> Self {
         if units::locktime::absolute::is_block_height(n) {
-            Self::Blocks(Height::from_consensus(n).expect("n is valid"))
+            Self::Blocks(Height::from_u32(n).expect("n is valid"))
         } else {
             Self::Seconds(Mtp::from_u32(n).expect("n is valid"))
         }
@@ -170,7 +170,7 @@ impl LockTime {
     /// ```
     #[inline]
     pub fn from_height(n: u32) -> Result<Self, ConversionError> {
-        let height = Height::from_consensus(n)?;
+        let height = Height::from_u32(n)?;
         Ok(LockTime::Blocks(height))
     }
 
@@ -314,7 +314,7 @@ impl LockTime {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         match self {
-            LockTime::Blocks(ref h) => h.to_consensus_u32(),
+            LockTime::Blocks(ref h) => h.to_u32(),
             LockTime::Seconds(ref t) => t.to_u32(),
         }
     }
@@ -499,9 +499,9 @@ mod tests {
 
     #[test]
     fn satisfied_by_height() {
-        let height_below = Height::from_consensus(700_000).unwrap();
-        let height = Height::from_consensus(750_000).unwrap();
-        let height_above = Height::from_consensus(800_000).unwrap();
+        let height_below = Height::from_u32(700_000).unwrap();
+        let height = Height::from_u32(750_000).unwrap();
+        let height_above = Height::from_u32(800_000).unwrap();
 
         let lock_by_height = LockTime::from(height);
 
@@ -521,7 +521,7 @@ mod tests {
 
         let lock_by_time = LockTime::from(time);
 
-        let height = Height::from_consensus(800_000).unwrap();
+        let height = Height::from_u32(800_000).unwrap();
 
         assert!(!lock_by_time.is_satisfied_by(height, time_before));
         assert!(lock_by_time.is_satisfied_by(height, time));

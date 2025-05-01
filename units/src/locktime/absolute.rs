@@ -45,15 +45,22 @@ impl Height {
     /// # Errors
     ///
     /// If the input string is not a valid hex representation of a block height.
-    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
-        parse_hex(s, Self::from_consensus)
-    }
+    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_u32) }
 
-    /// Constructs a new block height.
+    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[doc(hidden)]
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
+
+    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[doc(hidden)]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
+
+    /// Constructs a new block height directly from a `u32` value.
     ///
     /// # Errors
     ///
-    /// If `n` does not represent a valid block height value.
+    /// If `n` does not represent a block height within the valid range for a locktime:
+    /// `[0, 499_999_999]`.
     ///
     /// # Examples
     ///
@@ -61,11 +68,11 @@ impl Height {
     /// use bitcoin_units::locktime::absolute::Height;
     ///
     /// let h: u32 = 741521;
-    /// let height = Height::from_consensus(h).expect("invalid height value");
+    /// let height = Height::from_u32(h).expect("invalid height value");
     /// assert_eq!(height.to_consensus_u32(), h);
     /// ```
     #[inline]
-    pub const fn from_consensus(n: u32) -> Result<Height, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<Height, ConversionError> {
         if is_block_height(n) {
             Ok(Self(n))
         } else {
@@ -73,16 +80,16 @@ impl Height {
         }
     }
 
-    /// Converts this [`Height`] to its inner `u32` value.
+    /// Converts this [`Height`] to a raw `u32` value.
     #[inline]
-    pub const fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
+crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
 /// Error returned when parsing block height fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -111,7 +118,7 @@ impl<'de> serde::Deserialize<'de> for Height {
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Height::from_consensus(u).map_err(serde::de::Error::custom)
+        Height::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
@@ -121,7 +128,7 @@ impl serde::Serialize for Height {
     where
         S: serde::Serializer,
     {
-        self.to_consensus_u32().serialize(serializer)
+        self.to_u32().serialize(serializer)
     }
 }
 
@@ -158,7 +165,7 @@ impl Mtp {
 
     #[deprecated(since = "TBD", note = "use `from_u32` instead")]
     #[doc(hidden)]
-    pub const fn from_consensus(n: u32) -> Result<Mtp, ConversionError> { Self::from_u32(n) }
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
 
     #[deprecated(since = "TBD", note = "use `to_u32` instead")]
     #[doc(hidden)]
@@ -183,7 +190,7 @@ impl Mtp {
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
-    pub const fn from_u32(n: u32) -> Result<Mtp, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<Self, ConversionError> {
         if is_block_time(n) {
             Ok(Self(n))
         } else {
@@ -425,10 +432,10 @@ impl<'a> Arbitrary<'a> for Height {
             0 => Ok(Height::MIN),
             1 => Ok(Height::MAX),
             _ => {
-                let min = Height::MIN.to_consensus_u32();
-                let max = Height::MAX.to_consensus_u32();
+                let min = Height::MIN.to_u32();
+                let max = Height::MAX.to_u32();
                 let h = u.int_in_range(min..=max)?;
-                Ok(Height::from_consensus(h).unwrap())
+                Ok(Height::from_u32(h).unwrap())
             }
         }
     }
