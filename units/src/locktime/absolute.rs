@@ -147,20 +147,31 @@ impl Mtp {
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Mtp(u32::MAX);
 
-    /// Constructs a new [`Mtp`] from a hex string.
+    /// Constructs a new [`Mtp`] from a big-endian hex-encoded `u32`.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     ///
     /// # Errors
     ///
     /// If the input string is not a valid hex representation of a block time.
-    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }
+    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_u32) }
 
-    /// Constructs a new block time.
+    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[doc(hidden)]
+    pub const fn from_consensus(n: u32) -> Result<Mtp, ConversionError> { Self::from_u32(n) }
+
+    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[doc(hidden)]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
+
+    /// Constructs a new MTP directly from a `u32` value.
+    ///
+    /// This function, with [`Mtp::to_u32`], is used to obtain a raw MTP value. It is
+    /// **not** used to convert to or from a block timestamp, which is not a MTP.
     ///
     /// # Errors
     ///
-    /// If `n` does not encode a valid UNIX time stamp.
+    /// If `n` is not in the allowable range of MTPs in a locktime: `[500_000_000, 2^32 - 1]`.
     ///
     /// # Examples
     ///
@@ -168,11 +179,11 @@ impl Mtp {
     /// use bitcoin_units::locktime::absolute::Mtp;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = Mtp::from_consensus(t).expect("invalid time value");
+    /// let time = Mtp::from_u32(t).expect("invalid time value");
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
-    pub const fn from_consensus(n: u32) -> Result<Mtp, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<Mtp, ConversionError> {
         if is_block_time(n) {
             Ok(Self(n))
         } else {
@@ -180,16 +191,16 @@ impl Mtp {
         }
     }
 
-    /// Converts this [`Mtp`] to its inner `u32` value.
+    /// Converts this [`Mtp`] to a raw `u32` value.
     #[inline]
-    pub const fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for Mtp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Mtp, ParseTimeError, parser(Mtp::from_consensus));
+crate::impl_parse_str!(Mtp, ParseTimeError, parser(Mtp::from_u32));
 
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Mtp {
@@ -198,7 +209,7 @@ impl<'de> serde::Deserialize<'de> for Mtp {
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Mtp::from_consensus(u).map_err(serde::de::Error::custom)
+        Mtp::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
@@ -208,7 +219,7 @@ impl serde::Serialize for Mtp {
     where
         S: serde::Serializer,
     {
-        self.to_consensus_u32().serialize(serializer)
+        self.to_u32().serialize(serializer)
     }
 }
 
@@ -431,10 +442,10 @@ impl<'a> Arbitrary<'a> for Mtp {
             0 => Ok(Mtp::MIN),
             1 => Ok(Mtp::MAX),
             _ => {
-                let min = Mtp::MIN.to_consensus_u32();
-                let max = Mtp::MAX.to_consensus_u32();
+                let min = Mtp::MIN.to_u32();
+                let max = Mtp::MAX.to_u32();
                 let t = u.int_in_range(min..=max)?;
-                Ok(Mtp::from_consensus(t).unwrap())
+                Ok(Mtp::from_u32(t).unwrap())
             }
         }
     }
@@ -450,7 +461,7 @@ mod tests {
     #[test]
     fn time_from_str_hex_happy_path() {
         let actual = Mtp::from_hex("0x6289C350").unwrap();
-        let expected = Mtp::from_consensus(0x6289_C350).unwrap();
+        let expected = Mtp::from_u32(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 

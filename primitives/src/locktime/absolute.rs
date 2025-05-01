@@ -147,7 +147,7 @@ impl LockTime {
         if units::locktime::absolute::is_block_height(n) {
             Self::Blocks(Height::from_consensus(n).expect("n is valid"))
         } else {
-            Self::Seconds(Mtp::from_consensus(n).expect("n is valid"))
+            Self::Seconds(Mtp::from_u32(n).expect("n is valid"))
         }
     }
 
@@ -174,13 +174,19 @@ impl LockTime {
         Ok(LockTime::Blocks(height))
     }
 
-    /// Constructs a new `LockTime` from `n`, expecting `n` to be a valid block time.
+    #[inline]
+    #[deprecated(since = "TBD", note = "use `from_mtp` instead")]
+    #[doc(hidden)]
+    pub fn from_time(n: u32) -> Result<Self, ConversionError> { Self::from_mtp(n) }
+
+    /// Constructs a new `LockTime` from `n`, expecting `n` to be a median-time-past (MTP)
+    /// which is in range for a locktime.
     ///
     /// # Note
     ///
-    /// If the locktime is set to a timestamp `T`,
-    /// the transaction can be included in a block only if the median time past (MTP) of the
-    /// last 11 blocks is greater than `T`.
+    /// If the locktime is set to an MTP `T`, the transaction can be included in a block only if
+    /// the MTP of last recent 11 blocks is greater than `T`.
+    ///
     /// It is possible to broadcast the transaction once the MTP is greater than `T`.[see BIP-113]
     ///
     /// [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
@@ -195,8 +201,8 @@ impl LockTime {
     /// assert!(absolute::LockTime::from_time(741521).is_err());
     /// ```
     #[inline]
-    pub fn from_time(n: u32) -> Result<Self, ConversionError> {
-        let time = Mtp::from_consensus(n)?;
+    pub fn from_mtp(n: u32) -> Result<Self, ConversionError> {
+        let time = Mtp::from_u32(n)?;
         Ok(LockTime::Seconds(time))
     }
 
@@ -309,7 +315,7 @@ impl LockTime {
     pub fn to_consensus_u32(self) -> u32 {
         match self {
             LockTime::Blocks(ref h) => h.to_consensus_u32(),
-            LockTime::Seconds(ref t) => t.to_consensus_u32(),
+            LockTime::Seconds(ref t) => t.to_u32(),
         }
     }
 }
@@ -410,7 +416,7 @@ mod tests {
     #[test]
     fn display_and_alternate() {
         let lock_by_height = LockTime::from_height(741_521).unwrap();
-        let lock_by_time = LockTime::from_time(1_653_195_600).unwrap(); // May 22nd 2022, 5am UTC.
+        let lock_by_time = LockTime::from_mtp(1_653_195_600).unwrap(); // May 22nd 2022, 5am UTC.
 
         assert_eq!(format!("{}", lock_by_height), "741521");
         assert_eq!(format!("{:#}", lock_by_height), "block-height 741521");
@@ -466,9 +472,9 @@ mod tests {
         assert!(LockTime::from_height(500_000_000).is_err()); // The threshold.
         assert!(LockTime::from_height(500_000_001).is_err()); // Above the threshold.
 
-        assert!(LockTime::from_time(499_999_999).is_err()); // Below the threshold.
-        assert!(LockTime::from_time(500_000_000).is_ok()); // The threshold.
-        assert!(LockTime::from_time(500_000_001).is_ok()); // Above the threshold.
+        assert!(LockTime::from_mtp(499_999_999).is_err()); // Below the threshold.
+        assert!(LockTime::from_mtp(500_000_000).is_ok()); // The threshold.
+        assert!(LockTime::from_mtp(500_000_001).is_ok()); // Above the threshold.
     }
 
     #[test]
@@ -500,7 +506,7 @@ mod tests {
         let lock_by_height = LockTime::from(height);
 
         let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
-        let time = Mtp::from_consensus(t).unwrap();
+        let time = Mtp::from_u32(t).unwrap();
 
         assert!(!lock_by_height.is_satisfied_by(height_below, time));
         assert!(lock_by_height.is_satisfied_by(height, time));
@@ -509,9 +515,9 @@ mod tests {
 
     #[test]
     fn satisfied_by_time() {
-        let time_before = Mtp::from_consensus(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
-        let time = Mtp::from_consensus(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
-        let time_after = Mtp::from_consensus(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
+        let time_before = Mtp::from_u32(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
+        let time = Mtp::from_u32(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
+        let time_after = Mtp::from_u32(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
 
         let lock_by_time = LockTime::from(time);
 
