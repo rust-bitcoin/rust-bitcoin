@@ -20,6 +20,8 @@ const PSBT_OUT_TAP_INTERNAL_KEY: u64 = 0x05;
 const PSBT_OUT_TAP_TREE: u64 = 0x06;
 /// Type: Taproot Key BIP 32 Derivation Path PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
 const PSBT_OUT_TAP_BIP32_DERIVATION: u64 = 0x07;
+/// Type: MuSig2 Public Keys Participating in Aggregate Output PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS = 0x08
+const PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS: u64 = 0x08;
 /// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
 const PSBT_OUT_PROPRIETARY: u64 = 0xFC;
 
@@ -43,6 +45,9 @@ pub struct Output {
     /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
+    /// Mapping from MuSig2 aggregate keys to the participant keys from which they were aggregated.
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
+    pub musig2_participant_pubkeys: BTreeMap<secp256k1::PublicKey, Vec<secp256k1::PublicKey>>,
     /// Proprietary key-value pairs for this output.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -95,6 +100,11 @@ impl Output {
                     self.tap_key_origins <= <raw_key: XOnlyPublicKey>|< raw_value: (Vec<TapLeafHash>, KeySource)>
                 }
             }
+            PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS => {
+                impl_psbt_insert_pair! {
+                    self.musig2_participant_pubkeys <= <raw_key: secp256k1::PublicKey>|< raw_value: Vec<secp256k1::PublicKey> >
+                }
+            }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
@@ -112,6 +122,7 @@ impl Output {
         self.proprietary.extend(other.proprietary);
         self.unknown.extend(other.unknown);
         self.tap_key_origins.extend(other.tap_key_origins);
+        self.musig2_participant_pubkeys.extend(other.musig2_participant_pubkeys);
 
         combine!(redeem_script, self, other);
         combine!(witness_script, self, other);
@@ -146,6 +157,10 @@ impl Map for Output {
 
         impl_psbt_get_pair! {
             rv.push_map(self.tap_key_origins, PSBT_OUT_TAP_BIP32_DERIVATION)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push_map(self.musig2_participant_pubkeys, PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS)
         }
 
         for (key, value) in self.proprietary.iter() {
