@@ -322,6 +322,10 @@ impl LockTime {
 
     /// Returns true if this [`relative::LockTime`] is satisfied by [`Height`].
     ///
+    /// `height` is the delta between current block height and the block height when the UTXO was
+    /// mined. This function returns `true` if a transaction with this lock can be included in the
+    /// next block.
+    ///
     /// # Errors
     ///
     /// Returns an error if this lock is not lock-by-height.
@@ -341,12 +345,18 @@ impl LockTime {
         use LockTime as L;
 
         match self {
-            L::Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
+            L::Blocks(ref required_height) => Ok(required_height.value() <= height.value() + 1),
             L::Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }
 
     /// Returns true if this [`relative::LockTime`] is satisfied by [`Time`].
+    ///
+    /// `time` is the delta between the MTP of the current block and the mining date of the UTXO
+    /// (mining date is the MTP of the _previous_ block to the block that included the UTXO). This
+    /// function returns `true` if a transaction with this lock can be included in the next block.
+    ///
+    /// When calculating the delta be sure to use `Time::from_seconds_floor`.
     ///
     /// # Errors
     ///
