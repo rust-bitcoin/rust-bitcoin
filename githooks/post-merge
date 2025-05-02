@@ -22,7 +22,7 @@ do
 			>&2 cat <<- EOF
 			==================================================
 			Project githooks have changed. Please inspect the
-			changes and re-reun \`just githooks-install\` if
+			changes and re-run \`just githooks-install\` if
 			they are legitimate.
 
 			Remove $HOOKS_DIR/post-merge to skip this warning
