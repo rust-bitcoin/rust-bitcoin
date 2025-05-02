@@ -253,9 +253,15 @@ impl LockTime {
     /// two lock times (same unit) then the larger lock time being satisfied implies (in a
     /// mathematical sense) the smaller one being satisfied.
     ///
-    /// This function is useful if you wish to check a lock time against various other locks e.g.,
-    /// filtering out locks which cannot be satisfied. Can also be used to remove the smaller value
-    /// of two `OP_CHECKLOCKTIMEVERIFY` operations within one branch of the script.
+    /// This function serves multiple purposes:
+    ///
+    /// * When evaluating `OP_CHECKLOCKTIMEVERIFY` the argument must be less than or equal to the
+    ///   transactions nLockTime. If using this function to validate a script `self` is the argument
+    ///   to `CLTV` and `other` is the transaction nLockTime.
+    ///
+    /// * If you wish to check a lock time against various other locks e.g., filtering out locks
+    ///   which cannot be satisfied. Can also be used to remove the smaller value of two
+    ///   `OP_CHECKLOCKTIMEVERIFY` operations within one branch of the script.
     ///
     /// # Examples
     ///
