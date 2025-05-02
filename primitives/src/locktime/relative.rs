@@ -132,7 +132,7 @@ impl LockTime {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         match self {
-            LockTime::Blocks(ref h) => h.to_consensus_u32(),
+            LockTime::Blocks(ref h) => u32::from(h.to_height()),
             LockTime::Time(ref t) =>
                 Sequence::LOCK_TYPE_MASK | u32::from(t.to_512_second_intervals()),
         }
@@ -353,7 +353,7 @@ impl LockTime {
         use LockTime as L;
 
         match self {
-            L::Blocks(ref required_height) => Ok(required_height.value() <= height.value()),
+            L::Blocks(required_height) => Ok(required_height <= height),
             L::Time(time) => Err(IncompatibleHeightError { height, time }),
         }
     }

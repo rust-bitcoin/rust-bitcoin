@@ -261,8 +261,8 @@ impl<'a> Arbitrary<'a> for Sequence {
             1 => Ok(Sequence::ZERO),
             2 => Ok(Sequence::MIN_NO_RBF),
             3 => Ok(Sequence::ENABLE_LOCKTIME_AND_RBF),
-            4 => Ok(Sequence::from_consensus(relative::HeightInterval::MIN.to_consensus_u32())),
-            5 => Ok(Sequence::from_consensus(relative::HeightInterval::MAX.to_consensus_u32())),
+            4 => Ok(Sequence::from_consensus(u32::from(relative::HeightInterval::MIN.to_height()))),
+            5 => Ok(Sequence::from_consensus(u32::from(relative::HeightInterval::MAX.to_height()))),
             6 => Ok(Sequence::from_consensus(
                 Sequence::LOCK_TYPE_MASK
                     | u32::from(relative::MtpInterval::MIN.to_512_second_intervals()),

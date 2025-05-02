@@ -134,7 +134,7 @@ impl From<relative::HeightInterval> for BlockInterval {
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.value().into()) }
+    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_height().into()) }
 }
 
 impl TryFrom<BlockInterval> for relative::HeightInterval {

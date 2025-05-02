@@ -34,14 +34,24 @@ impl HeightInterval {
     #[inline]
     pub const fn from_height(blocks: u16) -> Self { Self(blocks) }
 
+    /// Express the [`Height`] as a count of blocks.
+    #[inline]
+    #[must_use]
+    pub const fn to_height(self) -> u16 { self.0 }
+
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]
+    #[deprecated(since = "TBD", note = "use `to_height` instead")]
+    #[doc(hidden)]
     pub const fn value(self) -> u16 { self.0 }
 
     /// Returns the `u32` value used to encode this locktime in an nSequence field or
     /// argument to `OP_CHECKSEQUENCEVERIFY`.
-    #[inline]
+    #[deprecated(
+        since = "TBD",
+        note = "use `LockTime::from` followed by `to_consensus_u32` instead"
+    )]
     pub const fn to_consensus_u32(self) -> u32 {
         self.0 as u32 // cast safety: u32 is wider than u16 on all architectures
     }
@@ -60,7 +70,7 @@ impl HeightInterval {
     pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
         // let chain_tip_height = BlockHeight::from(chain_tip);
         // let utxo_mined_at_height = BlockHeight::from(utxo_mined_at);
-        match self.to_consensus_u32().checked_add(utxo_mined_at.to_height().to_u32()) {
+        match u32::from(self.to_height()).checked_add(utxo_mined_at.to_height().to_u32()) {
             Some(target_height) => chain_tip.to_height().to_u32() >= target_height,
             None => false,
         }
