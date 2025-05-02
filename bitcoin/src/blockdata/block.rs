@@ -30,7 +30,7 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 #[doc(inline)]
 pub use primitives::block::{Block, Checked, Unchecked, Validation, Version, BlockHash, Header, WitnessCommitment};
 #[doc(inline)]
-pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
+pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightIntervalError};
 
 impl_hashencode!(BlockHash);
 

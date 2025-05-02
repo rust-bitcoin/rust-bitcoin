@@ -11,24 +11,28 @@ use serde::{Deserialize, Serialize};
 
 use crate::mtp_height::MtpAndHeight;
 
+#[deprecated(since = "TBD", note = "use `HeightIterval` instead")]
+#[doc(hidden)]
+pub type Height = HeightInterval;
+
 /// A relative lock time lock-by-blockheight value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Height(u16);
+pub struct HeightInterval(u16);
 
-impl Height {
+impl HeightInterval {
     /// Relative block height 0, can be included in any block.
-    pub const ZERO: Self = Height(0);
+    pub const ZERO: Self = Self(0);
 
     /// The minimum relative block height (0), can be included in any block.
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum relative block height.
-    pub const MAX: Self = Height(u16::MAX);
+    pub const MAX: Self = Self(u16::MAX);
 
-    /// Constructs a new [`Height`] using a count of blocks.
+    /// Constructs a new [`HeightInterval`] using a count of blocks.
     #[inline]
-    pub const fn from_height(blocks: u16) -> Self { Height(blocks) }
+    pub const fn from_height(blocks: u16) -> Self { Self(blocks) }
 
     /// Returns the inner `u16` value.
     #[inline]
@@ -63,14 +67,14 @@ impl Height {
     }
 }
 
-impl From<u16> for Height {
+impl From<u16> for HeightInterval {
     #[inline]
-    fn from(value: u16) -> Self { Height(value) }
+    fn from(value: u16) -> Self { HeightInterval(value) }
 }
 
-crate::impl_parse_str_from_int_infallible!(Height, u16, from);
+crate::impl_parse_str_from_int_infallible!(HeightInterval, u16, from);
 
-impl fmt::Display for Height {
+impl fmt::Display for HeightInterval {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
@@ -219,14 +223,14 @@ impl fmt::Display for TimeOverflowError {
 impl std::error::Error for TimeOverflowError {}
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Height {
+impl<'a> Arbitrary<'a> for HeightInterval {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
 
         match choice {
-            0 => Ok(Height::MIN),
-            1 => Ok(Height::MAX),
-            _ => Ok(Height::from_height(u16::arbitrary(u)?)),
+            0 => Ok(HeightInterval::MIN),
+            1 => Ok(HeightInterval::MAX),
+            _ => Ok(HeightInterval::from_height(u16::arbitrary(u)?)),
         }
     }
 }
@@ -257,7 +261,7 @@ mod tests {
     #[test]
     #[allow(deprecated_in_future)]
     fn sanity_check() {
-        assert_eq!(Height::MAX.to_consensus_u32(), u32::from(u16::MAX));
+        assert_eq!(HeightInterval::MAX.to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(MtpInterval::from_512_second_intervals(100).value(), 100u16);
         assert_eq!(MtpInterval::from_512_second_intervals(100).to_consensus_u32(), 4_194_404u32); // 0x400064
     }
@@ -312,9 +316,9 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_height() {
-        serde_round_trip!(Height::ZERO);
-        serde_round_trip!(Height::MIN);
-        serde_round_trip!(Height::MAX);
+        serde_round_trip!(HeightInterval::ZERO);
+        serde_round_trip!(HeightInterval::MIN);
+        serde_round_trip!(HeightInterval::MAX);
     }
 
     #[test]
@@ -374,7 +378,7 @@ mod tests {
         let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
         let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
 
-        let height_lock = Height(10);
+        let height_lock = HeightInterval(10);
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
         let chain_state1 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps);
@@ -387,7 +391,7 @@ mod tests {
         assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2));
 
         // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_height_lock = Height::MAX;
+        let max_height_lock = HeightInterval::MAX;
         let chain_state3 = MtpAndHeight::new(BlockHeight::from_u32(1000), timestamps);
         let utxo_state3 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
         assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3));
