@@ -354,4 +354,11 @@ mod tests {
         let sequence_u32: u32 = sequence.into();
         assert_eq!(sequence_u32, 0x7FFF_FFFF);
     }
+
+    #[test]
+    fn sequence_display() {
+        let sequence = Sequence(0x7FFF_FFFF);
+        let want: u32 = 0x7FFF_FFFF;
+        assert_eq!(format!("{}", sequence), want.to_string());
+    }
 }
