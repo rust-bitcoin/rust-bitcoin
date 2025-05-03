@@ -1,0 +1,1813 @@
+#[non_exhaustive] pub enum bitcoin_units::MathOp
+#[non_exhaustive] pub enum bitcoin_units::amount::Denomination
+#[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
+#[non_exhaustive] pub struct bitcoin_units::NumOpError(_)
+#[non_exhaustive] pub struct bitcoin_units::amount::MissingDenominationError
+#[non_exhaustive] pub struct bitcoin_units::amount::PossiblyConfusingDenominationError(_)
+#[non_exhaustive] pub struct bitcoin_units::amount::UnknownDenominationError(_)
+#[non_exhaustive] pub struct bitcoin_units::fee_rate::serde::OverflowError
+#[non_exhaustive] pub struct bitcoin_units::locktime::absolute::ConversionError
+#[non_exhaustive] pub struct bitcoin_units::parse::ParseIntError
+impl bitcoin_units::Amount
+impl bitcoin_units::MathOp
+impl bitcoin_units::NumOpError
+impl bitcoin_units::SignedAmount
+impl bitcoin_units::amount::Denomination
+impl bitcoin_units::amount::Display
+impl bitcoin_units::amount::OutOfRangeError
+impl bitcoin_units::amount::serde::SerdeAmount for bitcoin_units::Amount
+impl bitcoin_units::amount::serde::SerdeAmount for bitcoin_units::SignedAmount
+impl bitcoin_units::amount::serde::SerdeAmountForOpt for bitcoin_units::Amount
+impl bitcoin_units::amount::serde::SerdeAmountForOpt for bitcoin_units::SignedAmount
+impl bitcoin_units::block::BlockHeight
+impl bitcoin_units::block::BlockInterval
+impl bitcoin_units::fee_rate::FeeRate
+impl bitcoin_units::locktime::absolute::Height
+impl bitcoin_units::locktime::absolute::Time
+impl bitcoin_units::locktime::relative::Height
+impl bitcoin_units::locktime::relative::Time
+impl bitcoin_units::locktime::relative::TimeOverflowError
+impl bitcoin_units::parse::Integer for i128
+impl bitcoin_units::parse::Integer for i16
+impl bitcoin_units::parse::Integer for i32
+impl bitcoin_units::parse::Integer for i64
+impl bitcoin_units::parse::Integer for i8
+impl bitcoin_units::parse::Integer for u128
+impl bitcoin_units::parse::Integer for u16
+impl bitcoin_units::parse::Integer for u32
+impl bitcoin_units::parse::Integer for u64
+impl bitcoin_units::parse::Integer for u8
+impl bitcoin_units::time::BlockTime
+impl bitcoin_units::weight::Weight
+impl core::clone::Clone for bitcoin_units::Amount
+impl core::clone::Clone for bitcoin_units::MathOp
+impl core::clone::Clone for bitcoin_units::NumOpError
+impl core::clone::Clone for bitcoin_units::SignedAmount
+impl core::clone::Clone for bitcoin_units::amount::Denomination
+impl core::clone::Clone for bitcoin_units::amount::Display
+impl core::clone::Clone for bitcoin_units::amount::InputTooLargeError
+impl core::clone::Clone for bitcoin_units::amount::InvalidCharacterError
+impl core::clone::Clone for bitcoin_units::amount::MissingDenominationError
+impl core::clone::Clone for bitcoin_units::amount::MissingDigitsError
+impl core::clone::Clone for bitcoin_units::amount::OutOfRangeError
+impl core::clone::Clone for bitcoin_units::amount::ParseAmountError
+impl core::clone::Clone for bitcoin_units::amount::ParseDenominationError
+impl core::clone::Clone for bitcoin_units::amount::ParseError
+impl core::clone::Clone for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::clone::Clone for bitcoin_units::amount::TooPreciseError
+impl core::clone::Clone for bitcoin_units::amount::UnknownDenominationError
+impl core::clone::Clone for bitcoin_units::block::BlockHeight
+impl core::clone::Clone for bitcoin_units::block::BlockInterval
+impl core::clone::Clone for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::clone::Clone for bitcoin_units::fee_rate::FeeRate
+impl core::clone::Clone for bitcoin_units::fee_rate::serde::OverflowError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::ConversionError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::Height
+impl core::clone::Clone for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::clone::Clone for bitcoin_units::locktime::absolute::Time
+impl core::clone::Clone for bitcoin_units::locktime::relative::Height
+impl core::clone::Clone for bitcoin_units::locktime::relative::Time
+impl core::clone::Clone for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::clone::Clone for bitcoin_units::parse::ParseIntError
+impl core::clone::Clone for bitcoin_units::parse::PrefixedHexError
+impl core::clone::Clone for bitcoin_units::parse::UnprefixedHexError
+impl core::clone::Clone for bitcoin_units::time::BlockTime
+impl core::clone::Clone for bitcoin_units::weight::Weight
+impl core::cmp::Eq for bitcoin_units::Amount
+impl core::cmp::Eq for bitcoin_units::MathOp
+impl core::cmp::Eq for bitcoin_units::NumOpError
+impl core::cmp::Eq for bitcoin_units::SignedAmount
+impl core::cmp::Eq for bitcoin_units::amount::Denomination
+impl core::cmp::Eq for bitcoin_units::amount::InputTooLargeError
+impl core::cmp::Eq for bitcoin_units::amount::InvalidCharacterError
+impl core::cmp::Eq for bitcoin_units::amount::MissingDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::MissingDigitsError
+impl core::cmp::Eq for bitcoin_units::amount::OutOfRangeError
+impl core::cmp::Eq for bitcoin_units::amount::ParseAmountError
+impl core::cmp::Eq for bitcoin_units::amount::ParseDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::ParseError
+impl core::cmp::Eq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::TooPreciseError
+impl core::cmp::Eq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::Eq for bitcoin_units::block::BlockHeight
+impl core::cmp::Eq for bitcoin_units::block::BlockInterval
+impl core::cmp::Eq for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::cmp::Eq for bitcoin_units::fee_rate::FeeRate
+impl core::cmp::Eq for bitcoin_units::fee_rate::serde::OverflowError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::ConversionError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::Height
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::cmp::Eq for bitcoin_units::locktime::absolute::Time
+impl core::cmp::Eq for bitcoin_units::locktime::relative::Height
+impl core::cmp::Eq for bitcoin_units::locktime::relative::Time
+impl core::cmp::Eq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::cmp::Eq for bitcoin_units::parse::ParseIntError
+impl core::cmp::Eq for bitcoin_units::parse::PrefixedHexError
+impl core::cmp::Eq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::Eq for bitcoin_units::time::BlockTime
+impl core::cmp::Eq for bitcoin_units::weight::Weight
+impl core::cmp::Ord for bitcoin_units::Amount
+impl core::cmp::Ord for bitcoin_units::SignedAmount
+impl core::cmp::Ord for bitcoin_units::block::BlockHeight
+impl core::cmp::Ord for bitcoin_units::block::BlockInterval
+impl core::cmp::Ord for bitcoin_units::fee_rate::FeeRate
+impl core::cmp::Ord for bitcoin_units::locktime::absolute::Height
+impl core::cmp::Ord for bitcoin_units::locktime::absolute::Time
+impl core::cmp::Ord for bitcoin_units::locktime::relative::Height
+impl core::cmp::Ord for bitcoin_units::locktime::relative::Time
+impl core::cmp::Ord for bitcoin_units::time::BlockTime
+impl core::cmp::Ord for bitcoin_units::weight::Weight
+impl core::cmp::PartialEq for bitcoin_units::Amount
+impl core::cmp::PartialEq for bitcoin_units::MathOp
+impl core::cmp::PartialEq for bitcoin_units::NumOpError
+impl core::cmp::PartialEq for bitcoin_units::SignedAmount
+impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
+impl core::cmp::PartialEq for bitcoin_units::amount::InputTooLargeError
+impl core::cmp::PartialEq for bitcoin_units::amount::InvalidCharacterError
+impl core::cmp::PartialEq for bitcoin_units::amount::MissingDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::MissingDigitsError
+impl core::cmp::PartialEq for bitcoin_units::amount::OutOfRangeError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseAmountError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseError
+impl core::cmp::PartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::TooPreciseError
+impl core::cmp::PartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::PartialEq for bitcoin_units::block::BlockHeight
+impl core::cmp::PartialEq for bitcoin_units::block::BlockInterval
+impl core::cmp::PartialEq for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::cmp::PartialEq for bitcoin_units::fee_rate::FeeRate
+impl core::cmp::PartialEq for bitcoin_units::fee_rate::serde::OverflowError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ConversionError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::Height
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::cmp::PartialEq for bitcoin_units::locktime::absolute::Time
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::Height
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::Time
+impl core::cmp::PartialEq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::cmp::PartialEq for bitcoin_units::parse::ParseIntError
+impl core::cmp::PartialEq for bitcoin_units::parse::PrefixedHexError
+impl core::cmp::PartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::cmp::PartialEq for bitcoin_units::time::BlockTime
+impl core::cmp::PartialEq for bitcoin_units::weight::Weight
+impl core::cmp::PartialOrd for bitcoin_units::Amount
+impl core::cmp::PartialOrd for bitcoin_units::SignedAmount
+impl core::cmp::PartialOrd for bitcoin_units::block::BlockHeight
+impl core::cmp::PartialOrd for bitcoin_units::block::BlockInterval
+impl core::cmp::PartialOrd for bitcoin_units::fee_rate::FeeRate
+impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::Height
+impl core::cmp::PartialOrd for bitcoin_units::locktime::absolute::Time
+impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::Height
+impl core::cmp::PartialOrd for bitcoin_units::locktime::relative::Time
+impl core::cmp::PartialOrd for bitcoin_units::time::BlockTime
+impl core::cmp::PartialOrd for bitcoin_units::weight::Weight
+impl core::convert::AsRef<core::num::error::ParseIntError> for bitcoin_units::parse::ParseIntError
+impl core::convert::From<&bitcoin_units::Amount> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::convert::From<&bitcoin_units::SignedAmount> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::convert::From<bitcoin_units::Amount> for bitcoin_units::SignedAmount
+impl core::convert::From<bitcoin_units::SignedAmount> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::InputTooLargeError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::InvalidCharacterError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::InvalidCharacterError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::MissingDigitsError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::MissingDigitsError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::ParseAmountError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::ParseDenominationError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::TooPreciseError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::TooPreciseError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::block::BlockHeight> for u32
+impl core::convert::From<bitcoin_units::block::BlockInterval> for u32
+impl core::convert::From<bitcoin_units::fee_rate::FeeRate> for u64
+impl core::convert::From<bitcoin_units::locktime::absolute::Height> for bitcoin_units::block::BlockHeight
+impl core::convert::From<bitcoin_units::locktime::relative::Height> for bitcoin_units::block::BlockInterval
+impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::PrefixedHexError
+impl core::convert::From<bitcoin_units::parse::ParseIntError> for bitcoin_units::parse::UnprefixedHexError
+impl core::convert::From<bitcoin_units::parse::ParseIntError> for core::num::error::ParseIntError
+impl core::convert::From<bitcoin_units::time::BlockTime> for u32
+impl core::convert::From<bitcoin_units::weight::Weight> for u64
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseDenominationError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::amount::ParseError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::fee_rate::serde::OverflowError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::PrefixedHexError
+impl core::convert::From<core::convert::Infallible> for bitcoin_units::parse::UnprefixedHexError
+impl core::convert::From<u16> for bitcoin_units::locktime::relative::Height
+impl core::convert::From<u32> for bitcoin_units::block::BlockHeight
+impl core::convert::From<u32> for bitcoin_units::block::BlockInterval
+impl core::convert::From<u32> for bitcoin_units::time::BlockTime
+impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockHeight
+impl core::convert::TryFrom<&str> for bitcoin_units::block::BlockInterval
+impl core::convert::TryFrom<&str> for bitcoin_units::fee_rate::FeeRate
+impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::Height
+impl core::convert::TryFrom<&str> for bitcoin_units::locktime::absolute::Time
+impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::Height
+impl core::convert::TryFrom<&str> for bitcoin_units::locktime::relative::Time
+impl core::convert::TryFrom<&str> for bitcoin_units::weight::Weight
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockHeight
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::block::BlockInterval
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::fee_rate::FeeRate
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::Height
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::absolute::Time
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::Height
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::locktime::relative::Time
+impl core::convert::TryFrom<alloc::boxed::Box<str>> for bitcoin_units::weight::Weight
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockHeight
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::block::BlockInterval
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::fee_rate::FeeRate
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::Height
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::absolute::Time
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::Height
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::locktime::relative::Time
+impl core::convert::TryFrom<alloc::string::String> for bitcoin_units::weight::Weight
+impl core::convert::TryFrom<bitcoin_units::SignedAmount> for bitcoin_units::Amount
+impl core::convert::TryFrom<bitcoin_units::block::BlockHeight> for bitcoin_units::locktime::absolute::Height
+impl core::convert::TryFrom<bitcoin_units::block::BlockInterval> for bitcoin_units::locktime::relative::Height
+impl core::default::Default for bitcoin_units::Amount
+impl core::default::Default for bitcoin_units::SignedAmount
+impl core::default::Default for bitcoin_units::block::BlockInterval
+impl core::default::Default for bitcoin_units::locktime::relative::Height
+impl core::default::Default for bitcoin_units::locktime::relative::Time
+impl core::error::Error for bitcoin_units::NumOpError
+impl core::error::Error for bitcoin_units::amount::InputTooLargeError
+impl core::error::Error for bitcoin_units::amount::InvalidCharacterError
+impl core::error::Error for bitcoin_units::amount::MissingDigitsError
+impl core::error::Error for bitcoin_units::amount::OutOfRangeError
+impl core::error::Error for bitcoin_units::amount::ParseAmountError
+impl core::error::Error for bitcoin_units::amount::ParseDenominationError
+impl core::error::Error for bitcoin_units::amount::ParseError
+impl core::error::Error for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::error::Error for bitcoin_units::amount::TooPreciseError
+impl core::error::Error for bitcoin_units::amount::UnknownDenominationError
+impl core::error::Error for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::error::Error for bitcoin_units::fee_rate::serde::OverflowError
+impl core::error::Error for bitcoin_units::locktime::absolute::ConversionError
+impl core::error::Error for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::error::Error for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::error::Error for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::error::Error for bitcoin_units::parse::ParseIntError
+impl core::error::Error for bitcoin_units::parse::PrefixedHexError
+impl core::error::Error for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Debug for bitcoin_units::Amount
+impl core::fmt::Debug for bitcoin_units::MathOp
+impl core::fmt::Debug for bitcoin_units::NumOpError
+impl core::fmt::Debug for bitcoin_units::SignedAmount
+impl core::fmt::Debug for bitcoin_units::amount::Denomination
+impl core::fmt::Debug for bitcoin_units::amount::Display
+impl core::fmt::Debug for bitcoin_units::amount::InputTooLargeError
+impl core::fmt::Debug for bitcoin_units::amount::InvalidCharacterError
+impl core::fmt::Debug for bitcoin_units::amount::MissingDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::MissingDigitsError
+impl core::fmt::Debug for bitcoin_units::amount::OutOfRangeError
+impl core::fmt::Debug for bitcoin_units::amount::ParseAmountError
+impl core::fmt::Debug for bitcoin_units::amount::ParseDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::ParseError
+impl core::fmt::Debug for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::TooPreciseError
+impl core::fmt::Debug for bitcoin_units::amount::UnknownDenominationError
+impl core::fmt::Debug for bitcoin_units::block::BlockHeight
+impl core::fmt::Debug for bitcoin_units::block::BlockInterval
+impl core::fmt::Debug for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::fmt::Debug for bitcoin_units::fee_rate::FeeRate
+impl core::fmt::Debug for bitcoin_units::fee_rate::serde::OverflowError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::ConversionError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::fmt::Debug for bitcoin_units::locktime::absolute::Time
+impl core::fmt::Debug for bitcoin_units::locktime::relative::Height
+impl core::fmt::Debug for bitcoin_units::locktime::relative::Time
+impl core::fmt::Debug for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::fmt::Debug for bitcoin_units::parse::ParseIntError
+impl core::fmt::Debug for bitcoin_units::parse::PrefixedHexError
+impl core::fmt::Debug for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Debug for bitcoin_units::time::BlockTime
+impl core::fmt::Debug for bitcoin_units::weight::Weight
+impl core::fmt::Display for bitcoin_units::Amount
+impl core::fmt::Display for bitcoin_units::MathOp
+impl core::fmt::Display for bitcoin_units::NumOpError
+impl core::fmt::Display for bitcoin_units::SignedAmount
+impl core::fmt::Display for bitcoin_units::amount::Denomination
+impl core::fmt::Display for bitcoin_units::amount::Display
+impl core::fmt::Display for bitcoin_units::amount::InputTooLargeError
+impl core::fmt::Display for bitcoin_units::amount::InvalidCharacterError
+impl core::fmt::Display for bitcoin_units::amount::MissingDigitsError
+impl core::fmt::Display for bitcoin_units::amount::OutOfRangeError
+impl core::fmt::Display for bitcoin_units::amount::ParseAmountError
+impl core::fmt::Display for bitcoin_units::amount::ParseDenominationError
+impl core::fmt::Display for bitcoin_units::amount::ParseError
+impl core::fmt::Display for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::fmt::Display for bitcoin_units::amount::TooPreciseError
+impl core::fmt::Display for bitcoin_units::amount::UnknownDenominationError
+impl core::fmt::Display for bitcoin_units::block::BlockHeight
+impl core::fmt::Display for bitcoin_units::block::BlockInterval
+impl core::fmt::Display for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::fmt::Display for bitcoin_units::fee_rate::FeeRate
+impl core::fmt::Display for bitcoin_units::fee_rate::serde::OverflowError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::ConversionError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::Height
+impl core::fmt::Display for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::fmt::Display for bitcoin_units::locktime::absolute::Time
+impl core::fmt::Display for bitcoin_units::locktime::relative::Height
+impl core::fmt::Display for bitcoin_units::locktime::relative::Time
+impl core::fmt::Display for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::fmt::Display for bitcoin_units::parse::ParseIntError
+impl core::fmt::Display for bitcoin_units::parse::PrefixedHexError
+impl core::fmt::Display for bitcoin_units::parse::UnprefixedHexError
+impl core::fmt::Display for bitcoin_units::weight::Weight
+impl core::hash::Hash for bitcoin_units::Amount
+impl core::hash::Hash for bitcoin_units::SignedAmount
+impl core::hash::Hash for bitcoin_units::amount::Denomination
+impl core::hash::Hash for bitcoin_units::block::BlockHeight
+impl core::hash::Hash for bitcoin_units::block::BlockInterval
+impl core::hash::Hash for bitcoin_units::fee_rate::FeeRate
+impl core::hash::Hash for bitcoin_units::locktime::absolute::Height
+impl core::hash::Hash for bitcoin_units::locktime::absolute::Time
+impl core::hash::Hash for bitcoin_units::locktime::relative::Height
+impl core::hash::Hash for bitcoin_units::locktime::relative::Time
+impl core::hash::Hash for bitcoin_units::time::BlockTime
+impl core::hash::Hash for bitcoin_units::weight::Weight
+impl core::iter::traits::accum::Sum for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::iter::traits::accum::Sum for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::iter::traits::accum::Sum for bitcoin_units::block::BlockInterval
+impl core::iter::traits::accum::Sum for bitcoin_units::fee_rate::FeeRate
+impl core::iter::traits::accum::Sum for bitcoin_units::weight::Weight
+impl core::marker::Copy for bitcoin_units::Amount
+impl core::marker::Copy for bitcoin_units::MathOp
+impl core::marker::Copy for bitcoin_units::NumOpError
+impl core::marker::Copy for bitcoin_units::SignedAmount
+impl core::marker::Copy for bitcoin_units::amount::Denomination
+impl core::marker::Copy for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Copy for bitcoin_units::block::BlockHeight
+impl core::marker::Copy for bitcoin_units::block::BlockInterval
+impl core::marker::Copy for bitcoin_units::fee_rate::FeeRate
+impl core::marker::Copy for bitcoin_units::locktime::absolute::Height
+impl core::marker::Copy for bitcoin_units::locktime::absolute::Time
+impl core::marker::Copy for bitcoin_units::locktime::relative::Height
+impl core::marker::Copy for bitcoin_units::locktime::relative::Time
+impl core::marker::Copy for bitcoin_units::time::BlockTime
+impl core::marker::Copy for bitcoin_units::weight::Weight
+impl core::marker::Freeze for bitcoin_units::Amount
+impl core::marker::Freeze for bitcoin_units::MathOp
+impl core::marker::Freeze for bitcoin_units::NumOpError
+impl core::marker::Freeze for bitcoin_units::SignedAmount
+impl core::marker::Freeze for bitcoin_units::amount::Denomination
+impl core::marker::Freeze for bitcoin_units::amount::Display
+impl core::marker::Freeze for bitcoin_units::amount::InputTooLargeError
+impl core::marker::Freeze for bitcoin_units::amount::InvalidCharacterError
+impl core::marker::Freeze for bitcoin_units::amount::MissingDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::MissingDigitsError
+impl core::marker::Freeze for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Freeze for bitcoin_units::amount::ParseAmountError
+impl core::marker::Freeze for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::ParseError
+impl core::marker::Freeze for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Freeze for bitcoin_units::amount::TooPreciseError
+impl core::marker::Freeze for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Freeze for bitcoin_units::block::BlockHeight
+impl core::marker::Freeze for bitcoin_units::block::BlockInterval
+impl core::marker::Freeze for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::marker::Freeze for bitcoin_units::fee_rate::FeeRate
+impl core::marker::Freeze for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::ConversionError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::Height
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::marker::Freeze for bitcoin_units::locktime::absolute::Time
+impl core::marker::Freeze for bitcoin_units::locktime::relative::Height
+impl core::marker::Freeze for bitcoin_units::locktime::relative::Time
+impl core::marker::Freeze for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Freeze for bitcoin_units::parse::ParseIntError
+impl core::marker::Freeze for bitcoin_units::parse::PrefixedHexError
+impl core::marker::Freeze for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Freeze for bitcoin_units::time::BlockTime
+impl core::marker::Freeze for bitcoin_units::weight::Weight
+impl core::marker::Send for bitcoin_units::Amount
+impl core::marker::Send for bitcoin_units::MathOp
+impl core::marker::Send for bitcoin_units::NumOpError
+impl core::marker::Send for bitcoin_units::SignedAmount
+impl core::marker::Send for bitcoin_units::amount::Denomination
+impl core::marker::Send for bitcoin_units::amount::Display
+impl core::marker::Send for bitcoin_units::amount::InputTooLargeError
+impl core::marker::Send for bitcoin_units::amount::InvalidCharacterError
+impl core::marker::Send for bitcoin_units::amount::MissingDenominationError
+impl core::marker::Send for bitcoin_units::amount::MissingDigitsError
+impl core::marker::Send for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Send for bitcoin_units::amount::ParseAmountError
+impl core::marker::Send for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Send for bitcoin_units::amount::ParseError
+impl core::marker::Send for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Send for bitcoin_units::amount::TooPreciseError
+impl core::marker::Send for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Send for bitcoin_units::block::BlockHeight
+impl core::marker::Send for bitcoin_units::block::BlockInterval
+impl core::marker::Send for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::marker::Send for bitcoin_units::fee_rate::FeeRate
+impl core::marker::Send for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::Send for bitcoin_units::locktime::absolute::ConversionError
+impl core::marker::Send for bitcoin_units::locktime::absolute::Height
+impl core::marker::Send for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::marker::Send for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::marker::Send for bitcoin_units::locktime::absolute::Time
+impl core::marker::Send for bitcoin_units::locktime::relative::Height
+impl core::marker::Send for bitcoin_units::locktime::relative::Time
+impl core::marker::Send for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Send for bitcoin_units::parse::ParseIntError
+impl core::marker::Send for bitcoin_units::parse::PrefixedHexError
+impl core::marker::Send for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Send for bitcoin_units::time::BlockTime
+impl core::marker::Send for bitcoin_units::weight::Weight
+impl core::marker::StructuralPartialEq for bitcoin_units::Amount
+impl core::marker::StructuralPartialEq for bitcoin_units::MathOp
+impl core::marker::StructuralPartialEq for bitcoin_units::NumOpError
+impl core::marker::StructuralPartialEq for bitcoin_units::SignedAmount
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::Denomination
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::InputTooLargeError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::InvalidCharacterError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::MissingDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::MissingDigitsError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::OutOfRangeError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseAmountError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::TooPreciseError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockHeight
+impl core::marker::StructuralPartialEq for bitcoin_units::block::BlockInterval
+impl core::marker::StructuralPartialEq for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::fee_rate::FeeRate
+impl core::marker::StructuralPartialEq for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ConversionError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::Height
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::absolute::Time
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Height
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::Time
+impl core::marker::StructuralPartialEq for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse::ParseIntError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse::PrefixedHexError
+impl core::marker::StructuralPartialEq for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::StructuralPartialEq for bitcoin_units::time::BlockTime
+impl core::marker::StructuralPartialEq for bitcoin_units::weight::Weight
+impl core::marker::Sync for bitcoin_units::Amount
+impl core::marker::Sync for bitcoin_units::MathOp
+impl core::marker::Sync for bitcoin_units::NumOpError
+impl core::marker::Sync for bitcoin_units::SignedAmount
+impl core::marker::Sync for bitcoin_units::amount::Denomination
+impl core::marker::Sync for bitcoin_units::amount::Display
+impl core::marker::Sync for bitcoin_units::amount::InputTooLargeError
+impl core::marker::Sync for bitcoin_units::amount::InvalidCharacterError
+impl core::marker::Sync for bitcoin_units::amount::MissingDenominationError
+impl core::marker::Sync for bitcoin_units::amount::MissingDigitsError
+impl core::marker::Sync for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Sync for bitcoin_units::amount::ParseAmountError
+impl core::marker::Sync for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Sync for bitcoin_units::amount::ParseError
+impl core::marker::Sync for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Sync for bitcoin_units::amount::TooPreciseError
+impl core::marker::Sync for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Sync for bitcoin_units::block::BlockHeight
+impl core::marker::Sync for bitcoin_units::block::BlockInterval
+impl core::marker::Sync for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::marker::Sync for bitcoin_units::fee_rate::FeeRate
+impl core::marker::Sync for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::ConversionError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::Height
+impl core::marker::Sync for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::marker::Sync for bitcoin_units::locktime::absolute::Time
+impl core::marker::Sync for bitcoin_units::locktime::relative::Height
+impl core::marker::Sync for bitcoin_units::locktime::relative::Time
+impl core::marker::Sync for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Sync for bitcoin_units::parse::ParseIntError
+impl core::marker::Sync for bitcoin_units::parse::PrefixedHexError
+impl core::marker::Sync for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Sync for bitcoin_units::time::BlockTime
+impl core::marker::Sync for bitcoin_units::weight::Weight
+impl core::marker::Unpin for bitcoin_units::Amount
+impl core::marker::Unpin for bitcoin_units::MathOp
+impl core::marker::Unpin for bitcoin_units::NumOpError
+impl core::marker::Unpin for bitcoin_units::SignedAmount
+impl core::marker::Unpin for bitcoin_units::amount::Denomination
+impl core::marker::Unpin for bitcoin_units::amount::Display
+impl core::marker::Unpin for bitcoin_units::amount::InputTooLargeError
+impl core::marker::Unpin for bitcoin_units::amount::InvalidCharacterError
+impl core::marker::Unpin for bitcoin_units::amount::MissingDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::MissingDigitsError
+impl core::marker::Unpin for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Unpin for bitcoin_units::amount::ParseAmountError
+impl core::marker::Unpin for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::ParseError
+impl core::marker::Unpin for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::TooPreciseError
+impl core::marker::Unpin for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Unpin for bitcoin_units::block::BlockHeight
+impl core::marker::Unpin for bitcoin_units::block::BlockInterval
+impl core::marker::Unpin for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::marker::Unpin for bitcoin_units::fee_rate::FeeRate
+impl core::marker::Unpin for bitcoin_units::fee_rate::serde::OverflowError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::ConversionError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::Height
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::marker::Unpin for bitcoin_units::locktime::absolute::Time
+impl core::marker::Unpin for bitcoin_units::locktime::relative::Height
+impl core::marker::Unpin for bitcoin_units::locktime::relative::Time
+impl core::marker::Unpin for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::marker::Unpin for bitcoin_units::parse::ParseIntError
+impl core::marker::Unpin for bitcoin_units::parse::PrefixedHexError
+impl core::marker::Unpin for bitcoin_units::parse::UnprefixedHexError
+impl core::marker::Unpin for bitcoin_units::time::BlockTime
+impl core::marker::Unpin for bitcoin_units::weight::Weight
+impl core::ops::arith::Add for bitcoin_units::Amount
+impl core::ops::arith::Add for bitcoin_units::SignedAmount
+impl core::ops::arith::Add for bitcoin_units::block::BlockInterval
+impl core::ops::arith::Add for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Add for bitcoin_units::weight::Weight
+impl core::ops::arith::Add<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::Add<&bitcoin_units::NumOpResult<bitcoin_units::Amount>> for bitcoin_units::Amount
+impl core::ops::arith::Add<&bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for bitcoin_units::SignedAmount
+impl core::ops::arith::Add<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
+impl core::ops::arith::Add<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Add<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
+impl core::ops::arith::Add<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Add<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Add<bitcoin_units::Amount> for &bitcoin_units::Amount
+impl core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &bitcoin_units::Amount
+impl core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for bitcoin_units::Amount
+impl core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for bitcoin_units::SignedAmount
+impl core::ops::arith::Add<bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Add<bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockHeight
+impl core::ops::arith::Add<bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockInterval
+impl core::ops::arith::Add<bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Add<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Add<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl core::ops::arith::AddAssign for bitcoin_units::block::BlockInterval
+impl core::ops::arith::AddAssign for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::AddAssign for bitcoin_units::weight::Weight
+impl core::ops::arith::AddAssign<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
+impl core::ops::arith::AddAssign<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::AddAssign<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Div for bitcoin_units::Amount
+impl core::ops::arith::Div for bitcoin_units::SignedAmount
+impl core::ops::arith::Div for bitcoin_units::weight::Weight
+impl core::ops::arith::Div<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::Div<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
+impl core::ops::arith::Div<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::Amount
+impl core::ops::arith::Div<&bitcoin_units::weight::Weight> for bitcoin_units::Amount
+impl core::ops::arith::Div<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Div<&i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Div<&i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Div<&u64> for bitcoin_units::Amount
+impl core::ops::arith::Div<&u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Div<&u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Div<bitcoin_units::Amount> for &bitcoin_units::Amount
+impl core::ops::arith::Div<bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Div<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::Amount
+impl core::ops::arith::Div<bitcoin_units::fee_rate::FeeRate> for bitcoin_units::Amount
+impl core::ops::arith::Div<bitcoin_units::weight::Weight> for &bitcoin_units::Amount
+impl core::ops::arith::Div<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Div<bitcoin_units::weight::Weight> for bitcoin_units::Amount
+impl core::ops::arith::Div<i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Div<i64> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Div<i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Div<i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Div<u64> for &bitcoin_units::Amount
+impl core::ops::arith::Div<u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Div<u64> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Div<u64> for bitcoin_units::Amount
+impl core::ops::arith::Div<u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Div<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::DivAssign<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<&bitcoin_units::Amount> for u64
+impl core::ops::arith::Mul<&bitcoin_units::NumOpResult<bitcoin_units::Amount>> for u64
+impl core::ops::arith::Mul<&bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for i64
+impl core::ops::arith::Mul<&bitcoin_units::SignedAmount> for i64
+impl core::ops::arith::Mul<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<&bitcoin_units::weight::Weight> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Mul<&bitcoin_units::weight::Weight> for u64
+impl core::ops::arith::Mul<&i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Mul<&i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Mul<&u64> for bitcoin_units::Amount
+impl core::ops::arith::Mul<&u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Mul<&u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<bitcoin_units::Amount> for &u64
+impl core::ops::arith::Mul<bitcoin_units::Amount> for u64
+impl core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &u64
+impl core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for u64
+impl core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &i64
+impl core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for i64
+impl core::ops::arith::Mul<bitcoin_units::SignedAmount> for &i64
+impl core::ops::arith::Mul<bitcoin_units::SignedAmount> for i64
+impl core::ops::arith::Mul<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<bitcoin_units::fee_rate::FeeRate> for bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<bitcoin_units::weight::Weight> for &bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Mul<bitcoin_units::weight::Weight> for &u64
+impl core::ops::arith::Mul<bitcoin_units::weight::Weight> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Mul<bitcoin_units::weight::Weight> for u64
+impl core::ops::arith::Mul<i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Mul<i64> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Mul<i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Mul<i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Mul<u64> for &bitcoin_units::Amount
+impl core::ops::arith::Mul<u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Mul<u64> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Mul<u64> for bitcoin_units::Amount
+impl core::ops::arith::Mul<u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Mul<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::MulAssign<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Neg for bitcoin_units::SignedAmount
+impl core::ops::arith::Rem for bitcoin_units::weight::Weight
+impl core::ops::arith::Rem<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Rem<&i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Rem<&i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Rem<&u64> for bitcoin_units::Amount
+impl core::ops::arith::Rem<&u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Rem<&u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Rem<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Rem<i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Rem<i64> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Rem<i64> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl core::ops::arith::Rem<i64> for bitcoin_units::SignedAmount
+impl core::ops::arith::Rem<u64> for &bitcoin_units::Amount
+impl core::ops::arith::Rem<u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Rem<u64> for &bitcoin_units::weight::Weight
+impl core::ops::arith::Rem<u64> for bitcoin_units::Amount
+impl core::ops::arith::Rem<u64> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl core::ops::arith::Rem<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::RemAssign<u64> for bitcoin_units::weight::Weight
+impl core::ops::arith::Sub for bitcoin_units::Amount
+impl core::ops::arith::Sub for bitcoin_units::SignedAmount
+impl core::ops::arith::Sub for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub for bitcoin_units::block::BlockInterval
+impl core::ops::arith::Sub for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Sub for bitcoin_units::weight::Weight
+impl core::ops::arith::Sub<&bitcoin_units::Amount> for bitcoin_units::Amount
+impl core::ops::arith::Sub<&bitcoin_units::NumOpResult<bitcoin_units::Amount>> for bitcoin_units::Amount
+impl core::ops::arith::Sub<&bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for bitcoin_units::SignedAmount
+impl core::ops::arith::Sub<&bitcoin_units::SignedAmount> for bitcoin_units::SignedAmount
+impl core::ops::arith::Sub<&bitcoin_units::block::BlockHeight> for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
+impl core::ops::arith::Sub<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Sub<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::ops::arith::Sub<bitcoin_units::Amount> for &bitcoin_units::Amount
+impl core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &bitcoin_units::Amount
+impl core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::Amount>> for bitcoin_units::Amount
+impl core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for bitcoin_units::SignedAmount
+impl core::ops::arith::Sub<bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl core::ops::arith::Sub<bitcoin_units::block::BlockHeight> for &bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub<bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub<bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockInterval
+impl core::ops::arith::Sub<bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockHeight
+impl core::ops::arith::Sub<bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::Sub<bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl core::ops::arith::SubAssign for bitcoin_units::block::BlockInterval
+impl core::ops::arith::SubAssign for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::SubAssign for bitcoin_units::weight::Weight
+impl core::ops::arith::SubAssign<&bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
+impl core::ops::arith::SubAssign<&bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl core::ops::arith::SubAssign<&bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::Amount
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::MathOp
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::NumOpError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::SignedAmount
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::InputTooLargeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::InvalidCharacterError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::MissingDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::MissingDigitsError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::OutOfRangeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseAmountError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::TooPreciseError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockHeight
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::BlockInterval
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::fee_rate::FeeRate
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::fee_rate::serde::OverflowError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ConversionError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::Height
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::absolute::Time
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::Height
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::Time
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::ParseIntError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::PrefixedHexError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::time::BlockTime
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::weight::Weight
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::Amount
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::MathOp
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::NumOpError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::SignedAmount
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Denomination
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::InputTooLargeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::InvalidCharacterError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::MissingDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::MissingDigitsError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::OutOfRangeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseAmountError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::TooPreciseError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockHeight
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::BlockInterval
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::block::TooBigForRelativeBlockHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::fee_rate::FeeRate
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::fee_rate::serde::OverflowError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ConversionError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::Height
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ParseHeightError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::ParseTimeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::absolute::Time
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::Height
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::Time
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::locktime::relative::TimeOverflowError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::ParseIntError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::PrefixedHexError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::parse::UnprefixedHexError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::time::BlockTime
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::weight::Weight
+impl core::str::traits::FromStr for bitcoin_units::Amount
+impl core::str::traits::FromStr for bitcoin_units::SignedAmount
+impl core::str::traits::FromStr for bitcoin_units::amount::Denomination
+impl core::str::traits::FromStr for bitcoin_units::block::BlockHeight
+impl core::str::traits::FromStr for bitcoin_units::block::BlockInterval
+impl core::str::traits::FromStr for bitcoin_units::fee_rate::FeeRate
+impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Height
+impl core::str::traits::FromStr for bitcoin_units::locktime::absolute::Time
+impl core::str::traits::FromStr for bitcoin_units::locktime::relative::Height
+impl core::str::traits::FromStr for bitcoin_units::locktime::relative::Time
+impl core::str::traits::FromStr for bitcoin_units::weight::Weight
+impl serde::ser::Serialize for bitcoin_units::block::BlockHeight
+impl serde::ser::Serialize for bitcoin_units::block::BlockInterval
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Height
+impl serde::ser::Serialize for bitcoin_units::locktime::absolute::Time
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::Height
+impl serde::ser::Serialize for bitcoin_units::locktime::relative::Time
+impl serde::ser::Serialize for bitcoin_units::time::BlockTime
+impl serde::ser::Serialize for bitcoin_units::weight::Weight
+impl<'a, T> core::ops::arith::Add<&'a T> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<bitcoin_units::NumOpResult<T>, Output = bitcoin_units::NumOpResult<T>>
+impl<'a, T> core::ops::arith::Add<&'a bitcoin_units::NumOpResult<T>> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::NumOpResult<T>>
+impl<'a, T> core::ops::arith::Sub<&'a T> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<'a, T> core::ops::arith::Sub<&'a bitcoin_units::NumOpResult<T>> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::Amount
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::SignedAmount
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::amount::Denomination
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::block::BlockHeight
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::block::BlockInterval
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::fee_rate::FeeRate
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Height
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::absolute::Time
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::Height
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::locktime::relative::Time
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::time::BlockTime
+impl<'a> arbitrary::Arbitrary<'a> for bitcoin_units::weight::Weight
+impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::NumOpResult<bitcoin_units::Amount>> for bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::block::BlockInterval> for bitcoin_units::block::BlockInterval
+impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::fee_rate::FeeRate> for bitcoin_units::fee_rate::FeeRate
+impl<'a> core::iter::traits::accum::Sum<&'a bitcoin_units::weight::Weight> for bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::Amount> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockHeight
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockInterval
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl<'a> core::ops::arith::Add<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Div<&'a bitcoin_units::Amount> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Div<&'a bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Div<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Div<&'a bitcoin_units::weight::Weight> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Div<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl<'a> core::ops::arith::Div<&'a i64> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Div<&'a u64> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Div<&'a u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl<'a> core::ops::arith::Div<&'a u64> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::Amount> for &u64
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &u64
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &i64
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::SignedAmount> for &i64
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::weight::Weight> for &bitcoin_units::fee_rate::FeeRate
+impl<'a> core::ops::arith::Mul<&'a bitcoin_units::weight::Weight> for &u64
+impl<'a> core::ops::arith::Mul<&'a i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl<'a> core::ops::arith::Mul<&'a i64> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Mul<&'a u64> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Mul<&'a u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl<'a> core::ops::arith::Mul<&'a u64> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Rem<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Rem<&'a i64> for &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+impl<'a> core::ops::arith::Rem<&'a i64> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Rem<&'a u64> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Rem<&'a u64> for &bitcoin_units::NumOpResult<bitcoin_units::Amount>
+impl<'a> core::ops::arith::Rem<&'a u64> for &bitcoin_units::weight::Weight
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::Amount> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::NumOpResult<bitcoin_units::Amount>> for &bitcoin_units::Amount
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::SignedAmount> for &bitcoin_units::SignedAmount
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::block::BlockHeight> for &bitcoin_units::block::BlockHeight
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockHeight
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::block::BlockInterval> for &bitcoin_units::block::BlockInterval
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::fee_rate::FeeRate> for &bitcoin_units::fee_rate::FeeRate
+impl<'a> core::ops::arith::Sub<&'a bitcoin_units::weight::Weight> for &bitcoin_units::weight::Weight
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::block::BlockHeight
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::block::BlockInterval
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Height
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::absolute::Time
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::Height
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::locktime::relative::Time
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::time::BlockTime
+impl<'de> serde::de::Deserialize<'de> for bitcoin_units::weight::Weight
+impl<T: core::clone::Clone> core::clone::Clone for bitcoin_units::NumOpResult<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for bitcoin_units::NumOpResult<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for bitcoin_units::NumOpResult<T>
+impl<T: core::fmt::Debug> bitcoin_units::NumOpResult<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for bitcoin_units::NumOpResult<T>
+impl<T: core::marker::Copy> core::marker::Copy for bitcoin_units::NumOpResult<T>
+impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::Amount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::Amount>
+impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::SignedAmount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::SignedAmount>
+impl<T> core::marker::Freeze for bitcoin_units::NumOpResult<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for bitcoin_units::NumOpResult<T> where T: core::marker::Send
+impl<T> core::marker::StructuralPartialEq for bitcoin_units::NumOpResult<T>
+impl<T> core::marker::Sync for bitcoin_units::NumOpResult<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for bitcoin_units::NumOpResult<T> where T: core::marker::Unpin
+impl<T> core::ops::arith::Add for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Add<&T> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<bitcoin_units::NumOpResult<T>, Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Add<&bitcoin_units::NumOpResult<T>> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Add<T> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<bitcoin_units::NumOpResult<T>, Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Add<T> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<bitcoin_units::NumOpResult<T>, Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Add<bitcoin_units::NumOpResult<T>> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Add<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub<&T> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub<&bitcoin_units::NumOpResult<T>> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub<T> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub<T> for bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::ops::arith::Sub<bitcoin_units::NumOpResult<T>> for &bitcoin_units::NumOpResult<T> where T: core::marker::Copy + core::ops::arith::Sub<Output = bitcoin_units::NumOpResult<T>>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::NumOpResult<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_units::NumOpResult<T> where T: core::panic::unwind_safe::UnwindSafe
+pub bitcoin_units::MathOp::Add
+pub bitcoin_units::MathOp::Div
+pub bitcoin_units::MathOp::Mul
+pub bitcoin_units::MathOp::Neg
+pub bitcoin_units::MathOp::Rem
+pub bitcoin_units::MathOp::Sub
+pub bitcoin_units::NumOpResult::Error(bitcoin_units::NumOpError)
+pub bitcoin_units::NumOpResult::Valid(T)
+pub bitcoin_units::amount::Denomination::Bit
+pub bitcoin_units::amount::Denomination::Bitcoin
+pub bitcoin_units::amount::Denomination::CentiBitcoin
+pub bitcoin_units::amount::Denomination::MicroBitcoin
+pub bitcoin_units::amount::Denomination::MilliBitcoin
+pub bitcoin_units::amount::Denomination::Satoshi
+pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::PossiblyConfusingDenominationError)
+pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::UnknownDenominationError)
+pub const bitcoin_units::Amount::FIFTY_BTC: Self
+pub const bitcoin_units::Amount::MAX: Self
+pub const bitcoin_units::Amount::MAX_MONEY: Self
+pub const bitcoin_units::Amount::MIN: Self
+pub const bitcoin_units::Amount::ONE_BTC: Self
+pub const bitcoin_units::Amount::ONE_SAT: Self
+pub const bitcoin_units::Amount::SIZE: usize
+pub const bitcoin_units::Amount::ZERO: Self
+pub const bitcoin_units::SignedAmount::FIFTY_BTC: Self
+pub const bitcoin_units::SignedAmount::MAX: Self
+pub const bitcoin_units::SignedAmount::MAX_MONEY: Self
+pub const bitcoin_units::SignedAmount::MIN: Self
+pub const bitcoin_units::SignedAmount::ONE_BTC: Self
+pub const bitcoin_units::SignedAmount::ONE_SAT: Self
+pub const bitcoin_units::SignedAmount::ZERO: Self
+pub const bitcoin_units::amount::Denomination::BTC: Self
+pub const bitcoin_units::amount::Denomination::SAT: Self
+pub const bitcoin_units::block::BlockHeight::MAX: Self
+pub const bitcoin_units::block::BlockHeight::MIN: Self
+pub const bitcoin_units::block::BlockHeight::ZERO: Self
+pub const bitcoin_units::block::BlockInterval::MAX: Self
+pub const bitcoin_units::block::BlockInterval::MIN: Self
+pub const bitcoin_units::block::BlockInterval::ZERO: Self
+pub const bitcoin_units::fee_rate::FeeRate::BROADCAST_MIN: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin_units::fee_rate::FeeRate::DUST: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin_units::fee_rate::FeeRate::MAX: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin_units::fee_rate::FeeRate::MIN: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin_units::fee_rate::FeeRate::ZERO: bitcoin_units::fee_rate::FeeRate
+pub const bitcoin_units::locktime::absolute::Height::MAX: Self
+pub const bitcoin_units::locktime::absolute::Height::MIN: Self
+pub const bitcoin_units::locktime::absolute::Height::ZERO: Self
+pub const bitcoin_units::locktime::absolute::LOCK_TIME_THRESHOLD: u32
+pub const bitcoin_units::locktime::absolute::Time::MAX: Self
+pub const bitcoin_units::locktime::absolute::Time::MIN: Self
+pub const bitcoin_units::locktime::relative::Height::MAX: Self
+pub const bitcoin_units::locktime::relative::Height::MIN: Self
+pub const bitcoin_units::locktime::relative::Height::ZERO: Self
+pub const bitcoin_units::locktime::relative::Time::MAX: Self
+pub const bitcoin_units::locktime::relative::Time::MIN: Self
+pub const bitcoin_units::locktime::relative::Time::ZERO: Self
+pub const bitcoin_units::weight::WITNESS_SCALE_FACTOR: usize
+pub const bitcoin_units::weight::Weight::MAX: bitcoin_units::weight::Weight
+pub const bitcoin_units::weight::Weight::MAX_BLOCK: bitcoin_units::weight::Weight
+pub const bitcoin_units::weight::Weight::MIN: bitcoin_units::weight::Weight
+pub const bitcoin_units::weight::Weight::MIN_TRANSACTION: bitcoin_units::weight::Weight
+pub const bitcoin_units::weight::Weight::WITNESS_SCALE_FACTOR: u64
+pub const bitcoin_units::weight::Weight::ZERO: bitcoin_units::weight::Weight
+pub const fn bitcoin_units::Amount::checked_add(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::Amount::checked_div(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::Amount::checked_div_by_fee_rate_ceil(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::weight::Weight>
+pub const fn bitcoin_units::Amount::checked_div_by_fee_rate_floor(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::weight::Weight>
+pub const fn bitcoin_units::Amount::checked_div_by_weight_ceil(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
+pub const fn bitcoin_units::Amount::checked_div_by_weight_floor(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::fee_rate::FeeRate>
+pub const fn bitcoin_units::Amount::checked_mul(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::Amount::checked_rem(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::Amount::checked_sub(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::Amount::from_btc_u16(whole_bitcoin: u16) -> Self
+pub const fn bitcoin_units::Amount::from_sat(satoshi: u64) -> core::result::Result<Self, bitcoin_units::amount::OutOfRangeError>
+pub const fn bitcoin_units::Amount::from_sat_u32(satoshi: u32) -> Self
+pub const fn bitcoin_units::Amount::to_sat(self) -> u64
+pub const fn bitcoin_units::SignedAmount::abs(self) -> Self
+pub const fn bitcoin_units::SignedAmount::checked_abs(self) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::checked_add(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::checked_div(self, rhs: i64) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::checked_mul(self, rhs: i64) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::checked_rem(self, rhs: i64) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::checked_sub(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::SignedAmount::from_btc_i16(whole_bitcoin: i16) -> Self
+pub const fn bitcoin_units::SignedAmount::from_sat(satoshi: i64) -> core::result::Result<Self, bitcoin_units::amount::OutOfRangeError>
+pub const fn bitcoin_units::SignedAmount::from_sat_i32(satoshi: i32) -> Self
+pub const fn bitcoin_units::SignedAmount::to_sat(self) -> i64
+pub const fn bitcoin_units::block::BlockHeight::from_u32(inner: u32) -> Self
+pub const fn bitcoin_units::block::BlockHeight::to_u32(self) -> u32
+pub const fn bitcoin_units::block::BlockInterval::from_u32(inner: u32) -> Self
+pub const fn bitcoin_units::block::BlockInterval::to_u32(self) -> u32
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_add(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_div(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_mul_by_weight(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
+pub const fn bitcoin_units::fee_rate::FeeRate::checked_sub(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kvb(sat_kvb: u64) -> Self
+pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_kwu(sat_kwu: u64) -> Self
+pub const fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb_unchecked(sat_vb: u64) -> Self
+pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_kwu(self) -> u64
+pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_ceil(self) -> u64
+pub const fn bitcoin_units::fee_rate::FeeRate::to_sat_per_vb_floor(self) -> u64
+pub const fn bitcoin_units::locktime::absolute::Height::from_consensus(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Height, bitcoin_units::locktime::absolute::ConversionError>
+pub const fn bitcoin_units::locktime::absolute::Height::to_consensus_u32(self) -> u32
+pub const fn bitcoin_units::locktime::absolute::Time::from_consensus(n: u32) -> core::result::Result<bitcoin_units::locktime::absolute::Time, bitcoin_units::locktime::absolute::ConversionError>
+pub const fn bitcoin_units::locktime::absolute::Time::to_consensus_u32(self) -> u32
+pub const fn bitcoin_units::locktime::absolute::is_block_height(n: u32) -> bool
+pub const fn bitcoin_units::locktime::absolute::is_block_time(n: u32) -> bool
+pub const fn bitcoin_units::locktime::relative::Height::from_height(blocks: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::Height::to_consensus_u32(self) -> u32
+pub const fn bitcoin_units::locktime::relative::Height::value(self) -> u16
+pub const fn bitcoin_units::locktime::relative::Time::from_512_second_intervals(intervals: u16) -> Self
+pub const fn bitcoin_units::locktime::relative::Time::from_seconds_ceil(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::Time::from_seconds_floor(seconds: u32) -> core::result::Result<Self, bitcoin_units::locktime::relative::TimeOverflowError>
+pub const fn bitcoin_units::locktime::relative::Time::to_consensus_u32(self) -> u32
+pub const fn bitcoin_units::locktime::relative::Time::value(self) -> u16
+pub const fn bitcoin_units::time::BlockTime::from_u32(t: u32) -> Self
+pub const fn bitcoin_units::time::BlockTime::to_u32(self) -> u32
+pub const fn bitcoin_units::weight::Weight::checked_add(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::checked_div(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::checked_mul(self, rhs: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::checked_mul_by_fee_rate(self, fee_rate: bitcoin_units::fee_rate::FeeRate) -> core::option::Option<bitcoin_units::Amount>
+pub const fn bitcoin_units::weight::Weight::checked_sub(self, rhs: Self) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::from_kwu(wu: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::from_non_witness_data_size(non_witness_size: u64) -> Self
+pub const fn bitcoin_units::weight::Weight::from_vb(vb: u64) -> core::option::Option<Self>
+pub const fn bitcoin_units::weight::Weight::from_vb_unchecked(vb: u64) -> Self
+pub const fn bitcoin_units::weight::Weight::from_vb_unwrap(vb: u64) -> bitcoin_units::weight::Weight
+pub const fn bitcoin_units::weight::Weight::from_witness_data_size(witness_size: u64) -> Self
+pub const fn bitcoin_units::weight::Weight::from_wu(wu: u64) -> Self
+pub const fn bitcoin_units::weight::Weight::to_kwu_ceil(self) -> u64
+pub const fn bitcoin_units::weight::Weight::to_kwu_floor(self) -> u64
+pub const fn bitcoin_units::weight::Weight::to_vbytes_ceil(self) -> u64
+pub const fn bitcoin_units::weight::Weight::to_vbytes_floor(self) -> u64
+pub const fn bitcoin_units::weight::Weight::to_wu(self) -> u64
+pub enum bitcoin_units::NumOpResult<T>
+pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::add(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::Amount::mul(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::Amount::rem(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::Amount::rem(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &bitcoin_units::Amount::sub(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::add(self, rhs: &T) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::add(self, rhs: &bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::add(self, rhs: T) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::add(self, rhs: bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::sub(self, rhs: &T) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::sub(self, rhs: &bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::sub(self, rhs: T) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<T>::sub(self, rhs: bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::div(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::mul(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::mul(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::rem(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::Amount>::rem(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::mul(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::mul(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::rem(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::rem(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::div(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::div(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::div(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::mul(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::mul(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::rem(self, rhs: &i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::rem(self, rhs: i64) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::add(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::sub(self, rhs: &bitcoin_units::block::BlockHeight) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::sub(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::sub(self, rhs: bitcoin_units::block::BlockHeight) -> Self::Output
+pub fn &bitcoin_units::block::BlockHeight::sub(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockInterval::add(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockInterval::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockInterval::sub(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::block::BlockInterval::sub(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::add(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::add(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::mul(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::fee_rate::FeeRate::sub(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::add(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::div(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::div(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::div(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::mul(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::mul(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::mul(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::mul(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::rem(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::rem(self, rhs: &u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::rem(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::rem(self, rhs: u64) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::sub(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &bitcoin_units::weight::Weight::sub(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn &i64::mul(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn &i64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn &i64::mul(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn &u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn &u64::mul(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &u64::mul(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn &u64::mul(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn &u64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn &u64::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::Amount>
+pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::SignedAmount>
+pub fn bitcoin_units::Amount::add(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn bitcoin_units::Amount::add(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::add(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn bitcoin_units::Amount::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::Amount::clone(&self) -> bitcoin_units::Amount
+pub fn bitcoin_units::Amount::cmp(&self, other: &bitcoin_units::Amount) -> core::cmp::Ordering
+pub fn bitcoin_units::Amount::default() -> Self
+pub fn bitcoin_units::Amount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::Amount::display_dynamic(self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::Amount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::Amount::div(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::Amount::div(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::Amount::eq(&self, other: &bitcoin_units::Amount) -> bool
+pub fn bitcoin_units::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::Amount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::Amount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::Amount::from_int_btc<T: core::convert::Into<u16>>(whole_bitcoin: T) -> Self
+pub fn bitcoin_units::Amount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::Amount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::Amount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::Amount::mul(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::Amount::mul(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::Amount::partial_cmp(&self, other: &bitcoin_units::Amount) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::Amount::rem(self, modulus: u64) -> Self::Output
+pub fn bitcoin_units::Amount::rem(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::Amount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::sub(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn bitcoin_units::Amount::sub(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn bitcoin_units::Amount::to_btc(self) -> f64
+pub fn bitcoin_units::Amount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub fn bitcoin_units::Amount::to_signed(self) -> bitcoin_units::SignedAmount
+pub fn bitcoin_units::Amount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
+pub fn bitcoin_units::Amount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
+pub fn bitcoin_units::Amount::try_from(value: bitcoin_units::SignedAmount) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::Amount::type_prefix(_: bitcoin_units::amount::serde::private::Token) -> &'static str
+pub fn bitcoin_units::MathOp::clone(&self) -> bitcoin_units::MathOp
+pub fn bitcoin_units::MathOp::eq(&self, other: &bitcoin_units::MathOp) -> bool
+pub fn bitcoin_units::MathOp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::MathOp::is_div_by_zero(self) -> bool
+pub fn bitcoin_units::MathOp::is_overflow(self) -> bool
+pub fn bitcoin_units::NumOpError::clone(&self) -> bitcoin_units::NumOpError
+pub fn bitcoin_units::NumOpError::eq(&self, other: &bitcoin_units::NumOpError) -> bool
+pub fn bitcoin_units::NumOpError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::NumOpError::operation(self) -> bitcoin_units::MathOp
+pub fn bitcoin_units::NumOpError::while_doing(op: bitcoin_units::MathOp) -> Self
+pub fn bitcoin_units::NumOpResult<T>::add(self, rhs: &T) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::add(self, rhs: &bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::add(self, rhs: Self) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::add(self, rhs: T) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::and_then<F>(self, op: F) -> bitcoin_units::NumOpResult<T> where F: core::ops::function::FnOnce(T) -> bitcoin_units::NumOpResult<T>
+pub fn bitcoin_units::NumOpResult<T>::clone(&self) -> bitcoin_units::NumOpResult<T>
+pub fn bitcoin_units::NumOpResult<T>::eq(&self, other: &bitcoin_units::NumOpResult<T>) -> bool
+pub fn bitcoin_units::NumOpResult<T>::expect(self, msg: &str) -> T
+pub fn bitcoin_units::NumOpResult<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::NumOpResult<T>::into_result(self) -> core::result::Result<T, bitcoin_units::NumOpError>
+pub fn bitcoin_units::NumOpResult<T>::is_error(&self) -> bool
+pub fn bitcoin_units::NumOpResult<T>::is_valid(&self) -> bool
+pub fn bitcoin_units::NumOpResult<T>::ok(self) -> core::option::Option<T>
+pub fn bitcoin_units::NumOpResult<T>::sub(self, rhs: &T) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::sub(self, rhs: &bitcoin_units::NumOpResult<T>) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::sub(self, rhs: Self) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::sub(self, rhs: T) -> Self::Output
+pub fn bitcoin_units::NumOpResult<T>::unwrap(self) -> T
+pub fn bitcoin_units::NumOpResult<T>::unwrap_err(self) -> bitcoin_units::NumOpError
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::div(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::div(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::from(a: &bitcoin_units::Amount) -> Self
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::from(a: bitcoin_units::Amount) -> Self
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::mul(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::mul(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::rem(self, modulus: u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::rem(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::NumOpResult<bitcoin_units::Amount>>
+pub fn bitcoin_units::NumOpResult<bitcoin_units::Amount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = bitcoin_units::NumOpResult<bitcoin_units::Amount>>
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::div(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::from(a: &bitcoin_units::SignedAmount) -> Self
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::from(a: bitcoin_units::SignedAmount) -> Self
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::mul(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::mul(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::rem(self, modulus: i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::rem(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>
+pub fn bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>
+pub fn bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn bitcoin_units::SignedAmount::add(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn bitcoin_units::SignedAmount::add(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::SignedAmount::clone(&self) -> bitcoin_units::SignedAmount
+pub fn bitcoin_units::SignedAmount::cmp(&self, other: &bitcoin_units::SignedAmount) -> core::cmp::Ordering
+pub fn bitcoin_units::SignedAmount::default() -> Self
+pub fn bitcoin_units::SignedAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::SignedAmount::display_dynamic(self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::SignedAmount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::SignedAmount::div(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::div(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::div(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::div(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::eq(&self, other: &bitcoin_units::SignedAmount) -> bool
+pub fn bitcoin_units::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::SignedAmount::from(value: bitcoin_units::Amount) -> Self
+pub fn bitcoin_units::SignedAmount::from_btc(btc: f64) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::SignedAmount::from_float_in(value: f64, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::SignedAmount::from_int_btc<T: core::convert::Into<i16>>(whole_bitcoin: T) -> Self
+pub fn bitcoin_units::SignedAmount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<Self, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<Self, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::SignedAmount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::SignedAmount::is_negative(self) -> bool
+pub fn bitcoin_units::SignedAmount::is_positive(self) -> bool
+pub fn bitcoin_units::SignedAmount::mul(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::mul(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::neg(self) -> Self::Output
+pub fn bitcoin_units::SignedAmount::partial_cmp(&self, other: &bitcoin_units::SignedAmount) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::SignedAmount::positive_sub(self, rhs: Self) -> core::option::Option<Self>
+pub fn bitcoin_units::SignedAmount::rem(self, modulus: i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::rem(self, rhs: &i64) -> Self::Output
+pub fn bitcoin_units::SignedAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::SignedAmount::signum(self) -> i64
+pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn bitcoin_units::SignedAmount::sub(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn bitcoin_units::SignedAmount::sub(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn bitcoin_units::SignedAmount::to_btc(self) -> f64
+pub fn bitcoin_units::SignedAmount::to_float_in(self, denom: bitcoin_units::amount::Denomination) -> f64
+pub fn bitcoin_units::SignedAmount::to_string_in(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
+pub fn bitcoin_units::SignedAmount::to_string_with_denomination(self, denom: bitcoin_units::amount::Denomination) -> alloc::string::String
+pub fn bitcoin_units::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::Amount, bitcoin_units::amount::OutOfRangeError>
+pub fn bitcoin_units::SignedAmount::type_prefix(_: bitcoin_units::amount::serde::private::Token) -> &'static str
+pub fn bitcoin_units::SignedAmount::unsigned_abs(self) -> bitcoin_units::Amount
+pub fn bitcoin_units::amount::CheckedSum::checked_sum(self) -> core::option::Option<R>
+pub fn bitcoin_units::amount::Denomination::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
+pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
+pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::Denomination::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::amount::Denomination::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::amount::Display::clone(&self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::Display::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
+pub fn bitcoin_units::amount::InputTooLargeError::clone(&self) -> bitcoin_units::amount::InputTooLargeError
+pub fn bitcoin_units::amount::InputTooLargeError::eq(&self, other: &bitcoin_units::amount::InputTooLargeError) -> bool
+pub fn bitcoin_units::amount::InputTooLargeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::InvalidCharacterError::clone(&self) -> bitcoin_units::amount::InvalidCharacterError
+pub fn bitcoin_units::amount::InvalidCharacterError::eq(&self, other: &bitcoin_units::amount::InvalidCharacterError) -> bool
+pub fn bitcoin_units::amount::InvalidCharacterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::MissingDenominationError::clone(&self) -> bitcoin_units::amount::MissingDenominationError
+pub fn bitcoin_units::amount::MissingDenominationError::eq(&self, other: &bitcoin_units::amount::MissingDenominationError) -> bool
+pub fn bitcoin_units::amount::MissingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::MissingDigitsError::clone(&self) -> bitcoin_units::amount::MissingDigitsError
+pub fn bitcoin_units::amount::MissingDigitsError::eq(&self, other: &bitcoin_units::amount::MissingDigitsError) -> bool
+pub fn bitcoin_units::amount::MissingDigitsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::OutOfRangeError::clone(&self) -> bitcoin_units::amount::OutOfRangeError
+pub fn bitcoin_units::amount::OutOfRangeError::eq(&self, other: &bitcoin_units::amount::OutOfRangeError) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::OutOfRangeError::is_above_max(self) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::is_below_min(self) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::valid_range(self) -> (i64, u64)
+pub fn bitcoin_units::amount::ParseAmountError::clone(&self) -> bitcoin_units::amount::ParseAmountError
+pub fn bitcoin_units::amount::ParseAmountError::eq(&self, other: &bitcoin_units::amount::ParseAmountError) -> bool
+pub fn bitcoin_units::amount::ParseAmountError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseAmountError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::InputTooLargeError) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::InvalidCharacterError) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::MissingDigitsError) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::TooPreciseError) -> Self
+pub fn bitcoin_units::amount::ParseAmountError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::amount::ParseDenominationError::clone(&self) -> bitcoin_units::amount::ParseDenominationError
+pub fn bitcoin_units::amount::ParseDenominationError::eq(&self, other: &bitcoin_units::amount::ParseDenominationError) -> bool
+pub fn bitcoin_units::amount::ParseDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseDenominationError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::ParseDenominationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::amount::ParseError::clone(&self) -> bitcoin_units::amount::ParseError
+pub fn bitcoin_units::amount::ParseError::eq(&self, other: &bitcoin_units::amount::ParseError) -> bool
+pub fn bitcoin_units::amount::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::InputTooLargeError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::InvalidCharacterError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::MissingDigitsError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseAmountError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseDenominationError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::TooPreciseError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::amount::ParseError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::clone(&self) -> bitcoin_units::amount::PossiblyConfusingDenominationError
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::eq(&self, other: &bitcoin_units::amount::PossiblyConfusingDenominationError) -> bool
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::amount::TooPreciseError::clone(&self) -> bitcoin_units::amount::TooPreciseError
+pub fn bitcoin_units::amount::TooPreciseError::eq(&self, other: &bitcoin_units::amount::TooPreciseError) -> bool
+pub fn bitcoin_units::amount::TooPreciseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::UnknownDenominationError::clone(&self) -> bitcoin_units::amount::UnknownDenominationError
+pub fn bitcoin_units::amount::UnknownDenominationError::eq(&self, other: &bitcoin_units::amount::UnknownDenominationError) -> bool
+pub fn bitcoin_units::amount::UnknownDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::UnknownDenominationError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_btc<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_sat<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::des_str<'d, D: serde::de::Deserializer<'d>>(d: D, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_btc<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_sat<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmount::ser_str<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_btc_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_sat_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::ser_str_opt<S: serde::ser::Serializer>(self, s: S, _: bitcoin_units::amount::serde::private::Token) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::SerdeAmountForOpt::type_prefix(: bitcoin_units::amount::serde::private::Token) -> &'static str
+pub fn bitcoin_units::amount::serde::as_btc::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmount, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_btc::opt::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmountForOpt, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_btc::opt::serialize<A: bitcoin_units::amount::serde::SerdeAmountForOpt, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::as_btc::serialize<A: bitcoin_units::amount::serde::SerdeAmount, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::as_sat::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmount, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_sat::opt::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmountForOpt, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_sat::opt::serialize<A: bitcoin_units::amount::serde::SerdeAmountForOpt, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::as_sat::serialize<A: bitcoin_units::amount::serde::SerdeAmount, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::as_str::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmount, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<A, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_str::opt::deserialize<'d, A: bitcoin_units::amount::serde::SerdeAmountForOpt, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<A>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::amount::serde::as_str::opt::serialize<A: bitcoin_units::amount::serde::SerdeAmountForOpt, S: serde::ser::Serializer>(a: &core::option::Option<A>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::amount::serde::as_str::serialize<A: bitcoin_units::amount::serde::SerdeAmount, S: serde::ser::Serializer>(a: &A, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::block::BlockHeight::add(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::block::BlockHeight::clone(&self) -> bitcoin_units::block::BlockHeight
+pub fn bitcoin_units::block::BlockHeight::cmp(&self, other: &bitcoin_units::block::BlockHeight) -> core::cmp::Ordering
+pub fn bitcoin_units::block::BlockHeight::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::block::BlockHeight::eq(&self, other: &bitcoin_units::block::BlockHeight) -> bool
+pub fn bitcoin_units::block::BlockHeight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockHeight::from(h: bitcoin_units::locktime::absolute::Height) -> Self
+pub fn bitcoin_units::block::BlockHeight::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockHeight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockHeight::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::block::BlockHeight::partial_cmp(&self, other: &bitcoin_units::block::BlockHeight) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::block::BlockHeight::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::block::BlockHeight::sub(self, rhs: &bitcoin_units::block::BlockHeight) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::sub(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::sub(self, rhs: bitcoin_units::block::BlockHeight) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::sub(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockHeight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockHeight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockInterval::add(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockInterval::add(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockInterval::add_assign(&mut self, rhs: &bitcoin_units::block::BlockInterval)
+pub fn bitcoin_units::block::BlockInterval::add_assign(&mut self, rhs: bitcoin_units::block::BlockInterval)
+pub fn bitcoin_units::block::BlockInterval::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::block::BlockInterval::clone(&self) -> bitcoin_units::block::BlockInterval
+pub fn bitcoin_units::block::BlockInterval::cmp(&self, other: &bitcoin_units::block::BlockInterval) -> core::cmp::Ordering
+pub fn bitcoin_units::block::BlockInterval::default() -> bitcoin_units::block::BlockInterval
+pub fn bitcoin_units::block::BlockInterval::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::block::BlockInterval::eq(&self, other: &bitcoin_units::block::BlockInterval) -> bool
+pub fn bitcoin_units::block::BlockInterval::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::block::BlockInterval::from(h: bitcoin_units::locktime::relative::Height) -> Self
+pub fn bitcoin_units::block::BlockInterval::from(inner: u32) -> Self
+pub fn bitcoin_units::block::BlockInterval::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::block::BlockInterval::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::block::BlockInterval::partial_cmp(&self, other: &bitcoin_units::block::BlockInterval) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::block::BlockInterval::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::block::BlockInterval::sub(self, rhs: &bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockInterval::sub(self, rhs: bitcoin_units::block::BlockInterval) -> Self::Output
+pub fn bitcoin_units::block::BlockInterval::sub_assign(&mut self, rhs: &bitcoin_units::block::BlockInterval)
+pub fn bitcoin_units::block::BlockInterval::sub_assign(&mut self, rhs: bitcoin_units::block::BlockInterval)
+pub fn bitcoin_units::block::BlockInterval::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
+pub fn bitcoin_units::block::BlockInterval::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::block::BlockInterval>
+pub fn bitcoin_units::block::BlockInterval::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockInterval::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::BlockInterval::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::clone(&self) -> bitcoin_units::block::TooBigForRelativeBlockHeightError
+pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::eq(&self, other: &bitcoin_units::block::TooBigForRelativeBlockHeightError) -> bool
+pub fn bitcoin_units::block::TooBigForRelativeBlockHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::fee_rate::FeeRate::add(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::add(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::add_assign(&mut self, rhs: &bitcoin_units::fee_rate::FeeRate)
+pub fn bitcoin_units::fee_rate::FeeRate::add_assign(&mut self, rhs: bitcoin_units::fee_rate::FeeRate)
+pub fn bitcoin_units::fee_rate::FeeRate::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::fee_rate::FeeRate::clone(&self) -> bitcoin_units::fee_rate::FeeRate
+pub fn bitcoin_units::fee_rate::FeeRate::cmp(&self, other: &bitcoin_units::fee_rate::FeeRate) -> core::cmp::Ordering
+pub fn bitcoin_units::fee_rate::FeeRate::eq(&self, other: &bitcoin_units::fee_rate::FeeRate) -> bool
+pub fn bitcoin_units::fee_rate::FeeRate::fee_vb(self, vb: u64) -> core::option::Option<bitcoin_units::Amount>
+pub fn bitcoin_units::fee_rate::FeeRate::fee_wu(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
+pub fn bitcoin_units::fee_rate::FeeRate::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::fee_rate::FeeRate::from_sat_per_vb(sat_vb: u64) -> core::option::Option<Self>
+pub fn bitcoin_units::fee_rate::FeeRate::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::fee_rate::FeeRate::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::fee_rate::FeeRate::mul(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::partial_cmp(&self, other: &bitcoin_units::fee_rate::FeeRate) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::fee_rate::FeeRate::sub(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::sub(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: &bitcoin_units::fee_rate::FeeRate)
+pub fn bitcoin_units::fee_rate::FeeRate::sub_assign(&mut self, rhs: bitcoin_units::fee_rate::FeeRate)
+pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::fee_rate::FeeRate>
+pub fn bitcoin_units::fee_rate::FeeRate::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
+pub fn bitcoin_units::fee_rate::FeeRate::to_fee(self, weight: bitcoin_units::weight::Weight) -> core::option::Option<bitcoin_units::Amount>
+pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::fee_rate::FeeRate::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::fee_rate::serde::OverflowError::clone(&self) -> bitcoin_units::fee_rate::serde::OverflowError
+pub fn bitcoin_units::fee_rate::serde::OverflowError::eq(&self, other: &bitcoin_units::fee_rate::serde::OverflowError) -> bool
+pub fn bitcoin_units::fee_rate::serde::OverflowError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::fee_rate::serde::OverflowError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<bitcoin_units::fee_rate::FeeRate, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::fee_rate::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::fee_rate::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_kwu::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::fee_rate::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<bitcoin_units::fee_rate::FeeRate, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::fee_rate::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::fee_rate::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::fee_rate::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<bitcoin_units::fee_rate::FeeRate, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::deserialize<'d, D: serde::de::Deserializer<'d>>(d: D) -> core::result::Result<core::option::Option<bitcoin_units::fee_rate::FeeRate>, <D as serde::de::Deserializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt::serialize<S: serde::ser::Serializer>(f: &core::option::Option<bitcoin_units::fee_rate::FeeRate>, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::serialize<S: serde::ser::Serializer>(f: &bitcoin_units::fee_rate::FeeRate, s: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error>
+pub fn bitcoin_units::locktime::absolute::ConversionError::clone(&self) -> bitcoin_units::locktime::absolute::ConversionError
+pub fn bitcoin_units::locktime::absolute::ConversionError::eq(&self, other: &bitcoin_units::locktime::absolute::ConversionError) -> bool
+pub fn bitcoin_units::locktime::absolute::ConversionError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::ConversionError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::absolute::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::locktime::absolute::Height::clone(&self) -> bitcoin_units::locktime::absolute::Height
+pub fn bitcoin_units::locktime::absolute::Height::cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::cmp::Ordering
+pub fn bitcoin_units::locktime::absolute::Height::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::locktime::absolute::Height::eq(&self, other: &bitcoin_units::locktime::absolute::Height) -> bool
+pub fn bitcoin_units::locktime::absolute::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::Height::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseHeightError>
+pub fn bitcoin_units::locktime::absolute::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::absolute::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::absolute::Height::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::Height) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::locktime::absolute::Height::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_units::locktime::absolute::Height::try_from(h: bitcoin_units::block::BlockHeight) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::ParseHeightError::clone(&self) -> bitcoin_units::locktime::absolute::ParseHeightError
+pub fn bitcoin_units::locktime::absolute::ParseHeightError::eq(&self, other: &bitcoin_units::locktime::absolute::ParseHeightError) -> bool
+pub fn bitcoin_units::locktime::absolute::ParseHeightError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::ParseHeightError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::absolute::ParseTimeError::clone(&self) -> bitcoin_units::locktime::absolute::ParseTimeError
+pub fn bitcoin_units::locktime::absolute::ParseTimeError::eq(&self, other: &bitcoin_units::locktime::absolute::ParseTimeError) -> bool
+pub fn bitcoin_units::locktime::absolute::ParseTimeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::ParseTimeError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::locktime::absolute::Time::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::locktime::absolute::Time::clone(&self) -> bitcoin_units::locktime::absolute::Time
+pub fn bitcoin_units::locktime::absolute::Time::cmp(&self, other: &bitcoin_units::locktime::absolute::Time) -> core::cmp::Ordering
+pub fn bitcoin_units::locktime::absolute::Time::deserialize<D>(deserializer: D) -> core::result::Result<Self, <D as serde::de::Deserializer>::Error> where D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::locktime::absolute::Time::eq(&self, other: &bitcoin_units::locktime::absolute::Time) -> bool
+pub fn bitcoin_units::locktime::absolute::Time::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::absolute::Time::from_hex(s: &str) -> core::result::Result<Self, bitcoin_units::locktime::absolute::ParseTimeError>
+pub fn bitcoin_units::locktime::absolute::Time::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::absolute::Time::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::absolute::Time::partial_cmp(&self, other: &bitcoin_units::locktime::absolute::Time) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::locktime::absolute::Time::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde::ser::Serializer>::Ok, <S as serde::ser::Serializer>::Error> where S: serde::ser::Serializer
+pub fn bitcoin_units::locktime::absolute::Time::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::Time::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::absolute::Time::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Height::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::locktime::relative::Height::clone(&self) -> bitcoin_units::locktime::relative::Height
+pub fn bitcoin_units::locktime::relative::Height::cmp(&self, other: &bitcoin_units::locktime::relative::Height) -> core::cmp::Ordering
+pub fn bitcoin_units::locktime::relative::Height::default() -> bitcoin_units::locktime::relative::Height
+pub fn bitcoin_units::locktime::relative::Height::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::locktime::relative::Height::eq(&self, other: &bitcoin_units::locktime::relative::Height) -> bool
+pub fn bitcoin_units::locktime::relative::Height::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::Height::from(value: u16) -> Self
+pub fn bitcoin_units::locktime::relative::Height::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::relative::Height::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::relative::Height::partial_cmp(&self, other: &bitcoin_units::locktime::relative::Height) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::locktime::relative::Height::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::locktime::relative::Height::try_from(h: bitcoin_units::block::BlockInterval) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Height::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Height::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Height::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Time::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::locktime::relative::Time::clone(&self) -> bitcoin_units::locktime::relative::Time
+pub fn bitcoin_units::locktime::relative::Time::cmp(&self, other: &bitcoin_units::locktime::relative::Time) -> core::cmp::Ordering
+pub fn bitcoin_units::locktime::relative::Time::default() -> bitcoin_units::locktime::relative::Time
+pub fn bitcoin_units::locktime::relative::Time::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::locktime::relative::Time::eq(&self, other: &bitcoin_units::locktime::relative::Time) -> bool
+pub fn bitcoin_units::locktime::relative::Time::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::Time::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::locktime::relative::Time::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::locktime::relative::Time::partial_cmp(&self, other: &bitcoin_units::locktime::relative::Time) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::locktime::relative::Time::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::locktime::relative::Time::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Time::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::Time::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::locktime::relative::TimeOverflowError::clone(&self) -> bitcoin_units::locktime::relative::TimeOverflowError
+pub fn bitcoin_units::locktime::relative::TimeOverflowError::eq(&self, other: &bitcoin_units::locktime::relative::TimeOverflowError) -> bool
+pub fn bitcoin_units::locktime::relative::TimeOverflowError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::locktime::relative::TimeOverflowError::new(seconds: u32) -> Self
+pub fn bitcoin_units::parse::ParseIntError::as_ref(&self) -> &core::num::error::ParseIntError
+pub fn bitcoin_units::parse::ParseIntError::clone(&self) -> bitcoin_units::parse::ParseIntError
+pub fn bitcoin_units::parse::ParseIntError::eq(&self, other: &bitcoin_units::parse::ParseIntError) -> bool
+pub fn bitcoin_units::parse::ParseIntError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse::ParseIntError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::parse::PrefixedHexError::clone(&self) -> bitcoin_units::parse::PrefixedHexError
+pub fn bitcoin_units::parse::PrefixedHexError::eq(&self, other: &bitcoin_units::parse::PrefixedHexError) -> bool
+pub fn bitcoin_units::parse::PrefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse::PrefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
+pub fn bitcoin_units::parse::PrefixedHexError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::parse::PrefixedHexError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::parse::UnprefixedHexError::clone(&self) -> bitcoin_units::parse::UnprefixedHexError
+pub fn bitcoin_units::parse::UnprefixedHexError::eq(&self, other: &bitcoin_units::parse::UnprefixedHexError) -> bool
+pub fn bitcoin_units::parse::UnprefixedHexError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::parse::UnprefixedHexError::from(e: bitcoin_units::parse::ParseIntError) -> Self
+pub fn bitcoin_units::parse::UnprefixedHexError::from(never: core::convert::Infallible) -> Self
+pub fn bitcoin_units::parse::UnprefixedHexError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+pub fn bitcoin_units::parse::hex_check_unprefixed(s: &str) -> core::result::Result<&str, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::parse::hex_remove_prefix(s: &str) -> core::result::Result<&str, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::parse::hex_u128(s: &str) -> core::result::Result<u128, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::hex_u128_prefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::parse::hex_u128_unchecked(s: &str) -> core::result::Result<u128, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::hex_u128_unprefixed(s: &str) -> core::result::Result<u128, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::parse::hex_u32(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::hex_u32_prefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::PrefixedHexError>
+pub fn bitcoin_units::parse::hex_u32_unchecked(s: &str) -> core::result::Result<u32, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::hex_u32_unprefixed(s: &str) -> core::result::Result<u32, bitcoin_units::parse::UnprefixedHexError>
+pub fn bitcoin_units::parse::int_from_box<T: bitcoin_units::parse::Integer>(s: alloc::boxed::Box<str>) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::int_from_str<T: bitcoin_units::parse::Integer>(s: &str) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::parse::int_from_string<T: bitcoin_units::parse::Integer>(s: alloc::string::String) -> core::result::Result<T, bitcoin_units::parse::ParseIntError>
+pub fn bitcoin_units::time::BlockTime::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::time::BlockTime::clone(&self) -> bitcoin_units::time::BlockTime
+pub fn bitcoin_units::time::BlockTime::cmp(&self, other: &bitcoin_units::time::BlockTime) -> core::cmp::Ordering
+pub fn bitcoin_units::time::BlockTime::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::time::BlockTime::eq(&self, other: &bitcoin_units::time::BlockTime) -> bool
+pub fn bitcoin_units::time::BlockTime::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::time::BlockTime::from(t: u32) -> Self
+pub fn bitcoin_units::time::BlockTime::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::time::BlockTime::partial_cmp(&self, other: &bitcoin_units::time::BlockTime) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::time::BlockTime::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::weight::Weight::add(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::add(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::add_assign(&mut self, rhs: bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::arbitrary(u: &mut arbitrary::unstructured::Unstructured<'a>) -> arbitrary::error::Result<Self>
+pub fn bitcoin_units::weight::Weight::clone(&self) -> bitcoin_units::weight::Weight
+pub fn bitcoin_units::weight::Weight::cmp(&self, other: &bitcoin_units::weight::Weight) -> core::cmp::Ordering
+pub fn bitcoin_units::weight::Weight::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde::de::Deserializer>::Error> where __D: serde::de::Deserializer<'de>
+pub fn bitcoin_units::weight::Weight::div(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::div(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::div(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::div(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::div_assign(&mut self, rhs: u64)
+pub fn bitcoin_units::weight::Weight::eq(&self, other: &bitcoin_units::weight::Weight) -> bool
+pub fn bitcoin_units::weight::Weight::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::weight::Weight::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::weight::Weight::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::weight::Weight::mul(self, rhs: &bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::weight::Weight::mul(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::mul(self, rhs: bitcoin_units::fee_rate::FeeRate) -> Self::Output
+pub fn bitcoin_units::weight::Weight::mul(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::mul_assign(&mut self, rhs: u64)
+pub fn bitcoin_units::weight::Weight::partial_cmp(&self, other: &bitcoin_units::weight::Weight) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::weight::Weight::rem(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::rem(self, rhs: &u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::rem(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::rem(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::weight::Weight::rem_assign(&mut self, rhs: u64)
+pub fn bitcoin_units::weight::Weight::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde::ser::Serializer>::Ok, <__S as serde::ser::Serializer>::Error> where __S: serde::ser::Serializer
+pub fn bitcoin_units::weight::Weight::sub(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::sub(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub fn bitcoin_units::weight::Weight::sub_assign(&mut self, rhs: &bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::sub_assign(&mut self, rhs: bitcoin_units::weight::Weight)
+pub fn bitcoin_units::weight::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = &'a bitcoin_units::weight::Weight>
+pub fn bitcoin_units::weight::Weight::sum<I>(iter: I) -> Self where I: core::iter::traits::iterator::Iterator<Item = Self>
+pub fn bitcoin_units::weight::Weight::try_from(s: &str) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::weight::Weight::try_from(s: alloc::boxed::Box<str>) -> core::result::Result<Self, Self::Error>
+pub fn bitcoin_units::weight::Weight::try_from(s: alloc::string::String) -> core::result::Result<Self, Self::Error>
+pub fn core::num::error::ParseIntError::from(value: bitcoin_units::parse::ParseIntError) -> Self
+pub fn i64::mul(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn i64::mul(self, rhs: &bitcoin_units::SignedAmount) -> Self::Output
+pub fn i64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>) -> Self::Output
+pub fn i64::mul(self, rhs: bitcoin_units::SignedAmount) -> Self::Output
+pub fn u32::from(height: bitcoin_units::block::BlockHeight) -> Self
+pub fn u32::from(height: bitcoin_units::block::BlockInterval) -> Self
+pub fn u32::from(t: bitcoin_units::time::BlockTime) -> Self
+pub fn u64::from(value: bitcoin_units::fee_rate::FeeRate) -> Self
+pub fn u64::from(value: bitcoin_units::weight::Weight) -> Self
+pub fn u64::mul(self, rhs: &bitcoin_units::Amount) -> Self::Output
+pub fn u64::mul(self, rhs: &bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn u64::mul(self, rhs: &bitcoin_units::weight::Weight) -> Self::Output
+pub fn u64::mul(self, rhs: bitcoin_units::Amount) -> Self::Output
+pub fn u64::mul(self, rhs: bitcoin_units::NumOpResult<bitcoin_units::Amount>) -> Self::Output
+pub fn u64::mul(self, rhs: bitcoin_units::weight::Weight) -> Self::Output
+pub mod bitcoin_units
+pub mod bitcoin_units::amount
+pub mod bitcoin_units::amount::serde
+pub mod bitcoin_units::amount::serde::as_btc
+pub mod bitcoin_units::amount::serde::as_btc::opt
+pub mod bitcoin_units::amount::serde::as_sat
+pub mod bitcoin_units::amount::serde::as_sat::opt
+pub mod bitcoin_units::amount::serde::as_str
+pub mod bitcoin_units::amount::serde::as_str::opt
+pub mod bitcoin_units::block
+pub mod bitcoin_units::fee_rate
+pub mod bitcoin_units::fee_rate::serde
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_kwu::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor
+pub mod bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt
+pub mod bitcoin_units::locktime
+pub mod bitcoin_units::locktime::absolute
+pub mod bitcoin_units::locktime::relative
+pub mod bitcoin_units::parse
+pub mod bitcoin_units::time
+pub mod bitcoin_units::weight
+pub struct bitcoin_units::Amount(_)
+pub struct bitcoin_units::BlockHeight(pub u32)
+pub struct bitcoin_units::BlockInterval(pub u32)
+pub struct bitcoin_units::BlockTime(_)
+pub struct bitcoin_units::FeeRate(_)
+pub struct bitcoin_units::SignedAmount(_)
+pub struct bitcoin_units::Weight(_)
+pub struct bitcoin_units::amount::Amount(_)
+pub struct bitcoin_units::amount::Display
+pub struct bitcoin_units::amount::InputTooLargeError
+pub struct bitcoin_units::amount::InvalidCharacterError
+pub struct bitcoin_units::amount::MissingDigitsError
+pub struct bitcoin_units::amount::OutOfRangeError
+pub struct bitcoin_units::amount::ParseAmountError(_)
+pub struct bitcoin_units::amount::ParseError(_)
+pub struct bitcoin_units::amount::SignedAmount(_)
+pub struct bitcoin_units::amount::TooPreciseError
+pub struct bitcoin_units::block::BlockHeight(pub u32)
+pub struct bitcoin_units::block::BlockInterval(pub u32)
+pub struct bitcoin_units::block::TooBigForRelativeBlockHeightError(_)
+pub struct bitcoin_units::fee_rate::FeeRate(_)
+pub struct bitcoin_units::locktime::absolute::Height(_)
+pub struct bitcoin_units::locktime::absolute::ParseHeightError(_)
+pub struct bitcoin_units::locktime::absolute::ParseTimeError(_)
+pub struct bitcoin_units::locktime::absolute::Time(_)
+pub struct bitcoin_units::locktime::relative::Height(_)
+pub struct bitcoin_units::locktime::relative::Time(_)
+pub struct bitcoin_units::locktime::relative::TimeOverflowError
+pub struct bitcoin_units::parse::PrefixedHexError(_)
+pub struct bitcoin_units::parse::UnprefixedHexError(_)
+pub struct bitcoin_units::time::BlockTime(_)
+pub struct bitcoin_units::weight::Weight(_)
+pub trait bitcoin_units::amount::CheckedSum<R>: bitcoin_units::amount::sealed::Sealed<R>
+pub trait bitcoin_units::amount::serde::SerdeAmount: core::marker::Copy + core::marker::Sized
+pub trait bitcoin_units::amount::serde::SerdeAmountForOpt: core::marker::Copy + core::marker::Sized + bitcoin_units::amount::serde::SerdeAmount
+pub trait bitcoin_units::parse::Integer: core::str::traits::FromStr<Err = core::num::error::ParseIntError> + core::convert::TryFrom<i8> + core::marker::Sized + bitcoin_units::parse::sealed::Sealed
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::fee_rate::FeeRate>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::weight::Weight>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<u64>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Mul<u64>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Rem<u64>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type &bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Add<T>>::Output
+pub type &bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Add>::Output
+pub type &bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Sub<T>>::Output
+pub type &bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<u64>>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Mul<u64>>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Rem<u64>>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Mul<i64>>::Output
+pub type &bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Rem<i64>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Div<i64>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Div>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Mul<i64>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Rem<i64>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type &bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Add<bitcoin_units::block::BlockInterval>>::Output
+pub type &bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub<bitcoin_units::block::BlockInterval>>::Output
+pub type &bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::block::BlockInterval::Output = <bitcoin_units::block::BlockInterval as core::ops::arith::Add>::Output
+pub type &bitcoin_units::block::BlockInterval::Output = <bitcoin_units::block::BlockInterval as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
+pub type &bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Mul<bitcoin_units::weight::Weight>>::Output
+pub type &bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Sub>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Add>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Div<u64>>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Div>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Mul<bitcoin_units::fee_rate::FeeRate>>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Mul<u64>>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Rem<u64>>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Rem>::Output
+pub type &bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Sub>::Output
+pub type &i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type &i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::SignedAmount>>::Output
+pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output
+pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type &u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::weight::Weight>>::Output
+pub type bitcoin_units::Amount::Err = bitcoin_units::amount::ParseError
+pub type bitcoin_units::Amount::Error = bitcoin_units::amount::OutOfRangeError
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Add>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::fee_rate::FeeRate>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<bitcoin_units::weight::Weight>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div<u64>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Div>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Mul<u64>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Rem<u64>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type bitcoin_units::Amount::Output = <bitcoin_units::Amount as core::ops::arith::Sub>::Output
+pub type bitcoin_units::Amount::Output = bitcoin_units::NumOpResult<bitcoin_units::Amount>
+pub type bitcoin_units::Amount::Output = bitcoin_units::NumOpResult<bitcoin_units::fee_rate::FeeRate>
+pub type bitcoin_units::Amount::Output = bitcoin_units::NumOpResult<bitcoin_units::weight::Weight>
+pub type bitcoin_units::Amount::Output = bitcoin_units::NumOpResult<u64>
+pub type bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Add<T>>::Output
+pub type bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Add>::Output
+pub type bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Sub<T>>::Output
+pub type bitcoin_units::NumOpResult<T>::Output = <bitcoin_units::NumOpResult<T> as core::ops::arith::Sub>::Output
+pub type bitcoin_units::NumOpResult<T>::Output = bitcoin_units::NumOpResult<T>
+pub type bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Div<u64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Mul<u64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::Amount> as core::ops::arith::Rem<u64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::Amount>::Output = bitcoin_units::NumOpResult<bitcoin_units::Amount>
+pub type bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Div<i64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Mul<i64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = <bitcoin_units::NumOpResult<bitcoin_units::SignedAmount> as core::ops::arith::Rem<i64>>::Output
+pub type bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>::Output = bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+pub type bitcoin_units::SignedAmount::Err = bitcoin_units::amount::ParseError
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Add>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Div<i64>>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Div>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Mul<i64>>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Rem<i64>>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Sub<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type bitcoin_units::SignedAmount::Output = <bitcoin_units::SignedAmount as core::ops::arith::Sub>::Output
+pub type bitcoin_units::SignedAmount::Output = bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+pub type bitcoin_units::SignedAmount::Output = bitcoin_units::NumOpResult<i64>
+pub type bitcoin_units::SignedAmount::Output = bitcoin_units::SignedAmount
+pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::ParseDenominationError
+pub type bitcoin_units::block::BlockHeight::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockHeight::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Add<bitcoin_units::block::BlockInterval>>::Output
+pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub<bitcoin_units::block::BlockInterval>>::Output
+pub type bitcoin_units::block::BlockHeight::Output = <bitcoin_units::block::BlockHeight as core::ops::arith::Sub>::Output
+pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockHeight
+pub type bitcoin_units::block::BlockHeight::Output = bitcoin_units::block::BlockInterval
+pub type bitcoin_units::block::BlockInterval::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockInterval::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::block::BlockInterval::Output = <bitcoin_units::block::BlockInterval as core::ops::arith::Add>::Output
+pub type bitcoin_units::block::BlockInterval::Output = <bitcoin_units::block::BlockInterval as core::ops::arith::Sub>::Output
+pub type bitcoin_units::block::BlockInterval::Output = bitcoin_units::block::BlockInterval
+pub type bitcoin_units::fee_rate::FeeRate::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::fee_rate::FeeRate::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Add>::Output
+pub type bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Mul<bitcoin_units::weight::Weight>>::Output
+pub type bitcoin_units::fee_rate::FeeRate::Output = <bitcoin_units::fee_rate::FeeRate as core::ops::arith::Sub>::Output
+pub type bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::NumOpResult<bitcoin_units::Amount>
+pub type bitcoin_units::fee_rate::FeeRate::Output = bitcoin_units::fee_rate::FeeRate
+pub type bitcoin_units::locktime::absolute::Height::Err = bitcoin_units::locktime::absolute::ParseHeightError
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::ConversionError
+pub type bitcoin_units::locktime::absolute::Height::Error = bitcoin_units::locktime::absolute::ParseHeightError
+pub type bitcoin_units::locktime::absolute::Time::Err = bitcoin_units::locktime::absolute::ParseTimeError
+pub type bitcoin_units::locktime::absolute::Time::Error = bitcoin_units::locktime::absolute::ParseTimeError
+pub type bitcoin_units::locktime::relative::Height::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::relative::Height::Error = bitcoin_units::block::TooBigForRelativeBlockHeightError
+pub type bitcoin_units::locktime::relative::Height::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::relative::Time::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::locktime::relative::Time::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::weight::Weight::Err = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::weight::Weight::Error = bitcoin_units::parse::ParseIntError
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Add>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Div<u64>>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Div>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Mul<bitcoin_units::fee_rate::FeeRate>>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Mul<u64>>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Rem<u64>>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Rem>::Output
+pub type bitcoin_units::weight::Weight::Output = <bitcoin_units::weight::Weight as core::ops::arith::Sub>::Output
+pub type bitcoin_units::weight::Weight::Output = bitcoin_units::NumOpResult<bitcoin_units::Amount>
+pub type bitcoin_units::weight::Weight::Output = bitcoin_units::weight::Weight
+pub type bitcoin_units::weight::Weight::Output = u64
+pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>>>::Output
+pub type i64::Output = <i64 as core::ops::arith::Mul<bitcoin_units::SignedAmount>>::Output
+pub type i64::Output = bitcoin_units::NumOpResult<bitcoin_units::SignedAmount>
+pub type u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::Amount>>::Output
+pub type u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::NumOpResult<bitcoin_units::Amount>>>::Output
+pub type u64::Output = <u64 as core::ops::arith::Mul<bitcoin_units::weight::Weight>>::Output
+pub type u64::Output = bitcoin_units::NumOpResult<bitcoin_units::Amount>
+pub type u64::Output = bitcoin_units::weight::Weight
