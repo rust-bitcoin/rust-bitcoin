@@ -178,6 +178,9 @@ impl ChildNumber {
 
     /// Returns the child number that is a single increment from this one.
     pub fn increment(self) -> Result<ChildNumber, Error> {
+        // Bare addition in this function is okay, because we have an invariant that
+        // `index` is always within [0, 2^31 - 1]. FIXME this is not actually an
+        // invariant because the fields are public.
         match self {
             ChildNumber::Normal { index: idx } => ChildNumber::from_normal_idx(idx + 1),
             ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
@@ -481,6 +484,10 @@ pub type KeySource = (Fingerprint, DerivationPath);
 pub enum Error {
     /// A pk->pk derivation was attempted on a hardened key
     CannotDeriveFromHardenedKey,
+    /// Attempted to derive a child of depth 256 or higher.
+    ///
+    /// There is no way to encode such xkeys.
+    MaximumDepthExceeded,
     /// A secp256k1 error occurred
     Secp256k1(secp256k1::Error),
     /// A child number was provided that was out of range
@@ -512,6 +519,7 @@ impl fmt::Display for Error {
         match *self {
             CannotDeriveFromHardenedKey =>
                 f.write_str("cannot derive hardened key from public key"),
+            MaximumDepthExceeded => f.write_str("cannot derive child of depth 256 or higher"),
             Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
             InvalidChildNumber(ref n) =>
                 write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
@@ -540,6 +548,7 @@ impl std::error::Error for Error {
             Hex(ref e) => Some(e),
             InvalidBase58PayloadLength(ref e) => Some(e),
             CannotDeriveFromHardenedKey
+            | MaximumDepthExceeded
             | InvalidChildNumber(_)
             | InvalidChildNumberFormat
             | InvalidDerivationPathFormat
@@ -636,7 +645,7 @@ impl Xpriv {
 
         Ok(Xpriv {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(Error::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
@@ -768,7 +777,7 @@ impl Xpub {
 
         Ok(Xpub {
             network: self.network,
-            depth: self.depth + 1,
+            depth: self.depth.checked_add(1).ok_or(Error::MaximumDepthExceeded)?,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: tweaked,
