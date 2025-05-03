@@ -101,13 +101,13 @@ impl WitnessProgram {
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-        let pubkey = output_key.to_inner().serialize();
+        let pubkey = output_key.as_x_only_public_key().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }
 
     /// Constructs a new [`WitnessProgram`] from a tweaked key for a P2TR output.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        let pubkey = output_key.to_inner().serialize();
+        let pubkey = output_key.as_x_only_public_key().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }
 
