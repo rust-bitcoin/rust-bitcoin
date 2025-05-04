@@ -5,6 +5,7 @@
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 
+use alloc::boxed::Box; // Add Box import
 use core::convert::Infallible;
 use core::ops::Index;
 use core::str::FromStr;
@@ -12,6 +13,7 @@ use core::{fmt, slice};
 
 use hashes::{hash160, hash_newtype, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::array::ArrayExt;
+use internals::error::ParseErrorContext; // Import trait
 use internals::write_err;
 use secp256k1::{Secp256k1, XOnlyPublicKey};
 
@@ -531,17 +533,81 @@ impl fmt::Display for ParseError {
         use ParseError::*;
 
         match *self {
-            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
-            UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            WrongExtendedKeyLength(ref len) =>
-                write!(f, "encoded extended key data has wrong length {}", len),
-            Base58(ref e) => write_err!(f, "base58 encoding error"; e),
-            InvalidBase58PayloadLength(ref e) => write_err!(f, "base58 payload"; e),
-            InvalidPrivateKeyPrefix =>
-                f.write_str("invalid private key prefix, byte 45 must be 0 as required by BIP-32"),
+            Secp256k1(ref e) => write_err!(f, "invalid key"; e),
+            UnknownVersion(ref v) => {
+                write!(f, "unknown version bytes: [{}, {}, {}, {}]", v[0], v[1], v[2], v[3])
+            }
+            WrongExtendedKeyLength(l) => write!(f, "incorrect extended key length: {}", l),
+            Base58(ref e) => write_err!(f, "base58 error"; e),
+            InvalidBase58PayloadLength(ref e) => {
+                write_err!(f, "base58 payload length error"; e)
+            }
+            InvalidPrivateKeyPrefix => write!(f, "invalid private key prefix (expected 0x00)"),
             NonZeroParentFingerprintForMasterKey =>
-                f.write_str("non-zero parent fingerprint in master key"),
-            NonZeroChildNumberForMasterKey => f.write_str("non-zero child number in master key"),
+                write!(f, "non-zero parent fingerprint for master key (depth 0)"),
+            NonZeroChildNumberForMasterKey =>
+                write!(f, "non-zero child number for master key (depth 0)"),
+        }
+    }
+}
+
+// Helper struct to manage lifetimes
+struct ExpectingDisplay<D: fmt::Display>(D);
+impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl ParseErrorContext for ParseError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use ParseError::*;
+        match self {
+            Secp256k1(_) => Box::new("a valid secp256k1 key"),
+            UnknownVersion(_) => Box::new("known version bytes (mainnet/testnet, pub/priv)"),
+            WrongExtendedKeyLength(_) => Box::new("78 bytes of data"),
+            Base58(e) => e.expecting(), // Delegate (already returns Box)
+            InvalidBase58PayloadLength(_) => Box::new("a Base58 payload of 78 bytes"),
+            InvalidPrivateKeyPrefix => Box::new("a 0x00 prefix byte for the private key data"),
+            NonZeroParentFingerprintForMasterKey => Box::new("a zero parent fingerprint for a master key"),
+            NonZeroChildNumberForMasterKey => Box::new("a zero child number for a master key"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use ParseError::*;
+        match self {
+            Base58(e) => e.help(), // Delegate (already returns Option<Box>)
+            UnknownVersion(v) => {
+                struct HelpDisplay([u8;4]);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "The version bytes {:x?} are not recognized.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*v)))
+            }
+            InvalidPrivateKeyPrefix => Some(Box::new("The byte at index 45 for a private key must be 0x00.")),
+            NonZeroParentFingerprintForMasterKey => Some(Box::new("A master key (depth 0) must have the parent fingerprint bytes set to zero.")),
+            NonZeroChildNumberForMasterKey => Some(Box::new("A master key (depth 0) must have the child number bytes set to zero.")),
+            _ => None,
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        use ParseError::*;
+        match self {
+            Base58(e) => e.change_suggestion(), // Delegate
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use ParseError::*;
+        match self {
+            UnknownVersion(_) => Some("Common mainnet versions: xpub=0x0488b21e, xprv=0x0488ade4. Common testnet versions: tpub=0x043587cf, tprv=0x04358394."),
+            Base58(e) => e.note(), // Delegate
+            _ => Some("See BIP32 for extended key format details."),
         }
     }
 }
@@ -572,8 +638,10 @@ impl From<base58::Error> for ParseError {
 }
 
 impl From<InvalidBase58PayloadLengthError> for ParseError {
+    #[inline]
     fn from(e: InvalidBase58PayloadLengthError) -> ParseError {
-        Self::InvalidBase58PayloadLength(e)
+        // Base58 payload length error is part of the BIP32 format.
+        ParseError::InvalidBase58PayloadLength(e)
     }
 }
 
@@ -628,6 +696,26 @@ impl fmt::Display for IndexOutOfRangeError {
     }
 }
 
+impl ParseErrorContext for IndexOutOfRangeError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        Box::new("a child index between 0 and 2^31 - 1")
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        struct HelpDisplay(u32);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Index {} is outside the valid range [0, {}].", self.0, u32::MAX >> 1)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.index)))
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        Some("BIP32 reserves the most significant bit to indicate hardened derivation.")
+    }
+}
+
 /// Error parsing a child number.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseChildNumberError {
@@ -656,6 +744,32 @@ impl fmt::Display for ParseChildNumberError {
         match *self {
             Self::IndexOutOfRange(ref e) => e.fmt(f),
             Self::ParseInt(ref e) => e.fmt(f),
+        }
+    }
+}
+
+impl ParseErrorContext for ParseChildNumberError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use ParseChildNumberError::*;
+        match self {
+            IndexOutOfRange(e) => e.expecting(), // Delegate (already returns Box)
+            ParseInt(_) => Box::new("a valid non-negative integer, optionally followed by \' or h"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use ParseChildNumberError::*;
+        match self {
+            IndexOutOfRange(e) => e.help(), // Delegate (already returns Option<Box>)
+            ParseInt(_) => Some(Box::new("Could not parse the numeric part of the child number.")),
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use ParseChildNumberError::*;
+        match self {
+            IndexOutOfRange(e) => e.note(), // Delegate
+            ParseInt(_) => Some("Use digits 0-9, optionally followed by \' or h for hardened derivation."),
         }
     }
 }

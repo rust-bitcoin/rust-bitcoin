@@ -18,6 +18,7 @@ use internals::array::ArrayExt;
 #[allow(unused)] // MSRV polyfill
 use internals::slice::SliceExt;
 use internals::{impl_to_hex_from_lower_hex, write_err};
+use internals::error::ParseErrorContext; // Import trait
 use io::Write;
 use secp256k1::{Scalar, Secp256k1};
 
@@ -1478,17 +1479,39 @@ impl fmt::Display for TaprootBuilderError {
 
         match *self {
             InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            NodeNotInDfsOrder => {
-                write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
-            }
-            OverCompleteTree => write!(
-                f,
-                "attempted to create a tree with two nodes at depth 0. There must\
-                only be exactly one node at depth 0",
-            ),
-            EmptyTree => {
-                write!(f, "called finalize on an empty tree")
-            }
+            NodeNotInDfsOrder => write!(f, "nodes must be added in depth-first traversal order"),
+            OverCompleteTree => write!(f, "can not add two nodes at depth 0"),
+            EmptyTree => write!(f, "can not finalize an empty tree"),
+        }
+    }
+}
+
+impl ParseErrorContext for TaprootBuilderError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use TaprootBuilderError::*;
+        match self {
+            InvalidMerkleTreeDepth(e) => e.expecting(), // Delegate (already returns Box)
+            NodeNotInDfsOrder => Box::new("nodes to be added in depth-first traversal order"),
+            OverCompleteTree => Box::new("at most one node at depth 0"),
+            EmptyTree => Box::new("at least one leaf or hidden node"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use TaprootBuilderError::*;
+        match self {
+            InvalidMerkleTreeDepth(e) => e.help(), // Delegate (already returns Option<Box>)
+            NodeNotInDfsOrder => Some(Box::new("Nodes must be added in the order they would be visited in a depth-first search.")),
+            OverCompleteTree => Some(Box::new("Cannot combine two nodes when already at the root (depth 0).")),
+            EmptyTree => Some(Box::new("Cannot finalize a Taproot builder with no leaves or hidden nodes added.")),
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use TaprootBuilderError::*;
+        match self {
+            InvalidMerkleTreeDepth(e) => e.note(), // Delegate
+            _ => None,
         }
     }
 }
@@ -1506,6 +1529,7 @@ impl std::error::Error for TaprootBuilderError {
 }
 
 impl From<InvalidMerkleTreeDepthError> for TaprootBuilderError {
+    #[inline]
     fn from(e: InvalidMerkleTreeDepthError) -> Self { Self::InvalidMerkleTreeDepth(e) }
 }
 
@@ -1539,10 +1563,47 @@ impl fmt::Display for TaprootError {
         match *self {
             InvalidMerkleBranchSize(ref e) => write_err!(f, "invalid Merkle branch size"; e),
             InvalidMerkleTreeDepth(ref e) => write_err!(f, "invalid Merkle tree depth"; e),
-            InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid Taproot leaf version"; e),
+            InvalidTaprootLeafVersion(ref e) => write_err!(f, "invalid taproot leaf version"; e),
             InvalidControlBlockSize(ref e) => write_err!(f, "invalid control block size"; e),
+            InvalidInternalKey(ref e) => write_err!(f, "invalid internal key"; e),
             InvalidControlBlockHex(ref e) => write_err!(f, "invalid control block hex"; e),
-            InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
+        }
+    }
+}
+
+impl ParseErrorContext for TaprootError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use TaprootError::*;
+        match self {
+            InvalidMerkleBranchSize(e) => e.expecting(), // Delegate (already returns Box)
+            InvalidMerkleTreeDepth(e) => e.expecting(), // Delegate
+            InvalidTaprootLeafVersion(e) => e.expecting(), // Delegate
+            InvalidControlBlockSize(e) => e.expecting(), // Delegate
+            InvalidInternalKey(_) => Box::new("a valid secp256k1 x-only public key"),
+            InvalidControlBlockHex(_) => Box::new("a valid hex string for the control block"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use TaprootError::*;
+        match self {
+            InvalidMerkleBranchSize(e) => e.help(), // Delegate (already returns Option<Box>)
+            InvalidMerkleTreeDepth(e) => e.help(), // Delegate
+            InvalidTaprootLeafVersion(e) => e.help(), // Delegate
+            InvalidControlBlockSize(e) => e.help(), // Delegate
+            InvalidInternalKey(_) => Some(Box::new("The internal key bytes do not represent a valid point on the secp256k1 curve.")),
+            InvalidControlBlockHex(_) => Some(Box::new("The control block string contains non-hex characters or has an odd number of digits.")),
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use TaprootError::*;
+        match self {
+            InvalidMerkleBranchSize(e) => e.note(), // Delegate
+            InvalidMerkleTreeDepth(e) => e.note(), // Delegate
+            InvalidTaprootLeafVersion(e) => e.note(), // Delegate
+            InvalidControlBlockSize(e) => e.note(), // Delegate
+            InvalidInternalKey(_) | InvalidControlBlockHex(_) => Some("See BIP341 for Taproot structure details."),
         }
     }
 }
@@ -1601,6 +1662,22 @@ impl fmt::Display for InvalidMerkleBranchSizeError {
     }
 }
 
+impl ParseErrorContext for InvalidMerkleBranchSizeError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        Box::new("a Merkle branch size that is a multiple of 32 bytes")
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        struct HelpDisplay(usize);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "The provided Merkle branch data has length {}, which is not divisible by {}.", self.0, TAPROOT_CONTROL_NODE_SIZE)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.0)))
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidMerkleBranchSizeError {}
 
@@ -1627,6 +1704,26 @@ impl fmt::Display for InvalidMerkleTreeDepthError {
     }
 }
 
+impl ParseErrorContext for InvalidMerkleTreeDepthError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        Box::new("a Merkle tree depth of 128 or less")
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        struct HelpDisplay(usize);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Merkle tree depth {} exceeds the maximum allowed depth of {}.", self.0, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.0)))
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        Some("See BIP341 specification for Taproot tree depth limits.")
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidMerkleTreeDepthError {}
 
@@ -1646,6 +1743,22 @@ impl From<Infallible> for InvalidTaprootLeafVersionError {
 impl fmt::Display for InvalidTaprootLeafVersionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "leaf version({}) must have the least significant bit 0", self.0)
+    }
+}
+
+impl ParseErrorContext for InvalidTaprootLeafVersionError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        Box::new("a tapleaf version byte with the last bit unset (e.g., 0xc0 for TapScript)")
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        struct HelpDisplay(u8);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "leaf version({}) must have the least significant bit 0", self.0)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.0)))
     }
 }
 
@@ -1672,6 +1785,30 @@ impl fmt::Display for InvalidControlBlockSizeError {
             "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
             self.0, TAPROOT_CONTROL_MAX_NODE_COUNT
         )
+    }
+}
+
+impl ParseErrorContext for InvalidControlBlockSizeError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        // Use helper struct to capture size for display
+        struct SizeDisplay(usize);
+        impl fmt::Display for SizeDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "a control block size between {} and {} bytes, and equal to 33 + 32*n",
+                       TAPROOT_CONTROL_BASE_SIZE, TAPROOT_CONTROL_MAX_SIZE)
+            }
+        }
+        Box::new(SizeDisplay(self.0))
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        struct HelpDisplay(usize);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ", self.0, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.0)))
     }
 }
 
@@ -2111,3 +2248,4 @@ mod test {
         serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }
+

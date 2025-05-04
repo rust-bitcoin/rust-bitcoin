@@ -4,6 +4,9 @@ mod borrowed;
 mod buf;
 
 use core::fmt;
+use alloc::boxed::Box;
+
+use internals::error::ParseErrorContext;
 
 pub use borrowed::TaprootMerkleBranch;
 pub use buf::TaprootMerkleBranchBuf;
@@ -53,6 +56,60 @@ impl fmt::Display for DecodeError {
                 "the Merkle branch is {} bytes long which is not an integer multiple of {}",
                 self.num_bytes, TAPROOT_CONTROL_NODE_SIZE
             )
+        }
+    }
+}
+
+impl ParseErrorContext for DecodeError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        if self.num_bytes % TAPROOT_CONTROL_NODE_SIZE == 0 {
+            // Use helper struct to capture limit for display
+            struct LimitDisplay(usize);
+            impl fmt::Display for LimitDisplay {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(f, "a Merkle branch with at most {} nodes", self.0)
+                }
+            }
+            Box::new(LimitDisplay(TAPROOT_CONTROL_MAX_NODE_COUNT))
+        } else {
+            // Use helper struct to capture size for display
+            struct SizeDisplay(usize);
+            impl fmt::Display for SizeDisplay {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(f, "a Merkle branch size that is a multiple of {} bytes", self.0)
+                }
+            }
+            Box::new(SizeDisplay(TAPROOT_CONTROL_NODE_SIZE))
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        if self.num_bytes % TAPROOT_CONTROL_NODE_SIZE == 0 {
+            // Create a struct to display the Merkle tree depth error
+            struct HelpDisplay(usize);
+            impl fmt::Display for HelpDisplay {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(f, "Merkle tree depth {} exceeds the maximum allowed depth of {}.", self.0, TAPROOT_CONTROL_MAX_NODE_COUNT)
+                }
+            }
+            Some(Box::new(HelpDisplay(self.num_bytes / TAPROOT_CONTROL_NODE_SIZE)))
+        } else {
+            // Create a struct to display the Merkle branch size error
+            struct HelpDisplay(usize);
+            impl fmt::Display for HelpDisplay {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(f, "The provided Merkle branch data has length {}, which is not divisible by {}.", self.0, TAPROOT_CONTROL_NODE_SIZE)
+                }
+            }
+            Some(Box::new(HelpDisplay(self.num_bytes)))
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        if self.num_bytes % TAPROOT_CONTROL_NODE_SIZE == 0 {
+            InvalidMerkleTreeDepthError(self.num_bytes / TAPROOT_CONTROL_NODE_SIZE).note()
+        } else {
+            InvalidMerkleBranchSizeError(self.num_bytes).note()
         }
     }
 }

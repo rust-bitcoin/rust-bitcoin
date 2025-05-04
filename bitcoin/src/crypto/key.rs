@@ -14,6 +14,7 @@ use hashes::hash160;
 use hex::{FromHex, HexToArrayError};
 use internals::array::ArrayExt;
 use internals::array_vec::ArrayVec;
+use internals::error::ParseErrorContext; // Import trait
 use internals::{impl_to_hex_from_lower_hex, write_err};
 use io::{Read, Write};
 
@@ -970,10 +971,10 @@ impl fmt::Display for FromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use FromSliceError::*;
 
-        match self {
-            Secp256k1(e) => write_err!(f, "secp256k1"; e),
-            InvalidKeyPrefix(b) => write!(f, "key prefix invalid: {}", b),
-            InvalidLength(got) => write!(f, "slice length should be 33 or 65 bytes, got: {}", got),
+        match *self {
+            InvalidKeyPrefix(ref k) => write!(f, "invalid key prefix: {:x}", k),
+            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+            InvalidLength(ref l) => write!(f, "invalid key slice length: {}", l),
         }
     }
 }
@@ -1019,13 +1020,13 @@ impl fmt::Display for FromWifError {
         use FromWifError::*;
 
         match *self {
-            Base58(ref e) => write_err!(f, "invalid base58"; e),
-            InvalidBase58PayloadLength(ref e) =>
-                write_err!(f, "decoded base58 data was an invalid length"; e),
-            InvalidAddressVersion(ref e) =>
-                write_err!(f, "decoded base58 data contained an invalid address version byte"; e),
-            Secp256k1(ref e) => write_err!(f, "private key validation failed"; e),
-            InvalidWifCompressionFlag(ref e) => write_err!(f, "invalid WIF compression flag";e),
+            Base58(ref e) => write_err!(f, "base58 error"; e),
+            InvalidBase58PayloadLength(ref e) => {
+                write_err!(f, "WIF base58 payload length error"; e)
+            }
+            InvalidAddressVersion(ref e) => write_err!(f, "WIF address version error"; e),
+            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+            InvalidWifCompressionFlag(ref e) => write_err!(f, "WIF compression flag error"; e),
         }
     }
 }
@@ -1087,11 +1088,11 @@ impl From<Infallible> for ParsePublicKeyError {
 impl fmt::Display for ParsePublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParsePublicKeyError::*;
+
         match *self {
-            Encoding(ref e) => write_err!(f, "string error"; e),
-            InvalidChar(ref e) => write_err!(f, "hex decoding"; e),
-            InvalidHexLength(got) =>
-                write!(f, "pubkey string should be 66 or 130 digits long, got: {}", got),
+            Encoding(ref e) => write_err!(f, "key encoding error"; e),
+            InvalidChar(ref c) => write!(f, "invalid hex character {}", c),
+            InvalidHexLength(len) => write!(f, "invalid hex length {}", len),
         }
     }
 }
@@ -1129,9 +1130,10 @@ impl From<Infallible> for ParseCompressedPublicKeyError {
 impl fmt::Display for ParseCompressedPublicKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use ParseCompressedPublicKeyError::*;
-        match self {
-            Secp256k1(e) => write_err!(f, "secp256k1 error"; e),
-            Hex(e) => write_err!(f, "invalid hex"; e),
+
+        match *self {
+            Secp256k1(ref e) => write_err!(f, "secp256k1 error"; e),
+            Hex(ref e) => write_err!(f, "hex error"; e),
         }
     }
 }
@@ -1186,7 +1188,7 @@ impl InvalidBase58PayloadLengthError {
 
 impl fmt::Display for InvalidBase58PayloadLengthError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "decoded base58 data was an invalid length: {} (expected 33 or 34)", self.length)
+        write!(f, "decoded base58 WIF data was an invalid length: {} (expected 33 or 34)", self.length)
     }
 }
 
@@ -1686,5 +1688,150 @@ mod tests {
         use crate::Network;
         assert!(PrivateKey::from_slice(&[1u8; 31], Network::Regtest).is_err());
         assert!(PrivateKey::from_slice(&[1u8; 33], Network::Regtest).is_err());
+    }
+}
+
+impl ParseErrorContext for FromSliceError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use FromSliceError::*;
+        match self {
+            Secp256k1(_) => Box::new("valid secp256k1 public key bytes"),
+            InvalidKeyPrefix(_) => Box::new("a valid key prefix byte (0x02, 0x03 for compressed, 0x04 for uncompressed)"),
+            InvalidLength(_) => Box::new("a public key byte slice of length 33 (compressed) or 65 (uncompressed)"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use FromSliceError::*;
+        match self {
+            InvalidKeyPrefix(k) => {
+                struct HelpDisplay(u8);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "The prefix byte 0x{:02x} is invalid.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*k)))
+            }
+            Secp256k1(e) => Some(Box::new(e.to_string())),
+            InvalidLength(l) => {
+                struct HelpDisplay(usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Invalid length {} for public key bytes.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*l)))
+            }
+        }
+    }
+}
+
+impl ParseErrorContext for FromWifError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        use FromWifError::*;
+        match self {
+            Base58(e) => e.expecting(),
+            InvalidBase58PayloadLength(e) => Box::new("a base58 payload of 33 or 34 bytes for a private key"),
+            InvalidAddressVersion(e) => Box::new("a valid WIF version byte (128 for mainnet, 239 for testnet)"),
+            Secp256k1(_) => Box::new("valid secp256k1 private key bytes"),
+            InvalidWifCompressionFlag(e) => Box::new("a valid WIF compression flag (0x01)"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use FromWifError::*;
+        match self {
+            Base58(e) => e.help(),
+            InvalidBase58PayloadLength(e) => {
+                struct HelpDisplay(usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Invalid WIF data length {}. Expected 33 bytes (uncompressed) or 34 bytes (compressed).", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.invalid_base58_payload_length())))
+            },
+            InvalidAddressVersion(e) => {
+                struct HelpDisplay(u8);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Invalid WIF version byte: {}. Expected 128 (mainnet) or 239 (testnet).", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.invalid_address_version())))
+            },
+            Secp256k1(e) => Some(Box::new(e.to_string())),
+            InvalidWifCompressionFlag(e) => {
+                struct HelpDisplay(u8);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Invalid WIF compression flag: {}. Expected 0x01.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.invalid_compression_flag())))
+            },
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        use FromWifError::*;
+        match self {
+            Base58(e) => e.change_suggestion(),
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use FromWifError::*;
+        match self {
+            Base58(_) => Some("Mainnet private keys start with 128 (uncompressed) or 128+1 (compressed flag); Testnet/Regtest use 239."),
+            InvalidAddressVersion(_) => Some("Mainnet private keys start with 128 (uncompressed) or 128+1 (compressed flag); Testnet/Regtest use 239."),
+            InvalidWifCompressionFlag(_) => Some("If the private key corresponds to a compressed public key, the WIF format includes an extra 0x01 byte at the end."),
+            _ => Some("See Bitcoin Wiki for Wallet Import Format (WIF) details."),
+        }
+    }
+}
+
+impl ParseErrorContext for ParsePublicKeyError {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use ParsePublicKeyError::*;
+        match self {
+            Encoding(e) => e.expecting(),
+            InvalidChar(_) => Box::new("a valid hexadecimal character (0-9, a-f, A-F)"),
+            InvalidHexLength(_) => Box::new("a hex string of length 66 (compressed) or 130 (uncompressed)"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use ParsePublicKeyError::*;
+        match self {
+            Encoding(e) => e.help(),
+            InvalidChar(e) => {
+                struct HelpDisplay(char, usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Invalid character '{}' at position {} in hex string.", self.0, self.1)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.invalid_char().into(), e.pos())))
+            },
+            InvalidHexLength(len) => {
+                struct HelpDisplay(usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Hex string length {} is invalid for a public key. Expected 66 or 130 characters.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(*len)))
+            }
+        }
     }
 }

@@ -2,10 +2,11 @@
 
 //! Error types for bitcoin amounts.
 
+use alloc::boxed::Box;
 use core::convert::Infallible;
 use core::fmt;
 
-use internals::error::InputString;
+use internals::error::{InputString, ParseErrorContext};
 use internals::write_err;
 
 use super::INPUT_STRING_LEN_LIMIT;
@@ -68,6 +69,48 @@ impl fmt::Display for ParseError {
             // We consider this to not be a source because it currently doesn't contain useful info.
             ParseErrorInner::MissingDenomination(_) =>
                 f.write_str("the input doesn't contain a denomination"),
+        }
+    }
+}
+
+impl ParseErrorContext for ParseError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        // Helper struct to prevent lifetime issues with returning refs to temporary strings
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match &self.0 {
+            ParseErrorInner::Amount(e) => e.expecting(),
+            ParseErrorInner::Denomination(e) => e.expecting(),
+            ParseErrorInner::MissingDenomination(_) => Box::new("an amount followed by a denomination (e.g., \"1.23 BTC\", \"500 sat\")"),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match &self.0 {
+            ParseErrorInner::Amount(e) => e.help(),
+            ParseErrorInner::Denomination(e) => e.help(),
+            ParseErrorInner::MissingDenomination(_) => None,
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match &self.0 {
+            ParseErrorInner::Amount(e) => e.change_suggestion(),
+            ParseErrorInner::Denomination(e) => e.change_suggestion(),
+            ParseErrorInner::MissingDenomination(_) => Some("Try adding a denomination like 'BTC', 'sat', etc."),
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        match &self.0 {
+            ParseErrorInner::Amount(e) => e.note(),
+            ParseErrorInner::Denomination(e) => e.note(),
+            ParseErrorInner::MissingDenomination(_) => Some("Bitcoin amounts require an explicit denomination to avoid confusion."),
         }
     }
 }
@@ -143,6 +186,67 @@ impl fmt::Display for ParseAmountError {
     }
 }
 
+impl ParseErrorContext for ParseAmountError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match &self.0 {
+            ParseAmountErrorInner::OutOfRange(e) => e.expecting(),
+            ParseAmountErrorInner::TooPrecise(e) => e.expecting(),
+            ParseAmountErrorInner::MissingDigits(e) => e.expecting(),
+            ParseAmountErrorInner::InputTooLarge(e) => {
+                struct LimitDisplay(usize);
+                impl fmt::Display for LimitDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "an amount with at most {} characters", self.0)
+                    }
+                }
+                Box::new(LimitDisplay(e.len))
+            }
+            ParseAmountErrorInner::InvalidCharacter(e) => e.expecting(),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match &self.0 {
+            ParseAmountErrorInner::OutOfRange(e) => e.help(),
+            ParseAmountErrorInner::TooPrecise(e) => e.help(),
+            ParseAmountErrorInner::MissingDigits(e) => e.help(),
+            ParseAmountErrorInner::InputTooLarge(e) => {
+                struct HelpDisplay(usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "The input is too long ({} characters). Consider shortening or splitting it.", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.len)))
+            }
+            ParseAmountErrorInner::InvalidCharacter(e) => e.help(),
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match &self.0 {
+            ParseAmountErrorInner::OutOfRange(_) => Some("Try a value within the valid range."),
+            ParseAmountErrorInner::TooPrecise(_) => Some("Round to satoshis (8 decimal places)."),
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        match &self.0 {
+            ParseAmountErrorInner::TooPrecise(_) => Some("Bitcoin amounts are typically expressed in satoshis, the smallest unit (0.00000001 BTC)."),
+            ParseAmountErrorInner::InputTooLarge(_) => Some("For security reasons, we limit the size of numeric input to prevent resource exhaustion."),
+            _ => None,
+        }
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for ParseAmountError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -213,6 +317,32 @@ impl fmt::Display for OutOfRangeError {
     }
 }
 
+impl ParseErrorContext for OutOfRangeError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        struct RangeDisplay(i64, u64);
+        impl fmt::Display for RangeDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "a value between {} and {}", self.0, self.1)
+            }
+        }
+        
+        let range = self.valid_range();
+        Box::new(RangeDisplay(range.0, range.1))
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay(i64, u64);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "The amount {} is outside the valid range ({} to {}).", self.0 as f64, self.0, self.1)
+            }
+        }
+        
+        let range = self.valid_range();
+        Some(Box::new(HelpDisplay(range.0, range.1)))
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for OutOfRangeError {}
 
@@ -238,6 +368,16 @@ impl fmt::Display for TooPreciseError {
                 pos
             ),
         }
+    }
+}
+
+impl ParseErrorContext for TooPreciseError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("an amount with at most 8 decimal places (precision up to satoshis)")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        Some(Box::new("The provided amount has more precision than is representable."))
     }
 }
 
@@ -281,20 +421,61 @@ pub struct MissingDigitsError {
 impl fmt::Display for MissingDigitsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.kind {
-            MissingDigitsKind::Empty => f.write_str("the input is empty"),
-            MissingDigitsKind::OnlyMinusSign =>
-                f.write_str("there are no digits following the minus (-) sign"),
+            MissingDigitsKind::Empty => f.write_str("there are no digits in the input"),
+            MissingDigitsKind::OnlyMinusSign => {
+                f.write_str("there are no digits following the minus (-) sign")
+            },
+            MissingDigitsKind::BeforeDecimal => {
+                f.write_str("there are no digits before the decimal point")
+            },
+            MissingDigitsKind::AfterDecimal => {
+                f.write_str("there are no digits after the decimal point")
+            },
         }
+    }
+}
+
+impl ParseErrorContext for MissingDigitsError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        struct ExpectingDisplay(MissingDigitsKind);
+        impl fmt::Display for ExpectingDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self.0 {
+                    MissingDigitsKind::Empty => write!(f, "at least one digit"),
+                    MissingDigitsKind::OnlyMinusSign => write!(f, "at least one digit after the minus sign"),
+                    MissingDigitsKind::BeforeDecimal => write!(f, "at least one digit before the decimal point"),
+                    MissingDigitsKind::AfterDecimal => write!(f, "at least one digit after the decimal point"),
+                }
+            }
+        }
+        Box::new(ExpectingDisplay(self.kind))
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay(MissingDigitsKind);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                match self.0 {
+                    MissingDigitsKind::Empty => write!(f, "The input string was empty."),
+                    MissingDigitsKind::OnlyMinusSign => write!(f, "The input string contained only a minus sign."),
+                    MissingDigitsKind::BeforeDecimal => write!(f, "An amount must have at least one digit before the decimal point. Example: '0.5 BTC' not '.5 BTC'."),
+                    MissingDigitsKind::AfterDecimal => write!(f, "An amount with a decimal point must have at least one digit after it. Example: '1.0 BTC' not '1. BTC'."),
+                }
+            }
+        }
+        Some(Box::new(HelpDisplay(self.kind)))
     }
 }
 
 #[cfg(feature = "std")]
 impl std::error::Error for MissingDigitsError {}
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub(super) enum MissingDigitsKind {
     Empty,
     OnlyMinusSign,
+    BeforeDecimal,
+    AfterDecimal,
 }
 
 /// Error returned when the input contains an invalid character.
@@ -316,6 +497,33 @@ impl fmt::Display for InvalidCharacterError {
             ),
         }
     }
+}
+
+impl ParseErrorContext for InvalidCharacterError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("numeric digits (0-9), decimal separator ('.'), or sign ('-')")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay(char, usize);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Invalid character '{}' found at position {}.", self.0, self.1)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.invalid_char, self.position)))
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match self.invalid_char {
+            ',' => Some("Did you mean to use '.' as the decimal separator?"),
+            '_' => Some("Remove thousands separators like '_'."),
+            // Add other common mistakes if needed
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> { None }
 }
 
 #[cfg(feature = "std")]
@@ -342,6 +550,40 @@ impl fmt::Display for ParseDenominationError {
         match *self {
             E::Unknown(ref e) => write_err!(f, "denomination parse error"; e),
             E::PossiblyConfusing(ref e) => write_err!(f, "denomination parse error"; e),
+        }
+    }
+}
+
+impl ParseErrorContext for ParseDenominationError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        match self {
+            ParseDenominationError::Unknown(_) => Box::new("a known denomination (e.g., \"BTC\", \"mBTC\", \"sat\")"),
+            ParseDenominationError::PossiblyConfusing(_) => Box::new("an unambiguous denomination"),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match self {
+            ParseDenominationError::Unknown(_) => {
+                Some(Box::new("The denomination is not recognized. Valid denominations include BTC, mBTC, μBTC, sat."))
+            },
+            ParseDenominationError::PossiblyConfusing(_) => {
+                Some(Box::new("The denomination is ambiguous and could refer to multiple units."))
+            },
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match self {
+            ParseDenominationError::PossiblyConfusing(_) => Some("Use standard prefixes like 'm' (milli), 'u' (micro), or full names like 'BTC', 'sat'."),
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        match self {
+            ParseDenominationError::PossiblyConfusing(_) => Some("We intentionally do not support 'M' and 'P' so as to not confuse mega/milli and peta/pico."),
+            _ => None,
         }
     }
 }
@@ -373,6 +615,16 @@ impl fmt::Display for UnknownDenominationError {
     }
 }
 
+impl ParseErrorContext for UnknownDenominationError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("a known denomination (e.g., \"BTC\", \"mBTC\", \"sat\")")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        Some(Box::new("Use standard denominations like 'BTC', 'mBTC', 'uBTC', 'sat'."))
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for UnknownDenominationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
@@ -386,6 +638,16 @@ pub struct PossiblyConfusingDenominationError(pub(super) InputString);
 impl fmt::Display for PossiblyConfusingDenominationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: possibly confusing denomination - we intentionally do not support 'M' and 'P' so as to not confuse mega/milli and peta/pico", self.0.display_cannot_parse("bitcoin denomination"))
+    }
+}
+
+impl ParseErrorContext for PossiblyConfusingDenominationError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("an unambiguous denomination")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        Some(Box::new("Avoid ambiguous prefixes like 'M' and 'P' which could be confused with mega/milli and peta/pico."))
     }
 }
 
