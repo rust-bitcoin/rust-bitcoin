@@ -20,7 +20,7 @@ use primitives::Sequence;
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
 use crate::internal_macros::{impl_consensus_encoding, impl_hashencode};
-use crate::locktime::absolute::{self, Height, Time};
+use crate::locktime::absolute::{self, Height, Mtp};
 use crate::prelude::{Borrow, Vec};
 use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 #[cfg(doc)]
@@ -295,7 +295,7 @@ pub trait TransactionExt: sealed::Sealed {
     /// By definition if the lock time is not enabled the transaction's absolute timelock is
     /// considered to be satisfied i.e., there are no timelock constraints restricting this
     /// transaction from being mined immediately.
-    fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool;
+    fn is_absolute_timelock_satisfied(&self, height: Height, time: Mtp) -> bool;
 
     /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
     ///
@@ -393,7 +393,7 @@ impl TransactionExt for Transaction {
 
     fn is_explicitly_rbf(&self) -> bool { self.input.iter().any(|input| input.sequence.is_rbf()) }
 
-    fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
+    fn is_absolute_timelock_satisfied(&self, height: Height, time: Mtp) -> bool {
         if !self.is_lock_time_enabled() {
             return true;
         }

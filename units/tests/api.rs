@@ -38,7 +38,7 @@ struct Structs {
     e: BlockInterval,
     f: FeeRate,
     g: absolute::Height,
-    h: absolute::Time,
+    h: absolute::Mtp,
     i: relative::Height,
     j: relative::Time,
     k: Weight,
@@ -55,7 +55,7 @@ impl Structs {
             e: BlockInterval::MAX,
             f: FeeRate::MAX,
             g: absolute::Height::MAX,
-            h: absolute::Time::MAX,
+            h: absolute::Mtp::MAX,
             i: relative::Height::MAX,
             j: relative::Time::MAX,
             k: Weight::MAX,
@@ -85,7 +85,7 @@ struct CommonTraits {
     e: BlockInterval,
     f: FeeRate,
     g: absolute::Height,
-    h: absolute::Time,
+    h: absolute::Mtp,
     i: relative::Height,
     j: relative::Time,
     k: Weight,
@@ -128,7 +128,7 @@ struct Errors {
     t: amount::PossiblyConfusingDenominationError,
     u: amount::TooPreciseError,
     v: amount::UnknownDenominationError,
-    w: block::TooBigForRelativeBlockHeightError,
+    w: block::TooBigForRelativeBlockHeightIntervalError,
     x: locktime::absolute::ConversionError,
     y: locktime::absolute::Height,
     z: locktime::absolute::ParseHeightError,
@@ -163,7 +163,9 @@ fn api_can_use_all_types_from_module_amount() {
 
 #[test]
 fn api_can_use_all_types_from_module_block() {
-    use bitcoin_units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightError};
+    use bitcoin_units::block::{
+        BlockHeight, BlockInterval, TooBigForRelativeBlockHeightIntervalError,
+    };
 }
 
 #[test]
@@ -174,7 +176,7 @@ fn api_can_use_all_types_from_module_fee_rate() {
 #[test]
 fn api_can_use_all_types_from_module_locktime_absolute() {
     use bitcoin_units::locktime::absolute::{
-        ConversionError, Height, ParseHeightError, ParseTimeError, Time,
+        ConversionError, Height, Mtp, ParseHeightError, ParseTimeError,
     };
 }
 
@@ -291,7 +293,7 @@ impl<'a> Arbitrary<'a> for Structs {
             e: BlockInterval::arbitrary(u)?,
             f: FeeRate::arbitrary(u)?,
             g: absolute::Height::arbitrary(u)?,
-            h: absolute::Time::arbitrary(u)?,
+            h: absolute::Mtp::arbitrary(u)?,
             i: relative::Height::arbitrary(u)?,
             j: relative::Time::arbitrary(u)?,
             k: Weight::arbitrary(u)?,

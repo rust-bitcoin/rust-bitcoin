@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`Height`] and [`Time`] types used by the `rust-bitcoin` `absolute::LockTime` type.
+//! Provides [`Height`] and [`Mtp`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -45,15 +45,22 @@ impl Height {
     /// # Errors
     ///
     /// If the input string is not a valid hex representation of a block height.
-    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> {
-        parse_hex(s, Self::from_consensus)
-    }
+    pub fn from_hex(s: &str) -> Result<Self, ParseHeightError> { parse_hex(s, Self::from_u32) }
 
-    /// Constructs a new block height.
+    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[doc(hidden)]
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
+
+    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[doc(hidden)]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
+
+    /// Constructs a new block height directly from a `u32` value.
     ///
     /// # Errors
     ///
-    /// If `n` does not represent a valid block height value.
+    /// If `n` does not represent a block height within the valid range for a locktime:
+    /// `[0, 499_999_999]`.
     ///
     /// # Examples
     ///
@@ -61,11 +68,11 @@ impl Height {
     /// use bitcoin_units::locktime::absolute::Height;
     ///
     /// let h: u32 = 741521;
-    /// let height = Height::from_consensus(h).expect("invalid height value");
+    /// let height = Height::from_u32(h).expect("invalid height value");
     /// assert_eq!(height.to_consensus_u32(), h);
     /// ```
     #[inline]
-    pub const fn from_consensus(n: u32) -> Result<Height, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<Height, ConversionError> {
         if is_block_height(n) {
             Ok(Self(n))
         } else {
@@ -73,16 +80,16 @@ impl Height {
         }
     }
 
-    /// Converts this [`Height`] to its inner `u32` value.
+    /// Converts this [`Height`] to a raw `u32` value.
     #[inline]
-    pub const fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_consensus));
+crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
 
 /// Error returned when parsing block height fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -111,7 +118,7 @@ impl<'de> serde::Deserialize<'de> for Height {
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Height::from_consensus(u).map_err(serde::de::Error::custom)
+        Height::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
@@ -121,51 +128,69 @@ impl serde::Serialize for Height {
     where
         S: serde::Serializer,
     {
-        self.to_consensus_u32().serialize(serializer)
+        self.to_u32().serialize(serializer)
     }
 }
 
-/// A UNIX timestamp, seconds since epoch, guaranteed to always contain a valid time value.
+#[deprecated(since = "TBD", note = "use `Mtp` instead")]
+#[doc(hidden)]
+pub type Time = Mtp;
+
+/// The median timestamp of 11 consecutive blocks, representing "the timestamp" of the
+/// final block for locktime-checking purposes.
 ///
-/// Note that there is no manipulation of the inner value during construction or when using
-/// `to_consensus_u32()`. Said another way, `Time(x)` means 'x seconds since epoch' _not_ '(x -
-/// threshold) seconds since epoch'.
+/// Time-based locktimes are not measured against the timestamps in individual block
+/// headers, since these are not monotone and may be subject to miner manipulation.
+/// Instead, locktimes use the "median-time-past" (MTP) of the most recent 11 blocks,
+/// a quantity which is required by consensus to be monotone and which is difficult
+/// for any individual miner to manipulate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Time(u32);
+pub struct Mtp(u32);
 
-impl Time {
-    /// The minimum absolute block time (Tue Nov 05 1985 00:53:20 GMT+0000).
-    pub const MIN: Self = Time(LOCK_TIME_THRESHOLD);
+impl Mtp {
+    /// The minimum MTP allowable in a locktime (Tue Nov 05 1985 00:53:20 GMT+0000).
+    pub const MIN: Self = Mtp(LOCK_TIME_THRESHOLD);
 
-    /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
-    pub const MAX: Self = Time(u32::MAX);
+    /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
+    pub const MAX: Self = Mtp(u32::MAX);
 
-    /// Constructs a new [`Time`] from a hex string.
+    /// Constructs a new [`Mtp`] from a big-endian hex-encoded `u32`.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     ///
     /// # Errors
     ///
     /// If the input string is not a valid hex representation of a block time.
-    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_consensus) }
+    pub fn from_hex(s: &str) -> Result<Self, ParseTimeError> { parse_hex(s, Self::from_u32) }
 
-    /// Constructs a new block time.
+    #[deprecated(since = "TBD", note = "use `from_u32` instead")]
+    #[doc(hidden)]
+    pub const fn from_consensus(n: u32) -> Result<Self, ConversionError> { Self::from_u32(n) }
+
+    #[deprecated(since = "TBD", note = "use `to_u32` instead")]
+    #[doc(hidden)]
+    pub const fn to_consensus_u32(self) -> u32 { self.to_u32() }
+
+    /// Constructs a new MTP directly from a `u32` value.
+    ///
+    /// This function, with [`Mtp::to_u32`], is used to obtain a raw MTP value. It is
+    /// **not** used to convert to or from a block timestamp, which is not a MTP.
     ///
     /// # Errors
     ///
-    /// If `n` does not encode a valid UNIX time stamp.
+    /// If `n` is not in the allowable range of MTPs in a locktime: `[500_000_000, 2^32 - 1]`.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Time;
+    /// use bitcoin_units::locktime::absolute::Mtp;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = Time::from_consensus(t).expect("invalid time value");
+    /// let time = Mtp::from_u32(t).expect("invalid time value");
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
-    pub const fn from_consensus(n: u32) -> Result<Time, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<Self, ConversionError> {
         if is_block_time(n) {
             Ok(Self(n))
         } else {
@@ -173,35 +198,35 @@ impl Time {
         }
     }
 
-    /// Converts this [`Time`] to its inner `u32` value.
+    /// Converts this [`Mtp`] to a raw `u32` value.
     #[inline]
-    pub const fn to_consensus_u32(self) -> u32 { self.0 }
+    pub const fn to_u32(self) -> u32 { self.0 }
 }
 
-impl fmt::Display for Time {
+impl fmt::Display for Mtp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Time, ParseTimeError, parser(Time::from_consensus));
+crate::impl_parse_str!(Mtp, ParseTimeError, parser(Mtp::from_u32));
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Time {
+impl<'de> serde::Deserialize<'de> for Mtp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Time::from_consensus(u).map_err(serde::de::Error::custom)
+        Mtp::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Time {
+impl serde::Serialize for Mtp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        self.to_consensus_u32().serialize(serializer)
+        self.to_u32().serialize(serializer)
     }
 }
 
@@ -342,11 +367,11 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is above limit <upper_bound>)"
+                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is above limit <upper_bound>)"
                 write!(
                     f,
                     "{} ({} is above limit {})",
-                    input.display_cannot_parse("absolute Height/Time"),
+                    input.display_cannot_parse("absolute Height/Mtp"),
                     subject,
                     upper_bound
                 )
@@ -354,17 +379,17 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::NegOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Time (<subject> is below limit <lower_bound>)"
+                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is below limit <lower_bound>)"
                 write!(
                     f,
                     "{} ({} is below limit {})",
-                    input.display_cannot_parse("absolute Height/Time"),
+                    input.display_cannot_parse("absolute Height/Mtp"),
                     subject,
                     lower_bound
                 )
             }
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
-                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Time"), subject)
+                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Mtp"), subject)
             }
             E::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
@@ -407,27 +432,27 @@ impl<'a> Arbitrary<'a> for Height {
             0 => Ok(Height::MIN),
             1 => Ok(Height::MAX),
             _ => {
-                let min = Height::MIN.to_consensus_u32();
-                let max = Height::MAX.to_consensus_u32();
+                let min = Height::MIN.to_u32();
+                let max = Height::MAX.to_u32();
                 let h = u.int_in_range(min..=max)?;
-                Ok(Height::from_consensus(h).unwrap())
+                Ok(Height::from_u32(h).unwrap())
             }
         }
     }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Time {
+impl<'a> Arbitrary<'a> for Mtp {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {
-            0 => Ok(Time::MIN),
-            1 => Ok(Time::MAX),
+            0 => Ok(Mtp::MIN),
+            1 => Ok(Mtp::MAX),
             _ => {
-                let min = Time::MIN.to_consensus_u32();
-                let max = Time::MAX.to_consensus_u32();
+                let min = Mtp::MIN.to_u32();
+                let max = Mtp::MAX.to_u32();
                 let t = u.int_in_range(min..=max)?;
-                Ok(Time::from_consensus(t).unwrap())
+                Ok(Mtp::from_u32(t).unwrap())
             }
         }
     }
@@ -442,21 +467,21 @@ mod tests {
 
     #[test]
     fn time_from_str_hex_happy_path() {
-        let actual = Time::from_hex("0x6289C350").unwrap();
-        let expected = Time::from_consensus(0x6289_C350).unwrap();
+        let actual = Mtp::from_hex("0x6289C350").unwrap();
+        let expected = Mtp::from_u32(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
-        let time = Time::from_hex("6289C350").unwrap();
-        assert_eq!(time, Time(0x6289_C350));
+        let time = Mtp::from_hex("6289C350").unwrap();
+        assert_eq!(time, Mtp(0x6289_C350));
     }
 
     #[test]
     fn time_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Time::from_hex(hex);
+        let result = Mtp::from_hex(hex);
         assert!(result.is_err());
     }
 
@@ -500,8 +525,8 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_time() {
-        serde_round_trip!(Time::MIN);
-        serde_round_trip!(Time::MAX);
+        serde_round_trip!(Mtp::MIN);
+        serde_round_trip!(Mtp::MAX);
     }
 
     #[test]

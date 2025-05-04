@@ -41,7 +41,11 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
-        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, Time};
+        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, Mtp};
+
+        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[doc(hidden)]
+        pub type Time = Mtp;
 
         impl Encodable for LockTime {
             #[inline]
@@ -67,9 +71,17 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::relative` module.
         pub use primitives::locktime::relative::{
-            DisabledLockTimeError, Height, IncompatibleHeightError, IncompatibleTimeError,
-            LockTime, Time, TimeOverflowError,
+            DisabledLockTimeError, HeightInterval, IncompatibleHeightError, IncompatibleTimeError,
+            LockTime, MtpInterval, TimeOverflowError,
         };
+
+        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[doc(hidden)]
+        pub type Height = HeightInterval;
+
+        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[doc(hidden)]
+        pub type Time = MtpInterval;
     }
 }
 

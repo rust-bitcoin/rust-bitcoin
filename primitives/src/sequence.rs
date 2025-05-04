@@ -70,7 +70,7 @@ impl Sequence {
     /// BIP-68 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x8000_0000;
     /// BIP-68 relative lock time type flag mask.
-    const LOCK_TYPE_MASK: u32 = 0x0040_0000;
+    pub(super) const LOCK_TYPE_MASK: u32 = 0x0040_0000;
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
@@ -187,7 +187,7 @@ impl Sequence {
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
-        use crate::locktime::relative::{Height, LockTime, Time};
+        use crate::locktime::relative::{HeightInterval, LockTime, MtpInterval};
 
         if !self.is_relative_lock_time() {
             return None;
@@ -196,9 +196,9 @@ impl Sequence {
         let lock_value = self.low_u16();
 
         if self.is_time_locked() {
-            Some(LockTime::from(Time::from_512_second_intervals(lock_value)))
+            Some(LockTime::from(MtpInterval::from_512_second_intervals(lock_value)))
         } else {
-            Some(LockTime::from(Height::from(lock_value)))
+            Some(LockTime::from(HeightInterval::from(lock_value)))
         }
     }
 
@@ -261,10 +261,16 @@ impl<'a> Arbitrary<'a> for Sequence {
             1 => Ok(Sequence::ZERO),
             2 => Ok(Sequence::MIN_NO_RBF),
             3 => Ok(Sequence::ENABLE_LOCKTIME_AND_RBF),
-            4 => Ok(Sequence::from_consensus(relative::Height::MIN.to_consensus_u32())),
-            5 => Ok(Sequence::from_consensus(relative::Height::MAX.to_consensus_u32())),
-            6 => Ok(Sequence::from_consensus(relative::Time::MIN.to_consensus_u32())),
-            7 => Ok(Sequence::from_consensus(relative::Time::MAX.to_consensus_u32())),
+            4 => Ok(Sequence::from_consensus(u32::from(relative::HeightInterval::MIN.to_height()))),
+            5 => Ok(Sequence::from_consensus(u32::from(relative::HeightInterval::MAX.to_height()))),
+            6 => Ok(Sequence::from_consensus(
+                Sequence::LOCK_TYPE_MASK
+                    | u32::from(relative::MtpInterval::MIN.to_512_second_intervals()),
+            )),
+            7 => Ok(Sequence::from_consensus(
+                Sequence::LOCK_TYPE_MASK
+                    | u32::from(relative::MtpInterval::MAX.to_512_second_intervals()),
+            )),
             _ => Ok(Sequence(u.arbitrary()?)),
         }
     }
