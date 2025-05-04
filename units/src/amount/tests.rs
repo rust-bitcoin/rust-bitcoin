@@ -13,9 +13,9 @@ use std::panic;
 use ::serde::{Deserialize, Serialize};
 
 use super::*;
-use crate::{MathOp, NumOpResult};
 #[cfg(feature = "alloc")]
 use crate::{FeeRate, Weight};
+use crate::{MathOp, NumOpResult};
 
 #[track_caller]
 fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }

@@ -1784,7 +1784,11 @@ mod test {
         let script = ScriptBuf::from_hex_no_length_prefix(script_hex).unwrap();
         let control_block = ControlBlock::from_hex(control_block_hex).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
-        assert!(control_block.verify_taproot_commitment(secp, out_pk.to_x_only_public_key(), &script));
+        assert!(control_block.verify_taproot_commitment(
+            secp,
+            out_pk.to_x_only_public_key(),
+            &script
+        ));
     }
 
     #[test]
