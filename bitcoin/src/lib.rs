@@ -134,7 +134,7 @@ pub use primitives::{
 #[doc(inline)]
 pub use units::{
     amount::{Amount, Denomination, SignedAmount},
-    block::{BlockHeight, BlockInterval},
+    block::{BlockHeight, BlockInterval, BlockMtp},
     fee_rate::FeeRate,
     time::{self, BlockTime},
     weight::Weight,

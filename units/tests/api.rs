@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval,
+    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, BlockMtp,
     BlockTime, FeeRate, SignedAmount, Weight,
 };
 
@@ -43,6 +43,7 @@ struct Structs {
     j: relative::Time,
     k: Weight,
     l: BlockTime,
+    m: BlockMtp,
 }
 
 impl Structs {
@@ -60,6 +61,7 @@ impl Structs {
             j: relative::Time::MAX,
             k: Weight::MAX,
             l: BlockTime::from_u32(u32::MAX),
+            m: BlockMtp::MAX,
         }
     }
 }
@@ -90,6 +92,7 @@ struct CommonTraits {
     j: relative::Time,
     k: Weight,
     l: BlockTime,
+    m: BlockMtp,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -147,7 +150,7 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockInterval, BlockTime, FeeRate, SignedAmount, Weight,
+        Amount, BlockHeight, BlockInterval, BlockMtp, BlockTime, FeeRate, SignedAmount, Weight,
     };
 }
 
@@ -298,6 +301,7 @@ impl<'a> Arbitrary<'a> for Structs {
             j: relative::Time::arbitrary(u)?,
             k: Weight::arbitrary(u)?,
             l: BlockTime::arbitrary(u)?,
+            m: BlockMtp::arbitrary(u)?,
         };
         Ok(a)
     }

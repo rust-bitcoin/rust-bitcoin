@@ -50,7 +50,7 @@ pub mod witness;
 #[doc(inline)]
 pub use units::{
     amount::{self, Amount, SignedAmount},
-    block::{BlockHeight, BlockInterval},
+    block::{BlockHeight, BlockInterval, BlockMtp},
     fee_rate::{self, FeeRate},
     time::{self, BlockTime},
     weight::{self, Weight},

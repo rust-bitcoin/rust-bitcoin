@@ -93,8 +93,7 @@ impl From<absolute::Height> for BlockHeight {
     /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
-    /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
-    /// not interchangeable.
+    /// minus one, while [`BlockHeight`] may take the full range of `u32`.
     fn from(h: absolute::Height) -> Self { Self::from_u32(h.to_u32()) }
 }
 
@@ -104,8 +103,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
-    /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
-    /// not interchangeable.
+    /// minus one, while [`BlockHeight`] may take the full range of `u32`.
     fn try_from(h: BlockHeight) -> Result<Self, Self::Error> {
         absolute::Height::from_u32(h.to_u32())
     }
@@ -147,6 +145,49 @@ impl TryFrom<BlockInterval> for relative::HeightInterval {
         }
         Ok(relative::HeightInterval::from(h as u16)) // Cast ok, value checked above.
     }
+}
+
+impl_u32_wrapper! {
+    /// The median timestamp of 11 consecutive blocks.
+    ///
+    /// This type is not meant for constructing time-based timelocks. It is a general purpose
+    /// MTP abstraction. For locktimes please see [`locktime::absolute::Mtp`].
+    ///
+    /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    // Public to try and make it really clear that there are no invariants.
+    pub struct BlockMtp(pub u32);
+}
+
+impl BlockMtp {
+    /// Constructs a [`BlockMtp`] by computing the median‐time‐past from the last 11 block timestamps
+    ///
+    /// Because block timestamps are not monotonic, this function internally sorts them;
+    /// it is therefore not important what order they appear in the array; use whatever
+    /// is most convenient.
+    pub fn new(mut timestamps: [crate::BlockTime; 11]) -> Self {
+        timestamps.sort_unstable();
+        Self::from_u32(u32::from(timestamps[5]))
+    }
+}
+
+impl From<absolute::Mtp> for BlockMtp {
+    /// Converts a [`locktime::absolute::Mtp`] to a [`BlockMtp`].
+    ///
+    /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
+    /// while [`BlockMtp`] may take the full range of `u32`.
+    fn from(h: absolute::Mtp) -> Self { Self::from_u32(h.to_u32()) }
+}
+
+impl TryFrom<BlockMtp> for absolute::Mtp {
+    type Error = absolute::ConversionError;
+
+    /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
+    ///
+    /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
+    /// while [`BlockMtp`] may take the full range of `u32`.
+    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { absolute::Mtp::from_u32(h.to_u32()) }
 }
 
 /// Error returned when the block interval is too big to be used as a relative lock time.
