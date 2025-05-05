@@ -154,6 +154,12 @@ impl MtpInterval {
         }
     }
 
+    /// Represents the [`MtpInterval`] as an integer number of seconds.
+    #[inline]
+    pub const fn to_seconds(self) -> u32 {
+        self.0 as u32 * 512 // u16->u32 cast ok, const context
+    }
+
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]

@@ -57,7 +57,7 @@ pub mod weight;
 #[rustfmt::skip]
 pub use self::{
     amount::{Amount, SignedAmount},
-    block::{BlockHeight, BlockInterval, BlockMtp},
+    block::{BlockHeight, BlockInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     result::{NumOpError, NumOpResult, MathOp},
     time::BlockTime,

@@ -15,7 +15,7 @@ use arbitrary::{Arbitrary, Unstructured};
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
     amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, BlockMtp,
-    BlockTime, FeeRate, SignedAmount, Weight,
+    BlockMtpInterval, BlockTime, FeeRate, SignedAmount, Weight,
 };
 
 /// A struct that includes all public non-error enums.
@@ -44,6 +44,7 @@ struct Structs {
     k: Weight,
     l: BlockTime,
     m: BlockMtp,
+    n: BlockMtpInterval,
 }
 
 impl Structs {
@@ -62,6 +63,7 @@ impl Structs {
             k: Weight::MAX,
             l: BlockTime::from_u32(u32::MAX),
             m: BlockMtp::MAX,
+            n: BlockMtpInterval::MAX,
         }
     }
 }
@@ -93,6 +95,7 @@ struct CommonTraits {
     k: Weight,
     l: BlockTime,
     m: BlockMtp,
+    n: BlockMtpInterval,
 }
 
 /// A struct that includes all types that implement `Default`.
@@ -103,6 +106,7 @@ struct Default {
     c: BlockInterval,
     d: relative::Height,
     e: relative::Time,
+    f: BlockMtpInterval,
 }
 
 /// A struct that includes all public error types.
@@ -150,7 +154,8 @@ fn api_can_use_modules_from_crate_root() {
 #[test]
 fn api_can_use_types_from_crate_root() {
     use bitcoin_units::{
-        Amount, BlockHeight, BlockInterval, BlockMtp, BlockTime, FeeRate, SignedAmount, Weight,
+        Amount, BlockHeight, BlockInterval, BlockMtp, BlockMtpInterval, BlockTime, FeeRate,
+        SignedAmount, Weight,
     };
 }
 
@@ -260,6 +265,7 @@ fn regression_default() {
         c: BlockInterval::ZERO,
         d: relative::Height::ZERO,
         e: relative::Time::ZERO,
+        f: BlockMtpInterval::ZERO,
     };
     assert_eq!(got, want);
 }
@@ -302,6 +308,7 @@ impl<'a> Arbitrary<'a> for Structs {
             k: Weight::arbitrary(u)?,
             l: BlockTime::arbitrary(u)?,
             m: BlockMtp::arbitrary(u)?,
+            n: BlockMtpInterval::arbitrary(u)?,
         };
         Ok(a)
     }

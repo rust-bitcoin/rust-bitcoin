@@ -190,6 +190,62 @@ impl TryFrom<BlockMtp> for absolute::Mtp {
     fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { absolute::Mtp::from_u32(h.to_u32()) }
 }
 
+impl_u32_wrapper! {
+    /// An unsigned difference between two [`BlockMtp`]s.
+    ///
+    /// This type is not meant for constructing time-based timelocks. It is a general purpose
+    /// MTP abstraction. For locktimes please see [`locktime::relative::MtpInterval`].
+    ///
+    /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    // Public to try and make it really clear that there are no invariants.
+    pub struct BlockMtpInterval(pub u32);
+}
+
+impl BlockMtpInterval {
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding down.
+    ///
+    /// Relative timelock MTP intervals have a resolution of 512 seconds, while
+    /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the MTP is out-of-range (in excess of 512 times `u16::MAX` seconds, or about
+    /// 388 days) for a time-based relative locktime.
+    #[inline]
+    pub const fn to_relative_mtp_interval_floor(
+        self,
+    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
+        relative::MtpInterval::from_seconds_floor(self.to_u32())
+    }
+
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding up.
+    ///
+    /// Relative timelock MTP intervals have a resolution of 512 seconds, while
+    /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the MTP is out-of-range (in excess of 512 times `u16::MAX` seconds, or about
+    /// 388 days) for a time-based relative locktime.
+    #[inline]
+    pub const fn to_relative_mtp_interval_ceil(
+        self,
+    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
+        relative::MtpInterval::from_seconds_ceil(self.to_u32())
+    }
+}
+
+impl From<relative::MtpInterval> for BlockMtpInterval {
+    /// Converts a [`locktime::relative::MtpInterval`] to a [`BlockMtpInterval `].
+    ///
+    /// A relative locktime MTP interval has a resolution of 512 seconds, and a maximum value
+    /// of `u16::MAX` 512-second intervals. [`BlockMtpInterval`] may take the full range of
+    /// `u32`.
+    fn from(h: relative::MtpInterval) -> Self { Self::from_u32(h.to_seconds()) }
+}
+
 /// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TooBigForRelativeBlockHeightIntervalError(u32);
@@ -258,10 +314,62 @@ crate::internal_macros::impl_op_for_references! {
             BlockInterval::from_u32(height)
         }
     }
+
+    // height - height = interval
+    impl ops::Sub<BlockMtp> for BlockMtp {
+        type Output = BlockMtpInterval;
+
+        fn sub(self, rhs: BlockMtp) -> Self::Output {
+            let interval = self.to_u32() - rhs.to_u32();
+            BlockMtpInterval::from_u32(interval)
+        }
+    }
+
+    // height + interval = height
+    impl ops::Add<BlockMtpInterval> for BlockMtp {
+        type Output = BlockMtp;
+
+        fn add(self, rhs: BlockMtpInterval) -> Self::Output {
+            let height = self.to_u32() + rhs.to_u32();
+            BlockMtp::from_u32(height)
+        }
+    }
+
+    // height - interval = height
+    impl ops::Sub<BlockMtpInterval> for BlockMtp {
+        type Output = BlockMtp;
+
+        fn sub(self, rhs: BlockMtpInterval) -> Self::Output {
+            let height = self.to_u32() - rhs.to_u32();
+            BlockMtp::from_u32(height)
+        }
+    }
+
+    // interval + interval = interval
+    impl ops::Add<BlockMtpInterval> for BlockMtpInterval {
+        type Output = BlockMtpInterval;
+
+        fn add(self, rhs: BlockMtpInterval) -> Self::Output {
+            let height = self.to_u32() + rhs.to_u32();
+            BlockMtpInterval::from_u32(height)
+        }
+    }
+
+    // interval - interval = interval
+    impl ops::Sub<BlockMtpInterval> for BlockMtpInterval {
+        type Output = BlockMtpInterval;
+
+        fn sub(self, rhs: BlockMtpInterval) -> Self::Output {
+            let height = self.to_u32() - rhs.to_u32();
+            BlockMtpInterval::from_u32(height)
+        }
+    }
 }
 
 crate::internal_macros::impl_add_assign!(BlockInterval);
 crate::internal_macros::impl_sub_assign!(BlockInterval);
+crate::internal_macros::impl_add_assign!(BlockMtpInterval);
+crate::internal_macros::impl_sub_assign!(BlockMtpInterval);
 
 impl core::iter::Sum for BlockInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
@@ -277,6 +385,23 @@ impl<'a> core::iter::Sum<&'a BlockInterval> for BlockInterval {
     {
         let sum = iter.map(|interval| interval.0).sum();
         BlockInterval::from_u32(sum)
+    }
+}
+
+impl core::iter::Sum for BlockMtpInterval {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        let sum = iter.map(|interval| interval.0).sum();
+        BlockMtpInterval::from_u32(sum)
+    }
+}
+
+impl<'a> core::iter::Sum<&'a BlockMtpInterval> for BlockMtpInterval {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a BlockMtpInterval>,
+    {
+        let sum = iter.map(|interval| interval.0).sum();
+        BlockMtpInterval::from_u32(sum)
     }
 }
 
