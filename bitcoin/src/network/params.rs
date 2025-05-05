@@ -67,7 +67,7 @@
 //! # }
 //! ```
 
-use units::{BlockHeight, BlockInterval};
+use units::{BlockHeight, BlockHeightInterval};
 
 use crate::network::Network;
 #[cfg(doc)]
@@ -92,9 +92,9 @@ pub struct Params {
     /// Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
     /// (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
     /// Examples: 1916 for 95%, 1512 for testchains.
-    pub rule_change_activation_threshold: BlockInterval,
+    pub rule_change_activation_threshold: BlockHeightInterval,
     /// Number of blocks with the same set of rules.
-    pub miner_confirmation_window: BlockInterval,
+    pub miner_confirmation_window: BlockHeightInterval,
     /// Proof of work limit value. It contains the lowest possible difficulty.
     #[deprecated(since = "0.32.0", note = "use `max_attainable_target` instead")]
     pub pow_limit: Target,
@@ -152,8 +152,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(227931), // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
         bip65_height: BlockHeight::from_u32(388381), // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
         bip66_height: BlockHeight::from_u32(363725), // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
-        rule_change_activation_threshold: BlockInterval::from_u32(1916), // 95%
-        miner_confirmation_window: BlockInterval::from_u32(2016),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1916), // 95%
+        miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_MAINNET,
         max_attainable_target: Target::MAX_ATTAINABLE_MAINNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
@@ -170,8 +170,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(21111), // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
         bip65_height: BlockHeight::from_u32(581885), // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
         bip66_height: BlockHeight::from_u32(330776), // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
-        rule_change_activation_threshold: BlockInterval::from_u32(1512), // 75%
-        miner_confirmation_window: BlockInterval::from_u32(2016),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1512), // 75%
+        miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_TESTNET,
         max_attainable_target: Target::MAX_ATTAINABLE_TESTNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
@@ -187,8 +187,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(21111), // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
         bip65_height: BlockHeight::from_u32(581885), // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
         bip66_height: BlockHeight::from_u32(330776), // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
-        rule_change_activation_threshold: BlockInterval::from_u32(1512), // 75%
-        miner_confirmation_window: BlockInterval::from_u32(2016),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1512), // 75%
+        miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_TESTNET,
         max_attainable_target: Target::MAX_ATTAINABLE_TESTNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
@@ -204,8 +204,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(1),
         bip65_height: BlockHeight::from_u32(1),
         bip66_height: BlockHeight::from_u32(1),
-        rule_change_activation_threshold: BlockInterval::from_u32(1512), // 75%
-        miner_confirmation_window: BlockInterval::from_u32(2016),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1512), // 75%
+        miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_TESTNET,
         max_attainable_target: Target::MAX_ATTAINABLE_TESTNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
@@ -221,8 +221,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(1),
         bip65_height: BlockHeight::from_u32(1),
         bip66_height: BlockHeight::from_u32(1),
-        rule_change_activation_threshold: BlockInterval::from_u32(1916), // 95%
-        miner_confirmation_window: BlockInterval::from_u32(2016),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(1916), // 95%
+        miner_confirmation_window: BlockHeightInterval::from_u32(2016),
         pow_limit: Target::MAX_ATTAINABLE_SIGNET,
         max_attainable_target: Target::MAX_ATTAINABLE_SIGNET,
         pow_target_spacing: 10 * 60,            // 10 minutes.
@@ -238,8 +238,8 @@ impl Params {
         bip34_height: BlockHeight::from_u32(100000000), // not activated on regtest
         bip65_height: BlockHeight::from_u32(1351),
         bip66_height: BlockHeight::from_u32(1251), // used only in rpc tests
-        rule_change_activation_threshold: BlockInterval::from_u32(108), // 75%
-        miner_confirmation_window: BlockInterval::from_u32(144),
+        rule_change_activation_threshold: BlockHeightInterval::from_u32(108), // 75%
+        miner_confirmation_window: BlockHeightInterval::from_u32(144),
         pow_limit: Target::MAX_ATTAINABLE_REGTEST,
         max_attainable_target: Target::MAX_ATTAINABLE_REGTEST,
         pow_target_spacing: 10 * 60,            // 10 minutes.

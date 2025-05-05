@@ -50,11 +50,15 @@ pub mod witness;
 #[doc(inline)]
 pub use units::{
     amount::{self, Amount, SignedAmount},
-    block::{BlockHeight, BlockInterval, BlockMtp},
+    block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::{self, FeeRate},
     time::{self, BlockTime},
     weight::{self, Weight},
 };
+
+#[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
+#[doc(hidden)]
+pub type BlockInterval = BlockHeightInterval;
 
 #[doc(inline)]
 #[cfg(feature = "alloc")]

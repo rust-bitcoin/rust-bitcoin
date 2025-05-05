@@ -30,7 +30,13 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 #[doc(inline)]
 pub use primitives::block::{Block, Checked, Unchecked, Validation, Version, BlockHash, Header, WitnessCommitment};
 #[doc(inline)]
-pub use units::block::{BlockHeight, BlockInterval, TooBigForRelativeBlockHeightIntervalError};
+pub use units::block::{
+    BlockHeight, BlockHeightInterval, TooBigForRelativeBlockHeightIntervalError,
+};
+
+#[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
+#[doc(hidden)]
+pub type BlockInterval = BlockHeightInterval;
 
 impl_hashencode!(BlockHash);
 

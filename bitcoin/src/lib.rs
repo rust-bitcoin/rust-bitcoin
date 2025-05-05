@@ -134,11 +134,15 @@ pub use primitives::{
 #[doc(inline)]
 pub use units::{
     amount::{Amount, Denomination, SignedAmount},
-    block::{BlockHeight, BlockInterval, BlockMtp},
+    block::{BlockHeight, BlockHeightInterval, BlockMtp},
     fee_rate::FeeRate,
     time::{self, BlockTime},
     weight::Weight,
 };
+
+#[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
+#[doc(hidden)]
+pub type BlockInterval = BlockHeightInterval;
 
 #[doc(inline)]
 pub use crate::{
@@ -242,7 +246,7 @@ mod encode_impls {
     //! Encodable/Decodable implementations.
     // While we are deprecating, re-exporting, and generally moving things around just put these here.
 
-    use units::{BlockHeight, BlockInterval};
+    use units::{BlockHeight, BlockHeightInterval};
 
     use crate::consensus::{encode, Decodable, Encodable};
     use crate::io::{BufRead, Write};
@@ -274,5 +278,5 @@ mod encode_impls {
     }
 
     impl_encodable_for_u32_wrapper!(BlockHeight);
-    impl_encodable_for_u32_wrapper!(BlockInterval);
+    impl_encodable_for_u32_wrapper!(BlockHeightInterval);
 }

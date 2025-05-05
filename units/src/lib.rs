@@ -57,10 +57,14 @@ pub mod weight;
 #[rustfmt::skip]
 pub use self::{
     amount::{Amount, SignedAmount},
-    block::{BlockHeight, BlockInterval, BlockMtp, BlockMtpInterval},
+    block::{BlockHeight, BlockHeightInterval, BlockMtp, BlockMtpInterval},
     fee_rate::FeeRate,
     result::{NumOpError, NumOpResult, MathOp},
     time::BlockTime,
     weight::Weight
 };
 pub(crate) use self::result::OptionExt;
+
+#[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]
+#[doc(hidden)]
+pub type BlockInterval = BlockHeightInterval;

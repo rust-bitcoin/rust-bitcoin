@@ -119,25 +119,25 @@ impl_u32_wrapper! {
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     // Public to try and make it really clear that there are no invariants.
-    pub struct BlockInterval(pub u32);
+    pub struct BlockHeightInterval(pub u32);
 }
 
-impl From<relative::HeightInterval> for BlockInterval {
-    /// Converts a [`locktime::relative::HeightInterval`] to a [`BlockInterval`].
+impl From<relative::HeightInterval> for BlockHeightInterval {
+    /// Converts a [`locktime::relative::HeightInterval`] to a [`BlockHeightInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_height().into()) }
 }
 
-impl TryFrom<BlockInterval> for relative::HeightInterval {
+impl TryFrom<BlockHeightInterval> for relative::HeightInterval {
     type Error = TooBigForRelativeBlockHeightIntervalError;
 
-    /// Converts a [`BlockInterval`] to a [`locktime::relative::HeightInterval`].
+    /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::HeightInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
-    /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn try_from(h: BlockInterval) -> Result<Self, Self::Error> {
+    /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
+    fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
         let h = h.to_u32();
 
         if h > u32::from(u16::MAX) {
@@ -267,51 +267,51 @@ impl std::error::Error for TooBigForRelativeBlockHeightIntervalError {}
 crate::internal_macros::impl_op_for_references! {
     // height - height = interval
     impl ops::Sub<BlockHeight> for BlockHeight {
-        type Output = BlockInterval;
+        type Output = BlockHeightInterval;
 
         fn sub(self, rhs: BlockHeight) -> Self::Output {
             let interval = self.to_u32() - rhs.to_u32();
-            BlockInterval::from_u32(interval)
+            BlockHeightInterval::from_u32(interval)
         }
     }
 
     // height + interval = height
-    impl ops::Add<BlockInterval> for BlockHeight {
+    impl ops::Add<BlockHeightInterval> for BlockHeight {
         type Output = BlockHeight;
 
-        fn add(self, rhs: BlockInterval) -> Self::Output {
+        fn add(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
             BlockHeight::from_u32(height)
         }
     }
 
     // height - interval = height
-    impl ops::Sub<BlockInterval> for BlockHeight {
+    impl ops::Sub<BlockHeightInterval> for BlockHeight {
         type Output = BlockHeight;
 
-        fn sub(self, rhs: BlockInterval) -> Self::Output {
+        fn sub(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
             BlockHeight::from_u32(height)
         }
     }
 
     // interval + interval = interval
-    impl ops::Add<BlockInterval> for BlockInterval {
-        type Output = BlockInterval;
+    impl ops::Add<BlockHeightInterval> for BlockHeightInterval {
+        type Output = BlockHeightInterval;
 
-        fn add(self, rhs: BlockInterval) -> Self::Output {
+        fn add(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() + rhs.to_u32();
-            BlockInterval::from_u32(height)
+            BlockHeightInterval::from_u32(height)
         }
     }
 
     // interval - interval = interval
-    impl ops::Sub<BlockInterval> for BlockInterval {
-        type Output = BlockInterval;
+    impl ops::Sub<BlockHeightInterval> for BlockHeightInterval {
+        type Output = BlockHeightInterval;
 
-        fn sub(self, rhs: BlockInterval) -> Self::Output {
+        fn sub(self, rhs: BlockHeightInterval) -> Self::Output {
             let height = self.to_u32() - rhs.to_u32();
-            BlockInterval::from_u32(height)
+            BlockHeightInterval::from_u32(height)
         }
     }
 
@@ -366,25 +366,25 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
-crate::internal_macros::impl_add_assign!(BlockInterval);
-crate::internal_macros::impl_sub_assign!(BlockInterval);
+crate::internal_macros::impl_add_assign!(BlockHeightInterval);
+crate::internal_macros::impl_sub_assign!(BlockHeightInterval);
 crate::internal_macros::impl_add_assign!(BlockMtpInterval);
 crate::internal_macros::impl_sub_assign!(BlockMtpInterval);
 
-impl core::iter::Sum for BlockInterval {
+impl core::iter::Sum for BlockHeightInterval {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sum = iter.map(|interval| interval.0).sum();
-        BlockInterval::from_u32(sum)
+        BlockHeightInterval::from_u32(sum)
     }
 }
 
-impl<'a> core::iter::Sum<&'a BlockInterval> for BlockInterval {
+impl<'a> core::iter::Sum<&'a BlockHeightInterval> for BlockHeightInterval {
     fn sum<I>(iter: I) -> Self
     where
-        I: Iterator<Item = &'a BlockInterval>,
+        I: Iterator<Item = &'a BlockHeightInterval>,
     {
         let sum = iter.map(|interval| interval.0).sum();
-        BlockInterval::from_u32(sum)
+        BlockHeightInterval::from_u32(sum)
     }
 }
 
@@ -414,17 +414,19 @@ mod tests {
         let height: u32 = BlockHeight(100).into();
         assert_eq!(height, 100);
 
-        let interval: u32 = BlockInterval(100).into();
+        let interval: u32 = BlockHeightInterval(100).into();
         assert_eq!(interval, 100);
 
-        let interval_from_height: BlockInterval = relative::HeightInterval::from(10u16).into();
+        let interval_from_height: BlockHeightInterval =
+            relative::HeightInterval::from(10u16).into();
         assert_eq!(interval_from_height.to_u32(), 10u32);
 
         let invalid_height_greater =
-            relative::HeightInterval::try_from(BlockInterval(u32::from(u16::MAX) + 1));
+            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX) + 1));
         assert!(invalid_height_greater.is_err());
 
-        let valid_height = relative::HeightInterval::try_from(BlockInterval(u32::from(u16::MAX)));
+        let valid_height =
+            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX)));
         assert!(valid_height.is_ok());
     }
 
@@ -432,39 +434,41 @@ mod tests {
     #[test]
     fn all_available_ops() {
         // height - height = interval
-        assert!(BlockHeight(10) - BlockHeight(7) == BlockInterval(3));
+        assert!(BlockHeight(10) - BlockHeight(7) == BlockHeightInterval(3));
 
         // height + interval = height
-        assert!(BlockHeight(100) + BlockInterval(1) == BlockHeight(101));
+        assert!(BlockHeight(100) + BlockHeightInterval(1) == BlockHeight(101));
 
         // height - interval == height
-        assert!(BlockHeight(100) - BlockInterval(1) == BlockHeight(99));
+        assert!(BlockHeight(100) - BlockHeightInterval(1) == BlockHeight(99));
 
         // interval + interval = interval
-        assert!(BlockInterval(1) + BlockInterval(2) == BlockInterval(3));
+        assert!(BlockHeightInterval(1) + BlockHeightInterval(2) == BlockHeightInterval(3));
 
         // interval - interval = interval
-        assert!(BlockInterval(10) - BlockInterval(7) == BlockInterval(3));
+        assert!(BlockHeightInterval(10) - BlockHeightInterval(7) == BlockHeightInterval(3));
 
         assert!(
-            [BlockInterval(1), BlockInterval(2), BlockInterval(3)].iter().sum::<BlockInterval>()
-                == BlockInterval(6)
+            [BlockHeightInterval(1), BlockHeightInterval(2), BlockHeightInterval(3)]
+                .iter()
+                .sum::<BlockHeightInterval>()
+                == BlockHeightInterval(6)
         );
         assert!(
-            [BlockInterval(4), BlockInterval(5), BlockInterval(6)]
+            [BlockHeightInterval(4), BlockHeightInterval(5), BlockHeightInterval(6)]
                 .into_iter()
-                .sum::<BlockInterval>()
-                == BlockInterval(15)
+                .sum::<BlockHeightInterval>()
+                == BlockHeightInterval(15)
         );
 
         // interval += interval
-        let mut int = BlockInterval(1);
-        int += BlockInterval(2);
-        assert_eq!(int, BlockInterval(3));
+        let mut int = BlockHeightInterval(1);
+        int += BlockHeightInterval(2);
+        assert_eq!(int, BlockHeightInterval(3));
 
         // interval -= interval
-        let mut int = BlockInterval(10);
-        int -= BlockInterval(7);
-        assert_eq!(int, BlockInterval(3));
+        let mut int = BlockHeightInterval(10);
+        int -= BlockHeightInterval(7);
+        assert_eq!(int, BlockHeightInterval(3));
     }
 }

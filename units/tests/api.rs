@@ -172,7 +172,7 @@ fn api_can_use_all_types_from_module_amount() {
 #[test]
 fn api_can_use_all_types_from_module_block() {
     use bitcoin_units::block::{
-        BlockHeight, BlockInterval, TooBigForRelativeBlockHeightIntervalError,
+        BlockHeight, BlockHeightInterval, TooBigForRelativeBlockHeightIntervalError,
     };
 }
 
