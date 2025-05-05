@@ -203,7 +203,7 @@ pub struct NumOpError(MathOp);
 
 impl NumOpError {
     /// Creates a [`NumOpError`] caused by `op`.
-    pub(crate) fn while_doing(op: MathOp) -> Self { NumOpError(op) }
+    pub(crate) const fn while_doing(op: MathOp) -> Self { NumOpError(op) }
 
     /// Returns `true` if this operation error'ed due to overflow.
     pub fn is_overflow(self) -> bool { self.0.is_overflow() }
