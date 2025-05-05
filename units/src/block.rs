@@ -22,46 +22,71 @@ use serde::{Deserialize, Serialize};
 use crate::locktime;
 use crate::locktime::{absolute, relative};
 
-/// The block height, zero denotes the genesis block.
-///
-/// This type is not meant for constructing height based timelocks, this is a general purpose block
-/// height abstraction. For locktimes please see [`locktime::absolute::Height`].
-///
-/// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-// Public to try and make it really clear that there are no invariants.
-pub struct BlockHeight(pub u32);
+macro_rules! impl_u32_wrapper {
+    {
+        $(#[$($type_attrs:tt)*])*
+        $type_vis:vis struct $newtype:ident($inner_vis:vis u32);
+    } => {
+        $(#[$($type_attrs)*])*
+        $type_vis struct $newtype($inner_vis u32);
 
-impl BlockHeight {
-    /// Block height 0, the genesis block.
-    pub const ZERO: Self = BlockHeight(0);
+        impl $newtype {
+            /// Block height 0, the genesis block.
+            pub const ZERO: Self = Self(0);
 
-    /// The minimum block height (0), the genesis block.
-    pub const MIN: Self = Self::ZERO;
+            /// The minimum block height (0), the genesis block.
+            pub const MIN: Self = Self::ZERO;
 
-    /// The maximum block height.
-    pub const MAX: Self = BlockHeight(u32::MAX);
+            /// The maximum block height.
+            pub const MAX: Self = Self(u32::MAX);
 
-    /// Constructs a new block height from a `u32`.
-    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
+            /// Constructs a new block height from a `u32`.
+            pub const fn from_u32(inner: u32) -> Self { Self(inner) }
 
-    /// Returns block height as a `u32`.
-    pub const fn to_u32(self) -> u32 { self.0 }
+            /// Returns block height as a `u32`.
+            pub const fn to_u32(self) -> u32 { self.0 }
+        }
+
+        impl fmt::Display for $newtype {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+        }
+
+        crate::impl_parse_str_from_int_infallible!($newtype, u32, from);
+
+        impl From<u32> for $newtype {
+            fn from(inner: u32) -> Self { Self::from_u32(inner) }
+        }
+
+        impl From<$newtype> for u32 {
+            fn from(height: $newtype) -> Self { height.to_u32() }
+        }
+
+        #[cfg(feature = "arbitrary")]
+        impl<'a> Arbitrary<'a> for $newtype {
+            fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+                let choice = u.int_in_range(0..=2)?;
+                match choice {
+                    0 => Ok(Self::ZERO),
+                    1 => Ok(Self::MIN),
+                    2 => Ok(Self::MAX),
+                    _ => Ok(Self::from_u32(u32::arbitrary(u)?)),
+                }
+            }
+        }
+    }
 }
 
-impl fmt::Display for BlockHeight {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-crate::impl_parse_str_from_int_infallible!(BlockHeight, u32, from);
-
-impl From<u32> for BlockHeight {
-    fn from(inner: u32) -> Self { Self::from_u32(inner) }
-}
-
-impl From<BlockHeight> for u32 {
-    fn from(height: BlockHeight) -> Self { height.to_u32() }
+impl_u32_wrapper! {
+    /// A block height. Zero denotes the genesis block.
+    ///
+    /// This type is not meant for constructing height based timelocks. It is a general purpose
+    /// blockheight abstraction. For locktimes please see [`locktime::absolute::Height`].
+    ///
+    /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    // Public to try and make it really clear that there are no invariants.
+    pub struct BlockHeight(pub u32);
 }
 
 impl From<absolute::Height> for BlockHeight {
@@ -86,47 +111,17 @@ impl TryFrom<BlockHeight> for absolute::Height {
     }
 }
 
-/// The block interval.
-///
-/// Block interval is an integer type denoting the number of blocks that has passed since some point
-/// i.e., this type is meant for usage as a relative block measure.
-///
-/// This type is not meant for constructing relative height based timelocks, this is a general
-/// purpose block interval abstraction. For locktimes please see [`locktime::relative::Height`].
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-// Public to try and make it really clear that there are no invariants.
-pub struct BlockInterval(pub u32);
-
-impl BlockInterval {
-    /// Block interval 0 i.e., the current block.
-    pub const ZERO: Self = BlockInterval(0);
-
-    /// The minimum block interval (0).
-    pub const MIN: Self = Self::ZERO;
-
-    /// The maximum block interval.
-    pub const MAX: Self = BlockInterval(u32::MAX);
-
-    /// Constructs a new block interval from a `u32`.
-    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
-
-    /// Returns block interval as a `u32`.
-    pub const fn to_u32(self) -> u32 { self.0 }
-}
-
-impl fmt::Display for BlockInterval {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
-}
-
-crate::impl_parse_str_from_int_infallible!(BlockInterval, u32, from);
-
-impl From<u32> for BlockInterval {
-    fn from(inner: u32) -> Self { Self::from_u32(inner) }
-}
-
-impl From<BlockInterval> for u32 {
-    fn from(height: BlockInterval) -> Self { height.to_u32() }
+impl_u32_wrapper! {
+    /// An unsigned block interval.
+    ///
+    /// Block interval is an integer type representing a difference between the heights of two blocks.
+    ///
+    /// This type is not meant for constructing relative height based timelocks. It is a general
+    /// purpose block interval abstraction. For locktimes please see [`locktime::relative::Height`].
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    // Public to try and make it really clear that there are no invariants.
+    pub struct BlockInterval(pub u32);
 }
 
 impl From<relative::HeightInterval> for BlockInterval {
@@ -241,30 +236,6 @@ impl<'a> core::iter::Sum<&'a BlockInterval> for BlockInterval {
     {
         let sum = iter.map(|interval| interval.0).sum();
         BlockInterval::from_u32(sum)
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockHeight {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=2)?;
-        match choice {
-            0 => Ok(BlockHeight::MIN),
-            1 => Ok(BlockHeight::MAX),
-            _ => Ok(BlockHeight::from_u32(u32::arbitrary(u)?)),
-        }
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for BlockInterval {
-    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        let choice = u.int_in_range(0..=2)?;
-        match choice {
-            0 => Ok(BlockInterval::MIN),
-            1 => Ok(BlockInterval::MAX),
-            _ => Ok(BlockInterval::from_u32(u32::arbitrary(u)?)),
-        }
     }
 }
 
