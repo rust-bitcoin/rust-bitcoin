@@ -130,12 +130,8 @@ macro_rules! hash_type_no_default {
         }
 
         impl Hash {
-            const fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
-
             /// Constructs a new hash from the underlying byte array.
-            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self {
-                Self::internal_new(bytes)
-            }
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self { Hash(bytes) }
 
             /// Copies a byte slice into a hash object.
             #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
@@ -151,7 +147,7 @@ macro_rules! hash_type_no_default {
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);
-                    Ok(Self::internal_new(ret))
+                    Ok(Self::from_byte_array(ret))
                 }
             }
 
