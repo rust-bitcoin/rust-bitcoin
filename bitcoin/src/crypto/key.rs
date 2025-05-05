@@ -887,8 +887,10 @@ impl TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
+    /// Returns the underlying public key.
+    #[inline]
     #[doc(hidden)]
-    #[deprecated(since = "0.33.0", note = "use to_x_only_public_key() instead")]
+    #[deprecated(since = "0.32.6", note = "use to_x_only_public_key() instead")]
     pub fn to_inner(self) -> XOnlyPublicKey { self.0 }
 
     /// Returns the underlying x-only public key.
@@ -915,8 +917,10 @@ impl TweakedKeypair {
     #[inline]
     pub fn dangerous_assume_tweaked(pair: Keypair) -> TweakedKeypair { TweakedKeypair(pair) }
 
+    /// Returns the underlying key pair.
+    #[inline]
     #[doc(hidden)]
-    #[deprecated(since = "0.33.0", note = "use to_keypair() instead")]
+    #[deprecated(since = "0.32.6", note = "use to_keypair() instead")]
     pub fn to_inner(self) -> Keypair { self.0 }
 
     /// Returns the underlying key pair.
