@@ -2,8 +2,8 @@
 
 //! Do basic regression tests on the `Display` and `FromStr` impls.
 
-use bitcoin_units::locktime::{absolute, relative};
 use bitcoin_units::amount::Denomination;
+use bitcoin_units::locktime::{absolute, relative};
 use bitcoin_units::{Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
 
 macro_rules! check {
