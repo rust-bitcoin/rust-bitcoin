@@ -255,8 +255,10 @@ impl LockTime {
     /// ```
     pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
         match self {
-            LockTime::Blocks(blocks) => blocks.is_satisfied_by(chain_tip, utxo_mined_at),
-            LockTime::Time(time) => time.is_satisfied_by(chain_tip, utxo_mined_at),
+            LockTime::Blocks(blocks) =>
+                blocks.is_satisfied_by(chain_tip.to_height(), utxo_mined_at.to_height()),
+            LockTime::Time(time) =>
+                time.is_satisfied_by(chain_tip.to_mtp(), utxo_mined_at.to_mtp()),
         }
     }
 
