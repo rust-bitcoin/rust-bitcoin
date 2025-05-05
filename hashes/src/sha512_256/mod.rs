@@ -16,12 +16,12 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-/// Finalize a hash engine to produce a hash.
-pub fn from_engine(e: HashEngine) -> Self {
-    let mut ret = [0; 32];
-    ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..32]);
-    Hash(ret)
-}
+    /// Finalize a hash engine to produce a hash.
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut ret = [0; 32];
+        ret.copy_from_slice(&sha512::Hash::from_engine(e.0).as_byte_array()[..32]);
+        Hash(ret)
+    }
 }
 
 /// Engine to compute SHA512/256 hash function.

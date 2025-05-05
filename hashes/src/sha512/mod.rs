@@ -21,35 +21,35 @@ crate::internal_macros::general_hash_type! {
 }
 
 impl Hash {
-/// Finalize a hash engine to produce a hash.
-#[cfg(not(hashes_fuzz))]
-pub fn from_engine(mut e: HashEngine) -> Self {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
-    let n_bytes_hashed = e.bytes_hashed;
+    /// Finalize a hash engine to produce a hash.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(mut e: HashEngine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
 
-    let zeroes = [0; BLOCK_SIZE - 16];
-    e.input(&[0x80]);
-    if incomplete_block_len(&e) > zeroes.len() {
-        e.input(&zeroes);
+        let zeroes = [0; BLOCK_SIZE - 16];
+        e.input(&[0x80]);
+        if incomplete_block_len(&e) > zeroes.len() {
+            e.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - incomplete_block_len(&e);
+        e.input(&zeroes[..pad_length]);
+        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+
+        e.input(&[0; 8]);
+        e.input(&(8 * n_bytes_hashed).to_be_bytes());
+        debug_assert_eq!(incomplete_block_len(&e), 0);
+
+        Hash(e.midstate())
     }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
 
-    e.input(&[0; 8]);
-    e.input(&(8 * n_bytes_hashed).to_be_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
-
-    Hash(e.midstate())
-}
-
-/// Finalize a hash engine to produce a hash.
-#[cfg(hashes_fuzz)]
-pub fn from_engine(e: HashEngine) -> Self {
-    let mut hash = e.midstate();
-    hash[0] ^= 0xff; // Make this distinct from SHA-256
-    Hash(hash)
-}
+    /// Finalize a hash engine to produce a hash.
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut hash = e.midstate();
+        hash[0] ^= 0xff; // Make this distinct from SHA-256
+        Hash(hash)
+    }
 }
 
 pub(crate) const BLOCK_SIZE: usize = 128;
