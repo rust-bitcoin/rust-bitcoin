@@ -128,8 +128,6 @@ pub enum AddrV2 {
     Ipv4(Ipv4Addr),
     /// IPV6
     Ipv6(Ipv6Addr),
-    /// TORV2
-    TorV2([u8; 10]),
     /// TORV3
     TorV3([u8; 32]),
     /// I2P
@@ -152,7 +150,6 @@ impl Encodable for AddrV2 {
         Ok(match *self {
             AddrV2::Ipv4(ref addr) => encode_addr(w, 1, &addr.octets())?,
             AddrV2::Ipv6(ref addr) => encode_addr(w, 2, &addr.octets())?,
-            AddrV2::TorV2(ref bytes) => encode_addr(w, 3, bytes)?,
             AddrV2::TorV3(ref bytes) => encode_addr(w, 4, bytes)?,
             AddrV2::I2p(ref bytes) => encode_addr(w, 5, bytes)?,
             AddrV2::Cjdns(ref addr) => encode_addr(w, 6, &addr.octets())?,
@@ -195,13 +192,7 @@ impl Decodable for AddrV2 {
                     addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
                 ))
             }
-            3 => {
-                if len != 10 {
-                    return Err(consensus::parse_failed_error("invalid TorV2 address"));
-                }
-                let id = Decodable::consensus_decode(r)?;
-                AddrV2::TorV2(id)
-            }
+
             4 => {
                 if len != 32 {
                     return Err(consensus::parse_failed_error("invalid TorV3 address"));
@@ -399,9 +390,6 @@ mod test {
             AddrV2::Ipv6("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b".parse::<Ipv6Addr>().unwrap());
         assert_eq!(serialize(&ip), hex!("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b"));
 
-        let ip = AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap());
-        assert_eq!(serialize(&ip), hex!("030af1f2f3f4f5f6f7f8f9fa"));
-
         let ip = AddrV2::TorV3(
             FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
                 .unwrap(),
@@ -459,13 +447,6 @@ mod test {
 
         // Invalid IPv6, contains embedded TORv2.
         assert!(deserialize::<AddrV2>(&hex!("0210fd87d87eeb430102030405060708090a")).is_err());
-
-        // Valid TORv2.
-        let ip: AddrV2 = deserialize(&hex!("030af1f2f3f4f5f6f7f8f9fa")).unwrap();
-        assert_eq!(ip, AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap()));
-
-        // Invalid TORv2, with bogus length.
-        assert!(deserialize::<AddrV2>(&hex!("030700")).is_err());
 
         // Valid TORv3.
         let ip: AddrV2 = deserialize(&hex!(
