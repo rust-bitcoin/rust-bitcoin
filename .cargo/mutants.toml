@@ -7,8 +7,6 @@ exclude_re = [
     "impl Arbitrary",
     "impl Debug",
     "impl fmt::Debug",
-    "impl Display",
-    "impl fmt::Display",
     ".*Error",
     "deserialize", # Skip serde mutation tests
     "Iterator", # Mutating operations in an iterator can result in an infinite loop
