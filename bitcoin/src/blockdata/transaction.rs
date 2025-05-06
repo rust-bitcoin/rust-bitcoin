@@ -12,6 +12,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::{Arbitrary, Unstructured};
 use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
@@ -1133,6 +1135,20 @@ mod sealed {
     impl Sealed for super::TxIn {}
     impl Sealed for super::TxOut {}
     impl Sealed for super::Version {}
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> Arbitrary<'a> for InputWeightPrediction {
+    fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
+        match u.int_in_range(0..=5)? {
+            0 => Ok(InputWeightPrediction::P2WPKH_MAX),
+            1 => Ok(InputWeightPrediction::NESTED_P2WPKH_MAX),
+            2 => Ok(InputWeightPrediction::P2PKH_COMPRESSED_MAX),
+            3 => Ok(InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX),
+            4 => Ok(InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH),
+            _ => Ok(InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH),
+        }
+    }
 }
 
 #[cfg(test)]
