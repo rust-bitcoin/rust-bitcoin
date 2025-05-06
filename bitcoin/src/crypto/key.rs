@@ -899,9 +899,7 @@ impl TweakedPublicKey {
     #[inline]
     pub fn as_x_only_public_key(&self) -> &XOnlyPublicKey { &self.0 }
 
-    /// Serializes the key as a byte-encoded pair of values. In compressed form
-    /// the y-coordinate is represented by only a single bit, as x determines
-    /// it up to one bit.
+    /// Serializes the key as a byte-encoded x coordinate value (32 bytes).
     #[inline]
     pub fn serialize(&self) -> [u8; constants::SCHNORR_PUBLIC_KEY_SIZE] { self.0.serialize() }
 }
