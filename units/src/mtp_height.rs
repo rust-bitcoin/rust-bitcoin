@@ -2,14 +2,14 @@
 
 //! Median Time Past (MTP) and height - used for working lock times.
 
-use crate::{BlockHeight, BlockTime};
+use crate::{BlockHeight, BlockMtp, BlockTime};
 
 /// A structure containing both Median Time Past (MTP) and current
 /// absolute block height, used for validating relative locktimes.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct MtpAndHeight {
     /// The Median Time Past (median of the last 11 blocks' timestamps)
-    mtp: BlockTime,
+    mtp: BlockMtp,
     /// The current block height,
     height: BlockHeight,
 }
@@ -26,15 +26,11 @@ impl MtpAndHeight {
     ///   - …
     ///   - `timestamps[10]` is the timestamp at height `height`
     pub fn new(height: BlockHeight, timestamps: [BlockTime; 11]) -> Self {
-        let mut mtp_timestamps = timestamps;
-        mtp_timestamps.sort_unstable();
-        let mtp = mtp_timestamps[5];
-
-        MtpAndHeight { mtp, height }
+        MtpAndHeight { mtp: BlockMtp::new(timestamps), height }
     }
 
     /// Returns the median-time-past component.
-    pub fn to_mtp(self) -> BlockTime { self.mtp }
+    pub fn to_mtp(self) -> BlockMtp { self.mtp }
 
     /// Returns the block-height component.
     pub fn to_height(self) -> BlockHeight { self.height }
