@@ -39,12 +39,12 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 /// //
 /// // For example if the `spend` value comes from the user and the `change` value is later
 /// // used then overflow here could be an attack vector.
-/// let change = (a1 + a2 - spend - fee).into_result().expect("handle this error");
+/// let _change = (a1 + a2 - spend - fee).into_result().expect("handle this error");
 ///
 /// // Or if we control all the values and know they are sane we can just `unwrap`.
-/// let change = (a1 + a2 - spend - fee).unwrap();
+/// let _change = (a1 + a2 - spend - fee).unwrap();
 /// // `NumOpResult` also implements `expect`.
-/// let change = (a1 + a2 - spend - fee).expect("we know values don't overflow");
+/// let _change = (a1 + a2 - spend - fee).expect("we know values don't overflow");
 /// # Ok::<_, amount::OutOfRangeError>(())
 /// ```
 ///
