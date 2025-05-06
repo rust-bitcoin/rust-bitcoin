@@ -53,7 +53,7 @@ use crate::{Amount, FeeRate, SignedAmount, Weight};
 /// In some instances one may wish to differentiate div-by-zero from overflow.
 ///
 /// ```
-/// # use bitcoin_units::{amount, Amount, FeeRate, NumOpResult, NumOpError};
+/// # use bitcoin_units::{Amount, FeeRate, NumOpResult, NumOpError};
 /// // Two amounts that will be added to calculate the max fee.
 /// let a = Amount::from_sat(123).expect("valid amount");
 /// let b = Amount::from_sat(467).expect("valid amount");
