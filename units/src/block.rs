@@ -89,6 +89,18 @@ impl_u32_wrapper! {
     pub struct BlockHeight(pub u32);
 }
 
+impl BlockHeight {
+    /// Attempt to subtract two [`BlockHeight`]s, returning `None` in case of overflow.
+    pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
+        self.0.checked_sub(other.0).map(BlockHeightInterval)
+    }
+
+    /// Attempt to add an interval to this [`BlockHeight`], returning `None` in case of overflow.
+    pub fn checked_add(self, other: BlockHeightInterval) -> Option<Self> {
+        self.0.checked_add(other.0).map(Self)
+    }
+}
+
 impl From<absolute::Height> for BlockHeight {
     /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
@@ -120,6 +132,14 @@ impl_u32_wrapper! {
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     // Public to try and make it really clear that there are no invariants.
     pub struct BlockHeightInterval(pub u32);
+}
+
+impl BlockHeightInterval {
+    /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` in case of overflow.
+    pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
+
+    /// Attempt to add two [`BlockHeightInterval`]s, returning `None` in case of overflow.
+    pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
 impl From<relative::HeightInterval> for BlockHeightInterval {
@@ -169,6 +189,16 @@ impl BlockMtp {
     pub fn new(mut timestamps: [crate::BlockTime; 11]) -> Self {
         timestamps.sort_unstable();
         Self::from_u32(u32::from(timestamps[5]))
+    }
+
+    /// Attempt to subtract two [`BlockMtp`]s, returning `None` in case of overflow.
+    pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
+        self.0.checked_sub(other.0).map(BlockMtpInterval)
+    }
+
+    /// Attempt to add an interval to this [`BlockMtp`], returning `None` in case of overflow.
+    pub fn checked_add(self, other: BlockMtpInterval) -> Option<Self> {
+        self.0.checked_add(other.0).map(Self)
     }
 }
 
@@ -235,6 +265,12 @@ impl BlockMtpInterval {
     ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
         relative::MtpInterval::from_seconds_ceil(self.to_u32())
     }
+
+    /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` in case of overflow.
+    pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
+
+    /// Attempt to add two [`BlockMtpInterval`]s, returning `None` in case of overflow.
+    pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
 impl From<relative::MtpInterval> for BlockMtpInterval {
