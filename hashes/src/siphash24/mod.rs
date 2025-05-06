@@ -12,15 +12,6 @@ crate::internal_macros::hash_type_no_default! {
     "Output of the SipHash24 hash function."
 }
 
-#[cfg(not(hashes_fuzz))]
-fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let state = e.state.clone();
-    Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
-}
-
 macro_rules! compress {
     ($state:expr) => {{
         compress!($state.v0, $state.v1, $state.v2, $state.v3)
@@ -176,7 +167,14 @@ impl Hash {
     pub fn engine(k0: u64, k1: u64) -> HashEngine { HashEngine::with_keys(k0, k1) }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine) -> Hash { from_engine(e) }
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(e: HashEngine) -> Self { Hash::from_u64(Hash::from_engine_to_u64(e)) }
+
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let state = e.state.clone();
+        Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
+    }
 
     /// Hashes the given data with an engine with the provided keys.
     pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Hash {

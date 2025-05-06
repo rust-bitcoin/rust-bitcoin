@@ -20,31 +20,35 @@ crate::internal_macros::general_hash_type! {
     "Output of the RIPEMD160 hash function."
 }
 
-#[cfg(not(hashes_fuzz))]
-fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let n_bytes_hashed = e.bytes_hashed;
+impl Hash {
+    /// Finalize a hash engine to produce a hash.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(mut e: HashEngine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
 
-    let zeroes = [0; BLOCK_SIZE - 8];
-    e.input(&[0x80]);
-    if crate::incomplete_block_len(&e) > zeroes.len() {
-        e.input(&zeroes);
+        let zeroes = [0; BLOCK_SIZE - 8];
+        e.input(&[0x80]);
+        if crate::incomplete_block_len(&e) > zeroes.len() {
+            e.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - incomplete_block_len(&e);
+        e.input(&zeroes[..pad_length]);
+        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+
+        e.input(&(8 * n_bytes_hashed).to_le_bytes());
+        debug_assert_eq!(incomplete_block_len(&e), 0);
+
+        Hash(e.midstate())
     }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
 
-    e.input(&(8 * n_bytes_hashed).to_le_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
-
-    Hash(e.midstate())
-}
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let mut res = e.midstate();
-    res[0] ^= (e.bytes_hashed & 0xff) as u8;
-    Hash(res)
+    /// Finalize a hash engine to produce a hash.
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut res = e.midstate();
+        res[0] ^= (e.bytes_hashed & 0xff) as u8;
+        Hash(res)
+    }
 }
 
 const BLOCK_SIZE: usize = 64;

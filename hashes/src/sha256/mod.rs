@@ -22,37 +22,6 @@ crate::internal_macros::general_hash_type! {
     "Output of the SHA256 hash function."
 }
 
-#[cfg(not(hashes_fuzz))]
-fn from_engine(mut e: HashEngine) -> Hash {
-    // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
-    let n_bytes_hashed = e.bytes_hashed;
-
-    let zeroes = [0; BLOCK_SIZE - 8];
-    e.input(&[0x80]);
-    if incomplete_block_len(&e) > zeroes.len() {
-        e.input(&zeroes);
-    }
-    let pad_length = zeroes.len() - incomplete_block_len(&e);
-    e.input(&zeroes[..pad_length]);
-    debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
-
-    e.input(&(8 * n_bytes_hashed).to_be_bytes());
-    debug_assert_eq!(incomplete_block_len(&e), 0);
-
-    Hash(e.midstate_unchecked().bytes)
-}
-
-#[cfg(hashes_fuzz)]
-fn from_engine(e: HashEngine) -> Hash {
-    let mut hash = e.midstate_unchecked().bytes;
-    if hash == [0; 32] {
-        // Assume sha256 is secure and never generate 0-hashes (which represent invalid
-        // secp256k1 secret keys, causing downstream application breakage).
-        hash[0] = 1;
-    }
-    Hash(hash)
-}
-
 const BLOCK_SIZE: usize = 64;
 
 /// Engine to compute SHA256 hash function.
@@ -141,6 +110,39 @@ impl crate::HashEngine for HashEngine {
 }
 
 impl Hash {
+    /// Finalize a hash engine to obtain a hash.
+    #[cfg(not(hashes_fuzz))]
+    pub fn from_engine(mut e: HashEngine) -> Self {
+        // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
+        let n_bytes_hashed = e.bytes_hashed;
+
+        let zeroes = [0; BLOCK_SIZE - 8];
+        e.input(&[0x80]);
+        if incomplete_block_len(&e) > zeroes.len() {
+            e.input(&zeroes);
+        }
+        let pad_length = zeroes.len() - incomplete_block_len(&e);
+        e.input(&zeroes[..pad_length]);
+        debug_assert_eq!(incomplete_block_len(&e), zeroes.len());
+
+        e.input(&(8 * n_bytes_hashed).to_be_bytes());
+        debug_assert_eq!(incomplete_block_len(&e), 0);
+
+        Hash(e.midstate_unchecked().bytes)
+    }
+
+    /// Finalize a hash engine to obtain a hash.
+    #[cfg(hashes_fuzz)]
+    pub fn from_engine(e: HashEngine) -> Self {
+        let mut hash = e.midstate_unchecked().bytes;
+        if hash == [0; 32] {
+            // Assume sha256 is secure and never generate 0-hashes (which represent invalid
+            // secp256k1 secret keys, causing downstream application breakage).
+            hash[0] = 1;
+        }
+        Hash(hash)
+    }
+
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     #[must_use]
     pub fn hash_again(&self) -> sha256d::Hash { sha256d::Hash::from_byte_array(hash(&self.0).0) }

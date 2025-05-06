@@ -62,10 +62,8 @@ impl<T> Hash<T>
 where
     T: Tag,
 {
-    const fn internal_new(arr: [u8; 32]) -> Self { Hash(PhantomData, arr) }
-
     /// Constructs a new hash from the underlying byte array.
-    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self::internal_new(bytes) }
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Self(PhantomData, bytes) }
 
     /// Copies a byte slice into a hash object.
     #[deprecated(since = "0.15.0", note = "use `from_byte_array` instead")]
@@ -83,7 +81,7 @@ where
     }
 
     /// Produces a hash from the current state of a given engine.
-    pub fn from_engine(e: HashEngine<T>) -> Hash<T> {
+    pub fn from_engine(e: HashEngine<T>) -> Self {
         Hash::from_byte_array(sha256::Hash::from_engine(e.0).to_byte_array())
     }
 
