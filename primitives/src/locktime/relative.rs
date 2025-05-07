@@ -13,12 +13,12 @@ use crate::{relative, TxIn};
 
 #[rustfmt::skip]                // Keep public re-exports separate.
 #[doc(inline)]
-pub use units::locktime::relative::{HeightInterval, MtpInterval, TimeOverflowError};
+pub use units::locktime::relative::{NumberOfBlocks, MtpInterval, TimeOverflowError};
 use units::{BlockHeight, BlockMtp};
 
-#[deprecated(since = "TBD", note = "use `Mtp` instead")]
+#[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
-pub type Height = HeightInterval;
+pub type Height = NumberOfBlocks;
 
 #[deprecated(since = "TBD", note = "use `Mtp` instead")]
 #[doc(hidden)]
@@ -77,7 +77,7 @@ pub type Time = MtpInterval;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LockTime {
     /// A block height lock time value.
-    Blocks(HeightInterval),
+    Blocks(NumberOfBlocks),
     /// A 512 second time interval value.
     Time(MtpInterval),
 }
@@ -85,7 +85,7 @@ pub enum LockTime {
 impl LockTime {
     /// A relative locktime of 0 is always valid, and is assumed valid for inputs that
     /// are not yet confirmed.
-    pub const ZERO: LockTime = LockTime::Blocks(HeightInterval::ZERO);
+    pub const ZERO: LockTime = LockTime::Blocks(NumberOfBlocks::ZERO);
 
     /// The number of bytes that the locktime contributes to the size of a transaction.
     pub const SIZE: usize = 4; // Serialized length of a u32.
@@ -164,7 +164,7 @@ impl LockTime {
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a 16-bit count of blocks.
     #[inline]
-    pub const fn from_height(n: u16) -> Self { LockTime::Blocks(HeightInterval::from_height(n)) }
+    pub const fn from_height(n: u16) -> Self { LockTime::Blocks(NumberOfBlocks::from_height(n)) }
 
     /// Constructs a new `LockTime` from `n`, expecting `n` to be a count of 512-second intervals.
     ///
@@ -332,7 +332,7 @@ impl LockTime {
         }
     }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by [`HeightInterval`].
+    /// Returns true if this [`relative::LockTime`] is satisfied by [`NumberOfBlocks`].
     ///
     /// # Errors
     ///
@@ -346,12 +346,12 @@ impl LockTime {
     ///
     /// let required_height: u16 = 100;
     /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    /// assert!(lock.is_satisfied_by_height(relative::HeightInterval::from(required_height + 1)).expect("a height"));
+    /// assert!(lock.is_satisfied_by_height(relative::NumberOfBlocks::from(required_height + 1)).expect("a height"));
     /// ```
     #[inline]
     pub fn is_satisfied_by_height(
         self,
-        height: HeightInterval,
+        height: NumberOfBlocks,
     ) -> Result<bool, IncompatibleHeightError> {
         use LockTime as L;
 
@@ -388,9 +388,9 @@ impl LockTime {
     }
 }
 
-impl From<HeightInterval> for LockTime {
+impl From<NumberOfBlocks> for LockTime {
     #[inline]
-    fn from(h: HeightInterval) -> Self { LockTime::Blocks(h) }
+    fn from(h: NumberOfBlocks) -> Self { LockTime::Blocks(h) }
 }
 
 impl From<MtpInterval> for LockTime {
@@ -455,14 +455,14 @@ impl std::error::Error for DisabledLockTimeError {}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleHeightError {
     /// Attempted to satisfy a lock-by-blocktime lock with this height.
-    height: HeightInterval,
+    height: NumberOfBlocks,
     /// The inner time value of the lock-by-blocktime lock.
     time: MtpInterval,
 }
 
 impl IncompatibleHeightError {
     /// Returns the height that was erroneously used to try and satisfy a lock-by-blocktime lock.
-    pub fn incompatible(&self) -> HeightInterval { self.height }
+    pub fn incompatible(&self) -> NumberOfBlocks { self.height }
 
     /// Returns the time value of the lock-by-blocktime lock.
     pub fn expected(&self) -> MtpInterval { self.time }
@@ -488,7 +488,7 @@ pub struct IncompatibleTimeError {
     /// Attempted to satisfy a lock-by-blockheight lock with this time.
     time: MtpInterval,
     /// The inner height value of the lock-by-blockheight lock.
-    height: HeightInterval,
+    height: NumberOfBlocks,
 }
 
 impl IncompatibleTimeError {
@@ -496,7 +496,7 @@ impl IncompatibleTimeError {
     pub fn incompatible(&self) -> MtpInterval { self.time }
 
     /// Returns the height value of the lock-by-blockheight lock.
-    pub fn expected(&self) -> HeightInterval { self.height }
+    pub fn expected(&self) -> NumberOfBlocks { self.height }
 }
 
 impl fmt::Display for IncompatibleTimeError {
@@ -551,8 +551,8 @@ mod tests {
 
     #[test]
     fn parses_correctly_to_height_or_time() {
-        let height1 = HeightInterval::from(10);
-        let height2 = HeightInterval::from(11);
+        let height1 = NumberOfBlocks::from(10);
+        let height2 = NumberOfBlocks::from(11);
         let time1 = MtpInterval::from_512_second_intervals(70);
         let time2 = MtpInterval::from_512_second_intervals(71);
 
@@ -576,12 +576,12 @@ mod tests {
 
     #[test]
     fn height_correctly_implies() {
-        let height = HeightInterval::from(10);
+        let height = NumberOfBlocks::from(10);
         let lock_by_height = LockTime::from(height);
 
-        assert!(!lock_by_height.is_implied_by(LockTime::from(HeightInterval::from(9))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(HeightInterval::from(10))));
-        assert!(lock_by_height.is_implied_by(LockTime::from(HeightInterval::from(11))));
+        assert!(!lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(9))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(10))));
+        assert!(lock_by_height.is_implied_by(LockTime::from(NumberOfBlocks::from(11))));
     }
 
     #[test]
@@ -602,7 +602,7 @@ mod tests {
 
     #[test]
     fn sequence_correctly_implies() {
-        let height = HeightInterval::from(10);
+        let height = NumberOfBlocks::from(10);
         let time = MtpInterval::from_512_second_intervals(70);
 
         let lock_by_height = LockTime::from(height);
@@ -625,7 +625,7 @@ mod tests {
     #[test]
     fn incorrect_units_do_not_imply() {
         let time = MtpInterval::from_512_second_intervals(70);
-        let height = HeightInterval::from(10);
+        let height = NumberOfBlocks::from(10);
 
         let lock_by_time = LockTime::from(time);
         assert!(!lock_by_time.is_implied_by(LockTime::from(height)));
@@ -664,7 +664,7 @@ mod tests {
 
     #[test]
     fn incompatible_height_error() {
-        let height = HeightInterval::from(10);
+        let height = NumberOfBlocks::from(10);
         let time = MtpInterval::from_512_second_intervals(70);
         let lock_by_time = LockTime::from(time);
         let err = lock_by_time.is_satisfied_by_height(height).unwrap_err();
@@ -676,7 +676,7 @@ mod tests {
 
     #[test]
     fn incompatible_time_error() {
-        let height = HeightInterval::from(10);
+        let height = NumberOfBlocks::from(10);
         let time = MtpInterval::from_512_second_intervals(70);
         let lock_by_height = LockTime::from(height);
         let err = lock_by_height.is_satisfied_by_time(time).unwrap_err();
@@ -704,10 +704,10 @@ mod tests {
         let utxo_height = BlockHeight::from_u32(80);
         let utxo_mtp = BlockMtp::new(utxo_timestamps);
 
-        let lock1 = LockTime::Blocks(HeightInterval::from(10));
+        let lock1 = LockTime::Blocks(NumberOfBlocks::from(10));
         assert!(lock1.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp));
 
-        let lock2 = LockTime::Blocks(HeightInterval::from(21));
+        let lock2 = LockTime::Blocks(NumberOfBlocks::from(21));
         assert!(!lock2.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp));
 
         let lock3 = LockTime::Time(MtpInterval::from_512_second_intervals(10));
@@ -727,7 +727,7 @@ mod tests {
         let lock6 = LockTime::from_seconds_floor(5000).unwrap();
         assert!(lock6.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp));
 
-        let max_height_lock = LockTime::Blocks(HeightInterval::MAX);
+        let max_height_lock = LockTime::Blocks(NumberOfBlocks::MAX);
         assert!(!max_height_lock.is_satisfied_by(chain_height, chain_mtp, utxo_height, utxo_mtp));
 
         let max_time_lock = LockTime::Time(MtpInterval::MAX);

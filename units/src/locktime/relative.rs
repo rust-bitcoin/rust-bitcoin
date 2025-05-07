@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`Height`] and [`MtpInterval`] types used by the `rust-bitcoin` `relative::LockTime` type.
+//! Provides [`NumberOfBlocks`] and [`MtpInterval`] types used by the `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
 
@@ -9,16 +9,16 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[deprecated(since = "TBD", note = "use `HeightIterval` instead")]
+#[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
-pub type Height = HeightInterval;
+pub type Height = NumberOfBlocks;
 
 /// A relative lock time lock-by-blockheight value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct HeightInterval(u16);
+pub struct NumberOfBlocks(u16);
 
-impl HeightInterval {
+impl NumberOfBlocks {
     /// Relative block height 0, can be included in any block.
     pub const ZERO: Self = Self(0);
 
@@ -28,7 +28,7 @@ impl HeightInterval {
     /// The maximum relative block height.
     pub const MAX: Self = Self(u16::MAX);
 
-    /// Constructs a new [`HeightInterval`] using a count of blocks.
+    /// Constructs a new [`NumberOfBlocks`] using a count of blocks.
     #[inline]
     pub const fn from_height(blocks: u16) -> Self { Self(blocks) }
 
@@ -80,14 +80,14 @@ impl HeightInterval {
     }
 }
 
-impl From<u16> for HeightInterval {
+impl From<u16> for NumberOfBlocks {
     #[inline]
-    fn from(value: u16) -> Self { HeightInterval(value) }
+    fn from(value: u16) -> Self { NumberOfBlocks(value) }
 }
 
-crate::impl_parse_str_from_int_infallible!(HeightInterval, u16, from);
+crate::impl_parse_str_from_int_infallible!(NumberOfBlocks, u16, from);
 
-impl fmt::Display for HeightInterval {
+impl fmt::Display for NumberOfBlocks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
@@ -246,14 +246,14 @@ impl fmt::Display for TimeOverflowError {
 impl std::error::Error for TimeOverflowError {}
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for HeightInterval {
+impl<'a> Arbitrary<'a> for NumberOfBlocks {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
 
         match choice {
-            0 => Ok(HeightInterval::MIN),
-            1 => Ok(HeightInterval::MAX),
-            _ => Ok(HeightInterval::from_height(u16::arbitrary(u)?)),
+            0 => Ok(NumberOfBlocks::MIN),
+            1 => Ok(NumberOfBlocks::MAX),
+            _ => Ok(NumberOfBlocks::from_height(u16::arbitrary(u)?)),
         }
     }
 }
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     #[allow(deprecated_in_future)]
     fn sanity_check() {
-        assert_eq!(HeightInterval::MAX.to_consensus_u32(), u32::from(u16::MAX));
+        assert_eq!(NumberOfBlocks::MAX.to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(MtpInterval::from_512_second_intervals(100).value(), 100u16);
         assert_eq!(MtpInterval::from_512_second_intervals(100).to_consensus_u32(), 4_194_404u32); // 0x400064
     }
@@ -339,9 +339,9 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_height() {
-        serde_round_trip!(HeightInterval::ZERO);
-        serde_round_trip!(HeightInterval::MIN);
-        serde_round_trip!(HeightInterval::MAX);
+        serde_round_trip!(NumberOfBlocks::ZERO);
+        serde_round_trip!(NumberOfBlocks::MIN);
+        serde_round_trip!(NumberOfBlocks::MAX);
     }
 
     #[test]
@@ -402,7 +402,7 @@ mod tests {
     fn test_height_chain_state() {
         use crate::BlockHeight;
 
-        let height_lock = HeightInterval(10);
+        let height_lock = NumberOfBlocks(10);
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
         let chain_state1 = BlockHeight::from_u32(100);
@@ -415,7 +415,7 @@ mod tests {
         assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2));
 
         // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
-        let max_height_lock = HeightInterval::MAX;
+        let max_height_lock = NumberOfBlocks::MAX;
         let chain_state3 = BlockHeight::from_u32(1000);
         let utxo_state3 = BlockHeight::from_u32(80);
         assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3));

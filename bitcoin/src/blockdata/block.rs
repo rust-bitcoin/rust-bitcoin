@@ -31,7 +31,7 @@ use crate::transaction::{Transaction, TransactionExt as _, Wtxid};
 pub use primitives::block::{Block, Checked, Unchecked, Validation, Version, BlockHash, Header, WitnessCommitment};
 #[doc(inline)]
 pub use units::block::{
-    BlockHeight, BlockHeightInterval, TooBigForRelativeBlockHeightIntervalError,
+    BlockHeight, BlockHeightInterval, TooBigForRelativeHeightError,
 };
 
 #[deprecated(since = "TBD", note = "use `BlockHeightInterval` instead")]

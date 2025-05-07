@@ -142,18 +142,18 @@ impl BlockHeightInterval {
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
-impl From<relative::HeightInterval> for BlockHeightInterval {
-    /// Converts a [`locktime::relative::HeightInterval`] to a [`BlockHeightInterval`].
+impl From<relative::NumberOfBlocks> for BlockHeightInterval {
+    /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_height().into()) }
+    fn from(h: relative::NumberOfBlocks) -> Self { Self::from_u32(h.to_height().into()) }
 }
 
-impl TryFrom<BlockHeightInterval> for relative::HeightInterval {
-    type Error = TooBigForRelativeBlockHeightIntervalError;
+impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
+    type Error = TooBigForRelativeHeightError;
 
-    /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::HeightInterval`].
+    /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
@@ -161,9 +161,9 @@ impl TryFrom<BlockHeightInterval> for relative::HeightInterval {
         let h = h.to_u32();
 
         if h > u32::from(u16::MAX) {
-            return Err(TooBigForRelativeBlockHeightIntervalError(h));
+            return Err(TooBigForRelativeHeightError(h));
         }
-        Ok(relative::HeightInterval::from(h as u16)) // Cast ok, value checked above.
+        Ok(relative::NumberOfBlocks::from(h as u16)) // Cast ok, value checked above.
     }
 }
 
@@ -284,21 +284,21 @@ impl From<relative::MtpInterval> for BlockMtpInterval {
 
 /// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TooBigForRelativeBlockHeightIntervalError(u32);
+pub struct TooBigForRelativeHeightError(u32);
 
-impl fmt::Display for TooBigForRelativeBlockHeightIntervalError {
+impl fmt::Display for TooBigForRelativeHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "block interval is too big to be used as a relative lock time: {} (max: {})",
             self.0,
-            relative::HeightInterval::MAX
+            relative::NumberOfBlocks::MAX
         )
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for TooBigForRelativeBlockHeightIntervalError {}
+impl std::error::Error for TooBigForRelativeHeightError {}
 
 crate::internal_macros::impl_op_for_references! {
     // height - height = interval
@@ -454,15 +454,15 @@ mod tests {
         assert_eq!(interval, 100);
 
         let interval_from_height: BlockHeightInterval =
-            relative::HeightInterval::from(10u16).into();
+            relative::NumberOfBlocks::from(10u16).into();
         assert_eq!(interval_from_height.to_u32(), 10u32);
 
         let invalid_height_greater =
-            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX) + 1));
+            relative::NumberOfBlocks::try_from(BlockHeightInterval(u32::from(u16::MAX) + 1));
         assert!(invalid_height_greater.is_err());
 
         let valid_height =
-            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX)));
+            relative::NumberOfBlocks::try_from(BlockHeightInterval(u32::from(u16::MAX)));
         assert!(valid_height.is_ok());
     }
 

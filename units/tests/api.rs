@@ -135,7 +135,7 @@ struct Errors {
     t: amount::PossiblyConfusingDenominationError,
     u: amount::TooPreciseError,
     v: amount::UnknownDenominationError,
-    w: block::TooBigForRelativeBlockHeightIntervalError,
+    w: block::TooBigForRelativeHeightError,
     x: locktime::absolute::ConversionError,
     y: locktime::absolute::Height,
     z: locktime::absolute::ParseHeightError,
@@ -172,7 +172,7 @@ fn api_can_use_all_types_from_module_amount() {
 #[test]
 fn api_can_use_all_types_from_module_block() {
     use bitcoin_units::block::{
-        BlockHeight, BlockHeightInterval, TooBigForRelativeBlockHeightIntervalError,
+        BlockHeight, BlockHeightInterval, TooBigForRelativeHeightError,
     };
 }
 
