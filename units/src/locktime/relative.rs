@@ -9,8 +9,6 @@ use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::mtp_height::MtpAndHeight;
-
 #[deprecated(since = "TBD", note = "use `HeightIterval` instead")]
 #[doc(hidden)]
 pub type Height = HeightInterval;
@@ -59,21 +57,26 @@ impl HeightInterval {
     /// Determines whether a relative‐height locktime has matured, taking into account
     /// both the chain tip and the height at which the UTXO was confirmed.
     ///
+    /// If you have two height intervals `x` and `y`, and want to know whether `x`
+    /// is satisfied by `y`, use `x >= y`.
+    ///
     /// # Parameters
-    /// - `self` – The relative block‐height delay (`h`) required after confirmation.
-    /// - `chain_tip` – The current chain state (contains the tip height).
-    /// - `utxo_mined_at` – The chain state at the UTXO’s confirmation block (contains that height).
+    /// - `self` – the relative block‐height delay (`h`) required after confirmation.
+    /// - `chain_tip` – the height of the current chain tip
+    /// - `utxo_mined_at` – the height of the UTXO’s confirmation block
     ///
     /// # Returns
     /// - `true` if a UTXO locked by `self` can be spent in a block after `chain_tip`.
     /// - `false` if the UTXO is still locked at `chain_tip`.
-    pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
-        // let chain_tip_height = BlockHeight::from(chain_tip);
-        // let utxo_mined_at_height = BlockHeight::from(utxo_mined_at);
-        match u32::from(self.to_height()).checked_add(utxo_mined_at.to_height().to_u32()) {
-            Some(target_height) => chain_tip.to_height().to_u32() >= target_height,
-            None => false,
-        }
+    pub fn is_satisfied_by(
+        self,
+        chain_tip: crate::BlockHeight,
+        utxo_mined_at: crate::BlockHeight,
+    ) -> bool {
+        chain_tip
+            .checked_sub(utxo_mined_at)
+            .and_then(|diff: crate::BlockHeightInterval| diff.try_into().ok())
+            .map_or(false, |diff: Self| diff >= self)
     }
 }
 
@@ -154,6 +157,12 @@ impl MtpInterval {
         }
     }
 
+    /// Represents the [`MtpInterval`] as an integer number of seconds.
+    #[inline]
+    pub const fn to_seconds(self) -> u32 {
+        self.0 as u32 * 512 // u16->u32 cast ok, const context
+    }
+
     /// Returns the inner `u16` value.
     #[inline]
     #[must_use]
@@ -174,22 +183,26 @@ impl MtpInterval {
     /// Determines whether a relative‑time lock has matured, taking into account both
     /// the UTXO’s Median Time Past at confirmation and the required delay.
     ///
+    /// If you have two MTP intervals `x` and `y`, and want to know whether `x`
+    /// is satisfied by `y`, use `x >= y`.
+    ///
     /// # Parameters
-    /// - `self` – The relative time delay (`t`) in 512‑second intervals.
-    /// - `chain_tip` – The current chain state, providing the tip’s MTP.
-    /// - `utxo_mined_at` – The chain state at the UTXO’s confirmation, providing its MTP.
+    /// - `self` – the relative time delay (`t`) in 512‑second intervals.
+    /// - `chain_tip` – the MTP of the current chain tip
+    /// - `utxo_mined_at` – the MTP of the UTXO’s confirmation block
     ///
     /// # Returns
     /// - `true` if the relative‐time lock has expired by the tip’s MTP
     /// - `false` if the lock has not yet expired by the tip’s MTP
-    pub fn is_satisfied_by(self, chain_tip: MtpAndHeight, utxo_mined_at: MtpAndHeight) -> bool {
-        match u32::from(self.to_512_second_intervals()).checked_mul(512) {
-            Some(seconds) => match seconds.checked_add(utxo_mined_at.to_mtp().to_u32()) {
-                Some(required_seconds) => chain_tip.to_mtp().to_u32() >= required_seconds,
-                None => false,
-            },
-            None => false,
-        }
+    pub fn is_satisfied_by(
+        self,
+        chain_tip: crate::BlockMtp,
+        utxo_mined_at: crate::BlockMtp,
+    ) -> bool {
+        chain_tip
+            .checked_sub(utxo_mined_at)
+            .and_then(|diff: crate::BlockMtpInterval| diff.to_relative_mtp_interval_floor().ok())
+            .map_or(false, |diff: Self| diff >= self)
     }
 }
 
@@ -264,7 +277,7 @@ mod tests {
     use internals::serde_round_trip;
 
     use super::*;
-    use crate::{BlockHeight, BlockTime};
+    use crate::BlockTime;
 
     const MAXIMUM_ENCODABLE_SECONDS: u32 = u16::MAX as u32 * 512;
 
@@ -349,6 +362,8 @@ mod tests {
 
     #[test]
     fn test_time_chain_state() {
+        use crate::BlockMtp;
+
         let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
         let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
 
@@ -361,49 +376,48 @@ mod tests {
         // Test case 1: Satisfaction (current_mtp >= utxo_mtp + required_seconds)
         // 10 intervals × 512 seconds = 5120 seconds
         let time_lock = MtpInterval::from_512_second_intervals(10);
-        let chain_state1 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps);
-        let utxo_state1 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
+        let chain_state1 = BlockMtp::new(timestamps);
+        let utxo_state1 = BlockMtp::new(utxo_timestamps);
         assert!(time_lock.is_satisfied_by(chain_state1, utxo_state1));
 
         // Test case 2: Not satisfied (current_mtp < utxo_mtp + required_seconds)
-        let chain_state2 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps2);
-        let utxo_state2 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps2);
+        let chain_state2 = BlockMtp::new(timestamps2);
+        let utxo_state2 = BlockMtp::new(utxo_timestamps2);
         assert!(!time_lock.is_satisfied_by(chain_state2, utxo_state2));
 
         // Test case 3: Test with a larger value (100 intervals = 51200 seconds)
         let larger_lock = MtpInterval::from_512_second_intervals(100);
-        let chain_state3 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps3);
-        let utxo_state3 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps3);
+        let chain_state3 = BlockMtp::new(timestamps3);
+        let utxo_state3 = BlockMtp::new(utxo_timestamps3);
         assert!(larger_lock.is_satisfied_by(chain_state3, utxo_state3));
 
         // Test case 4: Overflow handling - tests that is_satisfied_by handles overflow gracefully
         let max_time_lock = MtpInterval::MAX;
-        let chain_state4 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps);
-        let utxo_state4 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
+        let chain_state4 = BlockMtp::new(timestamps);
+        let utxo_state4 = BlockMtp::new(utxo_timestamps);
         assert!(!max_time_lock.is_satisfied_by(chain_state4, utxo_state4));
     }
 
     #[test]
     fn test_height_chain_state() {
-        let timestamps: [BlockTime; 11] = generate_timestamps(1_600_000_000, 200);
-        let utxo_timestamps: [BlockTime; 11] = generate_timestamps(1_599_000_000, 200);
+        use crate::BlockHeight;
 
         let height_lock = HeightInterval(10);
 
         // Test case 1: Satisfaction (current_height >= utxo_height + required)
-        let chain_state1 = MtpAndHeight::new(BlockHeight::from_u32(100), timestamps);
-        let utxo_state1 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
+        let chain_state1 = BlockHeight::from_u32(100);
+        let utxo_state1 = BlockHeight::from_u32(80);
         assert!(height_lock.is_satisfied_by(chain_state1, utxo_state1));
 
         // Test case 2: Not satisfied (current_height < utxo_height + required)
-        let chain_state2 = MtpAndHeight::new(BlockHeight::from_u32(89), timestamps);
-        let utxo_state2 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
+        let chain_state2 = BlockHeight::from_u32(89);
+        let utxo_state2 = BlockHeight::from_u32(80);
         assert!(!height_lock.is_satisfied_by(chain_state2, utxo_state2));
 
         // Test case 3: Overflow handling - tests that is_satisfied_by handles overflow gracefully
         let max_height_lock = HeightInterval::MAX;
-        let chain_state3 = MtpAndHeight::new(BlockHeight::from_u32(1000), timestamps);
-        let utxo_state3 = MtpAndHeight::new(BlockHeight::from_u32(80), utxo_timestamps);
+        let chain_state3 = BlockHeight::from_u32(1000);
+        let utxo_state3 = BlockHeight::from_u32(80);
         assert!(!max_height_lock.is_satisfied_by(chain_state3, utxo_state3));
     }
 }

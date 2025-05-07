@@ -154,6 +154,22 @@ impl Mtp {
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
     pub const MAX: Self = Mtp(u32::MAX);
 
+    /// Constructs an [`Mtp`] by computing the median‐time‐past from the last 11 block timestamps
+    ///
+    /// Because block timestamps are not monotonic, this function internally sorts them;
+    /// it is therefore not important what order they appear in the array; use whatever
+    /// is most convenient.
+    ///
+    /// # Errors
+    ///
+    /// If the median block timestamp is not in the allowable range of MTPs in a
+    /// locktime: `[500_000_000, 2^32 - 1]`. Because there is a consensus rule that MTP
+    /// be monotonically increasing, and the MTP of the first 11 blocks exceeds `500_000_000`
+    /// for every real-life chain, this error typically cannot be hit in practice.
+    pub fn new(timestamps: [crate::BlockTime; 11]) -> Result<Self, ConversionError> {
+        crate::BlockMtp::new(timestamps).try_into()
+    }
+
     /// Constructs a new [`Mtp`] from a big-endian hex-encoded `u32`.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
@@ -538,5 +554,33 @@ mod tests {
 
         assert_eq!(format!("{}", blocks), "expected lock-by-blockheight (must be < 500000000)");
         assert_eq!(format!("{}", seconds), "expected lock-by-blocktime (must be >= 500000000)");
+    }
+
+    #[test]
+    fn valid_chain_computes_mtp() {
+        use crate::BlockTime;
+
+        let mut timestamps = [
+            BlockTime::from_u32(500_000_010),
+            BlockTime::from_u32(500_000_003),
+            BlockTime::from_u32(500_000_005),
+            BlockTime::from_u32(500_000_008),
+            BlockTime::from_u32(500_000_001),
+            BlockTime::from_u32(500_000_004),
+            BlockTime::from_u32(500_000_006),
+            BlockTime::from_u32(500_000_009),
+            BlockTime::from_u32(500_000_002),
+            BlockTime::from_u32(500_000_007),
+            BlockTime::from_u32(500_000_000),
+        ];
+
+        // Try various reorderings
+        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        timestamps.reverse();
+        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        timestamps.sort();
+        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        timestamps.reverse();
+        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
     }
 }
