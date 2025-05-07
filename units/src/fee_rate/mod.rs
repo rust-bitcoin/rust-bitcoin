@@ -5,6 +5,7 @@
 #[cfg(feature = "serde")]
 pub mod serde;
 
+use core::num::NonZeroU64;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -157,6 +158,12 @@ crate::internal_macros::impl_op_for_references! {
 
         fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_kwu(self.to_sat_per_kwu() - rhs.to_sat_per_kwu()) }
     }
+
+    impl ops::Div<NonZeroU64> for FeeRate {
+        type Output = FeeRate;
+        
+        fn div(self, rhs: NonZeroU64) -> Self::Output{ Self::from_sat_per_kwu(self.to_sat_per_kwu() / rhs.get()) }
+    }
 }
 crate::internal_macros::impl_add_assign!(FeeRate);
 crate::internal_macros::impl_sub_assign!(FeeRate);
@@ -198,11 +205,21 @@ impl<'a> Arbitrary<'a> for FeeRate {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::num::NonZeroU64;
 
     #[test]
     fn sanity_check() {
         let fee_rate: u64 = u64::from(FeeRate::from_sat_per_kwu(100));
         assert_eq!(fee_rate, 100_u64);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn feerate_div_nonzero() {
+        let rate = FeeRate::from_sat_per_kwu(200);
+        let divisor = NonZeroU64::new(2).unwrap();
+        assert_eq!(rate / divisor, FeeRate::from_sat_per_kwu(100));
+        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_kwu(100));
     }
 
     #[test]
