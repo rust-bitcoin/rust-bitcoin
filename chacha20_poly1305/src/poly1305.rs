@@ -55,7 +55,7 @@ impl Poly1305 {
         // Process previous leftovers if the message is long enough to fill the leftovers buffer. If
         // the message is too short then it will just be added to the leftovers at the end. Now if there
         // are no leftovers, but the message can fill the buffer, it will process that buffer and
-        // and process the rest of the message later on.
+        // process the rest of the message later on.
         let fill =
             if self.leftovers_len + message.len() >= 16 { 16 - self.leftovers_len } else { 0 };
 
