@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! Unit tests for the `amount` module.
-
 #[cfg(feature = "alloc")]
 use alloc::format;
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
+use core::num::{NonZeroI64, NonZeroU64};
 #[cfg(feature = "std")]
 use std::panic;
 
@@ -18,16 +18,24 @@ use crate::{FeeRate, Weight};
 use crate::{MathOp, NumOpResult};
 
 #[track_caller]
-fn sat(sat: u64) -> Amount { Amount::from_sat(sat).unwrap() }
+fn sat(sat: u64) -> Amount {
+    Amount::from_sat(sat).unwrap()
+}
 
 #[track_caller]
-fn ssat(ssat: i64) -> SignedAmount { SignedAmount::from_sat(ssat).unwrap() }
+fn ssat(ssat: i64) -> SignedAmount {
+    SignedAmount::from_sat(ssat).unwrap()
+}
 
 #[track_caller]
-fn res(n_sat: u64) -> NumOpResult<Amount> { NumOpResult::from(sat(n_sat)) }
+fn res(n_sat: u64) -> NumOpResult<Amount> {
+    NumOpResult::from(sat(n_sat))
+}
 
 #[track_caller]
-fn sres(n_sat: i64) -> NumOpResult<SignedAmount> { NumOpResult::from(ssat(n_sat)) }
+fn sres(n_sat: i64) -> NumOpResult<SignedAmount> {
+    NumOpResult::from(ssat(n_sat))
+}
 
 #[test]
 fn sanity_check() {
@@ -1529,4 +1537,25 @@ fn math_op_errors() {
     } else {
         panic!("Expected a division by zero error, but got a valid result");
     }
+}
+#[test]
+#[allow(clippy::op_ref)]
+fn amount_div_nonzero() {
+    let amount = Amount::from_sat(100).unwrap();
+    let divisor = NonZeroU64::new(4).unwrap();
+    let result = (amount / divisor).unwrap();
+    assert_eq!(result, Amount::from_sat(25).unwrap());
+    //checking also for &T/&U variant
+    assert_eq!((&amount / &divisor).unwrap(), Amount::from_sat(25).unwrap());
+}
+#[test]
+#[allow(clippy::op_ref)]
+fn signed_amount_div_nonzero() {
+    let signed = SignedAmount::from_sat(-100).unwrap();
+    let divisor = NonZeroI64::new(4).unwrap();
+    let result = (signed / divisor).unwrap();
+    assert_eq!(result, SignedAmount::from_sat(-25).unwrap());
+    //checking also for &T/U, T/&Uvariant
+    assert_eq!((&signed / divisor).unwrap(), SignedAmount::from_sat(-25).unwrap());
+    assert_eq!((signed / &divisor).unwrap(), SignedAmount::from_sat(-25).unwrap());
 }

@@ -2,6 +2,7 @@
 
 //! Implements `Weight` and associated features.
 
+use core::num::NonZeroU64;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -25,12 +26,16 @@ mod encapsulate {
 
     impl Weight {
         /// Constructs a new [`Weight`] from weight units.
-        pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
+        pub const fn from_wu(wu: u64) -> Self {
+            Weight(wu)
+        }
 
         /// Returns raw weight units.
         ///
         /// Can be used instead of `into()` to avoid inference issues.
-        pub const fn to_wu(self) -> u64 { self.0 }
+        pub const fn to_wu(self) -> u64 {
+            self.0
+        }
     }
 }
 #[doc(inline)]
@@ -91,10 +96,14 @@ impl Weight {
     }
 
     /// Constructs a new [`Weight`] from virtual bytes without an overflow check.
-    pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
+    pub const fn from_vb_unchecked(vb: u64) -> Self {
+        Weight::from_wu(vb * 4)
+    }
 
     /// Constructs a new [`Weight`] from witness size.
-    pub const fn from_witness_data_size(witness_size: u64) -> Self { Weight::from_wu(witness_size) }
+    pub const fn from_witness_data_size(witness_size: u64) -> Self {
+        Weight::from_wu(witness_size)
+    }
 
     /// Constructs a new [`Weight`] from non-witness size.
     pub const fn from_non_witness_data_size(non_witness_size: u64) -> Self {
@@ -102,13 +111,19 @@ impl Weight {
     }
 
     /// Converts to kilo weight units rounding down.
-    pub const fn to_kwu_floor(self) -> u64 { self.to_wu() / 1000 }
+    pub const fn to_kwu_floor(self) -> u64 {
+        self.to_wu() / 1000
+    }
 
     /// Converts to kilo weight units rounding up.
-    pub const fn to_kwu_ceil(self) -> u64 { (self.to_wu() + 999) / 1000 }
+    pub const fn to_kwu_ceil(self) -> u64 {
+        (self.to_wu() + 999) / 1000
+    }
 
     /// Converts to vB rounding down.
-    pub const fn to_vbytes_floor(self) -> u64 { self.to_wu() / Self::WITNESS_SCALE_FACTOR }
+    pub const fn to_vbytes_floor(self) -> u64 {
+        self.to_wu() / Self::WITNESS_SCALE_FACTOR
+    }
 
     /// Converts to vB rounding up.
     pub const fn to_vbytes_ceil(self) -> u64 {
@@ -176,7 +191,9 @@ impl fmt::Display for Weight {
 }
 
 impl From<Weight> for u64 {
-    fn from(value: Weight) -> Self { value.to_wu() }
+    fn from(value: Weight) -> Self {
+        value.to_wu()
+    }
 }
 
 crate::internal_macros::impl_op_for_references! {
@@ -222,19 +239,35 @@ crate::internal_macros::impl_op_for_references! {
         fn rem(self, rhs: Weight) -> Self::Output { self.to_wu() % rhs.to_wu() }
     }
 }
+
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Div<NonZeroU64> for Weight{
+        type Output = Weight;
+        fn div(self, rhs: NonZeroU64) -> Self::Output{
+            Self::from_wu(self.to_wu()/rhs.get())
+        }
+    }
+}
+
 crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
 
 impl ops::MulAssign<u64> for Weight {
-    fn mul_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() * rhs); }
+    fn mul_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() * rhs);
+    }
 }
 
 impl ops::DivAssign<u64> for Weight {
-    fn div_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() / rhs); }
+    fn div_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() / rhs);
+    }
 }
 
 impl ops::RemAssign<u64> for Weight {
-    fn rem_assign(&mut self, rhs: u64) { *self = Weight::from_wu(self.to_wu() % rhs); }
+    fn rem_assign(&mut self, rhs: u64) {
+        *self = Weight::from_wu(self.to_wu() % rhs);
+    }
 }
 
 impl core::iter::Sum for Weight {
@@ -268,6 +301,7 @@ impl<'a> Arbitrary<'a> for Weight {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::num::NonZeroU64;
 
     const ONE: Weight = Weight::from_wu(1);
     const TWO: Weight = Weight::from_wu(2);
@@ -277,7 +311,16 @@ mod tests {
     fn sanity_check() {
         assert_eq!(Weight::MIN_TRANSACTION, Weight::from_wu(240));
     }
-
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn weight_div_nonzero() {
+        let w = Weight::from_wu(100);
+        let divisor = NonZeroU64::new(4).unwrap();
+        assert_eq!(w / divisor, Weight::from_wu(25));
+        // for borrowed variants
+        assert_eq!(&w / &divisor, Weight::from_wu(25));
+        assert_eq!(w / &divisor, Weight::from_wu(25));
+    }
     #[test]
     fn from_kwu() {
         let got = Weight::from_kwu(1).unwrap();
@@ -286,7 +329,9 @@ mod tests {
     }
 
     #[test]
-    fn from_kwu_overflows() { assert!(Weight::from_kwu(u64::MAX).is_none()) }
+    fn from_kwu_overflows() {
+        assert!(Weight::from_kwu(u64::MAX).is_none());
+    }
 
     #[test]
     fn from_vb() {
@@ -310,7 +355,9 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic = "attempt to multiply with overflow"]
-    fn from_vb_unchecked_panic() { Weight::from_vb_unchecked(u64::MAX); }
+    fn from_vb_unchecked_panic() {
+        Weight::from_vb_unchecked(u64::MAX);
+    }
 
     #[test]
     fn from_witness_data_size() {
@@ -358,7 +405,9 @@ mod tests {
     }
 
     #[test]
-    fn checked_add_overflows() { assert!(Weight::MAX.checked_add(ONE).is_none()) }
+    fn checked_add_overflows() {
+        assert!(Weight::MAX.checked_add(ONE).is_none());
+    }
 
     #[test]
     fn checked_sub() {
@@ -366,7 +415,9 @@ mod tests {
     }
 
     #[test]
-    fn checked_sub_overflows() { assert!(Weight::ZERO.checked_sub(ONE).is_none()) }
+    fn checked_sub_overflows() {
+        assert!(Weight::ZERO.checked_sub(ONE).is_none());
+    }
 
     #[test]
     fn checked_mul() {
@@ -375,7 +426,9 @@ mod tests {
     }
 
     #[test]
-    fn checked_mul_overflows() { assert!(Weight::MAX.checked_mul(2).is_none()) }
+    fn checked_mul_overflows() {
+        assert!(Weight::MAX.checked_mul(2).is_none());
+    }
 
     #[test]
     fn checked_div() {
@@ -384,7 +437,9 @@ mod tests {
     }
 
     #[test]
-    fn checked_div_overflows() { assert!(TWO.checked_div(0).is_none()) }
+    fn checked_div_overflows() {
+        assert!(TWO.checked_div(0).is_none());
+    }
 
     #[test]
     #[allow(clippy::op_ref)]

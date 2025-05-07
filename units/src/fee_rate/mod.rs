@@ -5,6 +5,7 @@
 #[cfg(feature = "serde")]
 pub mod serde;
 
+use core::num::NonZeroU64;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -20,12 +21,16 @@ mod encapsulate {
 
     impl FeeRate {
         /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
-        pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
+        pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self {
+            FeeRate(sat_kwu)
+        }
 
         /// Returns raw fee rate.
         ///
         /// Can be used instead of `into()` to avoid inference issues.
-        pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
+        pub const fn to_sat_per_kwu(self) -> u64 {
+            self.0
+        }
     }
 }
 #[doc(inline)]
@@ -71,10 +76,14 @@ impl FeeRate {
     }
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
+    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self {
+        FeeRate::from_sat_per_kwu(sat_kvb / 4)
+    }
 
     /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
+    pub const fn to_sat_per_vb_floor(self) -> u64 {
+        self.to_sat_per_kwu() / (1000 / 4)
+    }
 
     /// Converts to sat/vB rounding up.
     pub const fn to_sat_per_vb_ceil(self) -> u64 {
@@ -142,7 +151,9 @@ impl fmt::Display for FeeRate {
 }
 
 impl From<FeeRate> for u64 {
-    fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
+    fn from(value: FeeRate) -> Self {
+        value.to_sat_per_kwu()
+    }
 }
 
 crate::internal_macros::impl_op_for_references! {
@@ -194,15 +205,32 @@ impl<'a> Arbitrary<'a> for FeeRate {
         }
     }
 }
+crate::internal_macros::impl_op_for_references! {
+    impl ops::Div<NonZeroU64> for FeeRate{
+        type Output = FeeRate;
+        fn div(self, rhs: NonZeroU64) -> Self::Output{
+            Self::from_sat_per_kwu(self.to_sat_per_kwu()/rhs.get())
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::num::NonZeroU64;
 
     #[test]
     fn sanity_check() {
         let fee_rate: u64 = u64::from(FeeRate::from_sat_per_kwu(100));
         assert_eq!(fee_rate, 100_u64);
+    }
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn feerate_div_nonzero() {
+        let rate = FeeRate::from_sat_per_kwu(200);
+        let divisor = NonZeroU64::new(2).unwrap();
+        assert_eq!(rate / divisor, FeeRate::from_sat_per_kwu(100));
+        assert_eq!(&rate / &divisor, FeeRate::from_sat_per_kwu(100));
     }
 
     #[test]
@@ -307,7 +335,9 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     #[should_panic = "attempt to multiply with overflow"]
-    fn from_sat_per_vb_unchecked_panic() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
+    fn from_sat_per_vb_unchecked_panic() {
+        FeeRate::from_sat_per_vb_unchecked(u64::MAX);
+    }
 
     #[test]
     fn raw_feerate() {

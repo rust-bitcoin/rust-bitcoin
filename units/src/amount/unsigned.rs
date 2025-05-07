@@ -65,7 +65,9 @@ mod encapsulate {
         /// # use bitcoin_units::Amount;
         /// assert_eq!(Amount::ONE_BTC.to_sat(), 100_000_000);
         /// ```
-        pub const fn to_sat(self) -> u64 { self.0 }
+        pub const fn to_sat(self) -> u64 {
+            self.0
+        }
 
         /// Constructs a new [`Amount`] from the given number of satoshis.
         ///
@@ -232,7 +234,9 @@ impl Amount {
     /// # Ok::<_, amount::ParseError>(())
     /// ```
     #[cfg(feature = "alloc")]
-    pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
+    pub fn to_btc(self) -> f64 {
+        self.to_float_in(Denomination::Bitcoin)
+    }
 
     /// Converts this [`Amount`] in floating-point notation in the given [`Denomination`].
     ///
@@ -302,7 +306,9 @@ impl Amount {
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[cfg(feature = "alloc")]
-    pub fn to_string_in(self, denom: Denomination) -> String { self.display_in(denom).to_string() }
+    pub fn to_string_in(self, denom: Denomination) -> String {
+        self.display_in(denom).to_string()
+    }
 
     /// Returns a formatted string representing this [`Amount`] in the given [`Denomination`],
     /// suffixed with the abbreviation for the denomination.
@@ -405,7 +411,9 @@ impl Amount {
 }
 
 impl default::Default for Amount {
-    fn default() -> Self { Self::ZERO }
+    fn default() -> Self {
+        Self::ZERO
+    }
 }
 
 impl fmt::Debug for Amount {
@@ -449,7 +457,9 @@ impl FromStr for Amount {
 impl TryFrom<SignedAmount> for Amount {
     type Error = OutOfRangeError;
 
-    fn try_from(value: SignedAmount) -> Result<Self, Self::Error> { value.to_unsigned() }
+    fn try_from(value: SignedAmount) -> Result<Self, Self::Error> {
+        value.to_unsigned()
+    }
 }
 
 #[cfg(feature = "arbitrary")]

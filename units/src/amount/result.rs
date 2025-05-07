@@ -2,6 +2,7 @@
 
 //! Provides a monodic type returned by mathematical operations (`core::ops`).
 
+use core::num::{NonZeroI64, NonZeroU64};
 use core::ops;
 
 use NumOpResult as R;
@@ -11,17 +12,25 @@ use crate::internal_macros::{impl_div_assign, impl_mul_assign};
 use crate::{MathOp, NumOpError, NumOpResult, OptionExt};
 
 impl From<Amount> for NumOpResult<Amount> {
-    fn from(a: Amount) -> Self { Self::Valid(a) }
+    fn from(a: Amount) -> Self {
+        Self::Valid(a)
+    }
 }
 impl From<&Amount> for NumOpResult<Amount> {
-    fn from(a: &Amount) -> Self { Self::Valid(*a) }
+    fn from(a: &Amount) -> Self {
+        Self::Valid(*a)
+    }
 }
 
 impl From<SignedAmount> for NumOpResult<SignedAmount> {
-    fn from(a: SignedAmount) -> Self { Self::Valid(a) }
+    fn from(a: SignedAmount) -> Self {
+        Self::Valid(a)
+    }
 }
 impl From<&SignedAmount> for NumOpResult<SignedAmount> {
-    fn from(a: &SignedAmount) -> Self { Self::Valid(*a) }
+    fn from(a: &SignedAmount) -> Self {
+        Self::Valid(*a)
+    }
 }
 
 crate::internal_macros::impl_op_for_references! {
@@ -88,6 +97,20 @@ crate::internal_macros::impl_op_for_references! {
 
         fn div(self, rhs: Amount) -> Self::Output {
             self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+        }
+    }
+    impl ops::Div<NonZeroU64> for Amount{
+        type Output = NumOpResult<Amount>;
+
+        fn div(self, rhs: NonZeroU64) -> Self::Output{
+            self.checked_div(rhs.get()).valid_or_error(MathOp::Div)
+        }
+    }
+    impl ops::Div<NonZeroU64> for NumOpResult<Amount>{
+        type Output = NumOpResult<Amount>;
+
+        fn div(self, rhs: NonZeroU64) -> Self::Output{
+            self.and_then(|lhs| lhs/rhs)
         }
     }
 
@@ -165,6 +188,20 @@ crate::internal_macros::impl_op_for_references! {
 
         fn div(self, rhs: SignedAmount) -> Self::Output {
             self.to_sat().checked_div(rhs.to_sat()).valid_or_error(MathOp::Div)
+        }
+    }
+    impl ops::Div<NonZeroI64> for SignedAmount{
+        type Output = NumOpResult<SignedAmount>;
+
+        fn div(self, rhs: NonZeroI64) -> Self::Output{
+            self.checked_div(rhs.get()).valid_or_error(MathOp::Div)
+        }
+    }
+    impl ops::Div<NonZeroI64> for NumOpResult<SignedAmount>{
+        type Output = NumOpResult<SignedAmount>;
+
+        fn div(self, rhs: NonZeroI64) -> Self::Output{
+            self.and_then(|lhs| lhs / rhs)
         }
     }
 
