@@ -1,5 +1,7 @@
 set positional-arguments
 
+alias ulf := update-lock-files
+
 default:
   @just --list
 
