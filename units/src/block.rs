@@ -224,7 +224,7 @@ impl_u32_wrapper! {
     /// An unsigned difference between two [`BlockMtp`]s.
     ///
     /// This type is not meant for constructing time-based timelocks. It is a general purpose
-    /// MTP abstraction. For locktimes please see [`locktime::relative::MtpInterval`].
+    /// MTP abstraction. For locktimes please see [`locktime::relative::NumberOf512Seconds`].
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -234,7 +234,7 @@ impl_u32_wrapper! {
 }
 
 impl BlockMtpInterval {
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding down.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding down.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
@@ -246,11 +246,11 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_floor(
         self,
-    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
-        relative::MtpInterval::from_seconds_floor(self.to_u32())
+    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+        relative::NumberOf512Seconds::from_seconds_floor(self.to_u32())
     }
 
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding up.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding up.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
@@ -262,8 +262,8 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_ceil(
         self,
-    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
-        relative::MtpInterval::from_seconds_ceil(self.to_u32())
+    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+        relative::NumberOf512Seconds::from_seconds_ceil(self.to_u32())
     }
 
     /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` in case of overflow.
@@ -273,13 +273,13 @@ impl BlockMtpInterval {
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
-impl From<relative::MtpInterval> for BlockMtpInterval {
-    /// Converts a [`locktime::relative::MtpInterval`] to a [`BlockMtpInterval `].
+impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
+    /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval `].
     ///
     /// A relative locktime MTP interval has a resolution of 512 seconds, and a maximum value
     /// of `u16::MAX` 512-second intervals. [`BlockMtpInterval`] may take the full range of
     /// `u32`.
-    fn from(h: relative::MtpInterval) -> Self { Self::from_u32(h.to_seconds()) }
+    fn from(h: relative::NumberOf512Seconds) -> Self { Self::from_u32(h.to_seconds()) }
 }
 
 /// Error returned when the block interval is too big to be used as a relative lock time.

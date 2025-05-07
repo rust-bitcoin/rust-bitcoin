@@ -187,7 +187,7 @@ impl Sequence {
     /// Constructs a new [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
     pub fn to_relative_lock_time(self) -> Option<relative::LockTime> {
-        use crate::locktime::relative::{NumberOfBlocks, LockTime, MtpInterval};
+        use crate::locktime::relative::{NumberOfBlocks, LockTime, NumberOf512Seconds};
 
         if !self.is_relative_lock_time() {
             return None;
@@ -196,7 +196,7 @@ impl Sequence {
         let lock_value = self.low_u16();
 
         if self.is_time_locked() {
-            Some(LockTime::from(MtpInterval::from_512_second_intervals(lock_value)))
+            Some(LockTime::from(NumberOf512Seconds::from_512_second_intervals(lock_value)))
         } else {
             Some(LockTime::from(NumberOfBlocks::from(lock_value)))
         }
@@ -265,11 +265,11 @@ impl<'a> Arbitrary<'a> for Sequence {
             5 => Ok(Sequence::from_consensus(u32::from(relative::NumberOfBlocks::MAX.to_height()))),
             6 => Ok(Sequence::from_consensus(
                 Sequence::LOCK_TYPE_MASK
-                    | u32::from(relative::MtpInterval::MIN.to_512_second_intervals()),
+                    | u32::from(relative::NumberOf512Seconds::MIN.to_512_second_intervals()),
             )),
             7 => Ok(Sequence::from_consensus(
                 Sequence::LOCK_TYPE_MASK
-                    | u32::from(relative::MtpInterval::MAX.to_512_second_intervals()),
+                    | u32::from(relative::NumberOf512Seconds::MAX.to_512_second_intervals()),
             )),
             _ => Ok(Sequence(u.arbitrary()?)),
         }
