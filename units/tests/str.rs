@@ -41,8 +41,8 @@ check! {
     fee_rate_max, FeeRate, FeeRate::MAX, "18446744073709551615";
     fee_rate_dust, FeeRate, FeeRate::DUST, "750";
 
-    lock_by_height_absolute_min, absolute::Height, absolute::Height::MIN, "0";
-    lock_by_height_absolute_max, absolute::Height, absolute::Height::MAX, "499999999";
+    lock_by_height_absolute_min, absolute::BlockHeight, absolute::BlockHeight::MIN, "0";
+    lock_by_height_absolute_max, absolute::BlockHeight, absolute::BlockHeight::MAX, "499999999";
 
     lock_by_height_relative_min, relative::Height, relative::Height::MIN, "0";
     lock_by_height_relative_max, relative::Height, relative::Height::MAX, "65535";

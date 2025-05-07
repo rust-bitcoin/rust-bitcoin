@@ -46,8 +46,8 @@ struct Serde {
 
     a: BlockHeight,
     b: BlockInterval,
-    c: absolute::Height,
-    d: absolute::Mtp,
+    c: absolute::BlockHeight,
+    d: absolute::BlockTime,
     e: relative::Height,
     f: relative::Time,
     g: Weight,
@@ -79,8 +79,8 @@ impl Serde {
 
             a: BlockHeight::MAX,
             b: BlockInterval::MAX,
-            c: absolute::Height::MAX,
-            d: absolute::Mtp::MAX,
+            c: absolute::BlockHeight::MAX,
+            d: absolute::BlockTime::MAX,
             e: relative::Height::MAX,
             f: relative::Time::MAX,
             g: Weight::MAX,

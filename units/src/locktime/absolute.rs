@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`Height`] and [`Mtp`] types used by the `rust-bitcoin` `absolute::LockTime` type.
+//! Provides [`BlockHeight`] and [`BlockTime`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -24,21 +24,25 @@ use crate::parse::{self, ParseIntError};
 /// [Bitcoin Core]: https://github.com/bitcoin/bitcoin/blob/9ccaee1d5e2e4b79b0a7c29aadb41b97e4741332/src/script/script.h#L39
 pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 
-/// An absolute block height, guaranteed to always contain a valid height value.
+/// A lock-by-height time lock value.
+///
+/// This is an absolute block height, guaranteed to always contain a valid height value i.e., be
+/// less than [`LOCK_TIME_THRESHOLD`]. This type differs from [`crate::BlockHeight`] because of the
+/// threshold guarantee.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Height(u32);
+pub struct BlockHeight(u32);
 
-impl Height {
+impl BlockHeight {
     /// Absolute block height 0, the genesis block.
-    pub const ZERO: Self = Height(0);
+    pub const ZERO: Self = BlockHeight(0);
 
     /// The minimum absolute block height (0), the genesis block.
     pub const MIN: Self = Self::ZERO;
 
     /// The maximum absolute block height.
-    pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
+    pub const MAX: Self = BlockHeight(LOCK_TIME_THRESHOLD - 1);
 
-    /// Constructs a new [`Height`] from a hex string.
+    /// Constructs a new [`BlockHeight`] from a hex string.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     ///
@@ -65,14 +69,14 @@ impl Height {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Height;
+    /// use bitcoin_units::locktime::absolute::BlockHeight;
     ///
     /// let h: u32 = 741521;
-    /// let height = Height::from_u32(h).expect("invalid height value");
+    /// let height = BlockHeight::from_u32(h).expect("invalid height value");
     /// assert_eq!(height.to_consensus_u32(), h);
     /// ```
     #[inline]
-    pub const fn from_u32(n: u32) -> Result<Height, ConversionError> {
+    pub const fn from_u32(n: u32) -> Result<BlockHeight, ConversionError> {
         if is_block_height(n) {
             Ok(Self(n))
         } else {
@@ -80,16 +84,16 @@ impl Height {
         }
     }
 
-    /// Converts this [`Height`] to a raw `u32` value.
+    /// Converts this [`BlockHeight`] to a raw `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
-impl fmt::Display for Height {
+impl fmt::Display for BlockHeight {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Height, ParseHeightError, parser(Height::from_u32));
+crate::impl_parse_str!(BlockHeight, ParseHeightError, parser(BlockHeight::from_u32));
 
 /// Error returned when parsing block height fails.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -112,18 +116,18 @@ impl From<ParseError> for ParseHeightError {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Height {
+impl<'de> serde::Deserialize<'de> for BlockHeight {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Height::from_u32(u).map_err(serde::de::Error::custom)
+        BlockHeight::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Height {
+impl serde::Serialize for BlockHeight {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -132,29 +136,32 @@ impl serde::Serialize for Height {
     }
 }
 
-#[deprecated(since = "TBD", note = "use `Mtp` instead")]
+#[deprecated(since = "TBD", note = "use `BlockTime` instead")]
 #[doc(hidden)]
-pub type Time = Mtp;
+pub type Time = BlockTime;
 
-/// The median timestamp of 11 consecutive blocks, representing "the timestamp" of the
-/// final block for locktime-checking purposes.
+/// A lock-by-time time lock value.
 ///
-/// Time-based locktimes are not measured against the timestamps in individual block
-/// headers, since these are not monotone and may be subject to miner manipulation.
-/// Instead, locktimes use the "median-time-past" (MTP) of the most recent 11 blocks,
-/// a quantity which is required by consensus to be monotone and which is difficult
-/// for any individual miner to manipulate.
+/// This is a UNIX timestamp but guaranteed to always contain a valid time value i.e., be greater
+/// than [`LOCK_TIME_THRESHOLD`]. This type differs from [`crate::BlockTime`] because of the
+/// threshold guarantee.
+///
+/// Please note, time-based locktimes are not measured against the timestamps in individual block
+/// headers, since these are not monotone and may be subject to miner manipulation. Instead,
+/// absolute locktimes are compared against the "median-time-past" (MTP) of the most recent 11
+/// blocks, a quantity which is required by consensus to be monotone and which is difficult for any
+/// individual miner to manipulate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Mtp(u32);
+pub struct BlockTime(u32);
 
-impl Mtp {
+impl BlockTime {
     /// The minimum MTP allowable in a locktime (Tue Nov 05 1985 00:53:20 GMT+0000).
-    pub const MIN: Self = Mtp(LOCK_TIME_THRESHOLD);
+    pub const MIN: Self = BlockTime(LOCK_TIME_THRESHOLD);
 
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
-    pub const MAX: Self = Mtp(u32::MAX);
+    pub const MAX: Self = BlockTime(u32::MAX);
 
-    /// Constructs a new [`Mtp`] from a big-endian hex-encoded `u32`.
+    /// Constructs a new [`BlockTime`] from a big-endian hex-encoded `u32`.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     ///
@@ -173,7 +180,7 @@ impl Mtp {
 
     /// Constructs a new MTP directly from a `u32` value.
     ///
-    /// This function, with [`Mtp::to_u32`], is used to obtain a raw MTP value. It is
+    /// This function, with [`BlockTime::to_u32`], is used to obtain a raw MTP value. It is
     /// **not** used to convert to or from a block timestamp, which is not a MTP.
     ///
     /// # Errors
@@ -183,10 +190,10 @@ impl Mtp {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Mtp;
+    /// use bitcoin_units::locktime::absolute::BlockTime;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = Mtp::from_u32(t).expect("invalid time value");
+    /// let time = BlockTime::from_u32(t).expect("invalid time value");
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
@@ -198,30 +205,30 @@ impl Mtp {
         }
     }
 
-    /// Converts this [`Mtp`] to a raw `u32` value.
+    /// Converts this [`BlockTime`] to a raw `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
-impl fmt::Display for Mtp {
+impl fmt::Display for BlockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Mtp, ParseTimeError, parser(Mtp::from_u32));
+crate::impl_parse_str!(BlockTime, ParseTimeError, parser(BlockTime::from_u32));
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Mtp {
+impl<'de> serde::Deserialize<'de> for BlockTime {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Mtp::from_u32(u).map_err(serde::de::Error::custom)
+        BlockTime::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Mtp {
+impl serde::Serialize for BlockTime {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -367,11 +374,11 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is above limit <upper_bound>)"
+                // Outputs "failed to parse <input_string> as absolute BlockHeight/BlockTime (<subject> is above limit <upper_bound>)"
                 write!(
                     f,
                     "{} ({} is above limit {})",
-                    input.display_cannot_parse("absolute Height/Mtp"),
+                    input.display_cannot_parse("absolute BlockHeight/BlockTime"),
                     subject,
                     upper_bound
                 )
@@ -379,17 +386,22 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::NegOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is below limit <lower_bound>)"
+                // Outputs "failed to parse <input_string> as absolute BlockHeight/BlockTime (<subject> is below limit <lower_bound>)"
                 write!(
                     f,
                     "{} ({} is below limit {})",
-                    input.display_cannot_parse("absolute Height/Mtp"),
+                    input.display_cannot_parse("absolute BlockHeight/BlockTime"),
                     subject,
                     lower_bound
                 )
             }
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
-                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Mtp"), subject)
+                write!(
+                    f,
+                    "{} ({})",
+                    input.display_cannot_parse("absolute BlockHeight/BlockTime"),
+                    subject
+                )
             }
             E::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
@@ -425,34 +437,34 @@ impl From<ConversionError> for ParseError {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Height {
+impl<'a> Arbitrary<'a> for BlockHeight {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {
-            0 => Ok(Height::MIN),
-            1 => Ok(Height::MAX),
+            0 => Ok(BlockHeight::MIN),
+            1 => Ok(BlockHeight::MAX),
             _ => {
-                let min = Height::MIN.to_u32();
-                let max = Height::MAX.to_u32();
+                let min = BlockHeight::MIN.to_u32();
+                let max = BlockHeight::MAX.to_u32();
                 let h = u.int_in_range(min..=max)?;
-                Ok(Height::from_u32(h).unwrap())
+                Ok(BlockHeight::from_u32(h).unwrap())
             }
         }
     }
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Mtp {
+impl<'a> Arbitrary<'a> for BlockTime {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {
-            0 => Ok(Mtp::MIN),
-            1 => Ok(Mtp::MAX),
+            0 => Ok(BlockTime::MIN),
+            1 => Ok(BlockTime::MAX),
             _ => {
-                let min = Mtp::MIN.to_u32();
-                let max = Mtp::MAX.to_u32();
+                let min = BlockTime::MIN.to_u32();
+                let max = BlockTime::MAX.to_u32();
                 let t = u.int_in_range(min..=max)?;
-                Ok(Mtp::from_u32(t).unwrap())
+                Ok(BlockTime::from_u32(t).unwrap())
             }
         }
     }
@@ -467,41 +479,41 @@ mod tests {
 
     #[test]
     fn time_from_str_hex_happy_path() {
-        let actual = Mtp::from_hex("0x6289C350").unwrap();
-        let expected = Mtp::from_u32(0x6289_C350).unwrap();
+        let actual = BlockTime::from_hex("0x6289C350").unwrap();
+        let expected = BlockTime::from_u32(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
-        let time = Mtp::from_hex("6289C350").unwrap();
-        assert_eq!(time, Mtp(0x6289_C350));
+        let time = BlockTime::from_hex("6289C350").unwrap();
+        assert_eq!(time, BlockTime(0x6289_C350));
     }
 
     #[test]
     fn time_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Mtp::from_hex(hex);
+        let result = BlockTime::from_hex(hex);
         assert!(result.is_err());
     }
 
     #[test]
     fn height_from_str_hex_happy_path() {
-        let actual = Height::from_hex("0xBA70D").unwrap();
-        let expected = Height(0xBA70D);
+        let actual = BlockHeight::from_hex("0xBA70D").unwrap();
+        let expected = BlockHeight(0xBA70D);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn height_from_str_hex_no_prefix_happy_path() {
-        let height = Height::from_hex("BA70D").unwrap();
-        assert_eq!(height, Height(0xBA70D));
+        let height = BlockHeight::from_hex("BA70D").unwrap();
+        assert_eq!(height, BlockHeight(0xBA70D));
     }
 
     #[test]
     fn height_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Height::from_hex(hex);
+        let result = BlockHeight::from_hex(hex);
         assert!(result.is_err());
     }
 
@@ -517,16 +529,16 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_height() {
-        serde_round_trip!(Height::ZERO);
-        serde_round_trip!(Height::MIN);
-        serde_round_trip!(Height::MAX);
+        serde_round_trip!(BlockHeight::ZERO);
+        serde_round_trip!(BlockHeight::MIN);
+        serde_round_trip!(BlockHeight::MAX);
     }
 
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_time() {
-        serde_round_trip!(Mtp::MIN);
-        serde_round_trip!(Mtp::MAX);
+        serde_round_trip!(BlockTime::MIN);
+        serde_round_trip!(BlockTime::MAX);
     }
 
     #[test]

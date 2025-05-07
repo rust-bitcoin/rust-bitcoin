@@ -26,7 +26,7 @@ use crate::locktime::{absolute, relative};
 /// The block height, zero denotes the genesis block.
 ///
 /// This type is not meant for constructing height based timelocks, this is a general purpose block
-/// height abstraction. For locktimes please see [`locktime::absolute::Height`].
+/// height abstraction. For locktimes please see [`locktime::absolute::BlockHeight`].
 ///
 /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -82,16 +82,16 @@ impl From<BlockHeight> for u32 {
     fn from(height: BlockHeight) -> Self { height.to_u32() }
 }
 
-impl From<absolute::Height> for BlockHeight {
+impl From<absolute::BlockHeight> for BlockHeight {
     /// Converts a [`locktime::absolute::Height`] to a [`BlockHeight`].
     ///
     /// An absolute locktime block height has a maximum value of [`absolute::LOCK_TIME_THRESHOLD`]
     /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
     /// not interchangeable.
-    fn from(h: absolute::Height) -> Self { Self::from_u32(h.to_u32()) }
+    fn from(h: absolute::BlockHeight) -> Self { Self::from_u32(h.to_u32()) }
 }
 
-impl TryFrom<BlockHeight> for absolute::Height {
+impl TryFrom<BlockHeight> for absolute::BlockHeight {
     type Error = absolute::ConversionError;
 
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
@@ -100,7 +100,7 @@ impl TryFrom<BlockHeight> for absolute::Height {
     /// (500,000,000) where as a [`BlockHeight`] is a thin wrapper around a `u32`, the two types are
     /// not interchangeable.
     fn try_from(h: BlockHeight) -> Result<Self, Self::Error> {
-        absolute::Height::from_u32(h.to_u32())
+        absolute::BlockHeight::from_u32(h.to_u32())
     }
 }
 
