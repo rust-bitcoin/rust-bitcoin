@@ -90,13 +90,13 @@ impl WitnessProgram {
         merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-        let pubkey = output_key.to_inner().serialize();
+        let pubkey = output_key.as_x_only_public_key().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }
 
     /// Creates a pay to taproot address from a pre-tweaked output key.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        let pubkey = output_key.to_inner().serialize();
+        let pubkey = output_key.as_x_only_public_key().serialize();
         WitnessProgram::new_p2tr(pubkey)
     }
 
