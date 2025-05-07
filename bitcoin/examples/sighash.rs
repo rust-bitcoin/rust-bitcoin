@@ -24,7 +24,7 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
     let witness = &inp.witness;
-    println!("Witness: {:?}", witness);
+    println!("Witness: {witness:?}");
 
     // BIP-141: The witness must consist of exactly 2 items (≤ 520 bytes each). The first one a
     // signature, and the second one a public key.
@@ -38,16 +38,16 @@ fn compute_sighash_p2wpkh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     //this is nothing but a standard P2PKH script OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG:
     let pk = CompressedPublicKey::from_slice(pk_bytes).expect("failed to parse pubkey");
     let wpkh = pk.wpubkey_hash();
-    println!("Script pubkey hash: {:x}", wpkh);
+    println!("Script pubkey hash: {wpkh:x}");
     let spk = ScriptBuf::new_p2wpkh(wpkh);
 
     let mut cache = sighash::SighashCache::new(&tx);
     let sighash = cache
         .p2wpkh_signature_hash(inp_idx, &spk, amount, sig.sighash_type)
         .expect("failed to compute sighash");
-    println!("SegWit p2wpkh sighash: {:x}", sighash);
+    println!("SegWit p2wpkh sighash: {sighash:x}");
     let msg = secp256k1::Message::from(sighash);
-    println!("Message is {:x}", msg);
+    println!("Message is {msg:x}");
     let secp = secp256k1::Secp256k1::verification_only();
     pk.verify(&secp, msg, sig).unwrap()
 }
@@ -63,7 +63,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
     let script_sig = &inp.script_sig;
-    println!("scriptSig is: {}", script_sig);
+    println!("scriptSig is: {script_sig}");
     let cache = sighash::SighashCache::new(&tx);
     //In the P2SH case we get scriptPubKey from scriptSig of the spending input.
     //The scriptSig that corresponds to an M of N multisig should be: PUSHBYTES_0 PUSHBYTES_K0 <sig0><sighashflag0> ... PUSHBYTES_Km <sigM><sighashflagM> PUSHBYTES_X <scriptPubKey>
@@ -83,8 +83,7 @@ fn compute_sighash_legacy(raw_tx: &[u8], inp_idx: usize, script_pubkey_bytes_opt
     let pushbytes_0 = instructions.remove(0).unwrap();
     assert!(
         pushbytes_0.push_bytes().unwrap().as_bytes().is_empty(),
-        "first in ScriptSig must be PUSHBYTES_0 got {:?}",
-        pushbytes_0
+        "first in ScriptSig must be PUSHBYTES_0 got {pushbytes_0:?}"
     );
 
     //All other scriptSig instructions  must be signatures
@@ -109,7 +108,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
     let tx: Transaction = consensus::deserialize(raw_tx).unwrap();
     let inp = &tx.input[inp_idx];
     let witness = &inp.witness;
-    println!("witness {:?}", witness);
+    println!("witness {witness:?}");
 
     //last element is called witnessScript according to BIP141. It supersedes scriptPubKey.
     let witness_script_bytes: &[u8] = witness.last().expect("out of bounds");
@@ -122,7 +121,7 @@ fn compute_sighash_p2wsh(raw_tx: &[u8], inp_idx: usize, amount: Amount) {
         let sig = ecdsa::Signature::from_slice(sig_bytes).expect("failed to parse sig");
         let sig_len = sig_bytes.len() - 1; //last byte is EcdsaSighashType sighash flag
                                            //ECDSA signature in DER format lengths are between 70 and 72 bytes
-        assert!((70..=72).contains(&sig_len), "signature length {} out of bounds", sig_len);
+        assert!((70..=72).contains(&sig_len), "signature length {sig_len} out of bounds");
         //here we assume that all sighash_flags are the same. Can they be different?
         let sighash = cache
             .p2wsh_signature_hash(inp_idx, witness_script, amount, sig.sighash_type)

@@ -19,6 +19,6 @@ fn main() {
     // Create a Bitcoin P2WPKH address.
     let address = Address::p2wpkh(public_key, Network::Bitcoin);
 
-    println!("Private Key: {}", private_key);
-    println!("Address: {}", address);
+    println!("Private Key: {private_key}");
+    println!("Address: {address}");
 }

@@ -82,7 +82,7 @@ fn main() {
     let tx = sighasher.into_transaction();
 
     // BOOM! Transaction signed and ready to broadcast.
-    println!("{:#?}", tx);
+    println!("{tx:#?}");
 }
 
 /// An example of keys controlled by the transaction sender.

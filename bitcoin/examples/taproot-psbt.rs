@@ -125,8 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
     )?);
     println!(
-        "\nYou should now be able to broadcast the following transaction: \n\n{}",
-        tx_hex_string
+        "\nYou should now be able to broadcast the following transaction: \n\n{tx_hex_string}"
     );
 
     println!("\nEND EXAMPLE 1\n");
@@ -147,7 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
         let tx_hex = encode::serialize_hex(&tx);
 
-        println!("Inheritance funding tx hex:\n\n{}", tx_hex);
+        println!("Inheritance funding tx hex:\n\n{tx_hex}");
         // You can now broadcast the transaction hex:
         // bt sendrawtransaction ...
         //
@@ -160,7 +159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             to_address,
         )?;
         let spending_tx_hex = encode::serialize_hex(&spending_tx);
-        println!("\nInheritance spending tx hex:\n\n{}", spending_tx_hex);
+        println!("\nInheritance spending tx hex:\n\n{spending_tx_hex}");
         // If you try to broadcast now, the transaction will be rejected as it is timelocked.
         // First mine 900 blocks so we're sure we are over the 1000 block locktime:
         // bt generatetoaddress 900 $(bt-benefactor getnewaddress '' 'bech32m')
@@ -185,7 +184,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
         let tx_hex = encode::serialize_hex(&tx);
 
-        println!("Inheritance funding tx hex:\n\n{}", tx_hex);
+        println!("Inheritance funding tx hex:\n\n{tx_hex}");
         // You can now broadcast the transaction hex:
         // bt sendrawtransaction ...
         //
@@ -200,7 +199,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (tx, _) = benefactor.refresh_tx(1000)?;
         let tx_hex = encode::serialize_hex(&tx);
 
-        println!("\nRefreshed inheritance tx hex:\n\n{}\n", tx_hex);
+        println!("\nRefreshed inheritance tx hex:\n\n{tx_hex}\n");
 
         println!("\nEND EXAMPLE 3\n");
         println!("----------------\n");
