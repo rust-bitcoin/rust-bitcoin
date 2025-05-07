@@ -14,6 +14,7 @@
 use core::ops;
 
 use NumOpResult as R;
+use crate::NumOpError as E;
 
 use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
 
@@ -114,12 +115,11 @@ impl Amount {
 }
 
 impl FeeRate {
-    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
-    /// if an overflow occurred.
+    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning
+    /// [`NumOpResult::Error`] if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    #[must_use]
-    pub fn to_fee(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn to_fee(self, weight: Weight) -> NumOpResult<Amount> { self.checked_mul_by_weight(weight) }
 
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
@@ -127,7 +127,9 @@ impl FeeRate {
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
-    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn fee_wu(self, weight: Weight) -> Option<Amount> {
+        self.checked_mul_by_weight(weight).ok()
+    }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
     /// if an overflow occurred.
@@ -137,7 +139,7 @@ impl FeeRate {
     #[must_use]
     #[deprecated(since = "TBD", note = "use Weight::from_vb and then `to_fee()` instead")]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
-        Weight::from_vb(vb).and_then(|w| self.to_fee(w))
+        Weight::from_vb(vb).and_then(|w| self.to_fee(w).ok())
     }
 
     /// Checked weight multiplication.
@@ -146,20 +148,16 @@ impl FeeRate {
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
     ///
-    /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
-        // No `?` operator in const context.
-        match self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
-            Some(mul_res) => match mul_res.checked_add(999) {
-                Some(add_res) => match Amount::from_sat(add_res / 1000) {
-                    Ok(fee) => Some(fee),
-                    Err(_) => None,
-                },
-                None => None,
-            },
-            None => None,
+    /// Returns [`NumOpResult::Error`] if overflow occurred.
+    pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
+        if let Some(fee) =  self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
+            if let Some(round_up) = fee.checked_add(999) {
+                if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
+                    return NumOpResult::Valid(ret);
+                }
+            }
         }
+        NumOpResult::Error(E::while_doing(MathOp::Mul))
     }
 }
 
@@ -167,7 +165,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: FeeRate) -> Self::Output {
-            rhs.checked_mul_by_weight(self).valid_or_error(MathOp::Mul)
+            rhs.checked_mul_by_weight(self)
         }
     }
     impl ops::Mul<FeeRate> for NumOpResult<Weight> {
@@ -204,7 +202,7 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<Weight> for FeeRate {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: Weight) -> Self::Output {
-            self.checked_mul_by_weight(rhs).valid_or_error(MathOp::Mul)
+            self.checked_mul_by_weight(rhs)
         }
     }
     impl ops::Mul<Weight> for NumOpResult<FeeRate> {
@@ -329,8 +327,7 @@ impl Weight {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
-    #[must_use]
-    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Option<Amount> {
+    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
         fee_rate.checked_mul_by_weight(self)
     }
 }
@@ -348,7 +345,7 @@ mod tests {
     #[test]
     fn fee_wu() {
         let fee_overflow = FeeRate::from_sat_per_kwu(10).to_fee(Weight::MAX);
-        assert!(fee_overflow.is_none());
+        assert!(fee_overflow.is_error());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
@@ -365,7 +362,7 @@ mod tests {
         assert_eq!(Amount::from_sat_u32(100), fee);
 
         let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
-        assert!(fee.is_none());
+        assert!(fee.is_error());
 
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
