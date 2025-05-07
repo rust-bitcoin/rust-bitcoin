@@ -225,7 +225,6 @@ impl LockTime {
     /// # Examples
     ///
     /// ```rust
-    /// # use bitcoin_primitives::locktime::relative::HeightInterval;
     /// # use bitcoin_primitives::relative::Time;
     /// # use units::mtp_height::MtpAndHeight;
     /// # use bitcoin_primitives::BlockHeight;
