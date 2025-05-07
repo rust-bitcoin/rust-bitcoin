@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(doc)]
 use crate::locktime;
+use crate::locktime::relative::HeightInterval;
 use crate::locktime::{absolute, relative};
 
 /// The block height, zero denotes the genesis block.
@@ -48,6 +49,23 @@ impl BlockHeight {
 
     /// Returns block height as a `u32`.
     pub const fn to_u32(self) -> u32 { self.0 }
+
+    /// Returns the [`HeightInterval`] between to heights.
+    ///
+    /// Useful for comparing the interval between two absolute block heights against a relative lock
+    /// time. This is equivalent to `h1 - h2` using the biggest height as `h1` so as to never panic.
+    ///
+    /// # Returns
+    ///
+    /// Returns `None` if calculated value will not fit in 16 bits because [`HeightInterval`] is
+    /// limited as such by the Bitcoin protocol.
+    pub fn lock_time_interval(self, other: BlockHeight) -> Option<HeightInterval> {
+        let interval = if self > other { self - other } else { other - self };
+        match u16::try_from(interval.to_u32()) {
+            Ok(interval) => Some(HeightInterval::from_interval(interval)),
+            Err(_) => None,
+        }
+    }
 }
 
 impl fmt::Display for BlockHeight {
@@ -134,7 +152,7 @@ impl From<relative::HeightInterval> for BlockInterval {
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_height().into()) }
+    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_interval().into()) }
 }
 
 impl TryFrom<BlockInterval> for relative::HeightInterval {

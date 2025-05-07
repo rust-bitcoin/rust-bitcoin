@@ -52,7 +52,7 @@ pub use units::{
     amount::{self, Amount, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::{self, FeeRate},
-    time::{self, BlockTime},
+    time::{self, BlockProducedTime, BlockTime, MedianTimePast},
     weight::{self, Weight},
 };
 

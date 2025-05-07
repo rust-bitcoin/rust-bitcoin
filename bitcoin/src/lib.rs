@@ -136,7 +136,7 @@ pub use units::{
     amount::{Amount, Denomination, SignedAmount},
     block::{BlockHeight, BlockInterval},
     fee_rate::FeeRate,
-    time::{self, BlockTime},
+    time::{self, BlockProducedTime, BlockTime, MedianTimePast},
     weight::Weight,
 };
 

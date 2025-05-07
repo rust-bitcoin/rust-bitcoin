@@ -10,6 +10,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 use units::parse::{self, PrefixedHexError, UnprefixedHexError};
+use units::MedianTimePast;
 
 #[cfg(all(doc, feature = "alloc"))]
 use crate::{absolute, Transaction};
@@ -238,21 +239,35 @@ impl LockTime {
     /// ```no_run
     /// # use bitcoin_primitives::absolute;
     /// // Can be implemented if block chain data is available.
-    /// fn get_height() -> absolute::Height { todo!("return the current block height") }
-    /// fn get_time() -> absolute::Mtp { todo!("return the current block time") }
+    /// fn chain_tip_height() -> absolute::Height { todo!("return the current block height") }
+    /// fn chain_tip_time() -> time::MedianTimePast { todo!("return the current block MTP") }
     ///
     /// let n = absolute::LockTime::from_consensus(741521); // `n OP_CHEKCLOCKTIMEVERIFY`.
-    /// if n.is_satisfied_by(get_height(), get_time()) {
+    /// if n.is_satisfied_by(chain_tip_height(), chain_tip_time()) {
     ///     // Can create and mine a transaction that satisfies the OP_CLTV timelock constraint.
     /// }
     /// ````
     #[inline]
-    pub fn is_satisfied_by(self, height: Height, time: Mtp) -> bool {
-        use LockTime as L;
-
+    pub fn is_satisfied_by(self, height: Height, time: MedianTimePast) -> bool {
         match self {
-            L::Blocks(n) => n <= height,
-            L::Seconds(n) => n <= time,
+            Self::Blocks(n) => n <= height,
+            Self::Seconds(n) => n.to_u32() <= time.time().to_u32(),
+        }
+    }
+
+    /// Returns true if this timelock constraint is satisfied by `height`.
+    pub fn is_satisfied_by_height(self, height: Height) -> Result<bool, IncompatibleHeightError> {
+        match self {
+            Self::Blocks(n) => Ok(n <= height),
+            Self::Seconds(n) => Err(IncompatibleHeightError { height, time: n }),
+        }
+    }
+
+    /// Returns true if this timelock constraint is satisfied by `time`.
+    pub fn is_satisfied_by_time(self, time: MedianTimePast) -> Result<bool, IncompatibleTimeError> {
+        match self {
+            Self::Seconds(n) => Ok(n.to_u32() <= time.time().to_u32()),
+            Self::Blocks(n) => Err(IncompatibleTimeError { time, height: n }),
         }
     }
 
@@ -407,6 +422,69 @@ impl<'de> serde::Deserialize<'de> for LockTime {
     }
 }
 
+/// Tried to satisfy a lock-by-blocktime lock using a height value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleHeightError {
+    /// Attempted to satisfy a lock-by-blocktime lock with this height.
+    height: Height,
+    /// The inner time value of the lock-by-blocktime lock.
+    time: Mtp,
+}
+
+impl IncompatibleHeightError {
+    /// Returns the height that was erroneously used to try and satisfy a lock-by-blocktime lock.
+    pub fn incompatible(&self) -> Height { self.height }
+
+    /// Returns the time value of the lock-by-blocktime lock.
+    pub fn expected(&self) -> Mtp { self.time }
+}
+
+impl fmt::Display for IncompatibleHeightError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-blocktime lock {} with height: {}",
+            self.time, self.height
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleHeightError {}
+
+/// Tried to satisfy a lock-by-blockheight lock using a time value.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IncompatibleTimeError {
+    /// Attempted to satisfy a lock-by-blockheight lock with this time.
+    time: MedianTimePast,
+    /// The inner height value of the lock-by-blockheight lock.
+    height: Height,
+}
+
+impl IncompatibleTimeError {
+    /// Returns the time that was erroneously used to try and satisfy a lock-by-blockheight lock.
+    pub fn incompatible(&self) -> MedianTimePast { self.time }
+
+    /// Returns the height value of the lock-by-blockheight lock.
+    pub fn expected(&self) -> Height { self.height }
+}
+
+impl fmt::Display for IncompatibleTimeError {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "tried to satisfy a lock-by-blockheight lock {} with time: {}",
+            self.height,
+            self.time.time().to_u32()
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for IncompatibleTimeError {}
+
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for LockTime {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
@@ -418,6 +496,7 @@ impl<'a> Arbitrary<'a> for LockTime {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::BlockTime;
 
     #[test]
     fn display_and_alternate() {
@@ -511,27 +590,24 @@ mod tests {
 
         let lock_by_height = LockTime::from(height);
 
-        let t: u32 = 1_653_195_600; // May 22nd, 5am UTC.
-        let time = Mtp::from_u32(t).unwrap();
-
-        assert!(!lock_by_height.is_satisfied_by(height_below, time));
-        assert!(lock_by_height.is_satisfied_by(height, time));
-        assert!(lock_by_height.is_satisfied_by(height_above, time));
+        assert!(!lock_by_height.is_satisfied_by_height(height_below).unwrap());
+        assert!(lock_by_height.is_satisfied_by_height(height).unwrap());
+        assert!(lock_by_height.is_satisfied_by_height(height_above).unwrap());
     }
 
     #[test]
     fn satisfied_by_time() {
-        let time_before = Mtp::from_u32(1_653_109_200).unwrap(); // "May 21th 2022, 5am UTC.
-        let time = Mtp::from_u32(1_653_195_600).unwrap(); // "May 22nd 2022, 5am UTC.
-        let time_after = Mtp::from_u32(1_653_282_000).unwrap(); // "May 23rd 2022, 5am UTC.
+        let mtp = |x| MedianTimePast::from_block_time(BlockTime::from_u32(x));
 
-        let lock_by_time = LockTime::from(time);
+        let time_before = mtp(1_653_109_200); // "May 21th 2022, 5am UTC.
+        let time = mtp(1_653_195_600); // "May 22nd 2022, 5am UTC.
+        let time_after = mtp(1_653_282_000); // "May 23rd 2022, 5am UTC.
 
-        let height = Height::from_u32(800_000).unwrap();
+        let lock_by_time = LockTime::from_consensus(1_653_195_600);
 
-        assert!(!lock_by_time.is_satisfied_by(height, time_before));
-        assert!(lock_by_time.is_satisfied_by(height, time));
-        assert!(lock_by_time.is_satisfied_by(height, time_after));
+        assert!(!lock_by_time.is_satisfied_by_time(time_before).unwrap());
+        assert!(lock_by_time.is_satisfied_by_time(time).unwrap());
+        assert!(lock_by_time.is_satisfied_by_time(time_after).unwrap());
     }
 
     #[test]
