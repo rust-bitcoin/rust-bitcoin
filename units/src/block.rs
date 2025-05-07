@@ -171,7 +171,7 @@ impl_u32_wrapper! {
     /// The median timestamp of 11 consecutive blocks.
     ///
     /// This type is not meant for constructing time-based timelocks. It is a general purpose
-    /// MTP abstraction. For locktimes please see [`locktime::absolute::Mtp`].
+    /// MTP abstraction. For locktimes please see [`locktime::absolute::MedianTimePast`].
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -202,22 +202,22 @@ impl BlockMtp {
     }
 }
 
-impl From<absolute::Mtp> for BlockMtp {
-    /// Converts a [`locktime::absolute::Mtp`] to a [`BlockMtp`].
+impl From<absolute::MedianTimePast> for BlockMtp {
+    /// Converts a [`locktime::absolute::MedianTimePast`] to a [`BlockMtp`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
-    fn from(h: absolute::Mtp) -> Self { Self::from_u32(h.to_u32()) }
+    fn from(h: absolute::MedianTimePast) -> Self { Self::from_u32(h.to_u32()) }
 }
 
-impl TryFrom<BlockMtp> for absolute::Mtp {
+impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     type Error = absolute::ConversionError;
 
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
-    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { absolute::Mtp::from_u32(h.to_u32()) }
+    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { absolute::MedianTimePast::from_u32(h.to_u32()) }
 }
 
 impl_u32_wrapper! {

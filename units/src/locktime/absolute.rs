@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`Height`] and [`Mtp`] types used by the `rust-bitcoin` `absolute::LockTime` type.
+//! Provides [`Height`] and [`MedianTimePast`] types used by the `rust-bitcoin` `absolute::LockTime` type.
 
 use core::convert::Infallible;
 use core::fmt;
@@ -132,9 +132,9 @@ impl serde::Serialize for Height {
     }
 }
 
-#[deprecated(since = "TBD", note = "use `Mtp` instead")]
+#[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
 #[doc(hidden)]
-pub type Time = Mtp;
+pub type Time = MedianTimePast;
 
 /// The median timestamp of 11 consecutive blocks, representing "the timestamp" of the
 /// final block for locktime-checking purposes.
@@ -145,16 +145,16 @@ pub type Time = Mtp;
 /// a quantity which is required by consensus to be monotone and which is difficult
 /// for any individual miner to manipulate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Mtp(u32);
+pub struct MedianTimePast(u32);
 
-impl Mtp {
+impl MedianTimePast {
     /// The minimum MTP allowable in a locktime (Tue Nov 05 1985 00:53:20 GMT+0000).
-    pub const MIN: Self = Mtp(LOCK_TIME_THRESHOLD);
+    pub const MIN: Self = MedianTimePast(LOCK_TIME_THRESHOLD);
 
     /// The maximum MTP allowable in a locktime (Sun Feb 07 2106 06:28:15 GMT+0000).
-    pub const MAX: Self = Mtp(u32::MAX);
+    pub const MAX: Self = MedianTimePast(u32::MAX);
 
-    /// Constructs an [`Mtp`] by computing the median‐time‐past from the last 11 block timestamps
+    /// Constructs an [`MedianTimePast`] by computing the median‐time‐past from the last 11 block timestamps
     ///
     /// Because block timestamps are not monotonic, this function internally sorts them;
     /// it is therefore not important what order they appear in the array; use whatever
@@ -170,7 +170,7 @@ impl Mtp {
         crate::BlockMtp::new(timestamps).try_into()
     }
 
-    /// Constructs a new [`Mtp`] from a big-endian hex-encoded `u32`.
+    /// Constructs a new [`MedianTimePast`] from a big-endian hex-encoded `u32`.
     ///
     /// The input string may or may not contain a typical hex prefix e.g., `0x`.
     ///
@@ -189,7 +189,7 @@ impl Mtp {
 
     /// Constructs a new MTP directly from a `u32` value.
     ///
-    /// This function, with [`Mtp::to_u32`], is used to obtain a raw MTP value. It is
+    /// This function, with [`MedianTimePast::to_u32`], is used to obtain a raw MTP value. It is
     /// **not** used to convert to or from a block timestamp, which is not a MTP.
     ///
     /// # Errors
@@ -199,10 +199,10 @@ impl Mtp {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin_units::locktime::absolute::Mtp;
+    /// use bitcoin_units::locktime::absolute::MedianTimePast;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let time = Mtp::from_u32(t).expect("invalid time value");
+    /// let time = MedianTimePast::from_u32(t).expect("invalid time value");
     /// assert_eq!(time.to_consensus_u32(), t);
     /// ```
     #[inline]
@@ -214,30 +214,30 @@ impl Mtp {
         }
     }
 
-    /// Converts this [`Mtp`] to a raw `u32` value.
+    /// Converts this [`MedianTimePast`] to a raw `u32` value.
     #[inline]
     pub const fn to_u32(self) -> u32 { self.0 }
 }
 
-impl fmt::Display for Mtp {
+impl fmt::Display for MedianTimePast {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
-crate::impl_parse_str!(Mtp, ParseTimeError, parser(Mtp::from_u32));
+crate::impl_parse_str!(MedianTimePast, ParseTimeError, parser(MedianTimePast::from_u32));
 
 #[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Mtp {
+impl<'de> serde::Deserialize<'de> for MedianTimePast {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         let u = u32::deserialize(deserializer)?;
-        Mtp::from_u32(u).map_err(serde::de::Error::custom)
+        MedianTimePast::from_u32(u).map_err(serde::de::Error::custom)
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Mtp {
+impl serde::Serialize for MedianTimePast {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -383,11 +383,11 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::PosOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is above limit <upper_bound>)"
+                // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is above limit <upper_bound>)"
                 write!(
                     f,
                     "{} ({} is above limit {})",
-                    input.display_cannot_parse("absolute Height/Mtp"),
+                    input.display_cannot_parse("absolute Height/MedianTimePast"),
                     subject,
                     upper_bound
                 )
@@ -395,17 +395,17 @@ impl ParseError {
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source })
                 if *source.kind() == IntErrorKind::NegOverflow =>
             {
-                // Outputs "failed to parse <input_string> as absolute Height/Mtp (<subject> is below limit <lower_bound>)"
+                // Outputs "failed to parse <input_string> as absolute Height/MedianTimePast (<subject> is below limit <lower_bound>)"
                 write!(
                     f,
                     "{} ({} is below limit {})",
-                    input.display_cannot_parse("absolute Height/Mtp"),
+                    input.display_cannot_parse("absolute Height/MedianTimePast"),
                     subject,
                     lower_bound
                 )
             }
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
-                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/Mtp"), subject)
+                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/MedianTimePast"), subject)
             }
             E::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
@@ -458,17 +458,17 @@ impl<'a> Arbitrary<'a> for Height {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for Mtp {
+impl<'a> Arbitrary<'a> for MedianTimePast {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
         match choice {
-            0 => Ok(Mtp::MIN),
-            1 => Ok(Mtp::MAX),
+            0 => Ok(MedianTimePast::MIN),
+            1 => Ok(MedianTimePast::MAX),
             _ => {
-                let min = Mtp::MIN.to_u32();
-                let max = Mtp::MAX.to_u32();
+                let min = MedianTimePast::MIN.to_u32();
+                let max = MedianTimePast::MAX.to_u32();
                 let t = u.int_in_range(min..=max)?;
-                Ok(Mtp::from_u32(t).unwrap())
+                Ok(MedianTimePast::from_u32(t).unwrap())
             }
         }
     }
@@ -483,21 +483,21 @@ mod tests {
 
     #[test]
     fn time_from_str_hex_happy_path() {
-        let actual = Mtp::from_hex("0x6289C350").unwrap();
-        let expected = Mtp::from_u32(0x6289_C350).unwrap();
+        let actual = MedianTimePast::from_hex("0x6289C350").unwrap();
+        let expected = MedianTimePast::from_u32(0x6289_C350).unwrap();
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn time_from_str_hex_no_prefix_happy_path() {
-        let time = Mtp::from_hex("6289C350").unwrap();
-        assert_eq!(time, Mtp(0x6289_C350));
+        let time = MedianTimePast::from_hex("6289C350").unwrap();
+        assert_eq!(time, MedianTimePast(0x6289_C350));
     }
 
     #[test]
     fn time_from_str_hex_invalid_hex_should_err() {
         let hex = "0xzb93";
-        let result = Mtp::from_hex(hex);
+        let result = MedianTimePast::from_hex(hex);
         assert!(result.is_err());
     }
 
@@ -541,8 +541,8 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_time() {
-        serde_round_trip!(Mtp::MIN);
-        serde_round_trip!(Mtp::MAX);
+        serde_round_trip!(MedianTimePast::MIN);
+        serde_round_trip!(MedianTimePast::MAX);
     }
 
     #[test]
@@ -575,12 +575,12 @@ mod tests {
         ];
 
         // Try various reorderings
-        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        assert_eq!(MedianTimePast::new(timestamps).unwrap().to_u32(), 500_000_005);
         timestamps.reverse();
-        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        assert_eq!(MedianTimePast::new(timestamps).unwrap().to_u32(), 500_000_005);
         timestamps.sort();
-        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        assert_eq!(MedianTimePast::new(timestamps).unwrap().to_u32(), 500_000_005);
         timestamps.reverse();
-        assert_eq!(Mtp::new(timestamps).unwrap().to_u32(), 500_000_005);
+        assert_eq!(MedianTimePast::new(timestamps).unwrap().to_u32(), 500_000_005);
     }
 }
