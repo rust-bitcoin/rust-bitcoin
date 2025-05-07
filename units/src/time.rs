@@ -10,7 +10,7 @@
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
-use crate::locktime::relative::MtpInterval;
+use crate::locktime::relative::NumberOf512Seconds;
 
 mod encapsulate {
     #[cfg(feature = "serde")]
@@ -127,13 +127,13 @@ impl BlockProducedTime {
     /// Returns the UNIX timestamp.
     pub fn time(self) -> BlockTime { self.0.time() }
 
-    /// Returns the [`MtpInterval`] between to block-produced-time and current chain tip.
+    /// Returns the [`NumberOf512Seconds`] between to block-produced-time and current chain tip.
     ///
     /// # Returns
     ///
-    /// Returns `None` if calculated value will not fit in 16 bits because [`MtpInterval`] is
+    /// Returns `None` if calculated value will not fit in 16 bits because [`NumberOf512Seconds`] is
     /// limited as such by the Bitcoin protocol.
-    pub fn interval(self, chain_tip: MedianTimePast) -> Result<MtpInterval, ()> {
+    pub fn interval(self, chain_tip: MedianTimePast) -> Result<NumberOf512Seconds, ()> {
         let this = self.time().to_u32();
         let that = chain_tip.time().to_u32();
 
@@ -142,7 +142,7 @@ impl BlockProducedTime {
         }
 
         let interval = this - that;
-        MtpInterval::from_seconds_floor(interval).map_err(|_| ())
+        NumberOf512Seconds::from_seconds_floor(interval).map_err(|_| ())
     }
 }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`Height`] and [`MtpInterval`] types used by the `rust-bitcoin` `relative::LockTime` type.
+//! Provides [`Height`] and [`NumberOf512Seconds`] types used by the `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
 
@@ -68,37 +68,37 @@ impl fmt::Display for NumberOfBlocks {
 
 #[deprecated(since = "TBD", note = "use `Mtp` instead")]
 #[doc(hidden)]
-pub type Time = MtpInterval;
+pub type Time = NumberOf512Seconds;
 
 /// A relative lock time lock-by-blocktime value.
 ///
 /// For BIP 68 relative lock-by-blocktime locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MtpInterval(u16);
+pub struct NumberOf512Seconds(u16);
 
-impl MtpInterval {
+impl NumberOf512Seconds {
     /// Relative block time 0, can be included in any block.
-    pub const ZERO: Self = MtpInterval(0);
+    pub const ZERO: Self = NumberOf512Seconds(0);
 
     /// The minimum relative block time (0), can be included in any block.
-    pub const MIN: Self = MtpInterval::ZERO;
+    pub const MIN: Self = NumberOf512Seconds::ZERO;
 
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
-    pub const MAX: Self = MtpInterval(u16::MAX);
+    pub const MAX: Self = NumberOf512Seconds(u16::MAX);
 
-    /// Constructs a new [`MtpInterval`] using time intervals where each interval is equivalent to 512 seconds.
+    /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
-    pub const fn from_512_second_intervals(intervals: u16) -> Self { MtpInterval(intervals) }
+    pub const fn from_512_second_intervals(intervals: u16) -> Self { NumberOf512Seconds(intervals) }
 
-    /// Express the [`MtpInterval`] as an integer number of 512-second intervals.
+    /// Express the [`NumberOf512Seconds`] as an integer number of 512-second intervals.
     #[inline]
     #[must_use]
     pub const fn to_512_second_intervals(self) -> u16 { self.0 }
 
-    /// Constructs a new [`MtpInterval`] from seconds, converting the seconds into 512 second interval with
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second interval with
     /// truncating division.
     ///
     /// # Errors
@@ -109,13 +109,13 @@ impl MtpInterval {
     pub const fn from_seconds_floor(seconds: u32) -> Result<Self, TimeOverflowError> {
         let interval = seconds / 512;
         if interval <= u16::MAX as u32 { // infallible cast, needed by const code
-            Ok(MtpInterval::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
+            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
         } else {
             Err(TimeOverflowError { seconds })
         }
     }
 
-    /// Constructs a new [`MtpInterval`] from seconds, converting the seconds into 512 second intervals with
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second intervals with
     /// ceiling division.
     ///
     /// # Errors
@@ -126,7 +126,7 @@ impl MtpInterval {
     pub const fn from_seconds_ceil(seconds: u32) -> Result<Self, TimeOverflowError> {
         if seconds <= u16::MAX as u32 * 512 {
             let interval = (seconds + 511) / 512;
-            Ok(MtpInterval::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
+            Ok(NumberOf512Seconds::from_512_second_intervals(interval as u16)) // Cast checked above, needed by const code.
         } else {
             Err(TimeOverflowError { seconds })
         }
@@ -150,9 +150,9 @@ impl MtpInterval {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(MtpInterval, u16, from_512_second_intervals);
+crate::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_second_intervals);
 
-impl fmt::Display for MtpInterval {
+impl fmt::Display for NumberOf512Seconds {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
@@ -203,14 +203,14 @@ impl<'a> Arbitrary<'a> for NumberOfBlocks {
 }
 
 #[cfg(feature = "arbitrary")]
-impl<'a> Arbitrary<'a> for MtpInterval {
+impl<'a> Arbitrary<'a> for NumberOf512Seconds {
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         let choice = u.int_in_range(0..=2)?;
 
         match choice {
-            0 => Ok(MtpInterval::MIN),
-            1 => Ok(MtpInterval::MAX),
-            _ => Ok(MtpInterval::from_512_second_intervals(u16::arbitrary(u)?)),
+            0 => Ok(NumberOf512Seconds::MIN),
+            1 => Ok(NumberOf512Seconds::MAX),
+            _ => Ok(NumberOf512Seconds::from_512_second_intervals(u16::arbitrary(u)?)),
         }
     }
 }
@@ -228,54 +228,58 @@ mod tests {
     #[allow(deprecated_in_future)]
     fn sanity_check() {
         assert_eq!(NumberOfBlocks::MAX.to_consensus_u32(), u32::from(u16::MAX));
-        assert_eq!(MtpInterval::from_512_second_intervals(100).value(), 100u16);
-        assert_eq!(MtpInterval::from_512_second_intervals(100).to_consensus_u32(), 4_194_404u32); // 0x400064
+        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).value(), 100u16);
+        assert_eq!(
+            NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(),
+            4_194_404u32
+        ); // 0x400064
     }
 
     #[test]
     fn from_seconds_ceil_success() {
-        let actual = MtpInterval::from_seconds_ceil(100).unwrap();
-        let expected = MtpInterval(1_u16);
+        let actual = NumberOf512Seconds::from_seconds_ceil(100).unwrap();
+        let expected = NumberOf512Seconds(1_u16);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_ceil_with_maximum_encodable_seconds_success() {
-        let actual = MtpInterval::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS).unwrap();
-        let expected = MtpInterval(u16::MAX);
+        let actual = NumberOf512Seconds::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS).unwrap();
+        let expected = NumberOf512Seconds(u16::MAX);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_ceil_causes_time_overflow_error() {
-        let result = MtpInterval::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1);
+        let result = NumberOf512Seconds::from_seconds_ceil(MAXIMUM_ENCODABLE_SECONDS + 1);
         assert!(result.is_err());
     }
 
     #[test]
     fn from_seconds_floor_success() {
-        let actual = MtpInterval::from_seconds_floor(100).unwrap();
-        let expected = MtpInterval(0_u16);
+        let actual = NumberOf512Seconds::from_seconds_floor(100).unwrap();
+        let expected = NumberOf512Seconds(0_u16);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_floor_with_exact_interval() {
-        let actual = MtpInterval::from_seconds_floor(512).unwrap();
-        let expected = MtpInterval(1_u16);
+        let actual = NumberOf512Seconds::from_seconds_floor(512).unwrap();
+        let expected = NumberOf512Seconds(1_u16);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_floor_with_maximum_encodable_seconds_success() {
-        let actual = MtpInterval::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
-        let expected = MtpInterval(u16::MAX);
+        let actual =
+            NumberOf512Seconds::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
+        let expected = NumberOf512Seconds(u16::MAX);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn from_seconds_floor_causes_time_overflow_error() {
-        let result = MtpInterval::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512);
+        let result = NumberOf512Seconds::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 512);
         assert!(result.is_err());
     }
 
@@ -290,8 +294,8 @@ mod tests {
     #[test]
     #[cfg(feature = "serde")]
     pub fn encode_decode_time() {
-        serde_round_trip!(MtpInterval::ZERO);
-        serde_round_trip!(MtpInterval::MIN);
-        serde_round_trip!(MtpInterval::MAX);
+        serde_round_trip!(NumberOf512Seconds::ZERO);
+        serde_round_trip!(NumberOf512Seconds::MIN);
+        serde_round_trip!(NumberOf512Seconds::MAX);
     }
 }
