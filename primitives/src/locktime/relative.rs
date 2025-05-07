@@ -257,6 +257,27 @@ impl LockTime {
 
     /// Determines whether a transaction with this locktime can be included in the next block.
     ///
+    /// For details see [`Self::is_satisfied_by_height`] and [`Self::is_satisfied_by_time`].
+    #[inline]
+    pub fn is_satisfied_by(
+        self,
+        mined_at_height: BlockHeight,
+        chain_tip_height: BlockHeight,
+        mined_at_time: BlockProducedTime,
+        chain_tip_time: MedianTimePast,
+    ) -> bool {
+        match self {
+            Self::Blocks(_) => self
+                .is_satisfied_by_height(mined_at_height, chain_tip_height)
+                .expect("checked by pattern match"),
+            Self::Time(_) => self
+                .is_satisfied_by_time(mined_at_time, chain_tip_time)
+                .expect("checked by pattern match"),
+        }
+    }
+
+    /// Determines whether a transaction with this locktime can be included in the next block.
+    ///
     /// Useful if you have the mining date of the transaction that included the UTXO you are
     /// attempting to spend along with the current height of the chain.
     ///
