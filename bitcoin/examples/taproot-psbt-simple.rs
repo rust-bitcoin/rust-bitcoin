@@ -85,11 +85,12 @@ fn get_internal_address_xpriv<C: Signing>(
 }
 
 // Get the Taproot Key Origin.
-fn get_tap_key_origin(
-    x_only_key: UntweakedPublicKey,
+fn get_tap_key_origin<K: Into<UntweakedPublicKey> + std::cmp::Ord>(
+    x_only_key: K,
     master_fingerprint: Fingerprint,
     path: DerivationPath,
 ) -> BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, (Fingerprint, DerivationPath))> {
+    let x_only_key = x_only_key.into();
     let mut map = BTreeMap::new();
     map.insert(x_only_key, (vec![], (master_fingerprint, path)));
     map
@@ -212,14 +213,14 @@ fn main() {
         Input {
             witness_utxo: Some(utxos[0].clone()),
             tap_key_origins: origins[0].clone(),
-            tap_internal_key: Some(pk_input_1),
+            tap_internal_key: Some(pk_input_1.into()),
             sighash_type: Some(ty),
             ..Default::default()
         },
         Input {
             witness_utxo: Some(utxos[1].clone()),
             tap_key_origins: origins[1].clone(),
-            tap_internal_key: Some(pk_input_2),
+            tap_internal_key: Some(pk_input_2.into()),
             sighash_type: Some(ty),
             ..Default::default()
         },

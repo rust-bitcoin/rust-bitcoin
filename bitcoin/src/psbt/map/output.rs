@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use secp256k1::XOnlyPublicKey;
-
 use crate::bip32::KeySource;
+use crate::crypto::key::XOnlyPublicKey;
 use crate::prelude::{btree_map, BTreeMap, Vec};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};

@@ -50,7 +50,7 @@ use bech32::primitives::gf32::Fe32;
 use bech32::primitives::hrp::Hrp;
 use hashes::{hash160, HashEngine};
 use internals::array::ArrayExt;
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::{Secp256k1, Verification};
 
 use crate::address::script_pubkey::ScriptBufExt as _;
 use crate::constants::{
@@ -59,6 +59,7 @@ use crate::constants::{
 };
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
+    XOnlyPublicKey,
 };
 use crate::network::{Network, NetworkKind, Params};
 use crate::prelude::{String, ToOwned};
@@ -572,12 +573,13 @@ impl Address {
     }
 
     /// Constructs a new pay-to-Taproot (P2TR) [`Address`] from an untweaked key.
-    pub fn p2tr<C: Verification>(
+    pub fn p2tr<C: Verification, K: Into<UntweakedPublicKey>>(
         secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
+        internal_key: K,
         merkle_root: Option<TapNodeHash>,
         hrp: impl Into<KnownHrp>,
     ) -> Address {
+        let internal_key = internal_key.into();
         let program = WitnessProgram::p2tr(secp, internal_key, merkle_root);
         Address::from_witness_program(program, hrp)
     }

@@ -11,9 +11,9 @@ use bitcoin::taproot::{LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::transaction::Version;
 use bitcoin::{
     absolute, script, Address, Network, OutPoint, PrivateKey, Psbt, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Witness,
+    Transaction, TxIn, TxOut, Witness, XOnlyPublicKey,
 };
-use secp256k1::{Keypair, Secp256k1, Signing, XOnlyPublicKey};
+use secp256k1::{Keypair, Secp256k1, Signing};
 use units::Amount;
 
 #[test]
@@ -146,7 +146,7 @@ fn psbt_sign_taproot() {
             sig,
             psbt_script_path_spend.inputs[0]
                 .tap_script_sigs
-                .get(&(x_only_pubkey, script2.clone().tapscript_leaf_hash()))
+                .get(&(x_only_pubkey.into(), script2.clone().tapscript_leaf_hash()))
                 .unwrap()
                 .signature
                 .to_string()
@@ -176,13 +176,14 @@ fn create_basic_single_sig_script(secp: &Secp256k1<secp256k1::All>, sk: &str) ->
         .into_script()
 }
 
-fn create_taproot_tree(
+fn create_taproot_tree<K: Into<XOnlyPublicKey>>(
     secp: &Secp256k1<secp256k1::All>,
     script1: ScriptBuf,
     script2: ScriptBuf,
     script3: ScriptBuf,
-    internal_key: XOnlyPublicKey,
+    internal_key: K,
 ) -> TaprootSpendInfo {
+    let internal_key = internal_key.into();
     let builder = TaprootBuilder::new();
     let builder = builder.add_leaf(2, script1).unwrap();
     let builder = builder.add_leaf(2, script2).unwrap();
@@ -267,14 +268,15 @@ fn finalize_psbt_for_key_path_spend(mut psbt: Psbt) -> Psbt {
     psbt
 }
 
-fn create_psbt_for_taproot_script_path_spend(
+fn create_psbt_for_taproot_script_path_spend<K: Into<XOnlyPublicKey>>(
     from_address: Address,
     to_address: Address,
     tree: TaprootSpendInfo,
-    x_only_pubkey_of_signing_key: XOnlyPublicKey,
+    x_only_pubkey_of_signing_key: K,
     signing_key_path: &str,
     use_script: ScriptBuf,
 ) -> Psbt {
+    let x_only_pubkey_of_signing_key = x_only_pubkey_of_signing_key.into();
     let utxo_value = 6280;
     let send_value = 6000;
     let mfp = "73c5da0a";

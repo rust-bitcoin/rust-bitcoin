@@ -113,10 +113,11 @@ fn receivers_address() -> Address {
 ///
 /// This output is locked to keys that we control, in a real application this would be a valid
 /// output taken from a transaction that appears in the chain.
-fn dummy_unspent_transaction_output<C: Verification>(
+fn dummy_unspent_transaction_output<C: Verification, K: Into<UntweakedPublicKey>>(
     secp: &Secp256k1<C>,
-    internal_key: UntweakedPublicKey,
+    internal_key: K,
 ) -> (OutPoint, TxOut) {
+    let internal_key = internal_key.into();
     let script_pubkey = ScriptBuf::new_p2tr(secp, internal_key, None);
 
     let out_point = OutPoint {

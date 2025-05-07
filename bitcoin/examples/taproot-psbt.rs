@@ -444,7 +444,7 @@ impl BenefactorWallet {
             (vec![leaf_hash], (self.beneficiary_xpub.fingerprint(), derivation_path.clone())),
         );
         origins.insert(
-            internal_keypair.x_only_public_key().0,
+            internal_keypair.x_only_public_key().0.into(),
             (vec![], (self.master_xpriv.fingerprint(&self.secp), derivation_path)),
         );
         let ty = "SIGHASH_ALL".parse::<PsbtSighashType>()?;
@@ -459,7 +459,7 @@ impl BenefactorWallet {
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
             sighash_type: Some(ty),
-            tap_internal_key: Some(internal_keypair.x_only_public_key().0),
+            tap_internal_key: Some(internal_keypair.x_only_public_key().0.into()),
             tap_scripts,
             ..Default::default()
         };
@@ -612,7 +612,7 @@ impl BenefactorWallet {
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),
                 sighash_type: Some(ty),
-                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0),
+                tap_internal_key: Some(new_internal_keypair.x_only_public_key().0.into()),
                 tap_scripts,
                 ..Default::default()
             };

@@ -1878,9 +1878,10 @@ mod tests {
             })
         }
 
-        use secp256k1::{SecretKey, XOnlyPublicKey};
+        use secp256k1::SecretKey;
 
         use crate::consensus::serde as con_serde;
+        use crate::crypto::key::XOnlyPublicKey;
         use crate::taproot::{TapNodeHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]
