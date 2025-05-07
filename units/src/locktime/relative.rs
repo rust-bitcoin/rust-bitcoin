@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Provides [`NumberOfBlocks`] and [`NumberOf512Seconds`] types used by the `rust-bitcoin` `relative::LockTime` type.
+//! Provides [`NumberOfBlocks`] and [`NumberOf512Seconds`] types used by the
+//! `rust-bitcoin` `relative::LockTime` type.
 
 use core::fmt;
 
@@ -123,8 +124,8 @@ impl NumberOf512Seconds {
     #[must_use]
     pub const fn to_512_second_intervals(self) -> u16 { self.0 }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second interval with
-    /// truncating division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
+    /// interval with truncating division.
     ///
     /// # Errors
     ///
@@ -140,8 +141,8 @@ impl NumberOf512Seconds {
         }
     }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second intervals with
-    /// ceiling division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
+    /// intervals with ceiling division.
     ///
     /// # Errors
     ///
