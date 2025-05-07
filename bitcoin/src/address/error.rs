@@ -338,7 +338,7 @@ impl LegacyAddressTooLongError {
 
     #[doc(hidden)]
     #[deprecated = "Use invalid_legacy_address_length() instead"]
-    pub fn invalid_legcay_address_length(&self) -> usize { self.invalid_legacy_address_length() }
+    pub fn invalid_legacy_address_length(&self) -> usize { self.invalid_legacy_address_length() }
 }
 
 impl fmt::Display for LegacyAddressTooLongError {
