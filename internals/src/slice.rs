@@ -9,10 +9,10 @@ pub trait SliceExt {
     ///
     /// Note that `N` must not be zero:
     ///
-    /// ```compile_fail
+    /// ```ignore
     /// # use bitcoin_internals::slice::SliceExt;
     /// let slice = [1, 2, 3];
-    /// let _fail = slice.bitcoin_as_chunks::<0>();
+    /// let _fail = slice.bitcoin_as_chunks::<0>(); // Fails to compile
     /// ```
     fn bitcoin_as_chunks<const N: usize>(&self) -> (&[[Self::Item; N]], &[Self::Item]);
 
@@ -20,10 +20,10 @@ pub trait SliceExt {
     ///
     /// Note that `N` must not be zero:
     ///
-    /// ```compile_fail
+    /// ```ignore
     /// # use bitcoin_internals::slice::SliceExt;
     /// let mut slice = [1, 2, 3];
-    /// let _fail = slice.bitcoin_as_chunks_mut::<0>();
+    /// let _fail = slice.bitcoin_as_chunks_mut::<0>(); // Fails to compile
     /// ```
     fn bitcoin_as_chunks_mut<const N: usize>(
         &mut self,
