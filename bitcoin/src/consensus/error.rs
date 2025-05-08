@@ -257,3 +257,33 @@ impl From<OddLengthStringError> for FromHexError {
 pub(crate) fn parse_failed_error(msg: &'static str) -> Error {
     Error::Parse(ParseError::ParseFailed(msg))
 }
+
+/// Custom error type for ScriptBuf hex parsing
+#[derive(Debug)]
+pub struct ScriptHexError {
+    error: FromHexError,
+}
+
+impl fmt::Display for ScriptHexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use FromHexError::*;
+        match &self.error {
+            Decode(DecodeError::Parse(ParseError::MissingData)) => {
+                write!(
+                    f,
+                    "MissingData: consider using ScriptBuf::from_hex_no_length_prefix() instead"
+                )
+            }
+            other => write!(f, "{}", other),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ScriptHexError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.error) }
+}
+
+impl From<FromHexError> for ScriptHexError {
+    fn from(error: FromHexError) -> Self { ScriptHexError { error } }
+}

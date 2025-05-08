@@ -30,8 +30,11 @@ crate::internal_macros::define_extension_trait! {
         /// Constructs a new [`ScriptBuf`] from a hex string.
         ///
         /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
-            consensus::encode::deserialize_hex(s)
+        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::ScriptHexError> {
+            match consensus::encode::deserialize_hex(s) {
+                Ok(script) => Ok(script),
+                Err(e) => Err(e.into()),
+            }
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
