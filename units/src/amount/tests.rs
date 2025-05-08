@@ -5,7 +5,7 @@
 #[cfg(feature = "alloc")]
 use alloc::format;
 #[cfg(feature = "alloc")]
-use alloc::string::{String, ToString};
+use alloc::string::ToString;
 #[cfg(feature = "std")]
 use std::panic;
 
@@ -459,18 +459,6 @@ fn to_string() {
     assert_eq!(SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi), "100000000 satoshi");
     assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin), "0.00000001 BTC");
     assert_eq!(ssat(-42).to_string_with_denomination(D::Bitcoin), "-0.00000042 BTC");
-}
-
-// May help identify a problem sooner
-#[cfg(feature = "alloc")]
-#[test]
-fn test_repeat_char() {
-    let mut buf = String::new();
-    repeat_char(&mut buf, '0', 0).unwrap();
-    assert_eq!(buf.len(), 0);
-    repeat_char(&mut buf, '0', 42).unwrap();
-    assert_eq!(buf.len(), 42);
-    assert!(buf.chars().all(|c| c == '0'));
 }
 
 // Creates individual test functions to make it easier to find which check failed.
