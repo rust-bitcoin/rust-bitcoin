@@ -264,7 +264,11 @@ pub trait BlockCheckedExt: sealed::Sealed {
     fn coinbase(&self) -> Option<&Transaction>;
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
-    fn bip34_block_height(&self) -> Result<u64, Bip34Error>;
+    fn block_height(&self) -> Result<u64, Bip34Error>;
+
+    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
+    #[deprecated(since = "TBD", note = "use `block_height` instead")]
+    fn bip34_block_height(&self) -> Result<u64, Bip34Error> { self.block_height() }
 }
 
 impl BlockCheckedExt for Block<Checked> {
@@ -299,7 +303,7 @@ impl BlockCheckedExt for Block<Checked> {
     fn coinbase(&self) -> Option<&Transaction> { self.transactions().first() }
 
     /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
-    fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
+    fn block_height(&self) -> Result<u64, Bip34Error> {
         // Citing the spec:
         // Add height as the first item in the coinbase transaction's scriptSig,
         // and increase block version to 2. The format of the height is
@@ -543,35 +547,35 @@ mod tests {
         let cb_txid = "d574f343976d8e70d91cb278d21044dd8a396019e6db70755a0a50e4783dba38";
         assert_eq!(block.coinbase().unwrap().compute_txid().to_string(), cb_txid);
 
-        assert_eq!(block.bip34_block_height(), Ok(100_000));
+        assert_eq!(block.block_height(), Ok(100_000));
 
         // block with 3-byte bip34 push for height 0x03010000 (non-minimal 1)
         const BAD_HEX: &str = "0200000035ab154183570282ce9afc0b494c9fc6a3cfea05aa8c1add2ecc56490000000038ba3d78e4500a5a7570dbe61960398add4410d278b21cd9708e6d9743f374d544fc055227f1001c29c1ea3b0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3703010000000427f1001c046a510100522cfabe6d6d0000000000000000000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff0100f2052a010000001976a914912e2b234f941f30b18afbb4fa46171214bf66c888ac00000000";
         let bad: Block = deserialize(&hex!(BAD_HEX)).unwrap();
         let bad = bad.assume_checked(None);
 
-        assert_eq!(bad.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
+        assert_eq!(bad.block_height(), Err(super::Bip34Error::NonMinimalPush));
 
         // Block 15 on Testnet4 has height of 0x5f (15 PUSHNUM)
         const BLOCK_HEX_SMALL_HEIGHT_15: &str = "000000200fd8c4c1e88f313b561b2724542ff9be1bc54a7dab8db8ef6359d48a00000000705bf9145e6d3c413702cc61f32e4e7bfe3117b1eb928071a59adcf75694a3fb07d83866ffff001dcf4c5e8401010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff095f00062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
         let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_15)).unwrap();
         let block = block.assume_checked(None);
 
-        assert_eq!(block.bip34_block_height(), Ok(15));
+        assert_eq!(block.block_height(), Ok(15));
 
         // Block 42 on Testnet4 has height of 0x012a (42)
         const BLOCK_HEX_SMALL_HEIGHT_42: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff09012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
         let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42)).unwrap();
         let block = block.assume_checked(None);
 
-        assert_eq!(block.bip34_block_height(), Ok(42));
+        assert_eq!(block.block_height(), Ok(42));
 
         // Block 42 on Testnet4 using OP_PUSHDATA1 0x4c012a (42) instead of 0x012a (42)
         const BLOCK_HEX_SMALL_HEIGHT_42_WRONG: &str = "000000202803addb5a3f42f3e8d6c8536598b2d872b04f3b4f0698c26afdb17300000000463dd9a37a5d3d5c05f9c80a1485b41f1f513dee00338bbc33f5a6e836fce0345dda3866ffff001d872b9def01010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0a4c012a062f4077697a2fffffffff0200f2052a010000001976a9140a59837ccd4df25adc31cdad39be6a8d97557ed688ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000";
         let block: Block = deserialize(&hex!(BLOCK_HEX_SMALL_HEIGHT_42_WRONG)).unwrap();
         let block = block.assume_checked(None);
 
-        assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NonMinimalPush));
+        assert_eq!(block.block_height(), Err(super::Bip34Error::NonMinimalPush));
 
         // Block with a 5 byte height properly minimally encoded
         // this is an overflow for ScriptNum (i32) parsing
@@ -579,7 +583,7 @@ mod tests {
         let block: Block = deserialize(&hex!(BLOCK_HEX_5_BYTE_HEIGHT)).unwrap();
         let block = block.assume_checked(None);
 
-        assert_eq!(block.bip34_block_height(), Err(super::Bip34Error::NotPresent));
+        assert_eq!(block.block_height(), Err(super::Bip34Error::NotPresent));
     }
 
     #[test]

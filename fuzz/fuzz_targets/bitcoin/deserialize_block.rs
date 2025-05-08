@@ -18,7 +18,7 @@ fn do_test(data: &[u8]) {
             block::compute_witness_root(&transactions);
 
             if let Ok(block) = Block::new_checked(header, transactions) {
-                let _ = block.bip34_block_height();
+                let _ = block.block_height();
                 block.block_hash();
                 block.weight();
             }
