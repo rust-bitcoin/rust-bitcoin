@@ -332,61 +332,41 @@ impl LockTime {
         }
     }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by [`NumberOfBlocks`].
+    /// Returns true if an output with this locktime can be spent in the next block.
     ///
     /// # Errors
     ///
     /// Returns an error if this lock is not lock-by-height.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::relative;
-    ///
-    /// let required_height: u16 = 100;
-    /// let lock = Sequence::from_height(required_height).to_relative_lock_time().expect("valid height");
-    /// assert!(lock.is_satisfied_by_height(relative::NumberOfBlocks::from(required_height + 1)).expect("a height"));
-    /// ```
     #[inline]
     pub fn is_satisfied_by_height(
         self,
-        height: NumberOfBlocks,
+        chain_tip: BlockHeight,
+        utxo_mined_at: BlockHeight,
     ) -> Result<bool, IncompatibleHeightError> {
         use LockTime as L;
 
         match self {
-            L::Blocks(required_height) => Ok(required_height <= height),
-            L::Time(time) => Err(IncompatibleHeightError { height, time }),
+            L::Blocks(blocks) => Ok(blocks.is_satisfied_by(chain_tip, utxo_mined_at)),
+            L::Time(time) => Err(IncompatibleHeightError { time }),
         }
     }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by [`Time`].
+    /// Returns true if an output with this locktime can be spent in the next block.
     ///
     /// # Errors
     ///
     /// Returns an error if this lock is not lock-by-time.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use bitcoin_primitives::Sequence;
-    /// # use bitcoin_primitives::relative;
-    ///
-    /// let intervals: u16 = 70; // approx 10 hours;
-    /// let lock = Sequence::from_512_second_intervals(intervals).to_relative_lock_time().expect("valid time");
-    /// assert!(lock.is_satisfied_by_time(relative::Time::from_512_second_intervals(intervals + 10)).expect("a time"));
-    /// ```
     #[inline]
     pub fn is_satisfied_by_time(
         self,
-        time: NumberOf512Seconds,
+        chain_tip: BlockMtp,
+        utxo_mined_at: BlockMtp,
     ) -> Result<bool, IncompatibleTimeError> {
         use LockTime as L;
 
         match self {
-            L::Time(ref t) => Ok(t.to_512_second_intervals() <= time.to_512_second_intervals()),
-            L::Blocks(height) => Err(IncompatibleTimeError { time, height }),
+            L::Time(time) => Ok(time.is_satisfied_by(chain_tip, utxo_mined_at)),
+            L::Blocks(blocks) => Err(IncompatibleTimeError { blocks }),
         }
     }
 }
@@ -457,16 +437,11 @@ impl std::error::Error for DisabledLockTimeError {}
 /// Tried to satisfy a lock-by-blocktime lock using a height value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleHeightError {
-    /// Attempted to satisfy a lock-by-blocktime lock with this height.
-    height: NumberOfBlocks,
     /// The inner time value of the lock-by-blocktime lock.
     time: NumberOf512Seconds,
 }
 
 impl IncompatibleHeightError {
-    /// Returns the height that was erroneously used to try and satisfy a lock-by-blocktime lock.
-    pub fn incompatible(&self) -> NumberOfBlocks { self.height }
-
     /// Returns the time value of the lock-by-blocktime lock.
     pub fn expected(&self) -> NumberOf512Seconds { self.time }
 }
@@ -474,11 +449,7 @@ impl IncompatibleHeightError {
 impl fmt::Display for IncompatibleHeightError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "tried to satisfy a lock-by-blocktime lock {} with height: {}",
-            self.time, self.height
-        )
+        write!(f, "tried to satisfy a lock-by-blocktime lock {} by height", self.time,)
     }
 }
 
@@ -488,28 +459,19 @@ impl std::error::Error for IncompatibleHeightError {}
 /// Tried to satisfy a lock-by-blockheight lock using a time value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompatibleTimeError {
-    /// Attempted to satisfy a lock-by-blockheight lock with this time.
-    time: NumberOf512Seconds,
-    /// The inner height value of the lock-by-blockheight lock.
-    height: NumberOfBlocks,
+    /// The inner value of the lock-by-blockheight lock.
+    blocks: NumberOfBlocks,
 }
 
 impl IncompatibleTimeError {
-    /// Returns the time that was erroneously used to try and satisfy a lock-by-blockheight lock.
-    pub fn incompatible(&self) -> NumberOf512Seconds { self.time }
-
     /// Returns the height value of the lock-by-blockheight lock.
-    pub fn expected(&self) -> NumberOfBlocks { self.height }
+    pub fn expected(&self) -> NumberOfBlocks { self.blocks }
 }
 
 impl fmt::Display for IncompatibleTimeError {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "tried to satisfy a lock-by-blockheight lock {} with time: {}",
-            self.height, self.time
-        )
+        write!(f, "tried to satisfy a lock-by-blockheight lock {} by time", self.blocks,)
     }
 }
 
@@ -664,25 +626,29 @@ mod tests {
 
     #[test]
     fn incompatible_height_error() {
-        let height = NumberOfBlocks::from(10);
-        let time = NumberOf512Seconds::from_512_second_intervals(70);
-        let lock_by_time = LockTime::from(time);
-        let err = lock_by_time.is_satisfied_by_height(height).unwrap_err();
+        // This is an error test these values are not used in the error path.
+        let mined_at = BlockHeight::from_u32(700_000);
+        let chain_tip = BlockHeight::from_u32(800_000);
 
-        assert_eq!(err.incompatible(), height);
-        assert_eq!(err.expected(), time);
+        let lock_by_time = LockTime::from_512_second_intervals(70); // Arbitrary value.
+        let err = lock_by_time.is_satisfied_by_height(chain_tip, mined_at).unwrap_err();
+
+        let expected_time = NumberOf512Seconds::from_512_second_intervals(70);
+        assert_eq!(err.expected(), expected_time);
         assert!(!format!("{}", err).is_empty());
     }
 
     #[test]
     fn incompatible_time_error() {
-        let height = NumberOfBlocks::from(10);
-        let time = NumberOf512Seconds::from_512_second_intervals(70);
-        let lock_by_height = LockTime::from(height);
-        let err = lock_by_height.is_satisfied_by_time(time).unwrap_err();
+        // This is an error test these values are not used in the error path.
+        let mined_at = BlockMtp::from_u32(1_234_567_890);
+        let chain_tip = BlockMtp::from_u32(1_600_000_000);
 
-        assert_eq!(err.incompatible(), time);
-        assert_eq!(err.expected(), height);
+        let lock_by_height = LockTime::from_height(10); // Arbitrary value.
+        let err = lock_by_height.is_satisfied_by_time(chain_tip, mined_at).unwrap_err();
+
+        let expected_height = NumberOfBlocks::from(10);
+        assert_eq!(err.expected(), expected_height);
         assert!(!format!("{}", err).is_empty());
     }
 
