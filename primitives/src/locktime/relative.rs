@@ -378,7 +378,10 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_time(relative::Time::from_512_second_intervals(intervals + 10)).expect("a time"));
     /// ```
     #[inline]
-    pub fn is_satisfied_by_time(self, time: NumberOf512Seconds) -> Result<bool, IncompatibleTimeError> {
+    pub fn is_satisfied_by_time(
+        self,
+        time: NumberOf512Seconds,
+    ) -> Result<bool, IncompatibleTimeError> {
         use LockTime as L;
 
         match self {
@@ -589,15 +592,12 @@ mod tests {
         let time = NumberOf512Seconds::from_512_second_intervals(70);
         let lock_by_time = LockTime::from(time);
 
-        assert!(
-            !lock_by_time.is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(69)))
-        );
-        assert!(
-            lock_by_time.is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(70)))
-        );
-        assert!(
-            lock_by_time.is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(71)))
-        );
+        assert!(!lock_by_time
+            .is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(69))));
+        assert!(lock_by_time
+            .is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(70))));
+        assert!(lock_by_time
+            .is_implied_by(LockTime::from(NumberOf512Seconds::from_512_second_intervals(71))));
     }
 
     #[test]

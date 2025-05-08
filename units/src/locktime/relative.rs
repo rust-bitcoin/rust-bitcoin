@@ -286,7 +286,10 @@ mod tests {
     fn sanity_check() {
         assert_eq!(NumberOfBlocks::MAX.to_consensus_u32(), u32::from(u16::MAX));
         assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).value(), 100u16);
-        assert_eq!(NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(), 4_194_404u32); // 0x400064
+        assert_eq!(
+            NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(),
+            4_194_404u32
+        ); // 0x400064
     }
 
     #[test]
@@ -325,7 +328,8 @@ mod tests {
 
     #[test]
     fn from_seconds_floor_with_maximum_encodable_seconds_success() {
-        let actual = NumberOf512Seconds::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
+        let actual =
+            NumberOf512Seconds::from_seconds_floor(MAXIMUM_ENCODABLE_SECONDS + 511).unwrap();
         let expected = NumberOf512Seconds(u16::MAX);
         assert_eq!(actual, expected);
     }

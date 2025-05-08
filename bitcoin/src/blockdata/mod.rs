@@ -71,8 +71,8 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::relative` module.
         pub use primitives::locktime::relative::{
-            DisabledLockTimeError, NumberOfBlocks, IncompatibleHeightError, IncompatibleTimeError,
-            LockTime, NumberOf512Seconds, TimeOverflowError,
+            DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, LockTime,
+            NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
         };
 
         #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]

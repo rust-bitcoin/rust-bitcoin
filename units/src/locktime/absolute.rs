@@ -405,7 +405,12 @@ impl ParseError {
                 )
             }
             E::ParseInt(ParseIntError { input, bits: _, is_signed: _, source: _ }) => {
-                write!(f, "{} ({})", input.display_cannot_parse("absolute Height/MedianTimePast"), subject)
+                write!(
+                    f,
+                    "{} ({})",
+                    input.display_cannot_parse("absolute Height/MedianTimePast"),
+                    subject
+                )
             }
             E::Conversion(value) if *value < i64::from(lower_bound) => {
                 write!(f, "{} {} is below limit {}", subject, value, lower_bound)
