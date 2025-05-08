@@ -431,12 +431,9 @@ impl fmt::Display for ScriptBuf {
 
 #[cfg(feature = "hex")]
 impl fmt::LowerHex for Script {
-    // Currently we drop all formatter options.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let compact = internals::compact_size::encode(self.as_bytes().len());
-        write!(f, "{:x}", compact.as_slice().as_hex())?;
-        write!(f, "{:x}", self.as_bytes().as_hex())
+        fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
 #[cfg(feature = "alloc")]
@@ -454,12 +451,9 @@ internals::impl_to_hex_from_lower_hex!(ScriptBuf, |script_buf: &Self| script_buf
 
 #[cfg(feature = "hex")]
 impl fmt::UpperHex for Script {
-    // Currently we drop all formatter options.
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let compact = internals::compact_size::encode(self.as_bytes().len());
-        write!(f, "{:X}", compact.as_slice().as_hex())?;
-        write!(f, "{:X}", self.as_bytes().as_hex())
+        fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
 
@@ -511,8 +505,7 @@ impl serde::Serialize for Script {
         S: serde::Serializer,
     {
         if serializer.is_human_readable() {
-            // Do not call LowerHex because we don't want to add the len prefix.
-            serializer.collect_str(&format_args!("{}", self.as_bytes().as_hex()))
+            serializer.collect_str(&format_args!("{:x}", self))
         } else {
             serializer.serialize_bytes(self.as_bytes())
         }
@@ -803,8 +796,8 @@ mod tests {
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script), "0300a1b2");
-            assert_eq!(format!("{:X}", script), "0300A1B2");
+            assert_eq!(format!("{:x}", script), "00a1b2");
+            assert_eq!(format!("{:X}", script), "00A1B2");
         }
         assert!(!format!("{:?}", script).is_empty());
     }
@@ -816,8 +809,8 @@ mod tests {
 
         #[cfg(feature = "hex")]
         {
-            assert_eq!(format!("{:x}", script_buf), "0300a1b2");
-            assert_eq!(format!("{:X}", script_buf), "0300A1B2");
+            assert_eq!(format!("{:x}", script_buf), "00a1b2");
+            assert_eq!(format!("{:X}", script_buf), "00A1B2");
         }
         assert!(!format!("{:?}", script_buf).is_empty());
     }
@@ -935,7 +928,7 @@ mod tests {
     fn script_to_hex() {
         let script = Script::from_bytes(&[0xa1, 0xb2, 0xc3]);
         let hex = script.to_hex();
-        assert_eq!(hex, "03a1b2c3");
+        assert_eq!(hex, "a1b2c3");
     }
 
     #[test]
@@ -944,6 +937,6 @@ mod tests {
     fn scriptbuf_to_hex() {
         let script = ScriptBuf::from_bytes(vec![0xa1, 0xb2, 0xc3]);
         let hex = script.to_hex();
-        assert_eq!(hex, "03a1b2c3");
+        assert_eq!(hex, "a1b2c3");
     }
 }
