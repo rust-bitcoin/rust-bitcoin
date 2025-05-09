@@ -27,6 +27,7 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount};
+use units::NumOpResult;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -773,14 +774,24 @@ impl Decodable for Transaction {
 ///
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `input_weight_prediction` - the predicted input weight.
+///
+/// # Returns
+///
+/// This will return [`NumOpResult::Error`] if the fee calculation (fee_rate * weight) overflows.
+/// Otherwise, [`NumOpResult::Valid`] will wrap the successful calculation.
 pub fn effective_value(
     fee_rate: FeeRate,
     input_weight_prediction: InputWeightPrediction,
     value: Amount,
-) -> Option<SignedAmount> {
+) -> NumOpResult<SignedAmount> {
     let weight = input_weight_prediction.total_weight();
-    let signed_input_fee = fee_rate.to_fee(weight).ok()?.to_signed();
-    value.to_signed().checked_sub(signed_input_fee)
+
+    let fee = match fee_rate.to_fee(weight) {
+        NumOpResult::Valid(x) => x.to_signed(),
+        NumOpResult::Error(e) => return NumOpResult::Error(e)
+    };
+
+    value.to_signed() - fee     // Cannot overflow.
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1665,7 +1676,7 @@ mod tests {
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
             effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
-        assert!(eff_value.is_none());
+        assert!(eff_value.is_error());
     }
 
     #[test]
