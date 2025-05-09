@@ -151,14 +151,16 @@ impl FeeRate {
     ///
     /// Returns [`NumOpResult::Error`] if overflow occurred.
     pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
-        if let Some(fee) = self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
-            if let Some(round_up) = fee.checked_add(999) {
-                if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
-                    return NumOpResult::Valid(ret);
-                }
+        let product = self.to_sat_per_kwu() as u128 * weight.to_wu() as u128;
+
+        if product > Amount::MAX.to_sat() as u128 + 1 {
+            NumOpResult::Error(NumOpError::while_doing(MathOp::Mul))
+        } else {
+            match Amount::from_sat((product as u64 + 999) / 1_000) {
+                Ok(res) => NumOpResult::Valid(res),
+                _ => panic!("overflow checked above")
             }
         }
-        NumOpResult::Error(NumOpError::while_doing(MathOp::Mul))
     }
 }
 
