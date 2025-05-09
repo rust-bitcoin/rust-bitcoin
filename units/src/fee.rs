@@ -15,7 +15,7 @@ use core::ops;
 
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpError, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.
@@ -158,7 +158,7 @@ impl FeeRate {
                 }
             }
         }
-        NumOpResult::Error(E::while_doing(MathOp::Mul))
+        NumOpResult::Error(NumOpError::while_doing(MathOp::Mul))
     }
 }
 
