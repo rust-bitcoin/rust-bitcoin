@@ -349,7 +349,7 @@ mod tests {
             .to_fee(Weight::MAX)
             .unwrap_err()
             .operation();
-        assert!(operation.is_multiplication());
+        assert!(operation.is_mul());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
