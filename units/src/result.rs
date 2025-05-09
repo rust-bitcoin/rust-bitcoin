@@ -256,16 +256,16 @@ impl MathOp {
     pub fn is_div_by_zero(self) -> bool { !self.is_overflow() }
 
     /// Returns `true` if this operation error'ed due to addition.
-    pub fn is_addition(self) -> bool { self == MathOp::Add }
+    pub fn is_add(self) -> bool { self == MathOp::Add }
 
     /// Returns `true` if this operation error'ed due to subtraction.
-    pub fn is_subtraction(self) -> bool { self == MathOp::Sub }
+    pub fn is_sub(self) -> bool { self == MathOp::Sub }
 
     /// Returns `true` if this operation error'ed due to multiplication.
-    pub fn is_multiplication(self) -> bool { self == MathOp::Mul }
+    pub fn is_mul(self) -> bool { self == MathOp::Mul }
 
     /// Returns `true` if this operation error'ed due to negation.
-    pub fn is_negation(self) -> bool { self == MathOp::Neg }
+    pub fn is_neg(self) -> bool { self == MathOp::Neg }
 }
 
 impl fmt::Display for MathOp {
