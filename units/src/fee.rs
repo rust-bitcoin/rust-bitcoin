@@ -118,7 +118,7 @@ impl FeeRate {
     /// [`NumOpResult::Error`] if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    pub fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
+    pub const fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
         self.checked_mul_by_weight(weight)
     }
 
