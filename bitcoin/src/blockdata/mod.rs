@@ -41,11 +41,11 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::absolute` module.
         #[rustfmt::skip]        // Keep public re-exports separate.
-        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, Mtp};
+        pub use primitives::locktime::absolute::{ConversionError, Height, LockTime, ParseHeightError, ParseTimeError, MedianTimePast};
 
-        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[deprecated(since = "TBD", note = "use `MedianTimePast` instead")]
         #[doc(hidden)]
-        pub type Time = Mtp;
+        pub type Time = MedianTimePast;
 
         impl Encodable for LockTime {
             #[inline]
@@ -71,17 +71,17 @@ pub mod locktime {
 
         /// Re-export everything from the `primitives::locktime::relative` module.
         pub use primitives::locktime::relative::{
-            DisabledLockTimeError, HeightInterval, IncompatibleHeightError, IncompatibleTimeError,
-            LockTime, MtpInterval, TimeOverflowError,
+            DisabledLockTimeError, IncompatibleHeightError, IncompatibleTimeError, LockTime,
+            NumberOf512Seconds, NumberOfBlocks, TimeOverflowError,
         };
 
-        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
         #[doc(hidden)]
-        pub type Height = HeightInterval;
+        pub type Height = NumberOfBlocks;
 
-        #[deprecated(since = "TBD", note = "use `Mtp` instead")]
+        #[deprecated(since = "TBD", note = "use `NumberOf512Seconds` instead")]
         #[doc(hidden)]
-        pub type Time = MtpInterval;
+        pub type Time = NumberOf512Seconds;
     }
 }
 

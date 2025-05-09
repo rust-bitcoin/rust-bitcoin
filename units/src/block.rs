@@ -142,18 +142,18 @@ impl BlockHeightInterval {
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
-impl From<relative::HeightInterval> for BlockHeightInterval {
-    /// Converts a [`locktime::relative::HeightInterval`] to a [`BlockHeightInterval`].
+impl From<relative::NumberOfBlocks> for BlockHeightInterval {
+    /// Converts a [`locktime::relative::NumberOfBlocks`] to a [`BlockHeightInterval`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
-    fn from(h: relative::HeightInterval) -> Self { Self::from_u32(h.to_height().into()) }
+    fn from(h: relative::NumberOfBlocks) -> Self { Self::from_u32(h.to_height().into()) }
 }
 
-impl TryFrom<BlockHeightInterval> for relative::HeightInterval {
-    type Error = TooBigForRelativeBlockHeightIntervalError;
+impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
+    type Error = TooBigForRelativeHeightError;
 
-    /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::HeightInterval`].
+    /// Converts a [`BlockHeightInterval`] to a [`locktime::relative::NumberOfBlocks`].
     ///
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
@@ -161,9 +161,9 @@ impl TryFrom<BlockHeightInterval> for relative::HeightInterval {
         let h = h.to_u32();
 
         if h > u32::from(u16::MAX) {
-            return Err(TooBigForRelativeBlockHeightIntervalError(h));
+            return Err(TooBigForRelativeHeightError(h));
         }
-        Ok(relative::HeightInterval::from(h as u16)) // Cast ok, value checked above.
+        Ok(relative::NumberOfBlocks::from(h as u16)) // Cast ok, value checked above.
     }
 }
 
@@ -171,7 +171,7 @@ impl_u32_wrapper! {
     /// The median timestamp of 11 consecutive blocks.
     ///
     /// This type is not meant for constructing time-based timelocks. It is a general purpose
-    /// MTP abstraction. For locktimes please see [`locktime::absolute::Mtp`].
+    /// MTP abstraction. For locktimes please see [`locktime::absolute::MedianTimePast`].
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -202,29 +202,31 @@ impl BlockMtp {
     }
 }
 
-impl From<absolute::Mtp> for BlockMtp {
-    /// Converts a [`locktime::absolute::Mtp`] to a [`BlockMtp`].
+impl From<absolute::MedianTimePast> for BlockMtp {
+    /// Converts a [`locktime::absolute::MedianTimePast`] to a [`BlockMtp`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
-    fn from(h: absolute::Mtp) -> Self { Self::from_u32(h.to_u32()) }
+    fn from(h: absolute::MedianTimePast) -> Self { Self::from_u32(h.to_u32()) }
 }
 
-impl TryFrom<BlockMtp> for absolute::Mtp {
+impl TryFrom<BlockMtp> for absolute::MedianTimePast {
     type Error = absolute::ConversionError;
 
     /// Converts a [`BlockHeight`] to a [`locktime::absolute::Height`].
     ///
     /// An absolute locktime MTP has a minimum value of [`absolute::LOCK_TIME_THRESHOLD`],
     /// while [`BlockMtp`] may take the full range of `u32`.
-    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> { absolute::Mtp::from_u32(h.to_u32()) }
+    fn try_from(h: BlockMtp) -> Result<Self, Self::Error> {
+        absolute::MedianTimePast::from_u32(h.to_u32())
+    }
 }
 
 impl_u32_wrapper! {
     /// An unsigned difference between two [`BlockMtp`]s.
     ///
     /// This type is not meant for constructing time-based timelocks. It is a general purpose
-    /// MTP abstraction. For locktimes please see [`locktime::relative::MtpInterval`].
+    /// MTP abstraction. For locktimes please see [`locktime::relative::NumberOf512Seconds`].
     ///
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -234,7 +236,7 @@ impl_u32_wrapper! {
 }
 
 impl BlockMtpInterval {
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding down.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding down.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
@@ -246,11 +248,11 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_floor(
         self,
-    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
-        relative::MtpInterval::from_seconds_floor(self.to_u32())
+    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+        relative::NumberOf512Seconds::from_seconds_floor(self.to_u32())
     }
 
-    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::MtpInterval`], rounding up.
+    /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding up.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
     /// [`BlockMtpInterval`], like all block timestamp types, has a one-second resolution.
@@ -262,8 +264,8 @@ impl BlockMtpInterval {
     #[inline]
     pub const fn to_relative_mtp_interval_ceil(
         self,
-    ) -> Result<relative::MtpInterval, relative::TimeOverflowError> {
-        relative::MtpInterval::from_seconds_ceil(self.to_u32())
+    ) -> Result<relative::NumberOf512Seconds, relative::TimeOverflowError> {
+        relative::NumberOf512Seconds::from_seconds_ceil(self.to_u32())
     }
 
     /// Attempt to subtract two [`BlockMtpInterval`]s, returning `None` in case of overflow.
@@ -273,32 +275,32 @@ impl BlockMtpInterval {
     pub fn checked_add(self, other: Self) -> Option<Self> { self.0.checked_add(other.0).map(Self) }
 }
 
-impl From<relative::MtpInterval> for BlockMtpInterval {
-    /// Converts a [`locktime::relative::MtpInterval`] to a [`BlockMtpInterval `].
+impl From<relative::NumberOf512Seconds> for BlockMtpInterval {
+    /// Converts a [`locktime::relative::NumberOf512Seconds`] to a [`BlockMtpInterval `].
     ///
     /// A relative locktime MTP interval has a resolution of 512 seconds, and a maximum value
     /// of `u16::MAX` 512-second intervals. [`BlockMtpInterval`] may take the full range of
     /// `u32`.
-    fn from(h: relative::MtpInterval) -> Self { Self::from_u32(h.to_seconds()) }
+    fn from(h: relative::NumberOf512Seconds) -> Self { Self::from_u32(h.to_seconds()) }
 }
 
 /// Error returned when the block interval is too big to be used as a relative lock time.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TooBigForRelativeBlockHeightIntervalError(u32);
+pub struct TooBigForRelativeHeightError(u32);
 
-impl fmt::Display for TooBigForRelativeBlockHeightIntervalError {
+impl fmt::Display for TooBigForRelativeHeightError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "block interval is too big to be used as a relative lock time: {} (max: {})",
             self.0,
-            relative::HeightInterval::MAX
+            relative::NumberOfBlocks::MAX
         )
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for TooBigForRelativeBlockHeightIntervalError {}
+impl std::error::Error for TooBigForRelativeHeightError {}
 
 crate::internal_macros::impl_op_for_references! {
     // height - height = interval
@@ -454,15 +456,15 @@ mod tests {
         assert_eq!(interval, 100);
 
         let interval_from_height: BlockHeightInterval =
-            relative::HeightInterval::from(10u16).into();
+            relative::NumberOfBlocks::from(10u16).into();
         assert_eq!(interval_from_height.to_u32(), 10u32);
 
         let invalid_height_greater =
-            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX) + 1));
+            relative::NumberOfBlocks::try_from(BlockHeightInterval(u32::from(u16::MAX) + 1));
         assert!(invalid_height_greater.is_err());
 
         let valid_height =
-            relative::HeightInterval::try_from(BlockHeightInterval(u32::from(u16::MAX)));
+            relative::NumberOfBlocks::try_from(BlockHeightInterval(u32::from(u16::MAX)));
         assert!(valid_height.is_ok());
     }
 

@@ -14,9 +14,8 @@
 use core::ops;
 
 use NumOpResult as R;
-use crate::NumOpError as E;
 
-use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.
@@ -119,7 +118,9 @@ impl FeeRate {
     /// [`NumOpResult::Error`] if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    pub fn to_fee(self, weight: Weight) -> NumOpResult<Amount> { self.checked_mul_by_weight(weight) }
+    pub fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
+        self.checked_mul_by_weight(weight)
+    }
 
     /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning [`None`]
     /// if an overflow occurred.
@@ -150,7 +151,7 @@ impl FeeRate {
     ///
     /// Returns [`NumOpResult::Error`] if overflow occurred.
     pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
-        if let Some(fee) =  self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
+        if let Some(fee) = self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             if let Some(round_up) = fee.checked_add(999) {
                 if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
                     return NumOpResult::Valid(ret);
