@@ -10,7 +10,7 @@ config=.github/labeler.yml
 # Define a default value for SCAN_DIR if not set
 : "${SCAN_DIR:=.}"
 
-if [ "${1:-default}" '!=' "--force" ] && ! git diff --exit-code "$config";
+if [ "${1:-default}" != "--force" ] && ! git diff --exit-code "$config";
 then
 	echo "Error: $config is not committed."
 	echo "Refusing to overwrite it to prevent disaster."
