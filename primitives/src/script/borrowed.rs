@@ -49,6 +49,14 @@ internals::transparent_newtype! {
     /// The type is `#[repr(transparent)]` for internal purposes only!
     /// No consumer crate may rely on the representation of the struct!
     ///
+    /// # Hexadecimal strings
+    ///
+    /// Scripts are consensus encoded with a length prefix and as a result of this in some places in
+    /// the eccosystem one will encounter hex strings that include the prefix while in other places
+    /// the prefix is excluded. To support parsing and formatting scripts as hex we provide a bunch
+    /// of different APIs and trait implementations. Please see [`examples/script.rs`] for a
+    /// thorough example of all the APIs.
+    ///
     /// # Bitcoin Core References
     ///
     /// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)

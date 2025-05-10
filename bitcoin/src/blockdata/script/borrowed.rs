@@ -376,12 +376,19 @@ crate::internal_macros::define_extension_trait! {
         fn to_asm_string(&self) -> String { self.to_string() }
 
         /// Consensus encodes the script as lower-case hex.
-        fn to_hex_string(&self) -> String { consensus::encode::serialize_hex(self) }
+        #[deprecated(since = "TBD", note = "use `to_hex_string_prefixed()` instead")]
+        fn to_hex_string(&self) -> String { self.to_hex_string_prefixed() }
+
+        /// Consensus encodes the script as lower-case hex.
+        fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
 
         /// Consensus encodes the script as lower-case hex.
         ///
-        /// This is **not** consensus encoding, you likely want to use `to_hex_string`. The returned
-        /// hex string will not include the length prefix.
+        /// This is **not** consensus encoding, you likely want to use `to_hex_string_prefixed`.
+        ///
+        /// # Returns
+        ///
+        /// The returned hex string will not include the length prefix.
         fn to_hex_string_no_length_prefix(&self) -> String {
             self.as_bytes().to_lower_hex_string()
         }

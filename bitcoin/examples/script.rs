@@ -15,10 +15,16 @@ use bitcoin::ScriptBuf;
 fn main() {
     let pk = "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".parse::<WPubkeyHash>().unwrap();
 
-    // TL;DR Use `to_hex_string` and `from_hex`.
+    // TL;DR Use `to_hex_string_prefixed` and `from_hex_prefixed`.
     let script_code = script::p2wpkh_script_code(pk);
-    let hex = script_code.to_hex_string();
-    let decoded = ScriptBuf::from_hex(&hex).unwrap();
+    let hex = script_code.to_hex_string_prefixed();
+    let decoded = ScriptBuf::from_hex_prefixed(&hex).unwrap();
+    assert_eq!(decoded, script_code);
+
+    // Or if you prefer: `to_hex_string_no_length_prefix` and `from_hex_no_length_prefix`.
+    let script_code = script::p2wpkh_script_code(pk);
+    let hex = script_code.to_hex_string_no_length_prefix();
+    let decoded = ScriptBuf::from_hex_no_length_prefix(&hex).unwrap();
     assert_eq!(decoded, script_code);
 
     // Writes the script as human-readable eg, OP_DUP OP_HASH160 OP_PUSHBYTES_20 ...
@@ -27,28 +33,25 @@ fn main() {
     // We do not implement parsing scripts from human-readable format.
     // let decoded = s.parse::<ScriptBuf>().unwrap();
 
-    // This is equivalent to consensus encoding i.e., includes the length prefix.
+    // This is not equivalent to consensus encoding i.e., does not include the length prefix.
     let hex_lower_hex_trait = format!("{script_code:x}");
     println!("hex created using `LowerHex`: {hex_lower_hex_trait}");
 
     // The `deserialize_hex` function requires the length prefix.
-    assert_eq!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).unwrap(), script_code);
-    // And so does `from_hex`.
-    assert_eq!(ScriptBuf::from_hex(&hex_lower_hex_trait).unwrap(), script_code);
-
-    // And we also provide an explicit constructor that does not use the length prefix.
-    let other = ScriptBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap();
-    // Without a prefix the script parses but its not the one we meant.
-    assert_ne!(other, script_code);
+    assert!(encode::deserialize_hex::<ScriptBuf>(&hex_lower_hex_trait).is_err());
+    // And so does `from_hex_prefixed`.
+    assert!(ScriptBuf::from_hex_prefixed(&hex_lower_hex_trait).is_err());
+    // But we provide an explicit constructor that does not.
+    assert_eq!(ScriptBuf::from_hex_no_length_prefix(&hex_lower_hex_trait).unwrap(), script_code);
 
     // This is consensus encoding i.e., includes the length prefix.
-    let hex_inherent = script_code.to_hex_string(); // Defined in `ScriptExt`.
-    println!("hex created using inherent `to_hex_string`: {hex_inherent}");
+    let hex_inherent = script_code.to_hex_string_prefixed(); // Defined in `ScriptExt`.
+    println!("hex created using inherent `to_hex_string_prefixed`: {hex_inherent}");
 
-    // The inverse of `to_hex_string` is `from_hex`.
-    let decoded = ScriptBuf::from_hex(&hex_inherent).unwrap(); // Defined in `ScriptBufExt`.
+    // The inverse of `to_hex_string_prefixed` is `from_hex_string_prefixed`.
+    let decoded = ScriptBuf::from_hex_prefixed(&hex_inherent).unwrap(); // Defined in `ScriptBufExt`.
     assert_eq!(decoded, script_code);
-    // We can also parse the output of `to_hex_string` using `deserialize_hex`.
+    // We can also parse the output of `to_hex_string_prefixed` using `deserialize_hex`.
     let decoded = encode::deserialize_hex::<ScriptBuf>(&hex_inherent).unwrap();
     assert_eq!(decoded, script_code);
 
@@ -58,8 +61,10 @@ fn main() {
 
     let decoded: ScriptBuf = encode::deserialize_hex(&encoded).unwrap();
     assert_eq!(decoded, script_code);
+
     // And we can mix these to calls because both include the length prefix.
-    let decoded = ScriptBuf::from_hex(&encoded).unwrap();
+    let encoded = encode::serialize_hex(&script_code);
+    let decoded = ScriptBuf::from_hex_prefixed(&encoded).unwrap();
     assert_eq!(decoded, script_code);
 
     // Encode/decode using a byte vector.
