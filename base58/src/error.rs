@@ -2,9 +2,11 @@
 
 //! Error code for the `base58` crate.
 
+use alloc::boxed::Box;
 use core::convert::Infallible;
 use core::fmt;
 
+use internals::error::ParseErrorContext;
 use internals::write_err;
 
 /// An error occurred during base58 decoding (with checksum).
@@ -64,6 +66,50 @@ impl fmt::Display for Error {
             IncorrectChecksum(ref e) => write_err!(f, "incorrect checksum"; e),
             TooShort(ref e) => write_err!(f, "too short"; e),
         }
+    }
+}
+
+impl ParseErrorContext for Error {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match &self.0 {
+            ErrorInner::Decode(e) => Box::new(ExpectingDisplay(e.expecting())),
+            ErrorInner::IncorrectChecksum(_) => Box::new("a correct checksum"),
+            ErrorInner::TooShort(_) => Box::new("at least 4 bytes of data"),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match &self.0 {
+            ErrorInner::IncorrectChecksum(_) => Some(Box::new("Data might be corrupted or belong to a different network.")),
+            ErrorInner::Decode(e) => e.help(),
+            ErrorInner::TooShort(e) => {
+                struct HelpDisplay(usize);
+                impl fmt::Display for HelpDisplay {
+                    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                        write!(f, "Data is too short: {} bytes (minimum required is 4).", self.0)
+                    }
+                }
+                Some(Box::new(HelpDisplay(e.length)))
+            },
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match &self.0 {
+            ErrorInner::Decode(e) => e.change_suggestion(),
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        None
     }
 }
 
@@ -168,6 +214,30 @@ impl InvalidCharacterError {
 impl fmt::Display for InvalidCharacterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "invalid base58 character {:#x}", self.0.invalid)
+    }
+}
+
+impl ParseErrorContext for InvalidCharacterError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("only valid base58 characters (123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz)")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay(u8);
+        impl fmt::Display for HelpDisplay {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Character '{}' (byte value {}) is not valid in Base58.", self.0 as char, self.0)
+            }
+        }
+        Some(Box::new(HelpDisplay(self.0.invalid)))
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        None
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        Some("Base58 uses a restricted character set to avoid visual ambiguity.")
     }
 }
 

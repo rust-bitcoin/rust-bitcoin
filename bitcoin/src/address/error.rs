@@ -2,7 +2,9 @@
 
 use core::convert::Infallible;
 use core::fmt;
+use alloc::boxed::Box;
 
+use internals::error::ParseErrorContext;
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
@@ -103,6 +105,48 @@ impl fmt::Display for ParseError {
     }
 }
 
+impl ParseErrorContext for ParseError {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        // Helper struct to prevent lifetime issues with returning refs to temporary strings
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match self {
+            ParseError::Base58(e) => e.expecting(),
+            ParseError::Bech32(e) => e.expecting(),
+            ParseError::NetworkValidation(e) => Box::new(ExpectingDisplay(e.expecting())),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match self {
+            ParseError::Base58(e) => e.help(),
+            ParseError::Bech32(e) => e.help(),
+            ParseError::NetworkValidation(e) => e.help(),
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match self {
+            ParseError::Base58(e) => e.change_suggestion(),
+            ParseError::Bech32(e) => e.change_suggestion(),
+            ParseError::NetworkValidation(e) => e.note(),
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        match self {
+            ParseError::Base58(e) => e.note(),
+            ParseError::Bech32(e) => e.note(),
+            ParseError::NetworkValidation(e) => e.note(),
+        }
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -166,6 +210,41 @@ impl fmt::Display for NetworkValidationError {
 #[cfg(feature = "std")]
 impl std::error::Error for NetworkValidationError {}
 
+/// Helper struct to display the expecting message for NetworkValidationError
+struct NetworkValidationExpecting<'a>(&'a NetworkValidationError);
+
+impl fmt::Display for NetworkValidationExpecting<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "an address valid for the {} network", self.0.required)
+    }
+}
+
+impl NetworkValidationError {
+    fn expecting<'a>(&'a self) -> impl fmt::Display + 'a {
+        struct ExpectingDisplay<'a>(&'a Network);
+        impl<'a> fmt::Display for ExpectingDisplay<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "an address for the {} network", self.0)
+            }
+        }
+        ExpectingDisplay(&self.required)
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay<'a>(&'a Address<NetworkUnchecked>);
+        impl<'a> fmt::Display for HelpDisplay<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "The address is for network {:?}, which is incompatible.", self.0.network_kind())
+            }
+        }
+        Some(Box::new(HelpDisplay(&self.address)))
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        Some("Bitcoin addresses are network-specific. Make sure you're using the correct network type.")
+    }
+}
+
 /// Bech32 related error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -193,6 +272,34 @@ impl fmt::Display for Bech32Error {
             WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
             WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
             UnknownHrp(ref e) => write_err!(f, "unknown hrp error"; e),
+        }
+    }
+}
+
+impl ParseErrorContext for Bech32Error {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        // Helper struct to prevent lifetime issues with returning refs to temporary strings
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        match self {
+            Bech32Error::ParseBech32(e) => e.expecting(),
+            Bech32Error::WitnessVersion(_) => Box::new("a valid witness version (0-16)"),
+            Bech32Error::WitnessProgram(_) => Box::new("a valid witness program length (2-40 bytes) that matches the version"),
+            Bech32Error::UnknownHrp(ref e) => Box::new("a known human-readable prefix (hrp)"),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match self {
+            Bech32Error::WitnessVersion(e) => Some(Box::new(e.to_string())),
+            Bech32Error::WitnessProgram(e) => Some(Box::new(e.to_string())),
+            Bech32Error::UnknownHrp(e) => e.help(),
+            Bech32Error::ParseBech32(e) => e.help(),
         }
     }
 }
@@ -238,6 +345,16 @@ impl fmt::Display for ParseBech32Error {
     }
 }
 
+impl ParseErrorContext for ParseBech32Error {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        Box::new("valid bech32 or bech32m encoding with correct checksum and character set")
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        Some(Box::new(self.0.to_string()))
+    }
+}
+
 #[cfg(feature = "std")]
 impl std::error::Error for ParseBech32Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
@@ -270,6 +387,48 @@ impl fmt::Display for Base58Error {
             LegacyAddressTooLong(ref e) => write_err!(f, "legacy address length error"; e),
             InvalidBase58PayloadLength(ref e) => write_err!(f, "legacy payload length error"; e),
             InvalidLegacyPrefix(ref e) => write_err!(f, "legacy prefix error"; e),
+        }
+    }
+}
+
+impl ParseErrorContext for Base58Error {
+    fn expecting<'a>(&'a self) -> Box<dyn fmt::Display + 'a> {
+        // Helper struct to manage lifetimes
+        struct ExpectingDisplay<D: fmt::Display>(D);
+        impl<D: fmt::Display> fmt::Display for ExpectingDisplay<D> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+
+        use Base58Error::*;
+        match self {
+            ParseBase58(e) => e.expecting(),
+            LegacyAddressTooLong(_) => Box::new("a base58 string of at most 50 characters"),
+            InvalidBase58PayloadLength(_) => Box::new("a base58 payload of 21 bytes for a legacy address"),
+            InvalidLegacyPrefix(_) => Box::new("a valid network prefix byte (e.g., 0 for p2pkh, 5 for p2sh on mainnet)"),
+        }
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        match self {
+            Base58Error::ParseBase58(e) => e.help(),
+            _ => None
+        }
+    }
+
+    fn change_suggestion(&self) -> Option<&'static str> {
+        match self {
+            Base58Error::ParseBase58(e) => e.change_suggestion(),
+            _ => None
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        match self {
+            Base58Error::ParseBase58(e) => e.note(),
+            Base58Error::InvalidLegacyPrefix(_) => Some("Common prefixes: Mainnet P2PKH=0, P2SH=5; Testnet P2PKH=111, P2SH=196."),
+            _ => None
         }
     }
 }
@@ -370,3 +529,16 @@ impl fmt::Display for InvalidLegacyPrefixError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for InvalidLegacyPrefixError {}
+
+// Add help for UnknownHrpError
+impl UnknownHrpError {
+    fn help<'a>(&'a self) -> Option<Box<dyn fmt::Display + 'a>> {
+        struct HelpDisplay<'a>(&'a String);
+        impl<'a> fmt::Display for HelpDisplay<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "The human-readable part \"{}\" is not recognized.", self.0)
+            }
+        }
+        Some(Box::new(HelpDisplay(&self.0)))
+    }
+}
