@@ -1931,6 +1931,62 @@ mod tests {
     }
 
     #[test]
+    // needless_borrows_for_generic_args incorrecctly identifies &[] as a needless borrow
+    #[allow(clippy::needless_borrows_for_generic_args)]
+    fn weight_prediction_new() {
+        let p2wpkh_max = InputWeightPrediction::new(0, [72,33]);
+        assert_eq!(p2wpkh_max.script_size, 1);
+        assert_eq!(p2wpkh_max.witness_size, 108);
+        assert_eq!(p2wpkh_max.total_weight(), Weight::from_wu(272));
+        assert_eq!(p2wpkh_max.total_weight(), InputWeightPrediction::P2WPKH_MAX.total_weight());
+
+        let nested_p2wpkh_max = InputWeightPrediction::new(23, [72, 33]);
+        assert_eq!(nested_p2wpkh_max.script_size, 24);
+        assert_eq!(nested_p2wpkh_max.witness_size, 108);
+        assert_eq!(nested_p2wpkh_max.total_weight(), Weight::from_wu(364));
+        assert_eq!(
+            nested_p2wpkh_max.total_weight(),
+            InputWeightPrediction::NESTED_P2WPKH_MAX.total_weight()
+        );
+
+        let p2pkh_compressed_max = InputWeightPrediction::new(107, &[]);
+        assert_eq!(p2pkh_compressed_max.script_size, 108);
+        assert_eq!(p2pkh_compressed_max.witness_size, 0);
+        assert_eq!(p2pkh_compressed_max.total_weight(), Weight::from_wu(592));
+        assert_eq!(
+            p2pkh_compressed_max.total_weight(),
+            InputWeightPrediction::P2PKH_COMPRESSED_MAX.total_weight()
+        );
+
+        let p2pkh_uncompressed_max = InputWeightPrediction::new(139, &[]);
+        assert_eq!(p2pkh_uncompressed_max.script_size, 140);
+        assert_eq!(p2pkh_uncompressed_max.witness_size, 0);
+        assert_eq!(p2pkh_uncompressed_max.total_weight(), Weight::from_wu(720));
+        assert_eq!(
+            p2pkh_uncompressed_max.total_weight(),
+            InputWeightPrediction::P2PKH_UNCOMPRESSED_MAX.total_weight()
+        );
+
+        let p2tr_key_default_sighash = InputWeightPrediction::new(0, [64]);
+        assert_eq!(p2tr_key_default_sighash.script_size, 1);
+        assert_eq!(p2tr_key_default_sighash.witness_size, 66);
+        assert_eq!(p2tr_key_default_sighash.total_weight(), Weight::from_wu(230));
+        assert_eq!(
+            p2tr_key_default_sighash.total_weight(),
+            InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH.total_weight()
+        );
+
+        let p2tr_key_non_default_sighash = InputWeightPrediction::new(0, [65]);
+        assert_eq!(p2tr_key_non_default_sighash.script_size, 1);
+        assert_eq!(p2tr_key_non_default_sighash.witness_size, 67);
+        assert_eq!(p2tr_key_non_default_sighash.total_weight(), Weight::from_wu(231));
+        assert_eq!(
+            p2tr_key_non_default_sighash.total_weight(),
+            InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH.total_weight()
+        );
+    }
+
+    #[test]
     fn sequence_debug_output() {
         let seq = Sequence::from_seconds_floor(1000);
         println!("{:?}", seq)
