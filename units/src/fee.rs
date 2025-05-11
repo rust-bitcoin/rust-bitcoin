@@ -345,10 +345,7 @@ mod tests {
 
     #[test]
     fn fee_wu() {
-        let operation = FeeRate::from_sat_per_kwu(10)
-            .to_fee(Weight::MAX)
-            .unwrap_err()
-            .operation();
+        let operation = FeeRate::from_sat_per_kwu(10).to_fee(Weight::MAX).unwrap_err().operation();
         assert!(operation.is_multiplication());
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
