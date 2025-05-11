@@ -210,6 +210,13 @@ fn script_builder() {
 }
 
 #[test]
+fn script_builder_with_capacity() {
+    let script = Builder::with_capacity(42);
+
+    assert!(script.into_script().capacity() >= 42);
+}
+
+#[test]
 fn script_generators() {
     let pubkey = "0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e"
         .parse::<PublicKey>()
