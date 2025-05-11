@@ -233,6 +233,9 @@ impl LockTime {
     /// is satisfied if a transaction with `nLockTime` ([`Transaction::lock_time`]) set to
     /// `height`/`time` is valid.
     ///
+    /// The parameters are expected to represent the current chain tip. If this function returns
+    /// true a transaction with this locktime can be included in the next block.
+    ///
     /// # Examples
     ///
     /// ```no_run
