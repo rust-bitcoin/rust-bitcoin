@@ -40,7 +40,6 @@ pub use self::{
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Psbt {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
     pub unsigned_tx: Transaction,
@@ -50,10 +49,8 @@ pub struct Psbt {
     /// derivation path as defined by BIP 32.
     pub xpub: BTreeMap<Xpub, KeySource>,
     /// Global proprietary key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown global key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 
     /// The corresponding key-value map for each input in the unsigned transaction.
@@ -728,6 +725,53 @@ impl Psbt {
             outputs = outputs.checked_add(out.value).ok_or(Error::FeeOverflow)?;
         }
         inputs.checked_sub(outputs).ok_or(Error::NegativeFee)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Psbt {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use crate::prelude::ToString;
+
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&self.to_string())
+        } else {
+            serializer.serialize_bytes(&self.serialize())
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Psbt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor
+        {
+            type Value = Psbt;
+
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "a psbt")
+            }
+
+            fn visit_bytes<E: serde::de::Error>(self, bytes: &[u8]) -> Result<Self::Value, E> {
+                Psbt::deserialize(bytes)
+                    .map_err(|e| serde::de::Error::custom(e))
+            }
+
+            fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
+                s.parse().map_err(|e| serde::de::Error::custom(e))
+            }
+        }
+
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_str(Visitor)
+        } else {
+            deserializer.deserialize_bytes(Visitor)
+        }
     }
 }
 
