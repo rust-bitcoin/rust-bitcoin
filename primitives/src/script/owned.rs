@@ -62,7 +62,7 @@ impl ScriptBuf {
         Script::from_boxed_bytes(self.into_bytes().into_boxed_slice())
     }
 
-    /// Constructs a new empty script with pre-allocated capacity.
+    /// Constructs a new empty script with at least the specified capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         ScriptBuf::from_bytes(Vec::with_capacity(capacity))
