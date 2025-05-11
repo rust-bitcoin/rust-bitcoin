@@ -30,7 +30,7 @@ use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d};
 use bitcoin::hex::FromHex;
 use bitcoin::locktime::{absolute, relative};
-use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
+use bitcoin::psbt::raw;
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::script::ScriptBufExt as _;
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
@@ -320,30 +320,11 @@ fn serde_regression_psbt() {
 
     let got = serialize(&psbt).unwrap();
     let want = include_bytes!("data/serde/psbt_bincode") as &[_];
-    assert_eq!(got, want)
-}
+    assert_eq!(got, want);
 
-#[test]
-fn serde_regression_raw_pair() {
-    let pair = Pair {
-        key: Key { type_value: 1u64, key_data: vec![0u8, 1u8, 2u8, 3u8] },
-        value: vec![0u8, 1u8, 2u8, 3u8],
-    };
-    let got = serialize(&pair).unwrap();
-    let want = include_bytes!("data/serde/raw_pair_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_proprietary_key() {
-    let key = ProprietaryKey {
-        prefix: vec![0u8, 1u8, 2u8, 3u8],
-        subtype: 1u64,
-        key: vec![0u8, 1u8, 2u8, 3u8],
-    };
-    let got = serialize(&key).unwrap();
-    let want = include_bytes!("data/serde/proprietary_key_bincode") as &[_];
-    assert_eq!(got, want)
+    let got = serde_json::to_string(&psbt).unwrap();
+    let want = include_str!("data/serde/psbt_base64.json");
+    assert_eq!(got, want);
 }
 
 #[test]

@@ -92,8 +92,6 @@ pub extern crate secp256k1;
 extern crate serde;
 
 mod internal_macros;
-#[cfg(feature = "serde")]
-mod serde_utils;
 
 #[macro_use]
 pub mod p2p;
