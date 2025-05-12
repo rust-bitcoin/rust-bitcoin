@@ -79,7 +79,7 @@ pub enum LockTime {
     /// use bitcoin_primitives::absolute;
     ///
     /// let seconds: u32 = 1653195600; // May 22nd, 5am UTC.
-    /// let n = absolute::LockTime::from_time(seconds).expect("valid time");
+    /// let n = absolute::LockTime::from_mtp(seconds).expect("valid time");
     /// assert!(n.is_block_time());
     /// assert_eq!(n.to_consensus_u32(), seconds);
     /// ```
@@ -197,8 +197,8 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin_primitives::absolute;
-    /// assert!(absolute::LockTime::from_time(1653195600).is_ok());
-    /// assert!(absolute::LockTime::from_time(741521).is_err());
+    /// assert!(absolute::LockTime::from_mtp(1653195600).is_ok());
+    /// assert!(absolute::LockTime::from_mtp(741521).is_err());
     /// ```
     #[inline]
     pub fn from_mtp(n: u32) -> Result<Self, ConversionError> {
