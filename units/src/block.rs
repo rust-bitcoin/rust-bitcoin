@@ -158,12 +158,9 @@ impl TryFrom<BlockHeightInterval> for relative::NumberOfBlocks {
     /// A relative locktime block height has a maximum value of `u16::MAX` where as a
     /// [`BlockHeightInterval`] is a thin wrapper around a `u32`, the two types are not interchangeable.
     fn try_from(h: BlockHeightInterval) -> Result<Self, Self::Error> {
-        let h = h.to_u32();
-
-        if h > u32::from(u16::MAX) {
-            return Err(TooBigForRelativeHeightError(h));
-        }
-        Ok(relative::NumberOfBlocks::from(h as u16)) // Cast ok, value checked above.
+        u16::try_from(h.to_u32())
+            .map(relative::NumberOfBlocks::from)
+            .map_err(|_| TooBigForRelativeHeightError(h.into()))
     }
 }
 
