@@ -111,7 +111,8 @@ impl NumberOf512Seconds {
     /// The maximum relative block time (33,554,432 seconds or approx 388 days).
     pub const MAX: Self = NumberOf512Seconds(u16::MAX);
 
-    /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is equivalent to 512 seconds.
+    /// Constructs a new [`NumberOf512Seconds`] using time intervals where each interval is
+    /// equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
@@ -122,8 +123,8 @@ impl NumberOf512Seconds {
     #[must_use]
     pub const fn to_512_second_intervals(self) -> u16 { self.0 }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
-    /// interval with truncating division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into a 512
+    /// second interval using truncating division.
     ///
     /// # Errors
     ///
@@ -139,8 +140,8 @@ impl NumberOf512Seconds {
         }
     }
 
-    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into 512 second
-    /// intervals with ceiling division.
+    /// Constructs a new [`NumberOf512Seconds`] from seconds, converting the seconds into a 512
+    /// second interval using ceiling division.
     ///
     /// # Errors
     ///
