@@ -213,6 +213,54 @@ impl LockTime {
         }
     }
 
+    /// Returns true if an output with this locktime can be spent in the next block.
+    ///
+    /// If this function returns true then an output with this locktime can be spent in the next
+    /// block.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this lock is not lock-by-height.
+    #[inline]
+    pub fn is_satisfied_by_height(
+        self,
+        chain_tip: BlockHeight,
+        utxo_mined_at: BlockHeight,
+    ) -> Result<bool, IsSatisfiedByHeightError> {
+        use LockTime as L;
+
+        match self {
+            L::Blocks(blocks) => blocks
+                .is_satisfied_by(chain_tip, utxo_mined_at)
+                .map_err(IsSatisfiedByHeightError::Satisfaction),
+            L::Time(time) => Err(IsSatisfiedByHeightError::Incompatible(time)),
+        }
+    }
+
+    /// Returns true if an output with this locktime can be spent in the next block.
+    ///
+    /// If this function returns true then an output with this locktime can be spent in the next
+    /// block.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this lock is not lock-by-time.
+    #[inline]
+    pub fn is_satisfied_by_time(
+        self,
+        chain_tip: BlockMtp,
+        utxo_mined_at: BlockMtp,
+    ) -> Result<bool, IsSatisfiedByTimeError> {
+        use LockTime as L;
+
+        match self {
+            L::Time(time) => time
+                .is_satisfied_by(chain_tip, utxo_mined_at)
+                .map_err(IsSatisfiedByTimeError::Satisfaction),
+            L::Blocks(blocks) => Err(IsSatisfiedByTimeError::Incompatible(blocks)),
+        }
+    }
+
     /// Returns true if satisfaction of `other` lock time implies satisfaction of this
     /// [`relative::LockTime`].
     ///
@@ -279,54 +327,6 @@ impl LockTime {
             self.is_implied_by(other)
         } else {
             false
-        }
-    }
-
-    /// Returns true if an output with this locktime can be spent in the next block.
-    ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if this lock is not lock-by-height.
-    #[inline]
-    pub fn is_satisfied_by_height(
-        self,
-        chain_tip: BlockHeight,
-        utxo_mined_at: BlockHeight,
-    ) -> Result<bool, IsSatisfiedByHeightError> {
-        use LockTime as L;
-
-        match self {
-            L::Blocks(blocks) => blocks
-                .is_satisfied_by(chain_tip, utxo_mined_at)
-                .map_err(IsSatisfiedByHeightError::Satisfaction),
-            L::Time(time) => Err(IsSatisfiedByHeightError::Incompatible(time)),
-        }
-    }
-
-    /// Returns true if an output with this locktime can be spent in the next block.
-    ///
-    /// If this function returns true then an output with this locktime can be spent in the next
-    /// block.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if this lock is not lock-by-time.
-    #[inline]
-    pub fn is_satisfied_by_time(
-        self,
-        chain_tip: BlockMtp,
-        utxo_mined_at: BlockMtp,
-    ) -> Result<bool, IsSatisfiedByTimeError> {
-        use LockTime as L;
-
-        match self {
-            L::Time(time) => time
-                .is_satisfied_by(chain_tip, utxo_mined_at)
-                .map_err(IsSatisfiedByTimeError::Satisfaction),
-            L::Blocks(blocks) => Err(IsSatisfiedByTimeError::Incompatible(blocks)),
         }
     }
 }
