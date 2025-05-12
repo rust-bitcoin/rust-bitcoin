@@ -30,8 +30,16 @@ crate::internal_macros::define_extension_trait! {
         /// Constructs a new [`ScriptBuf`] from a hex string.
         ///
         /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
+        fn from_hex_prefixed(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
             consensus::encode::deserialize_hex(s)
+        }
+
+        /// Constructs a new [`ScriptBuf`] from a hex string.
+        ///
+        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
+        #[deprecated(since = "TBD", note = "use `from_hex_string_prefixed()` instead")]
+        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
+            Self::from_hex_prefixed(s)
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
