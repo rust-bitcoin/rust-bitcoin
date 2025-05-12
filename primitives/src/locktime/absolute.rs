@@ -2,7 +2,7 @@
 
 //! Provides type [`LockTime`] that implements the logic around `nLockTime`/`OP_CHECKLOCKTIMEVERIFY`.
 //!
-//! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+//! There are two types of lock time: lock-by-height and lock-by-time, distinguished by
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 
 use core::fmt;

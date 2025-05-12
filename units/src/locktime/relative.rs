@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[doc(hidden)]
 pub type Height = NumberOfBlocks;
 
-/// A relative lock time lock-by-blockheight value.
+/// A relative lock time lock-by-height value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NumberOfBlocks(u16);
@@ -94,9 +94,9 @@ impl fmt::Display for NumberOfBlocks {
 #[doc(hidden)]
 pub type Time = NumberOf512Seconds;
 
-/// A relative lock time lock-by-blocktime value.
+/// A relative lock time lock-by-time value.
 ///
-/// For BIP 68 relative lock-by-blocktime locks, time is measured in 512 second intervals.
+/// For BIP 68 relative lock-by-time locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NumberOf512Seconds(u16);

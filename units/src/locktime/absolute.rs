@@ -349,7 +349,7 @@ impl std::error::Error for ConversionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-/// Describes the two types of locking, lock-by-blockheight and lock-by-blocktime.
+/// Describes the two types of locking, lock-by-height and lock-by-time.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum LockTimeUnit {
     /// Lock by blockheight.
@@ -364,9 +364,9 @@ impl fmt::Display for LockTimeUnit {
 
         match *self {
             L::Blocks =>
-                write!(f, "expected lock-by-blockheight (must be < {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock-by-height (must be < {})", LOCK_TIME_THRESHOLD),
             L::Seconds =>
-                write!(f, "expected lock-by-blocktime (must be >= {})", LOCK_TIME_THRESHOLD),
+                write!(f, "expected lock-by-time (must be >= {})", LOCK_TIME_THRESHOLD),
         }
     }
 }
@@ -580,8 +580,8 @@ mod tests {
         let blocks = LockTimeUnit::Blocks;
         let seconds = LockTimeUnit::Seconds;
 
-        assert_eq!(format!("{}", blocks), "expected lock-by-blockheight (must be < 500000000)");
-        assert_eq!(format!("{}", seconds), "expected lock-by-blocktime (must be >= 500000000)");
+        assert_eq!(format!("{}", blocks), "expected lock-by-height (must be < 500000000)");
+        assert_eq!(format!("{}", seconds), "expected lock-by-time (must be >= 500000000)");
     }
 
     #[test]
