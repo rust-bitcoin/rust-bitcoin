@@ -1059,6 +1059,16 @@ impl InputWeightPrediction {
     }
 
     /// Computes the prediction for a single input.
+    ///
+    /// # Panics
+    ///
+    /// If the sum of witness_element_length encoded_sizes plus the encoded_size of
+    /// witness_element_lengths.len() overflows _or_ input_script_len plus the encoded size of
+    /// inpust_script_len overflows.
+    ///
+    /// That is, if either of the following exceeds u64::MAX:
+    ///     * Σ(encoded_size(witness_elem[ ])) + encoded_size(witness_elem.len())
+    ///     * input_script_len + encoded_size(input_script_len)
     pub fn new<T>(input_script_len: usize, witness_element_lengths: T) -> Self
     where
         T: IntoIterator,
@@ -1084,6 +1094,16 @@ impl InputWeightPrediction {
     /// This is a `const` version of [`new`](Self::new) which only allows slices due to current Rust
     /// limitations around `const fn`. Because of these limitations it may be less efficient than
     /// `new` and thus is intended to be only used in `const` context.
+    ///
+    /// # Panics
+    ///
+    /// If the sum of witness_element_length encoded_sizes plus the encoded_size of
+    /// witness_element_lengths.len() overflows _or_ input_script_len plus the encoded size of
+    /// inpust_script_len overflows.
+    ///
+    /// That is, if either of the following exceeds u64::MAX:
+    ///     * Σ(encoded_size(witness_elem[ ])) + encoded_size(witness_elem.len())
+    ///     * input_script_len + encoded_size(input_script_len)
     pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
         let mut i = 0;
         let mut total_size = 0;
