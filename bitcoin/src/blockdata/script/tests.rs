@@ -33,15 +33,24 @@ fn script() {
 
     // data
     script = script.push_slice(b"NRA4VR"); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
-    // data push minimality
+    // data & number push minimality
+    // OP_0
     script = script.push_slice([0u8]); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script = script.push_slice_non_minimal([0u8]); comp.extend([1, 0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int(0).unwrap(); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int_non_minimal(0); comp.extend([0u8].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    // OP_1..16
     for n in 1..=16 {
         script = script.push_slice([n]); comp.extend([0x50 + n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
         script = script.push_slice_non_minimal([n]); comp.extend([1, n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+        script = script.push_int(n.into()).unwrap();  comp.extend([0x50 + n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+        script = script.push_int_non_minimal(n.into());  comp.extend([1, n].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     }
+    // OP_1NEGATE
     script = script.push_slice([0x81]); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
     script = script.push_slice_non_minimal([0x81]); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int(-1).unwrap(); comp.extend([0x4f].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_int_non_minimal(-1); comp.extend([1, 0x81].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
 
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
