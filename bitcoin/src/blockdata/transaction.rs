@@ -786,12 +786,10 @@ pub fn effective_value(
 ) -> NumOpResult<SignedAmount> {
     let weight = input_weight_prediction.total_weight();
 
-    let fee = match fee_rate.to_fee(weight) {
-        NumOpResult::Valid(x) => x.to_signed(),
-        NumOpResult::Error(e) => return NumOpResult::Error(e)
-    };
-
-    value.to_signed() - fee     // Cannot overflow.
+    fee_rate
+        .to_fee(weight)
+        .map(Amount::to_signed)
+        .and_then(|fee| value.to_signed() - fee)    // Cannot overflow.
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
