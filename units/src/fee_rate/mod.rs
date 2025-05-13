@@ -6,9 +6,14 @@
 pub mod serde;
 
 use core::{fmt, ops};
+use core::num::{NonZeroU8, NonZeroU64};
+use internals::error::InputString;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+
+use crate::decimal::Rounding;
+use crate::parse::ParseIntError;
 
 mod encapsulate {
     /// Fee rate.
@@ -81,6 +86,77 @@ impl FeeRate {
         (self.to_sat_per_kwu() + (1000 / 4 - 1)) / (1000 / 4)
     }
 
+    /// Displays the fee rate using sat/kwu unit.
+    ///
+    /// This unit is precise, so it doesn't need rounding options.
+    ///
+    /// The unit is displayed by default, call [`without_unit`](Display::without_unit) on the
+    /// returned value to hide it.
+    pub fn display_sat_per_kwu(self) -> Display {
+        Display {
+            fee_rate: self,
+            format: Format::SatPerKwu,
+            display_unit: true,
+        }
+    }
+
+    /// Displays the fee rate using sat/kwu unit, rounding if needed.
+    ///
+    /// By default this has precision of 3 decimal places (but the trailing zeros are not
+    /// displayed). In that case the value is precise and no rounding is applied.
+    ///
+    /// However, using smaller formatter precision will require rounding of the numer. This method
+    /// uses the natural rounding based on whether the most-significant decimal place that is
+    /// hidden is less than 5 or not.
+    ///
+    /// The unit is displayed by default, call [`without_unit`](Display::without_unit) on the
+    /// returned value to hide it.
+    pub fn display_sat_per_vb_round(self) -> Display {
+        Display {
+            fee_rate: self,
+            format: Format::SatPerVB { rounding: Rounding::Round },
+            display_unit: true,
+        }
+    }
+
+    /// Displays the fee rate using sat/kwu unit, rounding down if needed.
+    ///
+    /// By default this has precision of 3 decimal places (but the trailing zeros are not
+    /// displayed). In that case the value is precise and no rounding is applied.
+    ///
+    /// However, using smaller formatter precision will require rounding of the numer. This method
+    /// computes the floor - always rounding down, even if the most-significant decimal place that
+    /// is hidden is greater than or equal to 5.
+    ///
+    /// The unit is displayed by default, call [`without_unit`](Display::without_unit) on the
+    /// returned value to hide it.
+    pub fn display_sat_per_vb_floor(self) -> Display {
+        Display {
+            fee_rate: self,
+            format: Format::SatPerVB { rounding: Rounding::Floor },
+            display_unit: true,
+        }
+    }
+
+    /// Displays the fee rate using sat/kwu unit, rounding up if needed.
+    ///
+    /// By default this has precision of 3 decimal places (but the trailing zeros are not
+    /// displayed). In that case the value is precise and no rounding is applied.
+    ///
+    /// However, using smaller formatter precision will require rounding of the numer. This method
+    /// computes the ceiling - always rounding up, even if the most-significant decimal place that
+    /// is hidden is less than 5.
+    ///
+    /// The unit is displayed by default, call [`without_unit`](Display::without_unit) on the
+    /// returned value to hide it.
+    pub fn display_sat_per_vb_ceil(self) -> Display {
+        Display {
+            fee_rate: self,
+            format: Format::SatPerVB { rounding: Rounding::Ceil },
+            display_unit: true,
+        }
+    }
+
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if overflow occurred.
@@ -128,15 +204,36 @@ impl FeeRate {
             None => None,
         }
     }
+
+    fn parse<S: AsRef<str>>(s: S) -> Result<Self, ParseError> {
+        let s = s.as_ref();
+        let (value, unit) = if let Some((value, unit)) = s.split_once(' ') {
+            (value, unit)
+        } else {
+            let pos = s
+                .find(|c: char| c.is_alphabetic())
+                .ok_or(ParseError(ParseErrorInner::MissingUnit))?;
+            (&s[..pos], &s[(pos + 1)..])
+        };
+        match unit {
+            "sat/kwu" => {
+                crate::parse::int_from_str(value)
+                    .map(Self::from_sat_per_kwu)
+                    .map_err(|error| ParseError(ParseErrorInner::InvalidSatPerKwu(error)))
+            },
+            "sat/vb" => Err(ParseError(ParseErrorInner::UnsupportedSatPerVB)),
+            other => Err(ParseError(ParseErrorInner::UnknownUnit(other.into()))),
+        }
+    }
 }
 
 /// Alternative will display the unit.
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
+            fmt::Display::fmt(&self.display_sat_per_vb_ceil(), f)
         } else {
-            fmt::Display::fmt(&self.to_sat_per_kwu(), f)
+            fmt::Display::fmt(&self.display_sat_per_kwu(), f)
         }
     }
 }
@@ -179,7 +276,13 @@ impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
     }
 }
 
-crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+impl core::str::FromStr for FeeRate {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse(s)
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {
@@ -193,6 +296,106 @@ impl<'a> Arbitrary<'a> for FeeRate {
             _ => Ok(FeeRate::from_sat_per_kwu(u64::arbitrary(u)?)),
         }
     }
+}
+
+/// A helper/builder that displays fee rate with specified settings.
+///
+/// This provides richer interface than [`fmt::Formatter`]:
+///
+/// * Ability to select unit
+/// * Show or hide unit
+/// * How rounding works if smaller precision is requested
+///
+/// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
+/// padding, alignment... The formatting works like floats from `core` but applies rounding
+/// according to its setting.
+#[derive(Debug, Clone)]
+pub struct Display {
+    fee_rate: FeeRate,
+    format: Format,
+    display_unit: bool,
+}
+
+impl Display {
+    /// Do not display the unit.
+    ///
+    /// The unit is displayed by default to avoid confusion but if you need to hide it in
+    /// non-confusing situations you can call this function before formatting.
+    #[must_use = "the Display is not modified but a new one is returned"]
+    pub fn without_unit(mut self) -> Self {
+        self.display_unit = false;
+        self
+    }
+}
+
+impl fmt::Display for Display {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use crate::decimal::Decimal;
+
+        let decimal = match self.format {
+            Format::SatPerKwu => {
+                Decimal {
+                    negative: false,
+                    num_before_decimal_point: self.fee_rate.to_sat_per_kwu(),
+                    exp: 0,
+                    num_after_decimal_point: None,
+                    unit: self.display_unit.then_some("sat/kwu"),
+                }
+            },
+            Format::SatPerVB { rounding } => {
+                const NB_DECIMALS: NonZeroU8 = {
+                    match NonZeroU8::new(3) {
+                        Some(value) => value,
+                        None => panic!("the value is 3, which is not 0")
+                    }
+                };
+
+                // sat/vB = sat/kwu / 250
+                // if one has a number x known to have 3 decimal places multiplying by 1000 gives
+                // an integer
+                // if one has a number x and wants to display x / 1000, x % 1000 needs to be
+                // displayed after decimal point, with leading zeros
+                // so we have (fee_rate / 250 * 1000) % 1000
+                // which is fee_rate * 4 % 1000
+                // `as` will not truncate because of % 1000
+                let thousandths = (u128::from(self.fee_rate.to_sat_per_kwu()) * 4 % 1000) as u64;
+                let num_after_decimal_point = NonZeroU64::new(thousandths).map(|value| {
+                    crate::decimal::NumAfterDecimalPoint {
+                        value,
+                        nb_decimals: NB_DECIMALS,
+                        rounding,
+                    }
+                });
+                Decimal {
+                    negative: false,
+                    num_before_decimal_point: self.fee_rate.to_sat_per_vb_floor(),
+                    exp: 0,
+                    num_after_decimal_point,
+                    unit: self.display_unit.then_some("sat/kwu"),
+                }
+            },
+        };
+
+        fmt::Display::fmt(&decimal, f)
+    }
+}
+
+#[derive(Debug, Clone)]
+enum Format {
+    SatPerKwu,
+    SatPerVB { rounding: Rounding },
+}
+
+/// Error returned when parsing of `FeeRate` fails.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ParseError(ParseErrorInner);
+
+#[derive(Debug, Clone, PartialEq)]
+enum ParseErrorInner {
+    MissingUnit,
+    UnknownUnit(InputString),
+    UnsupportedSatPerVB,
+    InvalidSatPerKwu(ParseIntError),
 }
 
 #[cfg(test)]

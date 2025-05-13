@@ -34,6 +34,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod decimal;
 mod fee;
 mod internal_macros;
 mod result;

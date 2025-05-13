@@ -20,6 +20,7 @@ mod verification;
 use core::cmp::Ordering;
 use core::convert::Infallible;
 use core::fmt;
+use core::num::{NonZeroI8, NonZeroU8, NonZeroU64};
 use core::str::FromStr;
 
 #[cfg(feature = "arbitrary")]
@@ -349,184 +350,51 @@ fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseE
     Ok((&s[..i], s[j..].parse()?))
 }
 
-/// Options given by `fmt::Formatter`
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-struct FormatOptions {
-    fill: char,
-    align: Option<fmt::Alignment>,
-    width: Option<usize>,
-    precision: Option<usize>,
-    sign_plus: bool,
-    sign_aware_zero_pad: bool,
-}
-
-impl FormatOptions {
-    fn from_formatter(f: &fmt::Formatter) -> Self {
-        FormatOptions {
-            fill: f.fill(),
-            align: f.align(),
-            width: f.width(),
-            precision: f.precision(),
-            sign_plus: f.sign_plus(),
-            sign_aware_zero_pad: f.sign_aware_zero_pad(),
-        }
-    }
-}
-
-impl Default for FormatOptions {
-    fn default() -> Self {
-        FormatOptions {
-            fill: ' ',
-            align: None,
-            width: None,
-            precision: None,
-            sign_plus: false,
-            sign_aware_zero_pad: false,
-        }
-    }
-}
-
-fn dec_width(mut num: u64) -> usize {
-    let mut width = 1;
-    loop {
-        num /= 10;
-        if num == 0 {
-            break;
-        }
-        width += 1;
-    }
-    width
-}
-
-fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
-    for _ in 0..count {
-        f.write_char(c)?;
-    }
-    Ok(())
-}
-
 /// Format the given satoshi amount in the given denomination.
 fn fmt_satoshi_in(
-    mut satoshi: u64,
+    satoshi: u64,
     negative: bool,
-    f: &mut dyn fmt::Write,
+    f: &mut fmt::Formatter,
     denom: Denomination,
     show_denom: bool,
-    options: FormatOptions,
 ) -> fmt::Result {
     let precision = denom.precision();
     // First we normalize the number:
     // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
-    let mut num_after_decimal_point = 0;
-    let mut norm_nb_decimals = 0;
     let mut num_before_decimal_point = satoshi;
-    let trailing_decimal_zeros;
     let mut exp = 0;
-    match precision.cmp(&0) {
-        // We add the number of zeroes to the end
-        Ordering::Greater => {
+    let num_after_decimal_point = match NonZeroI8::new(precision) {
+        Some(precision) if i8::from(precision) > 0 => {
             if satoshi > 0 {
-                exp = precision as usize; // Cast ok, checked not negative above.
+                exp = i8::from(precision) as usize; // Cast ok, checked not negative above.
             }
-            trailing_decimal_zeros = options.precision.unwrap_or(0);
-        }
-        Ordering::Less => {
-            let precision = precision.unsigned_abs();
-            // round the number if needed
-            // rather than fiddling with chars, we just modify satoshi and let the simpler algorithm take over.
-            if let Some(format_precision) = options.precision {
-                if usize::from(precision) > format_precision {
-                    // precision is u8 so in this branch options.precision() < 255 which fits in u32
-                    let rounding_divisor =
-                        10u64.pow(u32::from(precision) - format_precision as u32); // Cast ok, commented above.
-                    let remainder = satoshi % rounding_divisor;
-                    satoshi -= remainder;
-                    if remainder / (rounding_divisor / 10) >= 5 {
-                        satoshi += rounding_divisor;
-                    }
-                }
-            }
-            let divisor = 10u64.pow(precision.into());
+            None
+        },
+        Some(precision) => {
+            // TODO(msrv >= 1.64): use unsized_abs
+            let precision = NonZeroU8::new(i8::from(precision).unsigned_abs())
+                .expect("unsigned_abs doesn't produce zero from non-zero value");
+            let divisor = 10u64.pow(u8::from(precision).into());
             num_before_decimal_point = satoshi / divisor;
-            num_after_decimal_point = satoshi % divisor;
-            // normalize by stripping trailing zeros
-            if num_after_decimal_point == 0 {
-                norm_nb_decimals = 0;
-            } else {
-                norm_nb_decimals = usize::from(precision);
-                while num_after_decimal_point % 10 == 0 {
-                    norm_nb_decimals -= 1;
-                    num_after_decimal_point /= 10;
+            let num_after_decimal_point = satoshi % divisor;
+            NonZeroU64::new(num_after_decimal_point).map(|num_after_decimal_point| {
+                crate::decimal::NumAfterDecimalPoint {
+                    value: num_after_decimal_point,
+                    nb_decimals: precision,
+                    rounding: crate::decimal::Rounding::Round,
                 }
-            }
-            // compute requested precision
-            let opt_precision = options.precision.unwrap_or(0);
-            trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
-        }
-        Ordering::Equal => trailing_decimal_zeros = options.precision.unwrap_or(0),
-    }
-    let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
-    // Compute expected width of the number
-    let mut num_width = if total_decimals > 0 {
-        // 1 for decimal point
-        1 + total_decimals
-    } else {
-        0
+            })
+        },
+        None => None,
     };
-    num_width += dec_width(num_before_decimal_point) + exp;
-    if options.sign_plus || negative {
-        num_width += 1;
-    }
-
-    if show_denom {
-        // + 1 for space
-        num_width += denom.as_str().len() + 1;
-    }
-
-    let width = options.width.unwrap_or(0);
-    let align = options.align.unwrap_or(fmt::Alignment::Right);
-    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, align) {
-        (false, _, _) => (0, 0),
-        // Alignment is always right (ignored) when zero-padding
-        (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
-        (true, false, fmt::Alignment::Left) => (0, width - num_width),
-        // If the required padding is odd it needs to be skewed to the left
-        (true, false, fmt::Alignment::Center) =>
-            ((width - num_width) / 2, (width - num_width + 1) / 2),
+    let decimal = crate::decimal::Decimal {
+        negative,
+        num_before_decimal_point,
+        exp,
+        num_after_decimal_point,
+        unit: show_denom.then_some(denom.as_str()),
     };
-
-    if !options.sign_aware_zero_pad {
-        repeat_char(f, options.fill, left_pad)?;
-    }
-
-    if negative {
-        write!(f, "-")?;
-    } else if options.sign_plus {
-        write!(f, "+")?;
-    }
-
-    if options.sign_aware_zero_pad {
-        repeat_char(f, '0', left_pad)?;
-    }
-
-    write!(f, "{}", num_before_decimal_point)?;
-
-    repeat_char(f, '0', exp)?;
-
-    if total_decimals > 0 {
-        write!(f, ".")?;
-    }
-    if norm_nb_decimals > 0 {
-        write!(f, "{:0width$}", num_after_decimal_point, width = norm_nb_decimals)?;
-    }
-    repeat_char(f, '0', trailing_decimal_zeros)?;
-
-    if show_denom {
-        write!(f, " {}", denom.as_str())?;
-    }
-
-    repeat_char(f, options.fill, pad_right)?;
-    Ok(())
+    fmt::Display::fmt(&decimal, f)
 }
 
 /// A helper/builder that displays amount with specified settings.
@@ -538,8 +406,7 @@ fn fmt_satoshi_in(
 /// * Dynamically-selected denomination - show in sats if less than 1 BTC.
 ///
 /// However, this can still be combined with [`fmt::Formatter`] options to precisely control zeros,
-/// padding, alignment... The formatting works like floats from `core` but note that precision will
-/// **never** be lossy - that means no rounding.
+/// padding, alignment... The formatting works like floats from `core`.
 ///
 /// Note: This implementation is currently **unstable**. The only thing that we can promise is that
 /// unless the precision is changed, this will display an accurate, human-readable number, and the
@@ -572,16 +439,15 @@ impl Display {
 impl fmt::Display for Display {
     #[rustfmt::skip]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let format_options = FormatOptions::from_formatter(f);
         match &self.style {
             DisplayStyle::FixedDenomination { show_denomination, denomination } => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination)
             },
             DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.to_sat() => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true)
             },
             DisplayStyle::DynamicDenomination => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true, format_options)
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true)
             },
         }
     }
