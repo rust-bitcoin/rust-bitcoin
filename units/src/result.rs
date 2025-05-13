@@ -87,6 +87,36 @@ pub enum NumOpResult<T> {
     Error(NumOpError),
 }
 
+impl<T> NumOpResult<T> {
+
+    /// Maps a `NumOpResult<T>` to `NumOpResult<U>` by applying a function to a
+    /// contained [`NumOpResult::Valid`] value, leaving a [`NumOpResult::Error`] value untouched.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bitcoin_units::{FeeRate, Amount, Weight, SignedAmount};
+    ///
+    /// let fee_rate = FeeRate::from_sat_per_vb(1).unwrap();
+    /// let weight = Weight::from_wu(1000);
+    /// let amount = Amount::from_sat_u32(1_000_000);
+    ///
+    /// let amount_after_fee = fee_rate
+    ///     .to_fee(weight) // (1 sat/ 4 wu) * (1000 wu) = 250 sat fee
+    ///     .map(|fee| fee.to_signed())
+    ///     .and_then(|fee| amount.to_signed() - fee);
+    ///
+    /// assert_eq!(amount_after_fee.unwrap(), SignedAmount::from_sat_i32(999_750))
+    /// ```
+    #[inline]
+    pub fn map<U, F: FnOnce(T) -> U>(self, op: F) -> NumOpResult<U> {
+        match self {
+            NumOpResult::Valid(t) => NumOpResult::Valid(op(t)),
+            NumOpResult::Error(e) => NumOpResult::Error(e),
+        }
+    }
+}
+
 impl<T: fmt::Debug> NumOpResult<T> {
     /// Returns the contained valid numeric type, consuming `self`.
     ///
