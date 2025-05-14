@@ -14,11 +14,11 @@
 //!
 //! ```
 //! use serde::{Serialize, Deserialize};
-//! use bitcoin_units::FeeRate;
+//! use bitcoin_units::{fee_rate, FeeRate};
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct Foo {
-//!     #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu")]
+//!     #[serde(with = "fee_rate::serde::as_sat_per_kwu")]
 //!     pub fee_rate: FeeRate,
 //! }
 //! ```
@@ -50,7 +50,7 @@ pub mod as_sat_per_kwu {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
         use crate::FeeRate;
 
@@ -69,7 +69,7 @@ pub mod as_sat_per_kwu {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -83,7 +83,7 @@ pub mod as_sat_per_kwu {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(FeeRate::from_sat_per_kwu(u64::deserialize(d)?)))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)
@@ -121,9 +121,8 @@ pub mod as_sat_per_vb_floor {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
-        use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
         #[allow(clippy::ref_option)] // API forced by serde.
@@ -141,7 +140,7 @@ pub mod as_sat_per_vb_floor {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -155,11 +154,7 @@ pub mod as_sat_per_vb_floor {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)
@@ -197,9 +192,8 @@ pub mod as_sat_per_vb_ceil {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
-        use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
         #[allow(clippy::ref_option)] // API forced by serde.
@@ -217,7 +211,7 @@ pub mod as_sat_per_vb_ceil {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -231,11 +225,7 @@ pub mod as_sat_per_vb_ceil {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)

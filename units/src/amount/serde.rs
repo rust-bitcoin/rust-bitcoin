@@ -13,11 +13,11 @@
 //!
 //! ```
 //! use serde::{Serialize, Deserialize};
-//! use bitcoin_units::Amount;
+//! use bitcoin_units::{amount, Amount};
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct HasAmount {
-//!     #[serde(with = "bitcoin_units::amount::serde::as_sat")]
+//!     #[serde(with = "amount::serde::as_sat")]
 //!     pub amount: Amount,
 //! }
 //! ```
@@ -230,7 +230,7 @@ pub mod as_sat {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<{}64>", X::type_prefix(private::Token))
+                    write!(formatter, "an Option<{}64>", X::type_prefix(private::Token))
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -301,7 +301,7 @@ pub mod as_btc {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<f64>")
+                    write!(formatter, "an Option<f64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -372,7 +372,7 @@ pub mod as_str {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<String>")
+                    write!(formatter, "an Option<String>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -396,6 +396,7 @@ pub mod as_str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::amount;
 
     #[test]
     fn sanity_check() {
@@ -407,7 +408,7 @@ mod tests {
     fn can_serde_as_sat() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_sat")]
+            #[serde(with = "amount::serde::as_sat")]
             pub amount: Amount,
         }
 
@@ -426,7 +427,7 @@ mod tests {
     fn can_serde_as_btc() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_btc")]
+            #[serde(with = "amount::serde::as_btc")]
             pub amount: Amount,
         }
 
@@ -445,7 +446,7 @@ mod tests {
     fn can_serde_as_str() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_str")]
+            #[serde(with = "amount::serde::as_str")]
             pub amount: Amount,
         }
 

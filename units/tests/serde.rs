@@ -7,41 +7,41 @@
 
 use bincode::serialize;
 use bitcoin_units::locktime::{absolute, relative};
-use bitcoin_units::{Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
+use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
 use serde::{Deserialize, Serialize};
 
 /// A struct that includes all the types that implement or support `serde` traits.
 #[derive(Debug, Serialize, Deserialize)]
 struct Serde {
-    #[serde(with = "bitcoin_units::amount::serde::as_sat")]
+    #[serde(with = "amount::serde::as_sat")]
     unsigned_as_sat: Amount,
-    #[serde(with = "bitcoin_units::amount::serde::as_btc")]
+    #[serde(with = "amount::serde::as_btc")]
     unsigned_as_btc: Amount,
-    #[serde(with = "bitcoin_units::amount::serde::as_sat::opt")]
+    #[serde(with = "amount::serde::as_sat::opt")]
     unsigned_opt_as_sat: Option<Amount>,
-    #[serde(with = "bitcoin_units::amount::serde::as_btc::opt")]
+    #[serde(with = "amount::serde::as_btc::opt")]
     unsigned_opt_as_btc: Option<Amount>,
 
-    #[serde(with = "bitcoin_units::amount::serde::as_sat")]
+    #[serde(with = "amount::serde::as_sat")]
     signed_as_sat: SignedAmount,
-    #[serde(with = "bitcoin_units::amount::serde::as_btc")]
+    #[serde(with = "amount::serde::as_btc")]
     signed_as_btc: SignedAmount,
-    #[serde(with = "bitcoin_units::amount::serde::as_sat::opt")]
+    #[serde(with = "amount::serde::as_sat::opt")]
     signed_opt_as_sat: Option<SignedAmount>,
-    #[serde(with = "bitcoin_units::amount::serde::as_btc::opt")]
+    #[serde(with = "amount::serde::as_btc::opt")]
     signed_opt_as_btc: Option<SignedAmount>,
 
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_floor")]
+    #[serde(with = "fee_rate::serde::as_sat_per_vb_floor")]
     vb_floor: FeeRate,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil")]
+    #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil")]
     vb_ceil: FeeRate,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu")]
+    #[serde(with = "fee_rate::serde::as_sat_per_kwu")]
     kwu: FeeRate,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_floor::opt")]
+    #[serde(with = "fee_rate::serde::as_sat_per_vb_floor::opt")]
     opt_vb_floor: Option<FeeRate>,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_vb_ceil::opt")]
+    #[serde(with = "fee_rate::serde::as_sat_per_vb_ceil::opt")]
     opt_vb_ceil: Option<FeeRate>,
-    #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu::opt")]
+    #[serde(with = "fee_rate::serde::as_sat_per_kwu::opt")]
     opt_kwu: Option<FeeRate>,
 
     a: BlockHeight,
