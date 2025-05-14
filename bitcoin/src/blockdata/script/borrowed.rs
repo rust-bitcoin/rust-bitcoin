@@ -376,19 +376,19 @@ crate::internal_macros::define_extension_trait! {
         fn to_asm_string(&self) -> String { self.to_string() }
 
         /// Consensus encodes the script as lower-case hex.
-        #[deprecated(since = "TBD", note = "use `to_hex_string_prefixed()` instead")]
-        fn to_hex_string(&self) -> String { self.to_hex_string_prefixed() }
+        #[deprecated(since = "TBD", note = "use `to_hex_string_no_length_prefix` instead")]
+        fn to_hex_string(&self) -> String { self.to_hex_string_no_length_prefix() }
 
         /// Consensus encodes the script as lower-case hex.
+        ///
+        /// Consensus encoding includes a length prefix. To hex encode without the length prefix use
+        /// `to_hex_string_no_length_prefix`.
         fn to_hex_string_prefixed(&self) -> String { consensus::encode::serialize_hex(self) }
 
-        /// Consensus encodes the script as lower-case hex.
+        /// Encodes the script as lower-case hex.
         ///
-        /// This is **not** consensus encoding, you likely want to use `to_hex_string_prefixed`.
-        ///
-        /// # Returns
-        ///
-        /// The returned hex string will not include the length prefix.
+        /// This is **not** consensus encoding. The returned hex string will not include the length
+        /// prefix. See `to_hex_string_prefixed`.
         fn to_hex_string_no_length_prefix(&self) -> String {
             self.as_bytes().to_lower_hex_string()
         }
