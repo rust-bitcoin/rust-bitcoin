@@ -85,8 +85,7 @@ impl_u32_wrapper! {
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    // Public to try and make it really clear that there are no invariants.
-    pub struct BlockHeight(pub u32);
+    pub struct BlockHeight(u32);
 }
 
 impl BlockHeight {
@@ -130,8 +129,7 @@ impl_u32_wrapper! {
     /// purpose block interval abstraction. For locktimes please see [`locktime::relative::Height`].
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    // Public to try and make it really clear that there are no invariants.
-    pub struct BlockHeightInterval(pub u32);
+    pub struct BlockHeightInterval(u32);
 }
 
 impl BlockHeightInterval {
@@ -173,8 +171,7 @@ impl_u32_wrapper! {
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    // Public to try and make it really clear that there are no invariants.
-    pub struct BlockMtp(pub u32);
+    pub struct BlockMtp(u32);
 }
 
 impl BlockMtp {
@@ -228,8 +225,7 @@ impl_u32_wrapper! {
     /// This is a thin wrapper around a `u32` that may take on all values of a `u32`.
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    // Public to try and make it really clear that there are no invariants.
-    pub struct BlockMtpInterval(pub u32);
+    pub struct BlockMtpInterval(u32);
 }
 
 impl BlockMtpInterval {
