@@ -8,7 +8,7 @@ use core::fmt;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[deprecated(since = "TBD", note = "use `NumberOfBlocks` instead")]
 #[doc(hidden)]
@@ -16,7 +16,6 @@ pub type Height = NumberOfBlocks;
 
 /// A relative lock time lock-by-blockheight value.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NumberOfBlocks(u16);
 
 impl NumberOfBlocks {
@@ -92,6 +91,28 @@ impl fmt::Display for NumberOfBlocks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+#[cfg(feature = "serde")]
+impl Serialize for NumberOfBlocks {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u16::serialize(&self.to_height(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for NumberOfBlocks {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_height(u16::deserialize(d)?))
+    }
+}
+
 #[deprecated(since = "TBD", note = "use `NumberOf512Seconds` instead")]
 #[doc(hidden)]
 pub type Time = NumberOf512Seconds;
@@ -100,7 +121,6 @@ pub type Time = NumberOf512Seconds;
 ///
 /// For BIP 68 relative lock-by-blocktime locks, time is measured in 512 second intervals.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NumberOf512Seconds(u16);
 
 impl NumberOf512Seconds {
@@ -211,6 +231,28 @@ crate::impl_parse_str_from_int_infallible!(NumberOf512Seconds, u16, from_512_sec
 
 impl fmt::Display for NumberOf512Seconds {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for NumberOf512Seconds {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u16::serialize(&self.to_512_second_intervals(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for NumberOf512Seconds {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_512_second_intervals(u16::deserialize(d)?))
+    }
 }
 
 /// Error returned when the input time in seconds was too large to be encoded to a 16 bit 512 second interval.
