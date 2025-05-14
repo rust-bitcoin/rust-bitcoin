@@ -187,7 +187,7 @@ impl LockTime {
     /// If the locktime is set to an MTP `T`, the transaction can be included in a block only if
     /// the MTP of last recent 11 blocks is greater than `T`.
     ///
-    /// It is possible to broadcast the transaction once the MTP is greater than `T`.[see BIP-113]
+    /// It is possible to broadcast the transaction once the MTP is greater than `T`. See BIP-113.
     ///
     /// [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     ///
