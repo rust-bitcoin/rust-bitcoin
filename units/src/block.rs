@@ -49,9 +49,8 @@ macro_rules! impl_u32_wrapper {
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
                 let choice = u.int_in_range(0..=2)?;
                 match choice {
-                    0 => Ok(Self::ZERO),
-                    1 => Ok(Self::MIN),
-                    2 => Ok(Self::MAX),
+                    0 => Ok(Self::from_u32(u32::MIN)),
+                    1 => Ok(Self::from_u32(u32::MAX)),
                     _ => Ok(Self::from_u32(u32::arbitrary(u)?)),
                 }
             }

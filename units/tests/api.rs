@@ -14,7 +14,7 @@ use arbitrary::{Arbitrary, Unstructured};
 // These imports test "typical" usage by user code.
 use bitcoin_units::locktime::{absolute, relative}; // Typical usage is `absolute::Height`.
 use bitcoin_units::{
-    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockInterval, BlockMtp,
+    amount, block, fee_rate, locktime, parse, weight, Amount, BlockHeight, BlockHeightInterval, BlockInterval, BlockMtp,
     BlockMtpInterval, BlockTime, FeeRate, SignedAmount, Weight,
 };
 
@@ -53,8 +53,8 @@ impl Structs {
             a: Amount::MAX,
             b: Amount::MAX.display_in(amount::Denomination::Bitcoin),
             c: SignedAmount::MAX,
-            d: BlockHeight::MAX,
-            e: BlockInterval::MAX,
+            d: BlockHeight::from_u32(u32::MAX),
+            e: BlockHeightInterval::from_u32(100),
             f: FeeRate::MAX,
             g: absolute::Height::MAX,
             h: absolute::MedianTimePast::MAX,
@@ -62,8 +62,8 @@ impl Structs {
             j: relative::Time::MAX,
             k: Weight::MAX,
             l: BlockTime::from_u32(u32::MAX),
-            m: BlockMtp::MAX,
-            n: BlockMtpInterval::MAX,
+            m: BlockMtp::from_u32(u32::MAX),
+            n: BlockMtpInterval::from_u32(86_400), // 1 day: 24 * 60 * 60.
         }
     }
 }
@@ -260,10 +260,10 @@ fn regression_default() {
     let want = Default {
         a: Amount::ZERO,
         b: SignedAmount::ZERO,
-        c: BlockInterval::ZERO,
+        c: BlockHeightInterval::from_u32(0),
         d: relative::Height::ZERO,
         e: relative::Time::ZERO,
-        f: BlockMtpInterval::ZERO,
+        f: BlockMtpInterval::from_u32(0),
     };
     assert_eq!(got, want);
 }

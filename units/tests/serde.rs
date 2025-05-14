@@ -7,7 +7,7 @@
 
 use bincode::serialize;
 use bitcoin_units::locktime::{absolute, relative};
-use bitcoin_units::{Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
+use bitcoin_units::{Amount, BlockHeight, BlockHeightInterval, FeeRate, SignedAmount, Weight};
 use serde::{Deserialize, Serialize};
 
 /// A struct that includes all the types that implement or support `serde` traits.
@@ -45,7 +45,7 @@ struct Serde {
     opt_kwu: Option<FeeRate>,
 
     a: BlockHeight,
-    b: BlockInterval,
+    b: BlockHeightInterval,
     c: absolute::Height,
     d: absolute::MedianTimePast,
     e: relative::Height,
@@ -78,7 +78,7 @@ impl Serde {
             opt_kwu: Some(FeeRate::BROADCAST_MIN),
 
             a: BlockHeight::MAX,
-            b: BlockInterval::MAX,
+            b: BlockHeightInterval::from_u32(u32::MAX),
             c: absolute::Height::MAX,
             d: absolute::MedianTimePast::MAX,
             e: relative::Height::MAX,
