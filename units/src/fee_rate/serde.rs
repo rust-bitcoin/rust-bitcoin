@@ -69,7 +69,7 @@ pub mod as_sat_per_kwu {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -140,7 +140,7 @@ pub mod as_sat_per_vb_floor {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -211,7 +211,7 @@ pub mod as_sat_per_vb_ceil {
                 type Value = Option<FeeRate>;
 
                 fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                    write!(f, "An Option<FeeRate>")
+                    write!(f, "an Option<u64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
