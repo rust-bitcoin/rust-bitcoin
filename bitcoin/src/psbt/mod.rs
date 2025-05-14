@@ -1586,7 +1586,7 @@ mod tests {
             }],
         };
         let unknown: BTreeMap<raw::Key, Vec<u8>> =
-            vec![(raw::Key { type_value: 1, key_data: vec![0, 1] }, vec![3, 4, 5])]
+            vec![(raw::Key { type_value: 42, key_data: vec![0, 1] }, vec![3, 4, 5])]
                 .into_iter()
                 .collect();
         let key_source = ("deadbeef".parse().unwrap(), "0'/1".parse().unwrap());
