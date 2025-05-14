@@ -30,23 +30,6 @@ macro_rules! impl_u32_wrapper {
         $(#[$($type_attrs)*])*
         $type_vis struct $newtype($inner_vis u32);
 
-        impl $newtype {
-            /// Block height 0, the genesis block.
-            pub const ZERO: Self = Self(0);
-
-            /// The minimum block height (0), the genesis block.
-            pub const MIN: Self = Self::ZERO;
-
-            /// The maximum block height.
-            pub const MAX: Self = Self(u32::MAX);
-
-            /// Constructs a new block height from a `u32`.
-            pub const fn from_u32(inner: u32) -> Self { Self(inner) }
-
-            /// Returns block height as a `u32`.
-            pub const fn to_u32(self) -> u32 { self.0 }
-        }
-
         impl fmt::Display for $newtype {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
         }
@@ -66,9 +49,8 @@ macro_rules! impl_u32_wrapper {
             fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
                 let choice = u.int_in_range(0..=2)?;
                 match choice {
-                    0 => Ok(Self::ZERO),
-                    1 => Ok(Self::MIN),
-                    2 => Ok(Self::MAX),
+                    0 => Ok(Self::from_u32(u32::MIN)),
+                    1 => Ok(Self::from_u32(u32::MAX)),
                     _ => Ok(Self::from_u32(u32::arbitrary(u)?)),
                 }
             }
@@ -90,6 +72,21 @@ impl_u32_wrapper! {
 }
 
 impl BlockHeight {
+    /// Block height 0, the genesis block.
+    pub const ZERO: Self = Self(0);
+
+    /// The minimum block height (0), the genesis block.
+    pub const MIN: Self = Self::ZERO;
+
+    /// The maximum block height.
+    pub const MAX: Self = Self(u32::MAX);
+
+    /// Constructs a new block height from a `u32`.
+    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
+
+    /// Returns block height as a `u32`.
+    pub const fn to_u32(self) -> u32 { self.0 }
+
     /// Attempt to subtract two [`BlockHeight`]s, returning `None` in case of overflow.
     pub fn checked_sub(self, other: Self) -> Option<BlockHeightInterval> {
         self.0.checked_sub(other.0).map(BlockHeightInterval)
@@ -135,6 +132,12 @@ impl_u32_wrapper! {
 }
 
 impl BlockHeightInterval {
+    /// Constructs a new block height interval from a `u32`.
+    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
+
+    /// Returns block height interval as a `u32`.
+    pub const fn to_u32(self) -> u32 { self.0 }
+
     /// Attempt to subtract two [`BlockHeightInterval`]s, returning `None` in case of overflow.
     pub fn checked_sub(self, other: Self) -> Option<Self> { self.0.checked_sub(other.0).map(Self) }
 
@@ -188,6 +191,15 @@ impl BlockMtp {
         Self::from_u32(u32::from(timestamps[5]))
     }
 
+    /// Constructs a new block MTP from a `u32`.
+    ///
+    /// You probably want to use `Self::new` unless you _really_ know what you are doing.
+    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
+
+    /// Returns the MTP as a `u32` i.e., a timestamp.
+    pub const fn to_u32(self) -> u32 { self.0 }
+
+
     /// Attempt to subtract two [`BlockMtp`]s, returning `None` in case of overflow.
     pub fn checked_sub(self, other: Self) -> Option<BlockMtpInterval> {
         self.0.checked_sub(other.0).map(BlockMtpInterval)
@@ -233,6 +245,16 @@ impl_u32_wrapper! {
 }
 
 impl BlockMtpInterval {
+    /// Constructs a new block MTP interval from a `u32`.
+    ///
+    /// It is better to subtract on `BlockMtp` from another to get a `BlockMtpInterval`.
+    ///
+    /// This is likely only useful for testing or if you _really_ know what you are doing.
+    pub const fn from_u32(inner: u32) -> Self { Self(inner) }
+
+    /// Returns the MTP internval as a `u32` i.e., a number of seconds.
+    pub const fn to_u32(self) -> u32 { self.0 }
+
     /// Converts a [`BlockMtpInterval`] to a [`locktime::relative::NumberOf512Seconds`], rounding down.
     ///
     /// Relative timelock MTP intervals have a resolution of 512 seconds, while
