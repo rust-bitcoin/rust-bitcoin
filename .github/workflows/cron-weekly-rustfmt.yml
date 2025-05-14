@@ -13,7 +13,8 @@ jobs:
         with:
           components: rustfmt
       - name: Run Nightly rustfmt
-        run: cargo +nightly fmt
+        # Run the formatter and manually remove trailing whitespace.
+        run: cargo +nightly fmt && find . -type f -name '*.rs' -exec sed -i 's/ $//' {} \;
       - name: Get the current date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
       - name: Create Pull Request
