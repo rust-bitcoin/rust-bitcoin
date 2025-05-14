@@ -50,7 +50,7 @@ pub mod as_sat_per_kwu {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
         use crate::FeeRate;
 
@@ -83,7 +83,7 @@ pub mod as_sat_per_kwu {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(FeeRate::from_sat_per_kwu(u64::deserialize(d)?)))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)
@@ -121,9 +121,8 @@ pub mod as_sat_per_vb_floor {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
-        use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
         #[allow(clippy::ref_option)] // API forced by serde.
@@ -155,11 +154,7 @@ pub mod as_sat_per_vb_floor {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)
@@ -197,9 +192,8 @@ pub mod as_sat_per_vb_ceil {
 
         use core::fmt;
 
-        use serde::{de, Deserialize, Deserializer, Serializer};
+        use serde::{de, Deserializer, Serializer};
 
-        use crate::fee_rate::serde::OverflowError;
         use crate::fee_rate::FeeRate;
 
         #[allow(clippy::ref_option)] // API forced by serde.
@@ -231,11 +225,7 @@ pub mod as_sat_per_vb_ceil {
                 where
                     D: Deserializer<'de>,
                 {
-                    Ok(Some(
-                        FeeRate::from_sat_per_vb(u64::deserialize(d)?)
-                            .ok_or(OverflowError)
-                            .map_err(serde::de::Error::custom)?,
-                    ))
+                    Ok(Some(super::deserialize(d)?))
                 }
             }
             d.deserialize_option(VisitOpt)
