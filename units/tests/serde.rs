@@ -6,7 +6,6 @@
 #![cfg(feature = "serde")]
 
 use bincode::serialize;
-use bitcoin_units::locktime::{absolute, relative};
 use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
 use serde::{Deserialize, Serialize};
 
@@ -46,11 +45,7 @@ struct Serde {
 
     a: BlockHeight,
     b: BlockInterval,
-    c: absolute::Height,
-    d: absolute::MedianTimePast,
-    e: relative::Height,
-    f: relative::Time,
-    g: Weight,
+    c: Weight,
 }
 
 impl Serde {
@@ -79,11 +74,7 @@ impl Serde {
 
             a: BlockHeight::MAX,
             b: BlockInterval::MAX,
-            c: absolute::Height::MAX,
-            d: absolute::MedianTimePast::MAX,
-            e: relative::Height::MAX,
-            f: relative::Time::MAX,
-            g: Weight::MAX,
+            c: Weight::MAX,
         }
     }
 }

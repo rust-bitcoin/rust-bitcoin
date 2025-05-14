@@ -74,7 +74,6 @@ pub type Time = NumberOf512Seconds;
 /// assert!(locktime.is_satisfied_by(current_height, current_mtp, utxo_height, utxo_mtp));
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LockTime {
     /// A block height lock time value.
     Blocks(NumberOfBlocks),
@@ -430,6 +429,46 @@ impl convert::TryFrom<Sequence> for LockTime {
 impl From<LockTime> for Sequence {
     #[inline]
     fn from(lt: LockTime) -> Sequence { lt.to_sequence() }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for LockTime {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u32(self.to_consensus_u32())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for LockTime {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor;
+        impl serde::de::Visitor<'_> for Visitor {
+            type Value = u32;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("a u32") }
+            // We cannot just implement visit_u32 because JSON (among other things) always
+            // calls visit_u64, even when called from Deserializer::deserialize_u32. The
+            // other visit_u*s have default implementations that forward to visit_u64.
+            fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<u32, E> {
+                v.try_into().map_err(|_| {
+                    E::invalid_value(serde::de::Unexpected::Unsigned(v), &"a 32-bit number")
+                })
+            }
+            // Also do the signed version, just for good measure.
+            fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<u32, E> {
+                v.try_into().map_err(|_| {
+                    E::invalid_value(serde::de::Unexpected::Signed(v), &"a 32-bit number")
+                })
+            }
+        }
+        LockTime::from_consensus(deserializer.deserialize_u32(Visitor)?)
+            .map_err(serde::de::Error::custom)
+    }
 }
 
 /// Error returned when a sequence number is parsed as a lock time, but its
