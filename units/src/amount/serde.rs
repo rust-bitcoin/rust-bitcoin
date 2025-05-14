@@ -230,7 +230,7 @@ pub mod as_sat {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<{}64>", X::type_prefix(private::Token))
+                    write!(formatter, "an Option<{}64>", X::type_prefix(private::Token))
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -301,7 +301,7 @@ pub mod as_btc {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<f64>")
+                    write!(formatter, "an Option<f64>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -372,7 +372,7 @@ pub mod as_str {
                 type Value = Option<X>;
 
                 fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    write!(formatter, "An Option<String>")
+                    write!(formatter, "an Option<String>")
                 }
 
                 fn visit_none<E>(self) -> Result<Self::Value, E>
