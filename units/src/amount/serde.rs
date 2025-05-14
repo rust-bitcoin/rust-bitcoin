@@ -13,11 +13,11 @@
 //!
 //! ```
 //! use serde::{Serialize, Deserialize};
-//! use bitcoin_units::Amount;
+//! use bitcoin_units::{amount, Amount};
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct HasAmount {
-//!     #[serde(with = "bitcoin_units::amount::serde::as_sat")]
+//!     #[serde(with = "amount::serde::as_sat")]
 //!     pub amount: Amount,
 //! }
 //! ```
@@ -396,6 +396,7 @@ pub mod as_str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::amount;
 
     #[test]
     fn sanity_check() {
@@ -407,7 +408,7 @@ mod tests {
     fn can_serde_as_sat() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_sat")]
+            #[serde(with = "amount::serde::as_sat")]
             pub amount: Amount,
         }
 
@@ -426,7 +427,7 @@ mod tests {
     fn can_serde_as_btc() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_btc")]
+            #[serde(with = "amount::serde::as_btc")]
             pub amount: Amount,
         }
 
@@ -445,7 +446,7 @@ mod tests {
     fn can_serde_as_str() {
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         pub struct HasAmount {
-            #[serde(with = "crate::amount::serde::as_str")]
+            #[serde(with = "amount::serde::as_str")]
             pub amount: Amount,
         }
 

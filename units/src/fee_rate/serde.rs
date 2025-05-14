@@ -14,11 +14,11 @@
 //!
 //! ```
 //! use serde::{Serialize, Deserialize};
-//! use bitcoin_units::FeeRate;
+//! use bitcoin_units::{fee_rate, FeeRate};
 //!
 //! #[derive(Serialize, Deserialize)]
 //! pub struct Foo {
-//!     #[serde(with = "bitcoin_units::fee_rate::serde::as_sat_per_kwu")]
+//!     #[serde(with = "fee_rate::serde::as_sat_per_kwu")]
 //!     pub fee_rate: FeeRate,
 //! }
 //! ```
