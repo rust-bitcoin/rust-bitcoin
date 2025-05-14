@@ -7,21 +7,19 @@ use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 mod encapsulate {
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
 
     /// The weight of a transaction or block.
     ///
     /// This is an integer newtype representing [`Weight`] in `wu`. It provides protection
     /// against mixing up types as well as basic formatting features.
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-    #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct Weight(u64);
 
     impl Weight {
@@ -262,6 +260,28 @@ impl<'a> core::iter::Sum<&'a Weight> for Weight {
 }
 
 crate::impl_parse_str_from_int_infallible!(Weight, u64, from_wu);
+
+#[cfg(feature = "serde")]
+impl Serialize for Weight {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u64::serialize(&self.to_wu(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Weight {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_wu(u64::deserialize(d)?))
+    }
+}
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for Weight {

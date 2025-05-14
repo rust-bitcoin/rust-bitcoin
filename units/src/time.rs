@@ -9,11 +9,10 @@
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod encapsulate {
-    #[cfg(feature = "serde")]
-    use serde::{Deserialize, Serialize};
-
     /// A Bitcoin block timestamp.
     ///
     /// > Each block contains a Unix time timestamp. In addition to serving as a source of variation for
@@ -27,7 +26,6 @@ mod encapsulate {
     ///
     /// ref: <https://en.bitcoin.it/wiki/Block_timestamp>
     #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     pub struct BlockTime(u32);
 
     impl BlockTime {
@@ -51,6 +49,28 @@ impl From<u32> for BlockTime {
 impl From<BlockTime> for u32 {
     #[inline]
     fn from(t: BlockTime) -> Self { t.to_u32() }
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for BlockTime {
+    #[inline]
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        u32::serialize(&self.to_u32(), s)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for BlockTime {
+    #[inline]
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from_u32(u32::deserialize(d)?))
+    }
 }
 
 #[cfg(feature = "arbitrary")]
