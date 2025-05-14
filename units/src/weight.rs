@@ -2,6 +2,7 @@
 
 //! Implements `Weight` and associated features.
 
+use core::num::NonZeroU64;
 use core::{fmt, ops};
 
 #[cfg(feature = "arbitrary")]
@@ -221,6 +222,11 @@ crate::internal_macros::impl_op_for_references! {
 
         fn rem(self, rhs: Weight) -> Self::Output { self.to_wu() % rhs.to_wu() }
     }
+    impl ops::Div<NonZeroU64> for Weight {
+        type Output = Weight;
+
+        fn div(self, rhs: NonZeroU64) -> Self::Output{ Self::from_wu(self.to_wu() / rhs.get()) }
+    }
 }
 crate::internal_macros::impl_add_assign!(Weight);
 crate::internal_macros::impl_sub_assign!(Weight);
@@ -268,6 +274,7 @@ impl<'a> Arbitrary<'a> for Weight {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::num::NonZeroU64;
 
     const ONE: Weight = Weight::from_wu(1);
     const TWO: Weight = Weight::from_wu(2);
@@ -276,6 +283,17 @@ mod tests {
     #[test]
     fn sanity_check() {
         assert_eq!(Weight::MIN_TRANSACTION, Weight::from_wu(240));
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn weight_div_nonzero() {
+        let w = Weight::from_wu(100);
+        let divisor = NonZeroU64::new(4).unwrap();
+        assert_eq!(w / divisor, Weight::from_wu(25));
+        // for borrowed variants
+        assert_eq!(&w / &divisor, Weight::from_wu(25));
+        assert_eq!(w / &divisor, Weight::from_wu(25));
     }
 
     #[test]
