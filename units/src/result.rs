@@ -258,6 +258,20 @@ crate::internal_macros::impl_op_for_references! {
     }
 }
 
+impl<T> ops::AddAssign<T> for NumOpResult<T>
+where
+    NumOpResult<T>: Copy + ops::Add<T, Output = NumOpResult<T>>
+{
+    fn add_assign(&mut self, rhs: T) { *self = *self + rhs }
+}
+
+impl<T> ops::SubAssign<T> for NumOpResult<T>
+where
+    NumOpResult<T>: Copy + ops::Sub<T, Output = NumOpResult<T>>
+{
+    fn sub_assign(&mut self, rhs: T) { *self = *self - rhs }
+}
+
 pub(crate) trait OptionExt<T> {
     fn valid_or_error(self, op: MathOp) -> NumOpResult<T>;
 }
