@@ -11,6 +11,8 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use crate::{Amount, NumOpResult};
+
 mod encapsulate {
     /// Fee rate.
     ///
@@ -52,25 +54,25 @@ impl FeeRate {
     /// The fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
-    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000 weight units.
+    ///
+    /// Returns [`None`] if overflow occurred.
+    pub const fn from_per_kwu(per_kwu: Amount) -> Option<Self> {
         // No `map()` in const context.
-        match sat_kwu.checked_mul(4_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
+        match per_kwu.checked_mul(4_000) {
+            NumOpResult::Ok(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
+            NumOpResult::Error(_) => None,
         }
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
+    /// Constructs a new [`FeeRate`] from satoshis per virtual byte.
     ///
-    /// # Errors
-    ///
-    /// Returns [`None`] on arithmetic overflow.
-    pub const fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
+    /// Returns [`None`] if overflow occurred.
+    pub const fn from_per_vb(per_vb: Amount) -> Option<Self> {
         // No `map()` in const context.
-        match sat_vb.checked_mul(1_000_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
+        match per_vb.checked_mul(1_000_000) {
+            NumOpResult::Ok(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
+            NumOpResult::Error(_) => None,
         }
     }
 
@@ -80,32 +82,76 @@ impl FeeRate {
         FeeRate::from_sat_per_mvb(sat_vb * 1_000_000)
     }
 
-    /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
-    pub const fn from_sat_per_kvb(sat_kvb: u64) -> Option<Self> {
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000 virtual bytes.
+    ///
+    /// Returns [`None`] if overflow occurred.
+    pub const fn from_per_kvb(sat_kvb: Amount) -> Option<Self> {
         // No `map()` in const context.
         match sat_kvb.checked_mul(1_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
+            NumOpResult::Ok(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
+            NumOpResult::Error(_) => None,
         }
     }
 
     /// Converts to sat/kwu rounding down.
-    pub const fn to_sat_per_kwu_floor(self) -> u64 { self.to_sat_per_mvb() / 4_000 }
+    pub const fn to_per_kwu_floor(self) -> Amount {
+        let sats = self.to_sat_per_mvb() / 4_000;
+
+        match Amount::from_sat(sats) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/kwu rounding up.
-    pub const fn to_sat_per_kwu_ceil(self) -> u64 { (self.to_sat_per_mvb() + 3_999) / 4_000 }
+    pub const fn to_per_kwu_ceil(self) -> Amount {
+        let sat = (self.to_sat_per_mvb() + 3_999) / 4_000;
+
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000_000 }
+    pub const fn to_per_vb_floor(self) -> Amount {
+        let sat = self.to_sat_per_mvb() / 1_000_000;
+
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999_999) / 1_000_000 }
+    pub const fn to_per_vb_ceil(self) -> Amount {
+        let sat = (self.to_sat_per_mvb() + 999_999) / 1_000_000;
+
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/kvb rounding down..
-    pub const fn to_sat_per_kvb_floor(self) -> u64 { self.to_sat_per_mvb() / 1_000 }
+    pub const fn to_per_kvb_floor(self) -> u64 {
+        let sat = self.to_sat_per_mvb() / 1_000;
+
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/kvb rounding up.
-    pub const fn to_sat_per_kvb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999) / 1_000 }
+    pub const fn to_per_kvb_ceil(self) -> u64 {
+        let sat = (self.to_sat_per_mvb() + 999) / 1_000;
+
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Checked multiplication.
     ///
