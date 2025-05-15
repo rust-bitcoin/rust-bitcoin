@@ -6,7 +6,7 @@
 pub mod serde;
 
 use core::num::NonZeroU64;
-use core::{fmt, ops};
+use core::ops;
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
@@ -131,17 +131,6 @@ impl FeeRate {
     }
 }
 
-/// Alternative will display the unit.
-impl fmt::Display for FeeRate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if f.alternate() {
-            write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
-        } else {
-            fmt::Display::fmt(&self.to_sat_per_kwu(), f)
-        }
-    }
-}
-
 impl From<FeeRate> for u64 {
     fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
@@ -185,8 +174,6 @@ impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
         FeeRate::from_sat_per_kwu(iter.map(|f| FeeRate::to_sat_per_kwu(*f)).sum())
     }
 }
-
-crate::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(feature = "arbitrary")]
 impl<'a> Arbitrary<'a> for FeeRate {
