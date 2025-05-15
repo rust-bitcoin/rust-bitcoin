@@ -122,7 +122,7 @@ impl ChaCha20Poly1305 {
         tag: [u8; 16],
         aad: Option<&[u8]>,
     ) -> Result<(), Error> {
-        let mut chacha = ChaCha20::new_from_block(self.key, self.nonce, 0);
+        let chacha = ChaCha20::new_from_block(self.key, self.nonce, 0);
         let keystream = chacha.get_keystream(0);
         let mut poly =
             Poly1305::new(keystream[..32].try_into().expect("slicing produces 32-byte slice"));
