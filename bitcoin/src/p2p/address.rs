@@ -138,6 +138,67 @@ pub enum AddrV2 {
     Unknown(u8, Vec<u8>),
 }
 
+/// Error types for [`AddrV2`] to [`SocketAddr`] conversion.
+#[derive(Debug, PartialEq, Eq)]
+pub enum AddrV2ConversionError {
+    /// A [`AddrV2::TorV3`] address cannot be converted to a [`SocketAddr`].
+    TorV3NotSupported,
+    /// A [`AddrV2::I2p`] address cannot be converted to a [`SocketAddr`].
+    I2pNotSupported,
+    /// A [`AddrV2::Cjdns`] address can be converted to a [`SocketAddr`],
+    /// but it won't work with a tradicional socket API.
+    CjdnsNotRecommended,
+    /// A [`AddrV2::Unknown`] address cannot be converted to a [`SocketAddr`].
+    UnknownNotSupported,
+}
+
+impl fmt::Display for AddrV2ConversionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TorV3NotSupported => write!(f, "TorV3 addresses cannot be converted to SocketAddr"),
+            Self::I2pNotSupported => write!(f, "I2P addresses cannot be converted to SocketAddr"),
+            Self::CjdnsNotRecommended => write!(f, "CJDNS addresses can be converted to SocketAddr, but won't work with a traditional socket API"),
+            Self::UnknownNotSupported => write!(f, "Unknown address type cannot be converted to SocketAddr"),
+        }
+    }
+}
+
+impl std::error::Error for AddrV2ConversionError {}
+
+
+impl From<SocketAddr> for AddrV2 {
+    fn from(addr: SocketAddr) -> Self {
+        match addr {
+            SocketAddr::V4(sock) => AddrV2::Ipv4(*sock.ip()),
+            SocketAddr::V6(sock) => {
+                // CJDNS uses the IPv6 network `fc00::/8`
+                // All CJDNS addresses must have `0xfc00` as the first and second octets
+                let ip = *sock.ip();
+                if ip.octets()[0] == 0xfc && ip.octets()[1] == 0x00 {
+                    AddrV2::Cjdns(ip)
+                } else {
+                    AddrV2::Ipv6(ip)
+                }
+            }
+        }
+    }
+}
+
+impl TryFrom<AddrV2> for SocketAddr {
+    type Error = AddrV2ConversionError;
+
+    fn try_from(addr: AddrV2) -> Result<SocketAddr, Self::Error> {
+        match addr {
+            AddrV2::Ipv4(ip) => Ok(SocketAddr::V4(SocketAddrV4::new(ip, 0))),
+            AddrV2::Ipv6(ip) => Ok(SocketAddr::V6(SocketAddrV6::new(ip, 0, 0, 0))),
+            AddrV2::Cjdns(_) => Err(AddrV2ConversionError::CjdnsNotRecommended),
+            AddrV2::TorV3(_) => Err(AddrV2ConversionError::TorV3NotSupported),
+            AddrV2::I2p(_) => Err(AddrV2ConversionError::I2pNotSupported),
+            AddrV2::Unknown(_, _) => Err(AddrV2ConversionError::UnknownNotSupported),
+        }
+    }
+}
+
 impl Encodable for AddrV2 {
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         fn encode_addr<W: Write + ?Sized>(
