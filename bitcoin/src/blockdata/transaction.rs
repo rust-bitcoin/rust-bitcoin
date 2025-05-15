@@ -785,11 +785,7 @@ pub fn effective_value(
     value: Amount,
 ) -> NumOpResult<SignedAmount> {
     let weight = input_weight_prediction.total_weight();
-
-    fee_rate
-        .to_fee(weight)
-        .map(Amount::to_signed)
-        .and_then(|fee| value.to_signed() - fee)    // Cannot overflow.
+    value.to_signed() - fee_rate.to_fee(weight).to_signed()
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1674,7 +1670,7 @@ mod tests {
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
             effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
-        assert!(eff_value.is_error());
+        assert_eq!(eff_value.unwrap(), SignedAmount::MIN);
     }
 
     #[test]

@@ -15,7 +15,7 @@ use core::ops;
 
 use NumOpResult as R;
 
-use crate::{Amount, FeeRate, MathOp, NumOpError as E, NumOpResult, OptionExt, Weight};
+use crate::{Amount, FeeRate, MathOp, NumOpResult, OptionExt, Weight};
 
 impl Amount {
     /// Checked weight ceiling division.
@@ -114,11 +114,11 @@ impl Amount {
 }
 
 impl FeeRate {
-    /// Calculates the fee by multiplying this fee rate by weight, in weight units, returning
-    /// [`NumOpResult::Error`] if an overflow occurred.
+    /// Calculates the fee by multiplying this fee rate by weight, in weight units.
     ///
-    /// This is equivalent to `Self::checked_mul_by_weight()`.
-    pub const fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
+    /// Saturates to `Amount::MAX` to avoid checking for overflow. This is equivalent to
+    /// `Self::checked_mul_by_weight()`.
+    pub const fn to_fee(self, weight: Weight) -> Amount {
         self.checked_mul_by_weight(weight)
     }
 
@@ -128,8 +128,9 @@ impl FeeRate {
     /// This is equivalent to `Self::checked_mul_by_weight()`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use `to_fee()` instead")]
+    #[allow(clippy::unnecessary_wraps)]
     pub fn fee_wu(self, weight: Weight) -> Option<Amount> {
-        self.checked_mul_by_weight(weight).ok()
+        Some(self.checked_mul_by_weight(weight))
     }
 
     /// Calculates the fee by multiplying this fee rate by weight, in virtual bytes, returning [`None`]
@@ -139,8 +140,9 @@ impl FeeRate {
     /// `Self::fee_wu(weight)`.
     #[must_use]
     #[deprecated(since = "TBD", note = "use Weight::from_vb and then `to_fee()` instead")]
+    #[allow(clippy::unnecessary_wraps)]
     pub fn fee_vb(self, vb: u64) -> Option<Amount> {
-        Weight::from_vb(vb).and_then(|w| self.to_fee(w).ok())
+        Weight::from_vb(vb).map(|w| self.to_fee(w))
     }
 
     /// Checked weight multiplication.
@@ -149,22 +151,22 @@ impl FeeRate {
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
     ///
-    /// Returns [`NumOpResult::Error`] if overflow occurred.
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
+    /// Saturates to `Amount::MAX` to avoid checking for overflow.
+    pub const fn checked_mul_by_weight(self, weight: Weight) -> Amount {
         if let Some(fee) = self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
             if let Some(round_up) = fee.checked_add(999) {
                 if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
-                    return NumOpResult::Valid(ret);
+                    return ret;
                 }
             }
         }
-        NumOpResult::Error(E::while_doing(MathOp::Mul))
+        Amount::MAX
     }
 }
 
 crate::internal_macros::impl_op_for_references! {
     impl ops::Mul<FeeRate> for Weight {
-        type Output = NumOpResult<Amount>;
+        type Output = Amount;
         fn mul(self, rhs: FeeRate) -> Self::Output {
             rhs.checked_mul_by_weight(self)
         }
@@ -173,7 +175,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: FeeRate) -> Self::Output {
             match self {
-                R::Valid(lhs) => lhs * rhs,
+                R::Valid(lhs) => NumOpResult::Valid(lhs * rhs),
                 R::Error(e) => NumOpResult::Error(e),
             }
         }
@@ -182,7 +184,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
             match rhs {
-                R::Valid(fee_rate) => self * fee_rate,
+                R::Valid(fee_rate) => NumOpResult::Valid(self * fee_rate),
                 R::Error(e) => NumOpResult::Error(e),
             }
         }
@@ -192,7 +194,7 @@ crate::internal_macros::impl_op_for_references! {
         fn mul(self, rhs: NumOpResult<FeeRate>) -> Self::Output {
             match self {
                 R::Valid(lhs) => { match rhs {
-                    R::Valid(fee_rate) => lhs * fee_rate,
+                    R::Valid(fee_rate) => NumOpResult::Valid(lhs * fee_rate),
                     R::Error(e) => NumOpResult::Error(e),
                 }}
                 R::Error(e) => NumOpResult::Error(e),
@@ -201,7 +203,7 @@ crate::internal_macros::impl_op_for_references! {
     }
 
     impl ops::Mul<Weight> for FeeRate {
-        type Output = NumOpResult<Amount>;
+        type Output = Amount;
         fn mul(self, rhs: Weight) -> Self::Output {
             self.checked_mul_by_weight(rhs)
         }
@@ -210,7 +212,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: Weight) -> Self::Output {
             match self {
-                R::Valid(lhs) => lhs * rhs,
+                R::Valid(lhs) => NumOpResult::Valid(lhs * rhs),
                 R::Error(e) => NumOpResult::Error(e),
             }
         }
@@ -219,7 +221,7 @@ crate::internal_macros::impl_op_for_references! {
         type Output = NumOpResult<Amount>;
         fn mul(self, rhs: NumOpResult<Weight>) -> Self::Output {
             match rhs {
-                R::Valid(weight) => self * weight,
+                R::Valid(weight) => NumOpResult::Valid(self * weight),
                 R::Error(e) => NumOpResult::Error(e),
             }
         }
@@ -229,7 +231,7 @@ crate::internal_macros::impl_op_for_references! {
         fn mul(self, rhs: NumOpResult<Weight>) -> Self::Output {
             match self {
                 R::Valid(lhs) => { match rhs {
-                    R::Valid(weight) => lhs * weight,
+                    R::Valid(weight) => NumOpResult::Valid(lhs * weight),
                     R::Error(e) => NumOpResult::Error(e),
                 }}
                 R::Error(e) => NumOpResult::Error(e),
@@ -327,8 +329,8 @@ impl Weight {
     /// fee is a non-integer amount, the amount is rounded up, ensuring that the transaction fee is
     /// enough instead of falling short if rounded down.
     ///
-    /// Returns [`None`] if overflow occurred.
-    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
+    /// Saturates to `Amount::MAX` to avoid checking for overflow. 
+    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> Amount {
         fee_rate.checked_mul_by_weight(self)
     }
 }
@@ -345,12 +347,11 @@ mod tests {
 
     #[test]
     fn fee_wu() {
-        let operation = FeeRate::from_sat_per_kwu(10).to_fee(Weight::MAX).unwrap_err().operation();
-        assert!(operation.is_multiplication());
+        assert_eq!(FeeRate::from_sat_per_kwu(10).to_fee(Weight::MAX), Amount::MAX);
 
         let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
         let weight = Weight::from_vb(3).unwrap();
-        assert_eq!(fee_rate.to_fee(weight).unwrap(), Amount::from_sat_u32(6));
+        assert_eq!(fee_rate.to_fee(weight), Amount::from_sat_u32(6));
     }
 
     #[test]
@@ -358,21 +359,19 @@ mod tests {
         let weight = Weight::from_vb(10).unwrap();
         let fee: Amount = FeeRate::from_sat_per_vb(10)
             .unwrap()
-            .checked_mul_by_weight(weight)
-            .expect("expected Amount");
+            .checked_mul_by_weight(weight);
         assert_eq!(Amount::from_sat_u32(100), fee);
 
-        let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
-        assert!(fee.is_error());
+        assert_eq!(FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX), Amount::MAX);
 
         let weight = Weight::from_vb(3).unwrap();
         let fee_rate = FeeRate::from_sat_per_vb(3).unwrap();
-        let fee = fee_rate.checked_mul_by_weight(weight).unwrap();
+        let fee = fee_rate.checked_mul_by_weight(weight);
         assert_eq!(Amount::from_sat_u32(9), fee);
 
         let weight = Weight::from_wu(381);
         let fee_rate = FeeRate::from_sat_per_kwu(864);
-        let fee = weight.checked_mul_by_fee_rate(fee_rate).unwrap();
+        let fee = weight.checked_mul_by_fee_rate(fee_rate);
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
         assert_eq!(fee, Amount::from_sat_u32(330));
@@ -385,12 +384,12 @@ mod tests {
         let three = Weight::from_vb(3).unwrap();
         let six = Amount::from_sat_u32(6);
 
-        assert_eq!(two * three, six.into());
+        assert_eq!(two * three, six);
 
         // Test reference operators
-        assert_eq!(&two * three, six.into());
-        assert_eq!(two * &three, six.into());
-        assert_eq!(&two * &three, six.into());
+        assert_eq!(&two * three, six);
+        assert_eq!(two * &three, six);
+        assert_eq!(&two * &three, six);
     }
 
     #[test]
