@@ -594,4 +594,98 @@ mod test {
 
         assert_eq!(serialize(&addresses), raw);
     }
+
+    #[test]
+    fn socketaddr_to_addrv2_ipv4() {
+        let socket = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(192, 168, 1, 1), 8333));
+        let addr = AddrV2::from(socket);
+
+        assert_eq!(addr, AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1)));
+    }
+
+    #[test]
+    fn socketaddr_to_addrv2_ipv6() {
+        let socket = SocketAddr::V6(SocketAddrV6::new(
+            Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1),
+            8333,
+            0,
+            0,
+        ));
+        let addr = AddrV2::from(socket);
+
+        assert_eq!(addr, AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1)));
+    }
+
+    #[test]
+    fn socketaddr_to_addrv2_cjdns() {
+        let socket = SocketAddr::V6(SocketAddrV6::new(
+            Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1),
+            8333,
+            0,
+            0,
+        ));
+        let addr = AddrV2::from(socket);
+
+        assert_eq!(addr, AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1)));
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_ipv4() {
+        let addr = AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1));
+        let socket = SocketAddr::try_from(addr).unwrap();
+
+        assert_eq!(socket, SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(192, 168, 1, 1), 0)));
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_ipv6() {
+        let addr = AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
+        let socket = SocketAddr::try_from(addr).unwrap();
+
+        assert_eq!(
+            socket,
+            SocketAddr::V6(SocketAddrV6::new(
+                Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1),
+                0,
+                0,
+                0
+            ))
+        );
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_cjdns() {
+        let addr = AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1));
+        let result = SocketAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ConversionError::CjdnsNotRecommended);
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_torv3() {
+        let addr = AddrV2::TorV3([0; 32]);
+        let result = SocketAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ConversionError::TorV3NotSupported);
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_i2p() {
+        let addr = AddrV2::I2p([0; 32]);
+        let result = SocketAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ConversionError::I2pNotSupported);
+    }
+
+    #[test]
+    fn addrv2_to_socketaddr_unknown() {
+        let addr = AddrV2::Unknown(42, vec![1, 2, 3, 4]);
+        let result = SocketAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ConversionError::UnknownNotSupported);
+    }
 }
