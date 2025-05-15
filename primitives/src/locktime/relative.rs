@@ -451,6 +451,10 @@ impl<'de> serde::Deserialize<'de> for LockTime {
         impl serde::de::Visitor<'_> for Visitor {
             type Value = u32;
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str("a u32") }
+
+            #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
+            fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<u32, E> { v }
+
             // We cannot just implement visit_u32 because JSON (among other things) always
             // calls visit_u64, even when called from Deserializer::deserialize_u32. The
             // other visit_u*s have default implementations that forward to visit_u64.
