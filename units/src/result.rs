@@ -3,7 +3,7 @@
 //! Provides a monodic type returned by mathematical operations (`core::ops`).
 
 use core::convert::Infallible;
-use core::fmt;
+use core::{fmt, ops};
 
 use NumOpResult as R;
 
@@ -203,6 +203,59 @@ impl<T: fmt::Debug> NumOpResult<T> {
     /// Returns `true` if the numeric result is invalid.
     #[inline]
     pub fn is_error(&self) -> bool { !self.is_valid() }
+}
+
+crate::internal_macros::impl_op_for_references! {
+    impl<T> ops::Add<NumOpResult<T>> for NumOpResult<T>
+    where
+        (T: Copy + ops::Add<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (R::Valid(lhs), R::Valid(rhs)) => lhs + rhs,
+                (_, _) => R::Error(NumOpError::while_doing(MathOp::Add)),
+            }
+        }
+    }
+
+    impl<T> ops::Add<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Add<NumOpResult<T>, Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn add(self, rhs: T) -> Self::Output { rhs + self }
+    }
+
+    impl<T> ops::Sub<NumOpResult<T>> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn sub(self, rhs: Self) -> Self::Output {
+            match (self, rhs) {
+                (R::Valid(lhs), R::Valid(rhs)) => lhs - rhs,
+                (_, _) => R::Error(NumOpError::while_doing(MathOp::Sub)),
+            }
+        }
+    }
+
+    impl<T> ops::Sub<T> for NumOpResult<T>
+    where
+        (T: Copy + ops::Sub<Output = NumOpResult<T>>)
+    {
+        type Output = NumOpResult<T>;
+
+        fn sub(self, rhs: T) -> Self::Output {
+            match self {
+                R::Valid(amount) => amount - rhs,
+                R::Error(_) => self,
+            }
+        }
+    }
 }
 
 pub(crate) trait OptionExt<T> {
