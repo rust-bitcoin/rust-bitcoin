@@ -6,7 +6,7 @@
 //! network addresses in Bitcoin messages.
 
 use core::{fmt, iter};
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
 use io::{BufRead, Read, Write};
 
@@ -136,6 +136,23 @@ pub enum AddrV2 {
     Cjdns(Ipv6Addr),
     /// Unknown
     Unknown(u8, Vec<u8>),
+}
+
+impl From<IpAddr> for AddrV2 {
+    fn from(addr: IpAddr) -> Self {
+        match addr {
+            IpAddr::V4(addr) => AddrV2::Ipv4(addr),
+            IpAddr::V6(addr) => AddrV2::Ipv6(addr),
+        }
+    }
+}
+
+impl From<Ipv4Addr> for AddrV2 {
+    fn from(addr: Ipv4Addr) -> Self { AddrV2::Ipv4(addr) }
+}
+
+impl From<Ipv6Addr> for AddrV2 {
+    fn from(addr: Ipv6Addr) -> Self { AddrV2::Ipv6(addr) }
 }
 
 impl Encodable for AddrV2 {
@@ -532,5 +549,33 @@ mod test {
         );
 
         assert_eq!(serialize(&addresses), raw);
+    }
+
+    #[test]
+    fn ipaddrv4_to_addrv2() {
+        let ip = IpAddr::V4(Ipv4Addr::new(1, 2, 3, 4));
+        let addrv2 = AddrV2::from(ip);
+        assert_eq!(addrv2, AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4)));
+    }
+
+    #[test]
+    fn ipaddrv6_to_addrv2() {
+        let ip = IpAddr::V6(Ipv6Addr::new(1, 2, 3, 4, 5, 6, 7, 8));
+        let addrv2 = AddrV2::from(ip);
+        assert_eq!(addrv2, AddrV2::Ipv6(Ipv6Addr::new(1, 2, 3, 4, 5, 6, 7, 8)));
+    }
+
+    #[test]
+    fn ipv4addr_to_addrv2() {
+        let ip = Ipv4Addr::new(1, 2, 3, 4);
+        let addrv2 = AddrV2::from(ip);
+        assert_eq!(addrv2, AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4)));
+    }
+
+    #[test]
+    fn ipv6addr_to_addrv2() {
+        let ip = Ipv6Addr::new(1, 2, 3, 4, 5, 6, 7, 8);
+        let addrv2 = AddrV2::from(ip);
+        assert_eq!(addrv2, AddrV2::Ipv6(Ipv6Addr::new(1, 2, 3, 4, 5, 6, 7, 8)));
     }
 }
