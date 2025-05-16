@@ -35,17 +35,15 @@ crate::internal_macros::define_extension_trait! {
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
-        ///
-        /// The input string is expected to be consensus encoded i.e., includes the length prefix.
-        #[deprecated(since = "TBD", note = "use `from_hex_string_prefixed()` instead")]
-        fn from_hex(s: &str) -> Result<ScriptBuf, consensus::FromHexError> {
-            Self::from_hex_prefixed(s)
+        #[deprecated(since = "TBD", note = "use `from_hex_string_no_length_prefix()` instead")]
+        fn from_hex(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
+            Self::from_hex_no_length_prefix(s)
         }
 
         /// Constructs a new [`ScriptBuf`] from a hex string.
         ///
-        /// This is **not** consensus encoding. If your hex string is a consensus encode script then
-        /// use `ScriptBuf::from_hex`.
+        /// This is **not** consensus encoding. If your hex string is a consensus encoded script
+        /// then use `ScriptBuf::from_hex_prefixed`.
         fn from_hex_no_length_prefix(s: &str) -> Result<ScriptBuf, hex::HexToBytesError> {
             let v = Vec::from_hex(s)?;
             Ok(ScriptBuf::from_bytes(v))
