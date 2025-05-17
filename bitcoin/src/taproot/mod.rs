@@ -95,9 +95,9 @@ impl From<TapLeafHash> for TapNodeHash {
 }
 
 impl TapTweakHash {
-    /// Constructs a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
+    /// Constructs a new BIP341 [`TapTweakHash`] from key and Merkle root. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the Merkle root.
-    pub fn from_key_and_tweak<K: Into<UntweakedPublicKey>>(
+    pub fn from_key_and_merkle_root<K: Into<UntweakedPublicKey>>(
         internal_key: K,
         merkle_root: Option<TapNodeHash>,
     ) -> TapTweakHash {
@@ -293,7 +293,7 @@ impl TaprootSpendInfo {
     /// Returns the `TapTweakHash` for this [`TaprootSpendInfo`] i.e., the tweak using `internal_key`
     /// and `merkle_root`.
     pub fn tap_tweak(&self) -> TapTweakHash {
-        TapTweakHash::from_key_and_tweak(self.internal_key, self.merkle_root)
+        TapTweakHash::from_key_and_merkle_root(self.internal_key, self.merkle_root)
     }
 
     /// Returns the internal key for this [`TaprootSpendInfo`].
@@ -1305,7 +1305,7 @@ impl<Branch: AsRef<TaprootMerkleBranch> + ?Sized> ControlBlock<Branch> {
         }
         // compute the taptweak
         let tweak =
-            TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash)).to_scalar();
+            TapTweakHash::from_key_and_merkle_root(self.internal_key, Some(curr_hash)).to_scalar();
         self.internal_key.tweak_add_check(secp, &output_key, self.output_key_parity, tweak)
     }
 }
@@ -2103,7 +2103,7 @@ mod test {
                 .unwrap()
                 .assume_checked();
 
-            let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
+            let tweak = TapTweakHash::from_key_and_merkle_root(internal_key, merkle_root);
             let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
             let addr = Address::p2tr(secp, internal_key, merkle_root, KnownHrp::Mainnet);
             let spk = addr.script_pubkey();

@@ -940,7 +940,7 @@ impl TapTweak for UntweakedPublicKey {
         secp: &Secp256k1<C>,
         merkle_root: Option<TapNodeHash>,
     ) -> (TweakedPublicKey, Parity) {
-        let tweak = TapTweakHash::from_key_and_tweak(self, merkle_root).to_scalar();
+        let tweak = TapTweakHash::from_key_and_merkle_root(self, merkle_root).to_scalar();
         let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
 
         debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak));
@@ -970,7 +970,7 @@ impl TapTweak for UntweakedKeypair {
         merkle_root: Option<TapNodeHash>,
     ) -> TweakedKeypair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
-        let tweak = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).to_scalar();
+        let tweak = TapTweakHash::from_key_and_merkle_root(pubkey, merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
         TweakedKeypair(tweaked)
     }
