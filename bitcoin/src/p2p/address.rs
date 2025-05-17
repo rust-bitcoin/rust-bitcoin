@@ -833,4 +833,162 @@ mod test {
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AddrV2ToSocketAddrError::UnknownNotSupported);
     }
+
+    #[test]
+    fn addrv2_to_ipaddr_ipv4() {
+        let addr = AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1));
+        let ip_addr = IpAddr::try_from(addr).unwrap();
+
+        assert_eq!(ip_addr, IpAddr::V4(Ipv4Addr::new(192, 168, 1, 1)));
+    }
+
+    #[test]
+    fn addrv2_to_ipaddr_ipv6() {
+        let addr = AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
+        let ip_addr = IpAddr::try_from(addr).unwrap();
+
+        assert_eq!(ip_addr, IpAddr::V6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1)));
+    }
+
+    #[test]
+    fn addrv2_to_ipaddr_cjdns() {
+        let addr = AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1));
+        let result = IpAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::Cjdns);
+    }
+
+    #[test]
+    fn addrv2_to_ipaddr_torv3() {
+        let addr = AddrV2::TorV3([0; 32]);
+        let result = IpAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::TorV3);
+    }
+
+    #[test]
+    fn addrv2_to_ipaddr_i2p() {
+        let addr = AddrV2::I2p([0; 32]);
+        let result = IpAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::I2p);
+    }
+
+    #[test]
+    fn addrv2_to_ipaddr_unknown() {
+        let addr = AddrV2::Unknown(42, vec![1, 2, 3, 4]);
+        let result = IpAddr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpAddrError::Unknown);
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_ipv4() {
+        let addr = AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1));
+        let ip_addr = Ipv4Addr::try_from(addr).unwrap();
+
+        assert_eq!(ip_addr, Ipv4Addr::new(192, 168, 1, 1));
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_ipv6() {
+        let addr = AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
+        let result = Ipv4Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv4AddrError::Ipv6);
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_cjdns() {
+        let addr = AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1));
+        let result = Ipv4Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv4AddrError::Cjdns);
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_torv3() {
+        let addr = AddrV2::TorV3([0; 32]);
+        let result = Ipv4Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv4AddrError::TorV3);
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_i2p() {
+        let addr = AddrV2::I2p([0; 32]);
+        let result = Ipv4Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv4AddrError::I2p);
+    }
+
+    #[test]
+    fn addrv2_to_ipv4addr_unknown() {
+        let addr = AddrV2::Unknown(42, vec![1, 2, 3, 4]);
+        let result = Ipv4Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv4AddrError::Unknown);
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_ipv4() {
+        let addr = AddrV2::Ipv4(Ipv4Addr::new(192, 168, 1, 1));
+        let result = Ipv6Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv6AddrError::Ipv4);
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_ipv6() {
+        let addr = AddrV2::Ipv6(Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
+        let ip_addr = Ipv6Addr::try_from(addr).unwrap();
+
+        assert_eq!(ip_addr, Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1));
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_cjdns() {
+        let addr = AddrV2::Cjdns(Ipv6Addr::new(0xfc00, 0, 0, 0, 0, 0, 0, 1));
+        let result = Ipv6Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv6AddrError::Cjdns);
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_torv3() {
+        let addr = AddrV2::TorV3([0; 32]);
+        let result = Ipv6Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv6AddrError::TorV3);
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_i2p() {
+        let addr = AddrV2::I2p([0; 32]);
+        let result = Ipv6Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv6AddrError::I2p);
+    }
+
+    #[test]
+    fn addrv2_to_ipv6addr_unknown() {
+        let addr = AddrV2::Unknown(42, vec![1, 2, 3, 4]);
+        let result = Ipv6Addr::try_from(addr);
+
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), AddrV2ToIpv6AddrError::Unknown);
+    }
 }
