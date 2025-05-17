@@ -140,7 +140,7 @@ pub enum AddrV2 {
 
 /// Error types for [`AddrV2`] to [`SocketAddr`] conversion.
 #[derive(Debug, PartialEq, Eq)]
-pub enum AddrV2ConversionError {
+pub enum AddrV2ToSocketAddrError {
     /// A [`AddrV2::TorV3`] address cannot be converted to a [`SocketAddr`].
     TorV3NotSupported,
     /// A [`AddrV2::I2p`] address cannot be converted to a [`SocketAddr`].
@@ -152,7 +152,7 @@ pub enum AddrV2ConversionError {
     UnknownNotSupported,
 }
 
-impl fmt::Display for AddrV2ConversionError {
+impl fmt::Display for AddrV2ToSocketAddrError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TorV3NotSupported => write!(f, "TorV3 addresses cannot be converted to SocketAddr"),
@@ -163,7 +163,7 @@ impl fmt::Display for AddrV2ConversionError {
     }
 }
 
-impl std::error::Error for AddrV2ConversionError {}
+impl std::error::Error for AddrV2ToSocketAddrError {}
 
 impl From<SocketAddr> for AddrV2 {
     fn from(addr: SocketAddr) -> Self {
@@ -184,16 +184,16 @@ impl From<SocketAddr> for AddrV2 {
 }
 
 impl TryFrom<AddrV2> for SocketAddr {
-    type Error = AddrV2ConversionError;
+    type Error = AddrV2ToSocketAddrError;
 
     fn try_from(addr: AddrV2) -> Result<SocketAddr, Self::Error> {
         match addr {
             AddrV2::Ipv4(ip) => Ok(SocketAddr::V4(SocketAddrV4::new(ip, 0))),
             AddrV2::Ipv6(ip) => Ok(SocketAddr::V6(SocketAddrV6::new(ip, 0, 0, 0))),
-            AddrV2::Cjdns(_) => Err(AddrV2ConversionError::CjdnsNotRecommended),
-            AddrV2::TorV3(_) => Err(AddrV2ConversionError::TorV3NotSupported),
-            AddrV2::I2p(_) => Err(AddrV2ConversionError::I2pNotSupported),
-            AddrV2::Unknown(_, _) => Err(AddrV2ConversionError::UnknownNotSupported),
+            AddrV2::Cjdns(_) => Err(AddrV2ToSocketAddrError::CjdnsNotRecommended),
+            AddrV2::TorV3(_) => Err(AddrV2ToSocketAddrError::TorV3NotSupported),
+            AddrV2::I2p(_) => Err(AddrV2ToSocketAddrError::I2pNotSupported),
+            AddrV2::Unknown(_, _) => Err(AddrV2ToSocketAddrError::UnknownNotSupported),
         }
     }
 }
@@ -801,7 +801,7 @@ mod test {
         let result = SocketAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ConversionError::CjdnsNotRecommended);
+        assert_eq!(result.unwrap_err(), AddrV2ToSocketAddrError::CjdnsNotRecommended);
     }
 
     #[test]
@@ -810,7 +810,7 @@ mod test {
         let result = SocketAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ConversionError::TorV3NotSupported);
+        assert_eq!(result.unwrap_err(), AddrV2ToSocketAddrError::TorV3NotSupported);
     }
 
     #[test]
@@ -819,7 +819,7 @@ mod test {
         let result = SocketAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ConversionError::I2pNotSupported);
+        assert_eq!(result.unwrap_err(), AddrV2ToSocketAddrError::I2pNotSupported);
     }
 
     #[test]
@@ -828,7 +828,7 @@ mod test {
         let result = SocketAddr::try_from(addr);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), AddrV2ConversionError::UnknownNotSupported);
+        assert_eq!(result.unwrap_err(), AddrV2ToSocketAddrError::UnknownNotSupported);
     }
 
     #[test]
