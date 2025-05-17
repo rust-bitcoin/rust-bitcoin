@@ -4,6 +4,10 @@
 
 - Use MAX_MONEY in serde regression test [#3950](https://github.com/rust-bitcoin/rust-bitcoin/pull/3950)
 
+## Breaking changes
+
+- Change Psbt serde implementation to contextually use the PSBT binary or base64 encoded formats described in BIP-174.
+
 # 0.33.0-alpha.0 - 2024-11-18
 
 This series of alpha releases is meant for two things:
