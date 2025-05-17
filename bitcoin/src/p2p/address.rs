@@ -6,7 +6,7 @@
 //! network addresses in Bitcoin messages.
 
 use core::{fmt, iter};
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
 use io::{BufRead, Read, Write};
 
@@ -165,7 +165,6 @@ impl fmt::Display for AddrV2ConversionError {
 
 impl std::error::Error for AddrV2ConversionError {}
 
-
 impl From<SocketAddr> for AddrV2 {
     fn from(addr: SocketAddr) -> Self {
         match addr {
@@ -197,6 +196,68 @@ impl TryFrom<AddrV2> for SocketAddr {
             AddrV2::Unknown(_, _) => Err(AddrV2ConversionError::UnknownNotSupported),
         }
     }
+}
+
+impl TryFrom<AddrV2> for IpAddr {
+    type Error = AddrV2ToIpAddrError;
+
+    fn try_from(addr: AddrV2) -> Result<IpAddr, Self::Error> {
+        match addr {
+            AddrV2::Ipv4(ip) => Ok(IpAddr::V4(ip)),
+            AddrV2::Ipv6(ip) => Ok(IpAddr::V6(ip)),
+            AddrV2::Cjdns(ip) => Ok(IpAddr::V6(ip)),
+            AddrV2::TorV3(_) => Err(AddrV2ToIpAddrError::TorV3),
+            AddrV2::I2p(_) => Err(AddrV2ToIpAddrError::I2p),
+            AddrV2::Unknown(_, _) => Err(AddrV2ToIpAddrError::Unknown),
+        }
+    }
+}
+
+impl TryFrom<AddrV2> for Ipv4Addr {
+    type Error = AddrV2ToIpv4AddrError;
+
+    fn try_from(addr: AddrV2) -> Result<Ipv4Addr, Self::Error> {
+        match addr {
+            AddrV2::Ipv4(ip) => Ok(ip),
+            AddrV2::Ipv6(_) => Err(AddrV2ToIpv4AddrError::Ipv6),
+            AddrV2::Cjdns(_) => Err(AddrV2ToIpv4AddrError::Cjdns),
+            AddrV2::TorV3(_) => Err(AddrV2ToIpv4AddrError::TorV3),
+            AddrV2::I2p(_) => Err(AddrV2ToIpv4AddrError::I2p),
+            AddrV2::Unknown(_, _) => Err(AddrV2ToIpv4AddrError::Unknown),
+        }
+    }
+}
+
+impl TryFrom<AddrV2> for Ipv6Addr {
+    type Error = AddrV2ToIpv6AddrError;
+
+    fn try_from(addr: AddrV2) -> Result<Ipv6Addr, Self::Error> {
+        match addr {
+            AddrV2::Ipv6(ip) => Ok(ip),
+            AddrV2::Cjdns(ip) => Ok(ip),
+            AddrV2::Ipv4(_) => Err(AddrV2ToIpv6AddrError::Ipv4),
+            AddrV2::TorV3(_) => Err(AddrV2ToIpv6AddrError::TorV3),
+            AddrV2::I2p(_) => Err(AddrV2ToIpv6AddrError::I2p),
+            AddrV2::Unknown(_, _) => Err(AddrV2ToIpv6AddrError::Unknown),
+        }
+    }
+}
+
+impl From<IpAddr> for AddrV2 {
+    fn from(addr: IpAddr) -> Self {
+        match addr {
+            IpAddr::V4(ip) => AddrV2::Ipv4(ip),
+            IpAddr::V6(ip) => AddrV2::Ipv6(ip),
+        }
+    }
+}
+
+impl From<Ipv4Addr> for AddrV2 {
+    fn from(addr: Ipv4Addr) -> Self { AddrV2::Ipv4(addr) }
+}
+
+impl From<Ipv6Addr> for AddrV2 {
+    fn from(addr: Ipv6Addr) -> Self { AddrV2::Ipv6(addr) }
 }
 
 impl Encodable for AddrV2 {
@@ -348,6 +409,87 @@ impl ToSocketAddrs for AddrV2Message {
         Ok(iter::once(self.socket_addr()?))
     }
 }
+
+/// Error types for [`AddrV2`] to [`IpAddr`] conversion.
+#[derive(Debug, PartialEq, Eq)]
+pub enum AddrV2ToIpAddrError {
+    /// A [`AddrV2::TorV3`] address cannot be converted to a [`IpAddr`].
+    TorV3,
+    /// A [`AddrV2::I2p`] address cannot be converted to a [`IpAddr`].
+    I2p,
+    /// A [`AddrV2::Unknown`] address cannot be converted to a [`IpAddr`].
+    Unknown,
+}
+
+impl fmt::Display for AddrV2ToIpAddrError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TorV3 => write!(f, "TorV3 addresses cannot be converted to IpAddr"),
+            Self::I2p => write!(f, "I2P addresses cannot be converted to IpAddr"),
+            Self::Unknown =>
+                write!(f, "Unknown address type cannot be converted to IpAddr"),
+        }
+    }
+}
+
+impl std::error::Error for AddrV2ToIpAddrError {}
+
+/// Error types for [`AddrV2`] to [`Ipv4Addr`] conversion.
+#[derive(Debug, PartialEq, Eq)]
+pub enum AddrV2ToIpv4AddrError {
+    /// A [`AddrV2::Ipv6`] address cannot be converted to a [`Ipv4Addr`].
+    Ipv6,
+    /// A [`AddrV2::TorV3`] address cannot be converted to a [`Ipv4Addr`].
+    TorV3,
+    /// A [`AddrV2::I2p`] address cannot be converted to a [`Ipv4Addr`].
+    I2p,
+    /// A [`AddrV2::Cjdns`] address cannot be converted to a [`Ipv4Addr`],
+    Cjdns,
+    /// A [`AddrV2::Unknown`] address cannot be converted to a [`Ipv4Addr`].
+    Unknown,
+}
+
+impl fmt::Display for AddrV2ToIpv4AddrError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ipv6 => write!(f, "Ipv6 addresses cannot be converted to Ipv4Addr"),
+            Self::TorV3 => write!(f, "TorV3 addresses cannot be converted to Ipv4Addr"),
+            Self::I2p => write!(f, "I2P addresses cannot be converted to Ipv4Addr"),
+            Self::Cjdns => write!(f, "Cjdns addresses cannot be converted to Ipv4Addr"),
+            Self::Unknown =>
+                write!(f, "Unknown address type cannot be converted to Ipv4Addr"),
+        }
+    }
+}
+
+impl std::error::Error for AddrV2ToIpv4AddrError {}
+
+/// Error types for [`AddrV2`] to [`Ipv6Addr`] conversion.
+#[derive(Debug, PartialEq, Eq)]
+pub enum AddrV2ToIpv6AddrError {
+    /// A [`AddrV2::Ipv4`] address cannot be converted to a [`Ipv6Addr`].
+    Ipv4,
+    /// A [`AddrV2::TorV3`] address cannot be converted to a [`Ipv6Addr`].
+    TorV3,
+    /// A [`AddrV2::I2p`] address cannot be converted to a [`Ipv6Addr`].
+    I2p,
+    /// A [`AddrV2::Unknown`] address cannot be converted to a [`Ipv6Addr`].
+    Unknown,
+}
+
+impl fmt::Display for AddrV2ToIpv6AddrError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ipv4 => write!(f, "Ipv addresses cannot be converted to Ipv6Addr"),
+            Self::TorV3 => write!(f, "TorV3 addresses cannot be converted to Ipv6Addr"),
+            Self::I2p => write!(f, "I2P addresses cannot be converted to Ipv6Addr"),
+            Self::Unknown =>
+                write!(f, "Unknown address type cannot be converted to Ipv6Addr"),
+        }
+    }
+}
+
+impl std::error::Error for AddrV2ToIpv6AddrError {}
 
 #[cfg(test)]
 mod test {
