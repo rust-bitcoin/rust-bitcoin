@@ -59,7 +59,9 @@ pub mod witness_version;
 
 use core::convert::Infallible;
 use core::fmt;
+use alloc::boxed::Box;
 
+use internals::error::ParseErrorContext;
 use io::{BufRead, Write};
 
 use crate::consensus::{encode, Decodable, Encodable};
@@ -248,9 +250,40 @@ impl fmt::Display for Error {
             EarlyEndOfScript => f.write_str("unexpected end of script"),
             NumericOverflow =>
                 f.write_str("numeric overflow (number on stack larger than 4 bytes)"),
-            UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
-            Serialization =>
-                f.write_str("can not serialize the spending transaction in Transaction::verify()"),
+            UnknownSpentOutput(ref op) => write!(f, "can not find spent output: {}", op),
+            Serialization => f.write_str("can not serialize the spending transaction"),
+        }
+    }
+}
+
+impl ParseErrorContext for Error {
+    fn expecting(&self) -> Box<dyn fmt::Display + '_> {
+        use Error::*;
+        match self {
+            NonMinimalPush => Box::new("a minimal data push (e.g., OP_PUSHBYTES_1..75, PUSHDATA1/2/4)"),
+            EarlyEndOfScript => Box::new("more script bytes for the required opcode parameter"),
+            NumericOverflow => Box::new("a script number representation of 4 bytes or less"),
+            UnknownSpentOutput(ref op) => Box::new(format!("can not find spent output: {}", op)),
+            Serialization => Box::new("a serializable transaction"),
+        }
+    }
+
+    fn help(&self) -> Option<Box<dyn fmt::Display + '_>> {
+        use Error::*;
+        match self {
+            NonMinimalPush => Some(Box::new("Data pushes must use the shortest possible opcode.")),
+            EarlyEndOfScript => Some(Box::new("An opcode requires data which was not present or was truncated.")),
+            NumericOverflow => Some(Box::new("Script numbers must be representable within 4 bytes.")),
+            _ => None,
+        }
+    }
+
+    fn note(&self) -> Option<&'static str> {
+        use Error::*;
+        match self {
+            NonMinimalPush => Some("See BIP62 (Rule 3) for minimal push rules."),
+            NumericOverflow => Some("See CScriptNum in Bitcoin Core."),
+            _ => None,
         }
     }
 }
