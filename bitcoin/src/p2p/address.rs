@@ -5,8 +5,17 @@
 //! This module defines the structures and functions needed to encode
 //! network addresses in Bitcoin messages.
 
+internals::rust_version! {
+    if >= 1.77 {
+        use core::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
+        #[cfg(feature = "std")]
+        use std::net::ToSocketAddrs;
+    } else {
+        use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+    }
+}
+
 use core::{fmt, iter};
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
 use io::{BufRead, Read, Write};
 
@@ -114,6 +123,7 @@ impl fmt::Debug for Address {
     }
 }
 
+#[cfg(feature = "std")]
 impl ToSocketAddrs for Address {
     type Iter = iter::Once<SocketAddr>;
     fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
@@ -153,7 +163,7 @@ pub enum AddrV2ConversionError {
 }
 
 impl fmt::Display for AddrV2ConversionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::TorV3NotSupported => write!(f, "TorV3 addresses cannot be converted to SocketAddr"),
             Self::I2pNotSupported => write!(f, "I2P addresses cannot be converted to SocketAddr"),
@@ -163,8 +173,8 @@ impl fmt::Display for AddrV2ConversionError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for AddrV2ConversionError {}
-
 
 impl From<SocketAddr> for AddrV2 {
     fn from(addr: SocketAddr) -> Self {
@@ -342,6 +352,7 @@ impl Decodable for AddrV2Message {
     }
 }
 
+#[cfg(feature = "std")]
 impl ToSocketAddrs for AddrV2Message {
     type Iter = iter::Once<SocketAddr>;
     fn to_socket_addrs(&self) -> Result<Self::Iter, std::io::Error> {
@@ -351,7 +362,13 @@ impl ToSocketAddrs for AddrV2Message {
 
 #[cfg(test)]
 mod test {
-    use std::net::IpAddr;
+    internals::rust_version! {
+        if >= 1.77 {
+            use core::net::IpAddr;
+        } else {
+            use std::net::IpAddr;
+        }
+    }
 
     use hex::FromHex;
     use hex_lit::hex;
