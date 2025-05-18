@@ -1304,6 +1304,11 @@ mod tests {
     use crate::witness::Witness;
     use crate::Sequence;
 
+    /// Fee rate in sat/kwu for a high-fee PSBT with an input=5_000_000_000_000, output=1000
+    const ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_843);
+    /// Fee rate which is just below absurd threshold (1 sat/kwu less)
+    const JUST_BELOW_ABSURD_FEE_RATE: FeeRate = FeeRate::from_sat_per_kwu(15_060_240_960_842);
+
     #[track_caller]
     pub fn hex_psbt(s: &str) -> Result<Psbt, crate::psbt::error::Error> {
         let r = Vec::from_hex(s);
@@ -1393,26 +1398,26 @@ mod tests {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(FeeRate::from_sat_per_kwu(15060240960843))
+            Err(ABSURD_FEE_RATE)
         );
         assert_eq!(
             psbt.clone().extract_tx_fee_rate_limit().map_err(|e| match e {
                 ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                 _ => panic!(""),
             }),
-            Err(FeeRate::from_sat_per_kwu(15060240960843))
+            Err(ABSURD_FEE_RATE)
         );
         assert_eq!(
             psbt.clone()
-                .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_kwu(15060240960842))
+                .extract_tx_with_fee_rate_limit(JUST_BELOW_ABSURD_FEE_RATE)
                 .map_err(|e| match e {
                     ExtractTxError::AbsurdFeeRate { fee_rate, .. } => fee_rate,
                     _ => panic!(""),
                 }),
-            Err(FeeRate::from_sat_per_kwu(15060240960843))
+            Err(ABSURD_FEE_RATE)
         );
         assert!(psbt
-            .extract_tx_with_fee_rate_limit(FeeRate::from_sat_per_kwu(15060240960843))
+            .extract_tx_with_fee_rate_limit(ABSURD_FEE_RATE)
             .is_ok());
 
         // Testing that extract_tx will error at 25k sat/vbyte (6250000 sat/kwu)
