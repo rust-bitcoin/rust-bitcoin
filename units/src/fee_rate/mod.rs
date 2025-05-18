@@ -161,7 +161,7 @@ crate::internal_macros::impl_op_for_references! {
 
     impl ops::Div<NonZeroU64> for FeeRate {
         type Output = FeeRate;
-        
+
         fn div(self, rhs: NonZeroU64) -> Self::Output{ Self::from_sat_per_kwu(self.to_sat_per_kwu() / rhs.get()) }
     }
 }
@@ -204,8 +204,9 @@ impl<'a> Arbitrary<'a> for FeeRate {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use core::num::NonZeroU64;
+
+    use super::*;
 
     #[test]
     fn sanity_check() {

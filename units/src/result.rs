@@ -88,7 +88,6 @@ pub enum NumOpResult<T> {
 }
 
 impl<T> NumOpResult<T> {
-
     /// Maps a `NumOpResult<T>` to `NumOpResult<U>` by applying a function to a
     /// contained [`NumOpResult::Valid`] value, leaving a [`NumOpResult::Error`] value untouched.
     ///

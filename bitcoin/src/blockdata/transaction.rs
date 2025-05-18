@@ -16,6 +16,7 @@ use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
+use units::NumOpResult;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
@@ -27,7 +28,6 @@ use crate::script::{Script, ScriptBuf, ScriptExt as _, ScriptExtPriv as _};
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::witness::Witness;
 use crate::{Amount, FeeRate, SignedAmount};
-use units::NumOpResult;
 
 #[rustfmt::skip]            // Keep public re-exports separate.
 #[doc(inline)]
@@ -786,10 +786,7 @@ pub fn effective_value(
 ) -> NumOpResult<SignedAmount> {
     let weight = input_weight_prediction.total_weight();
 
-    fee_rate
-        .to_fee(weight)
-        .map(Amount::to_signed)
-        .and_then(|fee| value.to_signed() - fee)    // Cannot overflow.
+    fee_rate.to_fee(weight).map(Amount::to_signed).and_then(|fee| value.to_signed() - fee) // Cannot overflow.
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1943,7 +1940,7 @@ mod tests {
     // needless_borrows_for_generic_args incorrecctly identifies &[] as a needless borrow
     #[allow(clippy::needless_borrows_for_generic_args)]
     fn weight_prediction_new() {
-        let p2wpkh_max = InputWeightPrediction::new(0, [72,33]);
+        let p2wpkh_max = InputWeightPrediction::new(0, [72, 33]);
         assert_eq!(p2wpkh_max.script_size, 1);
         assert_eq!(p2wpkh_max.witness_size, 108);
         assert_eq!(p2wpkh_max.total_weight(), Weight::from_wu(272));
