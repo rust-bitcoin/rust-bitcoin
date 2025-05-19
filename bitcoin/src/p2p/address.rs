@@ -15,6 +15,7 @@ internals::rust_version! {
     }
 }
 
+use alloc::vec::Vec;
 use core::{fmt, iter};
 
 use io::{BufRead, Read, Write};

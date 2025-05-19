@@ -5,7 +5,6 @@
 //! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and Bitcoin p2p network messages.
 
-#[cfg(feature = "std")]
 pub mod address;
 #[cfg(feature = "std")]
 pub mod message;
@@ -33,7 +32,6 @@ use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
 
 #[rustfmt::skip]
 #[doc(inline)]
-#[cfg(feature = "std")]
 pub use self::address::Address;
 
 /// Version of the protocol as appearing in network message headers.
