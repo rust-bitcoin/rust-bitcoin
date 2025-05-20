@@ -16,7 +16,6 @@ use hashes::sha256d;
 use internals::{compact_size, write_err, ToU64};
 use io::{BufRead, Write};
 use primitives::Sequence;
-use units::NumOpResult;
 
 use super::Weight;
 use crate::consensus::{self, encode, Decodable, Encodable};
@@ -775,19 +774,15 @@ impl Decodable for Transaction {
 /// * `fee_rate` - the fee rate of the transaction being created.
 /// * `input_weight_prediction` - the predicted input weight.
 /// * `value` - The value of the output we are spending.
-///
-/// # Returns
-///
-/// This will return [`NumOpResult::Error`] if the fee calculation (fee_rate * weight) overflows.
-/// Otherwise, [`NumOpResult::Valid`] will wrap the successful calculation.
 pub fn effective_value(
     fee_rate: FeeRate,
     input_weight_prediction: InputWeightPrediction,
     value: Amount,
-) -> NumOpResult<SignedAmount> {
+) -> SignedAmount {
     let weight = input_weight_prediction.total_weight();
+    let fee = fee_rate.to_fee(weight);
 
-    fee_rate.to_fee(weight).map(Amount::to_signed).and_then(|fee| value.to_signed() - fee) // Cannot overflow.
+    (value.to_signed() - fee.to_signed()).expect("cannot overflow")
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
@@ -1659,8 +1654,7 @@ mod tests {
     fn effective_value_happy_path() {
         let value = "1 cBTC".parse::<Amount>().unwrap();
         let fee_rate = FeeRate::from_sat_per_kwu(10);
-        let effective_value =
-            effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value).unwrap();
+        let effective_value = effective_value(fee_rate, InputWeightPrediction::P2WPKH_MAX, value);
 
         // 10 sat/kwu * 272 wu = 4 sats (rounding up)
         let expected_fee = "3 sats".parse::<SignedAmount>().unwrap();
@@ -1672,7 +1666,7 @@ mod tests {
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
             effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
-        assert!(eff_value.is_error());
+        assert_eq!(eff_value, SignedAmount::MIN)
     }
 
     #[test]
