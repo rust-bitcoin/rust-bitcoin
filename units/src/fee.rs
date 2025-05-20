@@ -55,7 +55,7 @@ impl Amount {
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
-    pub const fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
+    pub fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
         // No `?` operator in const context.
         if let Some(sats) = self.to_sat().checked_mul(1_000) {
@@ -78,7 +78,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
         match self.to_sat().checked_mul(1000) {
             Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
                 Some(wu) => Some(Weight::from_wu(wu)),
@@ -95,7 +95,7 @@ impl Amount {
     ///
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
-    pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
+    pub fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         // Use ceil because result is used as the divisor.
         let rate = fee_rate.to_sat_per_kwu_ceil();
         match self.to_sat().checked_mul(1000) {
@@ -119,7 +119,7 @@ impl FeeRate {
     /// [`NumOpResult::Error`] if an overflow occurred.
     ///
     /// This is equivalent to `Self::checked_mul_by_weight()`.
-    pub const fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
+    pub fn to_fee(self, weight: Weight) -> NumOpResult<Amount> {
         self.checked_mul_by_weight(weight)
     }
 
@@ -151,7 +151,7 @@ impl FeeRate {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`NumOpResult::Error`] if overflow occurred.
-    pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
+    pub fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
         if let Some(fee) = self.to_sat_per_kwu_floor().checked_mul(weight.to_wu()) {
             if let Some(round_up) = fee.checked_add(999) {
                 if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
@@ -329,7 +329,7 @@ impl Weight {
     /// enough instead of falling short if rounded down.
     ///
     /// Returns [`None`] if overflow occurred.
-    pub const fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
+    pub fn checked_mul_by_fee_rate(self, fee_rate: FeeRate) -> NumOpResult<Amount> {
         fee_rate.checked_mul_by_weight(self)
     }
 }
