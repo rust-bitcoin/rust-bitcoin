@@ -1700,7 +1700,8 @@ mod tests {
     fn effective_value_fee_rate_does_not_overflow() {
         let eff_value =
             effective_value(FeeRate::MAX, InputWeightPrediction::P2WPKH_MAX, Amount::ZERO);
-        assert_eq!(eff_value, SignedAmount::MIN)
+        let want = SignedAmount::from_sat(-1254378597012250).unwrap(); // U64::MAX / 4_000 because of FeeRate::MAX
+        assert_eq!(eff_value, want)
     }
 
     #[test]
