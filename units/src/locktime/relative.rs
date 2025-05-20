@@ -333,6 +333,7 @@ mod tests {
             NumberOf512Seconds::from_512_second_intervals(100).to_consensus_u32(),
             4_194_404u32
         ); // 0x400064
+        assert_eq!(NumberOf512Seconds::from_512_second_intervals(1).to_seconds(), 512);
     }
 
     #[test]
