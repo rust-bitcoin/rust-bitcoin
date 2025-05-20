@@ -439,6 +439,7 @@ impl<'a> core::iter::Sum<&'a BlockMtpInterval> for BlockMtpInterval {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::locktime::relative::NumberOf512Seconds;
 
     #[test]
     fn sanity_check() {
@@ -479,6 +480,7 @@ mod tests {
         // interval - interval = interval
         assert!(BlockHeightInterval(10) - BlockHeightInterval(7) == BlockHeightInterval(3));
 
+        // Sum for BlockHeightInterval by reference and by value
         assert!(
             [BlockHeightInterval(1), BlockHeightInterval(2), BlockHeightInterval(3)]
                 .iter()
@@ -492,6 +494,20 @@ mod tests {
                 == BlockHeightInterval(15)
         );
 
+        // Sum for BlockMtpInterval by reference and by value
+        assert!(
+            [BlockMtpInterval(1), BlockMtpInterval(2), BlockMtpInterval(3)]
+                .iter()
+                .sum::<BlockMtpInterval>()
+                == BlockMtpInterval(6)
+        );
+        assert!(
+            [BlockMtpInterval(4), BlockMtpInterval(5), BlockMtpInterval(6)]
+                .into_iter()
+                .sum::<BlockMtpInterval>()
+                == BlockMtpInterval(15)
+        );
+
         // interval += interval
         let mut int = BlockHeightInterval(1);
         int += BlockHeightInterval(2);
@@ -501,5 +517,55 @@ mod tests {
         let mut int = BlockHeightInterval(10);
         int -= BlockHeightInterval(7);
         assert_eq!(int, BlockHeightInterval(3));
+    }
+
+    #[test]
+    fn block_height_checked() {
+        let a = BlockHeight(10);
+        let b = BlockHeight(5);
+        assert_eq!(a.checked_sub(b), Some(BlockHeightInterval(5)));
+        assert_eq!(a.checked_add(BlockHeightInterval(5)), Some(BlockHeight(15)));
+        assert_eq!(a.checked_sub(BlockHeight(11)), None);
+        assert_eq!(a.checked_add(BlockHeightInterval(u32::MAX - 5)), None);
+    }
+
+    #[test]
+    fn block_height_interval_checked() {
+        let a = BlockHeightInterval(10);
+        let b = BlockHeightInterval(5);
+        assert_eq!(a.checked_sub(b), Some(BlockHeightInterval(5)));
+        assert_eq!(a.checked_add(b), Some(BlockHeightInterval(15)));
+        assert_eq!(a.checked_sub(BlockHeightInterval(11)), None);
+        assert_eq!(a.checked_add(BlockHeightInterval(u32::MAX - 5)), None);
+    }
+
+    #[test]
+    fn block_mtp_interval_checked() {
+        let a = BlockMtpInterval(10);
+        let b = BlockMtpInterval(5);
+        assert_eq!(a.checked_sub(b), Some(BlockMtpInterval(5)));
+        assert_eq!(a.checked_add(b), Some(BlockMtpInterval(15)));
+        assert_eq!(a.checked_sub(BlockMtpInterval(11)), None);
+        assert_eq!(a.checked_add(BlockMtpInterval(u32::MAX - 5)), None);
+    }
+
+    #[test]
+    fn block_mtp_checked() {
+        let a = BlockMtp(10);
+        let b = BlockMtp(5);
+        assert_eq!(a.checked_sub(b), Some(BlockMtpInterval(5)));
+        assert_eq!(a.checked_add(BlockMtpInterval(5)), Some(BlockMtp(15)));
+        assert_eq!(a.checked_sub(BlockMtp(11)), None);
+        assert_eq!(a.checked_add(BlockMtpInterval(u32::MAX - 5)), None);
+    }
+
+    #[test]
+    fn block_mtp_interval_from_number_of_512seconds() {
+        let n = NumberOf512Seconds::from_seconds_floor(0).unwrap();
+        let interval = BlockMtpInterval::from(n);
+        assert_eq!(interval, BlockMtpInterval(0));
+        let n = NumberOf512Seconds::from_seconds_floor(1024).unwrap();
+        let interval = BlockMtpInterval::from(n);
+        assert_eq!(interval, BlockMtpInterval(1024));
     }
 }
