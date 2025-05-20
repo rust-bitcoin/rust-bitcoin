@@ -64,15 +64,18 @@ impl FeeRate {
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
 
-    /// Returns raw fee rate.
-    pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
+    /// Converts to sat/kwu rounding down.
+    pub const fn to_sat_per_kwu_floor(self) -> u64 { self.0 }
+
+    /// Converts to sat/kwu rounding up.
+    pub const fn to_sat_per_kwu_ceil(self) -> u64 { self.0 }
 
     /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
+    pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu_floor() / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
     pub const fn to_sat_per_vb_ceil(self) -> u64 {
-        (self.to_sat_per_kwu() + (1000 / 4 - 1)) / (1000 / 4)
+        (self.to_sat_per_kwu_floor() + (1000 / 4 - 1)) / (1000 / 4)
     }
 
     /// Checked multiplication.
@@ -81,7 +84,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_mul(rhs) {
+        match self.to_sat_per_kwu_floor().checked_mul(rhs) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -93,7 +96,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_div(self, rhs: u64) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_div(rhs) {
+        match self.to_sat_per_kwu_floor().checked_div(rhs) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -105,7 +108,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_add(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_add(rhs.to_sat_per_kwu()) {
+        match self.to_sat_per_kwu_floor().checked_add(rhs.to_sat_per_kwu_floor()) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -117,7 +120,7 @@ impl FeeRate {
     #[must_use]
     pub const fn checked_sub(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_sub(rhs.to_sat_per_kwu()) {
+        match self.to_sat_per_kwu_floor().checked_sub(rhs.to_sat_per_kwu_floor()) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -128,19 +131,19 @@ crate::internal_macros::impl_op_for_references! {
     impl ops::Add<FeeRate> for FeeRate {
         type Output = FeeRate;
 
-        fn add(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_kwu(self.to_sat_per_kwu() + rhs.to_sat_per_kwu()) }
+        fn add(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_kwu(self.to_sat_per_kwu_floor() + rhs.to_sat_per_kwu_floor()) }
     }
 
     impl ops::Sub<FeeRate> for FeeRate {
         type Output = FeeRate;
 
-        fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_kwu(self.to_sat_per_kwu() - rhs.to_sat_per_kwu()) }
+        fn sub(self, rhs: FeeRate) -> Self::Output { FeeRate::from_sat_per_kwu(self.to_sat_per_kwu_floor() - rhs.to_sat_per_kwu_floor()) }
     }
 
     impl ops::Div<NonZeroU64> for FeeRate {
         type Output = FeeRate;
 
-        fn div(self, rhs: NonZeroU64) -> Self::Output{ Self::from_sat_per_kwu(self.to_sat_per_kwu() / rhs.get()) }
+        fn div(self, rhs: NonZeroU64) -> Self::Output{ Self::from_sat_per_kwu(self.to_sat_per_kwu_floor() / rhs.get()) }
     }
 }
 crate::internal_macros::impl_add_assign!(FeeRate);
@@ -151,7 +154,7 @@ impl core::iter::Sum for FeeRate {
     where
         I: Iterator<Item = Self>,
     {
-        FeeRate::from_sat_per_kwu(iter.map(FeeRate::to_sat_per_kwu).sum())
+        FeeRate::from_sat_per_kwu(iter.map(FeeRate::to_sat_per_kwu_floor).sum())
     }
 }
 
@@ -160,7 +163,7 @@ impl<'a> core::iter::Sum<&'a FeeRate> for FeeRate {
     where
         I: Iterator<Item = &'a FeeRate>,
     {
-        FeeRate::from_sat_per_kwu(iter.map(|f| FeeRate::to_sat_per_kwu(*f)).sum())
+        FeeRate::from_sat_per_kwu(iter.map(|f| FeeRate::to_sat_per_kwu_floor(*f)).sum())
     }
 }
 
@@ -266,11 +269,11 @@ mod tests {
 
     #[test]
     fn fee_rate_const() {
-        assert_eq!(FeeRate::ZERO.to_sat_per_kwu(), 0);
-        assert_eq!(FeeRate::MIN.to_sat_per_kwu(), u64::MIN);
-        assert_eq!(FeeRate::MAX.to_sat_per_kwu(), u64::MAX);
-        assert_eq!(FeeRate::BROADCAST_MIN.to_sat_per_kwu(), 250);
-        assert_eq!(FeeRate::DUST.to_sat_per_kwu(), 750);
+        assert_eq!(FeeRate::ZERO.to_sat_per_kwu_floor(), 0);
+        assert_eq!(FeeRate::MIN.to_sat_per_kwu_floor(), u64::MIN);
+        assert_eq!(FeeRate::MAX.to_sat_per_kwu_floor(), u64::MAX);
+        assert_eq!(FeeRate::BROADCAST_MIN.to_sat_per_kwu_floor(), 250);
+        assert_eq!(FeeRate::DUST.to_sat_per_kwu_floor(), 750);
     }
 
     #[test]
@@ -304,7 +307,7 @@ mod tests {
     #[test]
     fn raw_feerate() {
         let fee_rate = FeeRate::from_sat_per_kwu(749);
-        assert_eq!(fee_rate.to_sat_per_kwu(), 749);
+        assert_eq!(fee_rate.to_sat_per_kwu_floor(), 749);
         assert_eq!(fee_rate.to_sat_per_vb_floor(), 2);
         assert_eq!(fee_rate.to_sat_per_vb_ceil(), 3);
     }

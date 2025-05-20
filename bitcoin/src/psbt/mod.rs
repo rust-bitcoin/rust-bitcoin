@@ -1178,8 +1178,11 @@ impl fmt::Display for ExtractTxError {
         use ExtractTxError::*;
 
         match *self {
-            AbsurdFeeRate { fee_rate, .. } =>
-                write!(f, "an absurdly high fee rate of {} sat/kwu", fee_rate.to_sat_per_kwu()),
+            AbsurdFeeRate { fee_rate, .. } => write!(
+                f,
+                "an absurdly high fee rate of {} sat/kwu",
+                fee_rate.to_sat_per_kwu_floor()
+            ),
             MissingInputValue { .. } => write!(
                 f,
                 "one of the inputs lacked value information (witness_utxo or non_witness_utxo)"
