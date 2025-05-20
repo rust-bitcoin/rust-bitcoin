@@ -852,11 +852,11 @@ impl GetKey for $map<PublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => {
                 let pubkey_even = xonly.public_key(secp256k1::Parity::Even);
                 let key = self.get(&pubkey_even).cloned();
-                
+               
                 if key.is_some() {
                     return Ok(key);
                 }
-                
+               
                 let pubkey_odd = xonly.public_key(secp256k1::Parity::Odd);
                 if let Some(priv_key) = self.get(&pubkey_odd).copied() {
                     let negated_priv_key  = priv_key.negate();
@@ -889,18 +889,18 @@ impl GetKey for $map<XOnlyPublicKey, PrivateKey> {
             KeyRequest::XOnlyPubkey(xonly) => Ok(self.get(xonly).cloned()),
             KeyRequest::Pubkey(pk) => {
                 let (xonly, parity) = pk.inner.x_only_public_key();
-                
+               
                 if let Some(mut priv_key) = self.get(&XOnlyPublicKey::from(xonly)).cloned() {
                     let computed_pk = priv_key.public_key(&secp);
                     let (_, computed_parity) = computed_pk.inner.x_only_public_key();
-                    
+                   
                     if computed_parity != parity {
                         priv_key = priv_key.negate();
                     }
-                    
+                   
                     return Ok(Some(priv_key));
                 }
-                
+               
                 Ok(None)
             },
             KeyRequest::Bip32(_) => Err(GetKeyError::NotSupported),

@@ -293,8 +293,9 @@ impl<'a> Arbitrary<'a> for Weight {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use core::num::NonZeroU64;
+
+    use super::*;
 
     const ONE: Weight = Weight::from_wu(1);
     const TWO: Weight = Weight::from_wu(2);

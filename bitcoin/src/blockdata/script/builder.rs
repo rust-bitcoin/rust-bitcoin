@@ -23,7 +23,9 @@ impl Builder {
 
     /// Constructs a new empty script builder with at least the specified capacity.
     #[inline]
-    pub fn with_capacity(capacity: usize) -> Self { Builder(ScriptBuf::with_capacity(capacity), None) }
+    pub fn with_capacity(capacity: usize) -> Self {
+        Builder(ScriptBuf::with_capacity(capacity), None)
+    }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }

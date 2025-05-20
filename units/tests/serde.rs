@@ -7,7 +7,9 @@
 
 use bincode::serialize;
 use bitcoin_units::locktime::{absolute, relative};
-use bitcoin_units::{amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight};
+use bitcoin_units::{
+    amount, fee_rate, Amount, BlockHeight, BlockInterval, FeeRate, SignedAmount, Weight,
+};
 use serde::{Deserialize, Serialize};
 
 /// A struct that includes all the types that implement or support `serde` traits.
