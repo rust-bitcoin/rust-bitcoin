@@ -30,7 +30,7 @@ impl FeeRate {
     pub const MIN: FeeRate = FeeRate::ZERO;
 
     /// Maximum possible value.
-    pub const MAX: FeeRate = FeeRate::from_sat_per_kwu(u64::MAX);
+    pub const MAX: FeeRate = FeeRate::from_sat_per_kwu(u64::MAX / 4_000);
 
     /// Minimum fee rate required to broadcast a transaction.
     ///
@@ -271,7 +271,7 @@ mod tests {
     fn fee_rate_const() {
         assert_eq!(FeeRate::ZERO.to_sat_per_kwu_floor(), 0);
         assert_eq!(FeeRate::MIN.to_sat_per_kwu_floor(), u64::MIN);
-        assert_eq!(FeeRate::MAX.to_sat_per_kwu_floor(), u64::MAX);
+        assert_eq!(FeeRate::MAX.to_sat_per_kwu_floor(), u64::MAX / 4_000);
         assert_eq!(FeeRate::BROADCAST_MIN.to_sat_per_kwu_floor(), 250);
         assert_eq!(FeeRate::DUST.to_sat_per_kwu_floor(), 750);
     }
