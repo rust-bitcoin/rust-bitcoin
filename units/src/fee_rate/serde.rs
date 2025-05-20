@@ -36,7 +36,7 @@ pub mod as_sat_per_kwu {
     use crate::FeeRate;
 
     pub fn serialize<S: Serializer>(f: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
-        u64::serialize(&f.to_sat_per_kwu(), s)
+        u64::serialize(&f.to_sat_per_kwu_floor(), s)
     }
 
     pub fn deserialize<'d, D: Deserializer<'d>>(d: D) -> Result<FeeRate, D::Error> {
@@ -57,7 +57,7 @@ pub mod as_sat_per_kwu {
         #[allow(clippy::ref_option)] // API forced by serde.
         pub fn serialize<S: Serializer>(f: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
             match *f {
-                Some(f) => s.serialize_some(&f.to_sat_per_kwu()),
+                Some(f) => s.serialize_some(&f.to_sat_per_kwu_floor()),
                 None => s.serialize_none(),
             }
         }
