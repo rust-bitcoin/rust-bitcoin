@@ -290,7 +290,7 @@ crate::internal_macros::define_extension_trait! {
         ///
         /// [`minimal_non_dust`]: Script::minimal_non_dust
         fn minimal_non_dust_custom(&self, dust_relay_fee: FeeRate) -> Option<Amount> {
-            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu() * 4)
+            self.minimal_non_dust_internal(dust_relay_fee.to_sat_per_kwu_ceil() * 4)
         }
 
         /// Counts the sigops for this Script using accurate counting.

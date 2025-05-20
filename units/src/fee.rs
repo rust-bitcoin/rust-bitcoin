@@ -80,7 +80,7 @@ impl Amount {
     #[must_use]
     pub const fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
         match self.to_sat().checked_mul(1000) {
-            Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu()) {
+            Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu_ceil()) {
                 Some(wu) => Some(Weight::from_wu(wu)),
                 None => None,
             },
@@ -96,7 +96,8 @@ impl Amount {
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
     pub const fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
-        let rate = fee_rate.to_sat_per_kwu();
+        // Use ceil because result is used as the divisor.
+        let rate = fee_rate.to_sat_per_kwu_ceil();
         match self.to_sat().checked_mul(1000) {
             Some(amount_msats) => match rate.checked_sub(1) {
                 Some(rate_minus_one) => match amount_msats.checked_add(rate_minus_one) {
@@ -151,7 +152,7 @@ impl FeeRate {
     ///
     /// Returns [`NumOpResult::Error`] if overflow occurred.
     pub const fn checked_mul_by_weight(self, weight: Weight) -> NumOpResult<Amount> {
-        if let Some(fee) = self.to_sat_per_kwu().checked_mul(weight.to_wu()) {
+        if let Some(fee) = self.to_sat_per_kwu_floor().checked_mul(weight.to_wu()) {
             if let Some(round_up) = fee.checked_add(999) {
                 if let Ok(ret) = Amount::from_sat(round_up / 1_000) {
                     return NumOpResult::Valid(ret);
