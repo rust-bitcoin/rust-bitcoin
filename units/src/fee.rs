@@ -26,14 +26,15 @@ impl Amount {
     /// Returns [`None`] if overflow occurred.
     #[must_use]
     pub fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
-        // No `?` operator in const context.
-        match self.to_sat().checked_mul(1_000) {
-            Some(res) => match res.checked_div(weight.to_wu()) {
-                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
-                None => None,
-            },
-            None => None,
+        let wu = weight.to_wu();
+        if wu == 0 {
+            return None;
         }
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let fee_rate = sats / wu;
+
+        Some(FeeRate::from_sat_per_kwu(fee_rate))
     }
 
     /// Checked weight ceiling division.
@@ -57,17 +58,14 @@ impl Amount {
     #[must_use]
     pub fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
-        // No `?` operator in const context.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            if let Some(wu_minus_one) = wu.checked_sub(1) {
-                if let Some(sats_plus_wu_minus_one) = sats.checked_add(wu_minus_one) {
-                    if let Some(fee_rate) = sats_plus_wu_minus_one.checked_div(wu) {
-                        return Some(FeeRate::from_sat_per_kwu(fee_rate));
-                    }
-                }
-            }
+        if wu == 0 {
+            return None;
         }
-        None
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let fee_rate = (sats + wu - 1) / wu;
+
+        Some(FeeRate::from_sat_per_kwu(fee_rate))
     }
 
     /// Checked fee rate floor division.
@@ -79,13 +77,15 @@ impl Amount {
     /// Returns [`None`] if overflow occurred or if `fee_rate` is zero.
     #[must_use]
     pub fn checked_div_by_fee_rate_floor(self, fee_rate: FeeRate) -> Option<Weight> {
-        match self.to_sat().checked_mul(1000) {
-            Some(amount_msats) => match amount_msats.checked_div(fee_rate.to_sat_per_kwu_floor()) {
-                Some(wu) => Some(Weight::from_wu(wu)),
-                None => None,
-            },
-            None => None,
+        let rate = fee_rate.to_sat_per_kwu_floor();
+        if rate == 0 {
+            return None;
         }
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let weight = sats / rate;
+
+        Some(Weight::from_wu(weight))
     }
 
     /// Checked fee rate ceiling division.
@@ -97,19 +97,14 @@ impl Amount {
     #[must_use]
     pub fn checked_div_by_fee_rate_ceil(self, fee_rate: FeeRate) -> Option<Weight> {
         let rate = fee_rate.to_sat_per_kwu_floor();
-        match self.to_sat().checked_mul(1000) {
-            Some(amount_msats) => match rate.checked_sub(1) {
-                Some(rate_minus_one) => match amount_msats.checked_add(rate_minus_one) {
-                    Some(rounded_msats) => match rounded_msats.checked_div(rate) {
-                        Some(wu) => Some(Weight::from_wu(wu)),
-                        None => None,
-                    },
-                    None => None,
-                },
-                None => None,
-            },
-            None => None,
+        if rate == 0 {
+            return None;
         }
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let weight = (sats + rate - 1) / rate;
+
+        Some(Weight::from_wu(weight))
     }
 }
 
@@ -427,5 +422,10 @@ mod tests {
         let zero_rate = FeeRate::from_sat_per_kwu(0);
         assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
         assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
+    }
+
+    #[test]
+    fn amount_max_mul_for_kwu_does_not_overflow() {
+        let _ = Amount::MAX.to_sat() * 1_000;
     }
 }
