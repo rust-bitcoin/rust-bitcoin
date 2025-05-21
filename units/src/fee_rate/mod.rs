@@ -11,6 +11,8 @@ use core::ops;
 #[cfg(feature = "arbitrary")]
 use arbitrary::{Arbitrary, Unstructured};
 
+use crate::{Amount, NumOpResult};
+
 mod encapsulate {
     /// Fee rate.
     ///
@@ -54,6 +56,21 @@ impl FeeRate {
     /// Fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
 
+    /// Constructs a new fee rate per 1000 weight units.
+    pub const fn from_per_kwu(per_kwu: Amount) -> Self { FeeRate::from_sat_per_kwu(per_kwu.to_sat()) }
+
+    /// Constructs a new fee rate per virtual byte.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`None`] on arithmetic overflow.
+    pub fn from_per_vb(per_vb: Amount) -> NumOpResult<Self> {
+        // 1 vb == 4 wu
+        // 1 sat/vb == 1/4 sat/wu
+        // sat_vb sat/vb * 1000 / 4 == sat/kwu
+        (per_vb * 1000 / 4).map(|per_kwu| FeeRate::from_per_kwu(per_kwu))
+    }
+
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
     ///
     /// # Errors
@@ -73,6 +90,37 @@ impl FeeRate {
 
     /// Constructs a new [`FeeRate`] from satoshis per kilo virtual bytes (1,000 vbytes).
     pub const fn from_sat_per_kvb(sat_kvb: u64) -> Self { FeeRate::from_sat_per_kwu(sat_kvb / 4) }
+
+    /// Returns raw fee rate.
+    ///
+    /// Can be used instead of `into()` to avoid inference issues.
+    pub const fn to_per_kwu(self) -> Amount {
+        match Amount::from_sat(self.to_sat_per_kwu()) {
+            Ok(a) => a,
+            // Well it would be if we removed the `from_sat_` constructors.
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
+
+    /// Converts to sat/vB rounding down.
+    pub const fn to_per_vb_floor(self) -> Amount {
+        let sat = self.to_per_kwu().to_sat() / (1000 / 4);
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            // Well it would be if we removed the `from_sat_` constructors.
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
+
+    /// Converts to sat/vB rounding up.
+    pub const fn to_per_vb_ceil(self) -> Amount {
+        let sat = (self.to_per_kwu().to_sat() + (1000 / 4 - 1)) / (1000 / 4);
+        match Amount::from_sat(sat) {
+            Ok(a) => a,
+            // Well it would be if we removed the `from_sat_` constructors.
+            Err(_) => panic!("enforced by constructors"),
+        }
+    }
 
     /// Converts to sat/vB rounding down.
     pub const fn to_sat_per_vb_floor(self) -> u64 { self.to_sat_per_kwu() / (1000 / 4) }
