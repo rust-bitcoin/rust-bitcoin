@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-units"
-version = "0.2.0"
+version = "1.0.0-alpha.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
