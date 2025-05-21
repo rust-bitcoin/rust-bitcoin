@@ -36,7 +36,10 @@ impl Signature {
             Ok(Signature { signature, sighash_type: TapSighashType::Default })
         } else if let Ok(signature) = <[u8; 65]>::try_from(sl) {
             let (sighash_type, signature) = signature.split_last();
-            let sighash_type = TapSighashType::from_consensus_u8(*sighash_type)?;
+            let sighash_type = match TapSighashType::from_consensus_u8(*sighash_type)? {
+                TapSighashType::All => TapSighashType::Default,
+                t => t,
+            };
             let signature = secp256k1::schnorr::Signature::from_byte_array(*signature);
             Ok(Signature { signature, sighash_type })
         } else {
