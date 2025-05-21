@@ -78,6 +78,9 @@ impl FeeRate {
         (self.to_sat_per_kwu_floor() + (1000 / 4 - 1)) / (1000 / 4)
     }
 
+    /// Converts to sat/kvb.
+    pub const fn to_sat_per_kvb(self) -> u64 { self.to_sat_per_kwu_floor() * 4 }
+
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning [`None`] if overflow occurred.
