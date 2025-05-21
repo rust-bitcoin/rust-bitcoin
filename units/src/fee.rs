@@ -26,14 +26,15 @@ impl Amount {
     /// Returns [`None`] if overflow occurred.
     #[must_use]
     pub const fn checked_div_by_weight_floor(self, weight: Weight) -> Option<FeeRate> {
-        // No `?` operator in const context.
-        match self.to_sat().checked_mul(1_000) {
-            Some(res) => match res.checked_div(weight.to_wu()) {
-                Some(fee_rate) => Some(FeeRate::from_sat_per_kwu(fee_rate)),
-                None => None,
-            },
-            None => None,
+        let wu = weight.to_wu();
+        if wu == 0 {
+            return None;
         }
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let fee_rate = sats / wu;
+
+        FeeRate::from_sat_per_kwu(fee_rate)
     }
 
     /// Checked weight ceiling division.
@@ -51,23 +52,20 @@ impl Amount {
     /// let amount = Amount::from_sat(10)?;
     /// let weight = Weight::from_wu(300);
     /// let fee_rate = amount.checked_div_by_weight_ceil(weight);
-    /// assert_eq!(fee_rate, Some(FeeRate::from_sat_per_kwu(34)));
+    /// assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(34));
     /// # Ok::<_, amount::OutOfRangeError>(())
     /// ```
     #[must_use]
     pub fn checked_div_by_weight_ceil(self, weight: Weight) -> Option<FeeRate> {
         let wu = weight.to_wu();
-        // No `?` operator in const context.
-        if let Some(sats) = self.to_sat().checked_mul(1_000) {
-            if let Some(wu_minus_one) = wu.checked_sub(1) {
-                if let Some(sats_plus_wu_minus_one) = sats.checked_add(wu_minus_one) {
-                    if let Some(fee_rate) = sats_plus_wu_minus_one.checked_div(wu) {
-                        return Some(FeeRate::from_sat_per_kwu(fee_rate));
-                    }
-                }
-            }
+        if wu == 0 {
+            return None;
         }
-        None
+
+        let sats = self.to_sat() * 1_000; // Because we use per/kwu.
+        let fee_rate = (sats + wu - 1) / wu;
+
+        FeeRate::from_sat_per_kwu(fee_rate)
     }
 
     /// Checked fee rate floor division.
@@ -341,7 +339,7 @@ mod tests {
     #[test]
     fn fee_rate_div_by_weight() {
         let fee_rate = (Amount::from_sat_u32(329) / Weight::from_wu(381)).unwrap();
-        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863));
+        assert_eq!(fee_rate, FeeRate::from_sat_per_kwu(863).unwrap());
     }
 
     #[test]
@@ -360,7 +358,7 @@ mod tests {
             .expect("expected Amount");
         assert_eq!(Amount::from_sat_u32(100), fee);
 
-        let fee = FeeRate::from_sat_per_kwu(10).checked_mul_by_weight(Weight::MAX);
+        let fee = FeeRate::from_sat_per_kwu(10).unwrap().checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
 
         let weight = Weight::from_vb(3).unwrap();
@@ -369,7 +367,7 @@ mod tests {
         assert_eq!(Amount::from_sat_u32(9), fee);
 
         let weight = Weight::from_wu(381);
-        let fee_rate = FeeRate::from_sat_per_kwu(864);
+        let fee_rate = FeeRate::from_sat_per_kwu(864).unwrap();
         let fee = weight.checked_mul_by_fee_rate(fee_rate).unwrap();
         // 381 * 0.864 yields 329.18.
         // The result is then rounded up to 330.
@@ -396,7 +394,7 @@ mod tests {
     fn amount_div_by_fee_rate() {
         // Test exact division
         let amount = Amount::from_sat_u32(1000);
-        let fee_rate = FeeRate::from_sat_per_kwu(2);
+        let fee_rate = FeeRate::from_sat_per_kwu(2).unwrap();
         let weight = (amount / fee_rate).unwrap();
         assert_eq!(weight, Weight::from_wu(500_000));
 
@@ -410,7 +408,7 @@ mod tests {
 
         // Test truncation behavior
         let amount = Amount::from_sat_u32(1000);
-        let fee_rate = FeeRate::from_sat_per_kwu(3);
+        let fee_rate = FeeRate::from_sat_per_kwu(3).unwrap();
         let weight = (amount / fee_rate).unwrap();
         // 1000 * 1000 = 1,000,000 msats
         // 1,000,000 / 3 = 333,333.33... wu
@@ -422,7 +420,7 @@ mod tests {
         assert_eq!(ceil_weight, Weight::from_wu(333_334));
 
         // Test that division by zero returns None
-        let zero_rate = FeeRate::from_sat_per_kwu(0);
+        let zero_rate = FeeRate::from_sat_per_kwu(0).unwrap();
         assert!(amount.checked_div_by_fee_rate_floor(zero_rate).is_none());
         assert!(amount.checked_div_by_fee_rate_ceil(zero_rate).is_none());
     }
