@@ -310,3 +310,34 @@ impl fmt::Display for MathOp {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::MathOp;
+
+    #[test]
+    fn mathop_predicates() {
+        assert!(MathOp::Add.is_overflow());
+        assert!(MathOp::Sub.is_overflow());
+        assert!(MathOp::Mul.is_overflow());
+        assert!(MathOp::Neg.is_overflow());
+        assert!(!MathOp::Div.is_overflow());
+        assert!(!MathOp::Rem.is_overflow());
+
+        assert!(MathOp::Div.is_div_by_zero());
+        assert!(MathOp::Rem.is_div_by_zero());
+        assert!(!MathOp::Add.is_div_by_zero());
+
+        assert!(MathOp::Add.is_addition());
+        assert!(!MathOp::Sub.is_addition());
+
+        assert!(MathOp::Sub.is_subtraction());
+        assert!(!MathOp::Add.is_subtraction());
+
+        assert!(MathOp::Mul.is_multiplication());
+        assert!(!MathOp::Div.is_multiplication());
+
+        assert!(MathOp::Neg.is_negation());
+        assert!(!MathOp::Add.is_negation());
+    }
+}
