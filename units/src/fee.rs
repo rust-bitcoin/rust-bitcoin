@@ -147,9 +147,9 @@ impl FeeRate {
     /// Returns [`None`] if overflow occurred.
     pub fn checked_mul_by_weight(self, weight: Weight) -> Option<Amount> {
         let wu = weight.to_wu();
-        let fee_kwu = self.to_sat_per_kwu_floor().checked_mul(wu)?;
-        let bump = fee_kwu.checked_add(999)?; // We do ceil division.
-        let fee = bump / 1_000;
+        let fee_kwu = self.to_sat_per_mvb().checked_mul(wu)?;
+        let bump = fee_kwu.checked_add(3_999_999)?; // We do ceil division.
+        let fee = bump / 4_000_000;
 
         Amount::from_sat(fee).ok()
     }
@@ -428,5 +428,21 @@ mod tests {
     #[test]
     fn amount_max_mul_for_kwu_does_not_overflow() {
         let _ = Amount::MAX.to_sat() * 1_000;
+    }
+
+    #[test]
+    fn core_get_fee() {
+        // Bitcoin Core's GetFee function uses virtual bytes where
+        // as we use weight units. Remember `1vb = 4wu`.
+        let fee_rate = FeeRate::from_sat_per_kvb(123).unwrap();
+
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(0).unwrap()), Amount::ZERO);
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(8).unwrap()), Amount::from_sat(1).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(9).unwrap()), Amount::from_sat(2).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(121).unwrap()), Amount::from_sat(15).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(122).unwrap()), Amount::from_sat(16).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(999).unwrap()), Amount::from_sat(123).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(1_000).unwrap()), Amount::from_sat(123).unwrap());
+        assert_eq!(fee_rate.to_fee(Weight::from_vb(9_000).unwrap()), Amount::from_sat(1107).unwrap());
     }
 }
