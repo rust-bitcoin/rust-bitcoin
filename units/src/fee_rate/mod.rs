@@ -40,18 +40,6 @@ impl FeeRate {
     /// Fee rate used to compute dust amount.
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_u32(3);
 
-    /// Constructs a new [`FeeRate`] from satoshis per 1,000,000 virtual bytes.
-    pub(crate) const fn from_sat_per_mvb(sat_mvb: u64) -> Self { Self(sat_mvb) }
-
-    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
-    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
-        // No `map()` in const context.
-        match sat_kwu.checked_mul(4_000) {
-            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
-            None => None,
-        }
-    }
-
     /// Constructs a new [`FeeRate`] from satoshis per virtual bytes.
     ///
     /// # Errors
@@ -80,17 +68,16 @@ impl FeeRate {
         }
     }
 
-    /// Converts to sat/MvB.
-    pub(crate) const fn to_sat_per_mvb(self) -> u64 { self.0 }
+    /// Constructs a new [`FeeRate`] from satoshis per 1,000,000 virtual bytes.
+    pub(crate) const fn from_sat_per_mvb(sat_mvb: u64) -> Self { Self(sat_mvb) }
 
-    /// Converts to sat/kwu rounding down.
-    pub const fn to_sat_per_kwu_floor(self) -> u64 {
-        self.to_sat_per_mvb() / 4_000
-    }
-
-    /// Converts to sat/kwu rounding up.
-    pub const fn to_sat_per_kwu_ceil(self) -> u64 {
-        (self.to_sat_per_mvb() + 3_999) / 4_000
+    /// Constructs a new [`FeeRate`] from satoshis per 1000 weight units.
+    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Option<Self> {
+        // No `map()` in const context.
+        match sat_kwu.checked_mul(4_000) {
+            Some(fee_rate) => Some(FeeRate::from_sat_per_mvb(fee_rate)),
+            None => None,
+        }
     }
 
     /// Converts to sat/vB rounding down.
@@ -106,6 +93,19 @@ impl FeeRate {
 
     /// Converts to sat/kvb rounding up.
     pub const fn to_sat_per_kvb_ceil(self) -> u64 { (self.to_sat_per_mvb() + 999) / 1_000 }
+
+    /// Converts to sat/MvB.
+    pub(crate) const fn to_sat_per_mvb(self) -> u64 { self.0 }
+
+    /// Converts to sat/kwu rounding down.
+    pub const fn to_sat_per_kwu_floor(self) -> u64 {
+        self.to_sat_per_mvb() / 4_000
+    }
+
+    /// Converts to sat/kwu rounding up.
+    pub const fn to_sat_per_kwu_ceil(self) -> u64 {
+        (self.to_sat_per_mvb() + 3_999) / 4_000
+    }
 
     /// Checked multiplication.
     ///
