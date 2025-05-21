@@ -110,9 +110,9 @@ impl FeeRate {
     ///
     /// Computes `self + rhs` returning [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_add(self, rhs: u64) -> Option<Self> {
+    pub const fn checked_add(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_add(rhs) {
+        match self.to_sat_per_kwu().checked_add(rhs.to_sat_per_kwu()) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -122,9 +122,9 @@ impl FeeRate {
     ///
     /// Computes `self - rhs` returning [`None`] if overflow occurred.
     #[must_use]
-    pub const fn checked_sub(self, rhs: u64) -> Option<Self> {
+    pub const fn checked_sub(self, rhs: FeeRate) -> Option<Self> {
         // No `map()` in const context.
-        match self.to_sat_per_kwu().checked_sub(rhs) {
+        match self.to_sat_per_kwu().checked_sub(rhs.to_sat_per_kwu()) {
             Some(res) => Some(Self::from_sat_per_kwu(res)),
             None => None,
         }
@@ -260,19 +260,24 @@ mod tests {
 
     #[test]
     fn checked_add() {
-        let f = FeeRate::from_sat_per_kwu(1).checked_add(2).unwrap();
-        assert_eq!(FeeRate::from_sat_per_kwu(3), f);
+        let one = FeeRate::from_sat_per_kwu(1);
+        let two = FeeRate::from_sat_per_kwu(2);
+        let three = FeeRate::from_sat_per_kwu(3);
 
-        let f = FeeRate::from_sat_per_kwu(u64::MAX).checked_add(1);
+        assert_eq!(one.checked_add(two).unwrap(), three);
+
+        let f = FeeRate::from_sat_per_kwu(u64::MAX).checked_add(one);
         assert!(f.is_none());
     }
 
     #[test]
     fn checked_sub() {
-        let f = FeeRate::from_sat_per_kwu(2).checked_sub(1).unwrap();
-        assert_eq!(FeeRate::from_sat_per_kwu(1), f);
+        let one = FeeRate::from_sat_per_kwu(1);
+        let two = FeeRate::from_sat_per_kwu(2);
+        let three = FeeRate::from_sat_per_kwu(3);
+        assert_eq!(three.checked_sub(two).unwrap(), one);
 
-        let f = FeeRate::ZERO.checked_sub(1);
+        let f = FeeRate::ZERO.checked_sub(one);
         assert!(f.is_none());
     }
 
